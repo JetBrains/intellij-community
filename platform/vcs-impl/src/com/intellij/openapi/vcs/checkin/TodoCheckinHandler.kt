@@ -91,7 +91,8 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     object : BooleanCommitOption(project, "", false, settings::CHECK_NEW_TODO) {
       override fun getComponent(): JComponent {
-        setFilterText(todoSettings.todoFilterName)
+        val filter = TodoConfiguration.getInstance().getTodoFilter(todoSettings.todoFilterName)
+        setFilterText(filter?.name)
 
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { setFilter(it) }
