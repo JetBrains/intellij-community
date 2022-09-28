@@ -80,6 +80,16 @@ tasks {
     gradleVersion = properties("gradleVersion")
   }
 
+  withType<Test> {
+    testLogging {
+      this.showStandardStreams = true
+    }
+    // workaround for a Gradle issue, which lets "gradle test" actually run something
+    isScanForTestClasses = false
+    // Only run tests from classes that end with "Test"
+    include("**/*Test.class")
+  }
+
   generateLexer {
     source.set("src/grammar/lexer/MermaidLexer.flex")
     targetDir.set("src/generated/com/intellij/mermaid/lang/lexer/")
