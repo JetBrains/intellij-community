@@ -211,6 +211,29 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     return null;
   }
 
+  protected @Nullable Integer getStoredFileSubIndexerId(int fileId) {
+    if (mySubIndexerRetriever == null) return null;
+    try {
+      return mySubIndexerRetriever.getStoredFileIndexerId(fileId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public <SubIndexerVersion> @Nullable SubIndexerVersion getStoredSubIndexerVersion(int fileId) {
+    Integer indexerId = getStoredFileSubIndexerId(fileId);
+    if (indexerId == null) return null;
+    try {
+      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId.intValue());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   @Override
   public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileCachedData fileData) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);

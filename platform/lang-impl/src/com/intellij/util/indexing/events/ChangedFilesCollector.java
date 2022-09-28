@@ -3,16 +3,12 @@ package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -20,6 +16,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -33,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -231,6 +230,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
       if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
       if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
+      FileElementTypeModificationTracker.processFileElementTypeUpdate(file);
       return true;
     });
   }
@@ -325,6 +325,81 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       catch (TimeoutException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
+    }
+  }
+
+  // probably gotta move it outta here
+  private static class FileElementTypeModificationTracker {
+    private ConcurrentMap<String, Class<? extends IFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>(); // todo caching?
+
+    private static void processFileElementTypeUpdate(VirtualFile file) {
+      int fileId = FileBasedIndex.getFileId(file);
+
+      var stubIndex = (StubIndexEx)StubIndex.getInstance();
+      var modCounter = stubIndex.getFileElementTypeModCount();
+
+      FileContent indexedFile = makeIndexedFile(file);
+      var stubUpdatingIndexStorage =
+        (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+
+      var current = determineCurrentFileElementType(indexedFile);
+      if (current != null) {
+        modCounter.incModCount(current);
+      }
+
+      if (StubIndexEx.PRECISE_FILE_ELEMENT_TYPE_MOD_COUNT_TRACKING) {
+        var before = determinePreviousFileElementTypePrecisely(fileId, stubUpdatingIndexStorage);
+        if (before != null && before != current) {
+          modCounter.incModCount(before);
+        }
+      }
+      else {
+        if (determineFileElementTypeMightHaveChanged(fileId, indexedFile, stubUpdatingIndexStorage)) {
+          modCounter.incGlobalModCount();
+        }
+      }
+    }
+
+    @NotNull
+    private static FileContent makeIndexedFile(VirtualFile file) {
+      return FileContentImpl.createByContent(file, () -> {
+        try {
+          return file.contentsToByteArray();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }, getProject());
+    }
+
+    private static Project getProject() {
+      var projects = ProjectManager.getInstance().getOpenProjects();
+      for (var p : projects) {
+        if (!p.isDisposed()) {
+          return p;
+        }
+      }
+      return null;
+    }
+
+    private static Class<? extends IFileElementType> determineCurrentFileElementType(IndexedFile indexedFile) {
+      var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
+      if (stubBuilderType == null) return null;
+      var currentElementType = stubBuilderType.getStubFileElementType();
+      return currentElementType == null ? null : currentElementType.getClass();
+    }
+
+    private static Class<? extends IFileElementType> determinePreviousFileElementTypePrecisely(int fileId, StubUpdatingIndexStorage index) {
+      String storedVersion = index.getStoredSubIndexerVersion(fileId);
+      if (storedVersion == null) return null;
+      //return
+      Class<?> stubTypeClass = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
+      return (Class<? extends IFileElementType>)stubTypeClass;
+    }
+
+    private static boolean determineFileElementTypeMightHaveChanged(int fileId, IndexedFile indexedFile, StubUpdatingIndexStorage index) {
+      var state = index.getIndexingStateForFile(fileId, indexedFile);
+      return state == FileIndexingState.OUT_DATED;
     }
   }
 }

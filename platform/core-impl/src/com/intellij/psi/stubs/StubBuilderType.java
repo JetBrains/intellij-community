@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-class StubBuilderType {
+public class StubBuilderType {
   private static final Logger LOG = Logger.getInstance(StubBuilderType.class);
   private final IStubFileElementType myElementType;
   private final List<String> myProperties;
@@ -56,7 +56,11 @@ class StubBuilderType {
     return myBinaryFileStubBuilder;
   }
 
-  String getVersion() {
+  public IStubFileElementType getStubFileElementType() {
+    return myElementType;
+  }
+
+  public String getVersion() {
     if (myElementType != null) {
       int elementTypeStubVersion = myElementType.getStubVersion();
 
@@ -82,6 +86,18 @@ class StubBuilderType {
       } else {
         return baseVersion;
       }
+    }
+  }
+
+  @Nullable
+  public static Class<?> getStubFileElementTypeFromVersion(@NotNull String version) {
+    try {
+      int delimPos = version.indexOf(':');
+      if (delimPos == -1) return null;
+      String className = version.substring(0, delimPos);
+      return Class.forName(className);
+    } catch (ClassNotFoundException ignored) {
+      return null;
     }
   }
 
