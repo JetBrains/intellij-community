@@ -1007,6 +1007,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         public void testBasic() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/Basic.kt"));
         }
+
+        @TestMetadata("TypeAliasFTSuspendWithReceiver.kt")
+        public void testTypeAliasFTSuspendWithReceiver() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/coroutines/TypeAliasFTSuspendWithReceiver.kt"));
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
