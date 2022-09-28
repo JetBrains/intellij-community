@@ -786,7 +786,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (entity != null) {
       return moduleListSerializer.getFileName(entity)
     }
-    val contentRootEntity = entities[ContentRootEntity::class.java]?.singleOrNull() as? ContentRootEntity
+    val contentRootEntity = entities[ContentRootEntity::class.java]?.firstOrNull() as? ContentRootEntity
     if (contentRootEntity != null) {
       return moduleListSerializer.getFileName(contentRootEntity.module)
     }

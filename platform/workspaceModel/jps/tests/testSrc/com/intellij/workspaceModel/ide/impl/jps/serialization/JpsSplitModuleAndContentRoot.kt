@@ -45,6 +45,40 @@ class JpsSplitModuleAndContentRoot {
     }
   }
 
+  @Test
+  fun `add multiple local content roots`() {
+    checkSaveProjectAfterChange("before/addContentRoot", "after/addMultipleContentRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
+      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+      builder.addContentRootEntity(virtualFileManager.fromPath(path2), emptyList(), emptyList(), moduleEntity,
+                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
+  @Test
+  fun `add external content root`() {
+    checkSaveProjectAfterChange("before/addContentRoot", "after/addExternalContentRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
+    }
+  }
+
+  @Test
+  fun `add mixed content root`() {
+    checkSaveProjectAfterChange("before/addContentRoot", "after/addMixedContentRoot") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
+      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
+      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
+      builder.addContentRootEntity(virtualFileManager.fromPath(path2), emptyList(), emptyList(), moduleEntity,
+                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
+    }
+  }
+
   // There is some issue with path storing, they add additional ../.. in tests. I won't investigate it right now
   @Test
   fun `add second local content root`() {
@@ -170,6 +204,28 @@ class JpsSplitModuleAndContentRoot {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
 
       // Will throw an exception if something is wrong
+      contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
+      contentRoots.single { it.entitySource is JpsImportedEntitySource }
+    }
+  }
+
+  @Test
+  fun `load external content root`() {
+    checkSaveProjectAfterChange("after/addExternalContentRootLoading", "after/addExternalContentRootLoading") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRoots = moduleEntity.contentRoots
+      assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
+      assertTrue(contentRoots.single().entitySource is JpsImportedEntitySource)
+    }
+  }
+
+  @Test
+  fun `load mixed content root`() {
+    checkSaveProjectAfterChange("after/addMixedContentRootLoading", "after/addMixedContentRootLoading") { builder, configLocation ->
+      val moduleEntity = builder.entities(ModuleEntity::class.java).single()
+      val contentRoots = moduleEntity.contentRoots
+      assertEquals(2, contentRoots.size)
+      assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
       contentRoots.single { it.entitySource is JpsImportedEntitySource }
     }
