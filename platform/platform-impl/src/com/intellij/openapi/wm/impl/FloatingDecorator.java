@@ -164,7 +164,10 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   }
 
   private void applyBounds(WindowInfo info) {
-    setBounds(info.getFloatingBounds());
+    Rectangle bounds = info.getFloatingBounds();
+    if (bounds != null) {
+      setBounds(bounds);
+    }
   }
 
   private void applyAlphaMode(@NotNull WindowInfo info) {
