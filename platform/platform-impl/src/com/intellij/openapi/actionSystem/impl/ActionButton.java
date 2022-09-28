@@ -134,11 +134,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return getPopState(isSelected());
   }
 
-  protected final boolean isRollover() {
+  public final boolean isRollover() {
     return myRollover;
   }
 
-  protected final boolean isMouseDown() {
+  public final boolean isMouseDown() {
     return myMouseDown;
   }
 

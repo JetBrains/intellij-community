@@ -77,7 +77,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
                                          IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
                                          AllIcons.Actions.CloseHovered;
 
-  private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
+  public static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
     @Override
     public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
       if (component.isFocusOwner() && component.isEnabled()) {
@@ -92,8 +92,8 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
     @Override
     public void paintBackground(Graphics g, JComponent component, int state) {
-      MyActionButton actionButton = (MyActionButton)component;
-      if (actionButton.isRolloverState()) {
+      ActionButton actionButton = (ActionButton)component;
+      if (actionButton.isRollover()) {
         super.paintBackground(g, component, state);
       }
       else if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
@@ -108,9 +108,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     @Override
     protected Color getStateBackground(JComponent component, int state) {
       if (ExperimentalUI.isNewUI()) {
-        MyActionButton actionButton = (MyActionButton)component;
+        ActionButton actionButton = (ActionButton)component;
         if (state == ActionButtonComponent.SELECTED) {
-          return actionButton.isMouseDownState() ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
+          return actionButton.isMouseDown() ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
         }
       }
 
@@ -443,14 +443,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     @Override
     public int getPopState() {
       return isSelected() ? SELECTED : super.getPopState();
-    }
-
-    boolean isRolloverState() {
-      return super.isRollover();
-    }
-
-    boolean isMouseDownState() {
-      return super.isMouseDown();
     }
 
     @Override
