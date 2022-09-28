@@ -82,8 +82,11 @@ class SdkInProjectFileIndexTest {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(projectModel.baseProjectDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+    }
     setProjectSdk(sdk)
-    ModuleRootModificationUtil.setModuleSdk(module, null)
+    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
     assertFalse(fileIndex.isInProject(sdkRoot))
     
     ModuleRootModificationUtil.setSdkInherited(module)
@@ -107,6 +110,10 @@ class SdkInProjectFileIndexTest {
 
   @Test
   fun `add and remove project SDK inherited in module`() {
+    val module2 = projectModel.createModule("module2")
+    val sdk2 = projectModel.createSdk("sdk2")
+    ModuleRootModificationUtil.setModuleSdk(module2, sdk2)
+    
     val sdk = projectModel.createSdk("unresolved") {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
@@ -173,8 +180,11 @@ class SdkInProjectFileIndexTest {
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
+    val sdk2 = projectModel.addSdk("sdk2") {
+      it.addRoot(projectModel.baseProjectDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+    }
     setProjectSdk(sdk)
-    ModuleRootModificationUtil.setModuleSdk(module, null)
+    ModuleRootModificationUtil.setModuleSdk(module, sdk2)
     assertFalse(fileIndex.isInProject(sdkRoot))
 
     projectModel.removeModule(module)
