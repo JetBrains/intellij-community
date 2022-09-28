@@ -199,8 +199,21 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
             """.trimIndent()
         )
 
-        createProjectSubFile("settings.gradle", GroovyScriptBuilder.groovy {
-            assign("rootProject.name", "project")
+        createProjectSubFile("settings.gradle", buildscript {
+            withPrefix {
+                code(
+                """
+                pluginManagement {
+                    repositories {
+                        ${listRepositories(false, gradleVersion.version)}                    
+                    }
+                }
+                """.trimIndent()
+                )
+            }
+            withPostfix {
+                assign("rootProject.name", "project")
+            }
         })
 
         createProjectSubFile("build.gradle", buildscript {
