@@ -9,6 +9,8 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
@@ -41,6 +43,8 @@ class LibraryInfoCache(project: Project) : Disposable {
 
     private class LibraryInfoInnerCache(project: Project) :
         SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project, cleanOnLowMemory = false) {
+
+        val removedLibraryInfoTracker = SimpleModificationTracker()
 
         private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
 
@@ -301,12 +305,12 @@ class LibraryInfoCache(project: Project) : Disposable {
                 val droppedLibraryInfos = invalidateKeysAndGetOutdatedValues(outdated.map { it as LibraryEx }).flattenTo(hashSetOf())
 
                 if (droppedLibraryInfos.isNotEmpty()) {
+                    removedLibraryInfoTracker.incModificationCount()
                     project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
                 }
             }
         }
     }
-
 
     operator fun get(key: Library): List<LibraryInfo> {
         require(key is LibraryEx) { "Library '${key.presentableName}' does not implement LibraryEx which is not expected" }
@@ -316,6 +320,8 @@ class LibraryInfoCache(project: Project) : Disposable {
     fun deduplicatedLibrary(key: Library): Library = get(key).first().library
 
     override fun dispose() = Unit
+
+    fun removedLibraryInfoTracker(): ModificationTracker = libraryInfoCache.removedLibraryInfoTracker
 
     companion object {
         fun getInstance(project: Project): LibraryInfoCache = project.service()
