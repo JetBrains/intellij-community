@@ -28,7 +28,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -54,7 +53,7 @@ public class TestCaseLoader {
   private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
+  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
   /**
    * Distribute tests equally among the buckets
    */
@@ -80,6 +79,10 @@ public class TestCaseLoader {
   private Class<?> myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
+
+  static {
+    initFairBuckets();
+  }
 
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
@@ -172,14 +175,14 @@ public class TestCaseLoader {
 
   private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
-        testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
+        testCaseClass != myFirstTestClass &&
+        testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      var isFairBucketingInitialization = IS_FAIR_BUCKETING && BUCKETS.isEmpty();
+      // fair bucketing initialization
+      if (IS_FAIR_BUCKETING && BUCKETS.isEmpty()) return true;
 
-      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass)
-          || isFairBucketingInitialization
-          || matchesCurrentBucket(testCaseClass.getName())) {
+      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
         return true;
       }
     }
@@ -207,8 +210,8 @@ public class TestCaseLoader {
   /**
    * Init fair buckets for all test classes
    */
-  public static void initFairBuckets() {
-    if (!BUCKETS.isEmpty()) return;
+  public static synchronized void initFairBuckets() {
+    if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
 
     System.out.println("Fair bucketing initialization started ...");
 
@@ -232,6 +235,12 @@ public class TestCaseLoader {
   }
 
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
+    if (!IS_FAIR_BUCKETING) {
+      System.err.printf(
+        "Unexpected fair bucketing method call. Either property '%s' should be set, or invoking this method must not be performed%n",
+        FAIR_BUCKETING_FLAG
+      );
+    }
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
