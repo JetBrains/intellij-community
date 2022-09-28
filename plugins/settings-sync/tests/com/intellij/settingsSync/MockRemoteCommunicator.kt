@@ -5,11 +5,16 @@ import java.util.concurrent.CountDownLatch
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private var downloadedLatestVersion = false
+  private var versionOnServer: SettingsSnapshot? = null
 
   private lateinit var pushedLatch: CountDownLatch
 
   override fun prepareFileOnServer(snapshot: SettingsSnapshot) {
     versionOnServer = snapshot
+  }
+
+  override fun getVersionOnServer(): SettingsSnapshot? {
+    return versionOnServer
   }
 
   override fun checkServerState(): ServerState {

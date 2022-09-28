@@ -48,7 +48,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, initialContent)
@@ -70,7 +70,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, contentBetweenSessions)
@@ -84,7 +84,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(fileName, initialContent)
@@ -96,7 +96,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       })
     }
 
-    val versionOnServer = remoteCommunicator.versionOnServer!!
+    val versionOnServer = remoteCommunicator.getVersionOnServer()!!
     assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
@@ -107,6 +107,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
 
+    SettingsSyncSettings.getInstance().syncEnabled = true
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
@@ -132,7 +133,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync()
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(lafXml, lafContent)
@@ -155,7 +156,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(lafXml, lafContent)
@@ -302,7 +303,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
 
-    val pushedSnapshot = remoteCommunicator.versionOnServer
+    val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull("Nothing has been pushed", pushedSnapshot)
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState("options/laf.xml", "LaF Initial")

@@ -23,15 +23,19 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun receiveUpdates(): UpdateResult = cloudConfigServerCommunicator.receiveUpdates()
 
+  override fun getVersionOnServer(): SettingsSnapshot? {
+    val updateResult = receiveUpdates()
+    return if (updateResult is UpdateResult.Success) updateResult.settingsSnapshot else null
+  }
+
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)
     Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.await(30, TIMEOUT_UNIT))
-    return versionOnServer
+    return getVersionOnServer()
   }
 
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     val result = cloudConfigServerCommunicator.push(snapshot, force, expectedServerVersionId)
-    versionOnServer = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
     return result
   }
