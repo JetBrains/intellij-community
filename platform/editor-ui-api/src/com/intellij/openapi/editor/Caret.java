@@ -95,16 +95,12 @@ public interface Caret extends UserDataHolderEx, Disposable {
 
   /**
    * Returns the logical position of the caret.
-   *
-   * @return the caret position.
    */
   @NotNull
   LogicalPosition getLogicalPosition();
 
   /**
    * Returns the visual position of the caret.
-   *
-   * @return the caret position.
    */
   @NotNull
   VisualPosition getVisualPosition();
@@ -112,19 +108,18 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns the offset of the caret in the document. Returns 0 for a disposed (invalid) caret.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
-   * @return the caret offset.
    *
    * @see #isValid()
    */
   int getOffset();
 
   /**
-   * @return    document offset for the start of the visual line where caret is located
+   * Returns the document offset for the start of the visual line where caret is located
    */
   int getVisualLineStart();
 
   /**
-   * @return    document offset that points to the first symbol shown at the next visual line after the one with caret on it
+   * Returns the document offset that points to the first symbol shown at the next visual line after the one with caret on it
    */
   int getVisualLineEnd();
 
@@ -133,12 +128,12 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * position if there is currently no selection.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
-   * @return the selection start offset.
+   * @see #getSelectionRange()
    */
   int getSelectionStart();
 
   /**
-   * @return    object that encapsulates information about visual position of selected text start if any
+   * Returns the object that encapsulates information about visual position of selected text start if any
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
@@ -149,22 +144,20 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * position if there is currently no selection.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    *
-   * @return the selection end offset.
+   * @see #getSelectionRange()
    */
   int getSelectionEnd();
 
   /**
-   * @return    object that encapsulates information about visual position of selected text end if any;
+   * Returns the object that encapsulates information about visual position of selected text end if any.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
   VisualPosition getSelectionEndPosition();
 
   /**
-   * Returns the text selected in the editor.
+   * Returns the text selected in the editor or null if there is currently no selection.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
-   *
-   * @return the selected text, or null if there is currently no selection.
    */
   @Nullable
   @NlsSafe String getSelectedText();
@@ -172,26 +165,22 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns the offset from which the user started to extend the selection (the selection start
    * if the selection was extended in forward direction, or the selection end if it was
-   * extended backward).
+   * extended backward), or the caret offset if there is currently no selection.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
-   *
-   * @return the offset from which the selection was started, or the caret offset if there is
-   *         currently no selection.
    */
   int getLeadSelectionOffset();
 
   /**
-   * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
+   * Returns the object that encapsulates information about visual position from which the user
+   * started to extend the selection if any.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
    */
   @NotNull
   VisualPosition getLeadSelectionPosition();
 
   /**
-   * Checks if a range of text is currently selected.
+   * Returns true if a range of text is currently selected, false otherwise.
    * Must be called from inside read action (see {@link Application#runReadAction(Runnable)})
-   *
-   * @return true if a range of text is selected, false otherwise.
    */
   boolean hasSelection();
 

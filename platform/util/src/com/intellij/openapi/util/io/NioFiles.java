@@ -76,6 +76,18 @@ public final class NioFiles {
   }
 
   /**
+   * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
+   */
+  public static boolean isWritable(@NotNull Path path) {
+    try {
+      return Files.isWritable(path);
+    }
+    catch (SecurityException e) {
+      return false;
+    }
+  }
+
+  /**
    * On DOS-like file systems, sets the RO attribute to the corresponding value.
    * On POSIX file systems, deletes all write permissions when {@code value} is {@code true} or
    * adds the "owner-write" one otherwise.

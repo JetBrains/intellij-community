@@ -190,7 +190,7 @@ object ClasspathToVfsConverter {
 
         val (oldType, oldVFile) = cache.computeIfAbsent(key, ::compute)
 
-        if (oldType != newType) {
+        if (oldType != newType || oldVFile == null && (oldType == FileType.DIRECTORY || oldType == FileType.REGULAR_FILE)) {
             return cache.compute(key) { k, _ -> compute(k) }?.second
         } else {
             return oldVFile

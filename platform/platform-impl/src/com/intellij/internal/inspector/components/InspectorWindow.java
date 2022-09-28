@@ -283,9 +283,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
     super.dispose();
+    Disposer.dispose(this);
     DialogWrapper.cleanupRootPane(rootPane);
     DialogWrapper.cleanupWindowListeners(this);
-    Disposer.dispose(this);
   }
 
   public void close() {

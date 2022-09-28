@@ -92,7 +92,7 @@ private fun createNewCommentByPattern(pattern: Pattern, existingComment: PsiComm
 
 private class YAMLSuppressKeyQuickFix(ID: String, psiElement: PsiElement) :
   AbstractBatchSuppressByNoInspectionCommentFix(ID, false) {
-  override fun getContainer(context: PsiElement?): PsiElement? = context?.parentOfType<YAMLKeyValue>()
+  override fun getContainer(context: PsiElement?): PsiElement? = context?.parentOfType<YAMLKeyValue>(true)
 
   private val keyName: String? = getContainer(psiElement)?.asSafely<YAMLKeyValue>()?.keyText
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -37,7 +38,11 @@ public abstract class ExperimentalUI {
 
   public static boolean isNewUI() {
     // CWM-7348 thin client does not support new UI
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && !PlatformUtils.isJetBrainsClient();
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+  }
+
+  public static boolean isSupported() {
+    return !PlatformUtils.isJetBrainsClient();
   }
 
   public static boolean isNewNavbar() {
@@ -148,33 +153,16 @@ public abstract class ExperimentalUI {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
-    //List<String> keysToPatch = List.of("CheckBoxMenuItem.acceleratorFont",
-    //                                   "CheckBoxMenuItem.font",
-    //                                   "Menu.acceleratorFont",
-    //                                   "Menu.font",
-    //                                   //"MenuBar.font",
-    //                                   "MenuItem.acceleratorFont",
-    //                                   "MenuItem.font",
-    //                                   "PopupMenu.font",
-    //                                   "RadioButtonMenuItem.acceleratorFont",
-    //                                   "RadioButtonMenuItem.font");
-    //for (String key : keysToPatch) {
-    //  Font font = defaults.getFont(key);
-    //  defaults.put(key, new FontUIResource("Inter", font.getStyle(), font.getSize()));
-    //}
+  }
 
-    //if (JBColor.isBright()) {
-    //  Color menuBg = new ColorUIResource(0x242933);
-    //  Color menuFg = new ColorUIResource(0xFFFFFF);
-    //  setUIProperty("PopupMenu.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.background", menuBg, defaults);
-    //  setUIProperty("MenuItem.foreground", menuFg, defaults);
-    //  setUIProperty("Menu.background", menuBg, defaults);
-    //  setUIProperty("Menu.foreground", menuFg, defaults);
-    //  setUIProperty("CheckBoxMenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("Menu.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("MenuItem.acceleratorForeground", menuFg, defaults);
-    //  setUIProperty("RadioButtonMenuItem.acceleratorForeground", menuFg, defaults);
-    //}
+  public static class Icons {
+    public static class Gutter {
+      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
+    }
+
+    private static Icon loadIcon(String path) {
+      return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
+    }
   }
 }

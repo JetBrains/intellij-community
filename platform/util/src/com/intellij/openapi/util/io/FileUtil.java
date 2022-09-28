@@ -1088,14 +1088,21 @@ public class FileUtil extends FileUtilRt {
     return file.canExecute();
   }
 
+  /** @deprecated use {@link NioFiles#isWritable} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean canWrite(@NotNull String path) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(path);
-    return attributes != null && attributes.isWritable();
+    return NioFiles.isWritable(Paths.get(path));
   }
 
+  /** @deprecated use {@link NioFiles#setReadOnly} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) {
-    boolean writableFlag = !readOnlyFlag;
-    if (!new File(path).setWritable(writableFlag, false) && canWrite(path) != writableFlag) {
+    try {
+      NioFiles.setReadOnly(Paths.get(path), readOnlyFlag);
+    }
+    catch (IOException e) {
       LOG.warn("Can't set writable attribute of '" + path + "' to '" + readOnlyFlag + "'");
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -217,11 +217,11 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.isVisible = false
       val rootPane = (frame as RootPaneContainer).rootPane
       frame.removeAll()
-      DialogWrapper.cleanupRootPane(rootPane)
       if (frame is IdeFrame) {
         MouseGestureManager.getInstance().remove(frame)
       }
       frame.dispose()
+      DialogWrapper.cleanupRootPane(rootPane)
       DialogWrapper.cleanupWindowListeners(frame)
     }
   }

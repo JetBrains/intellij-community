@@ -7,7 +7,6 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -1581,7 +1580,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (ExperimentalUI.isNewUI()) {
       if (height > 0) {
         myAlphaContext.paintWithComposite(g, () -> {
-          Icon icon = scaleIcon(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()));
+          Icon icon = scaleIcon(ExperimentalUI.Icons.Gutter.Fold);
           icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
         });
       }
@@ -1618,7 +1617,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
     if (ExperimentalUI.isNewUI()) {
-      Icon icon = scaleIcon(IconLoader.getIcon("/expui/gutter/unfold.svg", AllIcons.class.getClassLoader()));
+      Icon icon = scaleIcon(ExperimentalUI.Icons.Gutter.Unfold);
       icon.paintIcon(this, g, getFoldingAreaOffset(), getFoldingIconY(visualLine, icon));
       return;
     }
@@ -1656,7 +1655,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private double getFoldingAnchorWidth2D() {
     if (ExperimentalUI.isNewUI()) {
-      return scale(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class.getClassLoader()).getIconWidth());
+      return scale(ExperimentalUI.Icons.Gutter.Fold.getIconWidth());
     }
     return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUIScale.scale(2f)) * 2;
   }

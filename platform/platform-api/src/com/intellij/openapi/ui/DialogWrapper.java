@@ -47,7 +47,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -922,7 +921,6 @@ public abstract class DialogWrapper {
     JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
-      unregisterKeyboardActions(rootPane);
       if (myActualSize != null && isAutoAdjustable()) {
         setSize(myActualSize.width, myActualSize.height);
       }
@@ -930,6 +928,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @ApiStatus.Internal
   public static void cleanupRootPane(@Nullable JRootPane rootPane) {
     if (rootPane == null) return;
     // Must be preserved:
@@ -938,7 +937,6 @@ public abstract class DialogWrapper {
     // Must be cleared:
     //   JComponent#clientProperties, contentPane children
     RepaintManager.currentManager(rootPane).removeInvalidComponent(rootPane);
-    unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
     clearOwnFields(rootPane, field -> {
@@ -950,23 +948,13 @@ public abstract class DialogWrapper {
     });
   }
 
+  /** @deprecated does nothing */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static void unregisterKeyboardActions(@Nullable Component rootPane) {
-    int[] flags = {JComponent.WHEN_FOCUSED, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, WHEN_IN_FOCUSED_WINDOW};
-    for (JComponent eachComp : UIUtil.uiTraverser(rootPane).traverse().filter(JComponent.class)) {
-      ActionMap actionMap = eachComp.getActionMap();
-      if (actionMap == null) continue;
-      for (KeyStroke eachStroke : eachComp.getRegisteredKeyStrokes()) {
-        boolean remove = true;
-        for (int i : flags) {
-          Object key = eachComp.getInputMap(i).get(eachStroke);
-          Action action = key == null ? null : actionMap.get(key);
-          if (action instanceof UIResource) remove = false;
-        }
-        if (remove) eachComp.unregisterKeyboardAction(eachStroke);
-      }
-    }
   }
 
+  @ApiStatus.Internal
   public static void cleanupWindowListeners(@Nullable Window window) {
     if (window == null) return;
     SwingUtilities.invokeLater(() -> {
