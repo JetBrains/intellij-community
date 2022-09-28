@@ -62,8 +62,8 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 public class UnindexedFilesScanner extends DumbModeTask {
   @VisibleForTesting
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
-  // should be used only for test debugging purpose
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);
+
+  private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);  // only for test debugging purpose
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -149,19 +149,16 @@ public class UnindexedFilesScanner extends DumbModeTask {
       reason = myIndexingReason;
     }
     else {
-      reason = "Merged " +
-               StringUtil.trimStart(myIndexingReason, "Merged ") +
-               " with " +
-               StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
+      reason = "Merged " + StringUtil.trimStart(myIndexingReason, "Merged ") +
+               " with " + StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
     }
     LOG.debug("Merged " + this + " task");
     return new UnindexedFilesScanner(
       myProject,
       myStartSuspended,
       false,
-      mergeIterators(myPredefinedIndexableFilesIterators, ((UnindexedFilesScanner)taskFromQueue).myPredefinedIndexableFilesIterators),
-      StatusMark.mergeStatus(myProvidedStatusMark,
-                             ((UnindexedFilesScanner)taskFromQueue).myProvidedStatusMark),
+      mergeIterators(myPredefinedIndexableFilesIterators, oldTask.myPredefinedIndexableFilesIterators),
+      StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
       reason,
       ScanningType.Companion.merge(oldTask.myScanningType, oldTask.myScanningType)
     );
@@ -180,23 +177,8 @@ public class UnindexedFilesScanner extends DumbModeTask {
     return new ArrayList<>(uniqueIterators.values());
   }
 
-  public UnindexedFilesScanner(@NotNull Project project) {
-    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
-    // file based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
-    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, false, null, null, null, ScanningType.FULL);
-  }
-
   public UnindexedFilesScanner(@NotNull Project project, @Nullable @NonNls String indexingReason) {
     this(project, false, false, null, null, indexingReason, ScanningType.FULL);
-  }
-
-  public UnindexedFilesScanner(@NotNull Project project,
-                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable StatusMark mark,
-                               @Nullable @NonNls String indexingReason) {
-    this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
-         predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
   }
 
   private @NotNull Map<IndexableFilesIterator, List<VirtualFile>> scan(@NotNull PerformanceWatcher.Snapshot snapshot,
@@ -293,7 +275,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
     boolean skipInitialRefresh = skipInitialRefresh();
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (myOnProjectOpen && !isUnitTestMode && !skipInitialRefresh) {
-      // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
+      // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       scheduleInitialVfsRefresh();
     }
 

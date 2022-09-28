@@ -131,7 +131,7 @@ public final class FileSystemUtil {
         long t = System.nanoTime();
         realPath = ourMediator.resolveSymLink(path);
         t = System.nanoTime() - t;
-        LOG.trace("resolveSymLink(" + path + ") = "+realPath+" in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
+        LOG.trace("resolveSymLink(" + path + ") = " + realPath + " in " + TimeUnit.NANOSECONDS.toMicros(t) + " mks");
       }
       else {
         realPath = ourMediator.resolveSymLink(path);
