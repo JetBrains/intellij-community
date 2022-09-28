@@ -27,21 +27,23 @@ public class UnsafeReturnStatementVisitorTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package com.intellij.psi;\n" +
                        "public interface PsiClass{}");
 
-    myFixture.configureByText(JavaFileType.INSTANCE, "import com.intellij.psi.*;\n" +
-                                                     "class Te<caret>st extends JavaRecursiveElementVisitor {\n" +
-                                                     "   public void visitReturnStatement(PsiReturnStatement statement) {}\n" +
-                                                     "   public void visitClass(PsiClass aClass) {}\n" +
-                                                     "}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      import com.intellij.psi.*;
+      class Te<caret>st extends JavaRecursiveElementVisitor {
+         public void visitReturnStatement(PsiReturnStatement statement) {}
+         public void visitClass(PsiClass aClass) {}
+      }""");
     IntentionAction intention = myFixture.findSingleIntention("Insert visitLambdaExpression method");
     myFixture.launchAction(intention);
-    myFixture.checkResult("import com.intellij.psi.*;\n" +
-                          "class Test extends JavaRecursiveElementVisitor {\n" +
-                          "   public void visitReturnStatement(PsiReturnStatement statement) {}\n" +
-                          "   public void visitClass(PsiClass aClass) {}\n" +
-                          "\n" +
-                          "    @Override\n" +
-                          "    public void visitLambdaExpression(PsiLambdaExpression expression) {\n" +
-                          "    }\n" +
-                          "}");
+    myFixture.checkResult("""
+                            import com.intellij.psi.*;
+                            class Test extends JavaRecursiveElementVisitor {
+                               public void visitReturnStatement(PsiReturnStatement statement) {}
+                               public void visitClass(PsiClass aClass) {}
+
+                                @Override
+                                public void visitLambdaExpression(PsiLambdaExpression expression) {
+                                }
+                            }""");
   }
 }

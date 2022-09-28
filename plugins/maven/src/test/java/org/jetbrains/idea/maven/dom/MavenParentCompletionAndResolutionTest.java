@@ -260,12 +260,14 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     importProject();
 
     m2 = createModulePom("m2",
-                         "<parent>\n" +
-                         "<groupId>test</groupId>\n" +
-                         "<artifactId><error descr=\"Properties in parent definition are prohibited\">project${anotherProperty}</error></artifactId>\n" +
-                         "<version>1.${revision}</version>\n" +
-                         "</parent>\n" +
-                         "<artifactId>m1</artifactId>\n");
+                         """
+                           <parent>
+                           <groupId>test</groupId>
+                           <artifactId><error descr="Properties in parent definition are prohibited">project${anotherProperty}</error></artifactId>
+                           <version>1.${revision}</version>
+                           </parent>
+                           <artifactId>m1</artifactId>
+                           """);
 
     myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
     checkHighlighting(m2);

@@ -186,18 +186,18 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
   public void testStaticImportsGrouping() {
     @Language("JAVA")
-    @NonNls String text = "import static java.lang.Math.max;\n" +
-                          "import java.util.Map;\n" +
-                          "\n" +
-                          "import static java.lang.Math.min;\n" +
-                          "\n" +
-                          "import java.awt.Component;\n" +
-                          "\n" +
-                          "\n" +
-                          "\n" +
-                          "import static javax.swing.SwingConstants.CENTER;\n" +
-                          "/** @noinspection ALL*/ " +
-                          "class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}";
+    @NonNls String text = """
+      import static java.lang.Math.max;
+      import java.util.Map;
+
+      import static java.lang.Math.min;
+
+      import java.awt.Component;
+
+
+
+      import static javax.swing.SwingConstants.CENTER;
+      /** @noinspection ALL*/ class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}""";
 
     final PsiJavaFile file = configureByText(text);
     assertEmpty(highlightErrors());

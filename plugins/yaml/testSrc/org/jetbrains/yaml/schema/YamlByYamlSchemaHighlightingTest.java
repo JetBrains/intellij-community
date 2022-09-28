@@ -47,23 +47,25 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testEnum1() {
-    @Language("YAML") final String schema = "properties:\n" +
-                                            "  prop: \n" +
-                                            "    \"enum\":\n" +
-                                            "      - 1\n" +
-                                            "      - 2\n" +
-                                            "      - 3\n" +
-                                            "      - \"18\"";
+    @Language("YAML") final String schema = """
+      properties:
+        prop:\s
+          "enum":
+            - 1
+            - 2
+            - 3
+            - "18\"""";
     doTestYaml(schema, "prop: 1");
     doTestYaml(schema, "prop: <warning>foo</warning>");
   }
 
   public void testMissingProp() {
-    @Language("YAML") final String schema = "properties: \n" +
-                                            "  prop: {}\n" +
-                                            "  flop: {}\n" +
-                                            "required:\n" +
-                                            "  - flop";
+    @Language("YAML") final String schema = """
+      properties:\s
+        prop: {}
+        flop: {}
+      required:
+        - flop""";
 
     doTestYaml(schema, "<warning>prop: 2</warning>");
     doTestYaml(schema, "prop: 2\nflop: a");
@@ -71,42 +73,46 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testNumberMultiple() {
-    @Language("YAML") String schema = "properties:\n" +
-                                      "  prop:\n" +
-                                      "    type: number\n" +
-                                      "    multipleOf: 2";
+    @Language("YAML") String schema = """
+      properties:
+        prop:
+          type: number
+          multipleOf: 2""";
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Is not multiple of 2\">3</warning>");
     doTestYaml(schema, "prop: 4");
   }
 
   public void testNumberMinMax() {
-    doTestYaml("properties:\n" +
-               "  prop: \n" +
-               "    type: number\n" +
-               "    minimum: 0\n" +
-               "    maximum: 100\n" +
-               "    exclusiveMaximum: true", "prop: 14");
+    doTestYaml("""
+                 properties:
+                   prop:\s
+                     type: number
+                     minimum: 0
+                     maximum: 100
+                     exclusiveMaximum: true""", "prop: 14");
   }
 
   public void testEnum() {
-    @Language("YAML") final String schema = "properties:\n" +
-                                            "  prop:\n" +
-                                            "    enum:\n" +
-                                            "      - 1\n" +
-                                            "      - 2\n" +
-                                            "      - 3\n" +
-                                            "      - \"18\"";
+    @Language("YAML") final String schema = """
+      properties:
+        prop:
+          enum:
+            - 1
+            - 2
+            - 3
+            - "18\"""";
     doTestYaml(schema, "prop: 18");
     doTestYaml(schema, "prop: 2");
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3, \\\"18\\\"\">6</warning>");
   }
 
   public void testSimpleString() {
-    @Language("YAML") final String schema = "properties:\n" +
-                                            "  prop: \n" +
-                                            "    type: string\n" +
-                                            "    minLength: 2\n" +
-                                            "    maxLength: 3";
+    @Language("YAML") final String schema = """
+      properties:
+        prop:\s
+          type: string
+          minLength: 2
+          maxLength: 3""";
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: String is shorter than 2\">s</warning>");
     doTestYaml(schema, "prop: sh");
     doTestYaml(schema, "prop: sho");
@@ -114,54 +120,56 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testArray() {
-    @Language("YAML") final String schema = schema("{\n" +
-                                                   "  \"type\": \"array\",\n" +
-                                                   "  \"items\": {\n" +
-                                                   "    \"type\": \"number\", \"minimum\": 18" +
-                                                   "  }\n" +
-                                                   "}");
+    @Language("YAML") final String schema = schema("""
+                                                     {
+                                                       "type": "array",
+                                                       "items": {
+                                                         "type": "number", "minimum": 18  }
+                                                     }""");
     doTestYaml(schema, "prop:\n - 101\n - 102");
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Less than the minimum 18\">16</warning>");
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">test</warning>");
   }
 
   public void testTopLevelArray() {
-    @Language("YAML") final String schema = "type: array\n" +
-                                            "items:\n" +
-                                            "  type: number\n" +
-                                            "  minimum: 18\n";
+    @Language("YAML") final String schema = """
+      type: array
+      items:
+        type: number
+        minimum: 18
+      """;
     doTestYaml(schema, "- 101\n- 102");
   }
 
   public void testTopLevelObjectArray() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"type\": \"array\",\n" +
-                                            "  \"items\": {\n" +
-                                            "    \"type\": \"object\", \"properties\": {\"a\": {\"type\": \"number\"}}" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "type": "array",
+        "items": {
+          "type": "object", "properties": {"a": {"type": "number"}}  }
+      }""";
     doTestYaml(schema, "- a: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: boolean.\">true</warning>");
     doTestYaml(schema, "- a: 18");
   }
 
   public void testArrayTuples1() {
-    @Language("YAML") final String schema = schema("{\n" +
-                                                   "  \"type\": \"array\",\n" +
-                                                   "  \"items\": [{\n" +
-                                                   "    \"type\": \"number\", \"minimum\": 18" +
-                                                   "  }, {\"type\" : \"string\"}]\n" +
-                                                   "}");
+    @Language("YAML") final String schema = schema("""
+                                                     {
+                                                       "type": "array",
+                                                       "items": [{
+                                                         "type": "number", "minimum": 18  }, {"type" : "string"}]
+                                                     }""");
     doTestYaml(schema,
                "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>");
   }
 
   public void testArrayTuples2() {
-    @Language("YAML") final String schema2 = schema("{\n" +
-                                                    "  \"type\": \"array\",\n" +
-                                                    "  \"items\": [{\n" +
-                                                    "    \"type\": \"number\", \"minimum\": 18" +
-                                                    "  }, {\"type\" : \"string\"}],\n" +
-                                                    "\"additionalItems\": false}");
+    @Language("YAML") final String schema2 = schema("""
+                                                      {
+                                                        "type": "array",
+                                                        "items": [{
+                                                          "type": "number", "minimum": 18  }, {"type" : "string"}],
+                                                      "additionalItems": false}""");
     doTestYaml(schema2, "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
   }
 
@@ -179,11 +187,12 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testMetadataIsOk() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"title\" : \"Match anything\",\n" +
-                                            "  \"description\" : \"This is a schema that matches anything.\",\n" +
-                                            "  \"default\" : \"Default value\"\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "title" : "Match anything",
+        "description" : "This is a schema that matches anything.",
+        "default" : "Default value"
+      }""";
     doTestYaml(schema, "anything: 1");
   }
 
@@ -247,10 +256,11 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
   public void testOneOfSelectError() {
     final List<String> subSchemas = new ArrayList<>();
-    subSchemas.add("{\"type\": \"string\",\n" +
-                   "          \"enum\": [\n" +
-                   "            \"off\", \"warn\", \"error\"\n" +
-                   "          ]}");
+    subSchemas.add("""
+                     {"type": "string",
+                               "enum": [
+                                 "off", "warn", "error"
+                               ]}""");
     subSchemas.add("{\"type\": \"integer\"}");
     @Language("YAML") final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
     doTestYaml(schema, "prop: off");
@@ -323,55 +333,67 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testPatternPropertiesHighlighting() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"patternProperties\": {\n" +
-                                            "    \"^A\" : {\n" +
-                                            "      \"type\": \"number\"\n" +
-                                            "    },\n" +
-                                            "    \"B\": {\n" +
-                                            "      \"type\": \"boolean\"\n" +
-                                            "    },\n" +
-                                            "    \"C\": {\n" +
-                                            "      \"enum\": [\"test\", \"em\"]\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
-    doTestYaml(schema, "Abezjana: 2\n" +
-                   "Auto: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">no</warning>\n" +
-                   "BAe: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">22</warning>\n" +
-                   "Boloto: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">2</warning>\n" +
-                   "Cyan: <warning descr=\"Schema validation: Value should be one of: \\\"test\\\", \\\"em\\\"\">me</warning>\n");
+    @Language("YAML") final String schema = """
+      {
+        "patternProperties": {
+          "^A" : {
+            "type": "number"
+          },
+          "B": {
+            "type": "boolean"
+          },
+          "C": {
+            "enum": ["test", "em"]
+          }
+        }
+      }""";
+    doTestYaml(schema, """
+      Abezjana: 2
+      Auto: <warning descr="Schema validation: Incompatible types.
+       Required: number. Actual: string.">no</warning>
+      BAe: <warning descr="Schema validation: Incompatible types.
+       Required: boolean. Actual: integer.">22</warning>
+      Boloto: <warning descr="Schema validation: Incompatible types.
+       Required: boolean. Actual: integer.">2</warning>
+      Cyan: <warning descr="Schema validation: Value should be one of: \\"test\\", \\"em\\"">me</warning>
+      """);
   }
 
   public void testPatternPropertiesFromIssue() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"type\": \"object\",\n" +
-                                            "  \"additionalProperties\": false,\n" +
-                                            "  \"patternProperties\": {\n" +
-                                            "    \"p[0-9]\": {\n" +
-                                            "      \"type\": \"string\"\n" +
-                                            "    },\n" +
-                                            "    \"a[0-9]\": {\n" +
-                                            "      \"enum\": [\"auto!\"]\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "p[0-9]": {
+            "type": "string"
+          },
+          "a[0-9]": {
+            "enum": ["auto!"]
+          }
+        }
+      }""";
     doTestYaml(schema,
-           "p1: <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">1</warning>\n" +
-           "p2: <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">3</warning>\n" +
-           "a2: auto!\n" +
-           "a1: <warning descr=\"Schema validation: Value should be one of: \\\"auto!\\\"\">moto!</warning>\n"
+               """
+                 p1: <warning descr="Schema validation: Incompatible types.
+                  Required: string. Actual: integer.">1</warning>
+                 p2: <warning descr="Schema validation: Incompatible types.
+                  Required: string. Actual: integer.">3</warning>
+                 a2: auto!
+                 a1: <warning descr="Schema validation: Value should be one of: \\"auto!\\"">moto!</warning>
+                 """
     );
   }
 
   public void testPatternForPropertyValue() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"withPattern\": {\n" +
-                                            "      \"pattern\": \"p[0-9]\"\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "properties": {
+          "withPattern": {
+            "pattern": "p[0-9]"
+          }
+        }
+      }""";
     final String correctText = "withPattern: p1";
     final String wrongText = "withPattern: <warning descr=\"Schema validation: String violates the pattern: 'p[0-9]'\">wrong</warning>";
     doTestYaml(schema, correctText);
@@ -379,13 +401,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testPatternWithSpecialEscapedSymbols() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"withPattern\": {\n" +
-                                            "      \"pattern\": \"^\\\\d{4}\\\\-(0?[1-9]|1[012])\\\\-(0?[1-9]|[12][0-9]|3[01])$\"\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "properties": {
+          "withPattern": {
+            "pattern": "^\\\\d{4}\\\\-(0?[1-9]|1[012])\\\\-(0?[1-9]|[12][0-9]|3[01])$"
+          }
+        }
+      }""";
     @Language("yaml") final String correctText = "withPattern: 1234-11-11";
     final String wrongText = "withPattern: <warning descr=\"Schema validation: String violates the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">wrong</warning>\n";
     doTestYaml(schema, correctText);
@@ -401,160 +424,175 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testNumberOfSameNamedPropertiesCorrectlyChecked() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"size\": {\n" +
-                                            "      \"type\": \"object\",\n" +
-                                            "      \"minProperties\": 2,\n" +
-                                            "      \"maxProperties\": 3,\n" +
-                                            "      \"properties\": {\n" +
-                                            "        \"a\": {\n" +
-                                            "          \"type\": \"boolean\"\n" +
-                                            "        }\n" +
-                                            "      }\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "properties": {
+          "size": {
+            "type": "object",
+            "minProperties": 2,
+            "maxProperties": 3,
+            "properties": {
+              "a": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }""";
     doTestYaml(schema,
-           "size: \n" +
-           " a: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">1</warning>\n" +
-           " b: 3\n" +
-           " c: 4\n" +
-           " a: <warning descr=\"Schema validation: Incompatible types.\n Required: boolean. Actual: integer.\">5</warning>" +
-           "\n");
+               """
+                 size:\s
+                  a: <warning descr="Schema validation: Incompatible types.
+                  Required: boolean. Actual: integer.">1</warning>
+                  b: 3
+                  c: 4
+                  a: <warning descr="Schema validation: Incompatible types.
+                  Required: boolean. Actual: integer.">5</warning>
+                 """);
   }
 
   public void testManyDuplicatesInArray() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"array\":{\n" +
-                                            "      \"type\": \"array\",\n" +
-                                            "      \"uniqueItems\": true\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
-    doTestYaml(schema, "array: \n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">1</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">1</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">1</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">2</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">2</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">2</warning>\n" +
-                   " - 5\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">3</warning>\n" +
-                   " - <warning descr=\"Schema validation: Item is not unique\">3</warning>\n");
+    @Language("YAML") final String schema = """
+      {
+        "properties": {
+          "array":{
+            "type": "array",
+            "uniqueItems": true
+          }
+        }
+      }""";
+    doTestYaml(schema, """
+      array:\s
+       - <warning descr="Schema validation: Item is not unique">1</warning>
+       - <warning descr="Schema validation: Item is not unique">1</warning>
+       - <warning descr="Schema validation: Item is not unique">1</warning>
+       - <warning descr="Schema validation: Item is not unique">2</warning>
+       - <warning descr="Schema validation: Item is not unique">2</warning>
+       - <warning descr="Schema validation: Item is not unique">2</warning>
+       - 5
+       - <warning descr="Schema validation: Item is not unique">3</warning>
+       - <warning descr="Schema validation: Item is not unique">3</warning>
+      """);
   }
 
   // ----
 
   public void testPropertyValueAlsoHighlightedIfPatternIsInvalid() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"withPattern\": {\n" +
-                                            "      \"pattern\": \"^[]$\"\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
-    final String text = "withPattern:" +
-                        " <warning descr=\"Schema validation: Cannot check the string by pattern because of an error: Unclosed character class near index 3\n^[]$\n   ^\">(124)555-4216</warning>";
+    @Language("YAML") final String schema = """
+      {
+        "properties": {
+          "withPattern": {
+            "pattern": "^[]$"
+          }
+        }
+      }""";
+    final String text = """
+      withPattern: <warning descr="Schema validation: Cannot check the string by pattern because of an error: Unclosed character class near index 3
+      ^[]$
+         ^">(124)555-4216</warning>""";
     doTestYaml(schema, text);
   }
 
   public void testNotSchema() {
-    @Language("YAML") final String schema = "{\"properties\": {\n" +
-                                            "    \"not_type\": { \"not\": { \"type\": \"string\" } }\n" +
-                                            "  }}";
+    @Language("YAML") final String schema = """
+      {"properties": {
+          "not_type": { "not": { "type": "string" } }
+        }}""";
     doTestYaml(schema, "not_type: <warning descr=\"Schema validation: Validates against 'not' schema\">wrong</warning>");
   }
 
   public void testNotSchemaCombinedWithNormal() {
-    @Language("YAML") final String schema = "{\"properties\": {\n" +
-                                            "    \"not_type\": {\n" +
-                                            "      \"pattern\": \"^[a-z]*[0-5]*$\",\n" +
-                                            "      \"not\": { \"pattern\": \"^[a-z]{1}[0-5]$\" }\n" +
-                                            "    }\n" +
-                                            "  }}";
+    @Language("YAML") final String schema = """
+      {"properties": {
+          "not_type": {
+            "pattern": "^[a-z]*[0-5]*$",
+            "not": { "pattern": "^[a-z]{1}[0-5]$" }
+          }
+        }}""";
     doTestYaml(schema, "not_type: va4");
     doTestYaml(schema, "not_type: <warning descr=\"Schema validation: Validates against 'not' schema\">a4</warning>");
     doTestYaml(schema, "not_type: <warning descr=\"Schema validation: String violates the pattern: '^[a-z]*[0-5]*$'\">4a4</warning>");
   }
 
   public void testDoNotMarkOneOfThatDiffersWithFormat() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"withFormat\": {\n" +
-                                            "      \"type\": \"string\"," +
-                                            "      \"oneOf\": [\n" +
-                                            "        {\n" +
-                                            "          \"format\":\"hostname\"\n" +
-                                            "        },\n" +
-                                            "        {\n" +
-                                            "          \"format\": \"ip4\"\n" +
-                                            "        }\n" +
-                                            "      ]\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+
+        "properties": {
+          "withFormat": {
+            "type": "string",      "oneOf": [
+              {
+                "format":"hostname"
+              },
+              {
+                "format": "ip4"
+              }
+            ]
+          }
+        }
+      }""";
     doTestYaml(schema, "withFormat: localhost");
   }
 
   public void testAcceptSchemaWithoutType() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "\n" +
-                                            "  \"properties\": {\n" +
-                                            "    \"withFormat\": {\n" +
-                                            "      \"oneOf\": [\n" +
-                                            "        {\n" +
-                                            "          \"format\":\"hostname\"\n" +
-                                            "        },\n" +
-                                            "        {\n" +
-                                            "          \"format\": \"ip4\"\n" +
-                                            "        }\n" +
-                                            "      ]\n" +
-                                            "    }\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+
+        "properties": {
+          "withFormat": {
+            "oneOf": [
+              {
+                "format":"hostname"
+              },
+              {
+                "format": "ip4"
+              }
+            ]
+          }
+        }
+      }""";
     doTestYaml(schema, "withFormat: localhost");
   }
 
   public void testArrayItemReference() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"items\": [\n" +
-                                            "    {\n" +
-                                            "      \"type\": \"integer\"\n" +
-                                            "    },\n" +
-                                            "    {\n" +
-                                            "      \"$ref\": \"#/items/0\"\n" +
-                                            "    }\n" +
-                                            "  ]\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "items": [
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/items/0"
+          }
+        ]
+      }""";
     doTestYaml(schema, "- 1\n- 2");
     doTestYaml(schema, "- 1\n- <warning>foo</warning>");
   }
 
   public void testValidateAdditionalItems() {
-    @Language("YAML") final String schema = "{\n" +
-                                            "  \"definitions\": {\n" +
-                                            "    \"options\": {\n" +
-                                            "      \"type\": \"array\",\n" +
-                                            "      \"items\": {\n" +
-                                            "        \"type\": \"number\"\n" +
-                                            "      }\n" +
-                                            "    }\n" +
-                                            "  },\n" +
-                                            "  \"items\": [\n" +
-                                            "    {\n" +
-                                            "      \"type\": \"boolean\"\n" +
-                                            "    },\n" +
-                                            "    {\n" +
-                                            "      \"type\": \"boolean\"\n" +
-                                            "    }\n" +
-                                            "  ],\n" +
-                                            "  \"additionalItems\": {\n" +
-                                            "    \"$ref\": \"#/definitions/options/items\"\n" +
-                                            "  }\n" +
-                                            "}";
+    @Language("YAML") final String schema = """
+      {
+        "definitions": {
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "items": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "additionalItems": {
+          "$ref": "#/definitions/options/items"
+        }
+      }""";
     doTestYaml(schema, "- true\n- true");
     doTestYaml(schema, "- true\n- true\n- 1\n- 2\n- 3");
     doTestYaml(schema, "- true\n- true\n- 1\n- <warning>qq</warning>");
@@ -596,32 +634,33 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testIfThenElseV7() {
-    @Language("YAML") String schema = "{\n" +
-                                      "  \"if\": {\n" +
-                                      "    \"properties\": {\n" +
-                                      "      \"a\": {\n" +
-                                      "        \"type\": \"string\"\n" +
-                                      "      }\n" +
-                                      "    },\n" +
-                                      "    \"required\": [\"a\"]\n" +
-                                      "  },\n" +
-                                      "  \"then\": {\n" +
-                                      "    \"properties\": {\n" +
-                                      "      \"b\": {\n" +
-                                      "        \"type\": \"number\"\n" +
-                                      "      }\n" +
-                                      "    },\n" +
-                                      "    \"required\": [\"b\"]\n" +
-                                      "  },\n" +
-                                      "  \"else\": {\n" +
-                                      "    \"properties\": {\n" +
-                                      "      \"c\": {\n" +
-                                      "        \"type\": \"boolean\"\n" +
-                                      "      }\n" +
-                                      "    },\n" +
-                                      "    \"required\": [\"c\"]\n" +
-                                      "  }\n" +
-                                      "}";
+    @Language("YAML") String schema = """
+      {
+        "if": {
+          "properties": {
+            "a": {
+              "type": "string"
+            }
+          },
+          "required": ["a"]
+        },
+        "then": {
+          "properties": {
+            "b": {
+              "type": "number"
+            }
+          },
+          "required": ["b"]
+        },
+        "else": {
+          "properties": {
+            "c": {
+              "type": "boolean"
+            }
+          },
+          "required": ["c"]
+        }
+      }""";
     doTestYaml(schema, "c: <warning>5</warning>");
     doTestYaml(schema, "c: true");
     doTestYaml(schema, "<warning>a: a\nc: true</warning>");
@@ -630,36 +669,37 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testNestedOneOf() {
-    @Language("YAML") String schema = "{\"type\":\"object\",\n" +
-                                      "  \"oneOf\": [\n" +
-                                      "    {\n" +
-                                      "      \"properties\": {\n" +
-                                      "        \"type\": {\n" +
-                                      "          \"type\": \"string\",\n" +
-                                      "          \"oneOf\": [\n" +
-                                      "            {\n" +
-                                      "              \"pattern\": \"(good)\"\n" +
-                                      "            },\n" +
-                                      "            {\n" +
-                                      "              \"pattern\": \"(ok)\"\n" +
-                                      "            }\n" +
-                                      "          ]\n" +
-                                      "        }\n" +
-                                      "      }\n" +
-                                      "    },\n" +
-                                      "    {\n" +
-                                      "      \"properties\": {\n" +
-                                      "        \"type\": {\n" +
-                                      "          \"type\": \"string\",\n" +
-                                      "          \"pattern\": \"^(fine)\"\n" +
-                                      "        },\n" +
-                                      "        \"extra\": {\n" +
-                                      "          \"type\": \"string\"\n" +
-                                      "        }\n" +
-                                      "      },\n" +
-                                      "      \"required\": [\"type\", \"extra\"]\n" +
-                                      "    }\n" +
-                                      "  ]}";
+    @Language("YAML") String schema = """
+      {"type":"object",
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "oneOf": [
+                  {
+                    "pattern": "(good)"
+                  },
+                  {
+                    "pattern": "(ok)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "pattern": "^(fine)"
+              },
+              "extra": {
+                "type": "string"
+              }
+            },
+            "required": ["type", "extra"]
+          }
+        ]}""";
 
     doTestYaml(schema, "type: good");
     doTestYaml(schema, "type: ok");
@@ -668,27 +708,28 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public void testArrayRefs() {
-    @Language("YAML") String schema = "{\n" +
-                                      "  \"myDefs\": {\n" +
-                                      "    \"myArray\": [\n" +
-                                      "      {\n" +
-                                      "        \"type\": \"number\"\n" +
-                                      "      },\n" +
-                                      "      {\n" +
-                                      "        \"type\": \"boolean\"\n" +
-                                      "      }\n" +
-                                      "    ]\n" +
-                                      "  },\n" +
-                                      "  \"type\": \"array\",\n" +
-                                      "  \"items\": [\n" +
-                                      "    {\n" +
-                                      "      \"$ref\": \"#/myDefs/myArray/0\"\n" +
-                                      "    },\n" +
-                                      "    {\n" +
-                                      "      \"$ref\": \"#/myDefs/myArray/1\"\n" +
-                                      "    }\n" +
-                                      "  ]\n" +
-                                      "}";
+    @Language("YAML") String schema = """
+      {
+        "myDefs": {
+          "myArray": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/myDefs/myArray/0"
+          },
+          {
+            "$ref": "#/myDefs/myArray/1"
+          }
+        ]
+      }""";
 
     doTestYaml(schema, "- 1\n- <warning>2</warning>");
     doTestYaml(schema, "- <warning>a</warning>\n- <warning>2</warning>");
@@ -704,96 +745,108 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
   public void testAmazonElasticSchema() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/cloudformation.schema.json"));
-    doTestYaml(schema, "Resources:\n" +
-                   "  ElasticsearchCluster:\n" +
-                   "    Type: \"AWS::Elasticsearch::Domain\"\n" +
-                   "    Properties:\n" +
-                   "      ElasticsearchVersion: !FindInMap [ElasticSearchConfig, !Ref AccountType, Version]\n" +
-                   "Conditions:\n" +
-                   "  IsDev: !Equals [!Ref AccountType, dev]");
+    doTestYaml(schema, """
+      Resources:
+        ElasticsearchCluster:
+          Type: "AWS::Elasticsearch::Domain"
+          Properties:
+            ElasticsearchVersion: !FindInMap [ElasticSearchConfig, !Ref AccountType, Version]
+      Conditions:
+        IsDev: !Equals [!Ref AccountType, dev]""");
   }
 
   public void testGitlabSchema() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/gitlab-ci.schema.json"));
-    doTestYaml(schema, "a:\n" +
-                   "  extends: .b\n" +
-                   "  script: echo");
+    doTestYaml(schema, """
+      a:
+        extends: .b
+        script: echo""");
   }
 
   @Language("YAML")
-  private static final String SCHEMA_FOR_REFS  = "{\n" +
-                                                 "  \"type\": \"object\",\n" +
-                                                 "\n" +
-                                                 "  \"properties\": {\n" +
-                                                 "    \"name\": { \"type\": \"string\", \"enum\": [\"aa\", \"bb\"] },\n" +
-                                                 "    \"bar\": {\n" +
-                                                 "      \"required\": [\n" +
-                                                 "        \"a\"\n" +
-                                                 "      ],\n" +
-                                                 "      \"properties\": {\n" +
-                                                 "        \"a\": {\n" +
-                                                 "          \"type\": [\"array\"]\n" +
-                                                 "        },\n" +
-                                                 "       \"b\": {" +
-                                                 "          \"type\": [\"number\"]" +
-                                                 "        }\n" +
-                                                 "      },\n" +
-                                                 "      \"additionalProperties\": false\n" +
-                                                 "    }\n" +
-                                                 "  }\n" +
-                                                 "}\n";
+  private static final String SCHEMA_FOR_REFS  = """
+    {
+      "type": "object",
+
+      "properties": {
+        "name": { "type": "string", "enum": ["aa", "bb"] },
+        "bar": {
+          "required": [
+            "a"
+          ],
+          "properties": {
+            "a": {
+              "type": ["array"]
+            },
+           "b": {          "type": ["number"]        }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+    """;
 
   public void testRefExtends() {
     // no warning about missing required property - it should be discovered in referenced object
     // no warning about extra 'property' with name '<<' with additionalProperties=false
-    doTestYaml(SCHEMA_FOR_REFS, "a: &a\n" +
-                            "  a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">7</warning>\n" +
-                            "\n" +
-                            "bar:\n" +
-                            "  <<: *a\n" +
-                            "  b: 5\n");
+    doTestYaml(SCHEMA_FOR_REFS, """
+      a: &a
+        a: <warning descr="Schema validation: Incompatible types.
+       Required: array. Actual: integer.">7</warning>
+
+      bar:
+        <<: *a
+        b: 5
+      """);
   }
 
   public void testRefRefValid() {
     // no warnings - &a references &b, which is an array - validation passes
-    doTestYaml(SCHEMA_FOR_REFS, "x: &b\n" +
-                            "  - x\n" +
-                            "  - y\n" +
-                            "\n" +
-                            "a: &a\n" +
-                            "  a: *b\n" +
-                            "\n" +
-                            "bar:\n" +
-                            "  <<: *a\n" +
-                            "  b: 5");
+    doTestYaml(SCHEMA_FOR_REFS, """
+      x: &b
+        - x
+        - y
+
+      a: &a
+        a: *b
+
+      bar:
+        <<: *a
+        b: 5""");
   }
 
   public void testRefRefInvalid() {
-    doTestYaml(SCHEMA_FOR_REFS, "x: &b <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: number.\">7</warning>\n" +
-                            "\n" +
-                            "a: &a\n" +
-                            "  a: *b\n" +
-                            "\n" +
-                            "bar:\n" +
-                            "  <<: *a\n" +
-                            "  b: 5");
+    doTestYaml(SCHEMA_FOR_REFS, """
+      x: &b <warning descr="Schema validation: Incompatible types.
+       Required: array. Actual: number.">7</warning>
+
+      a: &a
+        a: *b
+
+      bar:
+        <<: *a
+        b: 5""");
   }
   public void testRefRefScalarValid() {
-    doTestYaml(SCHEMA_FOR_REFS, "x: &b 7\n" +
-                            "\n" +
-                            "a: &a\n" +
-                            "  b: *b\n" +
-                            "\n" +
-                            "bar:\n" +
-                            "  <<: *a\n" +
-                            "  a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">5</warning>");
+    doTestYaml(SCHEMA_FOR_REFS, """
+      x: &b 7
+
+      a: &a
+        b: *b
+
+      bar:
+        <<: *a
+        a: <warning descr="Schema validation: Incompatible types.
+       Required: array. Actual: integer.">5</warning>""");
   }
 
   public void testInlineRef() {
-    doTestYaml(SCHEMA_FOR_REFS, "bar:\n" +
-                            "  <<: &q\n" +
-                            "    a: <warning descr=\"Schema validation: Incompatible types.\n Required: array. Actual: integer.\">5</warning>\n" +
-                            "  b: 5");
+    doTestYaml(SCHEMA_FOR_REFS, """
+      bar:
+        <<: &q
+          a: <warning descr="Schema validation: Incompatible types.
+       Required: array. Actual: integer.">5</warning>
+        b: 5""");
   }
 
   static String schema(final String s) {
@@ -801,25 +854,27 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   }
 
   public static String rootObjectRedefinedSchema() {
-    return "{\n" +
-           "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
-           "  \"type\": \"object\",\n" +
-           "  \"$ref\" : \"#/definitions/root\",\n" +
-           "  \"definitions\": {\n" +
-           "    \"root\" : {\n" +
-           "      \"type\": \"object\",\n" +
-           "      \"additionalProperties\": false,\n" +
-           "      \"properties\": {\n" +
-           "        \"r1\": {\n" +
-           "          \"type\": \"string\"\n" +
-           "        },\n" +
-           "        \"r2\": {\n" +
-           "          \"type\": \"string\"\n" +
-           "        }\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}\n";
+    return """
+      {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "$ref" : "#/definitions/root",
+        "definitions": {
+          "root" : {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "r1": {
+                "type": "string"
+              },
+              "r2": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+      """;
   }
 
   public void testTravisPythonVersion() throws Exception {
@@ -832,105 +887,119 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
   public void testTravisNode() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
-    doTestYaml(schema, "node_js: \n" +
-                   "  - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: number.\">2.10</warning>");
+    doTestYaml(schema, """
+      node_js:\s
+        - <warning descr="Schema validation: Incompatible types.
+       Required: string. Actual: number.">2.10</warning>""");
   }
 
   public void testExpNumberNotation() {
-    doTestYaml("{\n" +
-           "  \"properties\": {\n" +
-           "    \"x\": {\n" +
-           "      \"type\": \"number\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "x: 2.99792458e8");
+    doTestYaml("""
+                 {
+                   "properties": {
+                     "x": {
+                       "type": "number"
+                     }
+                   }
+                 }""", "x: 2.99792458e8");
   }
 
   public void testTreatEmptyValueAsNull_1() {
-    doTestYaml("{\n" +
-               "  \"properties\": {\n" +
-               "    \"x\": {\n" +
-               "      \"type\": \"number\"\n" +
-               "    }\n" +
-               "  }\n" +
-               "}", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
+    doTestYaml("""
+                 {
+                   "properties": {
+                     "x": {
+                       "type": "number"
+                     }
+                   }
+                 }""", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
   }
 
   public void testTreatEmptyValueAsNull_2() {
-    doTestYaml("{\n" +
-           "  \"properties\": {\n" +
-           "    \"x\": {\n" +
-           "      \"type\": \"null\"\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "x: ");
+    doTestYaml("""
+                 {
+                   "properties": {
+                     "x": {
+                       "type": "null"
+                     }
+                   }
+                 }""", "x: ");
   }
 
   public void testEmptyValueInArray() {
-    doTestYaml("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"array\",\n" +
-           "      \"items\": {\n" +
-           "        \"type\": \"string\"\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}", "versionAsStringArray:\n" +
-                "  -<warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\"> </warning>\n" +
-                "  <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\">-</warning>\n" +
-                "  - a");
+    doTestYaml("""
+                 {
+                   "type": "object",
+
+                   "properties": {
+                     "versionAsStringArray": {
+                       "type": "array",
+                       "items": {
+                         "type": "string"
+                       }
+                     }
+                   }
+                 }""", """
+                 versionAsStringArray:
+                   -<warning descr="Schema validation: Incompatible types.
+                  Required: string. Actual: null."> </warning>
+                   <warning descr="Schema validation: Incompatible types.
+                  Required: string. Actual: null.">-</warning>
+                   - a""");
   }
 
   public void testEmptyFile() {
-    doTestYaml("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"array\"\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"versionAsStringArray\"]\n" +
-           "}", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
+    doTestYaml("""
+                 {
+                   "type": "object",
+
+                   "properties": {
+                     "versionAsStringArray": {
+                       "type": "array"
+                     }
+                   },
+                   "required": ["versionAsStringArray"]
+                 }""", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
   }
 
   public void testEmptyValueBetweenProps() {
-    doTestYaml("{\n" +
-           "  \"type\": \"object\",\n" +
-           "\n" +
-           "  \"properties\": {\n" +
-           "    \"versionAsStringArray\": {\n" +
-           "      \"type\": \"object\",\n" +
-           "      \"properties\": {\n" +
-           "        \"xxx\": {\n" +
-           "          \"type\": \"number\"\n" +
-           "        },\n" +
-           "        \"yyy\": {\n" +
-           "          \"type\": \"string\"\n" +
-           "        },\n" +
-           "        \"zzz\": {\n" +
-           "          \"type\": \"number\"\n" +
-           "        }\n" +
-           "      },\n" +
-           "      \"required\": [\"xxx\", \"yyy\", \"zzz\"]\n" +
-           "    }\n" +
-           "  },\n" +
-           "  \"required\": [\"versionAsStringArray\"]\n" +
-           "}", "versionAsStringArray:\n" +
-                "  zzz: 0\n" +
-                "  yyy:<warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: null.\">  </warning>\n" +
-                "  xxx: 0");
+    doTestYaml("""
+                 {
+                   "type": "object",
+
+                   "properties": {
+                     "versionAsStringArray": {
+                       "type": "object",
+                       "properties": {
+                         "xxx": {
+                           "type": "number"
+                         },
+                         "yyy": {
+                           "type": "string"
+                         },
+                         "zzz": {
+                           "type": "number"
+                         }
+                       },
+                       "required": ["xxx", "yyy", "zzz"]
+                     }
+                   },
+                   "required": ["versionAsStringArray"]
+                 }""", """
+                 versionAsStringArray:
+                   zzz: 0
+                   yyy:<warning descr="Schema validation: Incompatible types.
+                  Required: string. Actual: null.">  </warning>
+                   xxx: 0""");
   }
 
   public void testDeprecation() {
-    doTestYaml("{\"properties\": {\n" +
-           "    \"myPropertyXxx\": {\n" +
-           "      \"deprecationMessage\": \"Baz\",\n" +
-           "      \"description\": \"Foo bar\"\n" +
-           "    }\n" +
-           "  }}", "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
+    doTestYaml("""
+                 {"properties": {
+                     "myPropertyXxx": {
+                       "deprecationMessage": "Baz",
+                       "description": "Foo bar"
+                     }
+                   }}""", "<weak_warning descr=\"Key 'myPropertyXxx' is deprecated: Baz\">myPropertyXxx</weak_warning>: a");
   }
 }

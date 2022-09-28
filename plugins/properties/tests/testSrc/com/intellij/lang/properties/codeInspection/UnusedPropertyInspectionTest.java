@@ -51,11 +51,12 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
 
   private void configureSources(Module module) throws IOException {
     final SourceFolder src = PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().findOrCreateDir("src"));
-    @Language("JAVA") final String javaClass = "public class Main {\n" +
-                                               "  static {\n" +
-                                               "    System.getProperty(\"used\");\n" +
-                                               "  }\n" +
-                                               "}";
+    @Language("JAVA") final String javaClass = """
+      public class Main {
+        static {
+          System.getProperty("used");
+        }
+      }""";
     VirtualFile file = VfsTestUtil.createFile(src.getFile(), "org/main/Main.java", javaClass);
     myFixture.allowTreeAccessForFile(file);
   }

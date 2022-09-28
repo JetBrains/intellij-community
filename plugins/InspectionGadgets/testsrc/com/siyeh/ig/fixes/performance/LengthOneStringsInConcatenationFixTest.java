@@ -53,23 +53,29 @@ public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase
 
   public void testDoNotFixWrongType() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
-                               "class X {\n" +
-                               "  String field = /**/\"a\";\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   String field = /**/"a";
+                                 }
+                                 """);
   }
 
   public void testDoNotFixIfConcatenationTurnsIntoAddition() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
-                               "class X {\n" +
-                               "  String field = /**/\"a\" + 'b';\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   String field = /**/"a" + 'b';
+                                 }
+                                 """);
   }
 
   public void testDoNotFixIfSecondOperandTurnsConcatenationIntoAddition() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
-                               "class X {\n" +
-                               "  String field = 'a' + /**/\"b\";\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   String field = 'a' + /**/"b";
+                                 }
+                                 """);
   }
 
   @Override

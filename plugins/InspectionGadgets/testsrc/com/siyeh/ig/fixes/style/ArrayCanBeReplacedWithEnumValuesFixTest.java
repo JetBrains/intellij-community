@@ -54,11 +54,12 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "public class OuterEnum {\n" +
-      "    public enum TestEnum {\n" +
-      "        A, B, C\n" +
-      "    }\n" +
-      "}"
+      """
+public class OuterEnum {
+    public enum TestEnum {
+        A, B, C
+    }
+}"""
     };
   }
 }

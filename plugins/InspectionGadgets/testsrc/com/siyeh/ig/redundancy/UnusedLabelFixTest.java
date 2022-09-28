@@ -16,37 +16,43 @@ public class UnusedLabelFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveLabel() {
     doMemberTest(InspectionGadgetsBundle.message("unused.label.remove.quickfix"),
-                 "  public void myMethod(int count) {\n" +
-                 "    label/**/: for (int i = 0; i < count; i++) {\n" +
-                 "      if (i == 3) {\n" +
-                 "        break;\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
+                 """
+                     public void myMethod(int count) {
+                       label/**/: for (int i = 0; i < count; i++) {
+                         if (i == 3) {
+                           break;
+                         }
+                       }
+                     }
+                   """,
 
-                 "  public void myMethod(int count) {\n" +
-                 "    for (int i = 0; i < count; i++) {\n" +
-                 "        if (i == 3) {\n" +
-                 "            break;\n" +
-                 "        }\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void myMethod(int count) {
+                       for (int i = 0; i < count; i++) {
+                           if (i == 3) {
+                               break;
+                           }
+                       }
+                     }
+                   """
     );
   }
 
   public void testDoNotFixUsedLabel() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unused.label.remove.quickfix"),
-                               "class Example {\n" +
-                               "  public void myMethod(int count) {\n" +
-                               "    label/**/: for (int i = 0; i < count; i++) {\n" +
-                               "      for (int j = 0; j < count; j++) {\n" +
-                               "        if (i == 3) {\n" +
-                               "          break label;\n" +
-                               "        }\n" +
-                               "      }\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n"
+                               """
+                                 class Example {
+                                   public void myMethod(int count) {
+                                     label/**/: for (int i = 0; i < count; i++) {
+                                       for (int j = 0; j < count; j++) {
+                                         if (i == 3) {
+                                           break label;
+                                         }
+                                       }
+                                     }
+                                   }
+                                 }
+                                 """
     );
   }
 }

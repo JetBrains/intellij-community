@@ -13,143 +13,167 @@ public class PyEmacsTabTest extends PyTestCase {
   
   public void testIndentToRightAfterCompositeStatementStart() {
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      " <caret> print name",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        <caret>print name"
+      """
+        def test(name):
+            if name != "":
+         <caret> print name""",
+      """
+        def test(name):
+            if name != "":
+                <caret>print name"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "<caret>  print name",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        <caret>print name"
+      """
+        def test(name):
+            if name != "":
+        <caret>  print name""",
+      """
+        def test(name):
+            if name != "":
+                <caret>print name"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "     <caret>print name",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        <caret>print name"
+      """
+        def test(name):
+            if name != "":
+             <caret>print name""",
+      """
+        def test(name):
+            if name != "":
+                <caret>print name"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "    print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+            print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                print n<caret>ame"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "         print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                 print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                print n<caret>ame"""
     );
   }
 
   public void testIndentToRight() {
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "    print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+        print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+            print n<caret>ame"""
     );
     
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\":\n" +
-      "            print 123\n" +
-      " print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\":\n" +
-      "            print 123\n" +
-      "        print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test":
+                    print 123
+         print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test":
+                    print 123
+                print n<caret>ame"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "    print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "        print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+            print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                print n<caret>ame"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "      print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "            print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+              print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                    print n<caret>ame"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "        print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "            print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                    print n<caret>ame"""
     );
 
     doTest(
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "          print n<caret>ame",
-      "def test(name):\n" +
-      "    if name != \"\":\n" +
-      "        if name == \"test\"\n" +
-      "            print 123\n" +
-      "            print n<caret>ame"
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                  print n<caret>ame""",
+      """
+        def test(name):
+            if name != "":
+                if name == "test"
+                    print 123
+                    print n<caret>ame"""
     );
   }
 
   public void testIndentToLeft() {
     doTest(
-      "__author__ = \"doe\"\n" +
-      " def test(name):\n" +
-      "     if name == \"\"\n" +
-      "         print 123\n" +
-      "         p<caret>rint 123",
-      "__author__ = \"doe\"\n" +
-      " def test(name):\n" +
-      "     if name == \"\"\n" +
-      "         print 123\n" +
-      " p<caret>rint 123"
+      """
+        __author__ = "doe"
+         def test(name):
+             if name == ""
+                 print 123
+                 p<caret>rint 123""",
+      """
+        __author__ = "doe"
+         def test(name):
+             if name == ""
+                 print 123
+         p<caret>rint 123"""
     );
     
     doTest(
@@ -179,143 +203,167 @@ public class PyEmacsTabTest extends PyTestCase {
     
     // If.
     doTest(
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            if value == 123:
+           print <caret>value""",
+      """
+        def test(value):
+            if value == 123:
+                print <caret>value"""
     );
     doTest(
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "        pass\n" +
-      "    elif value == 124:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "        pass\n" +
-      "    elif value == 124:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            if value == 123:
+                pass
+            elif value == 124:
+           print <caret>value""",
+      """
+        def test(value):
+            if value == 123:
+                pass
+            elif value == 124:
+                print <caret>value"""
     );
     doTest(
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "        pass\n" +
-      "    else:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    if value == 123:\n" +
-      "        pass\n" +
-      "    else:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            if value == 123:
+                pass
+            else:
+           print <caret>value""",
+      """
+        def test(value):
+            if value == 123:
+                pass
+            else:
+                print <caret>value"""
     );
     
     // While.
     doTest(
-      "def test(value):\n" +
-      "    while value == 123:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    while value == 123:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            while value == 123:
+           print <caret>value""",
+      """
+        def test(value):
+            while value == 123:
+                print <caret>value"""
     );
     doTest(
-      "def test(value):\n" +
-      "    while value == 123:\n" +
-      "        pass\n" +
-      "    else:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    while value == 123:\n" +
-      "        pass\n" +
-      "    else:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            while value == 123:
+                pass
+            else:
+           print <caret>value""",
+      """
+        def test(value):
+            while value == 123:
+                pass
+            else:
+                print <caret>value"""
     );
     
     // For.
     doTest(
-      "def test(value):\n" +
-      "    for i in value:\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    for i in value:\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            for i in value:
+           print <caret>value""",
+      """
+        def test(value):
+            for i in value:
+                print <caret>value"""
     );
     doTest(
-      "def test(value):\n" +
-      "    for i in value:\n" +
-      "        pass\n" +
-      "    else\n" +
-      "   print <caret>value",
-      "def test(value):\n" +
-      "    for i in value:\n" +
-      "        pass\n" +
-      "    else\n" +
-      "        print <caret>value"
+      """
+        def test(value):
+            for i in value:
+                pass
+            else
+           print <caret>value""",
+      """
+        def test(value):
+            for i in value:
+                pass
+            else
+                print <caret>value"""
     );
     
     // Try.
     doTest(
-      "def test(value):\n" +
-      "    try:\n" +
-      "   open()<caret>\n" +
-      "    except:\n" +
-      "        pass",
-      "def test(value):\n" +
-      "    try:\n" +
-      "        open()<caret>\n" +
-      "    except:\n" +
-      "        pass"
+      """
+        def test(value):
+            try:
+           open()<caret>
+            except:
+                pass""",
+      """
+        def test(value):
+            try:
+                open()<caret>
+            except:
+                pass"""
     );
     doTest(
-      "def test(value):\n" +
-      "    try:\n" +
-      "        open()\n" +
-      "    except:\n" +
-      "   print <caret>123",
-      "def test(value):\n" +
-      "    try:\n" +
-      "        open()\n" +
-      "    except:\n" +
-      "        print <caret>123"
+      """
+        def test(value):
+            try:
+                open()
+            except:
+           print <caret>123""",
+      """
+        def test(value):
+            try:
+                open()
+            except:
+                print <caret>123"""
     );
     doTest(
-      "def test(value):\n" +
-      "    try:\n" +
-      "        open()\n" +
-      "    finally:\n" +
-      "   print <caret>123",
-      "def test(value):\n" +
-      "    try:\n" +
-      "        open()\n" +
-      "    finally:\n" +
-      "        print <caret>123"
+      """
+        def test(value):
+            try:
+                open()
+            finally:
+           print <caret>123""",
+      """
+        def test(value):
+            try:
+                open()
+            finally:
+                print <caret>123"""
     );
     
     //With.
     runWithLanguageLevel(
       LanguageLevel.PYTHON26,
       () -> doTest(
-        "def test(value):\n" +
-        "    with 1 + 1 as a:\n" +
-        "   print <caret>a",
-        "def test(value):\n" +
-        "    with 1 + 1 as a:\n" +
-        "        print <caret>a"
+        """
+          def test(value):
+              with 1 + 1 as a:
+             print <caret>a""",
+        """
+          def test(value):
+              with 1 + 1 as a:
+                  print <caret>a"""
       )
     );
   }
 
   public void testSequence() {
-    doTest("l = [\n" +
-           "<caret>'alpha',\n" +
-           "'beta'\n" +
-           "]",
-           "l = [\n" +
-           "    'alpha',\n" +
-           "'beta'\n" +
-           "]");
+    doTest("""
+             l = [
+             <caret>'alpha',
+             'beta'
+             ]""",
+           """
+             l = [
+                 'alpha',
+             'beta'
+             ]""");
   }
   private void doTest(String before, String after) {
     final String fileName = getTestName(false);

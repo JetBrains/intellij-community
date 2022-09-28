@@ -21,22 +21,23 @@ import java.io.File;
 
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
   public void testAsyncOpening() {
-    openFiles("<component name=\"FileEditorManager\">\n" +
-              "    <leaf>\n" +
-              "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-              "        <entry file=\"file://$PROJECT_DIR$/src/Bar.java\">\n" +
-              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-              "            <state vertical-scroll-proportion=\"0.032882012\" vertical-offset=\"0\" max-vertical-offset=\"517\">\n" +
-              "              <caret line=\"1\" column=\"26\" selection-start=\"45\" selection-end=\"45\" />\n" +
-              "              <folding>\n" +
-              "                <element signature=\"e#69#70#0\" expanded=\"true\" />\n" +
-              "              </folding>\n" +
-              "            </state>\n" +
-              "          </provider>\n" +
-              "        </entry>\n" +
-              "      </file>\n" +
-              "    </leaf>\n" +
-              "  </component>");
+    openFiles("""
+                <component name="FileEditorManager">
+                    <leaf>
+                      <file pinned="false" current="true" current-in-tab="true">
+                        <entry file="file://$PROJECT_DIR$/src/Bar.java">
+                          <provider selected="true" editor-type-id="text-editor">
+                            <state vertical-scroll-proportion="0.032882012" vertical-offset="0" max-vertical-offset="517">
+                              <caret line="1" column="26" selection-start="45" selection-end="45" />
+                              <folding>
+                                <element signature="e#69#70#0" expanded="true" />
+                              </folding>
+                            </state>
+                          </provider>
+                        </entry>
+                      </file>
+                    </leaf>
+                  </component>""");
   }
 
   public void testFoldingIsNotBlinkingOnNavigationToSingleLineMethod() {

@@ -63,26 +63,31 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   private void addGuava() {
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Supplier<T> { T get();}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public interface Function<F, T> { T apply(F input);}\n");
-    myFixture.addClass("package com.google.common.base;\n" +
-                       "\n" +
-                       "public abstract class Optional<T> {\n" +
-                       "  public static <T> Optional<T> absent() {}\n" +
-                       "  public static <T> Optional<T> of(T ref) {}\n" +
-                       "  public static <T> Optional<T> fromNullable(T ref) {}\n" +
-                       "  public abstract T get();\n" +
-                       "  public abstract boolean isPresent();\n" +
-                       "  public abstract T orNull();\n" +
-                       "  public abstract T or(Supplier<? extends T> supplier);\n" +
-                       "  public abstract <V> Optional<V> transform(Function<? super T, V> fn);\n" +
-                       "  public abstract T or(T val);\n" +
-                       "  public abstract java.util.Optional<T> toJavaUtil();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Supplier<T> { T get();}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public interface Function<F, T> { T apply(F input);}
+                         """);
+    myFixture.addClass("""
+                         package com.google.common.base;
+
+                         public abstract class Optional<T> {
+                           public static <T> Optional<T> absent() {}
+                           public static <T> Optional<T> of(T ref) {}
+                           public static <T> Optional<T> fromNullable(T ref) {}
+                           public abstract T get();
+                           public abstract boolean isPresent();
+                           public abstract T orNull();
+                           public abstract T or(Supplier<? extends T> supplier);
+                           public abstract <V> Optional<V> transform(Function<? super T, V> fn);
+                           public abstract T or(T val);
+                           public abstract java.util.Optional<T> toJavaUtil();
+                         }""");
   }
 
   public void testPrimitiveInVoidLambda() { doTest(); }
@@ -256,16 +261,17 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testContractReturnValues() { doTest(); }
   public void testTryFinallySimple() { doTest(); }
   public void testAssertAll() {
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
-                       "\n" +
-                       "import org.junit.jupiter.api.function.Executable;\n" +
-                       "\n" +
-                       "public class Assertions {\n" +
-                       "  public static void assertAll(String s, Executable... e) {}\n" +
-                       "  public static void assertAll(Executable... e) {}\n" +
-                       "  public static void assertNotNull(Object o) {}\n" +
-                       "  public static void assertTrue(boolean b) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+
+                         import org.junit.jupiter.api.function.Executable;
+
+                         public class Assertions {
+                           public static void assertAll(String s, Executable... e) {}
+                           public static void assertAll(Executable... e) {}
+                           public static void assertNotNull(Object o) {}
+                           public static void assertTrue(boolean b) {}
+                         }""");
     myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
     doTest();
   }
@@ -361,9 +367,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testConstantInClosure() { doTest(); }
   public void testUnknownNullability() {
-    myFixture.addClass("package org.jetbrains.annotations;\nimport java.lang.annotation.*;\n" +
-                       "@Target(ElementType.TYPE_USE)\n" +
-                       "public @interface UnknownNullability { }");
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.*;
+                         @Target(ElementType.TYPE_USE)
+                         public @interface UnknownNullability { }""");
     doTestWith((insp, __) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
   public void testReturnOrElseNull() { doTestWith((insp, __) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }

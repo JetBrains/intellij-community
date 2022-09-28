@@ -24,10 +24,11 @@ public class PropertiesSpellcheckingTest extends LightJavaCodeInsightFixtureTest
     myFixture.enableInspections(new SpellCheckingInspection());
 
     myFixture.configureByText("test.properties",
-                              "valid.key=value\n" +
-                              "# comment is <TYPO descr=\"Typo: In word 'cheked'\">cheked</TYPO>\n" +
-                              "validWord<TYPO descr=\"Typo: In word 'Buuundary'\">Buuundary</TYPO>=value\n" +
-                              "i3<TYPO descr=\"Typo: In word 'nvalid'\">nvalid</TYPO>.key=i3<TYPO descr=\"Typo: In word 'nvalid'\">nvalid</TYPO>Value");
+                              """
+                                valid.key=value
+                                # comment is <TYPO descr="Typo: In word 'cheked'">cheked</TYPO>
+                                validWord<TYPO descr="Typo: In word 'Buuundary'">Buuundary</TYPO>=value
+                                i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>.key=i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>Value""");
     myFixture.testHighlighting();
   }
 }

@@ -71,7 +71,7 @@ public final class ColorMap {
     WindowFrame
         Window frame.
     WindowText
-        Text in windows. """;
+        Text in windows.\s""";
   @NonNls static final String standardColorsString = """
     maroon #800000 red #ff0000 orange #ffA500 yellow #ffff00 olive #808000
     purple #800080 fuchsia #ff00ff white #ffffff lime #00ff00 green #008000

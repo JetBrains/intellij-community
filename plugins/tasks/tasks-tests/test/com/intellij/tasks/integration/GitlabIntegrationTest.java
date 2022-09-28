@@ -35,20 +35,22 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   private GitlabRepository myRepository;
 
   public void testCommitMessageFormat() {
-    String issueJson = "{\n" +
-                       "    \"id\": 1,\n" +
-                       "    \"iid\": 2,\n" +
-                       "    \"project_id\": 3,\n" +
-                       "    \"title\": \"Sample title\",\n" +
-                       "    \"state\": \"opened\",\n" +
-                       "    \"updated_at\": \"2013-11-14T12:30:39Z\",\n" +
-                       "    \"created_at\": \"2013-11-14T12:30:39Z\"\n" +
-                       "}";
+    String issueJson = """
+      {
+          "id": 1,
+          "iid": 2,
+          "project_id": 3,
+          "title": "Sample title",
+          "state": "opened",
+          "updated_at": "2013-11-14T12:30:39Z",
+          "created_at": "2013-11-14T12:30:39Z"
+      }""";
 
-    String projectJson = "{\n" +
-                         "   \"id\": 3,\n" +
-                         "   \"name\": \"project-1\"\n" +
-                         "}";
+    String projectJson = """
+      {
+         "id": 3,
+         "name": "project-1"
+      }""";
 
     GitlabIssue issue = GSON.fromJson(issueJson, GitlabIssue.class);
     GitlabProject project = GSON.fromJson(projectJson, GitlabProject.class);

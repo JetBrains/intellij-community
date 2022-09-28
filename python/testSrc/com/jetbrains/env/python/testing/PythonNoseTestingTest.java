@@ -40,15 +40,17 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
-                                                           "[root](-)\n" +
-                                                           ".test_nose_generator(-)\n" +
-                                                           "..test_evens(-)\n" +
-                                                           "...(0, 0)(+)\n" +
-                                                           "...(1, 3)(-)\n" +
-                                                           "...(2, 6)(+)\n" +
-                                                           "...(3, 9)(-)\n" +
-                                                           "...(4, 12)(+)\n", runner.getFormattedTestTree());
+        assertEquals("Nose genenerator produced bad tree", """
+          Test tree:
+          [root](-)
+          .test_nose_generator(-)
+          ..test_evens(-)
+          ...(0, 0)(+)
+          ...(1, 3)(-)
+          ...(2, 6)(+)
+          ...(3, 9)(-)
+          ...(4, 12)(+)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -282,10 +284,12 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                     @NotNull String stdout,
                                     @NotNull String stderr,
                                     @NotNull String all, int exitCode) {
-      assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
-                                                                      "[root](+)\n" +
-                                                                      ".test_with_slow(+)\n" +
-                                                                      "..test_fast(+)\n",
+      assertEquals("--slow runner broken on arguments" + myArguments, """
+                     Test tree:
+                     [root](+)
+                     .test_with_slow(+)
+                     ..test_fast(+)
+                     """,
                    runner.getFormattedTestTree());
     }
   }

@@ -134,20 +134,22 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenRecentEditorTab() throws Exception {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
 
-    openFiles("  <component name=\"FileEditorManager\">\n" +
-              "    <leaf>\n" +
-              "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-              "        <entry selected=\"true\" file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-              "          <provider editor-type-id=\"mock\" selected=\"true\">\n" +
-              "            <state />\n" +
-              "          </provider>\n" +
-              "          <provider editor-type-id=\"text-editor\">\n" +
-              "            <state/>\n" +
-              "          </provider>\n" +
-              "        </entry>\n" +
-              "      </file>\n" +
-              "    </leaf>\n" +
-              "  </component>\n");
+    openFiles("""
+                  <component name="FileEditorManager">
+                    <leaf>
+                      <file pinned="false" current="true" current-in-tab="true">
+                        <entry selected="true" file="file://$PROJECT_DIR$/src/1.txt">
+                          <provider editor-type-id="mock" selected="true">
+                            <state />
+                          </provider>
+                          <provider editor-type-id="text-editor">
+                            <state/>
+                          </provider>
+                        </entry>
+                      </file>
+                    </leaf>
+                  </component>
+                """);
     FileEditor[] selectedEditors = manager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
     assertEquals(MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, selectedEditors[0].getName());
@@ -376,42 +378,44 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   @Language("XML")
-  private static final String STRING = "<component name=\"FileEditorManager\">\n" +
-                                       "    <leaf>\n" +
-                                       "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"true\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                       "        <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
-                                       "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                       "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                       "            </state>\n" +
-                                       "          </provider>\n" +
-                                       "        </entry>\n" +
-                                       "      </file>\n" +
-                                       "    </leaf>\n" +
-                                       "  </component>\n";
+  private static final String STRING = """
+    <component name="FileEditorManager">
+        <leaf>
+          <file pinned="false" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/1.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="true" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/foo.xml">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current="true" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/src/2.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/src/3.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </component>
+    """;
 
   private void assertOpenFiles(String... fileNames) {
     List<String> names = ContainerUtil.map(manager.getSplitters().getEditorComposites(), composite -> composite.getFile().getName());

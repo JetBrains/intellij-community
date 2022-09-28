@@ -98,14 +98,18 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
 
   public void testBag() {
     final Bag bag = new Bag("a", "b");
-    assertEquals("a : 1\n" +
-                 "b : 1\n", bag.toString());
+    assertEquals("""
+                   a : 1
+                   b : 1
+                   """, bag.toString());
     bag.add("a");
     Bag toAdd = new Bag("a", "c");
     bag.addAll(toAdd);
-    assertEquals("c : 1\n" +
-                 "a : 3\n" +
-                 "b : 1\n", bag.toString());
+    assertEquals("""
+                   c : 1
+                   a : 3
+                   b : 1
+                   """, bag.toString());
   }
 
   public void testDistance() {

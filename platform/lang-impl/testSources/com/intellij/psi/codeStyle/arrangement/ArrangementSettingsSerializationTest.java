@@ -247,35 +247,36 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <tokens>\n" +
-                            "    <token id=\"visibility\" name=\"visibility\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "  </tokens>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <tokens>
+          <token id="visibility" name="visibility">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+        </tokens>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 
@@ -291,84 +292,85 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, rules, defaultTokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <tokens>\n" +
-                            "    <token id=\"modifiers\" name=\"modifiers\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "              <STATIC>true</STATIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "    <token id=\"visibility\" name=\"visibility\">\n" +
-                            "      <rules>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PUBLIC>true</PUBLIC>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PROTECTED>true</PROTECTED>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "        <rule>\n" +
-                            "          <match>\n" +
-                            "            <AND>\n" +
-                            "              <PRIVATE>true</PRIVATE>\n" +
-                            "            </AND>\n" +
-                            "          </match>\n" +
-                            "        </rule>\n" +
-                            "      </rules>\n" +
-                            "    </token>\n" +
-                            "  </tokens>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <tokens>
+          <token id="modifiers" name="modifiers">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                    <STATIC>true</STATIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+          <token id="visibility" name="visibility">
+            <rules>
+              <rule>
+                <match>
+                  <AND>
+                    <PUBLIC>true</PUBLIC>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PROTECTED>true</PROTECTED>
+                  </AND>
+                </match>
+              </rule>
+              <rule>
+                <match>
+                  <AND>
+                    <PRIVATE>true</PRIVATE>
+                  </AND>
+                </match>
+              </rule>
+            </rules>
+          </token>
+        </tokens>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 
@@ -386,21 +388,22 @@ public class ArrangementSettingsSerializationTest {
     final StdArrangementExtendableSettings defaultSettings = extendableSettings(groupings, defaultRules, tokens);
 
     final Element holder = doSerializationTest(settings, defaultSettings);
-    final String expected = "<holder>\n" +
-                            "  <rules>\n" +
-                            "    <section>\n" +
-                            "      <rule>\n" +
-                            "        <match>\n" +
-                            "          <AND>\n" +
-                            "            <FIELD>true</FIELD>\n" +
-                            "            <visibility />\n" +
-                            "          </AND>\n" +
-                            "        </match>\n" +
-                            "        <order>BY_NAME</order>\n" +
-                            "      </rule>\n" +
-                            "    </section>\n" +
-                            "  </rules>\n" +
-                            "</holder>";
+    final String expected = """
+      <holder>
+        <rules>
+          <section>
+            <rule>
+              <match>
+                <AND>
+                  <FIELD>true</FIELD>
+                  <visibility />
+                </AND>
+              </match>
+              <order>BY_NAME</order>
+            </rule>
+          </section>
+        </rules>
+      </holder>""";
     assertXmlOutputEquals(expected, holder);
   }
 

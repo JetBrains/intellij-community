@@ -237,7 +237,7 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
                            public Root(@javafx.beans.NamedArg("axis") javafx.scene.Node node ) {
                              super(node);
                            }
-                           public javafx.beans.property.Property<javafx.scene.Node> axis;  public void setAxis() {}} """);
+                           public javafx.beans.property.Property<javafx.scene.Node> axis;  public void setAxis() {}}\s""");
     doTest(getTestName(true) + ".fxml");
   }
 

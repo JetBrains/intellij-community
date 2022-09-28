@@ -5,27 +5,35 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
 public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
   public void testForwardFromNonEmptyLine() {
-    doTestForward("ab<caret>c\n" +
-                  "\n" +
-                  "def\n" +
-                  "\n",
+    doTestForward("""
+                    ab<caret>c
 
-                  "abc\n" +
-                  "<caret>\n" +
-                  "def\n" +
-                  "\n");
+                    def
+
+                    """,
+
+                  """
+                    abc
+                    <caret>
+                    def
+
+                    """);
   }
 
   public void testForwardFromEmptyLine() {
-    doTestForward("<caret>\n" +
-                  "\n" +
-                  "def\n" +
-                  "\n",
+    doTestForward("""
+                    <caret>
 
-                  "\n" +
-                  "\n" +
-                  "def\n" +
-                  "<caret>\n");
+                    def
+
+                    """,
+
+                  """
+
+
+                    def
+                    <caret>
+                    """);
   }
 
   public void testForwardWhenNoMoreBlankLines() {
@@ -37,35 +45,45 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
   }
 
   public void testForwardWhenTargetLineContainsSpaces() {
-    doTestForward("<caret>abc\n" +
-                  "   \n",
+    doTestForward("""
+                    <caret>abc
+                      \s
+                    """,
 
-                  "abc\n" +
-                  "<caret>   \n");
+                  """
+                    abc
+                    <caret>  \s
+                    """);
   }
 
   public void testBackwardFromNonEmptyLine() {
-    doTestBackward("\n" +
-                   "abc\n" +
-                   "\n" +
-                   "de<caret>f",
+    doTestBackward("""
 
-                   "\n" +
-                   "abc\n" +
-                   "<caret>\n" +
-                   "def");
+                     abc
+
+                     de<caret>f""",
+
+                   """
+
+                     abc
+                     <caret>
+                     def""");
   }
 
   public void testBackwardFromEmptyLine() {
-    doTestBackward("\n" +
-                   "abc\n" +
-                   "\n" +
-                   "<caret>\n",
+    doTestBackward("""
 
-                   "<caret>\n" +
-                   "abc\n" +
-                   "\n" +
-                   "\n");
+                     abc
+
+                     <caret>
+                     """,
+
+                   """
+                     <caret>
+                     abc
+
+
+                     """);
   }
 
   public void testBackwardWhenNoMoreBlankLines() {
@@ -77,15 +95,19 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
   }
 
   public void testBackwardWhenTargetLineContainsSpaces() {
-    doTestBackward("  \n" +
-                   "abc\n" +
-                   "\n" +
-                   "<caret>\n",
+    doTestBackward("""
+                      \s
+                     abc
 
-                   "  \n" +
-                   "<caret>abc\n" +
-                   "\n" +
-                   "\n");
+                     <caret>
+                     """,
+
+                   """
+                      \s
+                     <caret>abc
+
+
+                     """);
   }
 
   public void testBackwardWhenPreviousLineContainsSpaces() {
@@ -97,39 +119,47 @@ public class ForwardBackwardParagraphActionTest extends AbstractEditorTest {
   }
 
   public void testBackwardAtLineStartWhenPreviousLineContainsSpaces() {
-    doTestBackward("\n" +
-                   "ttt\n" +
-                   "  \n" +
-                   "<caret>abc",
+    doTestBackward("""
 
-                   "<caret>\n" +
-                   "ttt\n" +
-                   "  \n" +
-                   "abc");
+                     ttt
+                      \s
+                     <caret>abc""",
+
+                   """
+                     <caret>
+                     ttt
+                      \s
+                     abc""");
   }
 
   public void testForwardWithSelection() {
-    doTestForwardWithSelection("ab<caret>c\n" +
-                               "\n" +
-                               "def\n" +
-                               "\n",
+    doTestForwardWithSelection("""
+                                 ab<caret>c
 
-                               "ab<selection>c\n" +
-                               "<caret></selection>\n" +
-                               "def\n" +
-                               "\n");
+                                 def
+
+                                 """,
+
+                               """
+                                 ab<selection>c
+                                 <caret></selection>
+                                 def
+
+                                 """);
   }
 
   public void testBackwardWithSelection() {
-    doTestBackwardWithSelection("\n" +
-                                "abc\n" +
-                                "\n" +
-                                "de<caret>f",
+    doTestBackwardWithSelection("""
 
-                                "\n" +
-                                "abc\n" +
-                                "<selection><caret>\n" +
-                                "de</selection>f");
+                                  abc
+
+                                  de<caret>f""",
+
+                                """
+
+                                  abc
+                                  <selection><caret>
+                                  de</selection>f""");
   }
 
   private void doTestForward(String initialText, String resultText) {

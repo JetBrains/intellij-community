@@ -20,8 +20,9 @@ public class StaticImportMethodWithCommonNameTest extends LightJavaCodeInsightFi
     final IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("static.import.method.text"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("import static java.lang.String.format;\n" +
-                          "\n" +
-                          "class A { {String s = format(\"\",\"\");}}", false);
+    myFixture.checkResult("""
+                            import static java.lang.String.format;
+
+                            class A { {String s = format("","");}}""", false);
   }
 }

@@ -35,26 +35,27 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
     String s = new HighlightsExtractor(map, INLINE_ELEMENT_DESCRIPTORS, COLOR_KEY_MAPPING).extractHighlights(page.getDemoText(),
                                                                                                              highlights);
     assertEquals(10, highlights.size());
-    assertEquals("<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
-                 "<!DOCTYPE index>\n" +
-                 "<!-- Some xml example -->\n" +
-                 "<index version=\"1.0\" xmlns:pf=\"http://test\">\n" +
-                 "   <name>Main Index</name>\n" +
-                 "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
-                 "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
-                 "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-                 "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
-                 "   <indexitem>Matched tag name</indexitem>\n" +
-                 "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
-                 "   <withCData><![CDATA[\n" +
-                 "          <object class=\"MyClass\" key=\"constant\">\n" +
-                 "          </object>\n" +
-                 "        ]]>\n" +
-                 "   </withCData>\n" +
-                 "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
-                 "   <custom-tag>hello</custom_tag>\n" +
-                 "   <pf:foo pf:bar=\"bar\"/>\n" +
-                 "</index>", s);
+    assertEquals("""
+                   <?xml version='1.0' encoding='ISO-8859-1'  ?>
+                   <!DOCTYPE index>
+                   <!-- Some xml example -->
+                   <index version="1.0" xmlns:pf="http://test">
+                      <name>Main Index</name>
+                      <indexitem text="rename" target="refactoring.rename"/>
+                      <indexitem text="move" target="refactoring.move"/>
+                      <indexitem text="migrate" target="refactoring.migrate"/>
+                      <indexitem text="usage search" target="find.findUsages"/>
+                      <indexitem>Matched tag name</indexitem>
+                      <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>
+                      <withCData><![CDATA[
+                             <object class="MyClass" key="constant">
+                             </object>
+                           ]]>
+                      </withCData>
+                      <indexitem text="project" target="project.management"/>
+                      <custom-tag>hello</custom_tag>
+                      <pf:foo pf:bar="bar"/>
+                   </index>""", s);
   }
 }
 

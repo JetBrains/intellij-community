@@ -18,20 +18,24 @@ public class AstLoadingFilterTest extends BasePlatformTestCase {
   private PsiFileImpl addFile() {
     return (PsiFileImpl)myFixture.addFileToProject(
       "classes.java",
-      "class A {\n" +
-      "  void foo() {}\n" +
-      "}\n" +
-      "class B {}\n"
+      """
+        class A {
+          void foo() {}
+        }
+        class B {}
+        """
     );
   }
 
   private PsiFileImpl addAnotherFile() {
     return (PsiFileImpl)myFixture.addFileToProject(
       "classes2.java",
-      "class C {\n" +
-      "  void foo() {}\n" +
-      "}\n" +
-      "class D {}\n"
+      """
+        class C {
+          void foo() {}
+        }
+        class D {}
+        """
     );
   }
 

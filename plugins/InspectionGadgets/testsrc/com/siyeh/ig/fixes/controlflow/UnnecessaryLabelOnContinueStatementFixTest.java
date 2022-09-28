@@ -17,68 +17,78 @@ public class UnnecessaryLabelOnContinueStatementFixTest extends IGQuickFixesTest
 
   public void testRemoveContinueLabel() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
-                 "  public void printName(String name) {\n" +
-                 "    label:\n" +
-                 "    for (int i = 0; i < 10; i++) {\n" +
-                 "      if (shouldBreak()) continue label/**/;\n" +
-                 "      for (int j = 0; j < 10; j++) {\n" +
-                 "        if (shouldBreak()) break label;\n" +
-                 "        System.out.println(\"B\");\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String name) {\n" +
-                 "    label:\n" +
-                 "    for (int i = 0; i < 10; i++) {\n" +
-                 "      if (shouldBreak()) continue;\n" +
-                 "      for (int j = 0; j < 10; j++) {\n" +
-                 "        if (shouldBreak()) break label;\n" +
-                 "        System.out.println(\"B\");\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String name) {
+                       label:
+                       for (int i = 0; i < 10; i++) {
+                         if (shouldBreak()) continue label/**/;
+                         for (int j = 0; j < 10; j++) {
+                           if (shouldBreak()) break label;
+                           System.out.println("B");
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String name) {
+                       label:
+                       for (int i = 0; i < 10; i++) {
+                         if (shouldBreak()) continue;
+                         for (int j = 0; j < 10; j++) {
+                           if (shouldBreak()) break label;
+                           System.out.println("B");
+                         }
+                       }
+                     }
+                   """
     );
   }
 
   public void testRemoveContinueLabelOnWhile() {
     doMemberTest(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
-                 "  public void printName(int i) {\n" +
-                 "    label:\n" +
-                 "    while (i < 100) {\n" +
-                 "      if (i == 50) continue label/**/;\n" +
-                 "      for (int j = 0; j < 10; j++) {\n" +
-                 "        if (shouldBreak()) break label;\n" +
-                 "        System.out.println(\"B\");\n" +
-                 "      }\n" +
-                 "      i *= 2;\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(int i) {\n" +
-                 "    label:\n" +
-                 "    while (i < 100) {\n" +
-                 "      if (i == 50) continue;\n" +
-                 "      for (int j = 0; j < 10; j++) {\n" +
-                 "        if (shouldBreak()) break label;\n" +
-                 "        System.out.println(\"B\");\n" +
-                 "      }\n" +
-                 "      i *= 2;\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(int i) {
+                       label:
+                       while (i < 100) {
+                         if (i == 50) continue label/**/;
+                         for (int j = 0; j < 10; j++) {
+                           if (shouldBreak()) break label;
+                           System.out.println("B");
+                         }
+                         i *= 2;
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(int i) {
+                       label:
+                       while (i < 100) {
+                         if (i == 50) continue;
+                         for (int j = 0; j < 10; j++) {
+                           if (shouldBreak()) break label;
+                           System.out.println("B");
+                         }
+                         i *= 2;
+                       }
+                     }
+                   """
     );
   }
 
   public void testDoNotFixMeaningfulLabel() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.label.remove.quickfix"),
-                               "class X {\n" +
-                               "  public void printName(String[] names) {\n" +
-                               "    label:\n" +
-                               "    for (int i = 0; i < 10; i++) {\n" +
-                               "      for (String name : names) {\n" +
-                               "        if (\"A\".equals(name)) continue label/**/;\n" +
-                               "        System.out.println(i);\n" +
-                               "      }\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String[] names) {
+                                     label:
+                                     for (int i = 0; i < 10; i++) {
+                                       for (String name : names) {
+                                         if ("A".equals(name)) continue label/**/;
+                                         System.out.println(i);
+                                       }
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 }

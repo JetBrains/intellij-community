@@ -13,13 +13,21 @@ public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
   public void testReplace() {
     PsiFileFactory instance = PsiFileFactory.getInstance(getProject());
     PsiJavaFile aFile = (PsiJavaFile)instance
-      .createFileFromText("a.java", JavaFileType.INSTANCE, "class Foo {\n" + "    void foo(){\n" + "    final int i = 0;" + "    }\n" + "}");
+      .createFileFromText("a.java", JavaFileType.INSTANCE, """
+        class Foo {
+            void foo(){
+            final int i = 0;    }
+        }""");
     PsiClass aClass = aFile.getClasses()[0];
     PsiDeclarationStatement firstStatement = (PsiDeclarationStatement)aClass.getMethods()[0].getBody().getStatements()[0];
     PsiLocalVariable variable1 = (PsiLocalVariable)firstStatement.getDeclaredElements()[0];
 
     PsiJavaFile aFile2 = (PsiJavaFile)instance
-      .createFileFromText("a.java", JavaFileType.INSTANCE, "class Foo {\n" + "    void foo(){\n" + "    int i = 0;" + "    }\n" + "}");
+      .createFileFromText("a.java", JavaFileType.INSTANCE, """
+        class Foo {
+            void foo(){
+            int i = 0;    }
+        }""");
     PsiClass aClass2 = aFile2.getClasses()[0];
     PsiDeclarationStatement firstStatement2 = (PsiDeclarationStatement)aClass2.getMethods()[0].getBody().getStatements()[0];
     PsiLocalVariable variable2 = (PsiLocalVariable)firstStatement2.getDeclaredElements()[0];
@@ -47,12 +55,13 @@ public class JavaCodeUtilTest extends LightJavaCodeInsightTestCase {
       CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newElement);
     });
 
-    assertEquals("import java.util.ArrayList;\n" +
-                 "\n" +
-                 "class Foo {\n" +
-                 "    void foo(){\n" +
-                 "        ArrayList \n" +
-                 "    }\n" +
-                 "}", getFile().getText());
+    assertEquals("""
+                   import java.util.ArrayList;
+
+                   class Foo {
+                       void foo(){
+                           ArrayList\s
+                       }
+                   }""", getFile().getText());
   }
 }

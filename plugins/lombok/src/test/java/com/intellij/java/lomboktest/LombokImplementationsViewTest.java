@@ -22,14 +22,14 @@ public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTe
 
   public void testFromCompletionForBuilder() {
     @Language("JAVA")
-    final String text = "@lombok.Builder\n" +
-                  "public class Test {\n" +
-                  "    private int someInt;\n" +
-                  "    public static void main(String[] args) {\n" +
-                  "        Test test = Test.builder().someInt<caret>(1).build();\n" +
-                  "        System.out.println(test);\n" +
-                  "    }" +
-                  "}";
+    final String text = """
+      @lombok.Builder
+      public class Test {
+          private int someInt;
+          public static void main(String[] args) {
+              Test test = Test.builder().someInt<caret>(1).build();
+              System.out.println(test);
+          }}""";
     PsiFile file = myFixture.addFileToProject("Test.java", text);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
@@ -43,14 +43,14 @@ public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTe
 
   public void testFromCompletionForData() {
     @Language("JAVA")
-    final String text = "@lombok.Data\n" +
-                        "public class Test {\n" +
-                        "    private String someString;\n" +
-                        "    public static void main(String[] args) {\n" +
-                        "        Test test = new Test();\n" +
-                        "        test.setSomeString<caret>(\"Hello\"));\n" +
-                        "    }" +
-                        "}";
+    final String text = """
+      @lombok.Data
+      public class Test {
+          private String someString;
+          public static void main(String[] args) {
+              Test test = new Test();
+              test.setSomeString<caret>("Hello"));
+          }}""";
     PsiFile file = myFixture.addFileToProject("Test.java", text);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 

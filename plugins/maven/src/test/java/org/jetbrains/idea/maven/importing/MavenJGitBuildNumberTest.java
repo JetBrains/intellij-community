@@ -28,36 +28,38 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
 
   @Test
   public void testCompletion() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-                  "<properties>\n" +
-                  "  <aaa>${}</aaa>" +
-                  "</properties>\n" +
-                  "    <build>\n" +
-                  "        <plugins>\n" +
-                  "            <plugin>\n" +
-                  "                <groupId>ru.concerteza.buildnumber</groupId>\n" +
-                  "                <artifactId>maven-jgit-buildnumber-plugin</artifactId>\n" +
-                  "            </plugin>\n" +
-                  "        </plugins>\n" +
-                  "    </build>\n"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <aaa>${}</aaa></properties>
+                        <build>
+                            <plugins>
+                                <plugin>
+                                    <groupId>ru.concerteza.buildnumber</groupId>
+                                    <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+                                </plugin>
+                            </plugins>
+                        </build>
+                    """
     );
 
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<properties>\n" +
-                     "  <aaa>${<caret>}</aaa>" +
-                     "</properties>\n" +
-                     "    <build>\n" +
-                     "        <plugins>\n" +
-                     "            <plugin>\n" +
-                     "                <groupId>ru.concerteza.buildnumber</groupId>\n" +
-                     "                <artifactId>maven-jgit-buildnumber-plugin</artifactId>\n" +
-                     "            </plugin>\n" +
-                     "        </plugins>\n" +
-                     "    </build>\n"
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <aaa>${<caret>}</aaa></properties>
+                           <build>
+                               <plugins>
+                                   <plugin>
+                                       <groupId>ru.concerteza.buildnumber</groupId>
+                                       <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+                                   </plugin>
+                               </plugins>
+                           </build>
+                       """
     );
 
     List<String> variants = getCompletionVariants(myProjectPom);
@@ -67,67 +69,74 @@ public class MavenJGitBuildNumberTest extends MavenDomTestCase {
 
   @Test
   public void testHighlighting() {
-    createModulePom("m", "<artifactId>m</artifactId>\n" +
-                         "<version>1</version>\n" +
-                         "<parent>\n" +
-                         "  <groupId>test</groupId>\n" +
-                         "  <artifactId>project</artifactId>\n" +
-                         "  <version>1</version>\n" +
-                         "</parent>\n" +
-                         "<properties>\n" +
-                         "  <aaa>${git.commitsCount}</aaa>\n" +
-                         "  <bbb>${git.commitsCount__}</bbb>\n" +
-                         "</properties>\n");
+    createModulePom("m", """
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <properties>
+        <aaa>${git.commitsCount}</aaa>
+        <bbb>${git.commitsCount__}</bbb>
+      </properties>
+      """);
 
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-                  "<packaging>pom</packaging>\n" +
-                  "<modules>\n" +
-                  "  <module>m</module>\n" +
-                  "</modules>\n" +
-
-                  "    <build>\n" +
-                  "        <plugins>\n" +
-                  "            <plugin>\n" +
-                  "                <groupId>ru.concerteza.buildnumber</groupId>\n" +
-                  "                <artifactId>maven-jgit-buildnumber-plugin</artifactId>\n" +
-                  "            </plugin>\n" +
-                  "        </plugins>\n" +
-                  "    </build>\n"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m</module>
+                    </modules>
+                        <build>
+                            <plugins>
+                                <plugin>
+                                    <groupId>ru.concerteza.buildnumber</groupId>
+                                    <artifactId>maven-jgit-buildnumber-plugin</artifactId>
+                                </plugin>
+                            </plugins>
+                        </build>
+                    """
     );
 
-    VirtualFile pom = createModulePom("m", "<artifactId>m</artifactId>\n" +
-                                           "<version>1</version>\n" +
-                                           "<parent>\n" +
-                                           "  <groupId>test</groupId>\n" +
-                                           "  <artifactId>project</artifactId>\n" +
-                                           "  <version>1</version>\n" +
-                                           "</parent>\n" +
-                                           "<properties>\n" +
-                                           "  <aaa>${git.commitsCount}</aaa>\n" +
-                                           "  <bbb>${<error>git.commitsCount__</error>}</bbb>\n" +
-                                           "</properties>\n");
+    VirtualFile pom = createModulePom("m", """
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <properties>
+        <aaa>${git.commitsCount}</aaa>
+        <bbb>${<error>git.commitsCount__</error>}</bbb>
+      </properties>
+      """);
 
     checkHighlighting(pom, true, false, true);
   }
 
   @Test
   public void testNoPluginHighlighting() {
-    importProject("<groupId>test</groupId>\n" +
-                  "<artifactId>project</artifactId>\n" +
-                  "<version>1</version>\n" +
-                  "<properties>\n" +
-                  "  <aaa>${git.commitsCount}</aaa>" +
-                  "</properties>\n"
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <aaa>${git.commitsCount}</aaa></properties>
+                    """
     );
 
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<properties>\n" +
-                     "  <aaa>${<error>git.commitsCount</error>}</aaa>" +
-                     "</properties>\n");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <aaa>${<error>git.commitsCount</error>}</aaa></properties>
+                       """);
 
     checkHighlighting(myProjectPom);
   }

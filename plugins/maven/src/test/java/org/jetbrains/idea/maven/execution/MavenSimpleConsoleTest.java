@@ -17,9 +17,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "second\n",
              "third\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -30,9 +32,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "second\n",
              "third\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -44,9 +48,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "third",
              "\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -59,9 +65,11 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "third",
              "\n"
            },
-           "first\n" +
-           "second\n" +
-           "third\n"
+           """
+             first
+             second
+             third
+             """
     );
   }
 
@@ -134,13 +142,15 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              "[IJ]-spy-output-3\n",
              "end\n"
            },
-           "first\n" +
-           "second\n" +
-           "[IJ]-spy-output-1\n" +
-           "[IJ]-spy-output-2\n" +
-           "third\n" +
-           "[IJ]-spy-output-3\n" +
-           "end\n"
+           """
+             first
+             second
+             [IJ]-spy-output-1
+             [IJ]-spy-output-2
+             third
+             [IJ]-spy-output-3
+             end
+             """
     );
   }
 

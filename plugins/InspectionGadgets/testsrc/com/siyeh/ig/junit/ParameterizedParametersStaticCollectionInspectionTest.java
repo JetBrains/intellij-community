@@ -18,16 +18,17 @@ public class ParameterizedParametersStaticCollectionInspectionTest extends Light
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.addClass("package org.junit.runner;\n" +
-                       "public @interface RunWith {\n" +
-                       "    Class value();\n" +
-                       "}\n");
-    myFixture.addClass("package org.junit.runners;\n" +
-                       "public class Parameterized {" +
-                       "    public @interface Parameters {\n" +
-                       "        String name() default \"{index}\";\n" +
-                       "    }" +
-                       "} ");
+    myFixture.addClass("""
+                         package org.junit.runner;
+                         public @interface RunWith {
+                             Class value();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package org.junit.runners;
+                         public class Parameterized {    public @interface Parameters {
+                                 String name() default "{index}";
+                             }}\s""");
   }
 
   @NotNull

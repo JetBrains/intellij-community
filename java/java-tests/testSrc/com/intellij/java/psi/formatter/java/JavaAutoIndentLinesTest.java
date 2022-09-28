@@ -21,13 +21,15 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
 public class JavaAutoIndentLinesTest extends AbstractEditorTest {
   public void testSelection() {
-    init("class C {\n" +
-         "int <selection>a<caret></selection> = 1;\n" +
-         "}",
+    init("""
+           class C {
+           int <selection>a<caret></selection> = 1;
+           }""",
          JavaFileType.INSTANCE);
     executeAction(IdeActions.ACTION_EDITOR_AUTO_INDENT_LINES);
-    checkResultByText("class C {\n" +
-                      "    int <selection>a<caret></selection> = 1;\n" +
-                      "}");
+    checkResultByText("""
+                        class C {
+                            int <selection>a<caret></selection> = 1;
+                        }""");
   }
 }

@@ -322,13 +322,15 @@ public class XmlFormatterTest extends XmlFormatterTestBase {
   
   public void testIdea52549() {
     doTextTest(
-      "<para>\n" +
-      "  My <link>link</link> within text.\n" +
-      "</para>",
-      
-      "<para>\n" +
-      "    My <link>link</link> within text.\n" +
-      "</para>"
+      """
+        <para>
+          My <link>link</link> within text.
+        </para>""",
+
+      """
+        <para>
+            My <link>link</link> within text.
+        </para>"""
     );
   }
 

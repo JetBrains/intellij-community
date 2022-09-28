@@ -45,9 +45,10 @@ public class TextMateSnippetsLoadingTest {
     TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
     assertEquals("div", snippet.getKey());
-    assertEquals("<div${1: id=\"${2:name}\"}>\n" +
-                 "\t${0:$TM_SELECTED_TEXT}\n" +
-                 "</div>", snippet.getContent());
+    assertEquals("""
+                   <div${1: id="${2:name}"}>
+                   \t${0:$TM_SELECTED_TEXT}
+                   </div>""", snippet.getContent());
     assertEquals("Div", snippet.getName());
     assertEquals("576036C0-A60E-11D9-ABD6-000D93C8BE28", snippet.getSettingsId());
   }

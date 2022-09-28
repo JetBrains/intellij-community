@@ -29,13 +29,14 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
   @Test
   public void testInsertDependency() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>juni<caret></dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>juni<caret></dependency>
+                       </dependencies>
+                       """);
 
     configTest(myProjectPom);
     LookupElement[] elements = myFixture.completeBasic();
@@ -45,91 +46,94 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.type('\n');
 
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
-                                       "<artifactId>project</artifactId>\n" +
-                                       "<version>1</version>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <version><caret></version>\n" +
-                                       "      <scope>test</scope>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId>
+                                         <artifactId>project</artifactId>
+                                         <version>1</version>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <version><caret></version>
+                                               <scope>test</scope>
+                                           </dependency>
+                                         </dependencies>
+                                         """));
   }
 
   @Test
   public void testInsertManagedDependency() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-
-                     "<dependencyManagement>\n" +
-                     "  <dependencies>\n" +
-                     "    <dependency>\n" +
-                     "      <groupId>junit</groupId>\n" +
-                     "      <artifactId>junit</artifactId>\n" +
-                     "      <version>4.0</version>\n" +
-                     "    </dependency>\n" +
-                     "  </dependencies>\n" +
-                     "</dependencyManagement>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>junit:<caret></dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencyManagement>
+                         <dependencies>
+                           <dependency>
+                             <groupId>junit</groupId>
+                             <artifactId>junit</artifactId>
+                             <version>4.0</version>
+                           </dependency>
+                         </dependencies>
+                       </dependencyManagement>
+                       <dependencies>
+                         <dependency>junit:<caret></dependency>
+                       </dependencies>
+                       """);
 
     configTest(myProjectPom);
     myFixture.complete(CompletionType.BASIC);
     assertCompletionVariants(myFixture, RENDERING_TEXT, "junit:junit");
     myFixture.type('\n');
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
-                                       "<artifactId>project</artifactId>\n" +
-                                       "<version>1</version>\n" +
-                                       "<dependencyManagement>\n" +
-                                       "  <dependencies>\n" +
-                                       "    <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <version>4.0</version>\n" +
-                                       "    </dependency>\n" +
-                                       "  </dependencies>\n" +
-                                       "</dependencyManagement>\n" +
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <scope>test</scope>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId>
+                                         <artifactId>project</artifactId>
+                                         <version>1</version>
+                                         <dependencyManagement>
+                                           <dependencies>
+                                             <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <version>4.0</version>
+                                             </dependency>
+                                           </dependencies>
+                                         </dependencyManagement>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <scope>test</scope>
+                                           </dependency>
+                                         </dependencies>
+                                         """));
   }
 
   @Test
   public void testInsertManagedDependencyWithTypeAndClassifier() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>project</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<properties>\n" +
-                     "  <junitClassifier>sources</junitClassifier>\n" +
-                     "  <junitType>test-jar</junitType>\n" +
-                     "</properties>\n" +
-
-                     "<dependencyManagement>\n" +
-                     "  <dependencies>\n" +
-                     "    <dependency>\n" +
-                     "      <groupId>junit</groupId>\n" +
-                     "      <artifactId>junit</artifactId>\n" +
-                     "      <version>4.0</version>\n" +
-                     "      <type>${junitType}</type>\n" +
-                     "      <classifier>${junitClassifier}</classifier>\n" +
-                     "    </dependency>\n" +
-                     "  </dependencies>\n" +
-                     "</dependencyManagement>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>junit:<caret></dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <junitClassifier>sources</junitClassifier>
+                         <junitType>test-jar</junitType>
+                       </properties>
+                       <dependencyManagement>
+                         <dependencies>
+                           <dependency>
+                             <groupId>junit</groupId>
+                             <artifactId>junit</artifactId>
+                             <version>4.0</version>
+                             <type>${junitType}</type>
+                             <classifier>${junitClassifier}</classifier>
+                           </dependency>
+                         </dependencies>
+                       </dependencyManagement>
+                       <dependencies>
+                         <dependency>junit:<caret></dependency>
+                       </dependencies>
+                       """);
 
     configTest(myProjectPom);
 
@@ -139,35 +143,35 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.type('\n');
 
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
-                                       "<artifactId>project</artifactId>\n" +
-                                       "<version>1</version>\n" +
-                                       "<properties>\n" +
-                                       "  <junitClassifier>sources</junitClassifier>\n" +
-                                       "  <junitType>test-jar</junitType>\n" +
-                                       "</properties>\n" +
-
-                                       "<dependencyManagement>\n" +
-                                       "  <dependencies>\n" +
-                                       "    <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <version>4.0</version>\n" +
-                                       "      <type>${junitType}</type>\n" +
-                                       "      <classifier>${junitClassifier}</classifier>\n" +
-                                       "    </dependency>\n" +
-                                       "  </dependencies>\n" +
-                                       "</dependencyManagement>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <type>${junitType}</type>\n" +
-                                       "      <classifier>${junitClassifier}</classifier>\n" +
-                                       "      <scope>test</scope>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId>
+                                         <artifactId>project</artifactId>
+                                         <version>1</version>
+                                         <properties>
+                                           <junitClassifier>sources</junitClassifier>
+                                           <junitType>test-jar</junitType>
+                                         </properties>
+                                         <dependencyManagement>
+                                           <dependencies>
+                                             <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <version>4.0</version>
+                                               <type>${junitType}</type>
+                                               <classifier>${junitClassifier}</classifier>
+                                             </dependency>
+                                           </dependencies>
+                                         </dependencyManagement>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <type>${junitType}</type>
+                                               <classifier>${junitClassifier}</classifier>
+                                               <scope>test</scope>
+                                           </dependency>
+                                         </dependencies>
+                                         """));
   }
 
   @Test
@@ -176,15 +180,14 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <artifactId>juni<caret></artifactId>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <artifactId>juni<caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
@@ -197,18 +200,17 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     assertSize(1, elements);
     myFixture.type('\n');
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>junit</groupId>\n" +
-                                       "      <artifactId>junit</artifactId>\n" +
-                                       "      <version><caret></version>\n" +
-                                       "      <scope>test</scope>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>junit</groupId>
+                                               <artifactId>junit</artifactId>
+                                               <version><caret></version>
+                                               <scope>test</scope>
+                                           </dependency>
+                                         </dependencies>
+                                         """));
 
     myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0"));
   }
@@ -219,15 +221,14 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <artifactId>as<caret></artifactId>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <artifactId>as<caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
@@ -241,17 +242,16 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
     myFixture.type("\n");
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>asm</groupId>\n" +
-                                       "      <artifactId>asm-attrs</artifactId>\n" +
-                                       "      <version>2.2.1</version>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>asm</groupId>
+                                               <artifactId>asm-attrs</artifactId>
+                                               <version>2.2.1</version>
+                                           </dependency>
+                                         </dependencies>
+                                         """));
   }
 
   @Test
@@ -260,15 +260,14 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <artifactId>common-i<caret></artifactId>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <artifactId>common-i<caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
     LookupElement[] elements = myFixture.completeBasic();
@@ -285,17 +284,16 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-
-                     "<dependencyManagement>\n" +
-                     "    <dependencies>\n" +
-                     "        <dependency>\n" +
-                     "            <artifactId>commons-i<caret></artifactId>\n" +
-                     "        </dependency>\n" +
-                     "    </dependencies>\n" +
-                     "</dependencyManagement>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                       <dependencyManagement>
+                           <dependencies>
+                               <dependency>
+                                   <artifactId>commons-i<caret></artifactId>
+                               </dependency>
+                           </dependencies>
+                       </dependencyManagement>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
@@ -311,55 +309,52 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
     myFixture.type('\n');
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>\n" +
-
-                                       "<dependencyManagement>\n" +
-                                       "    <dependencies>\n" +
-                                       "        <dependency>\n" +
-                                       "            <groupId>commons-io</groupId>\n" +
-                                       "            <artifactId>commons-io</artifactId>\n" +
-                                       "            <version>2.4</version>\n" +
-                                       "        </dependency>\n" +
-                                       "    </dependencies>\n" +
-                                       "</dependencyManagement>\n"));
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                                         <dependencyManagement>
+                                             <dependencies>
+                                                 <dependency>
+                                                     <groupId>commons-io</groupId>
+                                                     <artifactId>commons-io</artifactId>
+                                                     <version>2.4</version>
+                                                 </dependency>
+                                             </dependencies>
+                                         </dependencyManagement>
+                                         """));
   }
 
   @Test
   public void testCompletionArtifactIdWithManagedDependency() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>\n" +
-                  "" +
-                  "  <dependencyManagement>\n" +
-                  "    <dependencies>\n" +
-                  "      <dependency>\n" +
-                  "        <groupId>commons-io</groupId>\n" +
-                  "        <artifactId>commons-io</artifactId>\n" +
-                  "        <version>2.4</version>\n" +
-                  "      </dependency>\n" +
-                  "    </dependencies>\n" +
-                  "  </dependencyManagement>\n");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                      <dependencyManagement>
+                        <dependencies>
+                          <dependency>
+                            <groupId>commons-io</groupId>
+                            <artifactId>commons-io</artifactId>
+                            <version>2.4</version>
+                          </dependency>
+                        </dependencies>
+                      </dependencyManagement>
+                    """);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-                     "  <dependencyManagement>\n" +
-                     "    <dependencies>\n" +
-                     "      <dependency>\n" +
-                     "        <groupId>commons-io</groupId>\n" +
-                     "        <artifactId>commons-io</artifactId>\n" +
-                     "        <version>2.4</version>\n" +
-                     "      </dependency>\n" +
-                     "    </dependencies>\n" +
-                     "  </dependencyManagement>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "    <artifactId>common-i<caret></artifactId>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                         <dependencyManagement>
+                           <dependencies>
+                             <dependency>
+                               <groupId>commons-io</groupId>
+                               <artifactId>commons-io</artifactId>
+                               <version>2.4</version>
+                             </dependency>
+                           </dependencies>
+                         </dependencyManagement>
+                       <dependencies>
+                         <dependency>
+                           <artifactId>common-i<caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
@@ -371,72 +366,66 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     assertSize(1, elements);
     myFixture.type('\n');
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>\n" +
-
-                                       "  <dependencyManagement>\n" +
-                                       "    <dependencies>\n" +
-                                       "      <dependency>\n" +
-                                       "        <groupId>commons-io</groupId>\n" +
-                                       "        <artifactId>commons-io</artifactId>\n" +
-                                       "        <version>2.4</version>\n" +
-                                       "      </dependency>\n" +
-                                       "    </dependencies>\n" +
-                                       "  </dependencyManagement>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>commons-io</groupId>\n" +
-                                       "      <artifactId>commons-io</artifactId>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                                           <dependencyManagement>
+                                             <dependencies>
+                                               <dependency>
+                                                 <groupId>commons-io</groupId>
+                                                 <artifactId>commons-io</artifactId>
+                                                 <version>2.4</version>
+                                               </dependency>
+                                             </dependencies>
+                                           </dependencyManagement>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>commons-io</groupId>
+                                               <artifactId>commons-io</artifactId>
+                                           </dependency>
+                                         </dependencies>
+                                         """
     ));
   }
 
   @Test
   public void testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>\n" +
-                  "<properties>\n" +
-                  "  <ioClassifier>ccc</ioClassifier>" +
-                  "  <ioType>ttt</ioType>" +
-                  "</properties>\n" +
-                  "" +
-                  "<dependencyManagement>\n" +
-                  "  <dependencies>\n" +
-                  "    <dependency>\n" +
-                  "      <groupId>commons-io</groupId>\n" +
-                  "      <artifactId>commons-io</artifactId>\n" +
-                  "      <classifier>${ioClassifier}</classifier>\n" +
-                  "      <type>${ioType}</type>\n" +
-                  "      <version>2.4</version>\n" +
-                  "    </dependency>\n" +
-                  "  </dependencies>\n" +
-                  "</dependencyManagement>\n");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                    <properties>
+                      <ioClassifier>ccc</ioClassifier>  <ioType>ttt</ioType></properties>
+                    <dependencyManagement>
+                      <dependencies>
+                        <dependency>
+                          <groupId>commons-io</groupId>
+                          <artifactId>commons-io</artifactId>
+                          <classifier>${ioClassifier}</classifier>
+                          <type>${ioType}</type>
+                          <version>2.4</version>
+                        </dependency>
+                      </dependencies>
+                    </dependencyManagement>
+                    """);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>\n" +
-                     "<dependencyManagement>\n" +
-                     "  <dependencies>\n" +
-                     "    <dependency>\n" +
-                     "      <groupId>commons-io</groupId>\n" +
-                     "      <artifactId>commons-io</artifactId>\n" +
-                     "      <classifier>${ioClassifier}</classifier>\n" +
-                     "      <type>${ioType}</type>\n" +
-                     "      <version>2.4</version>\n" +
-                     "    </dependency>\n" +
-                     "  </dependencies>\n" +
-                     "</dependencyManagement>\n" +
-
-                     "<dependencies>\n" +
-                     "  <dependency>\n" +
-                     "      <groupId>commons-i<caret></groupId>\n" +
-                     "      <artifactId>commons-io</artifactId>\n" +
-                     "  </dependency>\n" +
-                     "</dependencies>\n");
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                       <dependencyManagement>
+                         <dependencies>
+                           <dependency>
+                             <groupId>commons-io</groupId>
+                             <artifactId>commons-io</artifactId>
+                             <classifier>${ioClassifier}</classifier>
+                             <type>${ioType}</type>
+                             <version>2.4</version>
+                           </dependency>
+                         </dependencies>
+                       </dependencyManagement>
+                       <dependencies>
+                         <dependency>
+                             <groupId>commons-i<caret></groupId>
+                             <artifactId>commons-io</artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     myFixture.configureFromExistingVirtualFile(myProjectPom);
 
@@ -444,30 +433,28 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     assertSize(1, elements);
     myFixture.type('\n');
 
-    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
-                                       "<artifactId>project</artifactId>" +
-                                       "<version>1</version>\n" +
-
-                                       "<dependencyManagement>\n" +
-                                       "  <dependencies>\n" +
-                                       "    <dependency>\n" +
-                                       "      <groupId>commons-io</groupId>\n" +
-                                       "      <artifactId>commons-io</artifactId>\n" +
-                                       "      <classifier>${ioClassifier}</classifier>\n" +
-                                       "      <type>${ioType}</type>\n" +
-                                       "      <version>2.4</version>\n" +
-                                       "    </dependency>\n" +
-                                       "  </dependencies>\n" +
-                                       "</dependencyManagement>\n" +
-
-                                       "<dependencies>\n" +
-                                       "  <dependency>\n" +
-                                       "      <groupId>commons-io</groupId>\n" +
-                                       "      <artifactId>commons-io</artifactId>\n" +
-                                       "      <type>${ioType}</type>\n" +
-                                       "      <classifier>${ioClassifier}</classifier>\n" +
-                                       "  </dependency>\n" +
-                                       "</dependencies>\n"
+    myFixture.checkResult(createPomXml("""
+                                         <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
+                                         <dependencyManagement>
+                                           <dependencies>
+                                             <dependency>
+                                               <groupId>commons-io</groupId>
+                                               <artifactId>commons-io</artifactId>
+                                               <classifier>${ioClassifier}</classifier>
+                                               <type>${ioType}</type>
+                                               <version>2.4</version>
+                                             </dependency>
+                                           </dependencies>
+                                         </dependencyManagement>
+                                         <dependencies>
+                                           <dependency>
+                                               <groupId>commons-io</groupId>
+                                               <artifactId>commons-io</artifactId>
+                                               <type>${ioType}</type>
+                                               <classifier>${ioClassifier}</classifier>
+                                           </dependency>
+                                         </dependencies>
+                                         """
     ));
   }
 }

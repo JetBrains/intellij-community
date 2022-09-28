@@ -113,21 +113,22 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testCanIgnoreReturnValue() {
-    doTest("import com.google.errorprone.annotations.CanIgnoreReturnValue;\n" +
-           "import javax.annotation.CheckReturnValue;\n" +
-           "\n" +
-           "@CheckReturnValue\n" +
-           "class Test {\n" +
-           "  int lookAtMe() { return 1; }\n" +
-           "\n" +
-           "  @CanIgnoreReturnValue\n" +
-           "  int ignoreMe() { return 2; }\n" +
-           "\n" +
-           "  void run() {\n" +
-           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
-           "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import com.google.errorprone.annotations.CanIgnoreReturnValue;
+             import javax.annotation.CheckReturnValue;
+
+             @CheckReturnValue
+             class Test {
+               int lookAtMe() { return 1; }
+
+               @CanIgnoreReturnValue
+               int ignoreMe() { return 2; }
+
+               void run() {
+                 /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.
+                 ignoreMe(); // OK.  This line should *not* produce a warning.
+               }
+             }""");
   }
 
   public void testCanIgnoreReturnValue2() {
@@ -226,35 +227,40 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testCustomCheckReturnValue() {
-    doTest("import a.CheckReturnValue;\n" +
-           "\n" +
-           "class Test {\n" +
-           "  @CheckReturnValue\n" +
-           "  int lookAtMe() { return 1; }\n" +
-           "\n" +
-           "  void run() {\n" +
-           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             import a.CheckReturnValue;
+
+             class Test {
+               @CheckReturnValue
+               int lookAtMe() { return 1; }
+
+               void run() {
+                 /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();
+               }
+             }""");
   }
 
   public void testObjectMethods() {
-    doTest("class C {\n" +
-           "  void foo(Object o, String s) {\n" +
-           "    o./*Result of 'Object.equals()' is ignored*/equals/**/(s);\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               void foo(Object o, String s) {
+                 o./*Result of 'Object.equals()' is ignored*/equals/**/(s);
+               }
+             }
+             """);
   }
 
   public void testMatcher() {
-    doTest("class C {\n" +
-           "  void matcher() {\n" +
-           "    final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(\"baaaa\");\n" +
-           "    final java.util.regex.Matcher matcher = pattern.matcher(\"babaaaaaaaa\");\n" +
-           "    matcher./*Result of 'Matcher.find()' is ignored*/find/**/();\n" +
-           "    matcher.notifyAll();\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               void matcher() {
+                 final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("baaaa");
+                 final java.util.regex.Matcher matcher = pattern.matcher("babaaaaaaaa");
+                 matcher./*Result of 'Matcher.find()' is ignored*/find/**/();
+                 matcher.notifyAll();
+               }
+             }
+             """);
   }
 
   public void testReader() {

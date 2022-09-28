@@ -10,14 +10,15 @@ public class EncapsulateVariableFixTest extends LightJavaCodeInsightFixtureTestC
   public void testIntentionPreview() {
     myFixture.enableInspections(new PublicFieldInspection());
     myFixture.configureByText("Test.java",
-                              "class A {\n" +
-                              "    public String name<caret>;\n" +
-                              "}\n" +
-                              "class B {\n" +
-                              "    void foo(A a) {\n" +
-                              "        System.out.println(a.name);\n" +
-                              "    }\n" +
-                              "}");
+                              """
+                                class A {
+                                    public String name<caret>;
+                                }
+                                class B {
+                                    void foo(A a) {
+                                        System.out.println(a.name);
+                                    }
+                                }""");
     IntentionAction action = myFixture.findSingleIntention("Encapsulate field 'name'");
     String text = myFixture.getIntentionPreviewText(action);
     assertEquals("""

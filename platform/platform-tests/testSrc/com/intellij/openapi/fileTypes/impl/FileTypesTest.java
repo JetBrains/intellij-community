@@ -745,9 +745,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     try {
       Element result = myFileTypeManager.getState().getChildren().get(0);
       @Language("XML")
-      String expectedXml = "<extensionMap>\n" +
-                         "  <removed_mapping ext=\"txt\" approved=\"true\" type=\"PLAIN_TEXT\" />\n" +
-                         "</extensionMap>";
+      String expectedXml = """
+        <extensionMap>
+          <removed_mapping ext="txt" approved="true" type="PLAIN_TEXT" />
+        </extensionMap>""";
       assertEquals(expectedXml, JDOMUtil.write(result));
     }
     finally {

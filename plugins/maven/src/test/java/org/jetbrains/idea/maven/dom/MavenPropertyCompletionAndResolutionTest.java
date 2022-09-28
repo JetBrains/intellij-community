@@ -812,29 +812,28 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
   @Test
   public void testHighlightUnresolvedProperties() {
-    createProjectPom("<groupId>test</groupId>\n" +
-                     "<artifactId>child</artifactId>\n" +
-                     "<version>1</version>\n" +
-                     "<name>${<error>xxx</error>}</name>\n" +
-
-                     "<properties>\n" +
-                     "  <foo>\n" +
-                     "${<error>zzz</error>}\n" +
-                     "${<error>pom.maven.build.timestamp</error>}\n" +
-                     "${<error>project.maven.build.timestamp</error>}\n" +
-                     "${<error>parent.maven.build.timestamp</error>}\n" +
-                     "${<error>baseUri</error>}\n" +
-                     "${<error>unknownProperty</error>}\n" +
-                     "${<error>project.version.bar</error>}\n" +
-
-                     "${maven.build.timestamp}\n" +
-                     "${project.parentFile.name}\n" +
-                     "${<error>project.parentFile.nameXxx</error>}\n" +
-                     "${pom.compileArtifacts.empty}\n" +
-                     "${modules.empty}\n" +
-                     "${projectDirectory}\n" +
-                     "</foo>\n" +
-                     "</properties>"
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>child</artifactId>
+                       <version>1</version>
+                       <name>${<error>xxx</error>}</name>
+                       <properties>
+                         <foo>
+                       ${<error>zzz</error>}
+                       ${<error>pom.maven.build.timestamp</error>}
+                       ${<error>project.maven.build.timestamp</error>}
+                       ${<error>parent.maven.build.timestamp</error>}
+                       ${<error>baseUri</error>}
+                       ${<error>unknownProperty</error>}
+                       ${<error>project.version.bar</error>}
+                       ${maven.build.timestamp}
+                       ${project.parentFile.name}
+                       ${<error>project.parentFile.nameXxx</error>}
+                       ${pom.compileArtifacts.empty}
+                       ${modules.empty}
+                       ${projectDirectory}
+                       </foo>
+                       </properties>"""
     );
 
     checkHighlighting();

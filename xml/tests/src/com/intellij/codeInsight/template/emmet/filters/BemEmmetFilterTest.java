@@ -37,12 +37,13 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
     addTest("form.search-form._wide>input.-query-string+input:s.-btn_large|bem",
             "<form action=\"\" class=\"search-form search-form_wide\"><input type=\"text\" class=\"search-form__query-string\"><input\n" +
             "        type=\"submit\" value=\"\" class=\"search-form__btn search-form__btn_large\"></form>");
-    addTest(".b1-div>.b2_m1>.-e1+.--e2_m2|bem", "<div class=\"b1-div\">\n" +
-                                                "    <div class=\"b2 b2_m1\">\n" +
-                                                "        <div class=\"b2__e1\"></div>\n" +
-                                                "        <div class=\"b1-div__e2 b1-div__e2_m2\"></div>\n" +
-                                                "    </div>\n" +
-                                                "</div>");
+    addTest(".b1-div>.b2_m1>.-e1+.--e2_m2|bem", """
+      <div class="b1-div">
+          <div class="b2 b2_m1">
+              <div class="b2__e1"></div>
+              <div class="b1-div__e2 b1-div__e2_m2"></div>
+          </div>
+      </div>""");
   }
 
   private void addBem2Tests() {
@@ -53,19 +54,21 @@ public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
   private void addRegressionTests() {
     addTest(".name__name2__name3__name4|bem", "<div class=\"name__name2__name3__name4\"></div>");
     addTest(".name__name2__name3|bem", "<div class=\"name__name2__name3\"></div>");
-    addTest(".news(.title.-title(.-text))|bem", "<div class=\"news\">\n" +
-                                                "    <div class=\"title news__title\">\n" +
-                                                "        <div class=\"title__text\"></div>\n" +
-                                                "    </div>\n" +
-                                                "</div>");
+    addTest(".news(.title.-title(.-text))|bem", """
+      <div class="news">
+          <div class="title news__title">
+              <div class="title__text"></div>
+          </div>
+      </div>""");
   }
 
   private void addConfigurableTests() {
     addTest(".b9m|bem", "<div class=\"b b9m\"></div>", createBemTestInitializer("__", "9", "-"), "html");
     addTest(".b9m|bem", "<div class=\"b9mb9m\"></div>", createBemTestInitializer("", "", ""), "html");
-    addTest(".b>.Ыe|bem", "<div class=\"b\">\n" +
-                          "    <div class=\"bЫe\"></div>\n" +
-                          "</div>", createBemTestInitializer("Ы", "_", "-"), "html");
+    addTest(".b>.Ыe|bem", """
+      <div class="b">
+          <div class="bЫe"></div>
+      </div>""", createBemTestInitializer("Ы", "_", "-"), "html");
   }
 
   @NotNull

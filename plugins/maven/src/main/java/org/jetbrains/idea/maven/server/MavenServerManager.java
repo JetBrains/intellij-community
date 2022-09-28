@@ -323,9 +323,10 @@ public final class MavenServerManager implements Disposable {
     }
     if (!eventListenerJar.exists()) {
       if (ApplicationManager.getApplication().isInternal()) {
-        MavenLog.LOG.warn("Event listener does not exist: Please run rebuild for maven modules:\n" +
-                          "community/plugins/maven/maven-event-listener\n" +
-                          "and all maven*-server* modules"
+        MavenLog.LOG.warn("""
+                            Event listener does not exist: Please run rebuild for maven modules:
+                            community/plugins/maven/maven-event-listener
+                            and all maven*-server* modules"""
         );
       }
       else {

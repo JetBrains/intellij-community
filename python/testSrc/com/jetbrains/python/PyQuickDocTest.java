@@ -340,13 +340,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),
-      "def len(p_object): # real signature unknown; restored from __doc__\n" +
-      "    \"\"\"\n" +
-      "    len(object) -> integer\n" +
-      "    \n" +
-      "    Return the number of items of a sequence or collection.\n" +
-      "    \"\"\"\n" +
-      "    return 0",
+      """
+        def len(p_object): # real signature unknown; restored from __doc__
+            ""\"
+            len(object) -> integer
+           \s
+            Return the number of items of a sequence or collection.
+            ""\"
+            return 0""",
       (__) -> checkHTMLOnly()
     );
   }
@@ -383,10 +384,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),
-      "class list(object):\n" +
-      "    def count(self, value): # real signature unknown; restored from __doc__\n" +
-      "        \"\"\" L.count(value) -> integer -- return number of occurrences of value \"\"\"\n" +
-      "        return 0",
+      """
+        class list(object):
+            def count(self, value): # real signature unknown; restored from __doc__
+                ""\" L.count(value) -> integer -- return number of occurrences of value ""\"
+                return 0""",
       (__) -> checkHTMLOnly()
     );
   }

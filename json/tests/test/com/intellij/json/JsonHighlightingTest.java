@@ -93,28 +93,29 @@ public class JsonHighlightingTest extends JsonHighlightingTestBase {
 
   public void testRainbow() {
     myFixture.testRainbow("test.json",
-                          "{\n" +
-                          "  <rainbow color='ff000002'>\"type\"</rainbow>: <rainbow color='ff000002'>\"object\"</rainbow>,\n" +
-                          "  <rainbow color='ff000002'>\"properties\"</rainbow>: <rainbow color='ff000002'>{</rainbow>\n" +
-                          "    <rainbow color='ff000004'>\"versionAsStringArray\"</rainbow>: <rainbow color='ff000004'>{</rainbow>\n" +
-                          "      <rainbow color='ff000002'>\"type\"</rainbow>: <rainbow color='ff000002'>\"object\"</rainbow>,\n" +
-                          "      <rainbow color='ff000002'>\"properties\"</rainbow>: <rainbow color='ff000002'>{</rainbow>\n" +
-                          "        <rainbow color='ff000003'>\"xxx\"</rainbow>: <rainbow color='ff000003'>{</rainbow>\n" +
-                          "          <rainbow color='ff000002'>\"type\"</rainbow>: <rainbow color='ff000002'>\"number\"</rainbow>\n" +
-                          "        <rainbow color='ff000003'>}</rainbow>,\n" +
-                          "        <rainbow color='ff000004'>\"yyy\"</rainbow>: <rainbow color='ff000004'>{</rainbow>\n" +
-                          "          <rainbow color='ff000001'>\"description\"</rainbow>: <rainbow color='ff000001'>\"qqq\"</rainbow>,\n" +
-                          "          <rainbow color='ff000002'>\"type\"</rainbow>: <rainbow color='ff000002'>\"string\"</rainbow>\n" +
-                          "        <rainbow color='ff000004'>}</rainbow>,\n" +
-                          "        <rainbow color='ff000001'>\"zzz\"</rainbow>: <rainbow color='ff000001'>{</rainbow>\n" +
-                          "          <rainbow color='ff000002'>\"type\"</rainbow>: <rainbow color='ff000002'>\"number\"</rainbow>\n" +
-                          "        <rainbow color='ff000001'>}</rainbow>\n" +
-                          "      <rainbow color='ff000002'>}</rainbow>,\n" +
-                          "      <rainbow color='ff000001'>\"description\"</rainbow>: <rainbow color='ff000001'>\"aaa\"</rainbow>,\n" +
-                          "      <rainbow color='ff000003'>\"required\"</rainbow>: <rainbow color='ff000003'>[</rainbow><rainbow color='ff000003'>\"xxx\"</rainbow>, <rainbow color='ff000003'>\"yyy\"</rainbow>, <rainbow color='ff000003'>\"zzz\"</rainbow><rainbow color='ff000003'>]</rainbow>\n" +
-                          "    <rainbow color='ff000004'>}</rainbow>\n" +
-                          "  <rainbow color='ff000002'>}</rainbow>,\n" +
-                          "  <rainbow color='ff000003'>\"required\"</rainbow>: <rainbow color='ff000003'>[</rainbow><rainbow color='ff000003'>\"versionAsStringArray\"</rainbow><rainbow color='ff000003'>]</rainbow>\n" +
-                          "}", true, true);
+                          """
+                            {
+                              <rainbow color='ff000002'>"type"</rainbow>: <rainbow color='ff000002'>"object"</rainbow>,
+                              <rainbow color='ff000002'>"properties"</rainbow>: <rainbow color='ff000002'>{</rainbow>
+                                <rainbow color='ff000004'>"versionAsStringArray"</rainbow>: <rainbow color='ff000004'>{</rainbow>
+                                  <rainbow color='ff000002'>"type"</rainbow>: <rainbow color='ff000002'>"object"</rainbow>,
+                                  <rainbow color='ff000002'>"properties"</rainbow>: <rainbow color='ff000002'>{</rainbow>
+                                    <rainbow color='ff000003'>"xxx"</rainbow>: <rainbow color='ff000003'>{</rainbow>
+                                      <rainbow color='ff000002'>"type"</rainbow>: <rainbow color='ff000002'>"number"</rainbow>
+                                    <rainbow color='ff000003'>}</rainbow>,
+                                    <rainbow color='ff000004'>"yyy"</rainbow>: <rainbow color='ff000004'>{</rainbow>
+                                      <rainbow color='ff000001'>"description"</rainbow>: <rainbow color='ff000001'>"qqq"</rainbow>,
+                                      <rainbow color='ff000002'>"type"</rainbow>: <rainbow color='ff000002'>"string"</rainbow>
+                                    <rainbow color='ff000004'>}</rainbow>,
+                                    <rainbow color='ff000001'>"zzz"</rainbow>: <rainbow color='ff000001'>{</rainbow>
+                                      <rainbow color='ff000002'>"type"</rainbow>: <rainbow color='ff000002'>"number"</rainbow>
+                                    <rainbow color='ff000001'>}</rainbow>
+                                  <rainbow color='ff000002'>}</rainbow>,
+                                  <rainbow color='ff000001'>"description"</rainbow>: <rainbow color='ff000001'>"aaa"</rainbow>,
+                                  <rainbow color='ff000003'>"required"</rainbow>: <rainbow color='ff000003'>[</rainbow><rainbow color='ff000003'>"xxx"</rainbow>, <rainbow color='ff000003'>"yyy"</rainbow>, <rainbow color='ff000003'>"zzz"</rainbow><rainbow color='ff000003'>]</rainbow>
+                                <rainbow color='ff000004'>}</rainbow>
+                              <rainbow color='ff000002'>}</rainbow>,
+                              <rainbow color='ff000003'>"required"</rainbow>: <rainbow color='ff000003'>[</rainbow><rainbow color='ff000003'>"versionAsStringArray"</rainbow><rainbow color='ff000003'>]</rainbow>
+                            }""", true, true);
   }
 }

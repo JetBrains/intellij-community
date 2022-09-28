@@ -37,9 +37,10 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testCountedLoopWithOverflow() { doTest(); }
 
   public void testLongRangeAnnotation() {
-    myFixture.addClass("package javax.annotation;\n" +
-                       "\n" +
-                       "public @interface Nonnegative {}");
+    myFixture.addClass("""
+                         package javax.annotation;
+
+                         public @interface Nonnegative {}""");
     doTest();
   }
 

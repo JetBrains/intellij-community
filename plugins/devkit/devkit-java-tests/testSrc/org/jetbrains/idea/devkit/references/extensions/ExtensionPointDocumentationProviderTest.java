@@ -73,9 +73,10 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class=\"definition\"><pre><b>foo.bar</b><br/>interfaceExtensionPointDocumentation.xml</pre></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\">&nbsp;<a href=\"psi_element://bar\"><code><span style=\"color:#000000;\">bar</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">MyExtension</span></pre></div><div class='content'>\n" +
-      "  My Extension Javadoc.\n" +
-      " </div><table class='sections'><p></table></div>",
+      """
+        <div class="definition"><pre><b>foo.bar</b><br/>interfaceExtensionPointDocumentation.xml</pre></div><div class="content"><a href="https://jb.gg/ipe?extensions=foo.bar">Show Usages in IntelliJ Platform Explorer</a></div><div class="content"><h2>Extension Point Implementation</h2><div class="bottom"><icon src="AllIcons.Nodes.Package">&nbsp;<a href="psi_element://bar"><code><span style="color:#000000;">bar</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">interface</span> <span style="color:#000000;">MyExtension</span></pre></div><div class='content'>
+          My Extension Javadoc.
+         </div><table class='sections'><p></table></div>""",
       provider.generateDoc(docElement, getOriginalElement()));
   }
 }

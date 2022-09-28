@@ -79,99 +79,121 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
 
     initBuilder();
 
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  file11\n"
-             + "  file12\n"
-             + "  -folder11\n"
-             + "   element111\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   file11
+                   file12
+                   -folder11
+                    element111
+                  -folder2
+                   file21
+                 """);
 
     update("", findNode("file11"));
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  [file11]\n"
-             + "  file12\n"
-             + "  -folder11\n"
-             + "   element111\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   [file11]
+                   file12
+                   -folder11
+                    element111
+                  -folder2
+                   file21
+                 """);
 
     updateFilter("f");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  [file11]\n"
-             + "  file12\n"
-             + "  folder11\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   [file11]
+                   file12
+                   folder11
+                  -folder2
+                   file21
+                 """);
 
     updateFilter("fo");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  [folder11]\n"
-             + " folder2\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   [folder11]
+                  folder2
+                 """);
 
     updateFilter("fo_");
     assertTree("/\n");
 
     updateFilter("");
-    assertTree("-/\n"
-             + " -[folder1]\n"
-             + "  file11\n"
-             + "  file12\n"
-             + "  -folder11\n"
-             + "   element111\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -[folder1]
+                   file11
+                   file12
+                   -folder11
+                    element111
+                  -folder2
+                   file21
+                 """);
 
 
     select("element111");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  file11\n"
-             + "  file12\n"
-             + "  -folder11\n"
-             + "   [element111]\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   file11
+                   file12
+                   -folder11
+                    [element111]
+                  -folder2
+                   file21
+                 """);
 
     updateFilter("folder2");
-    assertTree("-/\n"
-             + " [folder2]\n");
+    assertTree("""
+                 -/
+                  [folder2]
+                 """);
 
     updateFilter("");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  file11\n"
-             + "  file12\n"
-             + "  -folder11\n"
-             + "   element111\n"
-             + " -[folder2]\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   file11
+                   file12
+                   -folder11
+                    element111
+                  -[folder2]
+                   file21
+                 """);
 
     updateFilter("file1");
-    assertTree("-/\n"
-             + " -[folder1]\n"
-             + "  file11\n"
-             + "  file12\n");
+    assertTree("""
+                 -/
+                  -[folder1]
+                   file11
+                   file12
+                 """);
 
     select("file12");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  file11\n"
-             + "  [file12]\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   file11
+                   [file12]
+                 """);
 
     updateFilter("");
-    assertTree("-/\n"
-             + " -folder1\n"
-             + "  file11\n"
-             + "  [file12]\n"
-             + "  -folder11\n"
-             + "   element111\n"
-             + " -folder2\n"
-             + "  file21\n");
+    assertTree("""
+                 -/
+                  -folder1
+                   file11
+                   [file12]
+                   -folder11
+                    element111
+                  -folder2
+                   file21
+                 """);
 
   }
 

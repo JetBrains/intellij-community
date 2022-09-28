@@ -9,31 +9,33 @@ import com.siyeh.ipp.IPPTestCase;
 public class FlipComparisonIntentionTest extends IPPTestCase {
 
   public void testSimple() {
-    doTest("class X {" +
-           "  boolean b = 1//some comment\n" +
-           " >/*_Flip '>' to '<'*///another comment\n" +
-           " 2;" +
-           "}",
+    doTest("""
+             class X {  boolean b = 1//some comment
+              >/*_Flip '>' to '<'*///another comment
+              2;}""",
 
-           "class X {  //some comment\n" +
-           "    //another comment\n" +
-           "    boolean b = 2 < 1;}");
+           """
+             class X {  //some comment
+                 //another comment
+                 boolean b = 2 < 1;}""");
   }
 
   public void testAssignment() {
-    doTest("class X {\n" +
-           "  void foo(int x) {\n" +
-           "    boolean b;\n" +
-           "    b = 1/*_Flip '>' to '<'*/ > x;\n" +
-           "  }\n" +
-           "}",
+    doTest("""
+             class X {
+               void foo(int x) {
+                 boolean b;
+                 b = 1/*_Flip '>' to '<'*/ > x;
+               }
+             }""",
 
-           "class X {\n" +
-           "  void foo(int x) {\n" +
-           "    boolean b;\n" +
-           "    b = x < 1;\n" +
-           "  }\n" +
-           "}");
+           """
+             class X {
+               void foo(int x) {
+                 boolean b;
+                 b = x < 1;
+               }
+             }""");
   }
 
   public void testGreater() {
@@ -56,44 +58,48 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
   }
 
   public void testBrokenCode2() {
-    doTestIntentionNotAvailable("class Builder {\n" +
-                                "    Builder b = !(new//simple end comment\n" +
-                                "         </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);\n" +
-                                "}");
+    doTestIntentionNotAvailable("""
+                                  class Builder {
+                                      Builder b = !(new//simple end comment
+                                           </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);
+                                  }""");
   }
 
   public void testBrokenCode3() {
-    doTest("@Anno(\n" +
-           "  param//test comment\n" +
-           "  /*_Flip '<' to '>'*/<foo>",
+    doTest("""
+             @Anno(
+               param//test comment
+               /*_Flip '<' to '>'*/<foo>""",
 
-           "@Anno(\n" +
-           "        //test comment\n" +
-           "        foo > param >)");
+           """
+             @Anno(
+                     //test comment
+                     foo > param >)""");
   }
 
   public void testBrokenCode4() {
-    doTestIntentionNotAvailable("class A{\n" +
-           "  {\n" +
-           "    \"\"<foo>\"//simple/*_Flip '>' to '<'*/ end comment\n" +
-           "  }\n" +
-           "}");
+    doTestIntentionNotAvailable("""
+                                  class A{
+                                    {
+                                      ""<foo>"//simple/*_Flip '>' to '<'*/ end comment
+                                    }
+                                  }""");
   }
 
   public void testBrokenCode5() {
-    doTestIntentionNotAvailable("class A{\n" +
-           "  {\n" +
-           "    /*_Flip '>' to '<'*/a > b > c" +
-           "  }\n" +
-           "}");
+    doTestIntentionNotAvailable("""
+                                  class A{
+                                    {
+                                      /*_Flip '>' to '<'*/a > b > c  }
+                                  }""");
   }
 
   public void testBrokenCode6() {
-    doTestIntentionNotAvailable("class A{\n" +
-           "  {\n" +
-           "    ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();" +
-           "  }\n" +
-           "}");
+    doTestIntentionNotAvailable("""
+                                  class A{
+                                    {
+                                      ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();  }
+                                  }""");
   }
 
   public void testNoop() {

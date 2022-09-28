@@ -43,25 +43,26 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testAssertThat() {
-    myFixture.addClass("package org.hamcrest; public class CoreMatchers { public static <T> Matcher<T> notNullValue() {}\n" +
-                       "public static <T> Matcher<T> nullValue() {}\n" +
-                       "public static <T> Matcher<T> not(Matcher<T> matcher) {}\n" +
-                       "public static <T> Matcher<T> is(Matcher<T> matcher) {}\n" +
-                       "public static <T> Matcher<T> is(T operand) {}\n" +
-                       "public static <T> Matcher<T> equalTo(T operand) {}\n" +
-                       "public static <E> Matcher<E[]> arrayWithSize(int size) {} \n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.hamcrest; public class CoreMatchers { public static <T> Matcher<T> notNullValue() {}
+                         public static <T> Matcher<T> nullValue() {}
+                         public static <T> Matcher<T> not(Matcher<T> matcher) {}
+                         public static <T> Matcher<T> is(Matcher<T> matcher) {}
+                         public static <T> Matcher<T> is(T operand) {}
+                         public static <T> Matcher<T> equalTo(T operand) {}
+                         public static <E> Matcher<E[]> arrayWithSize(int size) {}\s
+                         }""");
     myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
-    myFixture.addClass("package org.junit; public class Assert { " +
-                       "public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
-                       "public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit; public class Assert { public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}
+                         public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}
+                         }""");
 
-    myFixture.addClass("package org.assertj.core.api; public class Assertions { " +
-                       "public static <T> AbstractAssert<?, T> assertThat(Object actual) {}\n" +
-                       "public static <T> AbstractAssert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}\n" +
-                       "public static <T> AbstractAssert<?, T> assertThat(boolean actual) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.assertj.core.api; public class Assertions { public static <T> AbstractAssert<?, T> assertThat(Object actual) {}
+                         public static <T> AbstractAssert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}
+                         public static <T> AbstractAssert<?, T> assertThat(boolean actual) {}
+                         }""");
     myFixture.addClass("package org.assertj.core.api; public class AbstractAssert<S extends AbstractAssert<S, A>, A> {" +
                        "public S isNotNull() {}" +
                        "public S describedAs(String s) {}" +
@@ -109,11 +110,11 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testBooleanPreconditions() {
-    myFixture.addClass("package com.google.common.base; public class Preconditions { " +
-                       "public static <T> T checkArgument(boolean b) {}\n" +
-                       "public static <T> T checkArgument(boolean b, String msg) {}\n" +
-                       "public static <T> T checkState(boolean b, String msg) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.google.common.base; public class Preconditions { public static <T> T checkArgument(boolean b) {}
+                         public static <T> T checkArgument(boolean b, String msg) {}
+                         public static <T> T checkState(boolean b, String msg) {}
+                         }""");
     checkHighlighting();
   }
 
@@ -125,12 +126,13 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testSpringAssert() {
-    myFixture.addClass("package org.springframework.util; public class Assert {\n" +
-                       "    public static void isTrue(boolean expression) {}\n" +
-                       "    public static void state(boolean expression, String s) {}\n" +
-                       "    public static void notNull(Object o) {}\n" +
-                       "    public static void notNull(Object o, String s) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.springframework.util; public class Assert {
+                             public static void isTrue(boolean expression) {}
+                             public static void state(boolean expression, String s) {}
+                             public static void notNull(Object o) {}
+                             public static void notNull(Object o, String s) {}
+                         }""");
     checkHighlighting();
   }
 
@@ -147,22 +149,24 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testAssertTestNg() {
-    myFixture.addClass("package org.testng;\n" +
-                       "\n" +
-                       "public class AssertJUnit {\n" +
-                       "  static public void assertTrue(String message, boolean condition) {}\n" +
-                       "  static public void assertTrue(boolean condition) {}\n" +
-                       "  static public void assertNotNull(String message, Object object) {}\n" +
-                       "  static public void assertNotNull(Object object) {}\n" +
-                       "}");
-    myFixture.addClass("package org.testng;\n" +
-                       "\n" +
-                       "public class Assert {\n" +
-                       "  static public void assertTrue(boolean condition, String message) {}\n" +
-                       "  static public void assertTrue(boolean condition) {}\n" +
-                       "  static public void assertNotNull(Object object, String message) {}\n" +
-                       "  static public void assertNotNull(Object object) {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.testng;
+
+                         public class AssertJUnit {
+                           static public void assertTrue(String message, boolean condition) {}
+                           static public void assertTrue(boolean condition) {}
+                           static public void assertNotNull(String message, Object object) {}
+                           static public void assertNotNull(Object object) {}
+                         }""");
+    myFixture.addClass("""
+                         package org.testng;
+
+                         public class Assert {
+                           static public void assertTrue(boolean condition, String message) {}
+                           static public void assertTrue(boolean condition) {}
+                           static public void assertNotNull(Object object, String message) {}
+                           static public void assertNotNull(Object object) {}
+                         }""");
     checkHighlighting();
   }
   

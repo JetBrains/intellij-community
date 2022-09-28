@@ -17,52 +17,62 @@ public class UnnecessaryContinueFixTest extends IGQuickFixesTestCase {
 
   public void testRemoveContinue() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
-                 "  public void printName(String[] names) {\n" +
-                 "    for (String name : names) {\n" +
-                 "      System.out.println(name);\n" +
-                 "      continue/**/;\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String[] names) {\n" +
-                 "    for (String name : names) {\n" +
-                 "      System.out.println(name);\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String[] names) {
+                       for (String name : names) {
+                         System.out.println(name);
+                         continue/**/;
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String[] names) {
+                       for (String name : names) {
+                         System.out.println(name);
+                       }
+                     }
+                   """
     );
   }
 
   public void testRemoveContinueIntoIf() {
     doMemberTest(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
-                 "  public void printName(String[] names) {\n" +
-                 "    for (String name : names) {\n" +
-                 "      if (!\"foo\".equals(name)) {\n" +
-                 "        System.out.println(name);\n" +
-                 "        continue/**/;\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n",
-                 "  public void printName(String[] names) {\n" +
-                 "    for (String name : names) {\n" +
-                 "      if (!\"foo\".equals(name)) {\n" +
-                 "        System.out.println(name);\n" +
-                 "      }\n" +
-                 "    }\n" +
-                 "  }\n"
+                 """
+                     public void printName(String[] names) {
+                       for (String name : names) {
+                         if (!"foo".equals(name)) {
+                           System.out.println(name);
+                           continue/**/;
+                         }
+                       }
+                     }
+                   """,
+                 """
+                     public void printName(String[] names) {
+                       for (String name : names) {
+                         if (!"foo".equals(name)) {
+                           System.out.println(name);
+                         }
+                       }
+                     }
+                   """
     );
   }
 
   public void testDoNotFixFollowedContinue() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("smth.unnecessary.remove.quickfix", "continue"),
-                               "class X {\n" +
-                               "  public void printName(String[] names) {\n" +
-                               "    for (String name : names) {\n" +
-                               "      if (!\"foo\".equals(name)) {\n" +
-                               "        System.out.println(name);\n" +
-                               "        continue/**/;\n" +
-                               "      }\n" +
-                               "      System.out.println(\"Ready for a new iteration\");\n" +
-                               "    }\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public void printName(String[] names) {
+                                     for (String name : names) {
+                                       if (!"foo".equals(name)) {
+                                         System.out.println(name);
+                                         continue/**/;
+                                       }
+                                       System.out.println("Ready for a new iteration");
+                                     }
+                                   }
+                                 }
+                                 """);
   }
 }

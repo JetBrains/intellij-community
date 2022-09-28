@@ -61,10 +61,11 @@ public class SSBasedInspectionTest extends UsefulTestCase {
   }
 
   public void testTwoStatementPattern() {
-    doTest("$field$ = $something$;\n" +
-           "if ($field$ == null) {\n" +
-           "     throw new $Exception$($msg$);\n" +
-           "}",
+    doTest("""
+             $field$ = $something$;
+             if ($field$ == null) {
+                  throw new $Exception$($msg$);
+             }""",
            "silly null check");
   }
 
@@ -94,10 +95,12 @@ public class SSBasedInspectionTest extends UsefulTestCase {
   }
 
   public void testChainedMethodCallsPerformance() {
-    final StringBuilder source = new StringBuilder("public class ChainedMethodCallsPerformance {\n" +
-                                                   "\n" +
-                                                   "  void x() {\n" +
-                                                   "    new StringBuilder()\n");
+    final StringBuilder source = new StringBuilder("""
+                                                     public class ChainedMethodCallsPerformance {
+
+                                                       void x() {
+                                                         new StringBuilder()
+                                                     """);
     for (int i = 0; i < 400; i++) {
       source.append("      .append(").append(i).append(")\n");
     }

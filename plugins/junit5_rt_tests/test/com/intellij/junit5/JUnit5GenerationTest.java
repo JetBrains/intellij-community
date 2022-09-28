@@ -23,27 +23,29 @@ public class JUnit5GenerationTest extends JUnit5CodeInsightTest {
   @Test
   void testMethodInTopLevelClass() {
     doTest("import org.junit.jupiter.api.Test; class MyTest {<caret> @Test void m2(){}}",
-           "import org.junit.jupiter.api.Test; class MyTest {\n" +
-                                   "    @Test\n" +
-                                   "    void name() {\n" +
-                                   "        \n" +
-                                   "    }\n" +
-                                   "\n" +
-                                   "    @Test void m2(){}}");
+           """
+             import org.junit.jupiter.api.Test; class MyTest {
+                 @Test
+                 void name() {
+                    \s
+                 }
+
+                 @Test void m2(){}}""");
   }
 
   @Test
   void testMethodInNestedClass() {
     doTest("import org.junit.jupiter.api.Nested; class MyTest { @Nested class NTest { <caret>}}",
-           "import org.junit.jupiter.api.Nested;\n" +
-           "import org.junit.jupiter.api.Test;\n" +
-           "\n" +
-           "class MyTest { @Nested class NTest {\n" +
-           "    @Test\n" +
-           "    void name() {\n" +
-           "        \n" +
-           "    }\n" +
-           "}}");
+           """
+             import org.junit.jupiter.api.Nested;
+             import org.junit.jupiter.api.Test;
+
+             class MyTest { @Nested class NTest {
+                 @Test
+                 void name() {
+                    \s
+                 }
+             }}""");
   }
 
   private void doTest(String text, String expected) {

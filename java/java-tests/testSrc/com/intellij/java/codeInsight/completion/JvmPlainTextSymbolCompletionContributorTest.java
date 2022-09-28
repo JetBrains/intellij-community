@@ -16,16 +16,17 @@ import java.util.Collection;
 
 public class JvmPlainTextSymbolCompletionContributorTest extends LightJavaCodeInsightFixtureTestCase {
   public void testBasics() {
-    PsiFile file = myFixture.configureByText("Test.java", "class Foo {\n" +
-                                                          "  void fooMethod() {}\n" +
-                                                          "  int fooField = 0;\n" +
-                                                          "  class FooClass {}\n" +
-                                                          "}\n" +
-                                                          "class Bar {\n" +
-                                                          "  class Baz {\n" +
-                                                          "    void quxMethod() {}\n" +
-                                                          "  }\n" +
-                                                          "}");
+    PsiFile file = myFixture.configureByText("Test.java", """
+      class Foo {
+        void fooMethod() {}
+        int fooField = 0;
+        class FooClass {}
+      }
+      class Bar {
+        class Baz {
+          void quxMethod() {}
+        }
+      }""");
     checkCompletion(file, "", 0, "Foo", "Bar");
     checkCompletion(file, "F", 1, "Foo", "fooMethod", "fooField", "FooClass");
     checkCompletion(file, "Foo::", 0, "Foo::fooMethod");

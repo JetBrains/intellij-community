@@ -608,13 +608,11 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     final VirtualFile excludedDir = createProjectSubDir("src/excluded");
     createProjectSubFile("src/excluded/c.txt", "c");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<properties>\n" +
-                  "        <maven.compiler.source>11</maven.compiler.source>\n" +
-                  "        <maven.compiler.target>11</maven.compiler.target>\n" +
-                  "    </properties>");
+    importProject("""
+                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
+                            <maven.compiler.source>11</maven.compiler.source>
+                            <maven.compiler.target>11</maven.compiler.target>
+                        </properties>""");
 
     Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
     PsiTestUtil.addSourceRoot(module, configDir);
