@@ -8,6 +8,7 @@ import com.intellij.util.io.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -27,19 +28,26 @@ internal object SettingsSnapshotZipSerializer {
 
   fun serializeToZip(snapshot: SettingsSnapshot): Path {
     val file = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, null)
-    Compressor.Zip(file)
-      .use { zip ->
-        zip.addFile("$METAINFO/$INFO", serializeMetaInfo(snapshot.metaInfo))
-        if (snapshot.plugins != null) {
-          zip.addFile("$METAINFO/$PLUGINS", serializePlugins(snapshot.plugins).toByteArray())
-        }
-
-        for (fileState in snapshot.fileStates) {
-          val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
-          zip.addFile(fileState.file, content)
-        }
-      }
+    serialize(snapshot, Compressor.Zip(file))
     return file.toPath()
+  }
+
+  fun serializeToStream(snapshot: SettingsSnapshot, stream: OutputStream) {
+    serialize(snapshot, Compressor.Zip(stream))
+  }
+
+  private fun serialize(snapshot: SettingsSnapshot, zipCompressor: Compressor.Zip) {
+    zipCompressor.use { zip ->
+      zip.addFile("$METAINFO/$INFO", serializeMetaInfo(snapshot.metaInfo))
+      if (snapshot.plugins != null) {
+        zip.addFile("$METAINFO/$PLUGINS", serializePlugins(snapshot.plugins).toByteArray())
+      }
+
+      for (fileState in snapshot.fileStates) {
+        val content = if (fileState is FileState.Modified) fileState.content else DELETED_FILE_MARKER.toByteArray()
+        zip.addFile(fileState.file, content)
+      }
+    }
   }
 
   private fun serializePlugins(plugins: SettingsSyncPluginsState): String {
