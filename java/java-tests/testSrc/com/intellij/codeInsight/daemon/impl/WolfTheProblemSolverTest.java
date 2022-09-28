@@ -6,7 +6,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -27,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,9 +114,10 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertNotEmpty(highlightErrors(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
 
-    ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, myProject);
+    ExcludeEntryDescription description = new ExcludeEntryDescription(x, false, true, getTestRootDisposable());
     CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
     FileStatusManager.getInstance(myProject).fileStatusesChanged();
+    UIUtil.dispatchAllInvocationEvents();
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
 
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
@@ -222,11 +222,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     deleteMethodWithProblem(x);
     assertEmpty(highlightErrors(x));
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
-  }
-
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    ReadAction.run(testRunnable);
   }
 
   @NotNull

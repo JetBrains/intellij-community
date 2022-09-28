@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 class WolfListeners implements Disposable {
   private final Project myProject;
@@ -125,11 +126,12 @@ class WolfListeners implements Disposable {
 
   private void clearInvalidFiles() {
     myWolfTheProblemSolver.processProblemFiles(file -> {
-      invalidateFileQueue.queue(Update.create(file, () -> ReadAction.run(() -> {
-        if (!myProject.isDisposed() && !file.isValid() || !myWolfTheProblemSolver.isToBeHighlighted(file)) {
+      invalidateFileQueue.queue(Update.create(file, () -> {
+        boolean toRemove = ReadAction.compute(() -> !myProject.isDisposed() && (!file.isValid() || !myWolfTheProblemSolver.isToBeHighlighted(file)));
+        if (toRemove) {
           myWolfTheProblemSolver.doRemove(file);
         }
-      })));
+      }));
       return true;
     });
   }
@@ -141,6 +143,6 @@ class WolfListeners implements Disposable {
 
   @TestOnly
   void waitForFilesQueuedForInvalidationAreProcessed() {
-    invalidateFileQueue.flush();
+    invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES);
   }
 }

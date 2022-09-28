@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -92,20 +91,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
       int result = problems.hashCode();
       result = 31 * result + (hasSyntaxErrors ? 1 : 0);
       return result;
-    }
-  }
-
-  void clearInvalidFiles() {
-    clearInvalidFilesFrom(myProblems);
-    clearInvalidFilesFrom(myProblemsFromExternalSources);
-  }
-
-  private void clearInvalidFilesFrom(@NotNull Map<? extends VirtualFile, ?> problems) {
-    VirtualFile[] files = VfsUtilCore.toVirtualFileArray(problems.keySet());
-    for (VirtualFile problemFile : files) {
-      if (!problemFile.isValid() || !isToBeHighlighted(problemFile)) {
-        doRemove(problemFile);
-      }
     }
   }
 
