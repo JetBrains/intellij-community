@@ -69,16 +69,6 @@
                                 implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMembersHandler"/>
 
 
-    <typeHierarchyProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
-    <typeHierarchyProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
-    <typeHierarchyProvider
-            language="JAVA"
-            order="last"
-            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
     <callHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallHierarchyProvider"/>

@@ -104,6 +104,17 @@
             parentId="project.propCompiler"/>
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
+    
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
+    <typeHierarchyProvider
+            language="JAVA"
+            order="last"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
