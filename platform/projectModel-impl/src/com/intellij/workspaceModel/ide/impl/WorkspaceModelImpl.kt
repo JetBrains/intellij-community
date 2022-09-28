@@ -115,9 +115,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   @Synchronized
   final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
     if (!projectModelUpdating.compareAndSet(false, true)) {
-      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
-      // Need to fix all cases and change to the runtime exception
-      log.warn("Recursive call to `updateProjectModel` is not allowed")
+      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
