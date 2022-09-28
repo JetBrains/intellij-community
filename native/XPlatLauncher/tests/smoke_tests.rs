@@ -16,9 +16,9 @@ mod tests {
     };
 
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn correct_launcher_startup_test(#[case] launcher_location: &LauncherLocation) {
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn correct_launcher_startup_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
         let status = &run_launcher_with_default_args(&test, &[]).exit_status;
 
@@ -32,9 +32,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn classpath_test(#[case] launcher_location: &LauncherLocation) {
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn classpath_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
         let classpath = &dump.systemProperties["java.class.path"];
 
@@ -45,9 +45,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn additional_jvm_arguments_in_product_info_test(#[case] launcher_location: &LauncherLocation) {
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn additional_jvm_arguments_in_product_info_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
         let idea_vendor_name_vm_option = dump.vmOptions.iter().find(|&vm| vm.starts_with("-Didea.vendor.name=JetBrains"));
 
@@ -58,9 +58,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn arguments_test(#[case] launcher_location: &LauncherLocation) {
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn arguments_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
 
         let args = &["arguments-test-123"];
@@ -76,20 +76,16 @@ mod tests {
         assert_eq!(&dump.cmdArguments[4], args[0]);
     }
 
+    // todo: order tests
+
     // # shellcheck disable=SC2154
     // if [ -n "$IDEA_JDK" ] && [ -x "$IDEA_JDK/bin/java" ]; then
     //   JRE="$IDEA_JDK"
     // fi
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn jre_is_idea_jdk_test(#[case] launcher_location: &LauncherLocation) {
-        // todo: different way to resolve java. mb add second java downloader in gradle project
-        // todo: mb should force turn off other ways of java resolving in launcher
-        let idea_jdk_root = get_jbrsdk_from_project_root();
-
-        std::env::set_var("IU_JDK", idea_jdk_root);
-
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
+    fn jre_is_idea_jdk_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
 
         assert!(std::env::var("IU_JDK").is_ok(), "IU_JDK is not set");
@@ -109,17 +105,9 @@ mod tests {
         );
         assert!(
             &dump.systemProperties["java.home"].starts_with(
-            idea_jdk_root.to_str().unwrap()),
-            "Resolved java is not equal to set"
-        );
-        assert!(
-            &dump.systemProperties["java.home"].starts_with(
             &dump.environmentVariables["IU_JDK"]),
             "Resolved java is not equal to env var"
         );
-
-        std::env::remove_var("IU_JDK");
-        assert!(std::env::var("IU_JDK").is_err());
     }
 
     // if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/JetBrains/IntelliJIdea2022.3/idea.jdk" ]; then
@@ -129,25 +117,24 @@ mod tests {
     //   fi
     // fi
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE)]
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    fn jre_is_user_jre_test(#[case] launcher_location: &LauncherLocation) {
-        // forced shutdown of IU_JDK
-        std::env::remove_var("IU_JDK");
-        assert!(std::env::var("IU_JDK").is_err());
-
-        let idea_jdk = create_dummy_config();
-        let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
-        let resolved_jdk_path = Path::new(&idea_jdk_content);
-
+    fn jre_is_user_jre_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
 
+        let idea_jdk = get_custom_user_file_with_java_path().join("idea.jdk");
+        let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
+        let jbr_home = get_jbr_home(&Path::new(&idea_jdk_content).to_path_buf());
+        let resolved_jdk_path = Path::new(&idea_jdk_content);
+        let metadata = idea_jdk.metadata().unwrap();
+
         assert!(idea_jdk.exists(), "Config file is not exists");
+        assert_ne!(0, metadata.len(), "Config file is empty");
         assert!(resolved_jdk_path.exists(), "JDK from idea.jdk is not exists");
-        assert!(
-            &dump.systemProperties["java.home"].starts_with(
-            &idea_jdk_content.to_string()),
+        assert_eq!(
+            &dump.systemProperties["java.home"],
+            jbr_home.to_str().unwrap(),
             "Resolved java is not from .config"
         );
 
@@ -161,35 +148,38 @@ mod tests {
     //   fi
     // fi
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn jre_is_jbr_test(#[case] launcher_location: &LauncherLocation) {
-        // force turn off IU_JDK resolver
-        std::env::remove_var("IU_JDK");
-        assert!(std::env::var("IU_JDK").is_err());
-        // todo: Reset the config jre as well
-
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn jre_is_jbr_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
 
-        let jbr_java_home = get_jbrsdk_from_project_root();
-        let java_executable = get_bin_java_path(&jbr_java_home);
+        let jbr_dir = match std::env::consts::OS {
+            "linux" => Path::new(&dump.systemProperties["user.dir"]).join("jbr"),
+            "macos" => Path::new(&dump.systemProperties["user.dir"]).join("Contents").join("jbr"),
+            "windows" => Path::new(&dump.systemProperties["user.dir"]).join("jbr"),
+            unsupported_os => panic!("Unsupported OS: {unsupported_os}")
+        };
 
-        assert!(jbr_java_home.is_dir(), "Resolved JBR dir is not a directory");
-        assert!(jbr_java_home.exists(), "JBR dir is not exists");
+        let jbr_home = get_jbr_home(&jbr_dir);
+
+        let java_executable = get_bin_java_path(&jbr_dir);
+
+        assert!(jbr_dir.exists(), "JBR dir is not exists");
+        assert!(jbr_dir.is_dir(), "Resolved JBR dir is not a directory");
         assert!(java_executable.exists(), "Resolved java executable is not exists");
         assert!(java_executable.is_executable(), "Resolved java executable is not executable");
         assert_eq!(
             &dump.systemProperties["java.vendor"],
             "JetBrains s.r.o.",
-            "Resolved java is not JBR");
-        assert!(
-            &dump.systemProperties["java.home"].starts_with(
-            &jbr_java_home.to_str().unwrap()),
+            "Java vendor is not JetBrains. Resolved java is not JBR");
+        assert_eq!(
+            &dump.systemProperties["java.home"],
+            &jbr_home.to_str().unwrap(),
             "Resolved java is not JBR"
         );
         assert!(
             &dump.systemProperties["java.home"].contains("jbr"),
-            "Resolved java is not JBR"
+            "java.home property does not contains 'jbr' in path. Resolved java is not JBR"
         );
     }
 

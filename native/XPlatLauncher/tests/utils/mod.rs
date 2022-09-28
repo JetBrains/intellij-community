@@ -8,6 +8,8 @@ use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::Once;
+use std::time::SystemTime;
+use log::debug;
 use utils::{get_path_from_env_var, PathExt};
 
 static INIT: Once = Once::new();
@@ -18,7 +20,7 @@ pub struct TestEnvironment {
     pub test_root_dir: tempfile::TempDir
 }
 
-pub fn prepare_test_env(layout_kind: &LauncherLocation) -> TestEnvironment {
+pub fn prepare_test_env(layout_kind: &LayoutSpecification) -> TestEnvironment {
     let result = match prepare_test_env_impl(layout_kind) {
         Ok(x) => x,
         Err(e) => {
@@ -29,7 +31,7 @@ pub fn prepare_test_env(layout_kind: &LauncherLocation) -> TestEnvironment {
     result
 }
 
-fn prepare_test_env_impl(layout_kind: &LauncherLocation) -> Result<TestEnvironment> {
+fn prepare_test_env_impl(layout_kind: &LayoutSpecification) -> Result<TestEnvironment> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().expect("Failed to init shared test environment");
         unsafe {
@@ -47,7 +49,10 @@ fn prepare_test_env_impl(layout_kind: &LauncherLocation) -> Result<TestEnvironme
     let temp_dir = tempfile::tempdir().context(format!("Failed to create temp directory"))?;
     let temp_dir_path = temp_dir.path();
 
+    resolve_java_source_type(&shared.jbrsdk_root, layout_kind);
+
     layout_launcher(
+        layout_kind,
         &temp_dir_path,
         &shared.project_root,
         &shared.jbrsdk_root,
@@ -67,6 +72,7 @@ fn prepare_test_env_impl(layout_kind: &LauncherLocation) -> Result<TestEnvironme
 
     Ok(result)
 }
+
 pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let project_root = env::current_dir().expect("Failed to get project root");
 
@@ -106,16 +112,6 @@ pub struct TestEnvironmentShared {
     project_root: PathBuf,
     jbrsdk_root: PathBuf,
     intellij_app_jar_source: PathBuf
-}
-
-pub fn get_jbrsdk_from_project_root() -> &'static Path {
-    let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
-    &shared.jbrsdk_root
-}
-
-fn get_project_root() -> &'static Path {
-    let shared = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
-    &shared.project_root
 }
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
@@ -182,13 +178,21 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     ));
 }
 
-pub enum LauncherLocation {
-    MainBin,
-    PluginsBin
+pub enum LayoutSpecification {
+    LauncherLocationMainBinJavaIsEnvVar,
+    LauncherLocationMainBinJavaIsUserJRE,
+    LauncherLocationMainBinJavaIsJBR,
+    LauncherLocationMainBinJavaIsJavaHome,
+
+    LauncherLocationPluginsBinJavaIsEnvVar,
+    LauncherLocationPluginsBinJavaIsUserJRE,
+    LauncherLocationPluginsBinJavaIsJBR,
+    LauncherLocationPluginsBinJavaIsJavaHome,
 }
 
 #[cfg(target_os = "linux")]
 pub fn layout_launcher(
+    layout_kind: &LayoutSpecification,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -215,6 +219,7 @@ pub fn layout_launcher(
     }
 
     layout_launcher_impl(
+        layout_kind,
         target_dir,
         vec![
             "bin/idea64.vmoptions",
@@ -236,6 +241,7 @@ pub fn layout_launcher(
 
 #[cfg(target_os = "macos")]
 pub fn layout_launcher(
+    layout_kind: &LayoutSpecification,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -264,6 +270,7 @@ pub fn layout_launcher(
     }
 
     layout_launcher_impl(
+        layout_kind,
         target_dir,
         vec![
             "Contents/bin/idea.vmoptions",
@@ -285,6 +292,7 @@ pub fn layout_launcher(
 
 #[cfg(target_os = "windows")]
 pub fn layout_launcher(
+    layout_kind: &LayoutSpecification,
     target_dir: &Path,
     project_root: &Path,
     jbr_absolute_path: &Path,
@@ -311,6 +319,7 @@ pub fn layout_launcher(
     }
 
     layout_launcher_impl(
+        layout_kind,
         target_dir,
         vec![
             "bin/idea64.exe.vmoptions",
@@ -347,6 +356,7 @@ fn get_testing_binary_root(project_root: &Path) -> PathBuf {
 }
 
 fn layout_launcher_impl(
+    layout_kind: &LayoutSpecification,
     target_dir: &Path,
     create_files: Vec<&str>,
     copy_files: Vec<(&Path, &str)>,
@@ -366,9 +376,15 @@ fn layout_launcher_impl(
     }
 
     for (source, target_relative) in symlink_dirs {
-        let target = &target_dir.join(target_relative);
-        fs::create_dir_all(target.parent_or_err()?)?;
-        symlink(source, target).context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
+        match layout_kind {
+            LayoutSpecification::LauncherLocationMainBinJavaIsJBR
+            | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR => {
+                let target = &target_dir.join(target_relative);
+                fs::create_dir_all(target.parent_or_err()?)?;
+                symlink(source, target).context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
+            }
+            _ => break
+        }
     }
 
     Ok(())
@@ -390,15 +406,43 @@ fn symlink(source: &Path, target: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LauncherLocation) -> PathBuf {
+pub fn resolve_java_source_type(java_root: &PathBuf, layout_kind: &LayoutSpecification) {
+    match layout_kind {
+        LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar => {
+            env::set_var("IU_JDK", java_root);
+            debug!("IU_JDK set. JBR is not included in layout")
+        }
+        LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE => {
+            create_dummy_config(java_root);
+            debug!("Custom user file with runtime is created. JBR is not included in layout")
+        },
+        LayoutSpecification::LauncherLocationMainBinJavaIsJBR
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR => {
+            debug!("JBR is included in test layout")
+        }
+        LayoutSpecification::LauncherLocationMainBinJavaIsJavaHome
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJavaHome => todo!()
+    }
+}
+
+pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpecification) -> PathBuf {
     let root = match cfg!(target_os = "macos") {
         true => test_dir.join("Contents"),
         false => test_dir.to_path_buf()
     };
 
     match layout_kind {
-        LauncherLocation::MainBin => root.join("bin"),
-        LauncherLocation::PluginsBin => root.join("plugins/remote-dev-server/bin")
+        LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
+        | LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
+        | LayoutSpecification::LauncherLocationMainBinJavaIsJBR
+        | LayoutSpecification::LauncherLocationMainBinJavaIsJavaHome => root.join("bin"),
+
+        LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJavaHome => root.join("plugins/remote-dev-server/bin")
     }
 }
 
@@ -425,6 +469,14 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
         .join("java")
 }
 
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
+    if env::consts::OS == "macos" {
+        jbr_dir.join("Contents").join("Home").canonicalize().unwrap()
+    } else {
+        jbr_dir.canonicalize().unwrap()
+    }
+}
+
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 fn get_config_home() -> PathBuf {
     let home = env::var("HOME").unwrap();
@@ -437,22 +489,23 @@ pub fn get_config_home() -> PathBuf {
     PathBuf::from("C:\\tmp")
 }
 
-pub fn create_dummy_config() -> PathBuf {
-    let config_home_path = get_config_home();
-    let idea_config_path = config_home_path
-        .join("JetBrains")
-        .join("IntellijIdea2022.3"); //todo
-    let idea_jdk = idea_config_path.join("idea.jdk");
+pub fn create_dummy_config(java_root: &PathBuf) {
+    let idea_config_path = get_custom_user_file_with_java_path();
+    let idea_config_file = idea_config_path.join("idea.jdk");
 
-    if !idea_jdk.exists() {
+    if !idea_config_file.exists() {
         fs::create_dir_all(idea_config_path).unwrap();
-        let idea_jdk_content = get_jbrsdk_from_project_root();
-        let idea_jdk_content = idea_jdk_content.to_str().unwrap().as_bytes();
-        let mut idea_jdk_file = File::create(&idea_jdk).expect("Fail to create idea.jdk");
+        let idea_jdk_content = java_root.to_str().unwrap().as_bytes();
+        let mut idea_jdk_file = File::create(&idea_config_file).expect("Fail to create idea.jdk");
         idea_jdk_file.write_all(idea_jdk_content).expect("Fail to write in idea.jdk");
     }
+}
 
-    idea_jdk
+pub fn get_custom_user_file_with_java_path() -> PathBuf {
+    let config_home_path = get_config_home();
+    config_home_path
+        .join("JetBrains")
+        .join("IntellijIdea2022.3") //todo
 }
 
 // TODO: test for additionalJvmArguments in product-info.json being set
@@ -547,14 +600,14 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
     Ok(dump)
 }
 
-pub fn run_launcher_and_get_dump(layout_kind: &LauncherLocation) -> IntellijMainDumpedLaunchParameters {
+pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpecification) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
     let result = run_launcher_with_default_args(&test, &[]);
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-pub fn run_launcher_and_get_dump_with_args(layout_kind: &LauncherLocation, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
+pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpecification, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
     let result = run_launcher_with_default_args(&test, args);
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
