@@ -1249,7 +1249,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           }
         });
         if (IdeaPopupMenuUI.isUnderPopup(contents) && WindowRoundedCornersManager.isAvailable()) {
-          WindowRoundedCornersManager.setRoundedCorners(window);
+          if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+            WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
+          }
+          else {
+            WindowRoundedCornersManager.setRoundedCorners(window);
+          }
           if (SystemInfoRt.isMac) {
             JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
             contentPane.setOpaque(true);

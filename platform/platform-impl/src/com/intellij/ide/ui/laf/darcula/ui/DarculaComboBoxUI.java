@@ -742,9 +742,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           if (isRoundBorder) {
             Window window = ComponentUtil.getWindow(popup);
             if (window != null) {
-              WindowRoundedCornersManager.setRoundedCorners(window);
-              if (SystemInfoRt.isMac) {
+              if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+                WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
                 popup.setBorder(null);
+              }
+              else {
+                WindowRoundedCornersManager.setRoundedCorners(window);
               }
             }
           }

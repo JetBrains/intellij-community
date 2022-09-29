@@ -50,6 +50,19 @@ public final class WindowRoundedCornersManager {
           cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
         params = Float.valueOf(radius.getFloat());
       }
+      else if (params instanceof Color) {
+        params = new Object[] {Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()), Integer.valueOf(1), params};
+      }
+      else if (params instanceof Object[]) {
+        Object[] values = (Object[])params;
+        if (values.length != 2 || !(values[0] instanceof PopupCornerType) || !(values[1] instanceof Color)) {
+          return;
+        }
+        PopupCornerType cornerType = (PopupCornerType)values[0];
+        JBValue radius =
+          cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
+        params = new Object[]{Float.valueOf(radius.getFloat()), Integer.valueOf(1), values[1]};
+      }
       else if (!(params instanceof Float)) {
         return;
       }

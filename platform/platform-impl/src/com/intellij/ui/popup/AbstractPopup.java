@@ -120,6 +120,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private Component[] myFocusOwners;
   private PopupBorder myPopupBorder;
+  private Color myPopupBorderColor;
   private Dimension myRestoreWindowSize;
   protected Component myOwner;
   private Component myRequestorComponent;
@@ -263,6 +264,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                  PopupBorder.Factory.createEmpty();
     myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
+    if (showBorder && SystemInfo.isMac) {
+      myPopupBorderColor = borderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : borderColor;
+    }
     myContent = createContentPanel(resizable, myPopupBorder, false);
     myMayBeParent = mayBeParent;
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
@@ -1125,9 +1129,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
-        if (SystemInfoRt.isMac) {
+        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+        }
+        else {
+          WindowRoundedCornersManager.setRoundedCorners(window, cornerType);
         }
       }
     }
