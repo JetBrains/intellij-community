@@ -214,7 +214,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   }
 
   private fun showUsersIcon(label: JLabel, users: NamedCollection<UserPresentation>?) {
-    val icons = users?.items?.map { it.avatarIcon }?.nullize()
+    val icons = users?.items?.map { it.avatarIcon }?.take(MAX_PARTICIPANT_ICONS)?.nullize()
     if (icons == null) {
       label.isVisible = false
       label.icon = null
@@ -237,6 +237,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   }
 
   companion object {
+    private const val MAX_PARTICIPANT_ICONS = 2
 
     // TODO: register metadata provider somehow?
     private val stateForeground = JBColor.namedColor("ReviewList.state.foreground", 0x797979)
