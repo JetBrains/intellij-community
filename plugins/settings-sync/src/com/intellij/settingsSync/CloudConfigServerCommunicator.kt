@@ -121,7 +121,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
-        return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot, version)
+        return UpdateResult.Success(snapshot, version)
       }
       finally {
         FileUtil.delete(tempFile)

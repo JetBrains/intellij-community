@@ -96,8 +96,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       })
     }
 
-    val versionOnServer = remoteCommunicator.getVersionOnServer()!!
-    assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer.isDeleted())
+    val versionOnServer = remoteCommunicator.getVersionOnServer()
+    assertNotNull("There is no version on the server", versionOnServer)
+    assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
