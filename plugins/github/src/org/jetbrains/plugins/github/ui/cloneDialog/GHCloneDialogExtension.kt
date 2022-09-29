@@ -42,8 +42,7 @@ class GHCloneDialogExtension : BaseCloneDialogExtension() {
 private class GHCloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
   modalityState,
-  GithubAuthenticationManager.getInstance(),
-  GithubApiRequestExecutorManager.getInstance()
+  GithubAuthenticationManager.getInstance()
 ) {
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHAccount

@@ -49,7 +49,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -69,8 +68,7 @@ import kotlin.properties.Delegates
 internal abstract class GHCloneDialogExtensionComponentBase(
   private val project: Project,
   private val modalityState: ModalityState,
-  private val authenticationManager: GithubAuthenticationManager,
-  private val executorManager: GithubApiRequestExecutorManager
+  private val authenticationManager: GithubAuthenticationManager
 ) : VcsCloneDialogExtensionComponent() {
 
   private val LOG = GithubUtil.LOG
@@ -98,7 +96,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
-  private val loader = GHCloneDialogRepositoryListLoaderImpl(executorManager)
+  private val loader = GHCloneDialogRepositoryListLoaderImpl()
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 

@@ -38,8 +38,7 @@ class GithubAuthenticationManager internal constructor() {
   @CalledInAny
   fun getAccounts(): Set<GithubAccount> = accountManager.accountsState.value
 
-  @CalledInAny
-  internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.findCredentials(account)
+  internal suspend fun getTokenForAccount(account: GithubAccount): String? = accountManager.findCredentials(account)
 
   @RequiresEdt
   @JvmOverloads
@@ -62,24 +61,18 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   @JvmOverloads
-  fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? =
-    login(
-      project, parentComponent,
-      GHLoginRequest(server = server, isCheckLoginUnique = true)
-    )?.registerAccount()
-
-  @RequiresEdt
-  @JvmOverloads
-  fun requestNewAccountForServer(
+  internal fun requestNewAccountForServer(
     server: GithubServerPath,
-    login: String,
+    login: String? = null,
     project: Project?,
     parentComponent: Component? = null
-  ): GithubAccount? =
+  ): GHAccountAuthData? =
     login(
       project, parentComponent,
       GHLoginRequest(server = server, login = login, isLoginEditable = false, isCheckLoginUnique = true)
-    )?.registerAccount()
+    )?.apply {
+      registerAccount()
+    }
 
   @RequiresEdt
   fun requestNewAccountForDefaultServer(project: Project?, authType: AuthorizationType): GithubAccount? {
@@ -92,11 +85,18 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   @JvmOverloads
-  fun requestReLogin(project: Project?, account: GithubAccount, authType: AuthorizationType, parentComponent: Component? = null): Boolean =
+  internal fun requestReLogin(
+    project: Project?,
+    account: GithubAccount,
+    authType: AuthorizationType,
+    parentComponent: Component? = null
+  ): GHAccountAuthData? =
     login(
       project, parentComponent,
       GHLoginRequest(server = account.server, login = account.name, authType = authType),
-    )?.updateAccount(account) != null
+    )?.apply {
+      updateAccount(account)
+    }
 
   @RequiresEdt
   internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {

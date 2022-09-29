@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
@@ -34,10 +33,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
-import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubSettings;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
@@ -129,13 +125,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
     settings.setCopyURLGist(dialog.isCopyURL());
 
     GithubAccount account = requireNonNull(dialog.getAccount());
-    GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
-    if (requestExecutor == null) return;
 
     final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        String token = GHCompatibilityUtil.getOrRequestToken(authManager, account, project);
+        if (token == null) return;
+        GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
+
         List<FileContent> contents = collectContents(project, editor, file, files);
         if (contents.isEmpty()) return;
 

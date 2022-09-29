@@ -10,10 +10,12 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.util.concurrent.ThreadLocalRandom
 
 /**
@@ -64,9 +66,8 @@ abstract class GithubTest : GitPlatformTest() {
   }
 
   private fun createAccountData(host: GithubServerPath, token: String): AccountData {
-    val executorManager = service<GithubApiRequestExecutorManager>()
     val account = authenticationManager.registerAccount("token", host, token)
-    val executor = executorManager.getExecutor(account)
+    val executor = service<GithubApiRequestExecutor.Factory>().create(token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
     return AccountData(token, account, username, executor)

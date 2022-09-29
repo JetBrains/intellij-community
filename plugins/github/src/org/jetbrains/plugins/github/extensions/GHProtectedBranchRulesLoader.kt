@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
-import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
@@ -12,12 +11,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.PatternUtil
 import git4idea.config.GitSharedSettings
 import git4idea.fetch.GitFetchHandler
+import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.GHGQLRequests
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubProjectSettings
@@ -41,8 +43,9 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
   private fun loadProtectionRules(indicator: ProgressIndicator,
                                   fetches: Map<GitRepository, List<GitRemote>>,
                                   project: Project) {
-    val authenticationManager = GithubAuthenticationManager.getInstance()
-    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !authenticationManager.hasAccounts()) {
+    val accountManager = service<GHAccountManager>()
+    val accounts = accountManager.accountsState.value
+    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !accounts.isEmpty()) {
       runInEdt {
         project.service<GithubProjectSettings>().branchProtectionPatterns = arrayListOf()
       }
@@ -64,7 +67,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
           ?: continue
 
         val serverPath = repositoryMapping.repository.serverPath
-        val defaultAccount = authenticationManager.getDefaultAccount(repository.project)
+        val defaultAccount = project.service<GithubProjectDefaultAccountHolder>().account
 
         val account =
           if (defaultAccount != null
@@ -72,12 +75,15 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
             defaultAccount
           }
           else {
-            authenticationManager.getAccounts().find {
+            accounts.find {
               it.server.equals(serverPath, true)
             }
           } ?: continue
 
-        val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
+
+        val token = runBlocking { accountManager.findCredentials(account) } ?: continue
+        val requestExecutor = service<GithubApiRequestExecutor.Factory>().create(token)
+
         SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
           .loadAll(SensitiveProgressWrapper((indicator)))
           .forEach { rule -> branchProtectionPatterns.add(PatternUtil.convertToRegex(rule.pattern)) }
