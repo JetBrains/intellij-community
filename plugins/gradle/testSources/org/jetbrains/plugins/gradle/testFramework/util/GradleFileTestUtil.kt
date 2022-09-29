@@ -11,7 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
+import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
 
 fun GradleImportingTestCase.importProject(configure: TestGradleBuildScriptBuilder.() -> Unit) =
@@ -60,23 +60,23 @@ fun VirtualFile.createBuildFile(relativeModulePath: String, content: String) =
       .also { it.text = content }
   }
 
-fun FileTestFixture.Builder.withSettingsFile(configure: GradleSettingScriptBuilder.() -> Unit) = withSettingsFile(".", configure)
-fun FileTestFixture.Builder.withSettingsFile(relativeModulePath: String, configure: GradleSettingScriptBuilder.() -> Unit) =
+fun TestFilesConfiguration.withSettingsFile(configure: GradleSettingScriptBuilder.() -> Unit) = withSettingsFile(".", configure)
+fun TestFilesConfiguration.withSettingsFile(relativeModulePath: String, configure: GradleSettingScriptBuilder.() -> Unit) =
   withSettingsFile(relativeModulePath, settings(configure))
 
-fun FileTestFixture.Builder.withSettingsFile(content: String) = withSettingsFile(".", content)
-fun FileTestFixture.Builder.withSettingsFile(relativeModulePath: String, content: String) =
+fun TestFilesConfiguration.withSettingsFile(content: String) = withSettingsFile(".", content)
+fun TestFilesConfiguration.withSettingsFile(relativeModulePath: String, content: String) =
   withFile("$relativeModulePath/settings.gradle", content)
 
-fun FileTestFixture.Builder.withBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) =
+fun TestFilesConfiguration.withBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) =
   withBuildFile(".", gradleVersion, configure)
 
-fun FileTestFixture.Builder.withBuildFile(
+fun TestFilesConfiguration.withBuildFile(
   relativeModulePath: String,
   gradleVersion: GradleVersion,
   configure: TestGradleBuildScriptBuilder.() -> Unit
 ) = withBuildFile(relativeModulePath, buildscript(gradleVersion, configure))
 
-fun FileTestFixture.Builder.withBuildFile(content: String) = withBuildFile(".", content)
-fun FileTestFixture.Builder.withBuildFile(relativeModulePath: String, content: String) =
+fun TestFilesConfiguration.withBuildFile(content: String) = withBuildFile(".", content)
+fun TestFilesConfiguration.withBuildFile(relativeModulePath: String, content: String) =
   withFile("$relativeModulePath/build.gradle", content)
