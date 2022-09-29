@@ -68,22 +68,12 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
   private static @NotNull String replaceWhitespacesWithEscapes(@NotNull String contentLine) {
     int j;
     int len = contentLine.length();
-    for (j = len - 2; j >= 0; j--) {
-      char c = contentLine.charAt(j);
-      if (c != ' ' && c != '\t') break;
-    }
-    j++;
-    StringBuilder transformed = new StringBuilder(j + (len - j) * 4);
-    transformed.append(contentLine, 0, j);
-    for (; j < len; j++) {
-      if (contentLine.charAt(j) == ' ') {
-        transformed.append("\\040");
-      }
-      else {
-        transformed.append("\\t");
-      }
-    }
-    return transformed.toString();
+    char c = contentLine.charAt(len - 1);
+    return switch (c) {
+      case ' ' -> contentLine.substring(0, len - 1) + "\\s";
+      case '\t' -> contentLine.substring(0, len - 1) + "\\t";
+      default -> contentLine;
+    };
   }
 
   private static @NotNull String removeWhitespaces(@NotNull String contentLine) {
