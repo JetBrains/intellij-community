@@ -1,17 +1,16 @@
-/* It's an automatically generated code. Do not modify it. */
+/* This is automatically generated code. Do not modify it. */
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-
 import com.intellij.util.containers.IntArrayList;
+
 import java.util.EnumSet;
 
-import static java.lang.Boolean.*;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.intellij.lang.regexp.RegExpCapability.*;
-
-@SuppressWarnings("ALL")
 %%
 
 %class _RegExLexer
