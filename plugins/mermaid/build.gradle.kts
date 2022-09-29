@@ -1,4 +1,5 @@
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -6,9 +7,8 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
   // Java support
   java
-  idea
   // Kotlin support
-  id("org.jetbrains.kotlin.jvm") version "1.6.10"
+  id("org.jetbrains.kotlin.jvm") version "1.7.10"
   // Gradle IntelliJ Plugin
   id("org.jetbrains.intellij") version "1.9.0"
   // Gradle Changelog Plugin
@@ -61,14 +61,15 @@ val generateLexerAndParser by tasks.registering {
 }
 
 tasks {
-  // Set the JVM compatibility versions
-  properties("javaVersion").let {
-    withType<JavaCompile> {
-      sourceCompatibility = it
-      targetCompatibility = it
-    }
-    withType<KotlinCompile> {
-      kotlinOptions.jvmTarget = it
+  withType<JavaCompile> {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+  }
+  withType<KotlinCompile> {
+    kotlinOptions {
+      jvmTarget = "17"
+      languageVersion = "1.7"
+      apiVersion = "1.7"
     }
   }
 
@@ -80,6 +81,14 @@ tasks {
     gradleVersion = properties("gradleVersion")
   }
 
+  withType<RunIdeTask> {
+    jvmArgs(
+      "-Xmx750m",
+      "-Didea.jna.unpacked=true",
+      "-Djna.nounpack=true"
+    )
+  }
+
   withType<Test> {
     testLogging {
       this.showStandardStreams = true
@@ -88,6 +97,11 @@ tasks {
     isScanForTestClasses = false
     // Only run tests from classes that end with "Test"
     include("**/*Test.class")
+    jvmArgs(
+      "-Xmx750m",
+      "-Didea.jna.unpacked=true",
+      "-Djna.nounpack=true"
+    )
   }
 
   generateLexer {

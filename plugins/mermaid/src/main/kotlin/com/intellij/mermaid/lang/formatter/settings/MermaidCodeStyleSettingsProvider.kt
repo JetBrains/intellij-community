@@ -1,10 +1,10 @@
 package com.intellij.mermaid.lang.formatter.settings
 
-import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
+import com.intellij.mermaid.MermaidBundle
+import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.psi.codeStyle.*
 
 internal class MermaidCodeStyleSettingsProvider  : LanguageCodeStyleSettingsProvider() {
@@ -44,13 +44,13 @@ internal class MermaidCodeStyleSettingsProvider  : LanguageCodeStyleSettingsProv
 
   override fun getIndentOptionsEditor(): IndentOptionsEditor = SmartIndentOptionsEditor()
 
-  @org.intellij.lang.annotations.Language("MyMermaid")
+  @org.intellij.lang.annotations.Language("Mermaid")
   override fun getCodeSample(settingsType: SettingsType): String {
     val sampleName = when (settingsType) {
-      SettingsType.INDENT_SETTINGS -> "indent_settings.mymermaid"
-      SettingsType.BLANK_LINES_SETTINGS -> "default.mymermaid"
-      SettingsType.SPACING_SETTINGS -> "default.mymermaid"
-      else -> "default.mymermaid"
+      SettingsType.INDENT_SETTINGS -> "indent_settings.mermaid"
+      SettingsType.BLANK_LINES_SETTINGS -> "default.mermaid"
+      SettingsType.SPACING_SETTINGS -> "default.mermaid"
+      else -> "default.mermaid"
     }
     val codeSample = this::class.java.getResourceAsStream(sampleName)?.bufferedReader()?.use { it.readText() }
     return codeSample ?: "Failed to get predefined code sample"

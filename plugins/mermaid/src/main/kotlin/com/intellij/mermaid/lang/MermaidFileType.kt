@@ -4,11 +4,11 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import javax.swing.Icon
 
 object MermaidFileType: LanguageFileType(MermaidLanguage) {
-  override fun getName(): String = "MyMermaid"
+  override fun getName(): String = "Mermaid"
 
-  override fun getDescription(): String = "Mermaid description"
+  override fun getDescription(): String = "Mermaid"
 
-  override fun getDefaultExtension(): String = "mymermaid"
+  override fun getDefaultExtension(): String = "mermaid"
 
   override fun getIcon(): Icon? = null
 }

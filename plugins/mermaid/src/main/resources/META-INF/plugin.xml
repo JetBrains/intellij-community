@@ -6,38 +6,38 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="MyMermaid"
+    <fileType name="Mermaid"
               implementationClass="com.intellij.mermaid.lang.MermaidFileType"
               fieldName="INSTANCE"
-              language="MyMermaid"
-              extensions="mymermaid"/>
-    <lang.parserDefinition language="MyMermaid"
+              language="Mermaid"
+              extensions="mermaid"/>
+    <lang.parserDefinition language="Mermaid"
                            implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
-    <lang.syntaxHighlighter language="MyMermaid"
+    <lang.syntaxHighlighter language="Mermaid"
                             implementationClass="com.intellij.mermaid.lang.highlighting.MermaidHighlighter"/>
-    <completion.contributor language="MyMermaid"
+    <completion.contributor language="Mermaid"
                             implementationClass="com.intellij.mermaid.editor.MermaidCompletionContributor"/>
-    <lang.commenter language="MyMermaid"
+    <lang.commenter language="Mermaid"
                     implementationClass="com.intellij.mermaid.lang.MermaidCommenter"/>
-    <lang.braceMatcher language="MyMermaid"
+    <lang.braceMatcher language="Mermaid"
                        implementationClass="com.intellij.mermaid.lang.highlighting.MermaidPairMatcher"/>
-    <quoteHandler fileType="MyMermaid"
+    <quoteHandler fileType="Mermaid"
                   className="com.intellij.mermaid.editor.MermaidQuoteHandler"/>
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
 
     <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidNamedElement"
                              implementationClass="com.intellij.mermaid.lang.psi.MermaidIdentifierManipulator"/>
-    <lang.findUsagesProvider language="MyMermaid"
+    <lang.findUsagesProvider language="Mermaid"
                              implementationClass="com.intellij.mermaid.lang.MermaidFindUsagesProvider"/>
 
-    <lang.refactoringSupport language="MyMermaid"
+    <lang.refactoringSupport language="Mermaid"
                              implementationClass="com.intellij.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
 
     <typedHandler implementation="com.intellij.mermaid.editor.MermaidTypedHandlerDelegate"/>
 
     <lang.formatter
-      language="MyMermaid"
+      language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.formatter.MermaidFormattingModelBuilder"/>
     <langCodeStyleSettingsProvider
       implementation="com.intellij.mermaid.lang.formatter.settings.MermaidCodeStyleSettingsProvider"/>
