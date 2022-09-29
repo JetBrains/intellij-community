@@ -92,7 +92,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = IdeMenuBar.createMenuBar().setFrame(frame);
+    IdeMenuBar menu = IdeMenuBar.createMenuBar();
     boolean isDecoratedMenu = isDecoratedMenu();
     if (!isDecoratedMenu && !FrameInfoHelper.isFloatingMenuBarSupported()) {
       setJMenuBar(menu);
@@ -103,7 +103,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         ToolbarUtil.removeSystemTitleBar(this);
 
         mySelectedEditorFilePath = CustomDecorationPath.Companion.createMainInstance(frame);
-        IdeMenuBar ideMenu = IdeMenuBar.createMenuBar().setFrame(frame);
+        IdeMenuBar ideMenu = IdeMenuBar.createMenuBar();
         if (ExperimentalUI.isNewUI()) {
           myCustomFrameTitlePane = SystemInfoRt.isMac
                                    ? new MacToolbarFrameHeader(frame, this, ideMenu)

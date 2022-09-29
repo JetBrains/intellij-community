@@ -110,7 +110,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
+        rootPane.jMenuBar = WelcomeFrameMenuBar()
       }
       content.setContent(screen.welcomePanel)
     }
@@ -178,7 +178,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
-        rootPane.jMenuBar = WelcomeFrameMenuBar().setFrame(this)
+        rootPane.jMenuBar = WelcomeFrameMenuBar()
       }
       content.setContent(screen.welcomePanel)
     }

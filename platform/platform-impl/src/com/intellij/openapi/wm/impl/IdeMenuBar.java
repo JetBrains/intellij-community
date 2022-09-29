@@ -75,15 +75,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private double myProgress;
   private boolean myActivated;
 
-  private final MenuBar myScreenMenuPeer = Menu.isJbScreenMenuEnabled() ? new MenuBar("MainMenu") : null;
+  private MenuBar myScreenMenuPeer;
 
   public static @NotNull IdeMenuBar createMenuBar() {
     return SystemInfoRt.isLinux ? new LinuxIdeMenuBar() : new IdeMenuBar();
-  }
-
-  public IdeMenuBar setFrame(@NotNull JFrame frame) {
-    if (myScreenMenuPeer != null) myScreenMenuPeer.setFrame(frame);
-    return this;
   }
 
   protected IdeMenuBar() {
@@ -275,6 +270,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   @Override
   public void addNotify() {
     super.addNotify();
+    if (Menu.isJbScreenMenuEnabled()) {
+      myScreenMenuPeer = new MenuBar("MainMenu");
+      myScreenMenuPeer.setFrame(SwingUtilities.getWindowAncestor(this));
+    }
     ActionManagerEx.doWithLazyActionManager(actionManager -> {
       if (myDisposable.isDisposed()) return;
       doUpdateMenuActions(false, actionManager);
@@ -292,6 +291,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public void removeNotify() {
+    if (myScreenMenuPeer != null) {
+      myScreenMenuPeer.dispose();
+      myScreenMenuPeer = null;
+    }
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myAnimator != null) {
         myAnimator.suspend();
