@@ -85,7 +85,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
     val snapshot = initialSnapshotProvider(collectCurrentSnapshot())
-    applyState(IDE_REF_NAME, snapshot, "Copy current configs")
+    applyState(IDE_REF_NAME, snapshot, "Copy current configs", warnAboutEmptySnapshot = false)
   }
 
   private fun initRepository(repository: Repository?) {
@@ -118,9 +118,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return getMasterPosition()
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
-    if (snapshot.isEmpty()) {
-      LOG.error("Empty snapshot")
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String, warnAboutEmptySnapshot: Boolean = true) {
+    if (snapshot.isEmpty() && warnAboutEmptySnapshot) {
+      LOG.error("Empty snapshot, requested to apply on branch '$refName' with message '$message'")
       return
     }
 
