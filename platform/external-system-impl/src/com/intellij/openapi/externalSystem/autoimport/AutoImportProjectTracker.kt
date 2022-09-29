@@ -17,7 +17,9 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.BooleanProperty
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -34,17 +36,10 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
-  private val isDisabled = AtomicBooleanProperty(isDisabledAutoReload.get())
-  private val asyncChangesProcessingProperty = AtomicBooleanProperty(
-    !ApplicationManager.getApplication().isHeadlessEnvironment
-    || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
-  )
   private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
   private val projectReloadOperation = CompoundParallelOperationTrace<String>(debugName = "Project reload operation")
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, project)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
-
-  var isAsyncChangesProcessing by asyncChangesProcessingProperty
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
@@ -156,8 +151,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   private fun isDisabledAutoReload(): Boolean {
-    return isDisabled.get() ||
-           Registry.`is`("external.system.auto.import.disabled") ||
+    return Registry.`is`("external.system.auto.import.disabled") ||
+           !isEnabledAutoReload ||
            !projectChangeOperation.isOperationCompleted() ||
            !projectReloadOperation.isOperationCompleted()
   }
@@ -255,7 +250,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     LOG.debug("Project tracker initialization")
     ApplicationManager.getApplication().messageBus.connect(project).subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
     dispatcher.setRestartTimerOnAdd(true)
-    dispatcher.isPassThrough = !isAsyncChangesProcessing
+    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
     dispatcher.activate()
   }
 
@@ -265,15 +260,6 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       .filter { it.isActivated }
       .map { it.projectAware.projectId }
       .toSet()
-
-  /**
-   * Enables auto-import in tests
-   * Note: project tracker automatically enabled out of tests
-   */
-  @TestOnly
-  fun enableAutoImportInTests() {
-    isDisabled.set(false)
-  }
 
   @TestOnly
   fun setDispatcherMergingSpan(delay: Int) {
@@ -339,14 +325,40 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
     }
 
-    private val isDisabledAutoReload = AtomicBooleanProperty(
-      ApplicationManager.getApplication().isUnitTestMode
+    private val enableAutoReloadProperty = AtomicBooleanProperty(
+      !ApplicationManager.getApplication().isUnitTestMode
     )
 
+    private val asyncChangesProcessingProperty = AtomicBooleanProperty(
+      !ApplicationManager.getApplication().isHeadlessEnvironment
+      || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+    )
+
+    private val isEnabledAutoReload by enableAutoReloadProperty
+    val isAsyncChangesProcessing get() = asyncChangesProcessingProperty.get()
+
+    /**
+     * Enables auto-import in tests
+     * Note: project tracker automatically enabled out of tests
+     */
     @TestOnly
+    @JvmStatic
     fun enableAutoReloadInTests(parentDisposable: Disposable) {
-      Disposer.register(parentDisposable) { isDisabledAutoReload.reset() }
-      isDisabledAutoReload.set(false)
+      enableAutoReloadProperty.set(true, parentDisposable)
+    }
+
+    @TestOnly
+    @JvmStatic
+    fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
+      asyncChangesProcessingProperty.set(true, parentDisposable)
+    }
+
+    private fun <T> ObservableMutableProperty<T>.set(value: T, parentDisposable: Disposable) {
+      val oldValue = get()
+      set(value)
+      parentDisposable.whenDisposed {
+        set(oldValue)
+      }
     }
   }
 }

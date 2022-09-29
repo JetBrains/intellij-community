@@ -48,7 +48,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   protected lateinit var testDisposable: Disposable
   private val notificationAware get() =  AutoImportProjectNotificationAware.getInstance(myProject)
-  private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
+  private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject)
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 
   protected val projectRoot get() = myProjectRoot!!
@@ -241,7 +241,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
 
   protected fun enableAsyncExecution() {
-    projectTracker.isAsyncChangesProcessing = true
+    AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
   }
 
   @Suppress("SameParameterValue")
@@ -324,6 +324,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun setUp() {
     super.setUp()
     testDisposable = Disposer.newDisposable()
+    AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     myProject.replaceService(ExternalSystemProjectTrackerSettings::class.java, AutoImportProjectTrackerSettings(), testDisposable)
     myProject.replaceService(ExternalSystemProjectTracker::class.java, AutoImportProjectTracker(myProject), testDisposable)
   }
@@ -425,7 +426,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)) =
-    MockProjectAware(projectId, myProject, testDisposable)
+    MockProjectAware(projectId, testDisposable)
 
   protected inner class SimpleTestBench(val projectAware: MockProjectAware) {
 

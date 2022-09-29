@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
@@ -156,13 +157,13 @@ class ProjectSettingsTracker(
   }
 
   private fun submitSettingsFilesRefresh(callback: (Set<String>) -> Unit) {
-    EdtAsyncSupplier.invokeOnEdt(projectTracker::isAsyncChangesProcessing, {
+    EdtAsyncSupplier.invokeOnEdt(::isAsyncChangesProcessing, {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { Path.of(it) }
-        localFileSystem.refreshNioFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
+        localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
           callback(settingsPaths)
         }
       }
@@ -176,7 +177,7 @@ class ProjectSettingsTracker(
     callback: (Map<String, Long>) -> Unit
   ) {
     val builder = ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
-      .shouldKeepTasksAsynchronous { projectTracker.isAsyncChangesProcessing }
+      .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
     if (isMergeSameCalls) {
       builder.coalesceBy(this, operationName)
     }
@@ -329,10 +330,10 @@ class ProjectSettingsTracker(
   private inner class SettingsFilesAsyncSupplier : AsyncSupplier<Set<String>> {
     private val cachingAsyncSupplier = CachingAsyncSupplier(
       BackgroundAsyncSupplier.Builder(projectAware::settingsFiles)
-        .shouldKeepTasksAsynchronous(projectTracker::isAsyncChangesProcessing)
+        .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
         .build(backgroundExecutor))
     private val supplier = BackgroundAsyncSupplier.Builder(cachingAsyncSupplier)
-      .shouldKeepTasksAsynchronous(projectTracker::isAsyncChangesProcessing)
+      .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
       .build(backgroundExecutor)
 
     override fun supply(consumer: (Set<String>) -> Unit, parentDisposable: Disposable) {

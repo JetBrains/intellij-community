@@ -89,7 +89,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                            </module>""");
 
     Project fooProject = PlatformTestUtil.loadAndOpenProject(foo.toNioPath(), getTestRootDisposable());
-    AutoImportProjectTracker.getInstance(fooProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(getTestRootDisposable());
 
     try {
       edt(() -> UIUtil.dispatchAllInvocationEvents());

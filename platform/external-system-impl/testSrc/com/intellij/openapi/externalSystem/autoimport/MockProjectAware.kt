@@ -8,7 +8,6 @@ import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrac
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.observable.operations.onceAfterOperation
 import com.intellij.openapi.observable.operations.subscribe
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ConcurrencyUtil.once
 import com.intellij.util.EventDispatcher
@@ -20,7 +19,6 @@ import kotlin.concurrent.thread
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val project: Project,
   private val parentDisposable: Disposable
 ) : ExternalSystemProjectAware {
 
@@ -116,8 +114,7 @@ class MockProjectAware(
   }
 
   private fun background(action: () -> Unit) {
-    val projectTracker = AutoImportProjectTracker.getInstance(project)
-    if (projectTracker.isAsyncChangesProcessing) {
+    if (AutoImportProjectTracker.isAsyncChangesProcessing) {
       thread(block = action)
     }
     else {
