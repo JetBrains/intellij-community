@@ -6,9 +6,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.model.ExternalDependency;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.immutableList;
 
@@ -19,19 +21,18 @@ public final class AnnotationProcessingData {
 
   private static final Interner<AnnotationProcessingData> ourInterner = Interner.createWeakInterner();
 
-  private final Collection<String> path;
   private final Collection<String> arguments;
+  private final Collection<ExternalDependency> dependencies;
 
-  public static AnnotationProcessingData create(@NotNull Collection<String> path,
-                       @NotNull Collection<String> arguments) {
-    return ourInterner.intern(new AnnotationProcessingData(path, arguments));
+  public static AnnotationProcessingData create(@NotNull Collection<String> arguments,
+                                                @NotNull Collection<ExternalDependency> dependencies) {
+    return ourInterner.intern(new AnnotationProcessingData(arguments, dependencies));
   }
 
-  @PropertyMapping({"path", "arguments"})
-  private AnnotationProcessingData(@NotNull Collection<String> path,
-                                  @NotNull Collection<String> arguments) {
-    this.path = immutableList(new ArrayList<>(path));
+  @PropertyMapping({"arguments", "dependencies"})
+  private AnnotationProcessingData(@NotNull Collection<String> arguments, Collection<ExternalDependency> dependencies) {
     this.arguments = immutableList(new ArrayList<>(arguments));
+    this.dependencies = immutableList(new ArrayList<>(dependencies == null ? new ArrayList<>() : dependencies));
   }
 
   /**
@@ -46,8 +47,8 @@ public final class AnnotationProcessingData {
    * Annotation processor path
    * @return immutable collection of path elements
    */
-  public Collection<String> getPath() {
-    return path;
+  public Collection<ExternalDependency> getDependencies() {
+    return dependencies;
   }
 
   @Override
@@ -57,17 +58,15 @@ public final class AnnotationProcessingData {
 
     AnnotationProcessingData data = (AnnotationProcessingData)o;
 
-    if (!path.equals(data.path)) return false;
     if (!arguments.equals(data.arguments)) return false;
+    if (!dependencies.equals(data.dependencies)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = path.hashCode();
-    result = 31 * result + arguments.hashCode();
-    return result;
+    return Objects.hash(arguments, dependencies);
   }
 
   public static class AnnotationProcessorOutput {

@@ -13,7 +13,7 @@ public interface AnnotationProcessingConfig {
    * Contains annotation processor along with all transitive dependencies
    * @return see above
    */
-  @NotNull Collection<String> getAnnotationProcessorPath();
+  @NotNull Collection<ExternalDependency> annotationProcessors();
 
   /**
    * Annotation processor arguments

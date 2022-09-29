@@ -4,12 +4,15 @@ package org.jetbrains.plugins.gradle.service.project.data
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
+import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -29,7 +32,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
+import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -62,7 +68,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
         continue
       }
 
-      config.configureAnnotationProcessing(ideModule, node.data, importedData)
+      config.configureAnnotationProcessing(ideModule, node, importedData)
 
       if (projectData != null) {
         val isDelegatedBuild = GradleSettings.getInstance(project).getLinkedProjectSettings(
@@ -196,7 +202,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
     Computable {
       val profiles = ArrayList((CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).moduleProcessorProfiles)
       val importedProcessingProfiles = ArrayList(toImport).asSequence()
-        .map { it.data }
+        .map { it }
         .distinct()
         .map { createProcessorConfigProfile(it) }
         .toList()
@@ -231,10 +237,10 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
   }
 
   private fun CompilerConfigurationImpl.configureAnnotationProcessing(ideModule: Module,
-                                                                      data: AnnotationProcessingData,
+                                                                      node: DataNode<AnnotationProcessingData>,
                                                                       importedData: MutableSet<AnnotationProcessingData>) {
-    val profile = findOrCreateProcessorConfigProfile(data)
-    if (importedData.add(data)) {
+    val profile = findOrCreateProcessorConfigProfile(node)
+    if (importedData.add(node.data)) {
       profile.clearModuleNames()
     }
 
@@ -246,20 +252,60 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
     }
   }
 
-  private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: AnnotationProcessingData): ProcessorConfigProfile {
+  private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: DataNode<AnnotationProcessingData>): ProcessorConfigProfile {
     val newProfile = createProcessorConfigProfile(data)
     return ArrayList(this.moduleProcessorProfiles)
              .find { existing -> existing.matches(newProfile) }
            ?: newProfile.also { addModuleProcessorProfile(it) }
   }
 
-  private fun createProcessorConfigProfile(annotationProcessingData: AnnotationProcessingData): ProcessorConfigProfileImpl {
+  private fun createProcessorConfigProfile(annotationProcessingData: DataNode<AnnotationProcessingData>): ProcessorConfigProfileImpl {
     val newProfile = ProcessorConfigProfileImpl(IMPORTED_PROFILE_NAME)
-    newProfile.setProcessorPath(annotationProcessingData.path.joinToString(separator = File.pathSeparator))
-    annotationProcessingData.arguments
+    val path = annotationProcessingData.data.dependencies.flatMap { extractFilePath(annotationProcessingData, it) }
+      .joinToString(separator = File.pathSeparator)
+    newProfile.setProcessorPath(path)
+    annotationProcessingData.data.arguments
       .map { it.removePrefix("-A").split('=', limit = 2) }
       .forEach { newProfile.setOption(it[0], if (it.size > 1) it[1] else "") }
     return newProfile
+  }
+
+  private fun extractFilePath(annotationProcessingData: DataNode<AnnotationProcessingData>, dependency: ExternalDependency): Set<String> {
+    if (dependency is ExternalLibraryDependency) {
+      return setOf(dependency.file.path)
+    }
+    else if (dependency is ExternalMultiLibraryDependency) {
+      return dependency.files.map { it.path }.toSet()
+    }
+    else if (dependency is ExternalProjectDependency) {
+      val projectData = ExternalSystemApiUtil.findParent(annotationProcessingData, ProjectKeys.PROJECT)
+      val moduleData = GradleProjectResolverUtil.findModuleById(projectData, dependency.projectPath)
+
+      val gradleSourceSet = ExternalSystemApiUtil.find(moduleData as DataNode<ModuleData>,
+                                                       GradleSourceSetData.KEY) { node -> node.data.id.endsWith(":main") }
+
+      if (gradleSourceSet != null) {
+        val module = gradleSourceSet.getUserData(AbstractModuleDataService.MODULE_KEY)
+
+        val outputPath = CompilerPaths.getModuleOutputPath(module, false)
+        if (outputPath == null) {
+          return emptySet()
+        }
+
+        return setOf(outputPath)
+      }
+      return emptySet()
+    }
+    else if (dependency is FileCollectionDependency) {
+      return dependency.files.map { it.path }.toSet()
+    }
+    else if (dependency is UnresolvedExternalDependency) {
+      //Can not know the path of an unresolved dependency. Error will be reported elsewhere
+      return setOf()
+    }
+    else {
+      return setOf()
+    }
   }
 
   private fun ProcessorConfigProfile.matches(other: ProcessorConfigProfile): Boolean {

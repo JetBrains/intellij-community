@@ -5,6 +5,7 @@ import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
+import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
 import java.io.File;
@@ -14,22 +15,26 @@ import java.util.Collection;
 import java.util.List;
 
 public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfig, Serializable {
-  private final List<File> myPaths;
+
+  private final List<ExternalDependency> myDependencies;
   private final List<String> myArgs;
   private final String myProcessorOutput;
   private final boolean isTestSources;
 
-  public AnnotationProcessingConfigImpl(Collection<File> files, List<String> args, String output, boolean sources) {
+  public AnnotationProcessingConfigImpl(List<String> args,
+                                        String output,
+                                        boolean sources,
+                                        Collection<ExternalDependency> dependencies) {
     myProcessorOutput = output;
     isTestSources = sources;
-    myPaths = new ArrayList<File>(files);
     myArgs = args;
+    myDependencies = new ArrayList<>(dependencies);
   }
 
   @NotNull
   @Override
-  public Collection<String> getAnnotationProcessorPath() {
-    return GradleContainerUtil.unmodifiablePathSet(myPaths);
+  public Collection<ExternalDependency> annotationProcessors() {
+    return myDependencies;
   }
 
   @NotNull
@@ -55,12 +60,12 @@ public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfi
     AnnotationProcessingConfigImpl config = (AnnotationProcessingConfigImpl)o;
     return isTestSources == config.isTestSources &&
            Objects.equal(myProcessorOutput, config.myProcessorOutput) &&
-           Objects.equal(myPaths, config.myPaths) &&
+           Objects.equal(myDependencies, config.myDependencies) &&
            Objects.equal(myArgs, config.myArgs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myPaths, myArgs, myProcessorOutput, isTestSources);
+    return Objects.hashCode(myArgs, myDependencies, myProcessorOutput, isTestSources);
   }
 }

@@ -8,6 +8,7 @@ import com.amazon.ion.system.IonReaderBuilder;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
+import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
@@ -17,6 +18,7 @@ import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -93,9 +95,9 @@ public final class AnnotationProcessingModelSerializationService implements Seri
         writer.writeInt(objectId);
         if (isAdded) {
           writeStrings(writer, "args", config.getAnnotationProcessorArguments());
-          writeStrings(writer, "paths", config.getAnnotationProcessorPath());
           writeString(writer, "output", config.getProcessorOutput());
           writeBoolean(writer, "isTestSources", config.isTestSources());
+          ExternalProjectSerializationService.writeDependencies(writer, context.dependencyContext, config.annotationProcessors());
         }
         writer.stepOut();
       }
@@ -142,10 +144,11 @@ public final class AnnotationProcessingModelSerializationService implements Seri
           @Override
           public AnnotationProcessingConfigImpl create() {
             List<String> args = readStringList(reader);
-            List<File> files = readFiles(reader);
             String output = readString(reader, "output");
-            boolean isTest = readBoolean(reader,"isTestSources");
-            return new AnnotationProcessingConfigImpl(files, args, output, isTest);
+            boolean isTest = readBoolean(reader, "isTestSources");
+            List<ExternalDependency> dependencies =
+              new ArrayList<>(ExternalProjectSerializationService.readDependencies(reader, context.dependencyContext));
+            return new AnnotationProcessingConfigImpl(args, output, isTest, dependencies);
           }
         });
     reader.stepOut();
@@ -163,10 +166,15 @@ public final class AnnotationProcessingModelSerializationService implements Seri
 
     private final ObjectCollector<AnnotationProcessingConfig, IOException> configCollector =
       new ObjectCollector<AnnotationProcessingConfig, IOException>();
+
+    private final ExternalProjectSerializationService.WriteContext dependencyContext =
+      new ExternalProjectSerializationService.WriteContext();
   }
 
   private static class ReadContext {
     private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<AnnotationProcessingModelImpl>();
     private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<AnnotationProcessingConfigImpl>();
+
+    private final ExternalProjectSerializationService.ReadContext dependencyContext = new ExternalProjectSerializationService.ReadContext();
   }
 }
