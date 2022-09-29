@@ -1,15 +1,11 @@
 package com.intellij.mermaid.lang.parser
 
 import com.intellij.mermaid.lang.MermaidParserDefinition
-import com.intellij.mermaid.lang.lexer.MermaidLexer
-import com.intellij.lang.ASTNode
-import com.intellij.lang.PsiBuilderFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.ParsingTestCase
 import java.util.*
 
-abstract class MermaidParserTestCase(val diagramName: String) : ParsingTestCase("parser/$diagramName", "mymermaid", true, MermaidParserDefinition()) {
+abstract class MermaidParserTestCase(val diagramName: String) : ParsingTestCase("parser/$diagramName", "mermaid", true, MermaidParserDefinition()) {
   override fun getTestDataPath(): String {
     return "src/test/resources"
   }

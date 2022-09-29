@@ -38,8 +38,8 @@ class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest() {
-    val before = getTestName(true) + "_before.mymermaid"
-    val after = getTestName(true) + "_after.mymermaid"
+    val before = getTestName(true) + "_before.mermaid"
+    val after = getTestName(true) + "_after.mermaid"
     runWithTemporaryStyleSettings { settings ->
       settings.apply {
         getLanguageIndentOptions(MermaidLanguage).apply {
