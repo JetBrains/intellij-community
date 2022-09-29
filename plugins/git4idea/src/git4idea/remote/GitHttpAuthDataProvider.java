@@ -18,6 +18,7 @@ package git4idea.remote;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.AuthData;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,16 +32,17 @@ public interface GitHttpAuthDataProvider {
 
   ExtensionPointName<GitHttpAuthDataProvider> EP_NAME = ExtensionPointName.create("Git4Idea.GitHttpAuthDataProvider");
 
-  @Nullable
-  default AuthData getAuthData(@NotNull Project project, @NotNull String url, @NotNull String login) {
+  @RequiresBackgroundThread
+  default @Nullable AuthData getAuthData(@NotNull Project project, @NotNull String url, @NotNull String login) {
     return getAuthData(project, url);
   }
 
-  @Nullable
-  default AuthData getAuthData(@NotNull Project project, @NotNull String url) {
+  @RequiresBackgroundThread
+  default @Nullable AuthData getAuthData(@NotNull Project project, @NotNull String url) {
     return null;
   }
 
+  @RequiresBackgroundThread
   default void forgetPassword(@NotNull Project project, @NotNull String url, @NotNull AuthData authData) {
   }
 
