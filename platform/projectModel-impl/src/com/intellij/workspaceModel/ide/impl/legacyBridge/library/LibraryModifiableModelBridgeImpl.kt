@@ -316,7 +316,10 @@ internal class LibraryModifiableModelBridgeImpl(
 
     update {
       roots.removeIf{ it.url == virtualFileUrl && it.type.name == rootType.name() }
-      excludedRoots = excludedRoots.filter { isUnderRoots(it.url, roots) }
+    }
+    val libraryEntity = currentLibrary.libraryEntity
+    libraryEntity.excludedRoots.filterNot { isUnderRoots(it.url, libraryEntity.roots) }.forEach { 
+      diff.removeEntity(it)
     }
 
     if (assertChangesApplied && currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) {
@@ -331,11 +334,9 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
-    if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) return false
-
-    update {
-      excludedRoots = excludedRoots.filter { it.url != virtualFileUrl }
-    }
+    val excludeUrlEntity = currentLibrary.libraryEntity.excludedRoots.find { it.url == virtualFileUrl }
+    if (excludeUrlEntity == null) return false
+    diff.removeEntity(excludeUrlEntity)
 
     if (assertChangesApplied && currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) {
       error("removeRoot: removed excluded url '${virtualFileUrl.url}' still exists after removing")

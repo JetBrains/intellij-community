@@ -13,10 +13,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.junit.*
 import org.junit.Assert.*
 
@@ -37,15 +34,18 @@ class ProjectLibraryBridgeTest {
 
   private lateinit var project: Project
   private lateinit var events: MutableList<EntityChange<LibraryEntity>>
+  private lateinit var excludedUrlEvents: MutableList<EntityChange<ExcludeUrlEntity>>
 
   @Before
   fun prepareProject() {
     project = projectModel.project
 
     events = mutableListOf()
+    excludedUrlEvents = mutableListOf()
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         events.addAll(event.getChanges(LibraryEntity::class.java))
+        excludedUrlEvents.addAll(event.getChanges(ExcludeUrlEntity::class.java))
       }
     })
   }
@@ -258,6 +258,25 @@ class ProjectLibraryBridgeTest {
       assertEquals(1, moduleDependencies.size)
       assertTrue(moduleDependencies[0] is ModuleDependencyItem.ModuleSourceDependency)
     }
+  }
+
+  @Test
+  fun `add remove excluded root`() {
+    val library = createProjectLibrary("lib")
+    assertEquals(2, events.size)
+    assertEquals(0, excludedUrlEvents.size)
+    
+    val root = library.getFiles(OrderRootType.CLASSES).single()
+    projectModel.modifyLibrary(library) {
+      it.addExcludedRoot(root.url)
+    }
+    assertTrue(excludedUrlEvents.last() is EntityChange.Added)
+    
+    projectModel.modifyLibrary(library) {
+      it.removeExcludedRoot(root.url)
+    }
+    assertEquals(2, excludedUrlEvents.size)
+    assertTrue(excludedUrlEvents.last() is EntityChange.Removed)
   }
 
   private fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
