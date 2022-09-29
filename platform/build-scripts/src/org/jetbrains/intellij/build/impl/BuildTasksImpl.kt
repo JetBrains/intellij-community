@@ -1150,6 +1150,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
       }
 
       val commonFilter: (String) -> Boolean = { relPath ->
+        !relPath.startsWith("Info.plist") &&
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
