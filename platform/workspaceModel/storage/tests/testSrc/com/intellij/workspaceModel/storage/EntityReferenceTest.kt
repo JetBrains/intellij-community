@@ -3,7 +3,9 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class EntityReferenceTest {
@@ -52,4 +54,31 @@ class EntityReferenceTest {
     }
   }
 
+  @Test
+  @Disabled("Wrong entity reference behaviour")
+  fun `wrong entity ref resolve in different storage`() {
+    val mutableStorage = MutableEntityStorageImpl.create()
+    val sampleEntity = mutableStorage.addSampleEntity("hello")
+    val reference = sampleEntity.createReference<SampleEntity>()
+
+    val mutableStorage1 = MutableEntityStorageImpl.create()
+    mutableStorage1.addSampleEntity("buy")
+    assertNull(reference.resolve(mutableStorage1))
+  }
+
+  @Test
+  @Disabled("Wrong entity reference behaviour")
+  fun `wrong entity ref resolve in same storage`() {
+    val mutableStorage = MutableEntityStorageImpl.create()
+    val sampleEntity = mutableStorage.addSampleEntity("hello")
+    val reference = sampleEntity.createReference<SampleEntity>()
+    mutableStorage.addSampleEntity("buy")
+    val toBuilder = mutableStorage.toSnapshot().toBuilder()
+    val sampleEntity2 = toBuilder.entities(SampleEntity::class.java).first()
+    toBuilder.removeEntity(sampleEntity2)
+    val toBuilder1 = toBuilder.toSnapshot().toBuilder()
+    val sampleEntity1 = toBuilder1.addSampleEntity("own")
+    val resolve = reference.resolve(toBuilder1)
+    assertEquals(sampleEntity.stringProperty, resolve!!.stringProperty)
+  }
 }
