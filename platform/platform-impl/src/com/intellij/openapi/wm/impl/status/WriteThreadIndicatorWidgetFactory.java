@@ -13,13 +13,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Deque;
-import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory {
@@ -78,7 +81,7 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
       myCurrentStats = new AtomicIntegerArray(4);
       myComponent.repaint();
     });
-    private final java.util.Timer ourTimer2 = new java.util.Timer("Write Thread Widget Timer");
+    private Future<?> ourTimer2 = new CompletableFuture<>();
 
     @Override
     public JComponent getComponent() {
@@ -98,21 +101,18 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
         return;
       }
 
-      ourTimer2.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          boolean currentValue = application.isCurrentWriteOnEdt();
-          AtomicIntegerArray currentStats = myCurrentStats;
-          currentStats.incrementAndGet((currentValue ? ThreeState.YES : ThreeState.NO).ordinal());
-          currentStats.incrementAndGet(3);
-        }
-      }, 0, 1);
+      ourTimer2 = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+        boolean currentValue = application.isCurrentWriteOnEdt();
+        AtomicIntegerArray currentStats = myCurrentStats;
+        currentStats.incrementAndGet((currentValue ? ThreeState.YES : ThreeState.NO).ordinal());
+        currentStats.incrementAndGet(3);
+      }, 0, 1, TimeUnit.MILLISECONDS);
       myTimer.start();
     }
 
     @Override
     public void dispose() {
-      ourTimer2.cancel();
+      ourTimer2.cancel(true);
       myTimer.stop();
     }
 
