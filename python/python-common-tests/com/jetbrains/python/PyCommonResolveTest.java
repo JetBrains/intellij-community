@@ -1678,4 +1678,14 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   public void testRestDocstringCvarNameResolvesToInheritedClassAttribute() {
     runWithDocStringFormat(DocStringFormat.REST, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
   }
+
+  // PY-50788
+  public void testNumpyDocstringAttributeNameResolvesToInheritedInstanceAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
+  }
+
+  // PY-50788
+  public void testNumpyDocstringAttributeNameResolvesToInheritedClassAttribute() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
+  }
 }
