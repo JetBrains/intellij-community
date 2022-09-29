@@ -25,9 +25,7 @@ public final class ProjectFilesScope extends NamedScope {
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         if (ScratchUtil.isScratch(file)) return true;
         ProjectFileIndex fileIndex = getFileIndex(project);
-        return fileIndex != null
-               && !fileIndex.isExcluded(file)
-               && fileIndex.getContentRootForFile(file) != null;
+        return fileIndex != null && fileIndex.isInContent(file);
       }
     });
   }
