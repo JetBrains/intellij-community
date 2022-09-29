@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
@@ -171,8 +170,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    val targetIcon = (icon as? DeferredIcon)?.baseIcon ?: icon
-    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(targetIcon, Color.WHITE), x, y)
+    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, Color.WHITE), x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
