@@ -135,8 +135,9 @@ internal class WindowsDistributionBuilder(
                               context = context)
       }
 
-      context.executeStep(spanBuilder("build Windows installer").setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
+      context.executeStep(spanBuilder("build Windows installer")
+                            .setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+        val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
         validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, arch = arch, isJreIncluded = true, context = context),
                             relativePathToProductJson = "",
                             installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, jreDir),
@@ -370,7 +371,7 @@ internal class WindowsDistributionBuilder(
 }
 
 private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
-                                                 @Suppress("SameParameterValue") zipNameSuffix: String,
+                                                 zipNameSuffix: String,
                                                  winDistPath: Path,
                                                  arch: JvmArchitecture,
                                                  customizer: WindowsDistributionCustomizer,
@@ -379,24 +380,27 @@ private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
     val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     val targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
 
-    spanBuilder("build Windows ${zipNameSuffix}.zip distribution").setAttribute("targetFile", targetFile.toString()).useWithScope2 {
-      val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-      generateProductJson(targetDir = productJsonDir, arch = arch, isJreIncluded = !jreDirectoryPaths.isEmpty(), context = context)
+    spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+      .setAttribute("targetFile", targetFile.toString())
+      .setAttribute("arch", arch.dirName)
+      .useWithScope2 {
+        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+        generateProductJson(targetDir = productJsonDir, arch = arch, isJreIncluded = !jreDirectoryPaths.isEmpty(), context = context)
 
-      val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-      val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
+        val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+        val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
 
-      val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
-      if (context.options.compressZipFiles) {
-        zipWithCompression(targetFile = targetFile, dirs = dirMap)
+        val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
+        if (context.options.compressZipFiles) {
+          zipWithCompression(targetFile = targetFile, dirs = dirMap)
+        }
+        else {
+          zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
+        }
+        checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
+        context.notifyArtifactWasBuilt(targetFile)
+        targetFile
       }
-      else {
-        zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
-      }
-      checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
-      context.notifyArtifactWasBuilt(targetFile)
-      targetFile
-    }
   }
 }
 
