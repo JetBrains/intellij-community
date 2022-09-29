@@ -88,7 +88,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
   private final HgMergeProvider myMergeProvider;
@@ -105,7 +104,6 @@ public class HgVcs extends AbstractVcs {
   public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -287,7 +285,7 @@ public class HgVcs extends AbstractVcs {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
     }
-    myVcsManager.addMessageToConsoleWindow(message, contentType);
+    ProjectLevelVcsManager.getInstance(myProject).addMessageToConsoleWindow(message, contentType);
   }
 
   public HgExecutableValidator getExecutableValidator() {
