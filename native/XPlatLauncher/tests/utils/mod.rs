@@ -469,12 +469,19 @@ pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
         .join("java")
 }
 
+#[cfg(target_os = "linux")]
 pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
-    if env::consts::OS == "macos" {
-        jbr_dir.join("Contents").join("Home").canonicalize().unwrap()
-    } else {
-        jbr_dir.canonicalize().unwrap()
-    }
+    jbr_dir.canonicalize().unwrap()
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
+    jbr_dir.join("Contents").join("Home").canonicalize().unwrap()
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_jbr_home(jbr_dir: &PathBuf) -> PathBuf {
+    junction::get_target(jbr_dir).unwrap()
 }
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]

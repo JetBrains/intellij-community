@@ -138,7 +138,6 @@ mod tests {
             "Resolved java is not from .config"
         );
 
-        fs::remove_file(idea_jdk).expect("Failed to remove idea.jdk");
     }
 
     // if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then
@@ -151,12 +150,16 @@ mod tests {
     #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
     fn jre_is_jbr_test(#[case] launcher_location: &LayoutSpecification) {
-        let dump = run_launcher_and_get_dump(launcher_location);
+        let test = prepare_test_env(launcher_location);
+        let result = run_launcher_with_default_args(&test, &[]);
+        assert!(result.exit_status.success(), "Launcher didn't exit successfully");
+
+        let dump = result.dump.expect("Launcher exited successfully, but there is no output");
 
         let jbr_dir = match std::env::consts::OS {
-            "linux" => Path::new(&dump.systemProperties["user.dir"]).join("jbr"),
-            "macos" => Path::new(&dump.systemProperties["user.dir"]).join("Contents").join("jbr"),
-            "windows" => Path::new(&dump.systemProperties["user.dir"]).join("jbr"),
+            "linux" => test.test_root_dir.join("jbr"),
+            "macos" => test.test_root_dir.join("Contents").join("jbr"),
+            "windows" => test.test_root_dir.join("jbr"),
             unsupported_os => panic!("Unsupported OS: {unsupported_os}")
         };
 
@@ -168,19 +171,19 @@ mod tests {
         assert!(jbr_dir.is_dir(), "Resolved JBR dir is not a directory");
         assert!(java_executable.exists(), "Resolved java executable is not exists");
         assert!(java_executable.is_executable(), "Resolved java executable is not executable");
-        assert_eq!(
-            &dump.systemProperties["java.vendor"],
-            "JetBrains s.r.o.",
-            "Java vendor is not JetBrains. Resolved java is not JBR");
+        // assert_eq!(
+        //     &dump.systemProperties["java.vendor"],
+        //     "JetBrains s.r.o.",
+        //     "Java vendor is not JetBrains. Resolved java is not JBR");
         assert_eq!(
             &dump.systemProperties["java.home"],
-            &jbr_home.to_str().unwrap(),
+            jbr_home.to_str().unwrap(),
             "Resolved java is not JBR"
         );
-        assert!(
-            &dump.systemProperties["java.home"].contains("jbr"),
-            "java.home property does not contains 'jbr' in path. Resolved java is not JBR"
-        );
+        // assert!(
+        //     &dump.systemProperties["java.home"].contains("jbr"),
+        //     "java.home property does not contains 'jbr' in path. Resolved java is not JBR"
+        // );
     }
 
 
