@@ -43,6 +43,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -50,6 +51,7 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public abstract class TodoTreeBuilder implements Disposable {
@@ -320,35 +322,43 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   protected void rebuildCache() {
-    TreeUpdater uiUpdater = new TreeUpdater();
+    TreeUpdater bgtUpdater = new TreeUpdater();
     synchronized (LOCK) {
       clearPendingUpdates();
-      myPendingUpdates.add(uiUpdater);
+      myPendingUpdates.add(bgtUpdater);
     }
     JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
     if (loadingPanel != null) loadingPanel.startLoading();
     Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
-    SingleAlarm alarm = new SingleAlarm(() -> uiUpdater.accept(files), 1000, uiUpdater, Alarm.ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL);
-    ReadAction.nonBlocking(() -> {
-      collectFiles(virtualFile -> {
-        synchronized (LOCK) {
-          if (uiUpdater.isDisposed()) return false;
-          if (files.add(virtualFile)) {
-            alarm.request();
+    SingleAlarm alarm = new SingleAlarm(() -> bgtUpdater.accept(files),
+                                        1000,
+                                        bgtUpdater,
+                                        Alarm.ThreadToUse.POOLED_THREAD,
+                                        ModalityState.NON_MODAL);
+
+    ReadAction.nonBlocking((Callable<Void>)() -> {
+        collectFiles(virtualFile -> {
+          synchronized (LOCK) {
+            if (bgtUpdater.isDisposed()) return false;
+            if (files.add(virtualFile)) {
+              alarm.request();
+            }
           }
+          return true;
+        });
+
+        if (!bgtUpdater.isDisposed()) {
+          bgtUpdater.accept(files);
         }
-        return true;
-      });
-      return files;
-    })
-    .finishOnUiThread(ModalityState.NON_MODAL, o -> {
-      if (uiUpdater.isDisposed()) return;
-      if (loadingPanel != null) loadingPanel.stopLoading();
-      uiUpdater.accept(o);
-      Disposer.dispose(uiUpdater);
-    })
-    .expireWith(uiUpdater)
-    .submit(NonUrgentExecutor.getInstance());
+
+        return null;
+      })
+      .finishOnUiThread(ModalityState.NON_MODAL, o -> {
+        if (loadingPanel != null) loadingPanel.stopLoading();
+        Disposer.dispose(bgtUpdater);
+      })
+      .expireWith(bgtUpdater)
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   private void clearPendingUpdates() {
@@ -373,7 +383,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
 
     @Override
-    public void accept(Set<VirtualFile> files) {
+    public void accept(@NotNull Set<VirtualFile> files) {
       if (disposed || myDisposed || prevFilesSize == files.size()) return;
       prevFilesSize = files.size();
       rebuildCache(files);
@@ -393,7 +403,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   protected void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-    ApplicationManager.getApplication().assertIsWriteThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
@@ -406,7 +415,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   private void validateCache() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext();) {
@@ -485,15 +493,22 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  public final Promise<?> updateTree() {
+  @ApiStatus.Experimental
+  public final void updateTreeImmediately() {
+    FileTree.assertThreadIfNeeded();
+
     if (myUpdatable) {
-      return myModel.getInvoker().invoke(() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-          validateCache();
-          getTodoTreeStructure().validateCache();
-        }
-        myModel.invalidateAsync();
-      }, myProject.getDisposed()));
+      if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+        validateCache();
+        getTodoTreeStructure().validateCache();
+      }
+      myModel.invalidateAsync();
+    }
+  }
+
+  public final @NotNull Promise<?> updateTree() {
+    if (myUpdatable) {
+      return myModel.getInvoker().invoke(this::updateTreeImmediately);
     }
     return Promises.resolvedPromise();
   }
@@ -563,8 +578,18 @@ public abstract class TodoTreeBuilder implements Disposable {
   private void rebuildTreeOnSettingChange() {
     List<Object> pathsToSelect = TreeUtil.collectSelectedUserObjects(myTree);
     myTree.clearSelection();
-    getTodoTreeStructure().validateCache();
-    updateTree().onSuccess(o -> TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor)));
+
+    ReadAction.nonBlocking((Callable<Void>)() -> {
+        getTodoTreeStructure().validateCache();
+        updateTreeImmediately();
+
+        return null;
+      })
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.NON_MODAL, o -> {
+        TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor));
+      })
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   /**

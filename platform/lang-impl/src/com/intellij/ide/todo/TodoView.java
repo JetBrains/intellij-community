@@ -25,7 +25,6 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -38,6 +37,7 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
@@ -258,23 +258,26 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   public void refresh() {
-    ReadAction.nonBlocking(() -> {
-      Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
-      if (myAllTodos == null) {
-        return files;
-      }
-      for (TodoPanel panel : myPanels) {
-        panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
-          files.computeIfAbsent(panel, p -> new HashSet<>()).add(virtualFile);
-          return true;
-        });
-      }
-      return files;
-    })
-      .finishOnUiThread(ModalityState.NON_MODAL, files -> {
+    ReadAction.nonBlocking((Callable<Void>)() -> {
+        Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
+        if (myAllTodos != null) {
+          for (TodoPanel panel : myPanels) {
+            panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
+              files.computeIfAbsent(panel, __ -> new HashSet<>()).add(virtualFile);
+              return true;
+            });
+          }
+        }
+
         for (TodoPanel panel : myPanels) {
-          panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
+          panel.rebuildCache(files.getOrDefault(panel, Set.of()));
           panel.updateTree();
+        }
+
+        return null;
+      })
+      .finishOnUiThread(ModalityState.NON_MODAL, o -> {
+        for (TodoPanel ignored : myPanels) {
           notifyUpdateFinished();
         }
       })

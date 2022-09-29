@@ -281,7 +281,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * Immediately updates tree.
    */
   void updateTree() {
-    myTodoTreeBuilder.updateTree();
+    myTodoTreeBuilder.updateTreeImmediately();
   }
 
   /**
