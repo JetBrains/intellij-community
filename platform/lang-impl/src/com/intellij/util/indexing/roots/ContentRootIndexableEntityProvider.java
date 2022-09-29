@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,17 +41,18 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableSetSelfDependentOrigin> getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
-                                                                                                         @NotNull EntityStorage storage,
-                                                                                                         @NotNull Project project) {
+  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
+                                                                                    @NotNull EntityStorage storage,
+                                                                                    @NotNull Project project) {
     ModuleEntity moduleEntity = entity.getModule();
     ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
     if (module == null) {
-      return Collections.emptyList();
+      return null;
     }
     VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
-    List<VirtualFile> excludedFiles = IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
-    return Collections.singletonList(new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles));
+    List<VirtualFile> excludedFiles =
+      IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
+    return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles);
   }
 
   @Override
