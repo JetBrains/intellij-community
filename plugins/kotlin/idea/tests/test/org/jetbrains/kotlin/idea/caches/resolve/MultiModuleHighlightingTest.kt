@@ -177,7 +177,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
 
-            assertEquals(1, tracker.sdkResolversComputed.size)
+            assertEquals(0, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
 
             tracker.moduleResolversComputed.clear()
@@ -185,7 +185,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
                 (PsiModificationTracker.getInstance(myProject) as PsiModificationTrackerImpl).incOutOfCodeBlockModificationCounter()
             }
             checkHighlightingInProject { project.allKotlinFiles().filter { "m2" in it.name } }
-            assertEquals(2, tracker.sdkResolversComputed.size)
+            assertEquals(0, tracker.sdkResolversComputed.size)
             assertEquals(2, tracker.moduleResolversComputed.size)
         }
     }

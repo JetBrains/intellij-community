@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
+import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
@@ -225,7 +226,6 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
         val dependenciesForScriptDependencies = listOf(
             LibraryModificationTracker.getInstance(project),
-            ProjectRootModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
 
@@ -248,7 +248,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             //TODO: provide correct trackers
             dependencies = dependenciesForScriptDependencies,
             moduleFilter = { it == dependenciesModuleInfo },
-            invalidateOnOOCB = true
+            invalidateOnOOCB = false
         )
     }
 
@@ -288,7 +288,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             moduleFilter = moduleFilters::moduleFacadeFilter,
             dependencies = listOf(
                 LibraryModificationTracker.getInstance(project),
-                ProjectRootModificationTracker.getInstance(project)
+                ProjectRootModificationTracker.getInstance(project),
+                ModuleModificationTracker.getInstance(project)
             ),
             invalidateOnOOCB = true
         )

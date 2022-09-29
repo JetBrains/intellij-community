@@ -51,7 +51,12 @@ internal class ProjectResolutionFacade(
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
             val resolverProvider = computeModuleResolverProvider()
-            CachedValueProvider.Result.create(resolverProvider, resolverForProjectDependencies)
+            val allDependencies = if (invalidateOnOOCB) {
+                resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            } else {
+                resolverForProjectDependencies
+            }
+            CachedValueProvider.Result.create(resolverProvider, allDependencies)
         },
         /* trackValue = */ false
     )
@@ -105,14 +110,12 @@ internal class ProjectResolutionFacade(
                 }
             }
 
-            CachedValueProvider.Result.create(results, resolverForProjectDependencies)
+            val allDependencies = resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            CachedValueProvider.Result.create(results, allDependencies)
         }, false
     )
 
-    private val resolverForProjectDependencies = dependencies + listOf(
-        KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker,
-        globalContext.exceptionTracker
-    )
+    private val resolverForProjectDependencies = dependencies + globalContext.exceptionTracker
 
     private fun computeModuleResolverProvider(): ResolverForProject<IdeaModuleInfo> {
         val delegateResolverForProject: ResolverForProject<IdeaModuleInfo> =
@@ -135,7 +138,7 @@ internal class ProjectResolutionFacade(
             resolvedModulesWithDependencies,
             syntheticFilesByModule,
             delegateResolverForProject,
-            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else null,
+            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else LibraryModificationTracker.getInstance(project),
             settings
         )
     }
