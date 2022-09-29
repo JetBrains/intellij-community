@@ -18,6 +18,6 @@ public final class FeaturesTrainerIcons {
   /** 16x16 */ public static final @NotNull Icon FeatureTrainer = load("img/featureTrainer.svg", -702544516, 2);
   /** 13x13 */ public static final @NotNull Icon FeatureTrainerToolWindow = load("img/featureTrainerToolWindow.svg", -1207567605, 2);
   /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("img/greenCheckmark.svg", 1470976909, 2);
-  /** 40x40 */ public static final @NotNull Icon PluginIcon = load("img/pluginIcon.svg", -1525812347, 0);
+  /** 16x16 */ public static final @NotNull Icon PluginIcon = load("img/pluginIcon.svg", -475279622, 0);
   /** 16x16 */ public static final @NotNull Icon ResetLesson = load("img/resetLesson.svg", 98607716, 2);
 }

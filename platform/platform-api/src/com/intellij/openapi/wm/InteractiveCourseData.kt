@@ -21,7 +21,5 @@ interface InteractiveCourseData {
 
   fun getAction(): Action
 
-  fun getExpandContent(): JComponent
-
   fun newContentMarker(): JComponent? = null
 }
