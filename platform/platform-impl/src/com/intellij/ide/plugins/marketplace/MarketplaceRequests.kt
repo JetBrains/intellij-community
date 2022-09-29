@@ -61,7 +61,15 @@ class MarketplaceRequests : PluginInfoProvider {
     fun parsePluginList(input: InputStream): List<PluginNode> {
       try {
         val handler = RepositoryContentHandler()
-        SAXParserFactory.newDefaultInstance().newSAXParser().parse(InputSource(input), handler)
+
+        val spf = SAXParserFactory.newDefaultInstance()
+        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        spf.setFeature("http://xml.org/sax/features/external-general-entities", false)
+        spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+
+        val parser = spf.newSAXParser()
+
+        parser.parse(InputSource(input), handler)
         return handler.pluginsList
       }
       catch (e: Exception) {
