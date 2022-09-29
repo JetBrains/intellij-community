@@ -124,7 +124,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     putUserData(LombokInferredAnnotationProvider.CONTRACT_ANNOTATION,
                 JavaPsiFacade.getElementFactory(getProject())
                   .createAnnotationFromText('@' + JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT + "(" + parameters + ")",
-                                            null));
+                                            this));
     return this;
   }
 
