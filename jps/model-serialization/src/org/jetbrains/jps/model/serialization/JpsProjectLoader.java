@@ -386,7 +386,11 @@ public final class JpsProjectLoader extends JpsLoaderBase {
               data = externalData;
             }
             else {
-              JDOMUtil.merge(data, externalData);
+              JDOMUtil.deepMergeWithAttributes(data, externalData,
+                                               List.of(
+                                    new JDOMUtil.MergeAttribute("content", "url"),
+                                    new JDOMUtil.MergeAttribute("component", "name")
+                                  ));
             }
           }
         }
