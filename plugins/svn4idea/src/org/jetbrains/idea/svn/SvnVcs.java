@@ -102,11 +102,8 @@ public final class SvnVcs extends AbstractVcs {
   private UpdateEnvironment mySvnIntegrateEnvironment;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
-  private final VcsShowConfirmationOption myAddConfirmation;
-  private final VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
   private SvnCommittedChangesProvider myCommittedChangesProvider;
-  private final VcsShowSettingOption myCheckoutOptions;
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -129,11 +126,6 @@ public final class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
 
     cmdClientFactory = new CmdClientFactory(this);
-
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
-    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-    myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
@@ -293,18 +285,6 @@ public final class SvnVcs extends AbstractVcs {
     SvnLoadedBranchesStorage.getInstance(myProject).deactivate();
   }
 
-  public VcsShowConfirmationOption getAddConfirmation() {
-    return myAddConfirmation;
-  }
-
-  public VcsShowConfirmationOption getDeleteConfirmation() {
-    return myDeleteConfirmation;
-  }
-
-  public VcsShowSettingOption getCheckoutOptions() {
-    return myCheckoutOptions;
-  }
-
   @Override
   public EditFileProvider getEditFileProvider() {
     if (myEditFilesProvider == null) {
@@ -410,6 +390,16 @@ public final class SvnVcs extends AbstractVcs {
       mySvnDiffProvider = new SvnDiffProvider(this);
     }
     return mySvnDiffProvider;
+  }
+
+  @Override
+  public void loadSettings() {
+    super.loadSettings();
+
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
+    vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
+    vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
   }
 
   @Nullable

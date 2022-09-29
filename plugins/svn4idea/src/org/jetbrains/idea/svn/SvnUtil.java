@@ -16,9 +16,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -171,9 +169,12 @@ public final class SvnUtil {
   public static void doLockFiles(Project project, final SvnVcs activeVcs, final File @NotNull [] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
+    VcsShowSettingOption option = ProjectLevelVcsManager.getInstance(project)
+      .getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, activeVcs);
+
     // TODO[yole]: check for shift pressed
-    if (activeVcs.getCheckoutOptions().getValue()) {
-      LockDialog dialog = new LockDialog(project, true, ioFiles.length > 1);
+    if (option.getValue()) {
+      LockDialog dialog = new LockDialog(project, true, ioFiles.length > 1, option);
       if (!dialog.showAndGet()) {
         return;
       }
