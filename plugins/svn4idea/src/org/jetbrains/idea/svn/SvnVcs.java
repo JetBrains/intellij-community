@@ -93,9 +93,6 @@ public final class SvnVcs extends AbstractVcs {
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
 
-  private final SvnEntriesFileListener myEntriesFileListener;
-  private SvnFileSystemListener myFileOperationsHandler;
-
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
   private UpdateEnvironment mySvnUpdateEnvironment;
@@ -108,9 +105,7 @@ public final class SvnVcs extends AbstractVcs {
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
 
-  private final SvnChangelistListener myChangeListListener;
-
-  private Disposable myFrameStateListenerDisposable;
+  private Disposable myDisposable;
 
   //Consumer<Boolean>
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
@@ -126,15 +121,6 @@ public final class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
 
     cmdClientFactory = new CmdClientFactory(this);
-
-    if (myProject.isDefault()) {
-      myChangeListListener = null;
-      myEntriesFileListener = null;
-    }
-    else {
-      myEntriesFileListener = new SvnEntriesFileListener(project);
-      myChangeListListener = new SvnChangelistListener(this);
-    }
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
@@ -228,23 +214,23 @@ public final class SvnVcs extends AbstractVcs {
 
   @Override
   public void activate() {
-    MessageBusConnection busConnection = myProject.getMessageBus().connect();
-    if (!myProject.isDefault()) {
-      busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invokeRefreshSvnRoots());
-    }
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    myFileOperationsHandler = new SvnFileSystemListener(this);
-    if (myEntriesFileListener != null) {
-      VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
-    }
+
+    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    busConnection.subscribe(ChangeListListener.TOPIC, new SvnChangelistListener(this));
+    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invokeRefreshSvnRoots());
+
+    SvnFileSystemListener fileOperationsHandler = new SvnFileSystemListener(this);
+    Disposer.register(disposable, fileOperationsHandler);
+
+    VirtualFileManager.getInstance().addVirtualFileListener(new SvnEntriesFileListener(myProject), disposable);
+
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
-    if (myFrameStateListenerDisposable == null && !myProject.isDefault()) {
-      myFrameStateListenerDisposable = Disposer.newDisposable();
-      Topics.subscribe(ApplicationActivationListener.TOPIC, myFrameStateListenerDisposable,
-                       new MyFrameStateListener(ChangeListManager.getInstance(myProject), VcsDirtyScopeManager.getInstance(myProject)));
-    }
+    Topics.subscribe(ApplicationActivationListener.TOPIC, disposable,
+                     new MyFrameStateListener(ChangeListManager.getInstance(myProject), VcsDirtyScopeManager.getInstance(myProject)));
 
     mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
@@ -261,19 +247,11 @@ public final class SvnVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    Disposable frameStateListenerDisposable = myFrameStateListenerDisposable;
-    if (frameStateListenerDisposable != null) {
-      myFrameStateListenerDisposable = null;
-      Disposer.dispose(frameStateListenerDisposable);
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
 
-    if (myEntriesFileListener != null) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
-    }
-    if (myFileOperationsHandler != null) {
-      Disposer.dispose(myFileOperationsHandler);
-      myFileOperationsHandler = null;
-    }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
       myCommittedChangesProvider = null;
