@@ -3,6 +3,7 @@ package com.intellij.toolWindow
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -29,7 +30,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
     runBlocking {
       val project = project
       manager = object : ToolWindowManagerImpl(project) {
-        override fun fireStateChanged(changeType: ToolWindowManagerEventType) {}
+        override fun fireStateChanged(toolWidow: ToolWindow?, changeType: ToolWindowManagerEventType) {}
       }
       project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)
 
