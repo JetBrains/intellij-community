@@ -128,7 +128,45 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %xstate gitgraph
 
-//%xstate
+%xstate c4
+%xstate person
+%xstate person_ext
+%xstate system_ext_queue
+%xstate system_ext_db
+%xstate system_ext
+%xstate system_queue
+%xstate system_db
+%xstate system
+%xstate boundary
+%xstate enterprise_boundary
+%xstate system_boundary
+%xstate container_ext_db
+%xstate container_ext
+%xstate container_queue
+%xstate container_ext_queue
+%xstate container_db
+%xstate container
+%xstate container_boundary
+%xstate component_ext_db
+%xstate component_ext
+%xstate component_queue
+%xstate component_ext_queue
+%xstate component_db
+%xstate component
+%xstate node
+%xstate node_l
+%xstate node_r
+%xstate rel
+%xstate birel
+%xstate rel_u
+%xstate rel_d
+%xstate rel_l
+%xstate rel_r
+%xstate rel_b
+%xstate rel_index
+%xstate update_el_style
+%xstate update_rel_style
+%xstate update_layout_config
 
 %%
 
@@ -148,6 +186,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
   "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
   "gitgraph" { yybegin(gitgraph); return GitGraph.GIT_GRAPH; }
+  "C4Context" { yybegin (c4); return C4.C4_CONTEXT; }
+  "C4Container" { yybegin (c4); return C4.C4_CONTAINER; }
+  "C4Component" { yybegin (c4); return C4.C4_COMPONENT; }
+  "C4Dynamic" { yybegin (c4); return C4.C4_DYNAMIC; }
+  "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   ";" { return SEMICOLON; }
   [^\s%;{]+ { return BAD_CHARACTER; }
 }
@@ -169,14 +212,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 //}
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -605,7 +648,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   o\{ { return EntityRelationship.ZERO_OR_MORE_RIGHT; }
   \|\{ { return EntityRelationship.ONE_OR_MORE_RIGHT; }
   \-\- { return EntityRelationship.IDENTIFYING; }
-  \.\. { return EntityRelationship.NON_IDENTIFYING;}
+  \.\. { return EntityRelationship.NON_IDENTIFYING; }
   \.\- { return EntityRelationship.NON_IDENTIFYING; }
   \-\. { return EntityRelationship.NON_IDENTIFYING; }
 
@@ -725,6 +768,77 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [a-zA-Z][-_\./a-zA-Z0-9]*[-_a-zA-Z0-9] { return ID; }
   [0-9]+ { return NUM; }
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
+}
+
+//---C4---------------------------------------------------------------------------
+<c4> {
+  "direction" { yypushstate(simple_direction_value); return DIRECTION; }
+  "title" { yypushstate(title); return TITLE; }
+
+  "Person_Ext" { yybegin(person_ext); return C4.PERSON_EXT; }
+  "Person" { yybegin(person); return C4.PERSON; }
+  "SystemQueue_Ext" { yybegin(system_ext_queue); return C4.SYSTEM_EXT_QUEUE; }
+  "SystemDb_Ext" { yybegin(system_ext_db); return C4.SYSTEM_EXT_DB; }
+  "System_Ext" { yybegin(system_ext); return C4.SYSTEM_EXT; }
+  "SystemQueue" { yybegin(system_queue); return C4.SYSTEM_QUEUE; }
+  "SystemDb" { yybegin(system_db); return C4.SYSTEM_DB; }
+  "System" { yybegin(system); return C4.SYSTEM; }
+  
+  "Boundary" { yybegin(boundary); return C4.BOUNDARY; }
+  "Enterprise_Boundary" { yybegin(enterprise_boundary); return C4.ENTERPRISE_BOUNDARY; }
+  "System_Boundary" { yybegin(system_boundary); return C4.SYSTEM_BOUNDARY; }
+  
+  "ContainerQueue_Ext" { yybegin(container_ext_queue); return C4.CONTAINER_EXT_QUEUE; }
+  "ContainerDb_Ext" { yybegin(container_ext_db); return C4.CONTAINER_EXT_DB; }
+  "Container_Ext" { yybegin(container_ext); return C4.CONTAINER_EXT; }
+  "ContainerQueue" { yybegin(container_queue); return C4.CONTAINER_QUEUE; }
+  "ContainerDb" { yybegin(container_db); return C4.CONTAINER_DB; }
+  "Container" { yybegin(container); return C4.CONTAINER; }
+  
+  "Container_Boundary" { yybegin(container_boundary); return C4.CONTAINER_BOUNDARY; }
+  
+  "ComponentQueue_Ext" { yybegin(component_ext_queue); return C4.COMPONENT_EXT_QUEUE; }
+  "ComponentDb_Ext" { yybegin(component_ext_db); return C4.COMPONENT_EXT_DB; }
+  "Component_Ext" { yybegin(component_ext); return C4.COMPONENT_EXT; }
+  "ComponentQueue" { yybegin(component_queue); return C4.COMPONENT_QUEUE; }
+  "ComponentDb" { yybegin(component_db); return C4.COMPONENT_DB; }
+  "Component" { yybegin(component); return C4.COMPONENT; }
+  
+  "Deployment_Node" { yybegin(node); return C4.NODE; }
+  "Node" { yybegin(node); return C4.NODE; }
+  "Node_L" { yybegin(node_l); return C4.NODE_L; }
+  "Node_R" { yybegin(node_r); return C4.NODE_R; }
+  
+  
+  "Rel" { yybegin(rel); return C4.REL; } 
+  "BiRel" { yybegin(birel); return C4.BIREL; } 
+  "Rel_Up" { yybegin(rel_u); return C4.REL_U; }  
+  "Rel_U" { yybegin(rel_u); return C4.REL_U; }  
+  "Rel_Down" { yybegin(rel_d); return C4.REL_D; }  
+  "Rel_D" { yybegin(rel_d); return C4.REL_D; }  
+  "Rel_Left" { yybegin(rel_l); return C4.REL_L; }  
+  "Rel_L" { yybegin(rel_l); return C4.REL_L; }  
+  "Rel_Right" { yybegin(rel_r); return C4.REL_R; }  
+  "Rel_R" { yybegin(rel_r); return C4.REL_R; }  
+  "Rel_Back" { yybegin(rel_b); return C4.REL_B; }  
+  "RelIndex" { yybegin(rel_index); return C4.REL_INDEX; } 
+  
+  "UpdateElementStyle" { yybegin(update_el_style); return C4.UPDATE_EL_STYLE; }  
+  "UpdateRelStyle" { yybegin(update_rel_style); return C4.UPDATE_REL_STYLE; } 
+  "UpdateLayoutConfig" { yybegin(update_layout_config); return C4.UPDATE_LAYOUT_CONFIG; } 
+
+  "{" { return OPEN_CURLY; }
+  "}" { return CLOSE_CURLY; }
+}
+<person,person_ext,system_ext_queue,system_ext_db,system_ext,system_queue,system_db,system,boundary,enterprise_boundary,system_boundary,container_ext_db,container_ext,container_queue,container_ext_queue,container_db,container,container_boundary,component_ext_db,component_ext,component_queue,component_ext_queue,component_db,component,node,node_l,node_r,rel,birel,rel_u,rel_d,rel_l,rel_r,rel_b,rel_index,update_el_style,update_rel_style,update_layout_config> {
+  "(" { return OPEN_ROUND; }
+  ")" { yybegin(c4); return CLOSE_ROUND; }
+  "," { return COMMA; }
+  \" { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  "$" { return DOLLAR; }
+  "=" { return C4.EQUALITY; }
+  [^$=(),\"\s]* { return C4.C4_ATTRIBUTE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
 }
 
 //--------------------------------------------------------------------------------

@@ -28,6 +28,8 @@ class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
 
   fun `test gitgraph`() = doTest()
 
+  fun `test c4`() = doTest()
+
   override fun getTestDataPath(): String {
     return "src/test/resources/formatter/"
   }

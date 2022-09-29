@@ -53,6 +53,47 @@ internal object MermaidSpacingBuilder {
 
   )
 
+  private val C4_KEYWORDS_SPACE_AFTER = TokenSet.create(
+    MermaidTokens.C4.PERSON_EXT,
+    MermaidTokens.C4.PERSON,
+    MermaidTokens.C4.SYSTEM_EXT_QUEUE,
+    MermaidTokens.C4.SYSTEM_EXT_DB,
+    MermaidTokens.C4.SYSTEM_EXT,
+    MermaidTokens.C4.SYSTEM_QUEUE,
+    MermaidTokens.C4.SYSTEM_DB,
+    MermaidTokens.C4.SYSTEM,
+    MermaidTokens.C4.BOUNDARY,
+    MermaidTokens.C4.ENTERPRISE_BOUNDARY,
+    MermaidTokens.C4.SYSTEM_BOUNDARY,
+    MermaidTokens.C4.CONTAINER_EXT_QUEUE,
+    MermaidTokens.C4.CONTAINER_EXT_DB,
+    MermaidTokens.C4.CONTAINER_EXT,
+    MermaidTokens.C4.CONTAINER_QUEUE,
+    MermaidTokens.C4.CONTAINER_DB,
+    MermaidTokens.C4.CONTAINER,
+    MermaidTokens.C4.CONTAINER_BOUNDARY,
+    MermaidTokens.C4.COMPONENT_EXT_QUEUE,
+    MermaidTokens.C4.COMPONENT_EXT_DB,
+    MermaidTokens.C4.COMPONENT_EXT,
+    MermaidTokens.C4.COMPONENT_QUEUE,
+    MermaidTokens.C4.COMPONENT_DB,
+    MermaidTokens.C4.COMPONENT,
+    MermaidTokens.C4.NODE,
+    MermaidTokens.C4.NODE_L,
+    MermaidTokens.C4.NODE_R,
+    MermaidTokens.C4.REL,
+    MermaidTokens.C4.BIREL,
+    MermaidTokens.C4.REL_U,
+    MermaidTokens.C4.REL_D,
+    MermaidTokens.C4.REL_L,
+    MermaidTokens.C4.REL_R,
+    MermaidTokens.C4.REL_B,
+    MermaidTokens.C4.REL_INDEX,
+    MermaidTokens.C4.UPDATE_EL_STYLE,
+    MermaidTokens.C4.UPDATE_REL_STYLE,
+    MermaidTokens.C4.UPDATE_LAYOUT_CONFIG
+  )
+
   fun get(settings: CodeStyleSettings): SpacingBuilder {
     val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
 
@@ -80,7 +121,6 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.CLICK_DATA, MermaidTokens.CLICK_DATA).spaces(1)
       .between(MermaidTokens.TITLE_VALUE, MermaidTokens.TITLE_VALUE).spaces(1)
       .after(MermaidTokens.LINK).spaces(1)
-//      .between(MermaidTokens.END, MermaidTokens.END).lineBreakInCode()
       // Flowchart
       .around(MermaidElements.FLOWCHART_LINK_STATEMENT).spaces(1)
       .before(MermaidTokens.ARROW).spaces(1)
@@ -136,21 +176,16 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.Requirement.REQ_LINE).spaces(1)
       // Git  Graph
       .after(MermaidTokens.GitGraph.BRANCH).spaces(1)
-//      .before(MermaidTokens.GitGraph.ORDER).spaces(1)
       .after(MermaidTokens.GitGraph.CHERRY_PICK).spaces(1)
-//      .before(MermaidTokens.ID_KEYWORD).spaces(1)
       .after(MermaidTokens.GitGraph.MERGE).spaces(1)
-//      .before(MermaidTokens.GitGraph.TAG).spaces(1)
       .after(MermaidTokens.GitGraph.CHECKOUT).spaces(1)
       .after(MermaidTokens.GitGraph.COMMIT).spaces(1)
-//      .before(MermaidTokens.TYPE).spaces(1)
       .around(MermaidElements.COMMIT_ID_ATTRIBUTE).spaces(1)
       .around(MermaidElements.COMMIT_TAG_ATTRIBUTE).spaces(1)
       .around(MermaidElements.COMMIT_TYPE_ATTRIBUTE).spaces(1)
       .around(MermaidElements.BRANCH_ORDER).spaces(1)
-  }
-
-  private fun SpacingBuilder.RuleBuilder.blankLinesRange(from: Int, to: Int): SpacingBuilder {
-    return spacing(0, 0, to + 1, false, from)
+      // C4
+      .after(C4_KEYWORDS_SPACE_AFTER).spaceIf(false)
+      .around(MermaidTokens.C4.EQUALITY).spacing(0, 1, 0, false, 0)
   }
 }

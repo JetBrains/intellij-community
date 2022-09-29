@@ -1,10 +1,10 @@
 package com.intellij.mermaid.editor
 
-import com.intellij.mermaid.lang.psi.impl.MermaidSubgraphStatementImpl
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.mermaid.lang.psi.impl.MermaidSubgraphStatementImpl
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
@@ -22,7 +22,12 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "erDiagram",
       "gantt",
       "requirementDiagram",
-      "gitGraph"
+      "gitGraph",
+      "C4Context",
+      "C4Container",
+      "C4Component",
+      "C4Dynamic",
+      "C4Deployment"
     )
 
   override fun addCompletions(
@@ -31,7 +36,11 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
     result: CompletionResultSet
   ) {
     parameters.position.parentOfType<PsiFile>()?.let {
-      result.addAllElements(diagrams.map { d -> LookupElementBuilder.create(d) })
+      result.addAllElements(diagrams.map { d ->
+        LookupElementBuilder
+          .create(d)
+          .withCaseSensitivity(false)
+      })
     }
   }
 }
@@ -58,7 +67,11 @@ open class MermaidSimpleCompletionProvider(private val keywords: List<String>) :
     context: ProcessingContext,
     result: CompletionResultSet
   ) {
-    result.addAllElements(keywords.map { LookupElementBuilder.create(it) })
+    result.addAllElements(keywords.map {
+      LookupElementBuilder
+        .create(it)
+        .withCaseSensitivity(false)
+    })
   }
 }
 
@@ -75,7 +88,11 @@ class FlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider() {
     while (psiElement.parent != null) {
       psiElement = psiElement.parent
       if (psiElement is MermaidSubgraphStatementImpl) {
-        result.addElement(LookupElementBuilder.create("direction"))
+        result.addElement(
+          LookupElementBuilder
+            .create("direction")
+            .withCaseSensitivity(false)
+        )
         break
       }
     }
@@ -181,3 +198,81 @@ class GitGraphCommitCompletionProvider : MermaidLiveTemplateCompletionProvider()
 class GitGraphCommitTypeCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("NORMAL", "REVERSE", "HIGHLIGHT"))
 
+
+class C4CompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val simpleKeywords = listOf(
+    "Person_Ext",
+    "Person",
+    "SystemQueue_Ext",
+    "SystemDb_Ext",
+    "System_Ext",
+    "SystemQueue",
+    "SystemDb",
+    "System",
+
+    "ContainerQueue_Ext",
+    "ContainerDb_Ext",
+    "Container_Ext",
+    "ContainerQueue",
+    "ContainerDb",
+    "Container",
+
+    "ComponentQueue_Ext",
+    "ComponentDb_Ext",
+    "Component_Ext",
+    "ComponentQueue",
+    "ComponentDb",
+    "Component",
+
+    "Deployment_Node",
+    "Node",
+    "Node_L",
+    "Node_R",
+
+    "Rel",
+    "BiRel",
+    "Rel_Up",
+    "Rel_U",
+    "Rel_Down",
+    "Rel_D",
+    "Rel_Left",
+    "Rel_L",
+    "Rel_Right",
+    "Rel_R",
+    "Rel_Back",
+    "RelIndex",
+
+    "UpdateElementStyle",
+    "UpdateRelStyle",
+    "UpdateLayoutConfig"
+  )
+
+  private val boundaryKeywords = listOf(
+    "Boundary",
+    "Enterprise_Boundary",
+    "System_Boundary",
+    "Container_Boundary"
+  )
+
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(simpleKeywords.map {
+      createKeywordLookupElement(
+        project,
+        keyword = "c4_simple",
+        predefinedNameVar = it
+      )
+    })
+    result.addAllElements(boundaryKeywords.map {
+      createKeywordLookupElement(
+        project,
+        keyword = "c4_boundary",
+        predefinedNameVar = it
+      )
+    })
+  }
+}

@@ -212,6 +212,25 @@ class MermaidCompletionContributor : CompletionContributor() {
       ),
       GitGraphCommitTypeCompletionProvider()
     )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(
+        or(
+          psiElement(MermaidTokens.C4.C4_CONTEXT),
+          psiElement(MermaidTokens.C4.C4_CONTAINER),
+          psiElement(MermaidTokens.C4.C4_COMPONENT),
+          psiElement(MermaidTokens.C4.C4_DYNAMIC),
+          psiElement(MermaidTokens.C4.C4_DEPLOYMENT)
+        )
+      ),
+      TitleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidElements.C_4_HEADER)),
+      C4CompletionProvider()
+    )
   }
 
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {

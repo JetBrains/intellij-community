@@ -633,4 +633,141 @@ object MermaidTokens {
     @JvmField
     val HIGHLIGHT = MermaidToken("HIGHLIGHT")
   }
+
+  object C4 {
+    @JvmField
+    val C4_CONTEXT = MermaidToken("C4_CONTEXT")
+
+    @JvmField
+    val C4_CONTAINER = MermaidToken("C4_CONTAINER")
+
+    @JvmField
+    val C4_COMPONENT = MermaidToken("C4_COMPONENT")
+
+    @JvmField
+    val C4_DYNAMIC = MermaidToken("C4_DYNAMIC")
+
+    @JvmField
+    val C4_DEPLOYMENT = MermaidToken("C4_DEPLOYMENT")
+
+    @JvmField
+    val PERSON_EXT = MermaidToken("PERSON_EXT")
+
+    @JvmField
+    val PERSON = MermaidToken("PERSON")
+
+    @JvmField
+    val SYSTEM_EXT_QUEUE = MermaidToken("SYSTEM_EXT_QUEUE")
+
+    @JvmField
+    val SYSTEM_EXT_DB = MermaidToken("SYSTEM_EXT_DB")
+
+    @JvmField
+    val SYSTEM_EXT = MermaidToken("SYSTEM_EXT")
+
+    @JvmField
+    val SYSTEM_QUEUE = MermaidToken("SYSTEM_QUEUE")
+
+    @JvmField
+    val SYSTEM_DB = MermaidToken("SYSTEM_DB")
+
+    @JvmField
+    val SYSTEM = MermaidToken("SYSTEM")
+
+    @JvmField
+    val BOUNDARY = MermaidToken("BOUNDARY")
+
+    @JvmField
+    val ENTERPRISE_BOUNDARY = MermaidToken("ENTERPRISE_BOUNDARY")
+
+    @JvmField
+    val SYSTEM_BOUNDARY = MermaidToken("SYSTEM_BOUNDARY")
+
+    @JvmField
+    val CONTAINER_EXT_QUEUE = MermaidToken("CONTAINER_EXT_QUEUE")
+
+    @JvmField
+    val CONTAINER_EXT_DB = MermaidToken("CONTAINER_EXT_DB")
+
+    @JvmField
+    val CONTAINER_EXT = MermaidToken("CONTAINER_EXT")
+
+    @JvmField
+    val CONTAINER_QUEUE = MermaidToken("CONTAINER_QUEUE")
+
+    @JvmField
+    val CONTAINER_DB = MermaidToken("CONTAINER_DB")
+
+    @JvmField
+    val CONTAINER = MermaidToken("CONTAINER")
+
+    @JvmField
+    val CONTAINER_BOUNDARY = MermaidToken("CONTAINER_BOUNDARY")
+
+    @JvmField
+    val COMPONENT_EXT_QUEUE = MermaidToken("COMPONENT_EXT_QUEUE")
+
+    @JvmField
+    val COMPONENT_EXT_DB = MermaidToken("COMPONENT_EXT_DB")
+
+    @JvmField
+    val COMPONENT_EXT = MermaidToken("COMPONENT_EXT")
+
+    @JvmField
+    val COMPONENT_QUEUE = MermaidToken("COMPONENT_QUEUE")
+
+    @JvmField
+    val COMPONENT_DB = MermaidToken("COMPONENT_DB")
+
+    @JvmField
+    val COMPONENT = MermaidToken("COMPONENT")
+
+    @JvmField
+    val NODE = MermaidToken("NODE")
+
+    @JvmField
+    val NODE_L = MermaidToken("NODE_L")
+
+    @JvmField
+    val NODE_R = MermaidToken("NODE_R")
+
+    @JvmField
+    val REL = MermaidToken("REL")
+
+    @JvmField
+    val BIREL = MermaidToken("BIREL")
+
+    @JvmField
+    val REL_U = MermaidToken("REL_U")
+
+    @JvmField
+    val REL_D = MermaidToken("REL_D")
+
+    @JvmField
+    val REL_L = MermaidToken("REL_L")
+
+    @JvmField
+    val REL_R = MermaidToken("REL_R")
+
+    @JvmField
+    val REL_B = MermaidToken("REL_B")
+
+    @JvmField
+    val REL_INDEX = MermaidToken("REL_INDEX")
+
+    @JvmField
+    val UPDATE_EL_STYLE = MermaidToken("UPDATE_EL_STYLE")
+
+    @JvmField
+    val UPDATE_REL_STYLE = MermaidToken("UPDATE_REL_STYLE")
+
+    @JvmField
+    val UPDATE_LAYOUT_CONFIG = MermaidToken("UPDATE_LAYOUT_CONFIG")
+
+    @JvmField
+    val C4_ATTRIBUTE = MermaidToken("C4_ATTRIBUTE")
+
+    @JvmField
+    val EQUALITY = MermaidToken("EQUALITY")
+  }
 }

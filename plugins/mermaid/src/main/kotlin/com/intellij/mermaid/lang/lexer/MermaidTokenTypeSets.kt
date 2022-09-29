@@ -26,7 +26,8 @@ object MermaidTokenTypeSets {
     MermaidElements.REQUIREMENT_STATEMENT,
     MermaidElements.REQUIREMENT_BODY_STATEMENT,
     MermaidElements.ELEMENT_BODY_STATEMENT,
-    MermaidElements.GIT_GRAPH_STATEMENT
+    MermaidElements.GIT_GRAPH_STATEMENT,
+    MermaidElements.C_4_STATEMENT
   )
 
   val DIAGRAM_DOCUMENTS = TokenSet.create(
@@ -48,7 +49,8 @@ object MermaidTokenTypeSets {
     MermaidElements.REQUIREMENT_DOCUMENT,
     MermaidElements.REQUIREMENT_BODY,
     MermaidElements.ELEMENT_BODY,
-    MermaidElements.GIT_GRAPH_DOCUMENT
+    MermaidElements.GIT_GRAPH_DOCUMENT,
+    MermaidElements.C_4_DOCUMENT
   )
 
   val EXPAND_INDENT_AFTER = TokenSet.create(
@@ -73,6 +75,11 @@ object MermaidTokenTypeSets {
     MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP,
     MermaidTokens.Gantt.GANTT,
     MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
-    MermaidTokens.GitGraph.GIT_GRAPH
+    MermaidTokens.GitGraph.GIT_GRAPH,
+    MermaidTokens.C4.C4_CONTEXT,
+    MermaidTokens.C4.C4_CONTAINER,
+    MermaidTokens.C4.C4_COMPONENT,
+    MermaidTokens.C4.C4_DYNAMIC,
+    MermaidTokens.C4.C4_DEPLOYMENT
   )
 }

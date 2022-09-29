@@ -197,6 +197,60 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getC4Highlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.C4.C4_CONTEXT,
+      MermaidTokens.C4.C4_CONTAINER,
+      MermaidTokens.C4.C4_COMPONENT,
+      MermaidTokens.C4.C4_DYNAMIC,
+      MermaidTokens.C4.C4_DEPLOYMENT,
+      MermaidTokens.C4.PERSON_EXT,
+      MermaidTokens.C4.PERSON,
+      MermaidTokens.C4.SYSTEM_EXT_QUEUE,
+      MermaidTokens.C4.SYSTEM_EXT_DB,
+      MermaidTokens.C4.SYSTEM_EXT,
+      MermaidTokens.C4.SYSTEM_QUEUE,
+      MermaidTokens.C4.SYSTEM_DB,
+      MermaidTokens.C4.SYSTEM,
+      MermaidTokens.C4.BOUNDARY,
+      MermaidTokens.C4.ENTERPRISE_BOUNDARY,
+      MermaidTokens.C4.SYSTEM_BOUNDARY,
+      MermaidTokens.C4.CONTAINER_EXT_QUEUE,
+      MermaidTokens.C4.CONTAINER_EXT_DB,
+      MermaidTokens.C4.CONTAINER_EXT,
+      MermaidTokens.C4.CONTAINER_QUEUE,
+      MermaidTokens.C4.CONTAINER_DB,
+      MermaidTokens.C4.CONTAINER,
+      MermaidTokens.C4.CONTAINER_BOUNDARY,
+      MermaidTokens.C4.COMPONENT_EXT_QUEUE,
+      MermaidTokens.C4.COMPONENT_EXT_DB,
+      MermaidTokens.C4.COMPONENT_EXT,
+      MermaidTokens.C4.COMPONENT_QUEUE,
+      MermaidTokens.C4.COMPONENT_DB,
+      MermaidTokens.C4.COMPONENT,
+      MermaidTokens.C4.NODE,
+      MermaidTokens.C4.NODE_L,
+      MermaidTokens.C4.NODE_R,
+      MermaidTokens.C4.REL,
+      MermaidTokens.C4.BIREL,
+      MermaidTokens.C4.REL_U,
+      MermaidTokens.C4.REL_D,
+      MermaidTokens.C4.REL_L,
+      MermaidTokens.C4.REL_R,
+      MermaidTokens.C4.REL_B,
+      MermaidTokens.C4.REL_INDEX,
+      MermaidTokens.C4.UPDATE_EL_STYLE,
+      MermaidTokens.C4.UPDATE_REL_STYLE,
+      MermaidTokens.C4.UPDATE_LAYOUT_CONFIG -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.C4.C4_ATTRIBUTE -> arrayOf(MermaidTextAttributes.identifier)
+
+      MermaidTokens.C4.EQUALITY -> arrayOf(MermaidTextAttributes.operationSign)
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -208,6 +262,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val ganttDiagramHighlights = getGanttDiagramHighlights(tokenType)
     val requirementHighlights = getRequirementHighlights(tokenType)
     val gitGraphHighlights = getGitGraphHighlights(tokenType)
+    val c4Highlights = getC4Highlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
@@ -218,6 +273,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       ?: ganttDiagramHighlights
       ?: requirementHighlights
       ?: gitGraphHighlights
+      ?: c4Highlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,

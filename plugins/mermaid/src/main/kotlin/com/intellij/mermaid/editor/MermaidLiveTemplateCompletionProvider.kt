@@ -19,13 +19,16 @@ abstract class MermaidLiveTemplateCompletionProvider :
   CompletionProvider<CompletionParameters>() {
   private val priority = 10.0
   
-  protected fun createKeywordLookupElement(project: Project, keyword: String): LookupElement {
+  protected fun createKeywordLookupElement(project: Project, keyword: String, predefinedNameVar: String? = null): LookupElement {
     val templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     val template = TemplateSettings.getInstance().getTemplateById("mermaid_$keyword")
-    val insertHandler = createTemplateBasedInsertHandler(templateManager, template)
+    val predefinedVarValues = if (predefinedNameVar != null) mapOf("NAME" to predefinedNameVar) else null
+    val lookupString = predefinedNameVar ?: keyword
+    val insertHandler = createTemplateBasedInsertHandler(templateManager, template, predefinedVarValues)
     return PrioritizedLookupElement.withPriority(
       LookupElementBuilder
-        .create(keyword)
+        .create(lookupString)
+        .withCaseSensitivity(false)
         .withBoldness(true)
         .withInsertHandler(insertHandler), priority
     )
@@ -33,7 +36,8 @@ abstract class MermaidLiveTemplateCompletionProvider :
 
   private fun createTemplateBasedInsertHandler(
     templateManager: TemplateManagerImpl,
-    template: Template?
+    template: Template?,
+    predefinedVarValues: Map<String, String>?
   ): InsertHandler<LookupElement> {
     return InsertHandler { context: InsertionContext, _: LookupElement? ->
       val editor = context.editor
@@ -42,7 +46,7 @@ abstract class MermaidLiveTemplateCompletionProvider :
         val document = editor.document
         document.deleteString(startOffset, context.tailOffset)
 
-        templateManager.startTemplate(editor, template, true, null, object : TemplateEditingAdapter() {
+        templateManager.startTemplate(editor, template, true, predefinedVarValues, object : TemplateEditingAdapter() {
           override fun templateFinished(template: Template, brokenOff: Boolean) {
             super.templateFinished(template, brokenOff)
 

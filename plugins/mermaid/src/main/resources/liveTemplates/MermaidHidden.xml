@@ -246,4 +246,26 @@
     </context>
   </template>
 
+  <template id="mermaid_c4_simple" name="mermaid_c4_simple"
+            value="$NAME$($ARGS$)$END$$SELECTION$"
+            description="c4 simple"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_c4_boundary" name="mermaid_c4_boundary"
+            value="$NAME$($ARGS$) {&#10;    $END$$SELECTION$&#10;}"
+            description="c4 boundary"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>
