@@ -111,9 +111,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
     }
   }
 
-  override fun findCredentials(account: A): Cred? = runBlocking {
-    persistentCredentials.retrieveCredentials(account)
-  }
+  override suspend fun findCredentials(account: A): Cred? = persistentCredentials.retrieveCredentials(account)
 
   override fun getCredentialsFlow(account: A, withCurrent: Boolean): Flow<Cred?> = channelFlow {
     mutex.withLock {

@@ -7,24 +7,25 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.ui.SingleSelectionModel
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import javax.swing.ListSelectionModel
 
-internal class GHCloneDialogRepositoryListLoaderImpl(
-  private val executorManager: GithubApiRequestExecutorManager
-) : GHCloneDialogRepositoryListLoader, Disposable {
+internal class GHCloneDialogRepositoryListLoaderImpl : GHCloneDialogRepositoryListLoader, Disposable {
 
   override val loading: Boolean
     get() = indicatorsMap.isNotEmpty()
@@ -38,19 +39,14 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
   override fun loadRepositories(account: GithubAccount) {
     if (indicatorsMap.containsKey(account)) return
 
-    val executor = try {
-      executorManager.getExecutor(account)
-    }
-    catch (e: GithubMissingTokenException) {
-      listModel.setError(account, e)
-      return
-    }
-
     val indicator = EmptyProgressIndicator()
     indicatorsMap[account] = indicator
     loadingEventDispatcher.multicaster.eventOccurred()
 
     ProgressManager.getInstance().submitIOTask(indicator) {
+      val token = runBlocking { service<GHAccountManager>().findCredentials(account) } ?: throw GithubMissingTokenException(account)
+      val executor = service<GithubApiRequestExecutor.Factory>().create(token)
+
       val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
 
       val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(account.server,

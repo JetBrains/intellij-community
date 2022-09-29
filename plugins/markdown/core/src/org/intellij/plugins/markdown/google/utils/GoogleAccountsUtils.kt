@@ -24,6 +24,7 @@ import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
 import org.intellij.plugins.markdown.google.accounts.*
@@ -94,11 +95,12 @@ internal object GoogleAccountsUtils {
   /**
    * Returns the user's credentials if the access token is still valid, otherwise updates the credentials and returns updated.
    */
+  //TODO: rework to access token on BG
   @RequiresEdt
   fun getOrUpdateUserCredentials(oAuthService: GoogleOAuthService,
                                  accountManager: GoogleAccountManager,
                                  account: GoogleAccount): GoogleCredentials? =
-    accountManager.findCredentials(account)?.let { credentials ->
+    runBlocking { accountManager.findCredentials(account) }?.let { credentials ->
       if (credentials.isAccessTokenValid()) return credentials
 
       val refreshRequest = getGoogleRefreshRequest(credentials.refreshToken)

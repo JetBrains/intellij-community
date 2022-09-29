@@ -25,7 +25,7 @@ open class GHApiLoadingErrorHandler(private val project: Project,
 
   private inner class ReLoginAction : AbstractAction(GithubBundle.message("accounts.relogin")) {
     override fun actionPerformed(e: ActionEvent?) {
-      if (GithubAuthenticationManager.getInstance().requestReLogin(project, account, AuthorizationType.UNDEFINED)) {
+      if (GithubAuthenticationManager.getInstance().requestReLogin(project, account, AuthorizationType.UNDEFINED) != null) {
         resetRunnable()
       }
     }

@@ -38,7 +38,7 @@ interface AccountManager<A : Account, Cred> {
   /**
    * Retrieve credentials for account
    */
-  fun findCredentials(account: A): Cred?
+  suspend fun findCredentials(account: A): Cred?
 
   /**
    * Flow of account credentials

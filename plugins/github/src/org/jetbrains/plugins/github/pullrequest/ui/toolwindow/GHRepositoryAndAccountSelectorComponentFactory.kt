@@ -104,7 +104,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(project, account, authType)
+      return authManager.requestReLogin(project, account, authType) != null
     }
     return false
   }
@@ -113,12 +113,12 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
     val server = repo.repository.serverPath
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return authManager.requestNewAccountForServer(server, project)?.also {
-        vm.accountSelectionState.value = it
+      return authManager.requestNewAccountForServer(server, login = null, project)?.also {
+        vm.accountSelectionState.value = it.account
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN)
+      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN) != null
     }
     return false
   }

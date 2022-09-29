@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
@@ -36,8 +35,7 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
 private class GHECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
   modalityState,
-  GithubAuthenticationManager.getInstance(),
-  GithubApiRequestExecutorManager.getInstance()
+  GithubAuthenticationManager.getInstance()
 ) {
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHEAccount
