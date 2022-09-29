@@ -1099,7 +1099,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   fun startDispose() {
     stopServicePreloading()
 
-    Disposer.disposeChildren(this, { _ -> true})
+    Disposer.disposeChildren(this, null)
 
     val messageBus = messageBus
     // There is a chance that someone will try to connect to the message bus and will get NPE because of disposed connection disposable,
