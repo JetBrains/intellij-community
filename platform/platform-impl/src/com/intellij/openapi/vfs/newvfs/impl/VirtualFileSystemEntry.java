@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
@@ -93,8 +94,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType myFileType;
 
   static {
-    //noinspection ConstantConditions
-    assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
+    //noinspection ConstantValue
+    assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK;
   }
 
   VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
@@ -451,7 +452,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private static class DebugInvalidation {
-    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+    private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
+    private static final boolean DEBUG = LOG.isDebugEnabled();
     private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
     private static final Key<Throwable> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   }
