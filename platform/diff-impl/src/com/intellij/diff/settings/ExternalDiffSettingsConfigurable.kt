@@ -43,7 +43,6 @@ class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
       }
 
       val models = ExternalToolsModels()
-      val externalToolsTablePanel = ExternalToolsTablePanel(models)
       indent {
         row {
           val treePanel = ExternalToolsTreePanel(models)
@@ -56,6 +55,7 @@ class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
         }.bottomGap(BottomGap.MEDIUM)
 
         row {
+          val externalToolsTablePanel = ExternalToolsTablePanel(models)
           cell(externalToolsTablePanel.component)
             .label(DiffBundle.message("settings.external.diff.panel.table.title"), LabelPosition.TOP)
             .horizontalAlign(HorizontalAlign.FILL)
