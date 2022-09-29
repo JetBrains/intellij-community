@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -90,11 +87,7 @@ internal class GithubLoginPanel(
     setBusy(true)
     tokenAcquisitionError = null
 
-    val server = getServer()
-    val executor = currentUi.createExecutor()
-
-    return service<ProgressManager>()
-      .submitIOTask(progressIndicator) { currentUi.acquireLoginAndToken(server, executor, it) }
+    return currentUi.submitLoginTask(getServer(), progressIndicator)
       .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
       .errorOnEdt(progressIndicator.modalityState) { setError(it) }
   }

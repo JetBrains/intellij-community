@@ -7,17 +7,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.*
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import java.awt.Component
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Allows to acquire API executor without exposing the auth token to external code
  */
 class GithubApiRequestExecutorManager : Disposable {
-  private val executors = mutableMapOf<GithubAccount, GithubApiRequestExecutor.WithTokenAuth>()
+
+  private val tokenSuppliers = ConcurrentHashMap<GithubAccount, MutableTokenSupplier>()
 
   companion object {
     @JvmStatic
@@ -28,8 +31,8 @@ class GithubApiRequestExecutorManager : Disposable {
     disposingMainScope().launch {
       service<GHAccountManager>().accountsState.collect {
         it.forEach { (account, token) ->
-          if (token == null) executors.remove(account)
-          else executors[account]?.token = token
+          if (token == null) tokenSuppliers.remove(account)
+          else tokenSuppliers[account]?.token = token
         }
       }
     }
@@ -50,14 +53,11 @@ class GithubApiRequestExecutorManager : Disposable {
     return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!
   }
 
-  private fun getOrTryToCreateExecutor(account: GithubAccount,
-                                       missingTokenHandler: () -> String?): GithubApiRequestExecutor? {
-
-    return executors.getOrPut(account) {
+  private fun getOrTryToCreateExecutor(account: GithubAccount, missingTokenHandler: () -> String?): GithubApiRequestExecutor? =
+    tokenSuppliers.getOrPut(account) {
       (GithubAuthenticationManager.getInstance().getTokenForAccount(account) ?: missingTokenHandler())
-        ?.let(GithubApiRequestExecutor.Factory.getInstance()::create) ?: return null
-    }
-  }
+        ?.let(::MutableTokenSupplier) ?: return null
+    }?.let(Factory.getInstance()::create)
 
   override fun dispose() = Unit
 }
