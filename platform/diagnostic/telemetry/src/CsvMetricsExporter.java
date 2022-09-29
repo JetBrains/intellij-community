@@ -35,14 +35,19 @@ import static java.nio.file.StandardOpenOption.*;
 public class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
 
+  @NotNull
   private final Path writeToPath;
 
-  public CsvMetricsExporter(final @NotNull String writeToPath) {
+  public CsvMetricsExporter(final @NotNull String writeToPath) throws IOException {
     this(Path.of(writeToPath));
   }
 
-  public CsvMetricsExporter(final @NotNull Path writeToPath) {
-    this.writeToPath = writeToPath;
+  public CsvMetricsExporter(final @NotNull Path writeToPath) throws IOException {
+    this.writeToPath = writeToPath.toAbsolutePath();
+    if (!Files.exists(this.writeToPath)) {
+      Files.createDirectories(this.writeToPath.getParent());
+      Files.write(this.writeToPath, csvHeadersLines(), CREATE, WRITE);
+    }
   }
 
   @Override
@@ -59,10 +64,6 @@ public class CsvMetricsExporter implements MetricExporter {
         .toList();
 
       try {
-        if (!Files.exists(writeToPath)) {
-          Files.createDirectories(writeToPath.getParent());
-          Files.write(writeToPath, csvHeadersLines(), CREATE, WRITE);
-        }
         Files.write(writeToPath, lines, CREATE, APPEND);
         result.succeed();
       }
