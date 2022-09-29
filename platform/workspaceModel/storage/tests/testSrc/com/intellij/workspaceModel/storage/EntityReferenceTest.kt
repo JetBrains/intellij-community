@@ -33,4 +33,23 @@ class EntityReferenceTest {
     assertEquals(reference1, reference2)
     assertNotEquals(reference1, reference3)
   }
+
+  @Test
+  fun `replace entity by equal`() {
+    val builder = createEmptyBuilder()
+    builder.addSampleEntity("foo")
+    val snapshot = builder.toSnapshot()
+    val entity = snapshot.singleSampleEntity()
+    val reference = entity.createReference<SampleEntity>()
+    val newBuilder = createBuilderFrom(snapshot)
+    newBuilder.removeEntity(entity)
+    newBuilder.addSampleEntity("foo")
+    val changes = newBuilder.collectChanges(snapshot)
+    //if there is an event about the change, the code which stores EntityReference is supposed to update it
+    if (changes.isEmpty()) {
+      val updated = newBuilder.toSnapshot()
+      assertEquals(updated.singleSampleEntity(), reference.resolve(updated))
+    }
+  }
+
 }
