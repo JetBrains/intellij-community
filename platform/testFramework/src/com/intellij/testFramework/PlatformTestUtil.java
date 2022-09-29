@@ -1071,7 +1071,7 @@ public final class PlatformTestUtil {
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
     waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
-                              processHandler::isProcessTerminated, 60);
+                              processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
     return result.first;
   }
 
