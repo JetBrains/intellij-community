@@ -87,6 +87,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         module("a", hasProductionRoot = true, hasTestRoot = true)
         assertEquals(6 /* sdk + stdlib + daemon + fakeLib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+
+        ModuleRootModificationUtil.removeDependency(module, fakeLib)
+        assertEquals(5 /* sdk + stdlib + daemon + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+
+        runWriteAction {
+            LibraryTablesRegistrar.getInstance().getLibraryTable(project).removeLibrary(daemon)
+        }
+
+        assertEquals(4 /* sdk + stdlib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
     }
 
     fun testLowMemory() {
