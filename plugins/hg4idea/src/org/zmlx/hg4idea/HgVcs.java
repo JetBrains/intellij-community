@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,7 +90,8 @@ public class HgVcs extends AbstractVcs {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
 
-  private HgVFSListener myVFSListener;
+  private Disposable myDisposable;
+
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
@@ -233,12 +235,19 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
+
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
 
     // updaters and listeners
-    myHgRemoteStatusUpdater = new HgRemoteStatusUpdater(this);
-    myVFSListener = HgVFSListener.createInstance(this);
+    HgRemoteStatusUpdater remoteStatusUpdater = new HgRemoteStatusUpdater(this);
+    Disposer.register(disposable, remoteStatusUpdater);
+    myHgRemoteStatusUpdater = remoteStatusUpdater;
+
+    HgVFSListener VFSListener = HgVFSListener.createInstance(this);
+    Disposer.register(disposable, VFSListener);
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
@@ -256,17 +265,10 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    if (myHgRemoteStatusUpdater != null) {
-      Disposer.dispose(myHgRemoteStatusUpdater);
-      myHgRemoteStatusUpdater = null;
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
-
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
-
-    super.deactivate();
   }
 
   @Nullable
