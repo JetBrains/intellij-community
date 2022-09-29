@@ -17,7 +17,7 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 
   data class AppInfo(val applicationId: UUID, val userName: String, val hostName: String, val configFolder: String)
 
-  fun isEmpty(): Boolean = fileStates.isEmpty() && plugins == null
+  fun isEmpty(): Boolean = fileStates.isEmpty() && (plugins == null || plugins.plugins.isEmpty())
 
   fun isDeleted(): Boolean {
     return metaInfo.isDeleted
