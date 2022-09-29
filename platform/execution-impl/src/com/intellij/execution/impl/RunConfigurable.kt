@@ -1109,6 +1109,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val typeNode = selectedConfigurationTypeNode!!
         val settings = configuration.createSnapshot(true)
         val copyName = createUniqueName(typeNode, configuration.nameText, CONFIGURATION, TEMPORARY_CONFIGURATION)
+        (settings.configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(true)
         settings.name = copyName
         val factory = settings.factory
         @Suppress("UNCHECKED_CAST", "DEPRECATION")
