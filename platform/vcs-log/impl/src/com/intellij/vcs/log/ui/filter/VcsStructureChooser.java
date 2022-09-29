@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -162,21 +163,24 @@ public class VcsStructureChooser extends DialogWrapper {
           return file == null ? "" : file.getName();
         }
         return o.toString();
-      });
+      }) {
+        @Override
+        protected Comparator<? super NodeDescriptor<?>> getFileComparator() {
+          return (o1, o2) -> {
+            if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
+              VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+              VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
 
-    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator((o1, o2) -> {
-      if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-        VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-        VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+              boolean isDir1 = f1.isDirectory();
+              boolean isDir2 = f2.isDirectory();
+              if (isDir1 != isDir2) return isDir1 ? -1 : 1;
 
-        boolean isDir1 = f1.isDirectory();
-        boolean isDir2 = f2.isDirectory();
-        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-        return f1.getPath().compareToIgnoreCase(f2.getPath());
-      }
-      return o1.getIndex() - o2.getIndex();
-    });
+              return f1.getPath().compareToIgnoreCase(f2.getPath());
+            }
+            return o1.getIndex() - o2.getIndex();
+          };
+        }
+      };
 
     new ClickListener() {
       @Override

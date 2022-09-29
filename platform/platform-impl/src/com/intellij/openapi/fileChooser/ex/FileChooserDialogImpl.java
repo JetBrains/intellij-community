@@ -343,7 +343,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myFileSystemTree.addListener(selection -> {
       // myTreeIsUpdating makes no sense for AsyncTreeModel
-      if (myTreeIsUpdating && myFileSystemTree.getTreeBuilder() == null) myTreeIsUpdating = false;
+      if (myTreeIsUpdating) myTreeIsUpdating = false;
       updatePathFromTree(selection, false);
     }, getDisposable());
 
@@ -547,13 +547,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         text = VfsUtil.getReadableUrl(roots.get(0));
       }
     }
-    if (myFileSystemTree.getTreeBuilder() == null) {
-      if (text.isEmpty()) return;
-      String old = myPathTextField.getTextFieldText();
-      if (old == null || old.equals(text)) return;
-      int index = old.length() - 1;
-      if (index == text.length() && File.separatorChar == old.charAt(index) && old.startsWith(text)) return;
-    }
+    if (text.isEmpty()) return;
+    String old = myPathTextField.getTextFieldText();
+    if (old == null || old.equals(text)) return;
+    int index = old.length() - 1;
+    if (index == text.length() && File.separatorChar == old.charAt(index) && old.startsWith(text)) return;
 
     myPathTextField.setText(text, now, () -> {
       myPathTextField.getField().selectAll();
