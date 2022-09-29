@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.impl.toCodeCompletionItems
 import java.util.*
-import javax.swing.Icon
 
 /*
  * DEPRECATION -> @JvmDefault
@@ -36,41 +35,5 @@ interface WebSymbolsContainer : ModificationTracker {
   @JvmDefault
   fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
     false
-
-  interface Origin {
-    @JvmDefault
-    val framework: FrameworkId?
-      get() = null
-
-    @JvmDefault
-    val library: String?
-      get() = null
-
-    @JvmDefault
-    val version: String?
-      get() = null
-
-    @JvmDefault
-    val defaultIcon: Icon?
-      get() = null
-  }
-
-  data class OriginData(override val framework: FrameworkId? = null,
-                        override val library: String? = null,
-                        override val version: String? = null,
-                        override val defaultIcon: Icon? = null) : Origin
-
-  @Suppress("MayBeConstant")
-  companion object {
-    @JvmField
-    val NAMESPACE_HTML = "html"
-    @JvmField
-    val NAMESPACE_CSS = "css"
-    @JvmField
-    val NAMESPACE_JS = "js"
-
-    @JvmField
-    val EMPTY_ORIGIN: Origin = OriginData()
-  }
 
 }

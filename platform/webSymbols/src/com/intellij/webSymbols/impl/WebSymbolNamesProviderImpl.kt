@@ -4,7 +4,6 @@ package com.intellij.webSymbols.impl
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNamesProvider.Target.*
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.framework.WebSymbolsFramework
 import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import java.util.*
@@ -90,7 +89,7 @@ internal class WebSymbolNamesProviderImpl(
       }
     }
     ?: listOf(
-      if (namespace == NAMESPACE_JS)
+      if (namespace == WebSymbol.NAMESPACE_JS)
         name
       else
         name.lowercase(Locale.US))

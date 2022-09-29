@@ -8,9 +8,9 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_CSS
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbolsScope.Companion.applyScope
 import com.intellij.webSymbols.utils.hideFromCompletion
 import java.util.*

@@ -5,8 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import javax.swing.Icon
 
 interface WebSymbolDefaultIconProvider {
@@ -20,12 +18,12 @@ interface WebSymbolDefaultIconProvider {
     fun get(namespace: SymbolNamespace, kind: SymbolKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }
       ?: when (namespace) {
-        NAMESPACE_HTML -> when (kind) {
+        WebSymbol.NAMESPACE_HTML -> when (kind) {
           WebSymbol.KIND_HTML_ELEMENTS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag)
           WebSymbol.KIND_HTML_ATTRIBUTES -> AllIcons.Nodes.ObjectTypeAttribute
           else -> null
         }
-        NAMESPACE_JS -> when (kind) {
+        WebSymbol.NAMESPACE_JS -> when (kind) {
           WebSymbol.KIND_JS_PROPERTIES -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
           else -> null
         }

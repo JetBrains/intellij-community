@@ -299,7 +299,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsFra
 
   class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
-    private val typeResolver: WebTypesSymbolTypeResolver,
+    override val typeSupport: WebTypesSymbolTypeSupport,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
     private val iconLoader: (path: String) -> Icon? = { null },
@@ -319,17 +319,6 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsFra
     override val defaultIcon: Icon? = webTypes.defaultIcon?.let { IconLoader.createLazy { loadIcon(it) ?: EmptyIcon.ICON_0 } }
 
     override fun renderDescription(description: String): String? = descriptionRenderer(description)
-
-    override fun getType(typeReferences: List<Type>): Any? =
-      typeResolver.resolveType(typeReferences.mapNotNull {
-        when (val reference = it.value) {
-          is String -> WebTypesSymbolTypeResolver.TypeReference(null, reference)
-          is TypeReference -> if (reference.name != null)
-            WebTypesSymbolTypeResolver.TypeReference(reference.module, reference.name)
-          else null
-          else -> null
-        }
-      })
 
     override fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement? =
       resolveSourceLocation(source)?.let { sourceSymbolResolver(it, cacheHolder) }
@@ -353,8 +342,11 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsFra
 
   }
 
-  interface WebTypesJsonOrigin : WebSymbolsContainer.Origin {
-    fun getType(typeReferences: List<Type>): Any?
+  interface WebTypesJsonOrigin : WebSymbolOrigin {
+    @JvmDefault
+    override val typeSupport: WebTypesSymbolTypeSupport?
+      get() = null
+
     fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
     fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
     fun renderDescription(description: String): String?

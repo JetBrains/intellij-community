@@ -83,7 +83,7 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
             registry.get(it.key, it.value)?.let { (pluginDescriptor, webTypes) ->
               addWebTypes(webTypes, WebTypesJsonOriginImpl(
                 webTypes,
-                typeResolver = WebTypesSymbolTypeResolver.get(webTypes),
+                typeSupport = WebTypesSymbolTypeSupport.get(webTypes),
                 iconLoader = WebTypesEmbeddedIconLoader(pluginDescriptor)::loadIcon,
                 version = null
               ))

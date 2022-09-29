@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.registry
 
-import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
@@ -383,11 +382,13 @@ class WebSymbolsRegistryNameQueryTest : WebSymbolsMockRegistryTestBase() {
   }
 
   fun testReferenceComplexNameConversion() {
-    doTest("html/elements/demo-test/attributes/foo-FOO-BAR", null, includeVirtual = true, "mixed-component", "reference-with-complex-name-conversion")
+    doTest("html/elements/demo-test/attributes/foo-FOO-BAR", null, includeVirtual = true, "mixed-component",
+           "reference-with-complex-name-conversion")
   }
 
   fun testReferenceComplexNameConversion2() {
-    doTest("html/elements/demo-test/attributes/foo-foo-bar", null, includeVirtual = true, "mixed-component", "reference-with-complex-name-conversion")
+    doTest("html/elements/demo-test/attributes/foo-foo-bar", null, includeVirtual = true, "mixed-component",
+           "reference-with-complex-name-conversion")
   }
 
   fun testNestedPattern1() {
@@ -400,12 +401,12 @@ class WebSymbolsRegistryNameQueryTest : WebSymbolsMockRegistryTestBase() {
                                 context: Stack<WebSymbolsContainer>): List<WebSymbolsContainer> {
           return if (kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : WebSymbol {
-              override val origin: WebSymbolsContainer.Origin
-                get() = object : WebSymbolsContainer.Origin {
+              override val origin: WebSymbolOrigin
+                get() = object : WebSymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
               override val namespace: SymbolNamespace
-                get() = WebSymbolsContainer.NAMESPACE_HTML
+                get() = WebSymbol.NAMESPACE_HTML
               override val kind: SymbolKind
                 get() = WebSymbol.KIND_HTML_ATTRIBUTES
               override val matchedName: String

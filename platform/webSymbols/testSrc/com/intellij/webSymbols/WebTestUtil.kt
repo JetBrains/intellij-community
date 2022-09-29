@@ -52,7 +52,7 @@ import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
 
-val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
+internal val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
 
 fun UsefulTestCase.enableAstLoadingFilter() {
   Registry.get("ast.loading.filter").setValue(true, testRootDisposable)

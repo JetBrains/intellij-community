@@ -11,7 +11,6 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -127,7 +126,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val kind: SymbolKind
       get() = base.kind
 
-    override val origin: WebSymbolsContainer.Origin
+    override val origin: WebSymbolOrigin
       get() = base.jsonOrigin
 
     override val namespace: SymbolNamespace
@@ -184,7 +183,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
     override val type: Any?
       get() = (base.contribution.type)
-                ?.let { base.jsonOrigin.getType(it) }
+                ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
               ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
     override val deprecated: Boolean
@@ -268,7 +267,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
 
       override val langType: Any?
         get() = value.type?.toLangType()
-          ?.let { base.jsonOrigin.getType(it) }
+          ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
 
     }
   }

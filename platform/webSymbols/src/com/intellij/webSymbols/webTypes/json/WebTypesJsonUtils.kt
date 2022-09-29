@@ -12,16 +12,17 @@ import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_EVENTS
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_PROPERTIES
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_CSS
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsContainer.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
+import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
 import java.util.function.Function
@@ -435,3 +436,14 @@ internal fun <K, T> mapNameConverters(map: Map<String, T>,
       val converter = mapper(value) ?: return@mapNotNull null
       Pair(Triple(framework, namespace, symbolKind), converter)
     }
+
+internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.TypeReference> =
+  mapNotNull {
+    when (val reference = it.value) {
+      is String -> WebTypesSymbolTypeSupport.TypeReference(null, reference)
+      is TypeReference -> if (reference.name != null)
+        WebTypesSymbolTypeSupport.TypeReference(reference.module, reference.name)
+      else null
+      else -> null
+    }
+  }

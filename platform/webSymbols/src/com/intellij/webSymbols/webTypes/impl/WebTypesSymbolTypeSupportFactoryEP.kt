@@ -6,15 +6,15 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver
+import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import java.util.*
 
-internal class WebTypesSymbolTypeResolverFactoryEP : CustomLoadingExtensionPointBean<WebTypesSymbolTypeResolver.Factory>(),
-                                                     KeyedLazyInstance<WebTypesSymbolTypeResolver.Factory> {
+internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointBean<WebTypesSymbolTypeSupport.Factory>(),
+                                                    KeyedLazyInstance<WebTypesSymbolTypeSupport.Factory> {
 
   companion object {
-    val EP_NAME = KeyedExtensionCollector<WebTypesSymbolTypeResolver.Factory, String>(
-      "com.intellij.webSymbols.webTypes.symbolTypeResolverFactory")
+    val EP_NAME = KeyedExtensionCollector<WebTypesSymbolTypeSupport.Factory, String>(
+      "com.intellij.webSymbols.webTypes.symbolTypeSupportFactory")
   }
 
   @Attribute("syntax")

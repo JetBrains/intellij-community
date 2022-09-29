@@ -25,7 +25,7 @@ import javax.swing.Icon
 @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
 interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
 
-  val origin: WebSymbolsContainer.Origin
+  val origin: WebSymbolOrigin
 
   val namespace: SymbolNamespace
 
@@ -197,6 +197,10 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   }
 
   companion object {
+    const val NAMESPACE_HTML = "html"
+    const val NAMESPACE_CSS = "css"
+    const val NAMESPACE_JS = "js"
+
     const val KIND_HTML_ELEMENTS = "elements"
     const val KIND_HTML_ATTRIBUTES = "attributes"
     const val KIND_HTML_ATTRIBUTE_VALUES = "values"

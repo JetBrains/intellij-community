@@ -203,8 +203,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
             symbol = WebSymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              WebSymbolsContainer.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
-              WebSymbolsContainer.OriginData()
+              WebSymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
+              WebSymbolOrigin.empty()
             ))
         }
         val result = mutableListOf<WebSymbolCodeCompletionItem>()

@@ -14,7 +14,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
                                               override val nameSegments: List<WebSymbolNameSegment>,
                                               override val namespace: SymbolNamespace,
                                               override val kind: SymbolKind,
-                                              override val origin: WebSymbolsContainer.Origin,
+                                              override val origin: WebSymbolOrigin,
                                               private val explicitPriority: Priority?,
                                               private val explicitProximity: Int?) : WebSymbol {
 
@@ -148,7 +148,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
                nameSegments: List<WebSymbolNameSegment>,
                namespace: SymbolNamespace,
                kind: SymbolKind,
-               origin: WebSymbolsContainer.Origin,
+               origin: WebSymbolOrigin,
                explicitPriority: Priority? = null,
                explicitProximity: Int? = null): WebSymbolMatch =
       if (nameSegments.any { it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol } })
@@ -186,7 +186,7 @@ open class WebSymbolMatch private constructor(override val matchedName: String,
                                  nameSegments: List<WebSymbolNameSegment>,
                                  namespace: SymbolNamespace,
                                  kind: SymbolKind,
-                                 origin: WebSymbolsContainer.Origin,
+                                 origin: WebSymbolOrigin,
                                  explicitPriority: Priority?,
                                  explicitProximity: Int?)
     : WebSymbolMatch(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity), PsiSourcedWebSymbol {

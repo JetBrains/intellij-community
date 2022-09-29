@@ -16,7 +16,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
-  override val origin: WebSymbolsContainer.Origin
+  override val origin: WebSymbolOrigin
     get() = delegate.origin
   override val namespace: SymbolNamespace
     get() = delegate.namespace

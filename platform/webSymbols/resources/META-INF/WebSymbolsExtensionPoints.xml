@@ -14,10 +14,10 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
                     beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolTypeResolverFactory"
-                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeResolverFactoryEP"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolTypeSupportFactory"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeResolver$Factory"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport$Factory"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.additionalContextProvider"
                     interface="com.intellij.webSymbols.WebSymbolsAdditionalContextProvider"
