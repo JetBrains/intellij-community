@@ -1,25 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerator<String>> {
+public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
-  static{
+  static {
     IndexDebugProperties.DEBUG = true;
   }
 
@@ -61,14 +62,14 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerato
     final int id1 = enumerator.enumerate(value);
     final int id2 = enumerator.enumerate(value);
     assertEquals(
-      "["+value+"] must be given same ID if .enumerate()-ed subsequently",
+      "[" + value + "] must be given same ID if .enumerate()-ed subsequently",
       id1,
       id2
     );
   }
 
   @Test
-  public void manyValuesEnumeratedCouldBeGetBackById() throws IOException {
+  public void manyValuesEnumeratedCouldBeGetBack_ById() throws IOException {
     final String[] values = manyValues;
     final int[] ids = new int[values.length];
     for (int i = 0; i < values.length; i++) {
@@ -89,7 +90,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerato
   }
 
   @Test
-  public void manyValuesEnumeratedCouldBeGetBackByIdAfterReload() throws Exception {
+  public void manyValuesEnumeratedCouldBeGetBack_ById_AfterReload() throws Exception {
     final String[] values = manyValues;
     final int[] ids = new int[values.length];
     for (int i = 0; i < values.length; i++) {
@@ -97,8 +98,8 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerato
       final int id = enumerator.enumerate(value);
       ids[i] = id;
     }
-    closeEnumerator(enumerator);
 
+    closeEnumerator(enumerator);
     enumerator = openEnumerator(storageFile);
 
     for (int i = 0; i < ids.length; i++) {
@@ -111,6 +112,57 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerato
         actualValue
       );
     }
+  }
+
+  @Test
+  public void manyValuesEnumeratedCouldBeGetBack_ByProcessAllDataObjects() throws Exception {
+    final String[] values = manyValues;
+    final int[] ids = new int[values.length];
+    for (int i = 0; i < values.length; i++) {
+      final String value = values[i];
+      final int id = enumerator.enumerate(value);
+      ids[i] = id;
+    }
+
+    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> returnedNames = new HashSet<>(expectedNames.size());
+    enumerator.processAllDataObjects(name -> {
+      returnedNames.add(name);
+      return true;
+    });
+
+    assertEquals(
+      "processAllDataObjects must return all names put into enumerator",
+      expectedNames,
+      returnedNames
+    );
+  }
+
+  @Test
+  public void manyValuesEnumeratedCouldBeGetBack_ByProcessAllDataObjects_AfterReload() throws Exception {
+    final String[] values = manyValues;
+    final int[] ids = new int[values.length];
+    for (int i = 0; i < values.length; i++) {
+      final String value = values[i];
+      final int id = enumerator.enumerate(value);
+      ids[i] = id;
+    }
+
+    closeEnumerator(enumerator);
+    enumerator = openEnumerator(storageFile);
+
+    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> returnedNames = new HashSet<>(expectedNames.size());
+    enumerator.processAllDataObjects(name -> {
+      returnedNames.add(name);
+      return true;
+    });
+
+    assertEquals(
+      "processAllDataObjects must return all names put into enumerator",
+      expectedNames,
+      returnedNames
+    );
   }
 
   protected void closeEnumerator(final DataEnumerator<String> enumerator) throws Exception {
