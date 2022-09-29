@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.descendantsOfType
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector.Configuration
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -29,6 +30,7 @@ interface KotlinMainFunctionDetector {
      * Service implementations perform resolution.
      * See 'PsiOnlyKotlinMainFunctionDetector' for PSI-only heuristic-based checker.
      */
+    @RequiresReadLock
     fun isMain(function: KtNamedFunction, configuration: Configuration = Configuration.DEFAULT): Boolean
 
     companion object {
@@ -36,10 +38,12 @@ interface KotlinMainFunctionDetector {
     }
 }
 
+@RequiresReadLock
 fun KotlinMainFunctionDetector.hasMain(file: KtFile, configuration: Configuration = Configuration.DEFAULT): Boolean {
     return file.declarations.any { it is KtNamedFunction && isMain(it, configuration) }
 }
 
+@RequiresReadLock
 fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): Boolean {
     if (declaration is KtObjectDeclaration) {
         return !declaration.isObjectLiteral()
@@ -49,6 +53,7 @@ fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configurati
     return declaration.companionObjects.any { hasMain(it, configuration) }
 }
 
+@RequiresReadLock
 fun KotlinMainFunctionDetector.findMainOwner(element: PsiElement): KtDeclarationContainer? {
     val containingFile = element.containingFile as? KtFile ?: return null
     if (!RootKindFilter.projectSources.matches(containingFile)) {

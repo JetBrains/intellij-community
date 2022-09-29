@@ -20,6 +20,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -453,19 +454,20 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 } ?: emptyList()
             }
 
-            fun findFiles(fqName: String) =
-                if (shouldUseSlowResolve) {
-                    findMainClassFileHeuristically()
-                } else {
-                    project.runReadActionInSmartMode {
-                        KotlinFileFacadeFqNameIndex.get(fqName, project, scope).takeIf { it.isNotEmpty() }
-                            ?: KotlinFullClassNameIndex.get(fqName, project, scope)
-                                .flatMap { it.findMainFunCandidates() }
-                                .map { it.containingKtFile }
-                    }
+            if (shouldUseSlowResolve) {
+                return runReadAction {
+                    findMainClassFileHeuristically().firstOrNull { it.hasMainFun(true) }
                 }
+            }
 
-            return findFiles(dotNotationFqName).firstOrNull { it.hasMainFun(shouldUseSlowResolve) }
+            return project.runReadActionInSmartMode {
+                val candidates = KotlinFileFacadeFqNameIndex.get(dotNotationFqName, project, scope).takeIf { it.isNotEmpty() }
+                    ?: KotlinFullClassNameIndex.get(dotNotationFqName, project, scope)
+                        .flatMap { it.findMainFunCandidates() }
+                        .map { it.containingKtFile }
+
+                candidates.firstOrNull { it.hasMainFun(false) }
+            }
         }
 
         private fun Project.shouldUseSlowResolve(): Boolean =

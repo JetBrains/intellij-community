@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal
 object PsiOnlyKotlinMainFunctionDetector : KotlinMainFunctionDetector {
+    @RequiresReadLock
     override fun isMain(function: KtNamedFunction, configuration: KotlinMainFunctionDetector.Configuration): Boolean {
         if (function.isLocal || function.typeParameters.isNotEmpty()) {
             return false
