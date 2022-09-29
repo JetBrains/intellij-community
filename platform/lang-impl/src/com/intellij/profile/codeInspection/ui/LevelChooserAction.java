@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,12 +56,11 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
-        if (project != null) {
-          SeverityEditorDialog.show(project, myChosen, mySeverityRegistrar, true, severity -> {
-            setChosen(severity);
-            onChosen(severity);
-          });
-        }
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        SeverityEditorDialog.show(project, myChosen, mySeverityRegistrar, true, severity -> {
+          setChosen(severity);
+          onChosen(severity);
+        });
       }
     });
     return group;
