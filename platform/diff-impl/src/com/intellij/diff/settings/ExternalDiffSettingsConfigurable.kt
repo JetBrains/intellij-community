@@ -17,6 +17,7 @@ package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.BottomGap
@@ -26,15 +27,15 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
-import javax.swing.JComponent
 
-class ExternalDiffSettingsPanel {
-  private val panel: DialogPanel
+class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
+  DiffBundle.message("configurable.ExternalDiffSettingsConfigurable.display.name"),
+  "diff.external"
+) {
 
-  init {
+  override fun createPanel(): DialogPanel {
     val settings = ExternalDiffSettings.instance
-
-    panel = panel {
+    return panel {
       lateinit var externalToolsEnabled: Cell<JBCheckBox>
       row {
         externalToolsEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.tools"))
@@ -64,21 +65,5 @@ class ExternalDiffSettingsPanel {
         }
       }.enabledIf(externalToolsEnabled.component.selected)
     }
-  }
-
-  fun createComponent(): JComponent {
-    return panel
-  }
-
-  fun isModified(): Boolean {
-    return panel.isModified()
-  }
-
-  fun apply() {
-    panel.apply()
-  }
-
-  fun reset() {
-    panel.reset()
   }
 }
