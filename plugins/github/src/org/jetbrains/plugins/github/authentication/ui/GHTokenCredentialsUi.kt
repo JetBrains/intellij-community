@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.ide.BrowserUtil.browse
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
@@ -20,6 +23,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -55,15 +59,13 @@ internal class GHTokenCredentialsUi(
 
   override fun getValidator(): Validator = { notBlank(tokenTextField, message("login.token.cannot.be.empty")) }
 
-  override fun createExecutor() = factory.create(tokenTextField.text)
-
-  override fun acquireLoginAndToken(
-    server: GithubServerPath,
-    executor: GithubApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, String> {
-    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
-    return login to tokenTextField.text
+  override fun submitLoginTask(server: GithubServerPath, indicator: ProgressIndicator): CompletableFuture<Pair<String, String>> {
+    val token = tokenTextField.text
+    return service<ProgressManager>().submitIOTask(indicator) {
+      val executor = factory.create(token)
+      val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
+      login to token
+    }
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =

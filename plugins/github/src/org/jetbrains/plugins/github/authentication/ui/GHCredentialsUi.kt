@@ -7,22 +7,16 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.ui.util.Validator
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal abstract class GHCredentialsUi {
   abstract fun getPreferredFocusableComponent(): JComponent?
   abstract fun getValidator(): Validator
-  abstract fun createExecutor(): GithubApiRequestExecutor
-  abstract fun acquireLoginAndToken(
-    server: GithubServerPath,
-    executor: GithubApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, String>
-
+  abstract fun submitLoginTask(server: GithubServerPath, indicator: ProgressIndicator): CompletableFuture<Pair<String, String>>
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 
