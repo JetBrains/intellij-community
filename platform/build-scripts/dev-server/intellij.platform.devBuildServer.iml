@@ -47,5 +47,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" scope="RUNTIME" name="xz" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="ktor-client" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="ktor-client-auth" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="ktor-client-cio" level="project" />
   </component>
 </module>
