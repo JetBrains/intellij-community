@@ -4,6 +4,7 @@
 package com.intellij.ui
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.ide.ui.IconMapperBean
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
@@ -14,7 +15,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ResourceUtil
-import java.util.*
 
 /**
  * @author Konstantin Bulenkov
@@ -25,6 +25,8 @@ class ExperimentalUIImpl : ExperimentalUI() {
   override fun onExpUIEnabled() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
+    NewUIInfoService.getInstance().updateEnableNewUIDate()
+    
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
     UISettings.getInstance().openInPreviewTabIfPossible = true

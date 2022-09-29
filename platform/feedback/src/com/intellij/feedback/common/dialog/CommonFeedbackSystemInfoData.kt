@@ -19,7 +19,6 @@ import com.intellij.ui.LicensingFacade
 import kotlinx.serialization.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.streams.toList
 
 /** This number should be increased when [CommonFeedbackSystemInfoData] fields changing */
 const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 1
@@ -155,6 +154,33 @@ data class CommonFeedbackSystemInfoData(
     }
     else {
       CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins.empty")
+    }
+  }
+
+  override fun toString(): String {
+    return buildString {
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.title"))
+      appendLine()
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.os.version"))
+      appendLine(osVersion)
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.memory"))
+      appendLine(getMemorySizeForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.cores"))
+      appendLine(coresNumber)
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version"))
+      appendLine(appVersionWithBuild)
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.evaluation"))
+      appendLine(getIsLicenseEvaluationForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.restrictions"))
+      appendLine(getLicenseRestrictionsForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.runtime.version"))
+      appendLine(runtimeVersion)
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.registry"))
+      appendLine(getRegistryKeysForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.disabled.plugins"))
+      appendLine(getDisabledBundledPluginsForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins"))
+      appendLine(getNonBundledPluginsForDialog())
     }
   }
 }
