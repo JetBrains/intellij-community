@@ -13,6 +13,21 @@ import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import icons.SettingsSyncIcons
 
 class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")) {
+
+  private enum class SyncStatus {ON, OFF, FAILED}
+
+  companion object {
+    private fun getStatus() : SyncStatus {
+      if (SettingsSyncSettings.getInstance().syncEnabled &&
+          SettingsSyncAuthService.getInstance().isLoggedIn()) {
+        return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
+        else SyncStatus.FAILED
+      }
+      else
+        return SyncStatus.OFF
+    }
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     ShowSettingsUtil.getInstance().showSettingsDialog(e.project, SettingsSyncConfigurable::class.java)
   }
@@ -43,15 +58,4 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
     }
   }
 
-  private enum class SyncStatus {ON, OFF, FAILED}
-
-  private fun getStatus() : SyncStatus {
-    if (SettingsSyncSettings.getInstance().syncEnabled &&
-        SettingsSyncAuthService.getInstance().isLoggedIn()) {
-      return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
-      else SyncStatus.FAILED
-    }
-    else
-      return SyncStatus.OFF
-  }
 }
