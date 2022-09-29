@@ -735,7 +735,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-55521
   public void testTargetExpressionInsideTypeDeclaration() {
-    checkHTMLOnly();
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
   }
 
   @Override
