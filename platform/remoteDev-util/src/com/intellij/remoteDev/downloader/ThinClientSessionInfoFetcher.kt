@@ -41,11 +41,12 @@ object ThinClientSessionInfoFetcher {
         }
 
         val sessionInfo = objectMapper.value.reader().readTree(responseString)
+        val jreUrlNode = sessionInfo["compatibleJreUrl"]
         return@connect object : CodeWithMeSessionInfoProvider {
           override val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
           override val compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText()
           override val isUnattendedMode = false
-          override val compatibleJreUrl = sessionInfo["compatibleJreUrl"].asText()
+          override val compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText()
           override val hostFeaturesToEnable: Set<String>
             get() = throw UnsupportedOperationException("hostFeaturesToEnable field should not be used")
           override val stunTurnServers: List<StunTurnServerInfo>
