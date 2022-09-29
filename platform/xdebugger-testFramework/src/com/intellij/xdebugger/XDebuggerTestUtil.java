@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ui.TextTransferable;
@@ -240,6 +241,10 @@ public class XDebuggerTestUtil {
         return null;
       }
       catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          ExceptionUtil.rethrow(cause);
+        }
         throw new RuntimeException(e);
       }
     }, timeoutInMillis);
