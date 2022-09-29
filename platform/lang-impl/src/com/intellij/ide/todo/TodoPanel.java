@@ -148,8 +148,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       }
     }
   }
-  
-  protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, Project project);
+
+  protected abstract TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                       @NotNull Project project);
 
   private void initUI() {
     myTree.setShowsRootHandles(true);

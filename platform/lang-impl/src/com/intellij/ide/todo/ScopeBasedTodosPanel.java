@@ -25,6 +25,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -80,7 +81,8 @@ public class ScopeBasedTodosPanel extends TodoPanel {
   }
 
   @Override
-  protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+  protected @NotNull TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                       @NotNull Project project) {
     ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, project, myScopes);
     builder.init();
     return builder;

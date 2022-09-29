@@ -25,13 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
-  public CurrentFileTodosTreeBuilder(JTree tree, Project project){
+
+  public CurrentFileTodosTreeBuilder(@NotNull JTree tree,
+                                     @NotNull Project project) {
     super(tree, project);
   }
 
   @Override
-  @NotNull
-  protected TodoTreeStructure createTreeStructure(){
+  protected @NotNull TodoTreeStructure createTreeStructure() {
     return new CurrentFileTodosTreeStructure(myProject);
   }
 

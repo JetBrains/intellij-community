@@ -53,25 +53,28 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public abstract class TodoTreeBuilder implements Disposable {
+
   private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
-      Comparator.<NodeDescriptor<?>>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);
-  protected final Project myProject;
+    Comparator.<NodeDescriptor<?>>comparingInt(NodeDescriptor::getWeight).thenComparingInt(NodeDescriptor::getIndex);
+
+  protected final @NotNull Project myProject;
 
   /**
    * All files that have T.O.D.O items are presented as tree. This tree help a lot
    * to separate these files by directories.
    */
-  protected final FileTree myFileTree;
+  protected final @NotNull FileTree myFileTree = new FileTree();
   /**
    * This set contains "dirty" files. File is "dirty" if it's currently unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
    * validated in {@code validateCache()} method.
    */
-  protected final HashSet<VirtualFile> myDirtyFileSet;
+  protected final HashSet<VirtualFile> myDirtyFileSet = new HashSet<>();
 
-  protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter;
+  //used from EDT and from StructureTreeModel invoker thread
+  protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
 
   private final JTree myTree;
   /**
@@ -82,28 +85,23 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   private boolean myUpdatable;
 
-  /** Updates tree if containing files change VCS status. */
-  private final MyFileStatusListener myFileStatusListener;
+  /**
+   * Updates tree if containing files change VCS status.
+   */
+  private final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
   private TodoTreeStructure myTreeStructure;
   private StructureTreeModel<TodoTreeStructure> myModel;
   private boolean myDisposed;
 
   private final Object LOCK = new Object();
   private final List<TreeUpdater> myPendingUpdates = new SmartList<>(); // guarded by LOCK
-  
-  TodoTreeBuilder(JTree tree, Project project) {
+
+  TodoTreeBuilder(@NotNull JTree tree,
+                  @NotNull Project project) {
     myTree = tree;
     myProject = project;
 
-    myFileTree = new FileTree();
-    myDirtyFileSet = new HashSet<>();
-
-    myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap(); //used from EDT and from StructureTreeModel invoker thread
-
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
-
-    myFileStatusListener = new MyFileStatusListener();
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     //setCanYieldUpdate(true);
   }
@@ -160,8 +158,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  @NotNull
-  protected abstract TodoTreeStructure createTreeStructure();
+  protected abstract @NotNull TodoTreeStructure createTreeStructure();
 
   public final TodoTreeStructure getTodoTreeStructure() {
     return myTreeStructure;
@@ -184,8 +181,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
 
       @Override
-      @Nullable
-      public PsiFile next() {
+      public @Nullable PsiFile next() {
         VirtualFile vFile = iterator.next();
         if (vFile == null || !vFile.isValid()) {
           return null;

@@ -137,7 +137,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+      protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                  @NotNull Project project) {
         AllTodosTreeBuilder builder = createAllTodoBuilder(tree, project);
         builder.init();
         return builder;
@@ -162,7 +163,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
     myCurrentFileTodosPanel = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
       @Override
-      protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+      protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                  @NotNull Project project) {
         CurrentFileTodosTreeBuilder builder = new CurrentFileTodosTreeBuilder(tree, project);
         builder.init();
         return builder;
@@ -225,15 +227,16 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Disposer.dispose(myScopeBasedTodosPanel);
   }
 
-  @NotNull
-  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, Project project) {
+  protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
+                                                              @NotNull Project project) {
     return new AllTodosTreeBuilder(tree, project);
   }
 
   private final class MyPropertyChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent e) {
-      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) || TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
+      if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) ||
+          TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
         updateFilters();
       }
     }
