@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package one.two
 
 import org.jetbrains.annotations.NotNull
@@ -14,3 +15,5 @@ class B : A() {
 
 // EXIST: {"lookupString":"MyClass","tailText":" (one.two)","module":"light_idea_test_case","attributes":"","allLookupStrings":"MyClass","itemText":"MyClass"}
 // NUMBER: 1
+// FIR_COMPARISON
+// FIR_IDENTICAL
