@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -213,8 +212,6 @@ class ProjectLibraryBridgeTest {
         saveSettings(project)
       }
     }
-    assertTrue(checkLibraryClassRootOnDisk(antLibraryName, "$mavenLibraryName.jar"))
-    assertTrue(checkLibraryClassRootOnDisk(mavenLibraryName, "$antLibraryName.jar"))
   }
 
   @Test
@@ -409,16 +406,15 @@ class ProjectLibraryBridgeTest {
     assertFalse(moduleFile.readText().contains(antLibraryName))
   }
 
-  private suspend fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
+  private fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
     assertTrue(event is EntityChange.Added)
     val libraryEntity = (event as EntityChange.Added).entity
     assertEquals(libraryName, libraryEntity.name)
     assertTrue(libraryEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(0, libraryEntity.roots.size)
-    checkLibraryDiskState(libraryName)
   }
 
-  private suspend fun checkLibraryReplacedEvent(event: EntityChange<LibraryEntity>, oldLibraryName: String, newLibraryName: String) {
+  private fun checkLibraryReplacedEvent(event: EntityChange<LibraryEntity>, oldLibraryName: String, newLibraryName: String) {
     assertTrue(event is EntityChange.Replaced)
     val replaced = event as EntityChange.Replaced
     val newEntity = replaced.newEntity
@@ -428,28 +424,8 @@ class ProjectLibraryBridgeTest {
     assertEquals(newLibraryName, newEntity.name)
     assertTrue(newEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(2, newEntity.roots.size)
-    checkLibraryDiskState(newLibraryName, oldLibraryName)
   }
-
-  private suspend fun checkLibraryDiskState(currentLibraryName: String, previousLibraryName: String = "") {
-    val iprFile = File(project.projectFilePath!!)
-    saveSettings(project)
-    val librariesList = JDOMUtil.load(iprFile).getChildren("component")
-                                .first { it.getAttribute("name")!!.value == "libraryTable" }
-                                .getChildren("library")
-    assertTrue(librariesList.find { it.getAttribute("name")!!.value == currentLibraryName } != null)
-    assertTrue(librariesList.find { it.getAttribute("name")!!.value == previousLibraryName } == null)
-  }
-
-  private fun checkLibraryClassRootOnDisk(libraryName: String, classFileName: String): Boolean {
-    return JDOMUtil.load(File(project.projectFilePath!!)).getChildren("component")
-             .first { it.getAttribute("name")!!.value == "libraryTable" }
-             ?.getChildren("library")?.find { it.getAttribute("name")!!.value == libraryName }
-             ?.getChild(OrderRootType.CLASSES.name())
-             ?.getChild("root")
-             ?.getAttribute("url")?.value?.contains(classFileName) ?: false
-  }
-
+  
   private suspend fun createProjectLibrary(libraryName: String, withRoots: Boolean = true): Library {
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     return withContext(Dispatchers.EDT) {
