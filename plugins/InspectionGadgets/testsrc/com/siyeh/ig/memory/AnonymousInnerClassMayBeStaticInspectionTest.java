@@ -17,8 +17,10 @@ package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,6 +48,11 @@ public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspe
                            }
                        }
                    }""", text);
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_17;
   }
 
   @Nullable
