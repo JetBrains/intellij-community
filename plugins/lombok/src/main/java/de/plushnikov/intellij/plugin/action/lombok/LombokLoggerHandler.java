@@ -45,7 +45,10 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     }
   }
 
-  private void processLoggerField(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull AbstractLogProcessor logProcessor, @NotNull String lombokLoggerName) {
+  private static void processLoggerField(@NotNull PsiField psiField,
+                                         @NotNull PsiClass psiClass,
+                                         @NotNull AbstractLogProcessor logProcessor,
+                                         @NotNull String lombokLoggerName) {
     if (!lombokLoggerName.equals(psiField.getName())) {
       RenameProcessor processor = new RenameProcessor(psiField.getProject(), psiField, lombokLoggerName, false, false);
       processor.doRun();
@@ -56,7 +59,7 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     psiField.delete();
   }
 
-  private boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
+  private static boolean checkLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     if (!isValidLoggerField(psiField, lombokLoggerName, lombokLoggerIsStatic)) {
       String messageText =
         LombokBundle.message("dialog.message.logger.field.s.not.private.sfinal.field.named.s.refactor.anyway", psiField.getName(),
@@ -67,7 +70,7 @@ public class LombokLoggerHandler extends BaseLombokHandler {
     return true;
   }
 
-  private boolean isValidLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
+  private static boolean isValidLoggerField(@NotNull PsiField psiField, @NotNull String lombokLoggerName, boolean lombokLoggerIsStatic) {
     boolean isPrivate = psiField.hasModifierProperty(PsiModifier.PRIVATE);
     boolean isStatic = lombokLoggerIsStatic == psiField.hasModifierProperty(PsiModifier.STATIC);
     boolean isFinal = psiField.hasModifierProperty(PsiModifier.FINAL);

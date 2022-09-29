@@ -29,7 +29,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }
 
-  private SetterFieldProcessor getSetterFieldProcessor() {
+  private static SetterFieldProcessor getSetterFieldProcessor() {
     return ApplicationManager.getApplication().getService(SetterFieldProcessor.class);
   }
 
@@ -38,7 +38,9 @@ public final class SetterProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiAnnotation, psiClass, builder) && validateVisibility(psiAnnotation);
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiAnnotation psiAnnotation,
+                                                       @NotNull PsiClass psiClass,
+                                                       @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError(LombokBundle.message("inspection.message.s.only.supported.on.class.or.field.type"), psiAnnotation.getQualifiedName());
@@ -47,7 +49,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
@@ -65,9 +67,8 @@ public final class SetterProcessor extends AbstractClassProcessor {
 
     final Collection<PsiField> setterFields = filterSetterFields(psiClass);
 
-    SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     for (PsiField setterField : setterFields) {
-      result.add(fieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
+      result.add(SetterFieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
     }
     return result;
   }

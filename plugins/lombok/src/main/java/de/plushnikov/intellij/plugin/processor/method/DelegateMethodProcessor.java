@@ -18,10 +18,6 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
-  private DelegateHandler getDelegateHandler() {
-    return new DelegateHandler();
-  }
-
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
     boolean result = true;
@@ -31,8 +27,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
     }
 
     final PsiType returnType = psiMethod.getReturnType();
-    final DelegateHandler handler = getDelegateHandler();
-    result &= null != returnType && handler.validate(psiMethod, returnType, psiAnnotation, builder);
+    result &= null != returnType && DelegateHandler.validate(psiMethod, returnType, psiAnnotation, builder);
 
     return result;
   }
@@ -41,8 +36,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiType returnType = psiMethod.getReturnType();
     if (null != returnType) {
-      final DelegateHandler handler = getDelegateHandler();
-      handler.generateElements(psiMethod, returnType, psiAnnotation, target);
+      DelegateHandler.generateElements(psiMethod, returnType, psiAnnotation, target);
     }
   }
 }

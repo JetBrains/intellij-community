@@ -58,7 +58,7 @@ class NonSingularHandler implements BuilderElementHandler {
     return psiFieldName;
   }
 
-  private String getAllMethodBody(@NotNull BuilderInfo info) {
+  private static String getAllMethodBody(@NotNull BuilderInfo info) {
     StringBuilder codeBlockTemplate = new StringBuilder("this.{0} = {1};\n");
     if (info.hasBuilderDefaultAnnotation()) {
       codeBlockTemplate.append("this.{2} = true;\n");

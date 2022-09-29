@@ -7,6 +7,7 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -26,23 +27,23 @@ public class ValueProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.VALUE);
   }
 
-  private ToStringProcessor getToStringProcessor() {
+  private static ToStringProcessor getToStringProcessor() {
     return ApplicationManager.getApplication().getService(ToStringProcessor.class);
   }
 
-  private AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
+  private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
   }
 
-  private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
+  private static NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
 
-  private GetterProcessor getGetterProcessor() {
+  private static GetterProcessor getGetterProcessor() {
     return ApplicationManager.getApplication().getService(GetterProcessor.class);
   }
 
-  private EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
+  private static EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
     return ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class);
   }
 
@@ -56,7 +57,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiClass, builder);
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError(LombokBundle.message("inspection.message.value.only.supported.on.class.type"));
@@ -72,7 +73,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       target.addAll(getGetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.EQUALS_AND_HASHCODE)) {
-      target.addAll(this.getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
+      target.addAll(getEqualsAndHashCodeProcessor().createEqualAndHashCode(psiClass, psiAnnotation));
     }
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.TO_STRING)) {
       target.addAll(getToStringProcessor().createToStringMethod(psiClass, psiAnnotation));
@@ -83,7 +84,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       filterToleratedElements(definedConstructors);
 
       final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor", "");
-      final Collection<PsiField> requiredFields = getAllArgsConstructorProcessor().getAllFields(psiClass);
+      final Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getAllFields(psiClass);
 
       if (getAllArgsConstructorProcessor().validateIsConstructorNotDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
         target.addAll(getAllArgsConstructorProcessor().createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, requiredFields, true));

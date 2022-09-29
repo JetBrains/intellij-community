@@ -26,27 +26,27 @@ public class DataProcessor extends AbstractClassProcessor {
     super(PsiMethod.class, LombokClassNames.DATA);
   }
 
-  private ToStringProcessor getToStringProcessor() {
+  private static ToStringProcessor getToStringProcessor() {
     return ApplicationManager.getApplication().getService(ToStringProcessor.class);
   }
 
-  private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
+  private static NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class);
   }
 
-  private GetterProcessor getGetterProcessor() {
+  private static GetterProcessor getGetterProcessor() {
     return ApplicationManager.getApplication().getService(GetterProcessor.class);
   }
 
-  private SetterProcessor getSetterProcessor() {
+  private static SetterProcessor getSetterProcessor() {
     return ApplicationManager.getApplication().getService(SetterProcessor.class);
   }
 
-  private EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
+  private static EqualsAndHashCodeProcessor getEqualsAndHashCodeProcessor() {
     return ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class);
   }
 
-  private RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
+  private static RequiredArgsConstructorProcessor getRequiredArgsConstructorProcessor() {
     return ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class);
   }
 
@@ -66,7 +66,7 @@ public class DataProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiClass, builder);
   }
 
-  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError(LombokBundle.message("inspection.message.data.only.supported.on.class.type"));
@@ -109,7 +109,7 @@ public class DataProcessor extends AbstractClassProcessor {
     }
   }
 
-  private boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
+  private static boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
     final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass,

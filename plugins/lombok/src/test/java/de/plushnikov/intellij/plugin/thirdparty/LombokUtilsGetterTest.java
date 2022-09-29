@@ -11,7 +11,7 @@ public class LombokUtilsGetterTest {
 
   private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false);
 
-  private String makeResults(String fieldName, boolean isBoolean) {
+  private static String makeResults(String fieldName, boolean isBoolean) {
     String lombokResult = LombokHandlerUtil.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
     String result = LombokUtils.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
 

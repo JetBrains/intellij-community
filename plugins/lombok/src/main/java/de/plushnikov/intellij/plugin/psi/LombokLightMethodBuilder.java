@@ -215,7 +215,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
-  private String getAllModifierProperties(LightModifierList modifierList) {
+  private static String getAllModifierProperties(LightModifierList modifierList) {
     final StringBuilder builder = new StringBuilder();
     for (String modifier : modifierList.getModifiers()) {
       if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {

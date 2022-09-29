@@ -53,7 +53,9 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
     return LombokProcessorUtil.isLevelVisible(psiAnnotation) && checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
   }
 
-  public boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  public static boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation,
+                                                       @NotNull PsiField psiField,
+                                                       @NotNull ProblemBuilder builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
@@ -61,7 +63,7 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
     return isValid;
   }
 
-  private boolean isValidFieldNameConstant(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+  private static boolean isValidFieldNameConstant(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       final String fieldName = calcFieldConstantName(psiField, psiAnnotation, psiClass);
@@ -79,7 +81,9 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @NotNull
-  public PsiField createFieldNameConstant(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  public static PsiField createFieldNameConstant(@NotNull PsiField psiField,
+                                                 @NotNull PsiClass psiClass,
+                                                 @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager manager = psiClass.getContainingFile().getManager();
     final PsiType psiFieldType = PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(psiClass.getProject()));
 
@@ -102,7 +106,7 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @NotNull
-  private String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+  private static String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix", CONFIG_DEFAULT);
     String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix", CONFIG_DEFAULT);
 

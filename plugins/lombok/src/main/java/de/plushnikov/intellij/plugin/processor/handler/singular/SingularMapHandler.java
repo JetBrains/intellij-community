@@ -24,12 +24,12 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   @NotNull
-  private PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
+  private static PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
   }
 
   @NotNull
-  private PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
+  private static PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
   }
 

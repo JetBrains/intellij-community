@@ -46,7 +46,7 @@ public class LombokElementRenameVetoHandler implements RenameHandler {
     invokeInner(project, editor);
   }
 
-  private void invokeInner(Project project, Editor editor) {
+  private static void invokeInner(Project project, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor,
       RefactoringBundle.getCannotRefactorMessage(LombokBundle.message("dialog.message.this.element.cannot.be.renamed")),
       RefactoringBundle.message("rename.title"), null);
