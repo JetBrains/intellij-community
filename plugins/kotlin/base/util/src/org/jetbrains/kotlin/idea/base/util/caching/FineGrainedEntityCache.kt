@@ -269,6 +269,17 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(projec
     open fun postProcessNewValue(key: Key, value: Value) {}
 }
 
+abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, cleanOnLowMemory: Boolean = false) :
+    SynchronizedFineGrainedEntityCache<Unit, Value>(project, cleanOnLowMemory) {
+    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
+    override val cache: MutableMap<Unit, Value> = HashMap(1)
+
+    fun value(): Value = get(Unit)
+    abstract fun calculate(): Value
+    final override fun calculate(key: Unit): Value = calculate()
+    override fun checkKeyValidity(key: Unit) = Unit
+}
+
 fun EntityStorage.findModuleByEntityWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this)
 
 fun EntityStorage.findLibraryByEntityWithHack(entity: LibraryEntity, project: Project) = entity.findLibraryBridge(this)
@@ -303,8 +314,6 @@ abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: P
 
     abstract fun calculate(cache: MutableMap<Key, Value>, key: Key): Value
 }
-
-fun <T : Any> SynchronizedFineGrainedEntityCache<Unit, T>.get() = get(Unit)
 
 fun <T : WorkspaceEntity> EntityChange<T>.oldEntity() = when (this) {
     is EntityChange.Added -> null
