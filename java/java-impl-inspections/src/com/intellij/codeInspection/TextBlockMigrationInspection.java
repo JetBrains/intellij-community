@@ -142,7 +142,11 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         // append \ + newline at the end of the last line, so we can use closing """ to indent
         lines[lines.length - 1] += "\\\n";
       }
-      return "\"\"\"\n" + StringUtil.join(lines) + "\"\"\"";
+      String content = StringUtil.join(lines);
+      if (content.endsWith(" ")) {
+        content = content.substring(0, content.length() - 1) + "\\s";
+      }
+      return "\"\"\"\n" + content + "\"\"\"";
     }
 
     private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
