@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileTypes.FileTypeEvent
-import com.intellij.openapi.fileTypes.FileTypeListener
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -25,6 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 
 class LibraryModificationTracker(project: Project) : SimpleModificationTracker() {
     companion object {
@@ -37,16 +34,16 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
         val connection = project.messageBus.connect(disposable)
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: List<VFileEvent>) {
-                events.filter(::isRelevantEvent).let { createEvents ->
-                    if (createEvents.isNotEmpty()) {
-                        ApplicationManager.getApplication().invokeLater({
-                           processBulk(createEvents) {
-                               projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(
-                                   it
-                               )
-                           }
-                       }, project.disposed)
-                    }
+                events.filter(::isRelevantEvent).ifNotEmpty {
+                    val createEvents = this
+                    ApplicationManager.getApplication().invokeLater(
+                        {
+                            processBulk(createEvents) {
+                                projectFileIndex.isInLibraryClasses(it) ||
+                                        isLibraryArchiveRoot(it)
+                            }
+                        }, project.disposed
+                    )
                 }
             }
 
@@ -54,26 +51,6 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
                 processBulk(events) {
                     projectFileIndex.isInLibraryClasses(it)
                 }
-            }
-        })
-
-        connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
-            override fun enteredDumbMode() {
-                incModificationCount()
-            }
-
-            override fun exitDumbMode() {
-                incModificationCount()
-            }
-        })
-
-        connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
-            override fun beforeFileTypesChanged(event: FileTypeEvent) {
-                incModificationCount()
-            }
-
-            override fun fileTypesChanged(event: FileTypeEvent) {
-                incModificationCount()
             }
         })
 
