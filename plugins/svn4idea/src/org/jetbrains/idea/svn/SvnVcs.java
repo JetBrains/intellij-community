@@ -276,6 +276,7 @@ public final class SvnVcs extends AbstractVcs {
     }
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
+      myCommittedChangesProvider = null;
     }
     RootsToWorkingCopies.getInstance(myProject).clear();
     SvnAuthenticationNotifier.getInstance(myProject).clear();
