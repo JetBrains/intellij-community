@@ -830,7 +830,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitInstanceOfExpression(expression);
     if (!myHolder.hasErrorResults()) HighlightUtil.checkInstanceOfApplicable(expression, myHolder);
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
-    if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_16)) {
+    if (!myHolder.hasErrorResults() &&
+        myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
+        // 5.20.2 Removed restriction on pattern instanceof for total patterns (JEP 427)
+        myLanguageLevel.isLessThan(LanguageLevel.JDK_19_PREVIEW)) {
       myHolder.add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
   }
