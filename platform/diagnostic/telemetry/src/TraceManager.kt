@@ -3,6 +3,7 @@ package com.intellij.diagnostic.telemetry
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
@@ -34,6 +35,8 @@ import java.util.concurrent.TimeUnit.SECONDS
  */
 @ApiStatus.Experimental
 object TraceManager {
+  private val LOG: Logger = Logger.getInstance(TraceManager::class.java)
+
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
   private var verboseSdk: OpenTelemetry = OpenTelemetry.noop()
 
@@ -54,76 +57,82 @@ object TraceManager {
 
     val spanExporters = mutableListOf<SpanExporter>()
     val metricsExporters = mutableListOf<MetricExporter>()
-    if (traceFile != null) {
-      val jsonSpanExporter = JaegerJsonSpanExporter()
-      JaegerJsonSpanExporter.setOutput(file = Path.of(traceFile),
-                                       serviceName = serviceName,
-                                       serviceVersion = serviceVersion,
-                                       serviceNamespace = serviceNamespace)
-      spanExporters.add(jsonSpanExporter)
+    try {
+      if (traceFile != null) {
+        val jsonSpanExporter = JaegerJsonSpanExporter()
+        JaegerJsonSpanExporter.setOutput(file = Path.of(traceFile),
+                                         serviceName = serviceName,
+                                         serviceVersion = serviceVersion,
+                                         serviceNamespace = serviceNamespace)
+        spanExporters.add(jsonSpanExporter)
 
-      val metricsFile = deriveMetricsFile(traceFile)
-      metricsExporters.add(CsvMetricsExporter(metricsFile))
-    }
-
-    if (jaegerEndpoint != null) {
-      spanExporters.add(JaegerGrpcSpanExporter.builder().setEndpoint(jaegerEndpoint).build())
-    }
-
-    if (endpoint != null) {
-      spanExporters.add(OtlpGrpcSpanExporter.builder().setEndpoint(endpoint).build())
-    }
-
-    if (spanExporters.isNotEmpty() || metricsExporters.isNotEmpty()) {
-      val resource = Resource.create(Attributes.of(
-        ResourceAttributes.SERVICE_NAME, serviceName,
-        ResourceAttributes.SERVICE_VERSION, serviceVersion,
-        ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace,
-        ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-      ))
-
-      val otelSdkBuilder = OpenTelemetrySdk.builder()
-
-      if (spanExporters.isNotEmpty()) {
-        val tracerProvider = SdkTracerProvider.builder()
-          .addSpanProcessor(BatchSpanProcessor.builder(SpanExporter.composite(spanExporters)).build())
-          .setResource(resource)
-          .build()
-
-        otelSdkBuilder.setTracerProvider(tracerProvider)
-
-        ShutDownTracker.getInstance().registerShutdownTask(Runnable {
-          tracerProvider?.forceFlush()?.join(10, SECONDS)
-          JaegerJsonSpanExporter.finish()
-        })
+        val metricsFile = deriveMetricsFile(traceFile)
+        metricsExporters.add(CsvMetricsExporter(metricsFile))
       }
 
-      if (metricsExporters.isNotEmpty()) {
-        assert(metricsExporters.size == 1) { //no SpanExporter.composite() analog available
-          "Only single MetricsExporter supported so far, but got: $metricsExporters"
+      if (jaegerEndpoint != null) {
+        spanExporters.add(JaegerGrpcSpanExporter.builder().setEndpoint(jaegerEndpoint).build())
+      }
+
+      if (endpoint != null) {
+        spanExporters.add(OtlpGrpcSpanExporter.builder().setEndpoint(endpoint).build())
+      }
+
+      if (spanExporters.isNotEmpty() || metricsExporters.isNotEmpty()) {
+        LOG.info("Initialize OpenTelemetry: ${spanExporters.size} span & ${metricsExporters.size} metrics exporters")
+        val resource = Resource.create(Attributes.of(
+          ResourceAttributes.SERVICE_NAME, serviceName,
+          ResourceAttributes.SERVICE_VERSION, serviceVersion,
+          ResourceAttributes.SERVICE_NAMESPACE, serviceNamespace,
+          ResourceAttributes.SERVICE_INSTANCE_ID, DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+        ))
+
+        val otelSdkBuilder = OpenTelemetrySdk.builder()
+
+        if (spanExporters.isNotEmpty()) {
+          val tracerProvider = SdkTracerProvider.builder()
+            .addSpanProcessor(BatchSpanProcessor.builder(SpanExporter.composite(spanExporters)).build())
+            .setResource(resource)
+            .build()
+
+          otelSdkBuilder.setTracerProvider(tracerProvider)
+
+          ShutDownTracker.getInstance().registerShutdownTask(Runnable {
+            tracerProvider?.forceFlush()?.join(10, SECONDS)
+            JaegerJsonSpanExporter.finish()
+          })
         }
-        val metricsReader = PeriodicMetricReader.builder(metricsExporters.first())
-          .setInterval(Duration.ofMinutes(1)) // == default value, but to be explicit
-          .build()
 
-        val metricsProvider = SdkMeterProvider.builder()
-          .registerMetricReader(metricsReader)
-          .setResource(resource)
-          .build()
+        if (metricsExporters.isNotEmpty()) {
+          assert(metricsExporters.size == 1) { //no SpanExporter.composite() analog available
+            "Only single MetricsExporter supported so far, but got: $metricsExporters"
+          }
+          val metricsReader = PeriodicMetricReader.builder(metricsExporters.first())
+            .setInterval(Duration.ofMinutes(1)) // == default value, but to be explicit
+            .build()
 
-        otelSdkBuilder.setMeterProvider(metricsProvider)
+          val metricsProvider = SdkMeterProvider.builder()
+            .registerMetricReader(metricsReader)
+            .setResource(resource)
+            .build()
 
-        ShutDownTracker.getInstance().registerShutdownTask(Runnable {
-          metricsProvider?.forceFlush()?.join(10, SECONDS)
-        })
+          otelSdkBuilder.setMeterProvider(metricsProvider)
+
+          ShutDownTracker.getInstance().registerShutdownTask(Runnable {
+            metricsProvider?.forceFlush()?.join(10, SECONDS)
+          })
+        }
+
+        sdk = otelSdkBuilder.buildAndRegisterGlobal()
+
+        val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
+        if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
+          verboseSdk = sdk
+        }
       }
-
-      sdk = otelSdkBuilder.buildAndRegisterGlobal()
-
-      val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
-      if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
-        verboseSdk = sdk
-      }
+    }
+    catch (t: Throwable) {
+      LOG.warn("Can't initialize OpenTelemetry: will use default (noop) SDK impl", t)
     }
   }
 
