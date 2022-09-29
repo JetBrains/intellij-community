@@ -637,13 +637,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   @Suppress("DEPRECATION")
   private fun updateDeprecatedProperties() {
-    HIDE_TOOL_STRIPES = hideToolStripes
-    SHOW_MAIN_TOOLBAR = showMainToolbar
-    SHOW_CLOSE_BUTTON = showCloseButton
-    PRESENTATION_MODE = presentationMode
     OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
-    PRESENTATION_MODE_FONT_SIZE = presentationModeFontSize
-    CONSOLE_COMMAND_HISTORY_LIMIT = state.consoleCommandHistoryLimit
     FONT_SIZE = fontSize
     FONT_FACE = fontFace
     EDITOR_TAB_LIMIT = editorTabLimit
@@ -727,66 +721,28 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
   @JvmField
   @Transient
+  @ScheduledForRemoval
   var FONT_FACE: String? = null
 
   @Suppress("PropertyName")
   @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
   @JvmField
   @Transient
+  @ScheduledForRemoval
   var FONT_SIZE: Int? = 0
-
-  @Suppress("PropertyName")
-  @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
-  @JvmField
-  @Transient
-  var HIDE_TOOL_STRIPES = true
-
-  @Suppress("PropertyName")
-  @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
-  @JvmField
-  @Transient
-  var CONSOLE_COMMAND_HISTORY_LIMIT = 300
-
-  @Suppress("unused", "PropertyName")
-  @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"), level = DeprecationLevel.ERROR)
-  @JvmField
-  @Transient
-  var CYCLE_SCROLLING = true
-
-  @Suppress("PropertyName")
-  @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
-  @JvmField
-  @Transient
-  var SHOW_MAIN_TOOLBAR = false
-
-  @Suppress("PropertyName")
-  @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
-  @JvmField
-  @Transient
-  var SHOW_CLOSE_BUTTON = true
-
-  @Suppress("PropertyName")
-  @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE = false
 
   @Suppress("PropertyName", "SpellCheckingInspection")
   @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
   @JvmField
   @Transient
+  @ScheduledForRemoval
   var OVERRIDE_NONIDEA_LAF_FONTS = false
-
-  @Suppress("PropertyName")
-  @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE_FONT_SIZE = 24
 
   @Suppress("PropertyName")
   @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
   @JvmField
   @Transient
+  @ScheduledForRemoval
   var EDITOR_TAB_LIMIT = editorTabLimit
   //</editor-fold>
 }
