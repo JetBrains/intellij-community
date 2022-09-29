@@ -31,14 +31,17 @@ object MavenArtifactCoordinatesHelper {
                    ?: return withVersion(coords, "")
     val groupId = MavenDependencyCompletionUtil.removeDummy(coords?.groupId?.stringValue)
     val artifactId = MavenDependencyCompletionUtil.removeDummy(coords?.artifactId?.stringValue)
-    if (artifactId.isNotEmpty() && groupId.isNotEmpty() && (coords!=null && !MavenDependencyCompletionUtil.isInsideManagedDependency(coords))) {
-      val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId,
-                                                                        artifactId)
-      return withVersion(coords, managed?.version?.stringValue ?: "")
+    if (artifactId.isNotEmpty() && groupId.isNotEmpty() && coords != null) {
+      if (MavenDependencyCompletionUtil.isPlugin(coords)) {
+        val managedPlugin = MavenDependencyCompletionUtil.findManagedPlugin(domModel.rootElement, context.project, groupId, artifactId)
+        return withVersion(coords, managedPlugin?.version?.stringValue ?: "")
+      }
+      if (!MavenDependencyCompletionUtil.isInsideManagedDependency(coords)) {
+        val managed = MavenDependencyCompletionUtil.findManagedDependency(domModel.rootElement, context.project, groupId, artifactId)
+        return withVersion(coords, managed?.version?.stringValue ?: "")
+      }
     }
-    else {
-      return MavenId(groupId, artifactId, "")
-    }
+    return MavenId(groupId, artifactId, "")
   }
 
   @JvmStatic
