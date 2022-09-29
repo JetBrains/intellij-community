@@ -13,7 +13,7 @@ object GitHostingUrlUtil {
   fun removeProtocolPrefix(url: String): String {
     var index = url.indexOf('@')
     if (index != -1) {
-      return url.substring(index + 1).replace(':', '/')
+      return url.substring(index + 1)
     }
     index = url.indexOf("://")
     return if (index != -1) {
@@ -30,7 +30,7 @@ object GitHostingUrlUtil {
     return try {
       if (!fixed.contains(URLUtil.SCHEME_SEPARATOR)) {
         // scp-style
-        URI(URLUtil.HTTPS_PROTOCOL + URLUtil.SCHEME_SEPARATOR + removeProtocolPrefix(fixed).replace(':', '/'))
+        URI(URLUtil.HTTPS_PROTOCOL + URLUtil.SCHEME_SEPARATOR + removeProtocolPrefix(fixed).replace(":/", "/").replace(':', '/'))
       }
       else {
         URI(fixed)
