@@ -9,6 +9,7 @@ intellij.copyright
 intellij.editorconfig
 intellij.emojipicker
 intellij.featuresTrainer
+intellij.fullLine
 intellij.grazie
 intellij.markdown
 intellij.platform.langInjection
