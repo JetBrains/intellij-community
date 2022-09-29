@@ -37,6 +37,7 @@ import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -78,8 +79,7 @@ public final class NavBarListener
       return disposable;
     }
     panel.putClientProperty(LISTENER, disposable);
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(listener);
-    Disposer.register(disposable, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(listener));
+    FocusUtil.addFocusOwnerListener(disposable, listener);
     FileStatusManager.getInstance(project).addFileStatusListener(listener, disposable);
     PsiManager.getInstance(project).addPsiTreeChangeListener(listener, disposable);
 

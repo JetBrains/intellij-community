@@ -64,10 +64,7 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.util.ui.EDT
-import com.intellij.util.ui.PositionTracker
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
@@ -280,10 +277,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         }
       }, 50, ApplicationManager.getApplication())
       val focusListener = PropertyChangeListener { updateHeadersAlarm.cancelAndRequest() }
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", focusListener)
-      Disposer.register(ApplicationManager.getApplication()) {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", focusListener)
-      }
+      FocusUtil.addFocusOwnerListener(ApplicationManager.getApplication(), focusListener)
 
       val connection = ApplicationManager.getApplication().messageBus.connect()
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
