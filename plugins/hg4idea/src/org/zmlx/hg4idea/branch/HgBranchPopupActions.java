@@ -189,10 +189,10 @@ public class HgBranchPopupActions {
       List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(),
                                                                  change -> myRepositories.contains(repositoryManager.getRepositoryForFile(
                                                                    ChangesUtil.getFilePath(change))));
-      HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
-      closeBranchExecutor.setRepositories(myRepositories);
+      HgCloseBranchExecutor closeBranchExecutor = new HgCloseBranchExecutor(myRepositories);
       CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false); //NON-NLS
+                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null,
+                                           false); //NON-NLS
     }
 
     @Override

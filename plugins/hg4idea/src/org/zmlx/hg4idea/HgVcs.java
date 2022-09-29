@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
-import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.commit.HgMQNewExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
@@ -98,7 +97,6 @@ public class HgVcs extends AbstractVcs {
   private File myPromptHooksExtensionFile;
   private final CommitExecutor myCommitAndPushExecutor;
   private final CommitExecutor myMqNewExecutor;
-  private final HgCloseBranchExecutor myCloseBranchExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
@@ -117,7 +115,6 @@ public class HgVcs extends AbstractVcs {
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor();
-    myCloseBranchExecutor = new HgCloseBranchExecutor();
   }
 
   @Override
@@ -306,11 +303,6 @@ public class HgVcs extends AbstractVcs {
       commitExecutors.add(myMqNewExecutor);
     }
     return commitExecutors;
-  }
-
-  @NotNull
-  public HgCloseBranchExecutor getCloseBranchExecutor() {
-    return myCloseBranchExecutor;
   }
 
   @Nullable
