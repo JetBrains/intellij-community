@@ -67,6 +67,28 @@ import kotlin.test.assertContains
 class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
 
+    fun testAllModulesCache() {
+        val stdlib = stdlibJvm()
+        module.addDependency(stdlib)
+
+        val daemon = projectLibrary("daemon", TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        assertEquals(2 /* sdk + stdlib */, getModuleInfosFromIdeaModel(project).size)
+
+        module.addDependency(daemon)
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+
+        val fakeLib = projectLibraryWithFakeRoot("f")
+        fakeLib.toLibraryInfo()
+
+        assertEquals(3 /* sdk + stdlib + daemon */, getModuleInfosFromIdeaModel(project).size)
+
+        module.addDependency(fakeLib)
+        assertEquals(4 /* sdk + stdlib + daemon + fakeLib */, getModuleInfosFromIdeaModel(project).size)
+
+        module("a", hasProductionRoot = true, hasTestRoot = true)
+        assertEquals(6 /* sdk + stdlib + daemon + fakeLib + 2 roots of a */, getModuleInfosFromIdeaModel(project).size)
+    }
+
     fun testLowMemory() {
         val moduleA = module("a")
         val stdlib = stdlibJvm()
