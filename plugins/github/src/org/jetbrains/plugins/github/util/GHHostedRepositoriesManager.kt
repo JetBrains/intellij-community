@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.disposingScope
-import com.intellij.collaboration.async.mapState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,43 +9,41 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.*
-import git4idea.repo.GitRepositoryManager
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
 @Service
 class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManager<GHGitRepositoryMapping>, Disposable {
 
-  override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>>
+  override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>> by lazy {
+    knownRepositoriesFlow.stateIn(disposingScope(), SharingStarted.Eagerly, emptySet())
+  }
 
-  init {
-    val scope = disposingScope()
+  @VisibleForTesting
+  internal val knownRepositoriesFlow = run {
+    val gitRemotesFlow = gitRemotesFlow(project).distinctUntilChanged()
 
-    val gitRemotesState = project.service<GitRepositoryManager>().trackRemotesState(scope)
-
-    val knownServersState = service<GHAccountManager>().accountsState.mapState(scope) { accounts ->
+    val accountsServersFlow = service<GHAccountManager>().accountsState.map { accounts ->
       mutableSetOf(GithubServerPath.DEFAULT_SERVER) + accounts.map { it.server }
-    }
+    }.distinctUntilChanged()
 
-    val discoveredServersState = gitRemotesState.discoverServers(scope, knownServersState) {
+    val discoveredServersFlow = gitRemotesFlow.discoverServers(accountsServersFlow) {
       checkForDedicatedServer(it)
-    }
+    }.runningFold(emptySet<GithubServerPath>()) { accumulator, value ->
+      accumulator + value
+    }.distinctUntilChanged()
 
-    val serversState = combineState(scope, knownServersState, discoveredServersState) { servers1, servers2 ->
+    val serversFlow = accountsServersFlow.combine(discoveredServersFlow) { servers1, servers2 ->
       servers1 + servers2
     }
 
-    knownRepositoriesState = gitRemotesState.mapToServers(scope, serversState) { server, remote ->
+    gitRemotesFlow.mapToServers(serversFlow) { server, remote ->
       GHGitRepositoryMapping.create(server, remote)
-    }
-
-    scope.launch {
-      knownRepositoriesState.collect {
-        LOG.debug("New list of known repos: $it")
-      }
+    }.onEach {
+      LOG.debug("New list of known repos: $it")
     }
   }
 
