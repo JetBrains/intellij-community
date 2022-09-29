@@ -897,6 +897,23 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
+  public static HighlightInfo checkArrayWithEmptyDiamondCreation(@NotNull PsiElement element, @Nullable PsiType type) {
+    if (type instanceof PsiArrayType && element instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+      if (classReference != null) {
+        PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+            String description = JavaErrorBundle.message("cannot.create.array.with.empty.diamond");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   static HighlightInfo checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
     if (type instanceof PsiArrayType) {
       if (!JavaGenericsUtil.isReifiableType(((PsiArrayType)type).getComponentType())) {
