@@ -723,7 +723,8 @@ object CodeWithMeClientDownloader {
   }
 
   fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path): Path {
-    val linkTarget = detectTrueJdkRoot(jdkRoot)
+    val linkTarget = getJbrDirectory(jdkRoot)
+
     val guestHome = findCwmGuestHome(guestRoot)
     val link = guestHome / "jbr"
     createSymlink(link, linkTarget)
@@ -774,15 +775,36 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private fun detectTrueJdkRoot(jdkDownload: Path): Path {
-    jdkDownload.toFile().walk(FileWalkDirection.TOP_DOWN).forEach {
-      if (File(it, "bin").isDirectory && File(it, "lib").isDirectory) {
-        return it.toPath()
+  private fun getJbrDirectory(root: Path): Path =
+    tryGetMacOsJbrDirectory(root) ?: tryGetJdkRoot(root) ?: error("Unable to detect jdk content directory in path: '$root'")
+
+
+  private fun tryGetJdkRoot(jdkDownload: Path): Path? {
+    jdkDownload.toFile().walk(FileWalkDirection.TOP_DOWN).forEach { file ->
+      if (File(file, "bin").isDirectory && File(file, "lib").isDirectory) {
+        return file.toPath()
       }
     }
 
-    error("JDK root (bin/lib directories) was not found under $jdkDownload")
+    return null
   }
+
+  private fun getJdkRoot(jdkDownload: Path): Path =
+    tryGetJdkRoot(jdkDownload) ?: error ("JDK root (bin/lib directories) was not found under $jdkDownload")
+
+  private fun tryGetMacOsJbrDirectory(root: Path): Path? {
+    if (!SystemInfo.isMac) {
+      return null
+    }
+
+    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
+
+    LOG.debug { "JBR directory: $jbrDirectory" }
+    return jbrDirectory
+  }
+
+  private fun getMacOsJbrDirectory(root: Path): Path =
+    tryGetMacOsJbrDirectory(root) ?: error ("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
 
   fun versionsMatch(hostBuildNumberString: String, localBuildNumberString: String): Boolean {
     try {
