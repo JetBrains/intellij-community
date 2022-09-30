@@ -17,7 +17,11 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
     var knownAndAppliedServerId: String? by string(null)
   }
 
-  val applicationId: UUID = UUID.fromString(state.applicationId)
+  val applicationId: UUID get() = UUID.fromString(state.applicationId)
 
-  var knownAndAppliedServerId = state.knownAndAppliedServerId
+  var knownAndAppliedServerId
+    get() = state.knownAndAppliedServerId
+    set(value) {
+      state.knownAndAppliedServerId = value
+    }
 }
