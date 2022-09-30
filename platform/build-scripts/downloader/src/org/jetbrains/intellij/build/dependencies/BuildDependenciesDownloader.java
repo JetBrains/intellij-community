@@ -337,50 +337,11 @@ public final class BuildDependenciesDownloader {
         }
         Path tempFile = target.getParent().resolve(tempFileName);
         try {
-          HttpRequest request = HttpRequest.newBuilder()
-            .GET()
-            .uri(uri)
-            .setHeader("User-Agent", "Build Script Downloader")
-            .build();
-
           LOG.info(" * Downloading " + uri + " -> " + target);
-
-          HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
-          int statusCode = response.statusCode();
-          if (statusCode != 200) {
-            StringBuilder builder = new StringBuilder("Cannot download\n");
-
-            Map<String, List<String>> headers = response.headers().map();
-            headers.keySet().stream().sorted()
-              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
-              .forEach(builder::append);
-
-            builder.append('\n');
-            if (Files.exists(tempFile)) {
-              try (InputStream inputStream = Files.newInputStream(tempFile)) {
-                // yes, not trying to guess encoding
-                // string constructor should be exception free,
-                // so at worse we'll get some random characters
-                builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
-              }
-            }
-
-            throw new HttpStatusException(builder.toString(), statusCode, uri.toString());
-          }
-
-          long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
-          if (contentLength <= 0) {
-            throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
-          }
-
-          long fileSize = Files.size(tempFile);
-          if (fileSize != contentLength) {
-            throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
-                                            "' to '" + tempFile +
-                                            "': expected length " + contentLength +
-                                            "from Content-Length header, but got " + fileSize + " on disk");
-          }
-
+          Retry.withExponentialBackOff(() -> {
+            Files.deleteIfExists(tempFile);
+            tryToDownloadFile(uri, tempFile);
+          });
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         }
         finally {
@@ -398,6 +359,50 @@ public final class BuildDependenciesDownloader {
     }
     finally {
       lock.unlock();
+    }
+  }
+
+  private static void tryToDownloadFile(URI uri, Path tempFile) throws Exception {
+    HttpRequest request = HttpRequest.newBuilder()
+      .GET()
+      .uri(uri)
+      .setHeader("User-Agent", "Build Script Downloader")
+      .build();
+
+    HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+    int statusCode = response.statusCode();
+    if (statusCode != 200) {
+      StringBuilder builder = new StringBuilder("Cannot download\n");
+
+      Map<String, List<String>> headers = response.headers().map();
+      headers.keySet().stream().sorted()
+        .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
+        .forEach(builder::append);
+
+      builder.append('\n');
+      if (Files.exists(tempFile)) {
+        try (InputStream inputStream = Files.newInputStream(tempFile)) {
+          // yes, not trying to guess encoding
+          // string constructor should be exception free,
+          // so at worse we'll get some random characters
+          builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
+        }
+      }
+
+      throw new HttpStatusException(builder.toString(), statusCode, uri.toString());
+    }
+
+    long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
+    if (contentLength <= 0) {
+      throw new IllegalStateException("Header '" + HTTP_HEADER_CONTENT_LENGTH + "' is missing or zero for " + uri);
+    }
+
+    long fileSize = Files.size(tempFile);
+    if (fileSize != contentLength) {
+      throw new IllegalStateException("Wrong file length after downloading uri '" + uri +
+                                      "' to '" + tempFile +
+                                      "': expected length " + contentLength +
+                                      "from Content-Length header, but got " + fileSize + " on disk");
     }
   }
 
