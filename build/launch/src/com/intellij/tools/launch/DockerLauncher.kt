@@ -87,7 +87,6 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
                            paths.configFolder,
                            paths.systemFolder,
                            paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.sourcesRootFolder.resolve("remote-dev/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
                            paths.communityRootFolder.resolve("build/download")) // quiche lib
 
     // docker can create these under root, so we create them ourselves
