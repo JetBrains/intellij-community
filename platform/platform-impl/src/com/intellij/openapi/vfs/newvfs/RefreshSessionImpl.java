@@ -248,8 +248,12 @@ final class RefreshSessionImpl extends RefreshSession {
     return myModality;
   }
 
+  boolean hasEvents() {
+    return !myEvents.isEmpty();
+  }
+
   @NotNull List<VFileEvent> getEvents() {
-    return new ArrayList<>(new LinkedHashSet<>(myEvents));
+    return hasEvents() ? new ArrayList<>(new LinkedHashSet<>(myEvents)) : List.of();
   }
 
   @Override
