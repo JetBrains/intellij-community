@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +99,8 @@ public final class DfaBinOpValue extends DfaValue {
 
   public static class Factory {
     private final DfaValueFactory myFactory;
-    private final Map<Trinity<Long, LongRangeBinOp, DfType>, DfaBinOpValue> myValues = new HashMap<>();
+    private record Key(long hash, LongRangeBinOp op, DfType type) {}
+    private final Map<Key, DfaBinOpValue> myValues = new HashMap<>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -276,7 +276,7 @@ public final class DfaBinOpValue extends DfaValue {
     @NotNull
     private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, DfIntegralType resultType, LongRangeBinOp op) {
       long hash = ((long)left.getID() << 32) | right.getID();
-      Trinity<Long, LongRangeBinOp, DfType> key = Trinity.create(hash, op, resultType);
+      Key key = new Key(hash, op, resultType);
       return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, resultType, op));
     }
   }
