@@ -240,7 +240,12 @@ public final class PopupUtil {
     return new EmptyBorder(headerInsets.top, 0, headerInsets.bottom, 0);
   }
 
-  public static void configSelectablePanel(SelectablePanel selectablePanel) {
+  public static void configListRendererFixedHeight(SelectablePanel selectablePanel) {
+    configListRendererFlexibleHeight(selectablePanel);
+    selectablePanel.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+  }
+
+  public static void configListRendererFlexibleHeight(SelectablePanel selectablePanel) {
     int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
     Insets innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets();
     //noinspection UseDPIAwareBorders

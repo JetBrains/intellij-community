@@ -616,8 +616,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       wrapped.setSelectionColor(bg);
       wrapped.setForeground(foreground);
       if (ExperimentalUI.isNewUI()) {
-        PopupUtil.configSelectablePanel(wrapped);
-        wrapped.setPreferredHeight(JBUI.CurrentTheme.List.rowHeight());
+        PopupUtil.configListRendererFixedHeight(wrapped);
       }
       else {
         wrapped.setBorder(RENDERER_BORDER);

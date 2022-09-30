@@ -190,7 +190,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (ExperimentalUI.isNewUI()) {
       result = new SelectablePanel();
       result.setOpaque(false);
-      PopupUtil.configSelectablePanel(((SelectablePanel)result));
+      PopupUtil.configListRendererFlexibleHeight(((SelectablePanel)result));
     }
     else {
       result.setBorder(JBUI.Borders.empty());

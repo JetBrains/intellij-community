@@ -67,7 +67,7 @@ abstract class SEResultsListFactory {
       return component;
     }
     SelectablePanel selectablePanel = SelectablePanel.wrap(component, JBUI.CurrentTheme.Popup.BACKGROUND);
-    PopupUtil.configSelectablePanel(selectablePanel);
+    PopupUtil.configListRendererFixedHeight(selectablePanel);
     if (selected) {
       selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
     }
@@ -126,7 +126,7 @@ abstract class SEResultsListFactory {
         component = selectablePanel;
       }
       selectablePanel.setBackground(rowBackground);
-      PopupUtil.configSelectablePanel(selectablePanel);
+      PopupUtil.configListRendererFixedHeight(selectablePanel);
       if (selected) {
         selectablePanel.setSelectionColor(UIUtil.getListBackground(true, true));
       }

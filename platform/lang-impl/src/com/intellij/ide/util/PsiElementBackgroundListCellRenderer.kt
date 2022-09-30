@@ -37,7 +37,7 @@ internal class PsiElementBackgroundListCellRenderer(
   var usedInPopup = false
     set(value) {
       if (ExperimentalUI.isNewUI()) {
-        PopupUtil.configSelectablePanel(myComponent)
+        PopupUtil.configListRendererFixedHeight(myComponent)
       }
       field = value
     }

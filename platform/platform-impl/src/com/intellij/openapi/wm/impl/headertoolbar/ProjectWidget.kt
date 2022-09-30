@@ -172,7 +172,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
       }
 
       val result = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND)
-      PopupUtil.configSelectablePanel(result)
+      PopupUtil.configListRendererFlexibleHeight(result)
       if (isSelected) {
         result.selectionColor = ListPluginComponent.SELECTION_COLOR
       }
