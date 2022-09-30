@@ -7,8 +7,8 @@ import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 import org.jetbrains.kotlin.psi.*
 
-class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid() {
-    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context)
+class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement) : KtTreeVisitorVoid() {
+    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context, element)
     private val myContext = context
 
     fun getFeatures(): Bag {
@@ -47,7 +47,7 @@ class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid
     }
 
     override fun visitReferenceExpression(expression: KtReferenceExpression) {
-        var feature = "VAR:"
+        var feature = "VAR: "
         if (!theFirstReferenceInQualifiedExpression(expression)) {
             if (expression is KtNameReferenceExpression) {
                 feature = "{CALL: ${expression.getReferencedName()}}"

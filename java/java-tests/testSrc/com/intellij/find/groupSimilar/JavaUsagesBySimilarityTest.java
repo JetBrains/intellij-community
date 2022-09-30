@@ -19,8 +19,8 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("FeaturesProvider.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-    assertEquals(1, features.get("{CALL: foo}"));
-    assertEquals(1, features.get("NEW: A"));
+    assertEquals(1, features.get("USAGE: {CALL: foo}"));
+    assertEquals(1, features.get("CONTEXT: NEW: A"));
     assertEquals(1, features.get("NEW_KEYWORD"));
   }
 
@@ -28,9 +28,9 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("ForFeatures.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-    assertEquals(1, features.get("FOR"));
+    assertEquals(1, features.get("USAGE: FOR"));
     assertEquals(1, features.get("FOR_KEYWORD"));
-    assertEquals(1, features.get("GP:VAR:  FOR_STATEMENT -1"));
+    assertEquals(1, features.get("CONTEXT: VAR: int GP: FOR_STATEMENT -1"));
   }
 
   public void testAnonymous() {
@@ -39,8 +39,8 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
       myFixture.configureByFile("Anonymous.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
       final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-      assertEquals(1, features.get("P:anonymousClazz NEW_EXPRESSION -1"));
-      assertEquals(1, features.get("NEXT: {CALL: A.foo() ret:int arg0 type: A} PsiJavaToken:SEMICOLON"));
+      assertEquals(1, features.get("CONTEXT: anonymousClazz P: NEW_EXPRESSION -1"));
+      assertEquals(1, features.get("USAGE: {CALL: A.foo() ret:int arg0 type: A} NEXT: PsiJavaToken:SEMICOLON"));
     }
     finally {
       Registry.get("similarity.find.usages.fast.clustering").resetToDefault();
@@ -53,8 +53,8 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
       myFixture.configureByFile("Increment.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
       final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-      assertEquals(1, features.get("+="));
-      assertEquals(1, features.get("{CALL: A.af() ret:int }"));
+      assertEquals(1, features.get("USAGE: +="));
+      assertEquals(1, features.get("USAGE: {CALL: A.af() ret:int }"));
     }
     finally {
       Registry.get("similarity.find.usages.fast.clustering").resetToDefault();
@@ -67,8 +67,8 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
       myFixture.configureByFile("Lambda.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
       final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-      assertEquals(1, features.get("{CALL: aPackage.A.foo() ret:int arg0 type: <lambda expression>}"));
-      assertEquals(1, features.get("GP:lambda METHOD_CALL_EXPRESSION -1"));
+      assertEquals(1, features.get("USAGE: {CALL: aPackage.A.foo() ret:int arg0 type: <lambda expression>}"));
+      assertEquals(1, features.get("CONTEXT: lambda GP: METHOD_CALL_EXPRESSION -1"));
     }
     finally {
       Registry.get("similarity.find.usages.fast.clustering").resetToDefault();
@@ -82,7 +82,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
 
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
       final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-      assertEquals(1, features.get("{CALL: aPackage.A.foo() ret:int arg0 type: <method reference>}"));
+      assertEquals(1, features.get("USAGE: {CALL: aPackage.A.foo() ret:int arg0 type: <method reference>}"));
     }
     finally {
       Registry.get("similarity.find.usages.fast.clustering").resetToDefault();
@@ -93,7 +93,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("DeclarationInForStatement.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
     final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
-    assertEquals(1, features.get("FOR"));
+    assertEquals(1, features.get("USAGE: FOR"));
   }
 
   public void testBag() {

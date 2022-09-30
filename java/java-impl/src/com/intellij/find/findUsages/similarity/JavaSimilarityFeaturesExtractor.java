@@ -17,8 +17,8 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
 
-  public JavaSimilarityFeaturesExtractor(@NotNull PsiElement context) {
-    myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context);
+  public JavaSimilarityFeaturesExtractor(@NotNull PsiElement usage, @NotNull PsiElement context) {
+    myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context, usage);
     myContext = context;
   }
 
@@ -35,7 +35,6 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
     }
     super.visitKeyword(keyword);
   }
-
 
   @Override
   public void visitVariable(@NotNull PsiVariable variable) {
@@ -107,7 +106,7 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     String tokenFeature = null;
     if (!(expression instanceof PsiMethodReferenceExpression)) {
-      tokenFeature = "VAR: ";
+      tokenFeature = null;
       if (!Registry.is("similarity.find.usages.fast.clustering")) {
         tokenFeature += getTypeRepresentation(expression);
       }

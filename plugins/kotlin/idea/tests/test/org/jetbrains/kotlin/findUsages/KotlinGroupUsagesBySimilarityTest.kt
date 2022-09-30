@@ -24,8 +24,14 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
         myFixture.configureByFile(getTestName(true)+".kt")
         val elementAtCaret = myFixture.getReferenceAtCaretPosition()!!.element
         val features = KotlinUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret)
-        assertEquals(1, features["VAR: "])
-        assertEquals(1, features["{CALL: inc}"])
+        assertEquals(1, features["CONTEXT: VAR: "])
+        assertEquals(1, features["USAGE: {CALL: inc}"])
+    }
+
+    @TestMetadata("declaration.kt")
+    @Throws(Exception::class)
+    fun testDeclaration() {
+        doTest()
     }
 
     @TestMetadata("general.kt")

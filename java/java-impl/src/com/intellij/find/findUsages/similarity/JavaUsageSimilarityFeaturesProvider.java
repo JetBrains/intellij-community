@@ -19,9 +19,9 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
   public @NotNull Bag getFeatures(@NotNull PsiElement usage) {
     PsiElement context = getContainingStatement(usage);
     if (context != null) {
-      final Bag usageFeatures = new JavaSimilarityFeaturesExtractor(context).getFeatures();
+      final Bag usageFeatures = new JavaSimilarityFeaturesExtractor(usage, context).getFeatures();
       if (Registry.is("similarity.find.usages.parent.statement.condition.feature")) {
-        usageFeatures.addAll(getParentStatementFeatures(context));
+        usageFeatures.addAll(getParentStatementFeatures(usage, context));
       }
       return usageFeatures;
     }
@@ -50,20 +50,20 @@ public class JavaUsageSimilarityFeaturesProvider implements UsageSimilarityFeatu
     return containingStatement;
   }
 
-  private static @NotNull Bag getParentStatementFeatures(@NotNull PsiElement context) {
+  private static @NotNull Bag getParentStatementFeatures(@NotNull PsiElement usage, @NotNull PsiElement context) {
     final PsiElement parentControlStatement =
       PsiTreeUtil.findFirstParent(context, true,
                                   element -> element instanceof PsiConditionalLoopStatement || element instanceof PsiIfStatement);
     if (parentControlStatement instanceof PsiConditionalLoopStatement) {
       final PsiExpression conditionExpression = ((PsiConditionalLoopStatement)parentControlStatement).getCondition();
       if (conditionExpression != null) {
-        return new JavaSimilarityFeaturesExtractor(conditionExpression).getFeatures();
+        return new JavaSimilarityFeaturesExtractor(usage ,conditionExpression).getFeatures();
       }
     }
     if (parentControlStatement instanceof PsiIfStatement) {
       final PsiExpression conditionExpression = ((PsiIfStatement)parentControlStatement).getCondition();
       if (conditionExpression != null) {
-        return new JavaSimilarityFeaturesExtractor(conditionExpression).getFeatures();
+        return new JavaSimilarityFeaturesExtractor(usage, conditionExpression).getFeatures();
       }
     }
     return Bag.EMPTY_BAG;

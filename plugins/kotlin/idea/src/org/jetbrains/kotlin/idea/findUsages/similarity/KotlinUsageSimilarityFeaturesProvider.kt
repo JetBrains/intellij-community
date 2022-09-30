@@ -24,7 +24,7 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
         }
         val statement = getContext(usage)
         if (statement != null) {
-            properties.addAll(KotlinSimilarityFeaturesExtractor(statement).getFeatures())
+            properties.addAll(KotlinSimilarityFeaturesExtractor(usage, statement).getFeatures())
         }
 
         return properties
