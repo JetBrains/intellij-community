@@ -130,6 +130,15 @@ public class DisposerTest  {
     SelDisposable selfDisposable = new SelDisposable("root");
     //noinspection SSBasedInspection
     selfDisposable.dispose();
+    assertDisposed(selfDisposable);
+  }
+
+  @Test
+  public void testRecursiveSelfDisposeCallMustNotReenter() {
+    SelDisposable selfDisposable = new SelDisposable("root");
+    Disposer.dispose(selfDisposable);
+    assertDisposed(selfDisposable);
+    assertEquals(1, selfDisposable.disposeCount);
   }
 
   @Test
@@ -292,12 +301,14 @@ public class DisposerTest  {
   }
 
   private final class SelDisposable extends MyLoggingDisposable {
+    int disposeCount;
     private SelDisposable(@NonNls String aName) {
       super(aName);
     }
 
     @Override
     public void dispose() {
+      disposeCount++;
       Disposer.dispose(this);
       super.dispose();
     }

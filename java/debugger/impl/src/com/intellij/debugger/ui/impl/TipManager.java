@@ -303,8 +303,6 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
   @Override
   public void dispose() {
-    Disposer.dispose(this);
-
     hideTooltip(true);
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(myHideCanceller);
