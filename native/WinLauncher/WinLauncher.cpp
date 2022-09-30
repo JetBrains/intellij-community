@@ -21,6 +21,8 @@
 #include "resource.h"
 
 
+#define IDE_HOME_MACRO "%IDE_HOME%"
+
 typedef JNIIMPORT jint(JNICALL *JNI_createJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);
 
 HINSTANCE hInst; // Current instance.
@@ -90,18 +92,16 @@ bool FindValidJVM(const char* path)
   return false;
 }
 
-std::string GetAdjacentDir(const char* suffix)
-{
-  char libDir[_MAX_PATH];
-  GetModuleFileNameA(NULL, libDir, _MAX_PATH - 1);
-  char* lastSlash = strrchr(libDir, '\\');
+static std::string GetHomeDir() {
+  char path[_MAX_PATH];
+  GetModuleFileNameA(NULL, path, _MAX_PATH - 1);
+  char* lastSlash = strrchr(path, '\\');
   if (!lastSlash) return "";
   *lastSlash = '\0';
-  lastSlash = strrchr(libDir, '\\');
+  lastSlash = strrchr(path, '\\');
   if (!lastSlash) return "";
-  strcpy(lastSlash + 1, suffix);
-  strcat_s(libDir, "\\");
-  return std::string(libDir);
+  *lastSlash = '\0';
+  return path;
 }
 
 bool FindJVMInEnvVar(const char* envVarName, bool& result)
@@ -227,8 +227,7 @@ bool FindJVMInRegistry()
   return false;
 }
 
-bool LocateJVM()
-{
+static bool LocateJVM(const std::string &homeDir) {
   bool result;
   if (FindJVMInEnvVar(LoadStdString(IDS_JDK_ENV_VAR).c_str(), result))
   {
@@ -237,10 +236,7 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir("jbr").c_str()) && Is64BitJRE(jvmPath))
-  {
-    return true;
-  }
+  if (FindValidJVM((homeDir + "\\jbr").c_str()) && Is64BitJRE(jvmPath)) return true;
 
   if (FindJVMInEnvVar("JAVA_HOME", result))
   {
@@ -291,93 +287,72 @@ static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOpti
   return true;
 }
 
-std::string CollectLibJars(const std::string& jarList)
-{
-  std::string libDir = GetAdjacentDir("lib");
-  if (libDir.size() == 0 || !FileExists(libDir))
-  {
-    return "";
+static void ReplaceAll(std::string &str, const std::string &find, const std::string &replace) {
+  size_t p = 0;
+  while (p < str.length()) {
+    p = str.find(find, p);
+    if (p == std::string::npos) break;
+    str.replace(p, find.size(), replace);
+    p += replace.size();
   }
+}
 
+static std::string CollectLibJars(const std::string& jarList, const std::string &homeDir) {
   std::string result;
-  int pos = 0;
-  while (pos < jarList.size())
-  {
-    int delimiterPos = jarList.find(';', pos);
-    if (delimiterPos == std::string::npos)
-    {
-      delimiterPos = jarList.size();
-    }
-    if (result.size() > 0)
-    {
-      result += ";";
-    }
-    result += libDir;
+
+  size_t pos = 0;
+  while (pos < jarList.size()) {
+    size_t delimiterPos = jarList.find(';', pos);
+    if (delimiterPos == std::string::npos) delimiterPos = jarList.size();
+    if (!result.empty()) result += ';';
     result += jarList.substr(pos, delimiterPos - pos);
     pos = delimiterPos + 1;
   }
+
+  ReplaceAll(result, IDE_HOME_MACRO, homeDir);
+
   return result;
 }
 
-std::string BuildClassPath()
-{
+static void AddClassPathOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
-  return CollectLibJars(classpathLibs);
+  if (!classpathLibs.empty()) {
+    std::string classPath = CollectLibJars(classpathLibs, homeDir);
+    vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+  }
 }
 
-std::string BuildBootClassPath()
-{
+static void AddBootClassPathOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
   std::string classpathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
-  return CollectLibJars(classpathLibs);
-}
-
-bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string classPath = BuildClassPath();
-  if (classPath.size() == 0) return false;
-  vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
-
-  return true;
-}
-
-bool AddBootClassPathOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string classPath = BuildBootClassPath();
-  if (classPath.size() == 0) return false;
-  vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
-
-  return true;
-}
-
-std::string getVMOption(int resource){
-  TCHAR buffer[_MAX_PATH];
-  TCHAR copy[_MAX_PATH];
-  std::string vmOption = "";
-  if (LoadString(hInst, resource, buffer, _MAX_PATH))
-  {
-    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH);
-    std::wstring module(copy);
-    vmOption = std::string(module.begin(), module.end());
+  if (!classpathLibs.empty()) {
+    std::string classPath = CollectLibJars(classpathLibs, homeDir);
+    vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + classPath);
   }
-  return vmOption;
 }
 
-void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
-{
-  std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
-  while (vmOptions.size() > 0)
-  {
-    int pos = vmOptions.find(' ');
-    if (pos == std::string::npos) pos = vmOptions.size();
-    vmOptionLines.push_back(vmOptions.substr(0, pos));
-    while (pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
-    vmOptions = vmOptions.substr(pos);
+static void addVMOption(int resource, std::vector<std::string> &vmOptionLines) {
+  wchar_t buffer[_MAX_PATH];
+  if (LoadStringW(hInst, resource, buffer, _MAX_PATH)) {
+    wchar_t copy[_MAX_PATH];
+    ExpandEnvironmentStringsW(buffer, copy, _MAX_PATH);
+    vmOptionLines.push_back(EncodeWideACP(copy));
+  }
+}
+
+void AddPredefinedVMOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
+  std::string vmOptionsStr = LoadStdString(IDS_VM_OPTIONS);
+  while (!vmOptionsStr.empty()) {
+    size_t pos = vmOptionsStr.find(' ');
+    if (pos == std::string::npos) pos = vmOptionsStr.size();
+    std::string option = vmOptionsStr.substr(0, pos);
+    ReplaceAll(option, IDE_HOME_MACRO, homeDir);
+    vmOptionLines.push_back(option);
+    while (pos < vmOptionsStr.size() && vmOptionsStr[pos] == ' ') pos++;
+    vmOptionsStr = vmOptionsStr.substr(pos);
   }
 
-  std::string errorFile = getVMOption(IDS_VM_OPTION_ERRORFILE);
-  std::string heapDumpPath = getVMOption(IDS_VM_OPTION_HEAPDUMPPATH);
-  if (errorFile != "") vmOptionLines.push_back(errorFile);
-  if (heapDumpPath != "") vmOptionLines.push_back(heapDumpPath);
+  addVMOption(IDS_VM_OPTION_ERRORFILE, vmOptionLines);
+  addVMOption(IDS_VM_OPTION_HEAPDUMPPATH, vmOptionLines);
 
   char propertiesFile[_MAX_PATH];
   if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH))
@@ -393,7 +368,7 @@ void (JNICALL jniExitHook)(jint code) {
   hookExitCode = code;
 }
 
-bool LoadVMOptions() {
+static void LoadVMOptions(const std::string &homeDir) {
   char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
   std::vector<std::string> lines, user_lines;
 
@@ -452,9 +427,9 @@ bool LoadVMOptions() {
     }
   }
 
-  AddClassPathOptions(lines);
-  AddBootClassPathOptions(lines);
-  AddPredefinedVMOptions(lines);
+  AddClassPathOptions(homeDir, lines);
+  AddBootClassPathOptions(homeDir, lines);
+  AddPredefinedVMOptions(homeDir, lines);
 
   vmOptionCount = (int)lines.size() + 1;
   vmOptions = (JavaVMOption *)calloc(vmOptionCount, sizeof(JavaVMOption));
@@ -464,8 +439,6 @@ bool LoadVMOptions() {
     vmOptions[i + 1].optionString = _strdup(lines[i].c_str());
     vmOptions[i + 1].extraInfo = NULL;
   }
-
-  return true;
 }
 
 bool LoadJVMLibrary()
@@ -980,8 +953,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
   args = RemovePredefinedArgs(args);
 
-  if (!LocateJVM()) return 1;
-  if (!LoadVMOptions()) return 1;
+  std::string homeDir = GetHomeDir();
+  if (!LocateJVM(homeDir)) return 1;
+  LoadVMOptions(homeDir);
   if (!LoadJVMLibrary()) return 1;
   JNIEnv* jenv = CreateJVM();
   if (jenv == NULL) return 1;
