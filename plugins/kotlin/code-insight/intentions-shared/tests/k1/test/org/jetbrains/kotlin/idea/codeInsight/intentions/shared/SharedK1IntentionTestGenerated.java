@@ -214,69 +214,121 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/addBracesToAllBranches")
-    public static class AddBracesToAllBranches extends AbstractSharedK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class AddBracesToAllBranches extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/addBracesToAllBranches/oneLeft")
+        public static class OneLeft extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("else.kt")
+            public void testElse() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/else.kt");
+            }
+
+            @TestMetadata("else2.kt")
+            public void testElse2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/else2.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/elseIf.kt");
+            }
+
+            @TestMetadata("elseIf2.kt")
+            public void testElseIf2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/elseIf2.kt");
+            }
+
+            @TestMetadata("if.kt")
+            public void testIf() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/if.kt");
+            }
+
+            @TestMetadata("if2.kt")
+            public void testIf2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/if2.kt");
+            }
+
+            @TestMetadata("whenEntry.kt")
+            public void testWhenEntry() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/whenEntry.kt");
+            }
+
+            @TestMetadata("whenEntry2.kt")
+            public void testWhenEntry2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/oneLeft/whenEntry2.kt");
+            }
         }
 
-        @TestMetadata("else.kt")
-        public void testElse() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/else.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/addBracesToAllBranches")
+        public static class Uncategorized extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("elseIf.kt")
-        public void testElseIf() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/elseIf.kt");
-        }
+            @TestMetadata("else.kt")
+            public void testElse() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/else.kt");
+            }
 
-        @TestMetadata("if.kt")
-        public void testIf() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/if.kt");
-        }
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/elseIf.kt");
+            }
 
-        @TestMetadata("if2.kt")
-        public void testIf2() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/if2.kt");
-        }
+            @TestMetadata("if.kt")
+            public void testIf() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/if.kt");
+            }
 
-        @TestMetadata("if3.kt")
-        public void testIf3() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/if3.kt");
-        }
+            @TestMetadata("if2.kt")
+            public void testIf2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/if2.kt");
+            }
 
-        @TestMetadata("ifThen.kt")
-        public void testIfThen() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/ifThen.kt");
-        }
+            @TestMetadata("if3.kt")
+            public void testIf3() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/if3.kt");
+            }
 
-        @TestMetadata("ifWithNoElse.kt")
-        public void testIfWithNoElse() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/ifWithNoElse.kt");
-        }
+            @TestMetadata("ifThen.kt")
+            public void testIfThen() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/ifThen.kt");
+            }
 
-        @TestMetadata("when.kt")
-        public void testWhen() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/when.kt");
-        }
+            @TestMetadata("ifWithNoElse.kt")
+            public void testIfWithNoElse() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/ifWithNoElse.kt");
+            }
 
-        @TestMetadata("when2.kt")
-        public void testWhen2() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/when2.kt");
-        }
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/when.kt");
+            }
 
-        @TestMetadata("when3.kt")
-        public void testWhen3() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/when3.kt");
-        }
+            @TestMetadata("when2.kt")
+            public void testWhen2() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/when2.kt");
+            }
 
-        @TestMetadata("whenEntry.kt")
-        public void testWhenEntry() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/whenEntry.kt");
-        }
+            @TestMetadata("when3.kt")
+            public void testWhen3() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/when3.kt");
+            }
 
-        @TestMetadata("whenWithOneEntry.kt")
-        public void testWhenWithOneEntry() throws Exception {
-            runTest("../testData/intentions/addBracesToAllBranches/whenWithOneEntry.kt");
+            @TestMetadata("whenEntry.kt")
+            public void testWhenEntry() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/whenEntry.kt");
+            }
+
+            @TestMetadata("whenWithOneEntry.kt")
+            public void testWhenWithOneEntry() throws Exception {
+                runTest("../testData/intentions/addBracesToAllBranches/whenWithOneEntry.kt");
+            }
         }
     }
 
@@ -613,69 +665,121 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/removeBracesFromAllBranches")
-    public static class RemoveBracesFromAllBranches extends AbstractSharedK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class RemoveBracesFromAllBranches extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/removeBracesFromAllBranches/oneLeft")
+        public static class OneLeft extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("else.kt")
+            public void testElse() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/else.kt");
+            }
+
+            @TestMetadata("else2.kt")
+            public void testElse2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/else2.kt");
+            }
+
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/elseIf.kt");
+            }
+
+            @TestMetadata("elseIf2.kt")
+            public void testElseIf2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/elseIf2.kt");
+            }
+
+            @TestMetadata("if.kt")
+            public void testIf() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/if.kt");
+            }
+
+            @TestMetadata("if2.kt")
+            public void testIf2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/if2.kt");
+            }
+
+            @TestMetadata("whenEntry.kt")
+            public void testWhenEntry() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/whenEntry.kt");
+            }
+
+            @TestMetadata("whenEntry2.kt")
+            public void testWhenEntry2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/oneLeft/whenEntry2.kt");
+            }
         }
 
-        @TestMetadata("else.kt")
-        public void testElse() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/else.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/removeBracesFromAllBranches")
+        public static class Uncategorized extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("elseIf.kt")
-        public void testElseIf() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/elseIf.kt");
-        }
+            @TestMetadata("else.kt")
+            public void testElse() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/else.kt");
+            }
 
-        @TestMetadata("if.kt")
-        public void testIf() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/if.kt");
-        }
+            @TestMetadata("elseIf.kt")
+            public void testElseIf() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/elseIf.kt");
+            }
 
-        @TestMetadata("if2.kt")
-        public void testIf2() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/if2.kt");
-        }
+            @TestMetadata("if.kt")
+            public void testIf() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/if.kt");
+            }
 
-        @TestMetadata("if3.kt")
-        public void testIf3() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/if3.kt");
-        }
+            @TestMetadata("if2.kt")
+            public void testIf2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/if2.kt");
+            }
 
-        @TestMetadata("ifThen.kt")
-        public void testIfThen() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/ifThen.kt");
-        }
+            @TestMetadata("if3.kt")
+            public void testIf3() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/if3.kt");
+            }
 
-        @TestMetadata("ifWithNoElse.kt")
-        public void testIfWithNoElse() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/ifWithNoElse.kt");
-        }
+            @TestMetadata("ifThen.kt")
+            public void testIfThen() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/ifThen.kt");
+            }
 
-        @TestMetadata("when.kt")
-        public void testWhen() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/when.kt");
-        }
+            @TestMetadata("ifWithNoElse.kt")
+            public void testIfWithNoElse() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/ifWithNoElse.kt");
+            }
 
-        @TestMetadata("when2.kt")
-        public void testWhen2() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/when2.kt");
-        }
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/when.kt");
+            }
 
-        @TestMetadata("when3.kt")
-        public void testWhen3() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/when3.kt");
-        }
+            @TestMetadata("when2.kt")
+            public void testWhen2() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/when2.kt");
+            }
 
-        @TestMetadata("whenEntry.kt")
-        public void testWhenEntry() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/whenEntry.kt");
-        }
+            @TestMetadata("when3.kt")
+            public void testWhen3() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/when3.kt");
+            }
 
-        @TestMetadata("whenWithOneEntry.kt")
-        public void testWhenWithOneEntry() throws Exception {
-            runTest("../testData/intentions/removeBracesFromAllBranches/whenWithOneEntry.kt");
+            @TestMetadata("whenEntry.kt")
+            public void testWhenEntry() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/whenEntry.kt");
+            }
+
+            @TestMetadata("whenWithOneEntry.kt")
+            public void testWhenWithOneEntry() throws Exception {
+                runTest("../testData/intentions/removeBracesFromAllBranches/whenWithOneEntry.kt");
+            }
         }
     }
 }
