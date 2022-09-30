@@ -16,12 +16,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,6 +47,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
   private final boolean myQueryIntentionActions;
+  private final @NotNull ProperTextRange myVisibleRange;
   private volatile CachedIntentions myCachedIntentions;
   private volatile boolean myActionsChanged;
 
@@ -62,7 +63,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     myEditor = editor;
     myFile = psiFile;
-    assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    myVisibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
   }
 
   public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,
@@ -232,7 +233,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(myIntentionsInfo, false);
-    UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor);
+    UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
   }
 
   @Override

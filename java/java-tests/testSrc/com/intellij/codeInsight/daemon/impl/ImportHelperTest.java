@@ -1,19 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInsight.daemon;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -23,11 +9,10 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
-import com.intellij.codeInsight.daemon.impl.DaemonRespondToChangesTest;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,11 +20,14 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -618,5 +606,34 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     return ContainerUtil.exists(currentStack.getStackTrace(),
        stackElement -> stackElement.getClassName().equals(PsiImplUtil.class.getName())
                        && stackElement.getMethodName().equals("multiResolveImpl"));
+  }
+
+  public void testImportHintsMustBeComputedForAllUnresolvedReferencesInVisibleAreaToBeAbleToShowPopups() throws Exception {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    @Language("JAVA")
+    @NonNls final String text = "class S {{ \n" +
+                                "new ArrayList();\n".repeat(1000) +
+                                " }}";
+    configureByText(text);
+
+    getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(500, 10));
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100); // make sure editor is visible - auto-import works only for visible area
+    getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100); // make sure editor is visible - auto-import works only for visible area
+    UIUtil.dispatchAllInvocationEvents();
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 5000 && visibleRange.getEndOffset() < 10_000); // sanity check that visible range has been indeed changed
+
+    List<HighlightInfo> errors = highlightErrors();
+    assertNotEmpty(errors);
+    UnresolvedReferenceQuickFixUpdaterImpl updater = (UnresolvedReferenceQuickFixUpdaterImpl)UnresolvedReferenceQuickFixUpdater.getInstance(getProject());
+    for (HighlightInfo error : errors) {
+      updater.waitForBackgroundJobIfStartedInTests(error);
+      List<HintAction> hints = ShowAutoImportPass.extractHints(error);
+      String message = error + " hasHints: " + error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);
+      assertEquals(message, error.hasHint(), visibleRange.contains(error));
+    }
   }
 }
