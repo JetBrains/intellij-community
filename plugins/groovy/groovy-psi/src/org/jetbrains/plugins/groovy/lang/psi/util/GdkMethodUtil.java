@@ -255,11 +255,14 @@ public final class GdkMethodUtil {
     return Trinity.create(original.first, original.second, methods);
   }
 
-  record MixinInfo(PsiClassType subjectType, GrReferenceExpression ref, PsiClass mixin) {}
-
   /**
-   * @return (type[1] in which methods mixed, reference to type[1], type[2] to mixin)
+   * @param subjectType the type into which the methods are mixed in
+   * @param ref         reference to subjectType
+   * @param mixin       the type that is mixed into subjectType
    */
+  record MixinInfo(PsiClassType subjectType, GrReferenceExpression ref, PsiClass mixin) {
+  }
+
   @Nullable
   private static MixinInfo getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
