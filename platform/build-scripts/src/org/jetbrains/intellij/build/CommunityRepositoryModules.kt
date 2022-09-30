@@ -81,6 +81,16 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
+      spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
+      spec.withModuleLibrary(libraryName = "apache.maven.indexer.core:6.2.2", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common:3.2.1", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+
 
       spec.withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
@@ -90,9 +100,11 @@ object CommunityRepositoryModules {
 
       spec.withArtifact("maven-event-listener", "")
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
-        "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl",
+        "intellij.maven.server.m30.impl",
         "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.artifactResolver.common",  "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
+        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
+        "intellij.maven.server.indexer"
       ))
       spec.withGeneratedResources(BiConsumer { targetDir, context ->
         val targetLib = targetDir.resolve("lib")

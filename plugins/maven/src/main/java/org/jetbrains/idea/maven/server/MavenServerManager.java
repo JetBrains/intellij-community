@@ -359,24 +359,7 @@ public final class MavenServerManager implements Disposable {
     return null;
   }
 
-  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    if (!distribution.isValid()) {
-      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
-    }
 
-    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
-
-
-    if (extension == null) {
-      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
-        throw new BuildIssueException(new InstallMaven2BuildIssue());
-      }
-      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
-    }
-    MavenLog.LOG.warn("Using extension " + extension + " to start MavenServer");
-    return extension.collectClassPathAndLibsFolder(distribution);
-  }
 
   @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,

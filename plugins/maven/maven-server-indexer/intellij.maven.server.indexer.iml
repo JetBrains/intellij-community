@@ -11,11 +11,15 @@
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="module-library">
       <library name="apache.maven.indexer.core:6.2.2" type="repository">
-        <properties maven-id="org.apache.maven.indexer:indexer-core:6.2.2" />
+        <properties maven-id="org.apache.maven.indexer:indexer-core:6.2.2">
+          <exclude>
+            <dependency maven-id="javax.inject:javax.inject" />
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/indexer/indexer-core/6.2.2/indexer-core-6.2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/8.11.1/lucene-core-8.11.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/8.11.1/lucene-queryparser-8.11.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/8.11.1/lucene-queries-8.11.1.jar!/" />
@@ -27,7 +31,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.8.0/maven-resolver-api-1.8.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.8.0/maven-resolver-util-1.8.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.8.5/maven-model-3.8.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.3.0/plexus-utils-3.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -80,10 +83,13 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="apache.maven.wagon.provider.api:3.5.2" type="repository">
-        <properties maven-id="org.apache.maven.wagon:wagon-provider-api:3.5.2" />
+        <properties maven-id="org.apache.maven.wagon:wagon-provider-api:3.5.2">
+          <exclude>
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/wagon/wagon-provider-api/3.5.2/wagon-provider-api-3.5.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.3.0/plexus-utils-3.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -91,7 +97,12 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="apache.maven.archetype.common:3.2.1" type="repository">
-        <properties maven-id="org.apache.maven.archetype:archetype-common:3.2.1" />
+        <properties maven-id="org.apache.maven.archetype:archetype-common:3.2.1">
+          <exclude>
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+            <dependency maven-id="commons-io:commons-io" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar!/" />
@@ -125,8 +136,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0/maven-artifact-3.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-common-artifact-filters/3.1.0/maven-common-artifact-filters-3.1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.3.0/plexus-utils-3.3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.6/commons-io-2.6.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-velocity/1.2/plexus-velocity-1.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7.jar!/" />

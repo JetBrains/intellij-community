@@ -180,12 +180,21 @@ public class MavenIndexerCMDState extends CommandLineState {
     }
     else {
       MavenLog.LOG.debug("collecting classpath for production");
-      throw new UnsupportedOperationException();
+      prepareClassPathForProduction(distribution.getVersion(), classpath, root);
     }
 
     addMavenLibs(classpath, distribution.getMavenHome().toFile());
     MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
+  }
+
+  private static void prepareClassPathForProduction(@NotNull String mavenVersion,
+                                                    @NotNull List<File> classpath,
+                                                    String root) {
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
+    classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
+    classpath.add(new File(root, "maven-server-indexer.jar"));
+    addDir(classpath, new File(root, "maven-server-indexer"), f -> true);
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
