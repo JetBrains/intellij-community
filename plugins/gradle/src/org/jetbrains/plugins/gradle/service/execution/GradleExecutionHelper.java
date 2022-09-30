@@ -381,11 +381,24 @@ public class GradleExecutionHelper {
     @Nullable BuildEnvironment buildEnvironment
   ) {
     String buildRootDir = getBuildRoot(buildEnvironment);
-    GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    GradleProgressListener progressListener = new GradleProgressListener(listener, id, settings, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
-    operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
+    operation.addProgressListener(
+      progressListener,
+      OperationType.TASK,
+      OperationType.FILE_DOWNLOAD,
+      OperationType.BUILD_PHASE,
+      OperationType.PROJECT_CONFIGURATION
+    );
     if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
-      operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
+      operation.addProgressListener(
+        progressListener,
+        OperationType.TEST,
+        OperationType.TEST_OUTPUT,
+        OperationType.BUILD_PHASE,
+        OperationType.PROJECT_CONFIGURATION,
+        OperationType.TASK
+      );
     }
   }
 
@@ -797,7 +810,7 @@ public class GradleExecutionHelper {
       }
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, settings);
       modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
       modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
       modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));

@@ -244,40 +244,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   private void updateProgressIndicator(@NotNull ExternalSystemTaskNotificationEvent event, @NotNull ProgressIndicator indicator) {
-    long total;
-    long progress;
-    String unit;
-    if (event instanceof ExternalSystemBuildEvent &&
-        ((ExternalSystemBuildEvent)event).getBuildEvent() instanceof ProgressBuildEvent) {
-      ProgressBuildEvent progressEvent = (ProgressBuildEvent)((ExternalSystemBuildEvent)event).getBuildEvent();
-      total = progressEvent.getTotal();
-      progress = progressEvent.getProgress();
-      unit = progressEvent.getUnit();
-    }
-    else if (event instanceof ExternalSystemTaskExecutionEvent &&
-             ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
-      ExternalSystemStatusEvent<?> progressEvent = (ExternalSystemStatusEvent<?>)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
-      total = progressEvent.getTotal();
-      progress = progressEvent.getProgress();
-      unit = progressEvent.getUnit();
-    } else {
-      return;
-    }
-
-    String sizeInfo;
-    if (total <= 0) {
-      indicator.setIndeterminate(true);
-      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) + " / ?") : "";
-    }
-    else {
-      indicator.setIndeterminate(false);
-      indicator.setFraction((double)progress / total);
-      sizeInfo = "bytes".equals(unit) ? (StringUtil.formatFileSize(progress) +
-                                         " / " +
-                                         StringUtil.formatFileSize(total)) : "";
-    }
-    String description = event.getDescription();
-    indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
+    ExternalSystemTaskProgressTextConfigurator.updateProgressIndicator(event, indicator, description -> wrapProgressText(description));
   }
 
   @NotNull

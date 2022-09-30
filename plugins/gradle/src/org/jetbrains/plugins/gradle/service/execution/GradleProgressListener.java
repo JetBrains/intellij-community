@@ -21,17 +21,21 @@ import org.gradle.tooling.events.FinishEvent;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.gradle.tooling.events.StatusEvent;
+import org.gradle.tooling.events.task.TaskProgressEvent;
+import org.gradle.tooling.events.test.*;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.Message;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
+import static org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventHelper.*;
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
@@ -46,38 +50,55 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final Map<Object, StatusEvent> myDownloadStatusEventIds = new HashMap<>();
   private final String myOperationId;
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
+  private final GradleVersion myGradleVersion;
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
+  private GradleProgressState myGradleProgressState = new GradleProgressState(0, ProgressPhase.INITIALIZATION);
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull ExternalSystemTaskId taskId
+    @NotNull ExternalSystemTaskId taskId,
+    @Nullable GradleExecutionSettings settings
   ) {
-    this(listener, taskId, null);
+    this(listener, taskId, settings, null);
   }
 
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ExternalSystemTaskId taskId,
+    @Nullable GradleExecutionSettings settings,
     @Nullable String buildRootDir
   ) {
     myListener = listener;
     myTaskId = taskId;
+    myGradleVersion = extractGradleVersion(settings);
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
-    sendProgressToOutputIfNeeded(event);
 
-    var progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
-    if (progressBuildEvent != null) {
-      if (event instanceof StatusEvent) {
+    ExternalSystemTaskNotificationEvent progressBuildEvent;
+    if (areGradleBuildProgressEventsSupported(myGradleVersion) && isGradleBuildProgressEvent(event)) {
+      // Progress indicator supported with Gradle >= 7.6
+      myGradleProgressState = maybeUpdateGradleProgressState(myGradleProgressState, event);
+      progressBuildEvent = createProgressIndicatorEvent(myTaskId, myTaskId, event, myGradleProgressState);
+      if (progressBuildEvent != null) {
         // update IDE progress determinate indicator
         myListener.onStatusChange(progressBuildEvent);
       }
-      else if (!progressBuildEvent.equals(myLastStatusChange)) {
-        myListener.onStatusChange(progressBuildEvent);
-        myLastStatusChange = progressBuildEvent;
+    }
+    else {
+      sendProgressToOutputIfNeeded(event);
+      progressBuildEvent = GradleProgressEventConverter.convertProgressBuildEvent(myTaskId, myTaskId, event);
+      if (progressBuildEvent != null) {
+        if (event instanceof StatusEvent) {
+          // update IDE progress determinate indicator
+          myListener.onStatusChange(progressBuildEvent);
+        }
+        else if (!progressBuildEvent.equals(myLastStatusChange)) {
+          myListener.onStatusChange(progressBuildEvent);
+          myLastStatusChange = progressBuildEvent;
+        }
       }
     }
 
@@ -90,7 +111,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   @Override
   public void statusChanged(org.gradle.tooling.ProgressEvent event) {
     var eventDescription = event.getDescription();
-    if (!maybeReportModelBuilderMessage(eventDescription)) {
+    if (!maybeReportModelBuilderMessage(eventDescription) && !areGradleBuildProgressEventsSupported(myGradleVersion)) {
       var progressBuildEvent = GradleProgressEventConverter.legacyConvertProgressBuildEvent(myTaskId, myTaskId, eventDescription);
       if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
         myListener.onStatusChange(progressBuildEvent);
@@ -183,6 +204,79 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         String duration = formatDuration(eventTime - startTime);
         myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
       }
+    }
+  }
+
+  enum ProgressPhase {
+    INITIALIZATION,
+    CONFIGURATION,
+    EXECUTION;
+
+    boolean isConfiguration() {
+      return this == CONFIGURATION;
+    }
+    boolean isExecution() {
+      return this == EXECUTION;
+    }
+  }
+
+  static class GradleProgressState {
+
+    private long totalItems;
+    private long currentProgress;
+    private ProgressPhase currentPhase;
+    private final HashSet<String> runningWorkItems;
+    private boolean isConfiguringRootBuild;
+
+    private boolean isProgressStateEnabled;
+
+    GradleProgressState(long totalItems, ProgressPhase currentPhase) {
+      this.totalItems = totalItems;
+      this.currentProgress = 0;
+      this.currentPhase = currentPhase;
+      this.runningWorkItems = new LinkedHashSet<>();
+      this.isProgressStateEnabled = false;
+    }
+
+    long getTotalItems() {
+      return totalItems;
+    }
+
+    void incrementTotalItems(long additionalItems) {
+      this.totalItems += additionalItems;
+    }
+
+    long getCurrentProgress() {
+      return currentProgress;
+    }
+
+    void incrementCurrentProgress() {
+      currentProgress++;
+    }
+
+    ProgressPhase getCurrentPhase() {
+      return currentPhase;
+    }
+
+    void removeRunningWorkItem(String workItem) {
+      runningWorkItems.remove(workItem);
+    }
+
+    void addRunningWorkItem(String workItem) {
+      runningWorkItems.add(workItem);
+    }
+
+    @Nullable
+    String getFirstRunningWorkItem() {
+      return runningWorkItems.isEmpty() ? null : runningWorkItems.iterator().next();
+    }
+
+    void setIsConfiguringRootBuild(boolean isConfiguringRootBuild) {
+      this.isConfiguringRootBuild = isConfiguringRootBuild;
+    }
+
+    boolean isConfiguringRootBuild() {
+      return isConfiguringRootBuild;
     }
   }
 }

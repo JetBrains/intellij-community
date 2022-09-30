@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.task;
 import com.google.gson.GsonBuilder;
 import com.intellij.build.SyncViewManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
@@ -13,13 +14,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.service.execution.*;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -41,6 +48,8 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -107,10 +116,16 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         CancellationToken cancellationToken = cancellationTokenSource.token();
         myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
-      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
-        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
-        return null;
-      });
+
+      GradleProgressIndicatorHelper progressIndicatorHelper = new GradleProgressIndicatorHelper(id, effectiveSettings, listener);
+      progressIndicatorHelper.runWithProgressIndicator(
+        listenerWithProgressIndicator -> {
+          myHelper.execute(projectPath, effectiveSettings, id, listenerWithProgressIndicator, cancellationTokenSource, connection -> {
+            executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listenerWithProgressIndicator, connection, cancellationTokenSource);
+            return null;
+          });
+        }
+      );
     }
     finally {
       myCancellationMap.remove(id);
