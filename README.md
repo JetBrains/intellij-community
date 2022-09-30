@@ -16,7 +16,7 @@ These Git operations can also be done through the [IntelliJ IDEA user interface]
 
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 
-_**On Windows:**_ Two git options are required to check out sources on Windows. Since it's a common source of Git issues on Windows anyway, those options could be set globally (execute those commands before cloning any of intellij-community/android repositories):
+_**On Windows:**_ Two git options are required to check out sources on Windows. Since it's a common source of Git issues on Windows anyway, those options could be set globally (execute those commands before cloning any of IntelliJ-community/android repositories):
 
 * `git config --global core.longpaths true`
 * `git config --global core.autocrlf input`
@@ -26,7 +26,7 @@ run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Thes
 * `getPlugins.sh` for Linux or macOS.
 * `getPlugins.bat` for Windows.
 
-_**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
+_**Note:**_ Always `git checkout` the `IntelliJ-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
 Version 2022.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
@@ -34,7 +34,7 @@ for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
-* If IntelliJ IDEA displays an error about a missing or out of date required plugin (e.g. Kotlin),
+* If IntelliJ IDEA displays an error about a missing or out-of-date required plugin (e.g. Kotlin),
   [enable, upgrade, or install that plugin](https://www.jetbrains.com/help/idea/managing-plugins.html) and restart IntelliJ IDEA.
 * If IntelliJ IDEA displays an error about a Gradle configuration not found,
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
@@ -52,9 +52,9 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
 
-To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
+To build installation packages, run the `installers.cmd` command in the `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 
-Options to build installers are passed as system properties to `installers.cmd` command.
+Options to build installers are passed as system properties to the `installers.cmd` command.
 You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
@@ -65,9 +65,9 @@ Examples (`./` should be added only for Linux/macOS):
 You may call it directly from IDEA, see run configuration `Build IDEA Community Installers (current OS)` for an example.
 
 ## Running IntelliJ IDEA
-To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
+To run the IntelliJ IDEA built from the source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
 
-To run tests on the build, apply these setting to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
+To run tests on the build, apply these settings to the **Run | Edit Configurations... | Templates | JUnit** configuration tab:
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
@@ -77,14 +77,14 @@ The "Contribute Code" section of that site describes how you can contribute to I
 
 ## Running IntelliJ IDEA on CI/CD environment
 
-To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
+To run tests outside of IntelliJ IDEA, run the `tests. cmd` command in the `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
 
-Options to run tests are passed as system properties to `tests.cmd` command.
+Options to run tests are passed as system properties to the `tests. cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
-* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
+* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.IntelliJ.util.ArrayUtilTest`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
-You may call it directly from IDEA, see run configuration `tests in community` for an example.
+You may call it directly from IDEA, see run configuration `tests in the community for an example.
