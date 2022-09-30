@@ -23,7 +23,9 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ConsumedStreamProblem;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -565,7 +567,7 @@ public class StreamChainInliner implements CallInliner {
     void iteration(CFGBuilder builder) {
       if (myStreamSource != null) {
         builder.assignTo(myParameter).pop();
-        buildStreamCFG(builder, myChain, myStreamSource);
+        buildStreamCFG(builder, myChain, myStreamSource, false);
       } else {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
@@ -830,11 +832,16 @@ public class StreamChainInliner implements CallInliner {
     }
     PsiExpression originalQualifier = firstStep.myCall.getMethodExpression().getQualifierExpression();
     if (originalQualifier == null) return false;
-    builder.pushUnknown()
-           .ifConditionIs(true)
-           .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
-           .end()
-           .push(DfTypes.typedObject(call.getType(), Nullability.NOT_NULL), call);
+    builder.pushExpression(originalQualifier)
+      .chain(b -> checkAndMarkConsumed(b, originalQualifier))
+      .pop()
+      .pushUnknown()
+      .ifConditionIs(true)
+      .chain(b -> buildStreamCFG(b, firstStep, originalQualifier, true))
+      .end()
+      .push(builder.getFactory().fromDfType(SpecialField.CONSUMED_STREAM.asDfType(DfStreamStateType.OPEN)
+                                                 .meet(DfTypes.LOCAL_OBJECT)
+                                                 .meet(DfTypes.NOT_NULL_OBJECT)));
     return true;
   }
 
@@ -844,12 +851,13 @@ public class StreamChainInliner implements CallInliner {
     Step firstStep = buildChain(qualifierCall, terminalStep);
     PsiExpression originalQualifier = firstStep.myCall.getMethodExpression().getQualifierExpression();
     if (originalQualifier == null) return false;
-    buildStreamCFG(builder, firstStep, originalQualifier);
+    buildStreamCFG(builder, firstStep, originalQualifier, false);
     firstStep.pushResult(builder);
     return true;
   }
 
-  private static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
+  private static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier,
+                                     boolean originalQualifierAlreadyChecked) {
     PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType(), false);
     PsiMethodCallExpression sourceCall = tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
     if(STREAM_GENERATE.test(sourceCall)) {
@@ -918,9 +926,13 @@ public class StreamChainInliner implements CallInliner {
         .push(DfTypes.intValue(0))
         .ifCondition(RelationType.GT);
     } else {
+      if (!originalQualifierAlreadyChecked) {
+        builder
+          .pushExpression(originalQualifier)
+          .chain(b -> checkAndMarkConsumed(b, originalQualifier))
+          .pop();
+      }
       builder
-        .pushExpression(originalQualifier)
-        .pop()
         .chain(firstStep::before)
         .pushUnknown()
         .ifConditionIs(true);
@@ -928,6 +940,16 @@ public class StreamChainInliner implements CallInliner {
     builder
       .chain(b -> makeMainLoop(b, firstStep, inType))
       .end();
+  }
+
+  private static void checkAndMarkConsumed(CFGBuilder builder, PsiExpression qualifier) {
+    builder
+      .dup()
+      .unwrap(SpecialField.CONSUMED_STREAM)
+      .ensure(RelationType.NE, DfStreamStateType.CONSUMED, new ConsumedStreamProblem(qualifier), "java.lang.IllegalStateException")
+      .push(DfStreamStateType.CONSUMED)
+      .assign()
+      .pop();
   }
 
   private static void makeMainLoop(CFGBuilder builder, Step firstStep, PsiType inType) {

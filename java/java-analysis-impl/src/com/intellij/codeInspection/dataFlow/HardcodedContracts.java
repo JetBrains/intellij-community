@@ -15,6 +15,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,19 @@ public final class HardcodedContracts {
       }
     }
     return NO_PARAMETER_LEAK_METHODS.methodMatches(method);
+  }
+
+  private static final CallMatcher NO_QUALIFIER_LEAK_MATCHERS =
+    //not fully clear, but they don't affect on CONSUMED_STREAM and other tracked parameters
+    ConsumedStreamUtils.getAllNonLeakStreamMatchers();
+
+  /**
+   * @param method   method to test
+   * @return true if given method doesn't spoil its qualifier
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isKnownNoQualifierLeak(@Nullable PsiMethod method) {
+    return NO_QUALIFIER_LEAK_MATCHERS.methodMatches(method);
   }
 
   @FunctionalInterface
@@ -184,7 +198,9 @@ public final class HardcodedContracts {
       instanceCall("java.time.YearMonth", "isBefore", "isAfter")
     ), ContractProvider.of(
       singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
-    ));
+    ))
+    //for propagation CONSUMED_STREAM
+    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())));
 
   private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);
