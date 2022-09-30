@@ -1588,10 +1588,13 @@ public class MavenUtil {
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
 
-    String baseDir = EMPTY;
+    String baseDir = project.getBasePath();
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+    if (null == baseDir) {
+      baseDir = EMPTY;
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);

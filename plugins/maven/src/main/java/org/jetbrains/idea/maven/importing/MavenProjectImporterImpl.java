@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.module.impl.ModulePathKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -351,6 +350,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
 
+    if (projectsWithChanges.size() > 0) {
+      if (null != myDummyModule) {
+        deleteModules(List.of(myDummyModule));
+        myDummyModule = null;
+      }
+    }
+
     for (MavenProject each : projectsWithChanges.keySet()) {
       if (ensureModuleCreated(each)) {
         projectsWithNewlyCreatedModules.add(each);
@@ -392,21 +398,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     if (existingModule != null && existingModule != myDummyModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
     String moduleName = ModulePathKt.getModuleNameByFilePath(path);
-    if (isForTheDummyModule(project, existingModule)) {
-      try {
-        if (!myDummyModule.getName().equals(moduleName)) {
-          myModuleModel.renameModule(myDummyModule, moduleName);
-        }
-      }
-      catch (ModuleWithNameAlreadyExists e) {
-        MavenLog.LOG.error("Cannot rename dummy module:", e);
-      }
-      myMavenProjectToModule.put(project, myDummyModule);
-      myCreatedModules.add(myDummyModule);
-      myDummyModule = null;
-      return true;
-    }
-
 
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
@@ -417,13 +408,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
-  }
-
-  private boolean isForTheDummyModule(MavenProject project, Module existingModule) {
-    if (myDummyModule == null) return false;
-    if (existingModule == myDummyModule) return true;
-    return myProjectsTree.getRootProjects().size() == 1 &&
-           myProjectsTree.findRootProject(project) == project;
   }
 
   private void deleteExistingModuleByName(final String name) {
