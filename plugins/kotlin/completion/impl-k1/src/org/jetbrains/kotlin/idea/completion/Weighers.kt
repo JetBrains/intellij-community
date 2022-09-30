@@ -229,7 +229,7 @@ object DeprecatedWeigher : LookupElementWeigher("kotlin.deprecated") {
     }
 }
 
-object KotlinUnwantedLookupElementWeigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {
+object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {
     override fun weigh(element: LookupElement): Boolean {
         val declarationLookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return false
         val descriptor = declarationLookupObject.descriptor ?: return false
