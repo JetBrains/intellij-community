@@ -187,6 +187,17 @@ private class Uploader(serverUrl: String) {
         }
       }
       if (code == 200) {
+        try {
+          /**
+           * FIXME dirty workaround for unreliable [serverUrl]
+           */
+          httpClient.get(url).use {
+            it.peekBody(byteCount = 1)
+          }
+        }
+        catch (ignored: Exception) {
+          return false
+        }
         if (logIfExists) {
           span.addEvent("File '$path' already exists on server, nothing to upload")
         }
