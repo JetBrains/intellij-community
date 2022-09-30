@@ -476,7 +476,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         private fun KtFile.hasMainFun(
             shouldUseSlowResolve: Boolean = project.shouldUseSlowResolve()
         ): Boolean {
-            val mainFunCandidates = findMainFunCandidates()
+            val mainFunCandidates = runReadAction { findMainFunCandidates() }
             if (shouldUseSlowResolve && mainFunCandidates.size == 1) {
                 return true
             }
