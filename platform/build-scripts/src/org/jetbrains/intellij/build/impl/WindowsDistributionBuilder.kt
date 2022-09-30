@@ -294,8 +294,8 @@ internal class WindowsDistributionBuilder(
       @Suppress("SpellCheckingInspection")
       val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true")
       val productName = context.applicationInfo.shortProductName
-      val classPath = context.bootClassPathJarNames.joinToString(separator = ";")
-      val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";")
+      val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
+      val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
       val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
       val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
       val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory)

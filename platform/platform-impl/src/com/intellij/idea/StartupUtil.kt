@@ -846,15 +846,6 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
     throw AssertionError("Already initialized")
   }
 
-  // AddPredefinedVMOptions in WinLauncher.cpp doesn't expand %IDE_HOME% macro
-  if (SystemInfoRt.isWindows) {
-    for (name in arrayOf("jna.boot.library.path", "pty4j.preferred.native.folder")) {
-      System.getProperty(name)?.let {
-        System.setProperty(name, it.replace("%IDE_HOME%", PathManager.getHomePath()))
-      }
-    }
-  }
-
   return launch(Dispatchers.IO) {
     val (configPath, systemPath) = pathDeferred.await()
     configImportNeededDeferred.join()
