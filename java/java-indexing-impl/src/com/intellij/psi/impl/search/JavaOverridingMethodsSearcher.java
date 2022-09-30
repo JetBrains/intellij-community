@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -20,10 +20,10 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -64,7 +64,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   static boolean isJavaOnlyScope(VirtualFile @NotNull [] files) {
-    return Arrays.stream(files).allMatch(file -> FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE));
+    return ContainerUtil.and(files, file -> FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE));
   }
 
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
