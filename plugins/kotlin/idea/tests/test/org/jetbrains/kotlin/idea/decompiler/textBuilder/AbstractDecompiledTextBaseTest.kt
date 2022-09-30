@@ -68,7 +68,9 @@ abstract class AbstractDecompiledTextBaseTest(
             listOf("-Xallow-kotlin-package")
         } else {
             emptyList()
-        }
+        } + if (isJsLibrary) {
+            listOf("-Xuse-deprecated-legacy-compiler")
+        } else emptyList()
 
     private fun getCompilationClasspath(directivesText: String): List<File> =
         if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "STDLIB_JDK_8")) {
