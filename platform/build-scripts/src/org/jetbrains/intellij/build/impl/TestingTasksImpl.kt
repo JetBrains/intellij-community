@@ -42,18 +42,26 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val projectHome = context.paths.projectHome
     val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
     val configuration = RunConfigurationProperties.getConfiguration(file)
-    return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
-      JUnitRunConfigurationProperties.TYPE -> {
-        listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
-      }
-      CompoundRunConfigurationProperties.TYPE -> {
-        val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
-        runConfiguration.toRun.flatMap(::loadRunConfigurations)
-      }
-      else -> {
-        throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
+    val runConfigurations = try {
+      when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
+        JUnitRunConfigurationProperties.TYPE -> {
+          listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
+        }
+        CompoundRunConfigurationProperties.TYPE -> {
+          val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
+          runConfiguration.toRun.flatMap(::loadRunConfigurations)
+        }
+        else -> {
+          throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
+        }
       }
     }
+    catch (e: Exception) {
+      val description = e.message?.lineSequence()?.first()?.replace("'", "\"")
+      context.messages.warning("##teamcity[buildProblem identity='$name' description='$description']")
+      emptyList()
+    }
+    return runConfigurations
   }
 
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
