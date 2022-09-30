@@ -141,11 +141,8 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
   @Test
   public void manyValuesEnumeratedCouldBeGetBack_ByProcessAllDataObjects_AfterReload() throws Exception {
     final String[] values = manyValues;
-    final int[] ids = new int[values.length];
-    for (int i = 0; i < values.length; i++) {
-      final String value = values[i];
-      final int id = enumerator.enumerate(value);
-      ids[i] = id;
+    for (final String value : values) {
+      enumerator.enumerate(value);
     }
 
     closeEnumerator(enumerator);

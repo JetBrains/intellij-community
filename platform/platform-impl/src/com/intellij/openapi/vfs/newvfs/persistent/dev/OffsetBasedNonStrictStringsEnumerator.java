@@ -8,6 +8,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,6 +101,14 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
   private int nextOffsetToUse;
   private final ResizeableMappedFile file;
 
+  //monitoring:
+  private volatile long valueOfQueries = 0;
+  private volatile long valueOfQueriesCacheMisses = 0;
+  private volatile long enumerateQueries = 0;
+  private volatile long enumerateQueriesCacheMisses = 0;
+  @Nullable
+  private volatile BatchCallback monitoringCallback;
+
   public OffsetBasedNonStrictStringsEnumerator(final @NotNull ResizeableMappedFile file) throws IOException {
     this.file = file;
 
@@ -120,13 +130,13 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
       }
 
       //TODO RC: do we really need to read through whole file? We could read nothing (leaving cache empty, but
-      //    this is OK from correctness PoV), or read last 2-3 CACHE_SIZE records to fill up recentNames/Ids cache.
+      //    this is OK from correctness PoV), or read last 2-3 PAGE_SIZE records to fill up recentNames/Ids cache.
       //    ...But we can't read file backward that with <length> field _before_ string bytes, so for that
       //    to work we need to put <length> _after_ string bytes -- which makes it hard to read file in a
       //    regular start->end way.
       //    Both issues could be solved by storing data page-aware: i.e. never put record on a page boundary,
       //    move record on a new page if it doesn't fit on a current page fully. This way page always start
-      //    with record (length), hence it is enough to scan few last pages to fill up the cache. This also
+      //    with record x .length field, hence it is enough to scan few last pages to fill up the cache. This also
       //    should slightly improve performance of ResizeableMappedFile (see valuesAreBufferAligned ctor param)
 
       nextOffsetToUse = HEADER_SIZE;
@@ -142,14 +152,18 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
 
   @Override
   public int enumerate(final @Nullable String value) throws IOException {
+    enumerateQueries++;
     return namesToIds.lookup(value, () -> {
+      enumerateQueriesCacheMisses++;
       return writeValue(value);
     });
   }
 
   @Override
   public @Nullable String valueOf(final int id) throws IOException {
+    valueOfQueries++;
     return idsToNames.lookup(id, () -> {
+      valueOfQueriesCacheMisses++;
       final int offset = id;
       return readValueByOffset(offset, /*lengthRef: */null);
     });
@@ -158,6 +172,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
   @Override
   public int tryEnumerate(final String name) throws IOException {
     //return NULL_ID if value is not in cache (even if value was enumerated before, but already dropped from cache)
+    enumerateQueries++;
     return namesToIds.lookup(name, () -> NULL_ID);
   }
 
@@ -166,12 +181,15 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
     return forEach((value, id) -> processor.process(value));
   }
 
-  public boolean forEach(final ValuesProcessor<String> processor) throws IOException {
+  public boolean forEach(final ValuesProcessor<? super String> processor) throws IOException {
+    //TODO RC: ProgressManager.checkCanceled() ?
     final long fileSize = file.getLogicalSize();
     int nextOffset = HEADER_SIZE;
     final int[] lengthAndRedirectIdHolder = {0, 0};
     while (nextOffset < fileSize) {
       final int id = nextOffset;
+      //TODO RC: check idsToNames.lookup(id, () -> null), and avoid creation of new String if value is already cached
+      //         (but still need to read header to calculate fullRecordLength)
       final String value = readValueByOffset(nextOffset, lengthAndRedirectIdHolder);
       final int fullRecordLength = lengthAndRedirectIdHolder[0];
       final int redirectToId = lengthAndRedirectIdHolder[1];
@@ -207,11 +225,35 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
     readLock.lock();
     try {
       file.close();
+      final BatchCallback callback = monitoringCallback;
+      if (callback != null) {
+        callback.close();
+      }
     }
     finally {
       readLock.unlock();
     }
   }
+
+  public AutoCloseable enableMonitoring(final @NotNull Meter meter) {
+    final var valueOfQueriesCounter = meter.counterBuilder("NamesEnumerator.valueOfQueries").buildObserver();
+    final var valueOfQueriesCacheMissesCounter = meter.counterBuilder("NamesEnumerator.valueOfCacheMisses").buildObserver();
+    final var enumerateQueriesCounter = meter.counterBuilder("NamesEnumerator.enumerateQueries").buildObserver();
+    final var enumerateQueriesCacheMissesCounter = meter.counterBuilder("NamesEnumerator.enumerateCacheMisses").buildObserver();
+
+    monitoringCallback = meter.batchCallback(
+      () -> {
+        valueOfQueriesCounter.record(valueOfQueries);
+        valueOfQueriesCacheMissesCounter.record(valueOfQueriesCacheMisses);
+        enumerateQueriesCounter.record(enumerateQueries);
+        enumerateQueriesCacheMissesCounter.record(enumerateQueriesCacheMisses);
+      },
+      valueOfQueriesCounter, valueOfQueriesCacheMissesCounter,
+      enumerateQueriesCounter, enumerateQueriesCacheMissesCounter
+    );
+    return monitoringCallback;
+  }
+
 
   /**
    * @return offset (which serves also as an id) of the record just written
@@ -340,7 +382,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
       Arrays.fill(keys, NULL_ID);
     }
 
-    public String lookup(final @NotNull int key,
+    public String lookup(final int key,
                          final ThrowableComputable<String, IOException> orCompute) throws IOException {
       final int hash = Integer.hashCode(key);
       final int startIndex = Math.abs(hash) % SIZE;
@@ -359,6 +401,9 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
       }
 
       final String newValue = orCompute.compute();
+      if (newValue == null) {
+        return null;
+      }
       //no more free space remains, need to expurge some record -> choose the random one
       final int probe = ThreadLocalRandom.current().nextInt(MAX_PROBE);
       final int index = (startIndex + probe) % SIZE;

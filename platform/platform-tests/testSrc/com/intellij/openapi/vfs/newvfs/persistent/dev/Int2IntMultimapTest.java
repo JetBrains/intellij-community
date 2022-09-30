@@ -144,7 +144,7 @@ public class Int2IntMultimapTest {
       final IntOpenHashSet multimapValues = getValues(multimap, key);
 
       assertEquals(
-        "key["+key+"] values must be the same ",
+        "key[" + key + "] values must be the same ",
         etalonValues,
         multimapValues
       );
@@ -153,7 +153,7 @@ public class Int2IntMultimapTest {
     assertEquals(
       "Multimap size must be == number of unique (key,value) pairs",
       multimap.size(),
-      etalon.values().stream().mapToInt( values -> values.size()).sum()
+      etalon.values().stream().mapToInt(values -> values.size()).sum()
     );
   }
 
@@ -178,7 +178,10 @@ public class Int2IntMultimapTest {
   private static IntOpenHashSet getValues(final Int2IntMultimap multimap,
                                           final int key) {
     final IntOpenHashSet values = new IntOpenHashSet();
-    multimap.get(key, value -> {values.add(value);return true;} );
+    multimap.get(key, value -> {
+      values.add(value);
+      return true;
+    });
     return values;
   }
 
@@ -188,14 +191,14 @@ public class Int2IntMultimapTest {
   }
 
   private static int key(final long packedKeyValue) {
-    return (int)((packedKeyValue >> 32) & 0xFFFF_FFFF);
+    return (int)(packedKeyValue >> 32);
   }
 
   private static int value(final long packedKeyValue) {
-    return (int)(packedKeyValue & 0xFFFF_FFFF);
+    return (int)packedKeyValue;
   }
 
-  private static final long[] generateKeyValues(final int size) {
+  private static long[] generateKeyValues(final int size) {
     return ThreadLocalRandom.current().longs()
       .filter(v -> key(v) != Int2IntMultimap.NO_VALUE
                    && value(v) != Int2IntMultimap.NO_VALUE)
