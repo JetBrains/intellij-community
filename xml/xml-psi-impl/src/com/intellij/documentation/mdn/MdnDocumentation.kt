@@ -25,6 +25,7 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.xml.psi.XmlPsiBundle
 import com.intellij.xml.util.HtmlUtil
+import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -112,7 +113,6 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       }
     }
   }
-    ?.takeIf { symbolName != null }
     ?.let { (source, doc) ->
       MdnSymbolDocumentationAdapter(if (context?.isCaseSensitive == true) symbolName!! else toLowerCase(symbolName!!), source, doc)
     }
@@ -178,8 +178,8 @@ interface MdnSymbolDocumentation {
   val isDeprecated: Boolean
   val isExperimental: Boolean
   val description: String
-  val sections: Map<String, String>
-  val footnote: String?
+  val sections: Map<@Nls String, @Nls String>
+  val footnote: @Nls String?
 
   fun getDocumentation(withDefinition: Boolean): @NlsSafe String
 
