@@ -212,7 +212,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                          </dependencies>
                                          """));
 
-    myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0"));
+    assertTrue(myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0")));
   }
 
   @Test
@@ -225,7 +225,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
                          <dependency>
-                           <artifactId>as<caret></artifactId>
+                           <artifactId>intellijartif<caret></artifactId>
                          </dependency>
                        </dependencies>
                        """);
@@ -234,11 +234,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
     LookupElement[] elements = myFixture.completeBasic();
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "asm-attrs", "asm", "asm-analysis", "asm-parent", "asm-tree", "asm-util");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "intellijartifactanother", "intellijartifact");
 
     myFixture.type('\n');
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "asm");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.intellijgroup");
 
     myFixture.type("\n");
 
@@ -246,9 +246,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                          <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                                          <dependencies>
                                            <dependency>
-                                               <groupId>asm</groupId>
-                                               <artifactId>asm-attrs</artifactId>
-                                               <version>2.2.1</version>
+                                               <groupId>org.intellijgroup</groupId>
+                                               <artifactId>intellijartifact</artifactId>
+                                               <version>1.0</version>
                                            </dependency>
                                          </dependencies>
                                          """));
@@ -264,7 +264,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                        <dependencies>
                          <dependency>
-                           <artifactId>common-i<caret></artifactId>
+                           <artifactId>intellijmavent<caret></artifactId>
                          </dependency>
                        </dependencies>
                        """);
@@ -275,7 +275,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
     myFixture.type('\n');
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "commons-io");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example");
   }
 
   @Test
@@ -289,7 +289,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                        <dependencyManagement>
                            <dependencies>
                                <dependency>
-                                   <artifactId>commons-i<caret></artifactId>
+                                   <artifactId>intellijmavente<caret></artifactId>
                                </dependency>
                            </dependencies>
                        </dependencyManagement>
@@ -301,11 +301,11 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     assertSize(1, elements);
     myFixture.type('\n');
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "commons-io");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "org.example");
 
     myFixture.type('\n');
 
-    assertCompletionVariants(myFixture, RENDERING_TEXT, "2.4", "1.4");
+    assertCompletionVariants(myFixture, RENDERING_TEXT, "1.0", "2.0");
 
     myFixture.type('\n');
 
@@ -314,9 +314,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                          <dependencyManagement>
                                              <dependencies>
                                                  <dependency>
-                                                     <groupId>commons-io</groupId>
-                                                     <artifactId>commons-io</artifactId>
-                                                     <version>2.4</version>
+                                                     <groupId>org.example</groupId>
+                                                     <artifactId>intellijmaventest</artifactId>
+                                                     <version>2.0</version>
                                                  </dependency>
                                              </dependencies>
                                          </dependencyManagement>
@@ -330,9 +330,9 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                       <dependencyManagement>
                         <dependencies>
                           <dependency>
-                            <groupId>commons-io</groupId>
-                            <artifactId>commons-io</artifactId>
-                            <version>2.4</version>
+                            <groupId>org.intellijgroup</groupId>
+                            <artifactId>intellijartifact</artifactId>
+                            <version>1.0</version>
                           </dependency>
                         </dependencies>
                       </dependencyManagement>
@@ -343,15 +343,15 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                          <dependencyManagement>
                            <dependencies>
                              <dependency>
-                               <groupId>commons-io</groupId>
-                               <artifactId>commons-io</artifactId>
-                               <version>2.4</version>
+                               <groupId>org.intellijgroup</groupId>
+                               <artifactId>intellijartifactanother</artifactId>
+                               <version>1.0</version>
                              </dependency>
                            </dependencies>
                          </dependencyManagement>
                        <dependencies>
                          <dependency>
-                           <artifactId>common-i<caret></artifactId>
+                           <artifactId>intellijartifactan<caret></artifactId>
                          </dependency>
                        </dependencies>
                        """);
@@ -371,16 +371,16 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                            <dependencyManagement>
                                              <dependencies>
                                                <dependency>
-                                                 <groupId>commons-io</groupId>
-                                                 <artifactId>commons-io</artifactId>
-                                                 <version>2.4</version>
+                                                 <groupId>org.intellijgroup</groupId>
+                                                 <artifactId>intellijartifactanother</artifactId>
+                                                 <version>1.0</version>
                                                </dependency>
                                              </dependencies>
                                            </dependencyManagement>
                                          <dependencies>
                                            <dependency>
-                                               <groupId>commons-io</groupId>
-                                               <artifactId>commons-io</artifactId>
+                                               <groupId>org.intellijgroup</groupId>
+                                               <artifactId>intellijartifactanother</artifactId>
                                            </dependency>
                                          </dependencies>
                                          """

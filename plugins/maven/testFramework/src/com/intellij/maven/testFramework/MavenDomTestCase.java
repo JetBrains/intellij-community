@@ -262,6 +262,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected void assertCompletionVariants(CodeInsightTestFixture f, Function<? super LookupElement, String> lookupElementStringFunction, String... expected) {
     List<String> actual = getCompletionVariants(f, lookupElementStringFunction);
+    assertNotEmpty(actual);
     assertUnorderedElementsAreEqual(actual, expected);
   }
 

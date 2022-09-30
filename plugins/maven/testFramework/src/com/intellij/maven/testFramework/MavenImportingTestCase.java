@@ -567,10 +567,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myImportedContext = p.getContext();
       myReadContext = myImportedContext.getReadContext();
       myResolvedContext = myImportedContext.getResolvedContext();
-      DependencySearchService depService = myReadContext.getProject().getServiceIfCreated(DependencySearchService.class);
-      if (depService != null) {
-        depService.updateProviders();
-      }
     });
 
     try {
