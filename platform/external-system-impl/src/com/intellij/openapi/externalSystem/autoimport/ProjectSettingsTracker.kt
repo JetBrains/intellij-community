@@ -153,11 +153,11 @@ class ProjectSettingsTracker(
     if (isInvalidateCache) {
       settingsAsyncSupplier.invalidate()
     }
-    settingsAsyncSupplier.supply(callback, parentDisposable)
+    settingsAsyncSupplier.supply(parentDisposable, callback)
   }
 
   private fun submitSettingsFilesRefresh(callback: (Set<String>) -> Unit) {
-    EdtAsyncSupplier.invokeOnEdt(::isAsyncChangesProcessing, {
+    EdtAsyncSupplier.invokeOnEdt(::isAsyncChangesProcessing, parentDisposable) {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
@@ -167,7 +167,7 @@ class ProjectSettingsTracker(
           callback(settingsPaths)
         }
       }
-    }, parentDisposable)
+    }
   }
 
   private fun submitSettingsFilesCRCCalculation(
@@ -182,7 +182,7 @@ class ProjectSettingsTracker(
       builder.coalesceBy(this, operationName)
     }
     builder.build(backgroundExecutor)
-      .supply(callback, parentDisposable)
+      .supply(parentDisposable, callback)
   }
 
   private fun submitSettingsFilesCollection(
@@ -268,6 +268,7 @@ class ProjectSettingsTracker(
   ) : ExternalSystemSettingsFilesModificationContext
 
   private inner class ProjectListener : ExternalSystemProjectListener {
+
     override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
       settingsFilesStatus.updateAndGet {
@@ -301,6 +302,7 @@ class ProjectSettingsTracker(
   }
 
   private inner class ProjectSettingsListener : FilesChangesListener {
+
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
       logModificationAsDebug(path, modificationStamp, modificationType)
@@ -328,19 +330,25 @@ class ProjectSettingsTracker(
   }
 
   private inner class SettingsFilesAsyncSupplier : AsyncSupplier<Set<String>> {
+
     private val cachingAsyncSupplier = CachingAsyncSupplier(
       BackgroundAsyncSupplier.Builder(projectAware::settingsFiles)
         .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
         .build(backgroundExecutor))
+
     private val supplier = BackgroundAsyncSupplier.Builder(cachingAsyncSupplier)
       .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
       .build(backgroundExecutor)
 
-    override fun supply(consumer: (Set<String>) -> Unit, parentDisposable: Disposable) {
-      supplier.supply({ consumer(it + settingsFilesStatus.get().oldCRC.keys) }, parentDisposable)
+    override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
+      supplier.supply(parentDisposable) {
+        consumer(it + settingsFilesStatus.get().oldCRC.keys)
+      }
     }
 
-    fun invalidate() = cachingAsyncSupplier.invalidate()
+    fun invalidate() {
+      cachingAsyncSupplier.invalidate()
+    }
   }
 
   companion object {

@@ -63,7 +63,7 @@ class MavenProjectsAware(
   ) {
     ReadAsyncSupplier.Builder { partitionSettingsFiles(context) }
       .build(backgroundExecutor)
-      .supply(action, manager)
+      .supply(manager, action)
   }
 
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
