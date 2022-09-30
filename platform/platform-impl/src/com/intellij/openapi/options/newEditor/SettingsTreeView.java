@@ -597,7 +597,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
-      setBorder(JBUI.Borders.empty(3, 10));
+      setBorder(JBUI.Borders.empty(2, 10));
     }
 
     @Override
