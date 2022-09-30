@@ -172,7 +172,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  public static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+  private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
     List<HintAction> result = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       ProgressManager.checkCanceled();
