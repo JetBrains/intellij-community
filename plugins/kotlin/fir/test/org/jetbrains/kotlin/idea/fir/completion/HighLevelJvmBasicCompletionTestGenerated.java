@@ -3296,6 +3296,16 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/java/PackageDirective.kt");
             }
 
+            @TestMetadata("ReadlineMethodLowerPriority.kt")
+            public void testReadlineMethodLowerPriority() throws Exception {
+                runTest("../completion/testData/basic/java/ReadlineMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("ReadlineMethodUsualPriorityInInOldVersions.kt")
+            public void testReadlineMethodUsualPriorityInInOldVersions() throws Exception {
+                runTest("../completion/testData/basic/java/ReadlineMethodUsualPriorityInInOldVersions.kt");
+            }
+
             @TestMetadata("SAMAdaptersStatic.kt")
             public void testSAMAdaptersStatic() throws Exception {
                 runTest("../completion/testData/basic/java/SAMAdaptersStatic.kt");
