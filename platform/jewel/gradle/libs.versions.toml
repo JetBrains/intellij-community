@@ -1,5 +1,5 @@
 [versions]
-composeDesktop = "1.2.0-alpha01-dev774"
+composeDesktop = "1.2.0-beta01"
 coroutines = "1.6.0"
 ideaGradlePlugin = "1.9.0"
 jna = "5.10.0"
