@@ -59,7 +59,9 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
       }
     }
     if (info.record.failedLine == -1 || StringUtil.isEmpty(info.record.failedMethod)) return null
-    if (info.record.failedLine != document.getLineNumber(callSourcePsi.textOffset) + 1) return null
+    val textRange = callSourcePsi.textRange
+    val lineRange = document.getLineNumber(textRange.startOffset)..document.getLineNumber(textRange.endOffset)
+    if ((info.record.failedLine - 1) !in lineRange) return null
     if (info.record.failedMethod != call.methodName) return null
     info.pointer = SmartPointerManager.createPointer(callSourcePsi)
     return if (info.record.magnitude <= TestStateInfo.Magnitude.IGNORED_INDEX.value) null else info
