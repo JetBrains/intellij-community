@@ -7,8 +7,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInspection.CommonQuickFixBundle
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedTypes
@@ -30,6 +32,13 @@ internal class CreateEnumConstantAction(
   override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
   override fun getText(): String = CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.ENUM_CONSTANT.`object`(), request.fieldName)
+
+  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+    val constructor = target.constructors.firstOrNull() ?: return IntentionPreviewInfo.EMPTY
+    val hasParameters = constructor.parameters.isNotEmpty()
+    val text = if (hasParameters) "${request.fieldName}(...)" else request.fieldName
+    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", text)
+  }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val name = request.fieldName
