@@ -99,7 +99,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -558,7 +557,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkInfos,
                                            boolean checkWeakWarnings,
                                            @NotNull Stream<? extends VirtualFile> files) {
-    List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> data = files.map(file -> {
+    record FileHighlighting(PsiFile file, Editor editor, ExpectedHighlightingData data) {}
+    List<FileHighlighting> data = files.map(file -> {
       PsiFile psiFile = myPsiManager.findFile(file);
       assertNotNull(psiFile);
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
@@ -566,12 +566,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       ExpectedHighlightingData datum =
         new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, myMessageBundles);
       datum.init();
-      return Trinity.create(psiFile, createEditor(file), datum);
+      return new FileHighlighting(psiFile, createEditor(file), datum);
     }).toList();
     long elapsed = 0;
-    for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : data) {
-      setFileAndEditor(trinity.first.getVirtualFile(), trinity.second);
-      elapsed += collectAndCheckHighlighting(trinity.third);
+    for (FileHighlighting highlighting : data) {
+      setFileAndEditor(highlighting.file().getVirtualFile(), highlighting.editor());
+      elapsed += collectAndCheckHighlighting(highlighting.data());
     }
     return elapsed;
   }
