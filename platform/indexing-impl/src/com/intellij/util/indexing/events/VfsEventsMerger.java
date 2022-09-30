@@ -30,6 +30,19 @@ public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
   private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
+  private final @Nullable VfsEventProcessor myInstantUpdateProcessor;
+
+  VfsEventsMerger() {
+    myInstantUpdateProcessor = null;
+  }
+
+  /**
+   * @param instantUpdateProcessor this event processor will be called on receipt of every update event
+   */
+  VfsEventsMerger(@NotNull VfsEventProcessor instantUpdateProcessor) {
+    myInstantUpdateProcessor = instantUpdateProcessor;
+  }
+
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
@@ -64,6 +77,13 @@ public final class VfsEventsMerger {
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
       if(myChangeInfos.put(fileId, newChangeInfo) == existingChangeInfo) {
         myPublishedEventIndex.incrementAndGet();
+        if (myInstantUpdateProcessor != null) {
+          try {
+            myInstantUpdateProcessor.process(newChangeInfo);
+          } catch (Exception e) {
+            if (LOG != null) LOG.error(e);
+          }
+        }
         break;
       }
     }

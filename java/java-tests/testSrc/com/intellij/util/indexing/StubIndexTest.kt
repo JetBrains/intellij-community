@@ -10,7 +10,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import junit.framework.TestCase
 
 @SkipSlowTestLocally
 class StubIndexTest : JavaCodeInsightFixtureTestCase() {
@@ -41,11 +41,18 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test java file element type mod count increments on java file creation and change`() {
-    assertEquals(0, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
+    var lastModCount = 0
+    fun checkModCountIncreasedAtLeast(minInc: Int) {
+      val modCount = (StubIndex.getInstance() as StubIndexEx).fileElementTypeModCount.getModCount(JavaFileElementType::class.java)
+      TestCase.assertTrue(lastModCount <= modCount + minInc)
+      lastModCount = modCount
+    }
+    checkModCountIncreasedAtLeast(0)
     val psi = myFixture.addClass("class Foo { String bar; }")
-    assertEquals(1, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
+    checkModCountIncreasedAtLeast(1)
     WriteAction.run<Throwable> { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
-    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-    assertEquals(2, (StubIndex.getInstance() as StubIndexEx).getModificationCountForFileElementType(JavaFileElementType::class.java))
+    //(FileBasedIndex.getInstance() as FileBasedIndexImpl).changedFilesCollector.processFilesToUpdateInReadAction()
+    //CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
+    checkModCountIncreasedAtLeast(1)
   }
 }

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +56,15 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
   private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+  public ChangedFilesCollector() {
+    super(changeInfo -> {
+      if (StubIndexImpl.FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.VfsEventMerger) {
+        ((StubIndexImpl)StubIndex.getInstance()).getFileElementTypeModTracker().processFileElementTypeUpdate(changeInfo.getFile());
+      }
+      return true;
+    });
+  }
 
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -230,7 +238,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
       if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
       if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
-      FileElementTypeModificationTracker.processFileElementTypeUpdate(file);
+      if (StubIndexImpl.FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.ChangedFilesCollector) {
+        ((StubIndexImpl)StubIndex.getInstance()).getFileElementTypeModTracker().processFileElementTypeUpdate(file);
+      }
       return true;
     });
   }
@@ -325,81 +335,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       catch (TimeoutException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
-    }
-  }
-
-  // probably gotta move it outta here
-  private static class FileElementTypeModificationTracker {
-    private ConcurrentMap<String, Class<? extends IFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>(); // todo caching?
-
-    private static void processFileElementTypeUpdate(VirtualFile file) {
-      int fileId = FileBasedIndex.getFileId(file);
-
-      var stubIndex = (StubIndexEx)StubIndex.getInstance();
-      var modCounter = stubIndex.getFileElementTypeModCount();
-
-      FileContent indexedFile = makeIndexedFile(file);
-      var stubUpdatingIndexStorage =
-        (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
-
-      var current = determineCurrentFileElementType(indexedFile);
-      if (current != null) {
-        modCounter.incModCount(current);
-      }
-
-      if (StubIndexEx.PRECISE_FILE_ELEMENT_TYPE_MOD_COUNT_TRACKING) {
-        var before = determinePreviousFileElementTypePrecisely(fileId, stubUpdatingIndexStorage);
-        if (before != null && before != current) {
-          modCounter.incModCount(before);
-        }
-      }
-      else {
-        if (determineFileElementTypeMightHaveChanged(fileId, indexedFile, stubUpdatingIndexStorage)) {
-          modCounter.incGlobalModCount();
-        }
-      }
-    }
-
-    @NotNull
-    private static FileContent makeIndexedFile(VirtualFile file) {
-      return FileContentImpl.createByContent(file, () -> {
-        try {
-          return file.contentsToByteArray();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }, getProject());
-    }
-
-    private static Project getProject() {
-      var projects = ProjectManager.getInstance().getOpenProjects();
-      for (var p : projects) {
-        if (!p.isDisposed()) {
-          return p;
-        }
-      }
-      return null;
-    }
-
-    private static Class<? extends IFileElementType> determineCurrentFileElementType(IndexedFile indexedFile) {
-      var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
-      if (stubBuilderType == null) return null;
-      var currentElementType = stubBuilderType.getStubFileElementType();
-      return currentElementType == null ? null : currentElementType.getClass();
-    }
-
-    private static Class<? extends IFileElementType> determinePreviousFileElementTypePrecisely(int fileId, StubUpdatingIndexStorage index) {
-      String storedVersion = index.getStoredSubIndexerVersion(fileId);
-      if (storedVersion == null) return null;
-      //return
-      Class<?> stubTypeClass = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
-      return (Class<? extends IFileElementType>)stubTypeClass;
-    }
-
-    private static boolean determineFileElementTypeMightHaveChanged(int fileId, IndexedFile indexedFile, StubUpdatingIndexStorage index) {
-      var state = index.getIndexingStateForFile(fileId, indexedFile);
-      return state == FileIndexingState.OUT_DATED;
     }
   }
 }

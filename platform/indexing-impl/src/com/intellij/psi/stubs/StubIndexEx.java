@@ -38,7 +38,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -48,9 +47,6 @@ import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOpera
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
-  public static final boolean PRECISE_FILE_ELEMENT_TYPE_MOD_COUNT_TRACKING =
-    SystemProperties.getBooleanProperty("stub.index.precise.file.element.type.mod.count.tracking", true);
-
   static void initExtensions() {
     // initialize stub index keys
     for (StubIndexExtension<?, ?> extension : StubIndexExtension.EP_NAME.getExtensionList()) {
@@ -67,7 +63,14 @@ public abstract class StubIndexEx extends StubIndex {
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
-  private final FileElementTypeModificationCounter myFileElementTypeModCount = new FileElementTypeModificationCounter();
+  private final @NotNull FileElementTypeModificationCounter myFileElementTypeModCount;
+  private final @NotNull FileElementTypeModificationTracker myFileElementTypeModTracker;
+
+  public StubIndexEx(@NotNull FileElementTypeModificationCounter fileElementTypeModificationCounter,
+                     @NotNull FileElementTypeModificationTracker fileElementTypeModificationTracker) {
+    myFileElementTypeModCount = fileElementTypeModificationCounter;
+    myFileElementTypeModTracker = fileElementTypeModificationTracker;
+  }
 
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
@@ -555,34 +558,25 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public static class FileElementTypeModificationCounter {
-    private final ConcurrentHashMap<Class<? extends IFileElementType>, Integer> myFileElementTypeModCount = new ConcurrentHashMap<>();
-    private final AtomicInteger myGlobalShift = new AtomicInteger(0);
-
-    public int incModCount(Class<? extends IFileElementType> fileElementTypeClass) {
-      return myFileElementTypeModCount.compute(fileElementTypeClass, (__, value) -> {
-        if (value == null) {
-          return 1 - myGlobalShift.get();
-        }
-        return value + 1;
-      }) + myGlobalShift.get();
-    }
-
-    public int getModCount(Class<? extends IFileElementType> fileElementTypeClass) {
-      return myFileElementTypeModCount.compute(fileElementTypeClass, (__, value) -> {
-        if (value == null) {
-          return -myGlobalShift.get();
-        }
-        return value;
-      }) + myGlobalShift.get();
-    }
-
-    public void incGlobalModCount() {
-      myGlobalShift.incrementAndGet();
-    }
+  public interface FileElementTypeModificationCounter {
+    int incModCount(Class<? extends IFileElementType> fileElementTypeClass);
+    int getModCount(Class<? extends IFileElementType> fileElementTypeClass);
+    void incGlobalModCount();
   }
 
-  public FileElementTypeModificationCounter getFileElementTypeModCount() {
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @NotNull FileElementTypeModificationCounter getFileElementTypeModCount() {
     return myFileElementTypeModCount;
+  }
+
+  public interface FileElementTypeModificationTracker {
+    void processFileElementTypeUpdate(VirtualFile file);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @NotNull FileElementTypeModificationTracker getFileElementTypeModTracker() {
+    return myFileElementTypeModTracker;
   }
 }
