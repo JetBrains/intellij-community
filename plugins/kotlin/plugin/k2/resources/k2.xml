@@ -232,6 +232,7 @@
     <module name="kotlin.refactorings.k2"/>
     <module name="kotlin.refactorings.rename.k2"/>
 
+    <module name="kotlin.search"/>
     <module name="kotlin.navigation"/>
     <module name="kotlin.highlighting"/>
   </content>
