@@ -10,7 +10,6 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
 
 @SkipSlowTestLocally
 class StubIndexTest : JavaCodeInsightFixtureTestCase() {
@@ -44,15 +43,13 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     var lastModCount = 0
     fun checkModCountIncreasedAtLeast(minInc: Int) {
       val modCount = (StubIndex.getInstance() as StubIndexEx).fileElementTypeModCount.getModCount(JavaFileElementType::class.java)
-      TestCase.assertTrue(lastModCount <= modCount + minInc)
+      assert(lastModCount <= modCount + minInc)
       lastModCount = modCount
     }
     checkModCountIncreasedAtLeast(0)
     val psi = myFixture.addClass("class Foo { String bar; }")
     checkModCountIncreasedAtLeast(1)
     WriteAction.run<Throwable> { VfsUtil.saveText(psi.containingFile.virtualFile, "class Foo { int val; }"); }
-    //(FileBasedIndex.getInstance() as FileBasedIndexImpl).changedFilesCollector.processFilesToUpdateInReadAction()
-    //CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
     checkModCountIncreasedAtLeast(1)
   }
 }

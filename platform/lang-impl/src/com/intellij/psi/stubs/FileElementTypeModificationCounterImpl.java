@@ -4,6 +4,7 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +16,7 @@ public class FileElementTypeModificationCounterImpl implements StubIndexEx.FileE
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
 
   @Override
-  public int incModCount(Class<? extends IFileElementType> fileElementTypeClass) {
+  public int incModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
     return myFileElementTypeModCount.compute(fileElementTypeClass, (__, value) -> {
       if (value == null) {
         return 1 - myGlobalShift.get();
@@ -25,7 +26,7 @@ public class FileElementTypeModificationCounterImpl implements StubIndexEx.FileE
   }
 
   @Override
-  public int getModCount(Class<? extends IFileElementType> fileElementTypeClass) {
+  public int getModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
     if (StubIndexImpl.FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.ChangedFilesCollector) {
       myFileBasedIndex.getChangedFilesCollector().processFilesToUpdateInReadAction();
     }

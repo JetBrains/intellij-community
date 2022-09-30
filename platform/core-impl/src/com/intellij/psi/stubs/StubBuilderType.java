@@ -5,7 +5,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class StubBuilderType {
   private static final Logger LOG = Logger.getInstance(StubBuilderType.class);
   private final IStubFileElementType myElementType;
@@ -89,16 +92,20 @@ public class StubBuilderType {
     }
   }
 
+  /**
+   * @implNote this method is very costly. One should consider implementing caching of results
+   */
   @Nullable
-  public static Class<?> getStubFileElementTypeFromVersion(@NotNull String version) {
-    try {
-      int delimPos = version.indexOf(':');
-      if (delimPos == -1) return null;
-      String className = version.substring(0, delimPos);
-      return Class.forName(className);
-    } catch (ClassNotFoundException ignored) {
-      return null;
-    }
+  public static Class<? extends IStubFileElementType> getStubFileElementTypeFromVersion(@NotNull String version) {
+    int delimPos = version.indexOf(':');
+    if (delimPos == -1) return null;
+    String className = version.substring(0, delimPos);
+    IElementType[] matches = IElementType.enumerate(p -> {
+      return p.getClass().getName().equals(className);
+    });
+    if (matches.length == 0) return null;
+    assert matches.length == 1;
+    return (Class<? extends IStubFileElementType>)matches[0].getClass();
   }
 
   @Override

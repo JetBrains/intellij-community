@@ -559,8 +559,8 @@ public abstract class StubIndexEx extends StubIndex {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public interface FileElementTypeModificationCounter {
-    int incModCount(Class<? extends IFileElementType> fileElementTypeClass);
-    int getModCount(Class<? extends IFileElementType> fileElementTypeClass);
+    int incModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
+    int getModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
     void incGlobalModCount();
   }
 
@@ -570,8 +570,10 @@ public abstract class StubIndexEx extends StubIndex {
     return myFileElementTypeModCount;
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public interface FileElementTypeModificationTracker {
-    void processFileElementTypeUpdate(VirtualFile file);
+    void processFileElementTypeUpdate(@NotNull VirtualFile file);
   }
 
   @ApiStatus.Internal
