@@ -26,7 +26,7 @@ class KotlinLanguageInjectionPerformer : LanguageInjectionPerformer {
 
         if (parts.ranges.isEmpty()) return false
 
-        InjectorUtils.registerInjection(language, parts.ranges, file, registrar)
+        InjectorUtils.registerInjection(language, file, parts.ranges, registrar)
         InjectorUtils.registerSupport(support, false, context, language)
         InjectorUtils.putInjectedFileUserData(
             context,
