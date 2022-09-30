@@ -21,7 +21,6 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -55,7 +54,8 @@ import java.util.regex.Pattern;
  * It also tries to deal with the "glued token" problem by removing or adding whitespace to the prefix/suffix.
  */
 final class XmlLanguageInjector implements MultiHostInjector {
-  private volatile Trinity<Long, Pattern, Collection<String>> myXmlIndex;
+  record XmlIndex(long modCount, @Nullable Pattern pattern, @NotNull Collection<String> strings) {}
+  private volatile XmlIndex myXmlIndex;
   private final Project myProject;
 
   @SuppressWarnings("PublicConstructorInNonPublicClass")
@@ -204,7 +204,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
 
   // NOTE: local name of an XML entity or attribute value should match at least one string in the index
   private boolean isInIndex(XmlElement xmlElement) {
-    final Trinity<Long, Pattern, Collection<String>> index = getXmlAnnotatedElementsValue();
+    final XmlIndex index = getXmlAnnotatedElementsValue();
     if (xmlElement instanceof XmlAttributeValue) xmlElement = (XmlElement)xmlElement.getParent();
     final XmlTag tag;
     if (xmlElement instanceof XmlAttribute) {
@@ -226,18 +226,18 @@ final class XmlLanguageInjector implements MultiHostInjector {
     return false;
   }
 
-  private static boolean areThereInjectionsWithText(final String text, Trinity<Long, Pattern, Collection<String>> index) {
+  private static boolean areThereInjectionsWithText(final String text, XmlIndex index) {
     if (text == null) return false;
-    if (index.third.contains(text)) return true;
-    Pattern pattern = index.second;
+    if (index.strings.contains(text)) return true;
+    Pattern pattern = index.pattern;
     return pattern != null && pattern.matcher(text).matches();
   }
 
-  private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
+  private XmlIndex getXmlAnnotatedElementsValue() {
     Configuration configuration = getConfiguration();
 
-    Trinity<Long, Pattern, Collection<String>> index = myXmlIndex;
-    if (index == null || configuration.getModificationCount() != index.first.longValue()) {
+    XmlIndex index = myXmlIndex;
+    if (index == null || configuration.getModificationCount() != index.modCount) {
       final Map<ElementPattern<?>, BaseInjection> map = new HashMap<>();
       for (BaseInjection injection : configuration.getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID)) {
         for (InjectionPlace place : injection.getInjectionPlaces()) {
@@ -246,7 +246,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
       final Collection<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-      index = Trinity.create(configuration.getModificationCount(), buildPattern(stringSet), stringSet);
+      index = new XmlIndex(configuration.getModificationCount(), buildPattern(stringSet), stringSet);
       myXmlIndex = index;
     }
     return index;
