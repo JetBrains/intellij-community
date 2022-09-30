@@ -48,6 +48,8 @@ internal abstract class SettingsSyncTestBase {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
+    SettingsSyncLocalSettings.getInstance().resetState()
+
     remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
       System.setProperty(CloudConfigServerCommunicator.URL_PROPERTY, CloudConfigServerCommunicator.DEFAULT_PRODUCTION_URL)
       TestCloudConfigRemoteCommunicator()

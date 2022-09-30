@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 @State(name = "SettingsSyncLocalSettings", storages = [Storage("settingsSyncLocal.xml", roamingType = RoamingType.DISABLED)])
@@ -24,4 +25,9 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
     set(value) {
       state.knownAndAppliedServerId = value
     }
+
+  @TestOnly
+  internal fun resetState() {
+    state.knownAndAppliedServerId = null
+  }
 }
