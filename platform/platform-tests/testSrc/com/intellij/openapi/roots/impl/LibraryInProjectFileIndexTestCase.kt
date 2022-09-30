@@ -6,6 +6,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY_SOURCE_AND_CLASSES
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.vfs.JarFileSystem
@@ -16,8 +22,6 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generate
 import com.intellij.util.io.generateInVirtualTempDir
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -31,7 +35,7 @@ abstract class LibraryInProjectFileIndexTestCase {
 
   protected abstract val libraryTable: LibraryTable
   protected abstract fun createLibrary(name: String = "lib", setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx
-  
+
   lateinit var root: VirtualFile
   lateinit var module: Module
 
@@ -57,34 +61,24 @@ abstract class LibraryInProjectFileIndexTestCase {
     }
     ModuleRootModificationUtil.addDependency(module, library)
 
-    assertInLibrary(root)
-    assertTrue(fileIndex.isInLibraryClasses(root))
-    assertFalse(fileIndex.isInLibrarySource(root))
-    
-    assertInLibrary(srcRoot)
-    assertFalse(fileIndex.isInLibraryClasses(srcRoot))
-    assertTrue(fileIndex.isInLibrarySource(srcRoot))
-
-    assertFalse(fileIndex.isInProject(docRoot))
-    assertFalse(fileIndex.isInLibrary(docRoot))
-    
-    assertFalse(fileIndex.isInProject(excludedRoot))
-    assertTrue(fileIndex.isInProjectOrExcluded(excludedRoot))
-    assertTrue(fileIndex.isExcluded(excludedRoot))
+    fileIndex.assertScope(root, IN_LIBRARY)
+    fileIndex.assertScope(srcRoot, IN_LIBRARY or IN_SOURCE)
+    fileIndex.assertScope(docRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(excludedRoot, EXCLUDED)
   }
 
   @Test
   fun `add and remove dependency on library`() {
-    val library = createLibrary { 
+    val library = createLibrary {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    assertFalse(fileIndex.isInProject(root))
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
 
     ModuleRootModificationUtil.addDependency(module, library)
-    assertTrue(fileIndex.isInProject(root))
-    
+    fileIndex.assertScope(root, IN_LIBRARY)
+
     ModuleRootModificationUtil.removeDependency(module, library)
-    assertFalse(fileIndex.isInProject(root))
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
   }
 
   @Test
@@ -94,34 +88,34 @@ abstract class LibraryInProjectFileIndexTestCase {
       it.addInvalidLibrary(name, libraryTable.tableLevel)
       true
     }
-    assertFalse(fileIndex.isInProject(root))
-    
-    val library = createLibrary(name) { 
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
+
+    val library = createLibrary(name) {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInProject(root))
+    fileIndex.assertScope(root, IN_LIBRARY)
 
-    runWriteActionAndWait { 
+    runWriteActionAndWait {
       libraryTable.removeLibrary(library)
     }
-    assertFalse(fileIndex.isInProject(root))
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
   }
 
   @Test
   fun `add and remove root from library`() {
     val library = createLibrary()
     ModuleRootModificationUtil.addDependency(module, library)
-    assertFalse(fileIndex.isInProject(root))
-    
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
+
     projectModel.modifyLibrary(library) {
       it.addRoot(root, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInProject(root))
-    
+    fileIndex.assertScope(root, IN_LIBRARY)
+
     projectModel.modifyLibrary(library) {
       it.removeRoot(root.url, OrderRootType.CLASSES)
     }
-    assertFalse(fileIndex.isInProject(root))
+    fileIndex.assertScope(root, NOT_IN_PROJECT)
   }
 
   @Test
@@ -129,27 +123,24 @@ abstract class LibraryInProjectFileIndexTestCase {
     val library = createLibrary()
     val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("exc")
     ModuleRootModificationUtil.addDependency(module, library)
-    assertFalse(fileIndex.isInProject(excludedRoot))
-    assertFalse(fileIndex.isInProjectOrExcluded(excludedRoot))
-    
+    fileIndex.assertScope(excludedRoot, NOT_IN_PROJECT)
+
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedRoot.url)
     }
-    assertFalse(fileIndex.isInProject(excludedRoot))
-    assertTrue(fileIndex.isInProjectOrExcluded(excludedRoot))
-    
+    fileIndex.assertScope(excludedRoot, EXCLUDED)
+
     projectModel.modifyLibrary(library) {
       it.removeExcludedRoot(excludedRoot.url)
     }
-    assertFalse(fileIndex.isInProject(excludedRoot))
-    assertFalse(fileIndex.isInProjectOrExcluded(excludedRoot))
+    fileIndex.assertScope(excludedRoot, NOT_IN_PROJECT)
   }
 
   @Test
   fun `add and remove JAR directory root`() {
     val library = createLibrary()
     ModuleRootModificationUtil.addDependency(module, library)
-    val rootDir = directoryContent { 
+    val rootDir = directoryContent {
       zip("a.jar") { file("a.txt") }
       dir("subDir") {
         zip("b.jar") { file("b.txt") }
@@ -157,30 +148,27 @@ abstract class LibraryInProjectFileIndexTestCase {
     }.generateInVirtualTempDir()
     val jarFile = rootDir.findJarRootByRelativePath("a.jar")
     val jarInSubDir = rootDir.findJarRootByRelativePath("subDir/b.jar")
-    assertFalse(fileIndex.isInProject(jarFile))
-    assertFalse(fileIndex.isInProject(jarInSubDir))
+    fileIndex.assertScope(jarFile, NOT_IN_PROJECT)
+    fileIndex.assertScope(jarInSubDir, NOT_IN_PROJECT)
 
-    projectModel.modifyLibrary(library) { 
+    projectModel.modifyLibrary(library) {
       it.addJarDirectory(rootDir, false, OrderRootType.CLASSES)
     }
-    assertInLibrary(jarFile)
-    assertFalse(fileIndex.isInProject(jarInSubDir))
-    assertTrue(fileIndex.isInLibraryClasses(jarFile))
-    assertFalse(fileIndex.isInLibrarySource(jarFile))
+    fileIndex.assertScope(jarFile, IN_LIBRARY)
+    fileIndex.assertScope(jarInSubDir, NOT_IN_PROJECT)
 
-    projectModel.modifyLibrary(library) { 
+    projectModel.modifyLibrary(library) {
       it.removeRoot(rootDir.url, OrderRootType.CLASSES)
       it.addJarDirectory(rootDir, true, OrderRootType.CLASSES)
     }
-    assertInLibrary(jarFile)
-    assertInLibrary(jarInSubDir)
-    assertTrue(fileIndex.isInLibraryClasses(jarInSubDir))
+    fileIndex.assertScope(jarFile, IN_LIBRARY)
+    fileIndex.assertScope(jarInSubDir, IN_LIBRARY)
 
-    projectModel.modifyLibrary(library) { 
+    projectModel.modifyLibrary(library) {
       it.removeRoot(rootDir.url, OrderRootType.CLASSES)
     }
-    assertFalse(fileIndex.isInProject(jarFile))
-    assertFalse(fileIndex.isInProject(jarInSubDir))
+    fileIndex.assertScope(jarFile, NOT_IN_PROJECT)
+    fileIndex.assertScope(jarInSubDir, NOT_IN_PROJECT)
   }
 
   @Test
@@ -207,16 +195,13 @@ abstract class LibraryInProjectFileIndexTestCase {
     }.generate(recLibDir)
     val jarFile = root.findJarRootByRelativePath("a.jar")
     val jarInSubDir = root.findJarRootByRelativePath("subDir/b.jar")
-    assertFalse(fileIndex.isInProject(jarInSubDir))
+    fileIndex.assertScope(jarInSubDir, NOT_IN_PROJECT)
     val jar1InRecSubDir = recLibDir.findJarRootByRelativePath("c.jar")
     val jar2InRecSubDir = recLibDir.findJarRootByRelativePath("subDir/d.jar")
 
-    listOf(jarFile, jar1InRecSubDir, jar2InRecSubDir).forEach {
-      assertTrue(fileIndex.isInProject(it), it.presentableUrl)
-      assertTrue(fileIndex.isInLibrary(it), it.presentableUrl)
-      assertTrue(fileIndex.isInLibraryClasses(it), it.presentableUrl)
-      assertFalse(fileIndex.isInLibrarySource(it), it.presentableUrl)
-    }
+    fileIndex.assertScope(jarFile, IN_LIBRARY)
+    fileIndex.assertScope(jar1InRecSubDir, IN_LIBRARY)
+    fileIndex.assertScope(jar2InRecSubDir, IN_LIBRARY)
   }
 
   @Test
@@ -227,22 +212,13 @@ abstract class LibraryInProjectFileIndexTestCase {
     val innerLibrary = createLibrary("inner") { it.addRoot(innerFile.parent, OrderRootType.SOURCES) }
     ModuleRootModificationUtil.addDependency(module, innerLibrary)
     ModuleRootModificationUtil.addDependency(module, outerLibrary)
-    assertTrue(fileIndex.isInLibrary(innerFile))
-    assertTrue(fileIndex.isInLibrary(outerFile))
-    assertTrue(fileIndex.isInLibraryClasses(outerFile))
-    assertTrue(fileIndex.isInLibrarySource(innerFile))
+    fileIndex.assertScope(innerFile, IN_LIBRARY_SOURCE_AND_CLASSES)
+    fileIndex.assertScope(outerFile, IN_LIBRARY)
   }
 
   private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {
     val jarFile = findFileByRelativePath(path) ?: error("cannot find $path in ${this.presentableUrl}")
     return JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: error("cannot find JAR root for ${jarFile.presentableUrl}")
-  }
-
-  private fun assertInLibrary(file: VirtualFile) {
-    assertTrue(fileIndex.isInProject(file))
-    assertFalse(fileIndex.isInContent(file))
-    assertFalse(fileIndex.isExcluded(file))
-    assertTrue(fileIndex.isInLibrary(file))
   }
 }
 

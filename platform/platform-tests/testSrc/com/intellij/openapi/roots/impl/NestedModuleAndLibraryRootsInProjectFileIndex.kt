@@ -4,6 +4,11 @@ package com.intellij.openapi.roots.impl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
@@ -34,9 +39,7 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(libDir, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInLibrary(file))
-    assertTrue(fileIndex.isInContent(file))
-    assertEquals(module, fileIndex.getModuleForFile(file))
+    fileIndex.assertScope(file, IN_CONTENT or IN_LIBRARY, module)
   }
 
   @Test
@@ -49,9 +52,7 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(libDir, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInLibrary(file))
-    assertTrue(fileIndex.isInContent(file))
-    assertEquals(module, fileIndex.getModuleForFile(file))
+    fileIndex.assertScope(file, IN_CONTENT or IN_LIBRARY, module)
   }
 
   @Test
@@ -84,24 +85,21 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
 
   private fun checkAddingAndRemovingExcludedRootUnderModuleAndLibrary(file: VirtualFile, excludedDir: VirtualFile,
                                                                       module: Module, library: LibraryEx) {
-    assertTrue(fileIndex.isInContent(file))
+    fileIndex.assertScope(file, IN_CONTENT or IN_LIBRARY, module)
 
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    assertFalse(fileIndex.isInContent(file))
-    assertTrue(fileIndex.isInLibrary(file))
+    fileIndex.assertScope(file, IN_LIBRARY)
 
     PsiTestUtil.removeExcludedRoot(module, excludedDir)
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedDir.url)
     }
-    assertTrue(fileIndex.isInContent(file))
-    assertFalse(fileIndex.isInLibrary(file))
+    fileIndex.assertScope(file, IN_CONTENT, module)
 
     projectModel.modifyLibrary(library) {
       it.removeExcludedRoot(excludedDir.url)
     }
-    assertTrue(fileIndex.isInContent(file))
-    assertTrue(fileIndex.isInLibrary(file))
+    fileIndex.assertScope(file, IN_CONTENT or IN_LIBRARY, module)
   }
 
   @Test
@@ -112,12 +110,7 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(file.parent, OrderRootType.SOURCES)
     }
-    assertTrue(fileIndex.isInLibrary(file))
-    assertTrue(fileIndex.isInSource(file))
-    assertTrue(fileIndex.isInSourceContent(file))
-    assertTrue(fileIndex.isInLibrarySource(file))
-    assertFalse(fileIndex.isInLibraryClasses(file))
-    assertEquals(module, fileIndex.getModuleForFile(file))
+    fileIndex.assertScope(file, IN_CONTENT or IN_LIBRARY or IN_SOURCE, module)
   }
 
   @Test
@@ -128,11 +121,34 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(file.parent, OrderRootType.CLASSES)
     }
-    assertTrue(fileIndex.isInLibrary(file))
-    assertTrue(fileIndex.isInSource(file))
-    assertTrue(fileIndex.isInSourceContent(file))
-    assertFalse(fileIndex.isInLibrarySource(file))
-    assertTrue(fileIndex.isInLibraryClasses(file))
-    assertEquals(module, fileIndex.getModuleForFile(file))
+    fileIndex.assertScope(file, IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE, module)
+  }
+
+  @Test
+  fun `same dir as source root for module and excluded root for library`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("src/a.txt")
+    val root = file.parent
+    val module = projectModel.createModule()
+    PsiTestUtil.addSourceRoot(module, root)
+    projectModel.addModuleLevelLibrary(module, "lib") {
+      it.addRoot(root, OrderRootType.SOURCES)
+      it.addExcludedRoot(root.url)
+    }
+    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    fileIndex.assertScope(root, IN_CONTENT or IN_SOURCE, module)
+  }
+  
+  @Test
+  fun `same dir as library root and excluded root for module`() {
+    val file = projectModel.baseProjectDir.newVirtualFile("lib/a.txt")
+    val root = file.parent
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, root)
+    PsiTestUtil.addExcludedRoot(module, root)
+    projectModel.addModuleLevelLibrary(module, "lib") {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    fileIndex.assertScope(file, IN_LIBRARY)
+    fileIndex.assertScope(root, IN_LIBRARY)
   }
 }

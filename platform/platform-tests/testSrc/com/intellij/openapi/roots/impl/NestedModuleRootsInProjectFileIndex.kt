@@ -3,6 +3,9 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -28,15 +31,31 @@ class NestedModuleRootsInProjectFileIndex {
     val innerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/inner/inner.txt")
     val outerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/outer.txt")
     PsiTestUtil.addContentRoot(outerModule, outerFile.parent)
-    assertEquals(outerModule, fileIndex.getModuleForFile(outerFile))
-    assertEquals(outerModule, fileIndex.getModuleForFile(innerFile))
+    fileIndex.assertScope(outerFile, IN_CONTENT, outerModule)
+    fileIndex.assertScope(innerFile, IN_CONTENT, outerModule)
     
     PsiTestUtil.addContentRoot(innerModule, innerFile.parent)
-    assertEquals(outerModule, fileIndex.getModuleForFile(outerFile))
-    assertEquals(innerModule, fileIndex.getModuleForFile(innerFile))
+    fileIndex.assertScope(outerFile, IN_CONTENT, outerModule)
+    fileIndex.assertScope(innerFile, IN_CONTENT, innerModule)
     
     PsiTestUtil.removeContentEntry(innerModule, innerFile.parent)
-    assertEquals(outerModule, fileIndex.getModuleForFile(innerFile))
+    fileIndex.assertScope(innerFile, IN_CONTENT, outerModule)
+  }
+
+  @Test
+  fun `outer module exclude root in inner module`() {
+    val outerModule = projectModel.createModule("outer")
+    val innerModule = projectModel.createModule("inner")
+    val innerFile = projectModel.baseProjectDir.newVirtualFile("outer/inner/excluded/file.txt")
+    val excludedDir = innerFile.parent
+    val innerDir = excludedDir.parent
+    val outerDir = innerDir.parent
+    PsiTestUtil.addContentRoot(outerModule, outerDir)
+    PsiTestUtil.addContentRoot(innerModule, innerDir)
+    fileIndex.assertScope(innerFile, IN_CONTENT, innerModule)
+    
+    PsiTestUtil.addExcludedRoot(outerModule, excludedDir)
+    fileIndex.assertScope(innerFile, EXCLUDED, innerModule)
   }
 
   @Test
@@ -47,16 +66,13 @@ class NestedModuleRootsInProjectFileIndex {
     val outerDir = innerFile.parent.parent
     PsiTestUtil.addContentRoot(outerModule, outerDir)
     PsiTestUtil.addExcludedRoot(outerModule, innerFile.parent)
-    assertFalse(fileIndex.isInProject(innerFile))
-    assertEquals(outerModule, fileIndex.getModuleForFile(innerFile, false))
+    fileIndex.assertScope(innerFile, EXCLUDED, outerModule)
 
     PsiTestUtil.addContentRoot(innerModule, innerFile.parent)
-    assertTrue(fileIndex.isInProject(innerFile))
-    assertEquals(innerModule, fileIndex.getModuleForFile(innerFile))
+    fileIndex.assertScope(innerFile, IN_CONTENT, innerModule)
 
     PsiTestUtil.removeContentEntry(innerModule, innerFile.parent)
-    assertFalse(fileIndex.isInProject(innerFile))
-    assertEquals(outerModule, fileIndex.getModuleForFile(innerFile, false))
+    fileIndex.assertScope(innerFile, EXCLUDED, outerModule)
   }
 
   @Test

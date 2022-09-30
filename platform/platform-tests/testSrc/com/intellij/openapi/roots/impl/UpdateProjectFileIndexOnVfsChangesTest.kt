@@ -6,9 +6,9 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileEvent
-import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -54,12 +54,12 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     }
     val created = ArrayList<VirtualFile>()
     val listener = FileCreationListener(excludedName) { file ->
-      assertExcluded(file)
+      fileIndex.assertScope(file, EXCLUDED, module)
       created.add(file)
     }
     projectModel.project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)
     val excluded = HeavyPlatformTestCase.createChildDirectory(root, excludedName)
-    assertExcluded(excluded)
+    fileIndex.assertScope(excluded, EXCLUDED, module)
     assertEquals(1, created.size, created.toString())
     listener.assertNoErrors()
   }
@@ -72,11 +72,11 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     }
     val created: Boolean = File(root.path, "dir/excluded/foo").mkdirs()
     assertTrue(created)
-    
+
     val listener = FileCreationListener("dir") { file ->
       assertEquals("dir", file.name)
-      assertExcluded(file.findFileByRelativePath("excluded")!!)
-      assertExcluded(file.findFileByRelativePath("excluded/foo")!!)
+      fileIndex.assertScope(file.findFileByRelativePath("excluded")!!, EXCLUDED, module)
+      fileIndex.assertScope(file.findFileByRelativePath("excluded/foo")!!, EXCLUDED, module)
     }
     projectModel.project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)
     if (async) {
@@ -93,13 +93,10 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     listener.assertNoErrors()
   }
 
-  private fun assertExcluded(file: VirtualFile) {
-    assertTrue(fileIndex.isExcluded(file))
-  }
-  
   private class FileCreationListener(private val expectedName: String, private val handler: (VirtualFile) -> Unit) : BulkFileListener {
     @Volatile
     private var error: Throwable? = null
+
     @Volatile
     private var called = false
     private val allEvents = CopyOnWriteArrayList<VFileEvent>()
