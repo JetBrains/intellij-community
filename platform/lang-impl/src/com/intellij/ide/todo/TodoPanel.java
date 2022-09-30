@@ -50,7 +50,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.Set;
 
 public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
 
@@ -64,7 +63,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   private final @NotNull Tree myTree;
   private final @NotNull TreeExpander myTreeExpander;
   private final @NotNull MyOccurenceNavigator myOccurenceNavigator;
-  private final @NotNull TodoTreeBuilder myTodoTreeBuilder;
+  protected final @NotNull TodoTreeBuilder myTodoTreeBuilder;
 
   private MyVisibilityWatcher myVisibilityWatcher;
   private final @NotNull UsagePreviewPanel myUsagePreviewPanel;
@@ -249,17 +248,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       myVisibilityWatcher.deinstall(this);
       myVisibilityWatcher = null;
     }
-  }
-
-  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-    myTodoTreeBuilder.rebuildCache(files);
-  }
-
-  /**
-   * Immediately updates tree.
-   */
-  void updateTree() {
-    myTodoTreeBuilder.updateTreeImmediately();
   }
 
   /**

@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -32,16 +31,12 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -50,7 +45,6 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
 public abstract class TodoTreeBuilder implements Disposable {
 
@@ -93,8 +87,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   private StructureTreeModel<TodoTreeStructure> myModel;
   private boolean myDisposed;
 
-  private final Object LOCK = new Object();
-  private final List<TreeUpdater> myPendingUpdates = new SmartList<>(); // guarded by LOCK
+  private final TodoTreeBuilderCoroutineHelper myCoroutineHelper = new TodoTreeBuilderCoroutineHelper(this);
 
   TodoTreeBuilder(@NotNull JTree tree,
                   @NotNull Project project) {
@@ -109,6 +102,14 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   protected @NotNull PsiTodoSearchHelper getSearchHelper() {
     return PsiTodoSearchHelper.getInstance(myProject);
+  }
+
+  protected final @NotNull Project getProject() {
+    return myProject;
+  }
+
+  protected final @NotNull JTree getTree() {
+    return myTree;
   }
 
   public void setModel(StructureTreeModel<TodoTreeStructure> model) {
@@ -138,9 +139,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   @Override
   public final void dispose() {
     myDisposed = true;
-    synchronized (LOCK) {
-      clearPendingUpdates();
-    }
   }
 
   final boolean isUpdatable() {
@@ -320,70 +318,11 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  protected void rebuildCache() {
-    TreeUpdater bgtUpdater = new TreeUpdater();
-    synchronized (LOCK) {
-      clearPendingUpdates();
-      myPendingUpdates.add(bgtUpdater);
-    }
-    JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
-    if (loadingPanel != null) loadingPanel.startLoading();
-
-    ReadAction.nonBlocking((Callable<Void>)() -> {
-        Set<VirtualFile> files = new HashSet<>();
-        collectFiles(virtualFile -> {
-          synchronized (LOCK) {
-            if (bgtUpdater.isDisposed()) return false;
-            files.add(virtualFile);
-          }
-          return true;
-        });
-
-        if (!bgtUpdater.isDisposed()) {
-          bgtUpdater.accept(Collections.unmodifiableSet(files));
-        }
-
-        return null;
-      })
-      .finishOnUiThread(ModalityState.NON_MODAL, o -> {
-        if (loadingPanel != null) loadingPanel.stopLoading();
-        Disposer.dispose(bgtUpdater);
-      })
-      .expireWith(bgtUpdater)
-      .submit(NonUrgentExecutor.getInstance());
+  protected final void rebuildCache() {
+    myCoroutineHelper.scheduleUpdateCacheAndTree();
   }
 
-  private void clearPendingUpdates() {
-    for (TreeUpdater request : myPendingUpdates) {
-      Disposer.dispose(request);
-    }
-    myPendingUpdates.clear();
-  }
-
-  private class TreeUpdater implements CheckedDisposable, Consumer<Set<VirtualFile>> {
-    volatile boolean disposed;
-    int prevFilesSize = -1;
-
-    @Override
-    public void dispose() {
-      disposed = true;
-    }
-
-    @Override
-    public boolean isDisposed() {
-      return disposed;
-    }
-
-    @Override
-    public void accept(@NotNull Set<VirtualFile> files) {
-      if (disposed || myDisposed || prevFilesSize == files.size()) return;
-      prevFilesSize = files.size();
-      rebuildCache(files);
-      updateTree();
-    }
-  }
-
-  void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
+  protected void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     searchHelper.processFilesWithTodoItems(psiFile -> {
@@ -485,8 +424,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  @ApiStatus.Experimental
-  public final void updateTreeImmediately() {
+  protected final void updateTreeImmediately() {
     FileTree.assertThreadIfNeeded();
 
     if (myUpdatable) {
@@ -496,6 +434,11 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
       myModel.invalidateAsync();
     }
+  }
+
+  protected final void updateCacheAndTree(@NotNull Set<? extends VirtualFile> files) {
+    rebuildCache(files);
+    updateTreeImmediately();
   }
 
   public final @NotNull Promise<?> updateTree() {

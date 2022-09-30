@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -203,6 +202,7 @@ final class FileTree {
    */
   @NotNull List<VirtualFile> getFiles(@NotNull VirtualFile dir) {
     assertThreadIfNeeded();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<VirtualFile> filesList = new ArrayList<>();
     collectFiles(dir, filesList);
@@ -228,9 +228,7 @@ final class FileTree {
 
   static void assertThreadIfNeeded() {
     if (ASSERT_THREADS.asBoolean()) {
-      Application application = ApplicationManager.getApplication();
-      application.assertIsNonDispatchThread();
-      application.assertReadAccessAllowed();
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
   }
 }

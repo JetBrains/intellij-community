@@ -258,8 +258,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         }
 
         for (TodoPanel panel : myPanels) {
-          panel.rebuildCache(files.getOrDefault(panel, Set.of()));
-          panel.updateTree();
+          panel.myTodoTreeBuilder.updateCacheAndTree(files.getOrDefault(panel, Set.of()));
         }
 
         return null;

@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.projectView;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.AllTodosTreeBuilder;
-import com.intellij.ide.todo.CurrentFileTodosTreeBuilder;
-import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -23,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -38,10 +37,6 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       TestTodoBuilder() {
         super(new Tree(), ToDoTreeStructureTest.this.myProject);
       }
-      @Override
-      public void rebuildCache() {
-        super.rebuildCache();
-      }
 
       @Override
       protected void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
@@ -54,7 +49,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       all.init();
       //second rebuild, e.g. switching scope in scope based t.o.d.o panel
       all.rebuildCache();
-      
+
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
       Assert.assertEquals(1, rebuildCacheCount.get());
@@ -135,9 +130,6 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     finally {
       Disposer.dispose(builder);
     }
-
-
-    
   }
 
   private static void checkOccurrences(final AllTodosTreeBuilder all, final String[] strings) {
@@ -160,5 +152,4 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     }
     assertNull(current);
   }
-
 }
