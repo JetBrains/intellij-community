@@ -21,6 +21,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
-import org.jetbrains.kotlin.idea.base.util.caching.findModuleWithHack
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
@@ -262,7 +262,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 get() = ModuleEntity::class.java
 
             override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                storage.findModuleWithHack(entity, project)
+                entity.findModule(storage)
 
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidateKeys(outdated) { _, _ -> false }

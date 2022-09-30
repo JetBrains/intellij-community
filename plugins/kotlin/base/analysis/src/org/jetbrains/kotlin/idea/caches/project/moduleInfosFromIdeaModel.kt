@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -183,7 +182,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             for (moduleChange in moduleChanges) {
                 when (moduleChange) {
                     is EntityChange.Added -> {
-                        storageAfter.findModuleByEntityWithHack(moduleChange.newEntity, project)?.scheduleRegister()
+                        moduleChange.newEntity.findModule(storageAfter)?.scheduleRegister()
                     }
 
                     is EntityChange.Removed -> moduleChange.entity.findModule(storageBefore)?.scheduleRemove()
@@ -199,7 +198,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             for (sourceRootChange in sourceRootChanges) {
                 val modules: List<Module> = when (sourceRootChange) {
                     is EntityChange.Added -> listOfNotNull(
-                        storageAfter.findModuleByEntityWithHack(sourceRootChange.newEntity.contentRoot.module, project)
+                        sourceRootChange.newEntity.contentRoot.module.findModule(storageAfter)
                     )
 
                     is EntityChange.Removed -> listOfNotNull(sourceRootChange.entity.contentRoot.module.findModule(storageBefore))
@@ -305,7 +304,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
-                .mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
+                .mapNotNull { it.findModule(storageAfter) }
                 .flatMapTo(hashSetOf(), ::moduleSdks)
 
             updatedModuleSdks.forEach(::get)

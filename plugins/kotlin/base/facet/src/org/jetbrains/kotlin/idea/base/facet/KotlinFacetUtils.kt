@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
-import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -126,7 +125,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
         val newModuleNames = changes.asSequence()
             .mapNotNull(EntityChange<ModuleEntity>::newEntity)
-            .mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
+            .mapNotNull { it.findModule(storageAfter) }
             .associateBy(stableNameProvider::getStableModuleName)
 
         useCache { cache ->

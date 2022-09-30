@@ -7,15 +7,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import java.util.concurrent.ConcurrentHashMap
-
 
 abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val project: Project, cleanOnLowMemory: Boolean) : Disposable {
     private val invalidationStamp = InvalidationStamp()
@@ -279,12 +273,6 @@ abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, 
     final override fun calculate(key: Unit): Value = calculate()
     override fun checkKeyValidity(key: Unit) = Unit
 }
-
-fun EntityStorage.findModuleByEntityWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this)
-
-fun EntityStorage.findLibraryByEntityWithHack(entity: LibraryEntity, project: Project) = entity.findLibraryBridge(this)
-
-fun EntityStorage.findModuleWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this)
 
 abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(project: Project, cleanOnLowMemory: Boolean) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {

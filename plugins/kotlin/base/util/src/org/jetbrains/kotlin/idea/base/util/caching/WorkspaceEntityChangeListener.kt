@@ -5,6 +5,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -49,18 +51,21 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
     }
 }
 
-abstract class ModuleEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project, afterChangeApplied) {
-    override val entityClass: Class<ModuleEntity>
-        get() = ModuleEntity::class.java
+abstract class ModuleEntityChangeListener(project: Project,
+                                          afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project,
+                                                                                                                                    afterChangeApplied) {
+  override val entityClass: Class<ModuleEntity>
+    get() = ModuleEntity::class.java
 
-    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-        storage.findModuleByEntityWithHack(entity, project)
+  override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+    entity.findModule(storage)
 }
 
-abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project, afterChangeApplied) {
+abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) :
+    WorkspaceEntityChangeListener<LibraryEntity, Library>(project, afterChangeApplied) {
     override val entityClass: Class<LibraryEntity>
         get() = LibraryEntity::class.java
 
     override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
-        storage.findLibraryByEntityWithHack(entity, project)
+        entity.findLibraryBridge(storage)
 }
