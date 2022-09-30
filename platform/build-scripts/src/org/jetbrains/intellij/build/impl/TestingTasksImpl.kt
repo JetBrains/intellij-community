@@ -41,10 +41,10 @@ import java.util.stream.Stream
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
-    val projectHome = context.paths.projectHome
-    val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
-    val configuration = RunConfigurationProperties.getConfiguration(file)
-    val runConfigurations = try {
+    return try {
+      val projectHome = context.paths.projectHome
+      val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
+      val configuration = RunConfigurationProperties.getConfiguration(file)
       when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
         JUnitRunConfigurationProperties.TYPE -> {
           listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
@@ -63,7 +63,6 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       context.messages.warning("##teamcity[buildProblem identity='$name' description='$description']")
       emptyList()
     }
-    return runConfigurations
   }
 
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
