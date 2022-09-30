@@ -1081,18 +1081,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       final TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
 
-      List<Trinity<@Nls String, Icon, @Nullable VirtualFile>> toRender = new ArrayList<>();
+      record LabelData(@Nls String text, Icon icon, @Nullable VirtualFile file) { }
+      List<LabelData> toRender = new ArrayList<>();
       for (TreePath path : paths) {
         Pair<Icon, @Nls String> iconAndText = getIconAndText(path);
-        toRender.add(Trinity.create(iconAndText.second, iconAndText.first,
-                                    PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
+        toRender.add(new LabelData(iconAndText.second, iconAndText.first,
+                                   PsiCopyPasteManager.asVirtualFile(getFirstElementFromNode(path.getLastPathComponent()))));
       }
 
       int count = 0;
       JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
       int maxItemsToShow = toRender.size() < 20 ? toRender.size() : 10;
-      for (Trinity<@Nls String, Icon, @Nullable VirtualFile> trinity : toRender) {
-        JLabel fileLabel = new DragImageLabel(trinity.first, trinity.second, trinity.third);
+      for (LabelData data : toRender) {
+        JLabel fileLabel = new DragImageLabel(data.text(), data.icon(), data.file());
         panel.add(fileLabel);
         count++;
         if (count > maxItemsToShow) {
