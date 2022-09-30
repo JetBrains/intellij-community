@@ -3,7 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.settingsSync.config.SettingsSyncUiGroup
+import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.LightPlatformTestCase
 
 class SettingsFilteringTest : LightPlatformTestCase() {
@@ -32,12 +32,12 @@ class SettingsFilteringTest : LightPlatformTestCase() {
 
   fun `test font sync enabled via subcategory` () {
     assertTrue(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
-    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, SettingsSyncUiGroup.EDITOR_FONT_ID, false)
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, false)
     try {
       assertFalse(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
     }
     finally {
-      SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, SettingsSyncUiGroup.EDITOR_FONT_ID, true)
+      SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID, true)
     }
   }
 

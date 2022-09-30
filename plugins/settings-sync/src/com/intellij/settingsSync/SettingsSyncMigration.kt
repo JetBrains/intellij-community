@@ -17,4 +17,6 @@ interface SettingsSyncMigration {
    */
   fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot?
 
+  fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings)
+
 }

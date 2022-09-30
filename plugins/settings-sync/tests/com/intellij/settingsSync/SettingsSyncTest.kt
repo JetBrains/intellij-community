@@ -15,7 +15,7 @@ import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.settingsSync.config.SettingsSyncUiGroup
+import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.exists
 import com.intellij.util.toByteArray
@@ -159,7 +159,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     val os = getPerOsSettingsStorageFolderName()
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
-    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, SettingsSyncUiGroup.EDITOR_FONT_ID,  false)
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, EDITOR_FONT_SUBCATEGORY_ID,  false)
 
     initSettingsSync()
 

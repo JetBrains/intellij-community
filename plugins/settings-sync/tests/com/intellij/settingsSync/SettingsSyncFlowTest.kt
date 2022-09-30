@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
@@ -215,6 +216,29 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertEquals("Incorrect content", "Server Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
+  //@Test
+  // the implementation is postponed
+  fun `migrated settings with disabled categories should be pushed without settings from these categories`() {
+    val migration = object : SettingsSyncMigration {
+      override fun isLocalDataAvailable(appConfigDir: Path): Boolean = true
+
+      override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot {
+        return settingsSnapshot {
+          fileState("options/laf.xml", "Migration Data")
+          fileState("options/keymap.xml", "Migration Data")
+        }
+      }
+      override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
+        syncSettings.setCategoryEnabled(SettingsCategory.UI, false)
+      }
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
+
+    remoteCommunicator.getVersionOnServer()!!.assertSettingsSnapshot {
+      fileState("options/keymap.xml", "Migration Data")
+    }
+  }
+
   @Test
   fun `rollback settings and stop sync in case of error`() {
     val fileName = "options/laf.xml"
@@ -340,6 +364,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
         fileState("options/laf.xml", "Migration Data")
       }
     }
+    override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {}
   }
 
   private fun assertFileWithContent(expectedContent: String, file: Path) {

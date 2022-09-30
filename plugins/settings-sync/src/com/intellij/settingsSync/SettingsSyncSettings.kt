@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
@@ -11,7 +12,8 @@ internal fun interface SettingsSyncEnabledStateListener : EventListener {
 }
 
 @State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
-internal class SettingsSyncSettings :
+@ApiStatus.Internal
+class SettingsSyncSettings :
   SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(SettingsSyncSettingsState())
 {
 

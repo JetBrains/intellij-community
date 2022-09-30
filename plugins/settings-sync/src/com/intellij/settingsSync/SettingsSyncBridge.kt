@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -114,12 +115,18 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         val snapshot = updateResult.settingsSnapshot
         masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
         SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
+        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       }
       else {
         // otherwise we place our migrated data to the cloud
         forcePushToCloud(masterPosition)
+
+        pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+        migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
+        runBlocking {
+          saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+        }
       }
-      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       settingsLog.setCloudPosition(masterPosition)
     }
     else {
