@@ -30,7 +30,7 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun awaitForPush(): SettingsSnapshot? {
     pushedLatch = CountDownLatch(1)
-    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.await(30, TIMEOUT_UNIT))
+    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.wait())
     return getVersionOnServer()
   }
 

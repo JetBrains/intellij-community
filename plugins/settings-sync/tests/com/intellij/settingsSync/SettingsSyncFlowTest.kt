@@ -90,11 +90,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState(fileName, initialContent)
     }
 
-    await { cdl ->
-      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
-        cdl.countDown()
-      })
-    }
+    val cdl = CountDownLatch(1)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+      cdl.countDown()
+    })
+    cdl.wait()
 
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     assertNotNull("There is no version on the server", versionOnServer)
@@ -114,7 +114,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(),
                                                                                       isDeleted = true), emptySet(), null))
     SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+    bridge.waitForAllExecuted()
 
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
@@ -231,7 +231,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(settingsSnapshot {
         fileState("options/editor.xml", "Editor change")
       }, null))
-      bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+      bridge.waitForAllExecuted()
     }
 
     assertFalse("Partial apply was not rolled back", (settingsSyncStorage / "options" / "editor.xml").exists())
@@ -278,7 +278,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     })
 
     SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
-    bridge.waitForAllExecuted(10, TIMEOUT_UNIT)
+    bridge.waitForAllExecuted()
 
     assertFileWithContent("Editor from Server", (settingsSyncStorage / "options" / "editor.xml"))
     assertFileWithContent("LaF Initial", (settingsSyncStorage / "options" / "laf.xml"))
@@ -309,12 +309,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
-  }
-
-  private fun await(function: (CountDownLatch) -> Unit) {
-    val cdl = CountDownLatch(1)
-    function(cdl)
-    cdl.await(10, TIMEOUT_UNIT)
   }
 
   private fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
