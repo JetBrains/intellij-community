@@ -39,14 +39,9 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   private val myHeaderContent = createHeaderContent()
 
   private fun createToolbarPlaceholder(): NonOpaquePanel {
-    val sideSeparatorGap = JBUI.scale(4)
-    val sideSeparatorColor = JBColor.namedColor("MainToolbar.separatorColor", JBColor.gray)
+    val borderWidth = JBUI.scale(4)
     val panel = NonOpaquePanel()
-    panel.border = JBUI.Borders.compound(
-      JBUI.Borders.emptyLeft(sideSeparatorGap),
-      JBUI.Borders.customLine(sideSeparatorColor, 0, 1, 0, 1),
-      JBUI.Borders.empty(0, sideSeparatorGap)
-    )
+    panel.border = JBUI.Borders.empty(0, borderWidth)
     return panel
   }
 
