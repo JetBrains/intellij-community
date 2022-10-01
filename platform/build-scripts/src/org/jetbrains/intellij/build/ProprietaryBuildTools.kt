@@ -62,7 +62,7 @@ class ProprietaryBuildTools(
           error("Must be not called if usePresignedNativeFiles is false")
         }
 
-        override fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {
+        override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {
           return null
         }
       },

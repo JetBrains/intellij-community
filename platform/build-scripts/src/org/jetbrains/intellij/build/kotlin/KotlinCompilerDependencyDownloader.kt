@@ -3,9 +3,12 @@ package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
+import org.jetbrains.intellij.build.downloadFileToCacheLocation
 
 import java.nio.file.Path
 
@@ -13,17 +16,17 @@ private const val MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com
 private const val ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
 
 object KotlinCompilerDependencyDownloader {
-  fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot): Path {
+  suspend fun downloadAndExtractKotlinCompiler(communityRoot: BuildDependenciesCommunityRoot): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
-    val kotlinDistUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
-    val kotlinDistJar = downloadFileToCacheLocation(communityRoot, kotlinDistUrl)
-    return extractFileToCacheLocation(communityRoot, kotlinDistJar)
+    val kotlinDistUrl = BuildDependenciesDownloader.getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-dist-for-ide", kotlinJpsPluginVersion, "jar")
+    val kotlinDistJar = downloadFileToCacheLocation(kotlinDistUrl.toString(), communityRoot)
+    return BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, kotlinDistJar)
   }
 
-  fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
+  suspend fun downloadKotlinJpsPlugin(communityRoot: BuildDependenciesCommunityRoot): Path {
     val kotlinJpsPluginVersion = getKotlinJpsPluginVersion(communityRoot)
-    val kotlinJpsPluginUrl = getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
-    return downloadFileToCacheLocation(communityRoot, kotlinJpsPluginUrl)
+    val kotlinJpsPluginUrl = BuildDependenciesDownloader.getUriForMavenArtifact(MAVEN_REPOSITORY_URL, ARTIFACT_GROUP_ID, "kotlin-jps-plugin-classpath", kotlinJpsPluginVersion, "jar")
+    return downloadFileToCacheLocation(kotlinJpsPluginUrl.toString(), communityRoot)
   }
 
   fun getKotlinJpsPluginVersion(communityRoot: BuildDependenciesCommunityRoot): String {
@@ -41,9 +44,11 @@ object KotlinCompilerDependencyDownloader {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    val path = downloadAndExtractKotlinCompiler(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
-    println("Extracted Kotlin compiler is at $path")
-    val jpsPath = downloadKotlinJpsPlugin(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
-    println("Download Kotlin Jps Plugin at $jpsPath")
+    runBlocking(Dispatchers.IO) {
+      val path = downloadAndExtractKotlinCompiler(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+      println("Extracted Kotlin compiler is at $path")
+      val jpsPath = downloadKotlinJpsPlugin(BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+      println("Download Kotlin Jps Plugin at $jpsPath")
+    }
   }
 }
