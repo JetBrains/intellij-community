@@ -208,7 +208,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
               try {
                 FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
               }
-              catch (AlreadyDisposedException ignored) {
+              catch (AlreadyDisposedException | ProcessCanceledException ignored) {
               }
               catch (Exception e) {
                 LOG.error(e);
