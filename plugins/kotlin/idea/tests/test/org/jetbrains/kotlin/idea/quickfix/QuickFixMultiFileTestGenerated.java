@@ -2173,6 +2173,24 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/specifySuperExplicitly")
+    public static class SpecifySuperExplicitly extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractSuperCall4.before.Main.kt")
+        public void testAbstractSuperCall4() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCall4.before.Main.kt");
+        }
+
+        @TestMetadata("abstractSuperCallWithExplicitSuper3.before.Main.kt")
+        public void testAbstractSuperCallWithExplicitSuper3() throws Exception {
+            runTest("testData/quickfix/specifySuperExplicitly/abstractSuperCallWithExplicitSuper3.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/surroundWithNullCheck")
     public static class SurroundWithNullCheck extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {

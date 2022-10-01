@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction.Info
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
@@ -21,8 +22,10 @@ import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyEquals
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyHashCode
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.isAnyToString
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private const val EQUALS = "equals"
@@ -40,7 +43,7 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val expression = element ?: return false
-        return getSuperClassNameToReferTo(expression) != null
+        return getSuperClassFqNameToReferTo(expression) != null
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
@@ -70,18 +73,11 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
             functionDescriptor.isAnyHashCode() -> replaceIfNotInObject()
             functionDescriptor.isAnyToString() -> replaceIfNotInObject()
             else -> {
-                getSuperClassNameToReferTo(expression)?.let { superClassName ->
-                    expression.parentOfType<KtDotQualifiedExpression>()
-                        ?.receiverExpression
-                        ?.safeAs<KtSuperExpression>()
-                        ?.specifySuperType(superClassName)
-
-                    KtPsiFactory(containingClass).createSuperTypeEntry(superClassName)
-                }?.let {
-                    val alreadyExists = containingClass.superTypeListEntries.any { entry -> entry.text == it.text }
-                    if (!alreadyExists) {
-                        containingClass.addSuperTypeListEntry(it)
-                    }
+                val superExpression = expression.getParentSuperExpression()
+                val superClassFqName = getSuperClassFqNameToReferTo(expression)
+                if (superExpression != null && superClassFqName != null) {
+                    superExpression.specifySuperType(superClassFqName)
+                    containingClass.addSuperTypeListEntryIfNotExists(superClassFqName)
                 }
             }
         }
@@ -94,8 +90,8 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
             EQUALS -> KotlinBundle.message("equals.text")
             TO_STRING -> KotlinBundle.message("action.generate.tostring.name")
             else -> {
-                val nameToReferTo = getSuperClassNameToReferTo(expression) ?: error("isAvailable() was supposed to prevent null")
-                KotlinBundle.message("specify.super.type", nameToReferTo)
+                val nameToReferTo = getSuperClassFqNameToReferTo(expression) ?: error("isAvailable() was supposed to prevent null")
+                KotlinBundle.message("specify.super.type", nameToReferTo.shortName().asString())
             }
         }
     }
@@ -139,12 +135,26 @@ private fun Info.adjust(
     needEqualsActually, needHashCodeActually, this.classDescriptor, this.variablesForEquals, this.variablesForHashCode
 )
 
-private fun KtSuperExpression.specifySuperType(superType: String) {
+private fun KtSuperExpression.specifySuperType(superType: FqName) {
     val label = labelQualifier?.text ?: ""
-    replace(KtPsiFactory(this).createExpression("super<$superType>$label"))
+    val replaced = replaced(KtPsiFactory(this).createExpression("super<${superType.asString()}>$label"))
+    ShortenReferences.DEFAULT.process(replaced)
 }
 
-private fun getSuperClassNameToReferTo(expression: KtNameReferenceExpression): String? {
+private fun KtClassOrObject.addSuperTypeListEntryIfNotExists(superType: FqName) {
+    val superTypeFullName = superType.asString()
+    val superTypeShortName = superType.shortName().asString()
+    val superTypeNames = setOf(superTypeShortName, superTypeFullName)
+    val superTypeListEntry = superTypeListEntries.firstOrNull { it.text in superTypeNames }
+    if (superTypeListEntry == null) {
+        val added = addSuperTypeListEntry(KtPsiFactory(this).createSuperTypeEntry(superTypeFullName))
+        ShortenReferences.DEFAULT.process(added)
+    } else if (superTypeListEntry.text == superTypeFullName) {
+        ShortenReferences.DEFAULT.process(superTypeListEntry)
+    }
+}
+
+private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression): FqName? {
     fun tryViaCalledFunction(): CallableDescriptor? = expression.resolveToCall()?.resultingDescriptor
         ?.overriddenDescriptors
         ?.find { it.safeAs<SimpleFunctionDescriptor>()?.modality != Modality.ABSTRACT }
@@ -157,5 +167,8 @@ private fun getSuperClassNameToReferTo(expression: KtNameReferenceExpression): S
         ?: tryViaContainingFunction()
         ?: return null
 
-    return callableToUseInstead.containingDeclaration.name.asString()
+    return callableToUseInstead.containingDeclaration.fqNameOrNull()
 }
+
+private fun KtNameReferenceExpression.getParentSuperExpression(): KtSuperExpression? =
+    parentOfType<KtDotQualifiedExpression>()?.receiverExpression?.safeAs<KtSuperExpression>()
