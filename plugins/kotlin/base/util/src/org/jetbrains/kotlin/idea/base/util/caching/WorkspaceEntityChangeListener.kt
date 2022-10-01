@@ -51,14 +51,13 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
     }
 }
 
-abstract class ModuleEntityChangeListener(project: Project,
-                                          afterChangeApplied: Boolean = true) : WorkspaceEntityChangeListener<ModuleEntity, Module>(project,
-                                                                                                                                    afterChangeApplied) {
-  override val entityClass: Class<ModuleEntity>
-    get() = ModuleEntity::class.java
+abstract class ModuleEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) :
+    WorkspaceEntityChangeListener<ModuleEntity, Module>(project, afterChangeApplied) {
+    override val entityClass: Class<ModuleEntity>
+        get() = ModuleEntity::class.java
 
-  override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-    entity.findModule(storage)
+    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+        entity.findModule(storage)
 }
 
 abstract class LibraryEntityChangeListener(project: Project, afterChangeApplied: Boolean = true) :
