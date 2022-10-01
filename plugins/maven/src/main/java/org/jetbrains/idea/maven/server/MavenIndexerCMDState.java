@@ -33,75 +33,76 @@ import java.util.regex.Pattern;
 
 public class MavenIndexerCMDState extends CommandLineState {
 
-  private static final String dependenciesOutput =
-    "[INFO] +- org.apache.maven.indexer:indexer-core:jar:6.2.2:compile\n" +
-    "[INFO] |  +- org.slf4j:slf4j-api:jar:1.7.36:compile\n" +
-    "[INFO] |  +- javax.inject:javax.inject:jar:1:compile\n" +
-    "[INFO] |  +- org.apache.lucene:lucene-core:jar:8.11.1:compile\n" +
-    "[INFO] |  +- org.apache.lucene:lucene-queryparser:jar:8.11.1:compile\n" +
-    "[INFO] |  |  +- org.apache.lucene:lucene-queries:jar:8.11.1:compile\n" +
-    "[INFO] |  |  \\- org.apache.lucene:lucene-sandbox:jar:8.11.1:compile\n" +
-    "[INFO] |  +- org.apache.lucene:lucene-analyzers-common:jar:8.11.1:compile\n" +
-    "[INFO] |  +- org.apache.lucene:lucene-backward-codecs:jar:8.11.1:compile\n" +
-    "[INFO] |  +- org.apache.lucene:lucene-highlighter:jar:8.11.1:compile\n" +
-    "[INFO] |  |  \\- org.apache.lucene:lucene-memory:jar:8.11.1:compile\n" +
-    "[INFO] |  +- org.apache.maven.resolver:maven-resolver-api:jar:1.8.0:compile\n" +
-    "[INFO] |  +- org.apache.maven.resolver:maven-resolver-util:jar:1.8.0:compile\n" +
-    "[INFO] |  \\- org.apache.maven:maven-model:jar:3.8.5:compile\n" +
-    "[INFO] +- org.apache.maven:maven-core:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-settings:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-settings-builder:jar:3.8.3:compile\n" +
-    "[INFO] |  |  \\- org.codehaus.plexus:plexus-sec-dispatcher:jar:2.0:compile\n" +
-    "[INFO] |  |     \\- org.codehaus.plexus:plexus-cipher:jar:2.0:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-builder-support:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-repository-metadata:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-artifact:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-plugin-api:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-model-builder:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven:maven-resolver-provider:jar:3.8.3:compile\n" +
-    "[INFO] |  +- org.apache.maven.resolver:maven-resolver-impl:jar:1.6.3:compile\n" +
-    "[INFO] |  +- org.apache.maven.resolver:maven-resolver-spi:jar:1.6.3:compile\n" +
-    "[INFO] |  +- org.apache.maven.shared:maven-shared-utils:jar:3.3.4:compile\n" +
-    "[INFO] |  +- org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.3.5:compile\n" +
-    "[INFO] |  |  \\- javax.annotation:javax.annotation-api:jar:1.2:compile\n" +
-    "[INFO] |  +- org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.3.5:compile\n" +
-    "[INFO] |  +- com.google.inject:guice:jar:no_aop:4.2.2:compile\n" +
-    "[INFO] |  |  +- aopalliance:aopalliance:jar:1.0:compile\n" +
-    "[INFO] |  |  \\- com.google.guava:guava:jar:25.1-android:compile\n" +
-    "[INFO] |  |     +- com.google.code.findbugs:jsr305:jar:3.0.2:compile\n" +
-    "[INFO] |  |     +- org.checkerframework:checker-compat-qual:jar:2.0.0:compile\n" +
-    "[INFO] |  |     +- com.google.errorprone:error_prone_annotations:jar:2.1.3:compile\n" +
-    "[INFO] |  |     +- com.google.j2objc:j2objc-annotations:jar:1.1:compile\n" +
-    "[INFO] |  |     \\- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile\n" +
-    "[INFO] |  +- org.codehaus.plexus:plexus-utils:jar:3.3.0:compile\n" +
-    "[INFO] |  +- org.codehaus.plexus:plexus-classworlds:jar:2.6.0:compile\n" +
-    "[INFO] |  +- org.codehaus.plexus:plexus-interpolation:jar:1.26:compile\n" +
-    "[INFO] |  +- org.codehaus.plexus:plexus-component-annotations:jar:2.1.0:compile\n" +
-    "[INFO] |  \\- org.apache.commons:commons-lang3:jar:3.8.1:compile\n" +
-    "[INFO] +- org.apache.maven.wagon:wagon-provider-api:jar:3.5.2:compile\n" +
-    "[INFO] \\- org.apache.maven.archetype:archetype-common:jar:3.2.1:compile\n" +
-    "[INFO]    +- org.apache.maven.archetype:archetype-catalog:jar:3.2.1:compile\n" +
-    "[INFO]    +- org.apache.maven.archetype:archetype-descriptor:jar:3.2.1:compile\n" +
-    "[INFO]    +- org.codehaus.groovy:groovy-all:jar:2.4.16:compile\n" +
-    "[INFO]    +- org.apache.ivy:ivy:jar:2.5.0:runtime\n" +
-    "[INFO]    +- org.jdom:jdom2:jar:2.0.6:compile\n" +
-    "[INFO]    +- org.apache.maven.shared:maven-invoker:jar:3.0.1:compile\n" +
-    "[INFO]    +- org.apache.maven:maven-aether-provider:jar:3.0:runtime\n" +
-    "[INFO]    |  +- org.sonatype.aether:aether-api:jar:1.7:runtime\n" +
-    "[INFO]    |  +- org.sonatype.aether:aether-util:jar:1.7:runtime\n" +
-    "[INFO]    |  \\- org.sonatype.aether:aether-impl:jar:1.7:runtime\n" +
-    "[INFO]    |     \\- org.sonatype.aether:aether-spi:jar:1.7:runtime\n" +
-    "[INFO]    +- org.apache.maven.shared:maven-artifact-transfer:jar:0.13.1:compile\n" +
-    "[INFO]    |  \\- org.apache.maven.shared:maven-common-artifact-filters:jar:3.1.0:compile\n" +
-    "[INFO]    |     \\- org.sonatype.sisu:sisu-inject-plexus:jar:1.4.2:compile\n" +
-    "[INFO]    |        \\- org.sonatype.sisu:sisu-inject-bean:jar:1.4.2:compile\n" +
-    "[INFO]    |           \\- org.sonatype.sisu:sisu-guice:jar:noaop:2.1.7:compile\n" +
-    "[INFO]    +- commons-io:commons-io:jar:2.6:compile\n" +
-    "[INFO]    +- commons-collections:commons-collections:jar:3.2.2:compile\n" +
-    "[INFO]    +- org.codehaus.plexus:plexus-velocity:jar:1.2:compile\n" +
-    "[INFO]    +- org.apache.velocity:velocity:jar:1.7:compile\n" +
-    "[INFO]    |  \\- commons-lang:commons-lang:jar:2.4:compile\n" +
-    "[INFO]    \\- com.ibm.icu:icu4j:jar:70.1:compile\n";
+  private static final String dependenciesOutput = """
+      [INFO] +- org.apache.maven.indexer:indexer-core:jar:6.2.2:compile
+      [INFO] |  +- org.slf4j:slf4j-api:jar:1.7.36:compile
+      [INFO] |  +- javax.inject:javax.inject:jar:1:compile
+      [INFO] |  +- org.apache.lucene:lucene-core:jar:8.11.1:compile
+      [INFO] |  +- org.apache.lucene:lucene-queryparser:jar:8.11.1:compile
+      [INFO] |  |  +- org.apache.lucene:lucene-queries:jar:8.11.1:compile
+      [INFO] |  |  \\- org.apache.lucene:lucene-sandbox:jar:8.11.1:compile
+      [INFO] |  +- org.apache.lucene:lucene-analyzers-common:jar:8.11.1:compile
+      [INFO] |  +- org.apache.lucene:lucene-backward-codecs:jar:8.11.1:compile
+      [INFO] |  +- org.apache.lucene:lucene-highlighter:jar:8.11.1:compile
+      [INFO] |  |  \\- org.apache.lucene:lucene-memory:jar:8.11.1:compile
+      [INFO] |  +- org.apache.maven.resolver:maven-resolver-api:jar:1.8.0:compile
+      [INFO] |  +- org.apache.maven.resolver:maven-resolver-util:jar:1.8.0:compile
+      [INFO] |  \\- org.apache.maven:maven-model:jar:3.8.5:compile
+      [INFO] +- org.apache.maven:maven-core:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-settings:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-settings-builder:jar:3.8.3:compile
+      [INFO] |  |  \\- org.codehaus.plexus:plexus-sec-dispatcher:jar:2.0:compile
+      [INFO] |  |     \\- org.codehaus.plexus:plexus-cipher:jar:2.0:compile
+      [INFO] |  +- org.apache.maven:maven-builder-support:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-repository-metadata:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-artifact:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-plugin-api:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-model-builder:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven:maven-resolver-provider:jar:3.8.3:compile
+      [INFO] |  +- org.apache.maven.resolver:maven-resolver-impl:jar:1.6.3:compile
+      [INFO] |  +- org.apache.maven.resolver:maven-resolver-spi:jar:1.6.3:compile
+      [INFO] |  +- org.apache.maven.shared:maven-shared-utils:jar:3.3.4:compile
+      [INFO] |  +- org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.3.5:compile
+      [INFO] |  |  \\- javax.annotation:javax.annotation-api:jar:1.2:compile
+      [INFO] |  +- org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.3.5:compile
+      [INFO] |  +- com.google.inject:guice:jar:no_aop:4.2.2:compile
+      [INFO] |  |  +- aopalliance:aopalliance:jar:1.0:compile
+      [INFO] |  |  \\- com.google.guava:guava:jar:25.1-android:compile
+      [INFO] |  |     +- com.google.code.findbugs:jsr305:jar:3.0.2:compile
+      [INFO] |  |     +- org.checkerframework:checker-compat-qual:jar:2.0.0:compile
+      [INFO] |  |     +- com.google.errorprone:error_prone_annotations:jar:2.1.3:compile
+      [INFO] |  |     +- com.google.j2objc:j2objc-annotations:jar:1.1:compile
+      [INFO] |  |     \\- org.codehaus.mojo:animal-sniffer-annotations:jar:1.14:compile
+      [INFO] |  +- org.codehaus.plexus:plexus-utils:jar:3.3.0:compile
+      [INFO] |  +- org.codehaus.plexus:plexus-classworlds:jar:2.6.0:compile
+      [INFO] |  +- org.codehaus.plexus:plexus-interpolation:jar:1.26:compile
+      [INFO] |  +- org.codehaus.plexus:plexus-component-annotations:jar:2.1.0:compile
+      [INFO] |  \\- org.apache.commons:commons-lang3:jar:3.8.1:compile
+      [INFO] +- org.apache.maven.wagon:wagon-provider-api:jar:3.5.2:compile
+      [INFO] \\- org.apache.maven.archetype:archetype-common:jar:3.2.1:compile
+      [INFO]    +- org.apache.maven.archetype:archetype-catalog:jar:3.2.1:compile
+      [INFO]    +- org.apache.maven.archetype:archetype-descriptor:jar:3.2.1:compile
+      [INFO]    +- org.codehaus.groovy:groovy-all:jar:2.4.16:compile
+      [INFO]    +- org.apache.ivy:ivy:jar:2.5.0:runtime
+      [INFO]    +- org.jdom:jdom2:jar:2.0.6:compile
+      [INFO]    +- org.apache.maven.shared:maven-invoker:jar:3.0.1:compile
+      [INFO]    +- org.apache.maven:maven-aether-provider:jar:3.0:runtime
+      [INFO]    |  +- org.sonatype.aether:aether-api:jar:1.7:runtime
+      [INFO]    |  +- org.sonatype.aether:aether-util:jar:1.7:runtime
+      [INFO]    |  \\- org.sonatype.aether:aether-impl:jar:1.7:runtime
+      [INFO]    |     \\- org.sonatype.aether:aether-spi:jar:1.7:runtime
+      [INFO]    +- org.apache.maven.shared:maven-artifact-transfer:jar:0.13.1:compile
+      [INFO]    |  \\- org.apache.maven.shared:maven-common-artifact-filters:jar:3.1.0:compile
+      [INFO]    |     \\- org.sonatype.sisu:sisu-inject-plexus:jar:1.4.2:compile
+      [INFO]    |        \\- org.sonatype.sisu:sisu-inject-bean:jar:1.4.2:compile
+      [INFO]    |           \\- org.sonatype.sisu:sisu-guice:jar:noaop:2.1.7:compile
+      [INFO]    +- commons-io:commons-io:jar:2.6:compile
+      [INFO]    +- commons-collections:commons-collections:jar:3.2.2:compile
+      [INFO]    +- org.codehaus.plexus:plexus-velocity:jar:1.2:compile
+      [INFO]    +- org.apache.velocity:velocity:jar:1.7:compile
+      [INFO]    |  \\- commons-lang:commons-lang:jar:2.4:compile
+      [INFO]    \\- com.ibm.icu:icu4j:jar:70.1:compile
+      """;
 
   private final Sdk myJdk;
   private final String myOptions;
@@ -144,7 +145,7 @@ public class MavenIndexerCMDState extends CommandLineState {
     return params;
   }
 
-  private void addDependencies(PathsList classPath) {
+  private static void addDependencies(PathsList classPath) {
     String[] dependencies = dependenciesOutput.split("\\n");
     Pattern format = Pattern.compile(
       "^\\[INFO\\].*-\\s(?<groupId>[0-9a-z._\\-]+):(?<artifactId>[0-9a-z._\\-]+):jar:?(?<classifier>[a-z_]*):(?<version>[0-9a-z._\\-]+):(?<scope>(compile|runtime))$");
@@ -168,7 +169,7 @@ public class MavenIndexerCMDState extends CommandLineState {
     }
   }
 
-  private @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
+  private static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final String root = pluginFileOrDir.getParent();
 
