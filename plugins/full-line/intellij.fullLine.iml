@@ -26,6 +26,7 @@
         <properties maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.21">
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.slf4j:slf4j-api" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
