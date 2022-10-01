@@ -11,6 +11,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiModificationTrackerImpl
+import com.intellij.psi.impl.PsiTreeChangeEventImpl
+import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED
+import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
+import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
@@ -20,7 +26,7 @@ val KOTLIN_CONSOLE_KEY = Key.create<Boolean>("kotlin.console")
 /**
  * Tested in [OutOfBlockModificationTestGenerated]
  */
-class KotlinCodeBlockModificationListener(project: Project) : Disposable {
+class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePreprocessor, Disposable {
     private val modificationTrackerImpl: PsiModificationTracker =
         PsiModificationTracker.getInstance(project)
 
@@ -32,6 +38,26 @@ class KotlinCodeBlockModificationListener(project: Project) : Disposable {
     val kotlinOutOfCodeBlockTracker: ModificationTracker = kotlinOutOfCodeBlockTrackerImpl
 
     private val pureKotlinCodeBlockModificationListener: PureKotlinCodeBlockModificationListener = project.service()
+
+    override fun treeChanged(event: PsiTreeChangeEventImpl) {
+        if (!PsiModificationTrackerImpl.canAffectPsi(event)) {
+            return
+        }
+
+        // Copy logic from PsiModificationTrackerImpl.treeChanged(). Some out-of-code-block events are written to language modification
+        // tracker in PsiModificationTrackerImpl but don't have correspondent PomModelEvent. Increase kotlinOutOfCodeBlockTracker
+        // manually if needed.
+        val outOfCodeBlock = when (event.code) {
+            PROPERTY_CHANGED ->
+                event.propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.propertyName === PsiTreeChangeEvent.PROP_ROOTS
+            CHILD_MOVED -> event.oldParent is PsiDirectory || event.newParent is PsiDirectory
+            else -> event.parent is PsiDirectory
+        }
+
+        if (outOfCodeBlock) {
+            incModificationCount()
+        }
+    }
 
     companion object {
         fun getInstance(project: Project): KotlinCodeBlockModificationListener = project.service()
@@ -54,6 +80,8 @@ class KotlinCodeBlockModificationListener(project: Project) : Disposable {
             },
             this
         )
+
+        (PsiManager.getInstance(project) as PsiManagerImpl).addTreeChangePreprocessor(this)
 
         messageBusConnection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
             val kotlinTrackerInternalIDECount = modificationTrackerImpl.forLanguage(KotlinLanguage.INSTANCE).modificationCount
