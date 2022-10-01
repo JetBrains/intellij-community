@@ -84,7 +84,7 @@ You may find the list of available properties in [TestingOptions.kt](platform/bu
 
 Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
-* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.IntelliJ.util.ArrayUtilTest`
+* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intelliJ.util.ArrayUtilTest`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `tests in the community for an example.
