@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode") // extracted from org.jetbrains.r.rendering.toolwindow.RDocumentationComponent
 
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.GlobalEditorScheme
 import com.intellij.ui.ColorUtil
 import java.awt.*
 import javax.swing.text.Highlighter
@@ -93,23 +93,22 @@ private fun drawMultiLineSelection(
 }
 
 private fun getBackgroundColor(current: Boolean): Color? {
-  val globalScheme = EditorColorsManager.getInstance().globalScheme
   return if (current) {
-    if (ColorUtil.isDark(globalScheme.defaultBackground)) {
-      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
+    if (ColorUtil.isDark(GlobalEditorScheme.getDefaultBackground())) {
+      GlobalEditorScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)
     }
     else {
-      globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES).backgroundColor
+      GlobalEditorScheme.getBackground(EditorColors.SEARCH_RESULT_ATTRIBUTES)
     }
   }
   else {
-    globalScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).backgroundColor
+    GlobalEditorScheme.getBackground(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES)
   }
 }
 
 private fun getBorderColor(current: Boolean): Color? {
   if (current) {
-    return EditorColorsManager.getInstance().globalScheme.defaultForeground
+    return GlobalEditorScheme.getDefaultForeground()
   }
   else {
     return null
