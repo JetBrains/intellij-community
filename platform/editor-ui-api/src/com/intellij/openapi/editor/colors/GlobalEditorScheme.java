@@ -26,4 +26,8 @@ public final class GlobalEditorScheme {
   public static @NotNull Color getDefaultForeground() {
     return getGlobalScheme().getDefaultForeground();
   }
+
+  public static Color getBackground(@NotNull TextAttributesKey key) {
+    return getGlobalScheme().getAttributes(key).getBackgroundColor();
+  }
 }
