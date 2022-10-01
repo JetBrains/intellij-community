@@ -40,9 +40,9 @@ object SVGPreBuilder {
     }
   }
 
-  private fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
+  private suspend fun runSvgTool(context: BuildContext, svgToolClasspath: List<String>, requestFile: Path) {
     val dbDir = context.paths.tempDir.resolve("icon-db")
-    runJava(
+    runIdea(
       context = context,
       mainClass = "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
       args = listOf(dbDir.toString(), requestFile.toString()) + context.applicationInfo.svgProductIcons,

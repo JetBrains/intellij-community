@@ -594,90 +594,79 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   )
 }
 
-suspend fun buildDistributions(context: BuildContext) {
-  try {
-    spanBuilder("build distributions").useWithScope2 {
-      checkProductProperties(context as BuildContextImpl)
-      copyDependenciesFile(context)
-      logFreeDiskSpace("before compilation", context)
-      val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
-                                                              productLayout = context.productProperties.productLayout)
-      val distributionState = compileModulesForDistribution(context)
-      logFreeDiskSpace("after compilation", context)
+suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope2 {
+  checkProductProperties(context as BuildContextImpl)
+  copyDependenciesFile(context)
+  logFreeDiskSpace("before compilation", context)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
+                                                          productLayout = context.productProperties.productLayout)
+  val distributionState = compileModulesForDistribution(context)
+  logFreeDiskSpace("after compilation", context)
 
-      coroutineScope {
-        createMavenArtifactJob(context, distributionState)
+  coroutineScope {
+    createMavenArtifactJob(context, distributionState)
 
-        spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
-          val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
-          if (context.shouldBuildDistributions()) {
-            val entries = distributionJARsBuilder.buildJARs(context)
-            if (context.productProperties.buildSourcesArchive) {
-              buildSourcesArchive(entries, context)
-            }
-          }
-          else {
-            Span.current().addEvent("skip building product distributions because " +
-                                    "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-            distributionJARsBuilder.buildSearchableOptions(context)
-            distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                                                           compressPluginArchive = context.options.compressZipFiles,
-                                                           buildPlatformLibJob = null,
-                                                           context = context)
-          }
+    spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
+      val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
+      if (context.shouldBuildDistributions()) {
+        val entries = distributionJARsBuilder.buildJARs(context)
+        if (context.productProperties.buildSourcesArchive) {
+          buildSourcesArchive(entries, context)
         }
-
-        if (context.shouldBuildDistributions()) {
-          layoutShared(context)
-          val distDirs = buildOsSpecificDistributions(context)
-          @Suppress("SpellCheckingInspection")
-          if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
-            @Suppress("SENSELESS_COMPARISON")
-            if (context.buildNumber == null) {
-              Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
-            }
-            else if (context.options.targetOs != OsFamily.ALL) {
-              Span.current().addEvent(
-                "Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
-            }
-            else {
-              context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
-                val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-                checkNotNull(toolboxLiteGenVersion) {
-                  "Toolbox Lite-Gen version is not specified!"
-                }
-
-                ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
-                                                 toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
-                                                 "/product-code=" + context.applicationInfo.productCode,
-                                                 "/isEAP=" + context.applicationInfo.isEAP.toString(),
-                                                 "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
-              }
-            }
-          }
-          if (context.productProperties.buildCrossPlatformDistribution) {
-            if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
-              context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-                buildCrossPlatformZip(distDirs, context)
-              }
-            }
-            else {
-              Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
-            }
-          }
-        }
-
-        logFreeDiskSpace("after building distributions", context)
+      }
+      else {
+        Span.current().addEvent("skip building product distributions because " +
+                                "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
+        distributionJARsBuilder.buildSearchableOptions(context)
+        distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
+                                                       compressPluginArchive = context.options.compressZipFiles,
+                                                       buildPlatformLibJob = null,
+                                                       context = context)
       }
     }
-  }
-  catch (e: Throwable) {
-    try {
-      TraceManager.finish()
+
+    if (!context.shouldBuildDistributions()) {
+      return@coroutineScope
     }
-    catch (ignore: Throwable) {
+
+    layoutShared(context)
+    val distDirs = buildOsSpecificDistributions(context)
+    @Suppress("SpellCheckingInspection")
+    if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+      @Suppress("SENSELESS_COMPARISON")
+      if (context.buildNumber == null) {
+        Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+      }
+      else if (context.options.targetOs != OsFamily.ALL) {
+        Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+      }
+      else {
+        context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+          val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
+          checkNotNull(toolboxLiteGenVersion) {
+            "Toolbox Lite-Gen version is not specified!"
+          }
+
+          ToolboxLiteGen.runToolboxLiteGen(context.paths.communityHomeDirRoot, context.messages,
+                                           toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
+                                           "/product-code=" + context.applicationInfo.productCode,
+                                           "/isEAP=" + context.applicationInfo.isEAP.toString(),
+                                           "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
+        }
+      }
     }
-    throw e
+    if (context.productProperties.buildCrossPlatformDistribution) {
+      if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
+        context.executeStep(spanBuilder("build cross-platform distribution"), BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+          buildCrossPlatformZip(distDirs, context)
+        }
+      }
+      else {
+        Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
+      }
+    }
+
+    logFreeDiskSpace("after building distributions", context)
   }
 }
 
@@ -944,7 +933,7 @@ private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
   context.notifyArtifactBuilt(updaterJar)
 }
 
-private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateMultiPlatformProductJson(
@@ -1005,14 +994,15 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
     compress = context.options.compressZipFiles,
   )
 
-  checkInArchive(targetFile, "", context)
+  coroutineScope {
+    launch { checkInArchive(archiveFile = targetFile, pathInArchive = "", context = context) }
+    launch { checkClassFiles(targetFile = targetFile, context = context) }
+  }
   context.notifyArtifactBuilt(targetFile)
-
-  checkClassFiles(targetFile, context)
   return targetFile
 }
 
-private fun checkClassFiles(targetFile: Path, context: BuildContext) {
+private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
   val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
     emptyMap()
   }
@@ -1107,14 +1097,10 @@ private fun crossPlatformZip(macX64DistDir: Path,
       Files.newDirectoryStream(linuxX64DistDir.resolve("bin")).use {
         for (file in it) {
           val name = file.fileName.toString()
-          if (name.endsWith(".vmoptions")) {
-            out.entryToDir(file, "bin/linux")
-          }
-          else if (name.endsWith(".sh") || name.endsWith(".py")) {
-            out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
-          }
-          else if (name == "fsnotifier") {
-            out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
+          when {
+            name.endsWith(".vmoptions") -> out.entryToDir(file, "bin/linux")
+            name.endsWith(".sh") || name.endsWith(".py") -> out.entry("bin/${file.fileName}", file, unixMode = executableFileUnixMode)
+            name == "fsnotifier" -> out.entry("bin/linux/${name}", file, unixMode = executableFileUnixMode)
           }
         }
       }

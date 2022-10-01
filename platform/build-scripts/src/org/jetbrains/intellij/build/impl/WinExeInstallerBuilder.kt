@@ -21,7 +21,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.hours
 
 private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistributionCustomizer, context: BuildContext) {
   val targetFilePath = context.paths.artifactDir.resolve("silent.config")
@@ -114,7 +114,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
 
     Decompressor.Zip(communityHome.resolve("build/tools/NSIS.zip")).withZipExtensions().extract(box)
     spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
-      val timeoutMs = TimeUnit.HOURS.toMillis(2)
+      val timeout = 2.hours
       if (SystemInfoRt.isWindows) {
         runProcess(
           args = listOf(
@@ -127,8 +127,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
             "${box}/nsiconf/idea.nsi",
           ),
           workingDir = box,
-          logger = context.messages,
-          timeoutMillis = timeoutMs,
+          timeout = timeout,
         )
       }
       else {
@@ -145,8 +144,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
             "${box}/nsiconf/idea.nsi",
           ),
           workingDir = box,
-          logger = context.messages,
-          timeoutMillis = timeoutMs,
+          timeout = timeout,
           additionalEnvVariables = mapOf("NSISDIR" to "${box}/NSIS"),
         )
       }

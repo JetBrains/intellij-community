@@ -46,9 +46,9 @@ class RepairUtilityBuilder {
           return@executeStep
         }
 
-        val binary = findBinary(context, os, arch)
+        val binary = findBinary(os, arch)
         val path = cache.get(binary)
-        require(path != null && binary != null) {
+        checkNotNull(path) {
           "No binary was built for $os and $arch"
         }
         val repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
@@ -63,8 +63,8 @@ class RepairUtilityBuilder {
     suspend fun generateManifest(context: BuildContext, unpackedDistribution: Path, os: OsFamily, arch: JvmArchitecture) {
       context.executeStep(spanBuilder("generate installation integrity manifest")
                             .setAttribute("dir", unpackedDistribution.toString()), REPAIR_UTILITY_BUNDLE_STEP) {
-        if (Files.notExists(unpackedDistribution)) {
-          context.messages.error("$unpackedDistribution doesn't exist")
+        check(Files.exists(unpackedDistribution)) {
+          "$unpackedDistribution doesn't exist"
         }
 
         val cache = getBinaryCache(context).await()
@@ -72,21 +72,16 @@ class RepairUtilityBuilder {
           return@executeStep
         }
 
-        val manifestGenerator = findBinary(context, currentOs, currentJvmArch)
-        val distributionBinary = findBinary(context, os, arch)
-        requireNotNull(manifestGenerator) {
-          "No binary was built for $currentOs and $currentJvmArch"
-        }
-        requireNotNull(distributionBinary) {
-          "No binary was built for $os and $arch"
-        }
+        val manifestGenerator = findBinary(currentOs, currentJvmArch)
+        val distributionBinary = findBinary(os, arch)
         val binaryPath = repairUtilityProjectHome(context)?.resolve(manifestGenerator.relativeSourcePath)
         requireNotNull(binaryPath)
         val tmpDir = context.paths.tempDir.resolve(REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         withContext(Dispatchers.IO) {
           Files.createDirectories(tmpDir)
           try {
-            runProcess(listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()), tmpDir, context.messages)
+            runProcess(args = listOf(binaryPath.toString(), "hashes", "-g", "--path", unpackedDistribution.toString()),
+                       workingDir = tmpDir)
           }
           catch (e: Throwable) {
             context.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
@@ -110,11 +105,9 @@ class RepairUtilityBuilder {
       }
     }
 
-    private fun findBinary(buildContext: BuildContext, os: OsFamily, arch: JvmArchitecture): Binary? {
+    private fun findBinary(os: OsFamily, arch: JvmArchitecture): Binary {
       val binary = BINARIES.find { it.os == os && it.arch == arch }
-      if (binary == null) {
-        buildContext.messages.error("Unsupported binary: $os $arch")
-      }
+      checkNotNull(binary) { "Unsupported binary: $os $arch" }
       return binary
     }
   }
@@ -141,7 +134,7 @@ private fun repairUtilityProjectHome(context: BuildContext): Path? {
     return projectHome
   }
   else {
-    context.messages.warning("$projectHome doesn't exist")
+    Span.current().addEvent("$projectHome doesn't exist")
     return null
   }
 }
@@ -157,7 +150,7 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
     val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope2 emptyMap()
     try {
       withContext(Dispatchers.IO) {
-        runProcess(listOf("docker", "--version"), null, context.messages)
+        runProcess(args = listOf("docker", "--version"))
       }
       val baseUrl = context.applicationInfo.patchesUrl?.removeSuffix("/") ?: error("Missing download url")
       val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
@@ -169,7 +162,7 @@ private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
       }
 
       withContext(Dispatchers.IO) {
-        runProcess(listOf("bash", "build.sh"), projectHome, context.messages, additionalEnvVariables = distributionUrls)
+        runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome, additionalEnvVariables = distributionUrls)
       }
     }
     catch (e: Throwable) {

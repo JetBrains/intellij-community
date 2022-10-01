@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -32,6 +33,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EdtInvocationManager;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.Tracer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,18 +89,17 @@ public final class TraverseUIStarter implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    System.out.println("Starting searchable options index builder");
     try {
       startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_OPTION);
       ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
       System.out.println("Searchable options index builder completed");
     }
     catch (Throwable e) {
-      System.out.println("Searchable options index builder failed");
       try {
         Logger.getInstance(getClass()).error("Searchable options index builder failed", e);
-      } catch (Throwable ignored) {}
-      e.printStackTrace();
+      }
+      catch (Throwable ignored) {
+      }
       System.exit(-1);
     }
   }

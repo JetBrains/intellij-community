@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
@@ -195,7 +196,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     return tarPath
   }
 
-  private fun buildSnapPackage(jreDirectoryPath: Path, unixDistPath: Path, arch: JvmArchitecture) {
+  private suspend fun buildSnapPackage(jreDirectoryPath: Path, unixDistPath: Path, arch: JvmArchitecture) {
     val snapName = customizer.snapName ?: return
     if (!context.options.buildUnixSnaps) {
       return
@@ -286,8 +287,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "snap", "-o", "result/$snapArtifact"
           ),
           workingDir = snapDir,
-          logger = context.messages,
-          timeoutMillis = TimeUnit.MINUTES.toMillis(context.options.snapDockerBuildTimeoutMin)
+          timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
         moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
         context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))

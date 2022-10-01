@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -337,7 +338,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     messages.block("Test classpath and runtime info") {
       val runtime = runtimeExecutablePath().toString()
       messages.info("Runtime: ${runtime}")
-      runProcess(listOf(runtime, "-version"), null, messages)
+      runBlocking {
+        runProcess(args = listOf(runtime, "-version"), inheritOut = true)
+      }
       messages.info("Runtime options: ${allJvmArgs}")
       messages.info("System properties: ${allSystemProperties}")
       messages.info("Bootstrap classpath: ${bootstrapClasspath}")

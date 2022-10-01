@@ -78,13 +78,13 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
 </idea-plugin>"""
 }
 
-private fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
+private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").useWithScope {
-    runJava(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-                                            args = listOf(resourceRoot.resolve("search").toString(),
+    runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+            args = listOf(resourceRoot.resolve("search").toString(),
                                                           resourceRoot.resolve("topics").toString()),
-                                            jvmArgs = emptyList(),
-                                            classPath = classPath)
+            jvmArgs = emptyList(),
+            classPath = classPath)
 
     writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)

@@ -123,7 +123,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
   override var classesOutputDirectory: Path
     get() {
       val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
-      return JpsPathUtil.urlToFile(url).toPath()
+      return Path.of(JpsPathUtil.urlToOsPath(url))
     }
     set(outputDirectory) {
       val url = "file://" + FileUtilRt.toSystemIndependentName("$outputDirectory")
@@ -132,7 +132,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
 
   override fun findRequiredModule(name: String): JpsModule {
     val module = findModule(name)
-    check(module != null) {
+    checkNotNull(module) {
       "Cannot find required module \'$name\' in the project"
     }
     return module
@@ -234,7 +234,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
           BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
         }
 
-        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, options, messages), isCompilationRequired)
+        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
       }
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,

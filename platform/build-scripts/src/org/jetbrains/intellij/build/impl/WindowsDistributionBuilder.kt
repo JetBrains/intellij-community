@@ -156,44 +156,20 @@ internal class WindowsDistributionBuilder(
     }
 
     if (zipWithJbrPath != null && exePath != null) {
-      checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath = zipWithJbrPath, exePath = exePath!!, arch = arch)
-      return
-    }
-  }
-
-  private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path, arch: JvmArchitecture) {
-    if (context.options.isInDevelopmentMode) {
-      Span.current().addEvent("comparing .zip and .exe skipped in development mode")
-      return
-    }
-
-    if (!SystemInfoRt.isLinux) {
-      Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
-      return
-    }
-
-    Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
-
-    val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "zip-${arch.dirName}") }
-    val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "exe-${arch.dirName}") }
-    try {
-      withContext(Dispatchers.IO) {
-        runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe, logger = context.messages)
-        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip, logger = context.messages)
-        @Suppress("SpellCheckingInspection")
-        NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
-
-        runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), workingDir = null, logger = context.messages)
+      if (context.options.isInDevelopmentMode) {
+        Span.current().addEvent("comparing .zip and .exe skipped in development mode")
       }
-      if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-        RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
+      else if (!SystemInfoRt.isLinux) {
+        Span.current().addEvent("comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
       }
-    }
-    finally {
-      withContext(Dispatchers.IO + NonCancellable) {
-        NioFiles.deleteRecursively(tempZip)
-        NioFiles.deleteRecursively(tempExe)
+      else {
+        checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath = zipWithJbrPath,
+                                                     exePath = exePath!!,
+                                                     arch = arch,
+                                                     tempDir = context.paths.tempDir,
+                                                     context = context)
       }
+      return
     }
   }
 
@@ -338,7 +314,7 @@ internal class WindowsDistributionBuilder(
       }
       classpath.add(icoFilesDirectory.toString())
 
-      runJava(
+      runIdea(
         context = context,
         mainClass = "com.pme.launcher.LauncherGeneratorMain",
         args = listOf(
@@ -367,6 +343,36 @@ internal class WindowsDistributionBuilder(
     val patchedFile = icoFilesDirectory.resolve("win-launcher-application-info.xml")
     Files.writeString(patchedFile, appInfo)
     return patchedFile
+  }
+}
+
+private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
+                                                                 exePath: Path,
+                                                                 arch: JvmArchitecture,
+                                                                 tempDir: Path,
+                                                                 context: BuildContext) {
+  Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
+
+  val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "zip-${arch.dirName}") }
+  val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "exe-${arch.dirName}") }
+  try {
+    withContext(Dispatchers.IO) {
+      runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
+      runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
+      @Suppress("SpellCheckingInspection")
+      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+
+      runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+    }
+    if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
+    }
+  }
+  finally {
+    withContext(Dispatchers.IO + NonCancellable) {
+      NioFiles.deleteRecursively(tempZip)
+      NioFiles.deleteRecursively(tempExe)
+    }
   }
 }
 

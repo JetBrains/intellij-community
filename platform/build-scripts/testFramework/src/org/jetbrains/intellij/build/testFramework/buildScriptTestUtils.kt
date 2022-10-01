@@ -10,6 +10,7 @@ import com.intellij.util.ExceptionUtilRt
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -160,6 +161,7 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
   val outDir = context.paths.buildOutputDir
+  var error: Throwable? = null
   try {
     spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}")
       .setAttribute("outDir", outDir.toString())
@@ -167,6 +169,9 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
         try {
           buildDistributions(context)
           onFinish(context)
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Throwable) {
           if (e !is FileComparisonData) {
@@ -178,10 +183,10 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
 
           if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
             //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
-            throw TestAbortedException("failed to load data for build scripts", e)
+            error = TestAbortedException("failed to load data for build scripts", e)
           }
           else {
-            throw e
+            error = e
           }
         }
       }
@@ -198,6 +203,10 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
       System.err.println("cannot cleanup $outDir:")
       e.printStackTrace(System.err)
     }
+  }
+
+  error?.let {
+    throw it
   }
 }
 

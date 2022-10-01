@@ -51,8 +51,8 @@ class BundledRuntimeImpl(
 
     val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
     val releaseFile = home.resolve("release")
-    if (!Files.exists(releaseFile)) {
-      throw IllegalStateException("Unable to find release file $releaseFile after extracting JBR at $path")
+    check(Files.exists(releaseFile)) {
+      "Unable to find release file $releaseFile after extracting JBR at $path"
     }
 
     return home
@@ -73,8 +73,8 @@ class BundledRuntimeImpl(
 
     val releaseFile = if (os == OsFamily.MACOS) jbrDir.resolve("Contents/Home/release") else jbrDir.resolve("release")
 
-    if (!Files.exists(releaseFile)) {
-      throw IllegalStateException("Unable to find release file $releaseFile after extracting JBR at $archive")
+    check(Files.exists(releaseFile)) {
+      "Unable to find release file $releaseFile after extracting JBR at $archive"
     }
 
     return targetDir

@@ -73,24 +73,25 @@ internal object CompiledClasses {
 
   @Synchronized
   fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>? = null, includingTestsInModules: List<String>? = null) {
-    val options = context.options
-    val messages = context.messages
+    val span = Span.current()
     when {
       context.options.useCompiledClassesFromProjectOutput -> {
-        Span.current().addEvent("compiled classes reused", Attributes.of(
+        span.addEvent("compiled classes reused", Attributes.of(
           AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString(),
         ))
       }
       PortableCompilationCache.IS_ENABLED -> {
-        messages.info("JPS remote cache will be used for compilation")
+        span.addEvent("JPS remote cache will be used for compilation")
         PortableCompilationCache(context).downloadCacheAndCompileProject()
       }
       context.options.pathToCompiledClassesArchive != null -> {
-        messages.info("Compilation skipped, the compiled classes from '${options.pathToCompiledClassesArchive}' will be used")
-        unpackCompiledClasses(context.classesOutputDirectory, context)
+        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
+                                                           context.options.pathToCompiledClassesArchive.toString()))
+        unpackCompiledClasses(classOutput = context.classesOutputDirectory, context = context)
       }
       context.options.pathToCompiledClassesArchivesMetadata != null -> {
-        messages.info("Compilation skipped, the compiled classes from '${options.pathToCompiledClassesArchivesMetadata}' will be used")
+        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
+                                                           context.options.pathToCompiledClassesArchive.toString()))
         val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
         fetchAndUnpackCompiledClasses(
           reportStatisticValue = context.messages::reportStatisticValue,
@@ -102,10 +103,10 @@ internal object CompiledClasses {
       }
       else -> {
         if (context.options.incrementalCompilation) {
-          messages.info("Reusing locally available compilation state if any")
+          span.addEvent("reusing locally available compilation state if any")
         }
         else {
-          messages.info("No compiled classes can be reused")
+          span.addEvent("no compiled classes can be reused")
         }
         compileLocally(context, moduleNames, includingTestsInModules)
         return

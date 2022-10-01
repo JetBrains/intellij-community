@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
-import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -33,8 +32,7 @@ object BuildUtils {
     Files.writeString(targetPath, content)
   }
 
-  @JvmStatic
-  fun propertiesToJvmArgs(properties: Map<String, Any>): List<String> {
+  fun propertiesToJvmArgs(properties: List<Pair<String, String>>): List<String> {
     val result = ArrayList<String>(properties.size)
     for ((key, value) in properties) {
       addVmProperty(result, key, value.toString())
@@ -42,8 +40,7 @@ object BuildUtils {
     return result
   }
 
-  @JvmStatic
-  fun addVmProperty(args: MutableList<String>, key: String, value: String?) {
+  internal fun addVmProperty(args: MutableList<String>, key: String, value: String?) {
     if (value != null) {
       args.add("-D$key=$value")
     }

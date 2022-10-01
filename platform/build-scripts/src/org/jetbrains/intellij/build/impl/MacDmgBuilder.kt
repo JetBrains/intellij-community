@@ -24,9 +24,9 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.hours
 
 internal val BuildContext.publishSitArchive: Boolean
   get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
@@ -101,7 +101,7 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
       withContext(Dispatchers.IO) {
-        runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit, logger = context.messages)
+        runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit)
       }
       RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
     }
@@ -146,12 +146,12 @@ private fun buildAndSignWithMacBuilderHost(sitFile: Path,
   )
 }
 
-private fun buildLocally(sitFile: Path,
-                         targetName: String,
-                         sign: Boolean,
-                         notarize: Boolean,
-                         customizer: MacDistributionCustomizer,
-                         context: BuildContext) {
+private suspend fun buildLocally(sitFile: Path,
+                                 targetName: String,
+                                 sign: Boolean,
+                                 notarize: Boolean,
+                                 customizer: MacDistributionCustomizer,
+                                 context: BuildContext) {
   val tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
   spanBuilder("bundle JBR and sign sit locally")
     .setAttribute("sitFile", sitFile.toString()).useWithScope {
@@ -161,7 +161,7 @@ private fun buildLocally(sitFile: Path,
   if (context.publishSitArchive) {
     context.notifyArtifactBuilt(sitFile)
   }
-  context.executeStep("build DMG locally", BuildOptions.MAC_DMG_STEP) {
+  context.executeStep(spanBuilder("build DMG locally"), BuildOptions.MAC_DMG_STEP) {
     if (SystemInfoRt.isMac) {
       buildDmgLocally(tempDir, targetName, customizer, context)
     }
@@ -173,12 +173,12 @@ private fun buildLocally(sitFile: Path,
   NioFiles.deleteRecursively(tempDir)
 }
 
-private fun signSitLocally(sourceFile: Path,
-                           tempDir: Path,
-                           sign: Boolean,
-                           notarize: Boolean,
-                           customizer: MacDistributionCustomizer,
-                           context: BuildContext) {
+private suspend fun signSitLocally(sourceFile: Path,
+                                   tempDir: Path,
+                                   sign: Boolean,
+                                   notarize: Boolean,
+                                   customizer: MacDistributionCustomizer,
+                                   context: BuildContext) {
   val targetFile = tempDir.resolve(sourceFile.fileName)
   Files.copy(sourceFile, targetFile)
 
@@ -210,12 +210,12 @@ private fun signSitLocally(sourceFile: Path,
         ?.toString() ?: "null"
     ),
     workingDir = tempDir,
-    timeoutMillis = TimeUnit.HOURS.toMillis(3)
+    timeout = 3.hours,
   )
   Files.move(targetFile, sourceFile, StandardCopyOption.REPLACE_EXISTING)
 }
 
-private fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: MacDistributionCustomizer, context: BuildContext) {
+private suspend fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: MacDistributionCustomizer, context: BuildContext) {
   val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
   Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
              dmgImageCopy)

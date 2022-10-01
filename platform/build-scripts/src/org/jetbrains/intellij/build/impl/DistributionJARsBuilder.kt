@@ -174,12 +174,11 @@ class DistributionJARsBuilder {
    */
   suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, Any> = emptyMap()): Path? {
     val span = Span.current()
-    if (context.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+    if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       span.addEvent("skip building searchable options index")
       return null
     }
 
-    val messages = context.messages
     val targetDirectory = context.searchableOptionDir
     val modules = withContext(Dispatchers.IO) {
       val ideClasspath = createIdeClassPath(context)
@@ -191,21 +190,18 @@ class DistributionJARsBuilder {
                             ideClasspath = ideClasspath,
                             arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
                             systemProperties = systemProperties)
-      if (!Files.isDirectory(targetDirectory)) {
-        messages.error("Failed to build searchable options index: $targetDirectory does not exist. " +
-                       "See log above for error output from traverseUI run.")
+      check(Files.isDirectory(targetDirectory)) {
+        "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
       }
       Files.newDirectoryStream(targetDirectory).use { it.toList() }
     }
-    if (modules.isEmpty()) {
-      messages.error("Failed to build searchable options index: $targetDirectory is empty. " +
-                     "See log above for error output from traverseUI run.")
+    check(!modules.isEmpty()) {
+      "Failed to build searchable options index: $targetDirectory is empty. See log above for error output from traverseUI run."
     }
-    else {
-      span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
-      span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"),
-                        modules.map { targetDirectory.relativize(it).toString() })
-    }
+
+    span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
+    span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"),
+                      modules.map { targetDirectory.relativize(it).toString() })
     return targetDirectory
   }
 
@@ -217,8 +213,8 @@ class DistributionJARsBuilder {
       Files.createDirectories(context.paths.tempDir)
       Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
     }
-    val nonPluginsEntries = ArrayList<DistributionFileEntry>()
-    val pluginsEntries = ArrayList<DistributionFileEntry>()
+    val nonPluginsEntries = mutableListOf<DistributionFileEntry>()
+    val pluginsEntries = mutableListOf<DistributionFileEntry>()
     for (e in generateProjectStructureMapping(context = context, state = state, pluginLayoutRoot = pluginLayoutRoot)) {
       if (e.path.startsWith(pluginLayoutRoot)) {
         val relPath = pluginLayoutRoot.relativize(e.path)

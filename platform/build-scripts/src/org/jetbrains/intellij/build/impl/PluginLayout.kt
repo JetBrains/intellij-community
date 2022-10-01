@@ -21,6 +21,8 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.*
 
+typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
+
 /**
  * Describes layout of a plugin in the product distribution
  */
@@ -52,7 +54,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var retainProductDescriptorForBundledPlugin = false
   var enableSymlinksAndExecutableResources = false
 
-  internal var resourceGenerators: PersistentList<suspend (Path, BuildContext) -> Unit> = persistentListOf()
+  internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 
   internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
@@ -143,7 +145,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       }
     }
 
-    fun withGeneratedResources(generator: suspend (Path, BuildContext) -> Unit) {
+    fun withGeneratedResources(generator: ResourceGenerator) {
       layout.resourceGenerators += generator
     }
 
