@@ -113,11 +113,11 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
   }
 }
 
-private suspend fun buildAndSignWithMacBuilderHost(sitFile: Path,
-                                                   macHostProperties: MacHostProperties,
-                                                   notarize: Boolean,
-                                                   customizer: MacDistributionCustomizer,
-                                                   context: BuildContext) {
+private fun buildAndSignWithMacBuilderHost(sitFile: Path,
+                                           macHostProperties: MacHostProperties,
+                                           notarize: Boolean,
+                                           customizer: MacDistributionCustomizer,
+                                           context: BuildContext) {
   val dmgImage = if (context.options.buildStepsToSkip.contains(BuildOptions.MAC_DMG_STEP)) {
     null
   }

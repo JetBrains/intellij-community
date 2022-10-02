@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.downloadAsText
+import org.jetbrains.intellij.build.io.download
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Files
@@ -17,13 +17,11 @@ private const val MARKETPLACE_BROKEN_PLUGINS_URL = "https://plugins.jetbrains.co
 /**
  * Generate brokenPlugins.txt file using JetBrains Marketplace.
  */
-suspend fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelopmentMode: Boolean) {
+fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isInDevelopmentMode: Boolean) {
   val span = Span.current()
 
   val allBrokenPlugins = try {
-    val jsonFormat = Json { ignoreUnknownKeys = true }
-    val content = downloadAsText(MARKETPLACE_BROKEN_PLUGINS_URL)
-    jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
+    downloadFileFromMarketplace(span)
   }
   catch (e: Exception) {
     if (isInDevelopmentMode) {
@@ -49,6 +47,12 @@ suspend fun buildBrokenPlugins(targetFile: Path, currentBuildString: String, isI
   }
   storeBrokenPlugin(result, currentBuildString, targetFile)
   span.setAttribute("pluginCount", result.size.toLong())
+}
+
+private fun downloadFileFromMarketplace(span: Span): List<MarketplaceBrokenPlugin> {
+  val jsonFormat = Json { ignoreUnknownKeys = true }
+  val content = download(MARKETPLACE_BROKEN_PLUGINS_URL).toString(Charsets.UTF_8)
+  return jsonFormat.decodeFromString(ListSerializer(MarketplaceBrokenPlugin.serializer()), content)
 }
 
 private fun storeBrokenPlugin(brokenPlugin: Map<String, Set<String>>, build: String, targetFile: Path) {

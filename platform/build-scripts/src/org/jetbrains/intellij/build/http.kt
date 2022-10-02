@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.compilation
+package org.jetbrains.intellij.build
 
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,7 +29,7 @@ internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
   }
 }
 
-internal val httpClient: OkHttpClient by lazy {
+internal val httpClient by lazy {
   val timeout = 1L
   val unit = TimeUnit.MINUTES
   OkHttpClient.Builder()
@@ -57,14 +57,26 @@ internal val httpClient: OkHttpClient by lazy {
           if (error == null) {
             error = IOException("$maxTryCount attempts to ${request.method} ${request.url} failed")
           }
-          error.addSuppressed(e)
+          error?.addSuppressed(e)
           null
         }
         tryCount++
       }
-      while ((response == null || response.code >= 500) && tryCount < maxTryCount)
+      while ((response == null || response!!.code >= 500) && tryCount < maxTryCount)
       response ?: throw error ?: IllegalStateException()
     }
     .followRedirects(true)
     .build()
+}
+
+@Suppress("HttpUrlsUsage")
+internal fun toUrlWithTrailingSlash(serverUrl: String): String {
+  var result = serverUrl
+  if (!result.startsWith("http://") && !result.startsWith("https://")) {
+    result = "http://$result"
+  }
+  if (!result.endsWith('/')) {
+    result += '/'
+  }
+  return result
 }

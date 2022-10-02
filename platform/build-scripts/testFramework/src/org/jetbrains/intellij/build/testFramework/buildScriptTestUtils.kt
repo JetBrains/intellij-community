@@ -192,8 +192,6 @@ suspend fun runTestBuild(context: BuildContext, traceSpanName: String? = null, o
       }
   }
   finally {
-    closeKtorClient()
-
     // close debug logging to prevent locking of output directory on Windows
     (context.messages as BuildMessagesImpl).close()
 

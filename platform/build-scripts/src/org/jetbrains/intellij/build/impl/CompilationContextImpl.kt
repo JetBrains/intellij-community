@@ -25,7 +25,7 @@ import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
-import org.jetbrains.intellij.build.kotlin.loadKotlinJpsPluginToClassPath
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -234,7 +234,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
           BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
         }
 
-        loadProject(projectHome = projectHome, communityHome, isCompilationRequired)
+        loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(communityHome, messages), isCompilationRequired)
       }
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
@@ -271,26 +271,24 @@ class CompilationContextImpl private constructor(model: JpsModel,
     this.nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
     val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
-    paths = BuildPathsImpl(communityHome = communityHome, projectHome = projectHome, buildOut = buildOut, logDir = logDir)
+    paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(options = options,
-                                        paths = paths,
-                                        dependenciesProperties = dependenciesProperties,
-                                        error = messages::error,
-                                        info = messages::info)
+    bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
   }
 }
 
-private suspend fun loadProject(projectHome: Path, communityHome: BuildDependenciesCommunityRoot, isCompilationRequired: Boolean): JpsModel {
+private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, isCompilationRequired: Boolean): JpsModel {
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-  withContext(Dispatchers.IO) {
-    if (isCompilationRequired) {
-      val kotlinCompilerHome = loadKotlinJpsPluginToClassPath(communityHome)
-      System.setProperty("jps.kotlin.home", kotlinCompilerHome.toString())
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinCompilerHome.toString())
-    }
+  if (isCompilationRequired) {
+    kotlinBinaries.loadKotlinJpsPluginToClassPath()
 
+    val kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
+    System.setProperty("jps.kotlin.home", kotlinCompilerHome.toString())
+    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinCompilerHome.toString())
+  }
+
+  withContext(Dispatchers.IO) {
     spanBuilder("load project").useWithScope2 { span ->
       pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(
         Path.of(SystemProperties.getUserHome(), ".m2/repository").toString()))

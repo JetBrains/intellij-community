@@ -7,10 +7,10 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.collections.immutable.persistentListOf
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
@@ -34,7 +34,7 @@ class BundledRuntimeImpl(
     options.bundledRuntimeBuild ?: dependenciesProperties.property("runtimeBuild")
   }
 
-  override suspend fun getHomeForCurrentOsAndArch(): Path {
+  override fun getHomeForCurrentOsAndArch(): Path {
     var prefix = "jbr_jcef-"
     val os = OsFamily.currentOs
     val arch = JvmArchitecture.currentJvmArch
@@ -59,7 +59,7 @@ class BundledRuntimeImpl(
   }
 
   // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
-  override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  override fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
     val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
@@ -80,14 +80,14 @@ class BundledRuntimeImpl(
     return targetDir
   }
 
-  override suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
+  override fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
     doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  private suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val archiveName = archiveName(prefix = prefix, arch = arch, os = os)
-    val url = "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
-    return downloadFileToCacheLocation(url = url, communityRoot = paths.communityHomeDirRoot)
+  private fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+    val archiveName = archiveName(prefix, arch, os)
+    val url = URI("https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName")
+    return BuildDependenciesDownloader.downloadFileToCacheLocation(paths.communityHomeDirRoot, url)
   }
 
   /**
@@ -145,7 +145,7 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
 }
 
 private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
-  spanBuilder("extract JBR")
+  TraceManager.spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)
     .setAttribute("destination", destinationDir.toString())

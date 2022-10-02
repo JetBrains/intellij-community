@@ -38,7 +38,6 @@ data class BuildRequest(
   @JvmField val homePath: Path,
   @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
-  @JvmField val keepHttpClient: Boolean = true,
 )
 
 private suspend fun computeLibClassPath(targetFile: Path, homePath: Path, context: BuildContext) {

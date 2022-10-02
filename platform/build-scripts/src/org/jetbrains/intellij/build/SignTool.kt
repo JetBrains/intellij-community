@@ -21,5 +21,5 @@ interface SignTool {
    */
   suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path?
 
-  suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
+  fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path?
 }

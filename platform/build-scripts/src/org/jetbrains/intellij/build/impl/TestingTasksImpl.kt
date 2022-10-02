@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
@@ -337,9 +336,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
     }
     messages.block("Test classpath and runtime info") {
-      runBlocking(Dispatchers.IO) {
-        val runtime = getRuntimeExecutablePath().toString()
-        messages.info("Runtime: ${runtime}")
+      val runtime = runtimeExecutablePath().toString()
+      messages.info("Runtime: ${runtime}")
+      runBlocking {
         runProcess(args = listOf(runtime, "-version"), inheritOut = true)
       }
       messages.info("Runtime options: ${allJvmArgs}")
@@ -347,7 +346,6 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       messages.info("Bootstrap classpath: ${bootstrapClasspath}")
       messages.info("Tests classpath: ${testClasspath}")
       modulePath?.let { mp ->
-        @Suppress("SpellCheckingInspection")
         messages.info("Tests modulepath: $mp")
       }
       if (!envVariables.isEmpty()) {
@@ -365,7 +363,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private suspend fun getRuntimeExecutablePath(): Path {
+  private fun runtimeExecutablePath(): Path {
     val runtimeDir: Path
     if (options.customRuntimePath != null) {
       runtimeDir = Path.of(options.customRuntimePath)
@@ -378,7 +376,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     var java = runtimeDir.resolve(if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
-    if (SystemInfoRt.isMac && Files.notExists(java)) {
+    if (SystemInfoRt.isMac && !Files.exists(java)) {
       java = runtimeDir.resolve("Contents/Home/bin/java")
     }
     check(Files.exists(java)) { "java executable is missing: ${java}" }
@@ -424,7 +422,6 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
-    @Suppress("SpellCheckingInspection")
     mapOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
@@ -444,11 +441,11 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
-    ).forEach { (k, v) ->
+    ).forEach(BiConsumer { k, v ->
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
       }
-    }
+    })
 
     System.getProperties().forEach(BiConsumer { key, value ->
       if ((key as String).startsWith("pass.")) {
@@ -676,7 +673,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     val argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath ().toString() }
+    val runtime = runtimeExecutablePath().toString()
     context.messages.info("Starting tests on runtime ${runtime}")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
@@ -749,7 +746,6 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
       val map = LinkedHashMap<String, String>(7)
       map["teamcity-build-number"] = System.getProperty("build.number")
       map["teamcity-build-type-id"] = System.getProperty("teamcity.buildType.id")
-      @Suppress("SpellCheckingInspection")
       map["teamcity-build-configuration-name"] = System.getenv("TEAMCITY_BUILDCONF_NAME")
       map["teamcity-build-project-name"] = System.getenv("TEAMCITY_PROJECT_NAME")
       map["branch"] = System.getProperty("teamcity.build.branch")?.takeIf(String::isNotEmpty) ?: "master"

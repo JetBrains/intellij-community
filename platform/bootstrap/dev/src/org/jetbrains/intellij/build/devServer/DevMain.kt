@@ -12,7 +12,6 @@ fun main(rawArgs: Array<String>) {
       platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
       additionalModules = emptyList(),
       homePath = Path.of(PathManager.getHomePath()),
-      keepHttpClient = false,
     ))
   }
 
