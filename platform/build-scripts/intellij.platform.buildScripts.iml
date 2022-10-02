@@ -77,5 +77,9 @@
     <orderEntry type="library" name="jsch-agent-proxy" level="project" />
     <orderEntry type="library" name="jsch-agent-proxy-sshj" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
+    <orderEntry type="library" name="ktor-client" level="project" />
+    <orderEntry type="library" name="ktor-client-auth" level="project" />
+    <orderEntry type="library" name="ktor-client-cio" level="project" />
+    <orderEntry type="library" name="ktor-client-encoding" level="project" />
   </component>
 </module>

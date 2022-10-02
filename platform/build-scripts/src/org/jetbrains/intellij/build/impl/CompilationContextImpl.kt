@@ -271,9 +271,13 @@ class CompilationContextImpl private constructor(model: JpsModel,
     this.nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
     val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
-    paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
+    paths = BuildPathsImpl(communityHome = communityHome, projectHome = projectHome, buildOut = buildOut, logDir = logDir)
     dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
+    bundledRuntime = BundledRuntimeImpl(options = options,
+                                        paths = paths,
+                                        dependenciesProperties = dependenciesProperties,
+                                        error = messages::error,
+                                        info = messages::info)
   }
 }
 
