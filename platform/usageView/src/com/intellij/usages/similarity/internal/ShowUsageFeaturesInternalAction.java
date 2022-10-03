@@ -74,6 +74,9 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
             );
           }
         });
+        if (element.isNull()) {
+          return;
+        }
         writeCommandAction(project).compute(() -> {
           ScratchFileService fileService = ScratchFileService.getInstance();
           try {
