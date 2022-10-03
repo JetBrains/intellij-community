@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,15 @@ import javax.swing.event.ChangeEvent
 internal class GitLabMergeRequestsPanelFactory {
 
   fun create(scope: CoroutineScope, vm: GitLabMergeRequestsListViewModel): JComponent {
+    val listModel = collectMergeRequests(scope, vm)
+    val list = createMergeRequestListComponent(listModel)
+    val listLoaderPanel = createListLoaderPanel(scope, vm, list)
+
+    return JBUI.Panels.simplePanel(listLoaderPanel).andTransparent()
+  }
+
+  private fun collectMergeRequests(scope: CoroutineScope,
+                                   vm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestShortDTO> {
     val listModel = CollectionListModel<GitLabMergeRequestShortDTO>()
     scope.launch {
       var firstEvent = true
@@ -35,21 +45,25 @@ internal class GitLabMergeRequestsPanelFactory {
       }
     }
 
-    val list = ReviewListComponentFactory(listModel).create {
-      ReviewListItemPresentation.Simple(title = it.title,
-                                        id = it.id.toString(),
-                                        createdDate = it.createdAt,
-                                        author = null,
-                                        tagGroup = null,
-                                        mergeableStatus = null,
-                                        buildStatus = null,
-                                        state = it.state.uppercase(),
-                                        userGroup1 = null,
-                                        userGroup2 = null,
-                                        commentsCounter = null)
-    }
+    return listModel
+  }
 
-    return createListLoaderPanel(scope, vm, list)
+  private fun createMergeRequestListComponent(listModel: CollectionListModel<GitLabMergeRequestShortDTO>): JComponent {
+    return ReviewListComponentFactory(listModel).create {
+      ReviewListItemPresentation.Simple(
+        title = it.title,
+        id = it.id.toString(),
+        createdDate = it.createdAt,
+        author = null,
+        tagGroup = null,
+        mergeableStatus = null,
+        buildStatus = null,
+        state = it.state.uppercase(),
+        userGroup1 = null,
+        userGroup2 = null,
+        commentsCounter = null
+      )
+    }
   }
 
   private fun createListLoaderPanel(scope: CoroutineScope, vm: GitLabMergeRequestsListViewModel, list: JComponent): JComponent {
