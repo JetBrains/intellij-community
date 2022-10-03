@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.containers.ContainerUtil;
@@ -172,6 +173,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   @NotNull
+  @NlsActions.ActionText
   public String getTextFor(final PopupFactoryImpl.ActionItem value) {
     return value.getText();
   }
