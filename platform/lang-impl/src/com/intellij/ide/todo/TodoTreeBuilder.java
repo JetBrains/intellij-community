@@ -35,9 +35,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
-import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -329,26 +327,19 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
     JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
     if (loadingPanel != null) loadingPanel.startLoading();
-    Set<VirtualFile> files = ContainerUtil.newConcurrentSet();
-    SingleAlarm alarm = new SingleAlarm(() -> bgtUpdater.accept(files),
-                                        1000,
-                                        bgtUpdater,
-                                        Alarm.ThreadToUse.POOLED_THREAD,
-                                        ModalityState.NON_MODAL);
 
     ReadAction.nonBlocking((Callable<Void>)() -> {
+        Set<VirtualFile> files = new HashSet<>();
         collectFiles(virtualFile -> {
           synchronized (LOCK) {
             if (bgtUpdater.isDisposed()) return false;
-            if (files.add(virtualFile)) {
-              alarm.request();
-            }
+            files.add(virtualFile);
           }
           return true;
         });
 
         if (!bgtUpdater.isDisposed()) {
-          bgtUpdater.accept(files);
+          bgtUpdater.accept(Collections.unmodifiableSet(files));
         }
 
         return null;
