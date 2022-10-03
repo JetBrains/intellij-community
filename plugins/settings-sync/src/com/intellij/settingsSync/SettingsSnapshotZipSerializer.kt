@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
@@ -97,7 +98,9 @@ internal object SettingsSnapshotZipSerializer {
     try {
       val infoFile = path / INFO
       if (infoFile.exists()) {
-        val metaInfo = ObjectMapper().readValue(infoFile.readText(), MetaInfo::class.java)
+        val metaInfo = ObjectMapper()
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+          .readValue(infoFile.readText(), MetaInfo::class.java)
         val date = DateTimeFormatter.ISO_INSTANT.parse(metaInfo.date, Instant::from)
         val appInfo = SettingsSnapshot.AppInfo(UUID.fromString(metaInfo.applicationId),
                                                metaInfo.userName, metaInfo.hostName, metaInfo.configFolder)
