@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerListener;
@@ -422,7 +423,16 @@ public final class DaemonListeners implements Disposable {
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
+  /**
+   * @return true if the {@code file} (which does or doesn't lie in this project content roots, depending on {@code isInContent})
+   * can be modified without user's explicit permission.
+   * By convention, permission is required for
+   * - never touched files,
+   * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
+   * - files in the middle of cut-n-paste operation.
+   */
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
     if (listeners == null) {
@@ -432,7 +442,16 @@ public final class DaemonListeners implements Disposable {
     if (listeners.cutOperationJustHappened) {
       return false;
     }
-    return CanISilentlyChange.thisFile(file);
+    return CanISilentlyChange.thisFile(file).canIReally(isInContent);
+  }
+
+  /**
+   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean)} instead
+   */
+  @Deprecated
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
+    PluginException.reportDeprecatedUsage("this method", "");
+    return canChangeFileSilently(file, true);
   }
 
   private class MyApplicationListener implements ApplicationListener {

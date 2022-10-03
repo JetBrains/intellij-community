@@ -120,8 +120,6 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
     }
 
     private fun doImport(file: PsiFile, action: KotlinAddImportAction): Boolean {
-        if (!DaemonListeners.canChangeFileSilently(file)) return false
-
         var res = false;
         CommandProcessor.getInstance().runUndoTransparentAction {
             res = action.execute()

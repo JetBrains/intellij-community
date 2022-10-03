@@ -37,7 +37,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private final Document myDocument;
   @NotNull
   private final ProperTextRange myVisibleRange;
-  private final boolean myCanChangeFileSilently;
+  @NotNull
+  private final CanISilentlyChange.Result myCanChangeFileSilently;
   private final Long2ObjectMap<RangeMarker> myRanges2markersCache = new Long2ObjectOpenHashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
 
@@ -45,7 +46,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                   @NotNull DaemonProgressIndicator progressIndicator,
                                   @Nullable EditorColorsScheme editorColorsScheme,
                                   @NotNull ProperTextRange visibleRange,
-                                  boolean canChangeFileSilently) {
+                                  @NotNull CanISilentlyChange.Result canChangeFileSilently) {
     myPsiFile = psiFile;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
@@ -70,8 +71,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     myEDTQueue.offer(runnable);
   }
 
-  boolean canChangeFileSilently() {
-    return myCanChangeFileSilently;
+  boolean canChangeFileSilently(boolean isInContent) {
+    return myCanChangeFileSilently.canIReally(isInContent);
   }
 
   @NotNull
@@ -95,7 +96,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     HighlightingSession session = map == null ? null : map.get(psiFile);
     if (session == null) {
-      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, false);
+      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH);
     }
   }
 
@@ -107,7 +108,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TextRange fileRange = psiFile.getTextRange();
     ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE)) : VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    boolean canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
+    CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
     return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently);
   }
 
@@ -116,7 +117,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                        @NotNull DaemonProgressIndicator progressIndicator,
                                                        @Nullable EditorColorsScheme editorColorsScheme,
                                                        @NotNull ProperTextRange visibleRange,
-                                                       boolean canChangeFileSilently) {
+                                                       @NotNull CanISilentlyChange.Result canChangeFileSilently) {
     // no assertIsDispatchThread() is necessary
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
@@ -134,7 +135,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                   boolean canChangeFileSilently,
                                                   @NotNull Runnable runnable) {
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently);
+    createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH);
     runnable.run();
   }
 

@@ -372,18 +372,19 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   public void testAutoImportWorks() {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(text);
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
+    boolean isInContent = true;
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
 
 
     doHighlighting();
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
 
     type(" ");
-    assertTrue(DaemonListeners.canChangeFileSilently(getFile()));
+    assertTrue(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
 
     UndoManager.getInstance(getProject()).undo(TextEditorProvider.getInstance().getTextEditor(getEditor()));
 
-    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile(), isInContent));
   }
 
 

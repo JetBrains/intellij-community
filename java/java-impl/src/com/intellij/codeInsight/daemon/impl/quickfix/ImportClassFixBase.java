@@ -18,9 +18,11 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
@@ -57,6 +59,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
    * However, sometimes we do need to perform import on changed PSI, e.g., in case of auto-importing unambiguous references in bulk.
    */
   private boolean abortOnPSIModification = true;
+  private boolean myInContent;
 
   protected ImportClassFixBase(@NotNull T referenceElement, @NotNull R reference) {
     if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
@@ -132,6 +135,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   private PsiClass @NotNull [] calcClassesToImport() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    PsiFile file = myContainingFile;
+    if (file == null) {
+      return PsiClass.EMPTY_ARRAY;
+    }
+    VirtualFile virtualFile = file.getVirtualFile();
+    myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false);
+
     PsiElement referenceElement;
     if (!myReferenceElement.isValid() || (referenceElement = myReference.getElement()) != myReferenceElement && !referenceElement.isValid()) {
       return PsiClass.EMPTY_ARRAY;
@@ -150,8 +161,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (name == null) {
       return PsiClass.EMPTY_ARRAY;
     }
-    PsiFile file = myContainingFile;
-    if (file == null) return PsiClass.EMPTY_ARRAY;
 
     if (!canReferenceClass(myReference)) {
       return PsiClass.EMPTY_ARRAY;
@@ -430,7 +439,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiFile file = myReferenceElement.isValid() && myContainingFile != null && myContainingFile.isValid() ? myContainingFile : null;
     if (file == null) return false;
 
-    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(file));
+    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(file, myInContent));
     return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 

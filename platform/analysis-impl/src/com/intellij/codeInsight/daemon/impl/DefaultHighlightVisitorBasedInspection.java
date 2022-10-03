@@ -120,7 +120,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
     else {
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
-      HighlightingSessionImpl.createHighlightingSession(file, progress, null, ProperTextRange.create(file.getTextRange()), false);
+      HighlightingSessionImpl.createHighlightingSession(file, progress, null, ProperTextRange.create(file.getTextRange()), CanISilentlyChange.Result.UH_UH);
       ProgressManager.getInstance().runProcess(() -> file.accept(visitor), progress);
     }
     return visitor.result;

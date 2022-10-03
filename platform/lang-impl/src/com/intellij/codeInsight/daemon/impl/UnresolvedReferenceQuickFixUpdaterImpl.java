@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
@@ -126,11 +128,14 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
           info.setUnresolvedReferenceQuickFixesComputed();
           reference.getElement().putUserData(JOB, null);
           if (changed.get()) {
+            VirtualFile virtualFile = file.getVirtualFile();
+            boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
             // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
             ApplicationManager.getApplication().invokeLater(() -> {
               DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
+              boolean canChangeFileSilently = CanISilentlyChange.thisFile(file).canIReally(isInContent);
               ProgressManager.getInstance().executeProcessUnderProgress(() ->
-                HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), CanISilentlyChange.thisFile(file),
+                HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), canChangeFileSilently,
                                                                      () -> DefaultHighlightInfoProcessor.showAutoImportHints(editor, file, sessionIndicator))
               , sessionIndicator);
             }, __->editor.isDisposed() || file.getProject().isDisposed());
