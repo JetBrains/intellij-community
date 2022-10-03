@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.ActionCallback
@@ -57,10 +58,12 @@ private class AutoScrollToSourceTaskManager : Disposable {
         ?.suspend()
 
       val navigatable = withContext(Dispatchers.IO) {
-        if (handler.canAutoScrollTo(CommonDataKeys.VIRTUAL_FILE.getData(dataContext)))
-          CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext)?.singleOrNull()
-        else
-          null
+        readAction {
+          if (handler.canAutoScrollTo(CommonDataKeys.VIRTUAL_FILE.getData(dataContext)))
+            CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext)?.singleOrNull()
+          else
+            null
+        }
       }
 
       if (navigatable != null) {
