@@ -320,7 +320,7 @@ public class SwitchBlockHighlightingModel {
     return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
-  private static boolean isNullType(@NotNull PsiElement element) {
+  public static boolean isNullType(@NotNull PsiElement element) {
     return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
@@ -557,11 +557,12 @@ public class SwitchBlockHighlightingModel {
           return;
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType) ||
-            // 14.30.3 A type pattern that declares a pattern variable of a reference type U is applicable at another
-            // reference type T if T is downcast convertible to U (5.5) (JEP 427)
+            // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
+            // applicable at another reference type T if T is downcast convertible to U (JEP 427)
             // There is no rule that says that a reference type applies to a primitive type
             // There is no restriction on primitive types in JEP 406 and JEP 420:
-            // 14.30.1 The pattern is of type T and e is downcast compatible with T (5.5).
+            // 14.30.1 An expression e is compatible with a pattern if the pattern is of type T
+            // and e is downcast compatible with T
             (mySelectorType instanceof PsiPrimitiveType && HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) {
           HighlightInfo error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
