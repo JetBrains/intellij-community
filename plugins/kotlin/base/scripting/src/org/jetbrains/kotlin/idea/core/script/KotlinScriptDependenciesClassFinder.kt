@@ -17,6 +17,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptMarkerFileSystem
@@ -72,23 +73,20 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
         }
 
         // The following code is needed because NonClasspathClassFinder cannot find inner classes
-        // JavaFullClassNameIndex cannot be used directly, because it filter only classes in source roots
+        // JavaFullClassNameIndex cannot be used directly, because it filters only classes in source roots
 
-        val classes = StubIndex.getElements(
+        val processor = QualifiedClassNameProcessor(qualifiedName)
+
+        StubIndex.getInstance().processElements(
             JavaFullClassNameIndex.getInstance().key,
             qualifiedName,
             project,
             scope.takeUnless { it is EverythingGlobalScope },
-            PsiClass::class.java
-        ).filter {
-            it.qualifiedName == qualifiedName
-        }
+            PsiClass::class.java,
+            processor
+        )
 
-        return when (classes.size) {
-            0 -> null
-            1 -> classes.single()
-            else -> classes.first()  // todo: check when this happens
-        }?.takeIf { isInScope(it, scope) }
+        return processor.foundValue?.takeIf { isInScope(it, scope) }
     }
 
     private fun isInScope(clazz: PsiClass, scope: GlobalSearchScope): Boolean {
@@ -123,4 +121,10 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
         psiPackage: PsiPackage, scope: GlobalSearchScope,
         consumer: Processor<in PsiDirectory>, includeLibrarySources: Boolean
     ): Boolean = if (isApplicable(scope)) super.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources) else true
+
+    private class QualifiedClassNameProcessor(private val qualifiedName: String): CommonProcessors.FindFirstProcessor<PsiClass>() {
+        override fun accept(t: PsiClass?): Boolean {
+            return t?.qualifiedName == qualifiedName
+        }
+    }
 }
