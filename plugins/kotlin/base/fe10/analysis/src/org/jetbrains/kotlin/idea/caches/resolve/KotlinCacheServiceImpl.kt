@@ -286,11 +286,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             project, modulesContext, settings,
             reuseDataFrom = facadeForLibraries,
             moduleFilter = moduleFilters::moduleFacadeFilter,
-            dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
-                ProjectRootModificationTracker.getInstance(project),
-                ModuleModificationTracker.getInstance(project)
-            ),
+            dependencies = listOf(ProjectRootModificationTracker.getInstance(project)),
             invalidateOnOOCB = true
         )
     }
