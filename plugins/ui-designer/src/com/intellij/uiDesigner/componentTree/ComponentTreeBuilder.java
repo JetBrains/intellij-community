@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.componentTree;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.HierarchyChangeListener;
 import com.intellij.uiDesigner.SelectionWatcher;
@@ -15,22 +17,30 @@ import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public final class ComponentTreeBuilder extends AbstractTreeBuilder {
+public final class ComponentTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance(ComponentTreeBuilder.class);
 
   private final GuiEditor myEditor;
   private final MySelectionWatcher mySelectionWatcher;
+  private final StructureTreeModel<ComponentTreeStructure> myStructureTreeModel;
+  private final ComponentTree myTree;
+  private final ComponentTreeStructure myTreeStructure;
   /**
-   * More then 0 if we are inside some change. In this case we have not
+   * More than 0 if we are inside some change. In this case we have not
    * react on our own events.
    */
   private int myInsideChange;
@@ -38,17 +48,19 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private MyTreeSelectionListener myTreeSelectionListener;
 
   public ComponentTreeBuilder(final ComponentTree tree, @NotNull final GuiEditor editor) {
-    super(tree,(DefaultTreeModel)tree.getModel(), new ComponentTreeStructure(editor), MyComparator.ourComparator);
+    myTree = tree;
+    myTreeStructure = new ComponentTreeStructure(editor);
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, MyComparator.ourComparator, this);
+    tree.setModel(new AsyncTreeModel(myStructureTreeModel, this));
 
     myEditor = editor;
     mySelectionWatcher = new MySelectionWatcher(editor);
 
-    initRootNode();
     syncSelection();
 
     myTreeSelectionListener = new MyTreeSelectionListener();
     myHierarchyChangeListener = new MyHierarchyChangeListener();
-    getTree().getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
+    myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
     editor.addHierarchyChangeListener(myHierarchyChangeListener);
   }
 
@@ -57,20 +69,16 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   public void dispose() {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
     if (myTreeSelectionListener != null) {
-      getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
+      myTree.getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
       myTreeSelectionListener = null;
     }
     mySelectionWatcher.dispose();
-    super.dispose();
   }
 
-  private ComponentTreeStructure getComponentTreeStructure(){
-    return (ComponentTreeStructure)getTreeStructure();
-  }
-
-  @Override
-  protected boolean isAutoExpandNode(final NodeDescriptor descriptor){
-    return getComponentTreeStructure().isAutoExpandNode(descriptor);
+  // TODO Support auto expand for async tree model?
+  @SuppressWarnings("unused")
+  private boolean isAutoExpandNode(final NodeDescriptor<?> descriptor){
+    return myTreeStructure.isAutoExpandNode(descriptor);
   }
 
   public void beginUpdateSelection() {
@@ -86,9 +94,10 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
    * This method synchronizes selection in the tree with the selected
    * RadComponent in the component hierarchy
    */
+  @RequiresEdt
   private void syncSelection() {
     // Found selected components
-    final RadContainer rootContainer=myEditor.getRootContainer();
+    final RadContainer rootContainer = myEditor.getRootContainer();
     final ArrayList<RadComponent> selection = new ArrayList<>();
     FormEditingUtil.iterate(
       rootContainer,
@@ -108,22 +117,19 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
       selection.add(rootContainer);
     }
 
-    final ComponentPtr[] componentPtrs = new ComponentPtr[selection.size()];
-    for (int i = 0; i < selection.size(); i++) {
-      componentPtrs [i] = new ComponentPtr(myEditor, selection.get(i));
+    List<Promise<TreeVisitor>> treeVisitors = new ArrayList<>(selection.size());
+    for (RadComponent s : selection) {
+      ComponentPtr componentPtr = new ComponentPtr(myEditor, s);
+      treeVisitors.add(myStructureTreeModel.promiseVisitor(componentPtr));
     }
 
     // Set selection in the tree
-    select(componentPtrs, null);
-
-    // Notify the ComponentTree that selected component changed
-    myEditor.fireSelectedComponentChanged();
-  }
-
-  @Override
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    return new StatusBarProgress();
+    Promises.collectResults(treeVisitors).onProcessed(visitors -> {
+      TreeUtil.promiseSelect(myTree, visitors.stream()).onProcessed(__ -> {
+        // Notify the ComponentTree that selected component changed
+        myEditor.fireSelectedComponentChanged();
+      });
+    });
   }
 
   /**
@@ -171,20 +177,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
   private final class MyHierarchyChangeListener implements HierarchyChangeListener{
     @Override
     public void hierarchyChanged(){
-      if (myInsideChange>0) {
-        return;
-      }
-
-      myInsideChange++;
-      try{
-        queueUpdate().doWhenDone(() -> {
-          // After updating the tree we have to synchronize the selection in the tree
-          // with selected element in the hierarchy
-          syncSelection();
-        });
-      }finally{
-        myInsideChange--;
-      }
+      invalidateAndSyncSelection();
     }
   }
 
@@ -202,22 +195,27 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
+  public void invalidateAsync() {
+    myStructureTreeModel.invalidateAsync();
+  }
+
+  private void invalidateAndSyncSelection() {
+    myStructureTreeModel.invalidateAsync().thenRun(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // After updating the tree we have to synchronize the selection in the tree
+        // with selected element in the hierarchy
+        syncSelection();
+      });
+    });
+  }
+
   private void updateSelection() {
     final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(myEditor).getPropertyInspector();
     if (propertyInspector.isEditing()) {
       propertyInspector.stopEditing();
     }
 
-    if(myInsideChange > 0){
-      return;
-    }
-    myInsideChange++;
-    try {
-      updateFromRoot();
-      syncSelection();
-    } finally {
-      myInsideChange--;
-    }
+    invalidateAndSyncSelection();
   }
 
   /**
@@ -230,7 +228,11 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
         return;
       }
 
-      final Set<ComponentPtr> selectedElements = getSelectedElements(ComponentPtr.class);
+      final Set<ComponentPtr> selectedElements = TreeUtil.collectSelectedObjectsOfType(myTree, ComponentPtrDescriptor.class)
+        .stream()
+        .map(descriptor -> descriptor.getElement())
+        .collect(Collectors.toSet());
+
       myInsideChange++;
       try{
         FormEditingUtil.clearSelection(myEditor.getRootContainer());
