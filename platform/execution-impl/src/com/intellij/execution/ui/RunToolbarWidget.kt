@@ -55,6 +55,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -788,7 +789,8 @@ private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: S
 
 @Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationStartHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-internal class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
+@ApiStatus.Internal
+class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")
@@ -859,6 +861,7 @@ internal class RunConfigurationStartHistory(private val project: Project) : Pers
   }
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
   }
 }
