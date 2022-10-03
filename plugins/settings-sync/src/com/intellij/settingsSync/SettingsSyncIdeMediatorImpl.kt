@@ -97,7 +97,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
 
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
-    LOG.debug("Collected files for the following fileSpecs: $fileStates")
+    LOG.debug("Collected files for the following fileSpecs: ${fileStates.map { it.file }}")
 
     val pluginsState = SettingsSyncPluginManager.getInstance().updateStateFromIdeOnStart(lastSavedSnapshot.plugins)
     LOG.debug("Collected following plugin state: $pluginsState")
