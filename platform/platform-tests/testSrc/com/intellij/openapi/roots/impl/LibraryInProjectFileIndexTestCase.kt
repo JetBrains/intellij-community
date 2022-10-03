@@ -52,7 +52,7 @@ abstract class LibraryInProjectFileIndexTestCase {
   fun `library roots`() {
     val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("lib-src")
     val docRoot = projectModel.baseProjectDir.newVirtualDirectory("lib-doc")
-    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib-exc")
+    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/lib-exc")
     val library = createLibrary {
       it.addRoot(root, OrderRootType.CLASSES)
       it.addRoot(srcRoot, OrderRootType.SOURCES)
@@ -120,10 +120,12 @@ abstract class LibraryInProjectFileIndexTestCase {
 
   @Test
   fun `add and remove excluded root from library`() {
-    val library = createLibrary()
-    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("exc")
+    val library = createLibrary {
+      it.addRoot(root, OrderRootType.CLASSES)
+    }
+    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/exc")
     ModuleRootModificationUtil.addDependency(module, library)
-    fileIndex.assertScope(excludedRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(excludedRoot, IN_LIBRARY)
 
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedRoot.url)
@@ -133,7 +135,7 @@ abstract class LibraryInProjectFileIndexTestCase {
     projectModel.modifyLibrary(library) {
       it.removeExcludedRoot(excludedRoot.url)
     }
-    fileIndex.assertScope(excludedRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(excludedRoot, IN_LIBRARY)
   }
 
   @Test
