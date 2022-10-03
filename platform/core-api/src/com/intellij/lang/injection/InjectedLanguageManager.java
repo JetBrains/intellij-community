@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,6 +27,10 @@ public abstract class InjectedLanguageManager {
     return project.getService(InjectedLanguageManager.class);
   }
 
+  /**
+   * Used to indicate a psi file should not be checked for errors, see e.g. {@link org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter}.
+   * Set in user data ({@link UserDataHolder}) on for example a string expression that can not be completely evaluated at compile time.
+   */
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider);
