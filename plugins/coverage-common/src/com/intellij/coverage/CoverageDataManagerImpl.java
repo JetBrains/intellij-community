@@ -228,9 +228,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
-                                        final boolean collectLineInfo,
+                                        final boolean coverageByTestEnabled,
                                         final boolean tracingEnabled) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled);
+    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, tracingEnabled);
     addCoverageSuite(suite, suiteToMergeWith);
     return suite;
   }
@@ -652,14 +652,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                             final String[] filters,
                                             final long lastCoverageTimeStamp,
                                             final String suiteToMergeWith,
-                                            final boolean collectLineInfo,
+                                            final boolean coverageByTestEnabled,
                                             final boolean tracingEnabled) {
 
     CoverageSuite suite = null;
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (coverageRunner.acceptsCoverageEngine(engine)) {
         suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp,
-                                           suiteToMergeWith, collectLineInfo, tracingEnabled, false, myProject);
+                                           suiteToMergeWith, coverageByTestEnabled, tracingEnabled, false, myProject);
         if (suite != null) {
           break;
         }
