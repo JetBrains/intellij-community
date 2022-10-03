@@ -61,6 +61,10 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
         doTest()
     }
 
+    fun testTypeReference() {
+        doTest()
+    }
+
     private fun doTest() {
         myFixture.configureByFile(getTestName(true) + ".kt")
         val findUsages = findUsages(myFixture.elementAtCaret, null, false, myFixture.project)

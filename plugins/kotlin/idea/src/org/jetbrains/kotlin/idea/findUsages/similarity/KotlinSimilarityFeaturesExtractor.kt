@@ -54,10 +54,15 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement
         super.visitUnaryExpression(expression)
     }
 
+    override fun visitTypeReference(typeReference: KtTypeReference) {
+        myUsageSimilarityFeaturesRecorder.addAllFeatures(typeReference, "TYPE: ${typeReference.nameForReceiverLabel()}")
+        super.visitTypeReference(typeReference)
+    }
+
     override fun visitReferenceExpression(expression: KtReferenceExpression) {
         var feature = "REFERENCE: "
         val parent = expression.parent
-        if (parent is KtQualifiedExpression && parent.firstChild != expression) {
+        if (fieldOrMethodReference(parent, expression) || parent is KtUserType) {
             if (expression is KtNameReferenceExpression) {
                 feature = "{REFERENCE: ${expression.getReferencedName()}}"
             }
@@ -65,5 +70,8 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement
         myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, feature)
         super.visitReferenceExpression(expression)
     }
+
+    private fun fieldOrMethodReference(parent: PsiElement?, expression: KtReferenceExpression) =
+        parent is KtQualifiedExpression && parent.firstChild != expression
 
 }
