@@ -46,15 +46,16 @@ public class CopyReferenceAction extends DumbAwareAction {
 
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    List<PsiElement> elements = getPsiElements(dataContext, editor);
     if (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) {
       enabled = true;
     }
     else {
-      List<PsiElement> elements = getPsiElements(dataContext, editor);
       enabled = !elements.isEmpty();
       plural = elements.size() > 1;
       paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
     }
+    e.getPresentation().putClientProperty(CopyPathProvider.QUALIFIED_NAME, getQualifiedName(editor, elements));
 
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
