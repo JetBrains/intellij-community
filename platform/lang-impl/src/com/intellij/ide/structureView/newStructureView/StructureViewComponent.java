@@ -638,7 +638,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
 
     @Override
-    protected void scrollToSource(Component tree) {
+    protected void scrollToSource(@NotNull Component tree) {
       if (isDisposed()) return;
       myAutoscrollFeedback = true;
 

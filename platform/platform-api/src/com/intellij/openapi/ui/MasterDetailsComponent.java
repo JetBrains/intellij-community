@@ -186,7 +186,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
 
       @Override
-      protected void scrollToSource(Component tree) {
+      protected void scrollToSource(@NotNull Component tree) {
         updateSelectionFromTree();
       }
 
