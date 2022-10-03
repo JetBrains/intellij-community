@@ -758,5 +758,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ABSTRACT_SUPER_CALL.registerFactory(AbstractSuperCallFix)
         ABSTRACT_SUPER_CALL_WARNING.registerFactory(AbstractSuperCallFix)
+
+        WRONG_EXTENSION_FUNCTION_TYPE.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
+        WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
     }
 }
