@@ -231,12 +231,16 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                         final boolean collectLineInfo,
                                         final boolean tracingEnabled) {
     final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled);
-    if (suiteToMergeWith == null || !name.equals(suiteToMergeWith)) {
+    addCoverageSuite(suite, suiteToMergeWith);
+    return suite;
+  }
+
+  public void addCoverageSuite(final CoverageSuite suite, @Nullable final String suiteToMergeWith) {
+    if (suiteToMergeWith == null || !suite.getPresentableName().equals(suiteToMergeWith)) {
       removeCoverageSuite(suite);
     }
     myCoverageSuites.remove(suite); // remove previous instance
     myCoverageSuites.add(suite); // add new instance
-    return suite;
   }
 
   @Override
