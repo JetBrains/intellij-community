@@ -123,6 +123,20 @@ class CollectChangesInBuilderTest {
     assertEquals("to remove", parentChange.entity.parentProperty)
   }
 
+  @Test
+  fun `remove child by modifying parent`() {
+    val parent = builder.addParentEntity()
+    builder.addChildEntity(parent, "to remove")
+    val snapshot = builder.toSnapshot()
+    val newBuilder = createBuilderFrom(snapshot)
+    newBuilder.modifyEntity(snapshot.entities(XParentEntity::class.java).single()) {
+      children = emptyList()
+    }
+    val changes = newBuilder.collectChanges(snapshot)
+    val childChanges = changes.getValue(XChildEntity::class.java)
+    assertEquals("to remove", (childChanges.single() as EntityChange.Removed<XChildEntity>).oldEntity.childProperty)
+  }
+
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
     val changes = builder.collectChanges(initialStorage)
     if (changes.isEmpty()) return emptyList()
