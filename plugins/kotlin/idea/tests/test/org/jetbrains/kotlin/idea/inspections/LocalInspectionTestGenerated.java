@@ -1728,6 +1728,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/primitiveArrayFlatMap.kt");
             }
 
+            @TestMetadata("sequenceListFlatMap.kt")
+            public void testSequenceListFlatMap() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCall/sequenceListFlatMap.kt");
+            }
+
             @TestMetadata("set.kt")
             public void testSet() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCall/set.kt");
