@@ -45,8 +45,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
                                                                           JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41)));
 
+  protected static final int DEFAULT_BORDER_COMPENSATION = 1;
+
   private float myArc = COMPONENT_ARC.getFloat();
-  private Insets myBorderCompensation = JBUI.insets(1);
+  private Insets myBorderCompensation = JBUI.insets(DEFAULT_BORDER_COMPENSATION);
   private boolean myPaintArrowButton = true;
 
   public DarculaComboBoxUI() {}
