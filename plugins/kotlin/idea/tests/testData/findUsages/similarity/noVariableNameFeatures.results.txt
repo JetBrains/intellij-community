@@ -1,0 +1,4 @@
+[{
+7|print(a.|doFoo|(a)),
+8|print(b.|doFoo|(b))}
+]
