@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
@@ -136,7 +135,7 @@ class NewUIFeedbackDialog(
       }
       row {
         cell(MultiLineLabel(NewUIFeedbackBundle.message("dialog.description")))
-      }.bottomGap(BottomGap.MEDIUM)
+      }.bottomGap(BottomGap.SMALL)
 
       row {
         ratingComponent = RatingComponent().also {
@@ -211,9 +210,7 @@ class NewUIFeedbackDialog(
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }
-    return JBScrollPane(mainPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
-      border = JBEmptyBorder(0)
-    }
+    return mainPanel
   }
 
   override fun createActions(): Array<Action> {

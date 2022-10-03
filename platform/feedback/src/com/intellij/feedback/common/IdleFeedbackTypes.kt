@@ -4,6 +4,7 @@ package com.intellij.feedback.common
 import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.feedback.new_ui.state.NewUIInfoService
@@ -84,7 +85,7 @@ enum class IdleFeedbackTypes {
   },
   NEW_UI_FEEDBACK {
     override val suitableIdeVersion: String = "2022.3"
-    private val lastDayCollectFeedback = LocalDate(2022, 11, 29)
+    private val lastDayCollectFeedback = LocalDate(2022, 11, 15)
     private val maxNumberNotificationShowed = 1
     private val minNumberDaysElapsed = 5
 
@@ -148,6 +149,10 @@ enum class IdleFeedbackTypes {
     override fun getCancelFeedbackNotificationLabel(): String {
       return NewUIFeedbackBundle.getMessage("notification.request.feedback.cancel.feedback")
     }
+
+    override fun getNotificationOnCancelAction(project: Project?): () -> Unit {
+      return { CancelFeedbackNotification().notify(project) }
+    }
   };
 
   protected abstract val suitableIdeVersion: String
@@ -178,6 +183,10 @@ enum class IdleFeedbackTypes {
     return CommonFeedbackBundle.message("notification.request.feedback.action.dont.show.text")
   }
 
+  protected open fun getNotificationOnCancelAction(project: Project?): () -> Unit {
+    return {}
+  }
+
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
     notification.addAction(
@@ -191,6 +200,7 @@ enum class IdleFeedbackTypes {
         if (!forTest) {
           isFeedbackNotificationDisabled = true
         }
+        getNotificationOnCancelAction(project)()
       }
     )
     notification.notify(project)
