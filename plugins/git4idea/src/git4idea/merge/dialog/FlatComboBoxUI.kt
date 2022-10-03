@@ -58,6 +58,9 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getOuterShape(r: Rectangle, bw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      return super.getOuterShape(r, bw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left.toFloat(),
                              outerInsets.top.toFloat(),
                              r.width - outerInsets.left.toFloat() - outerInsets.right.toFloat(),
@@ -65,6 +68,9 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getInnerShape(r: Rectangle, bw: Float, lw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      return super.getInnerShape(r, bw, lw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left + lw * border.left,
                              outerInsets.top + lw,
                              r.width - (outerInsets.left + lw * border.left) - (outerInsets.right + lw * border.right),
