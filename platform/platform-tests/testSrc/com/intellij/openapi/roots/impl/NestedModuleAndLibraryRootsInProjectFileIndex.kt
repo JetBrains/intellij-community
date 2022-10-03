@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE
@@ -15,7 +16,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -90,10 +90,12 @@ class NestedModuleAndLibraryRootsInProjectFileIndex {
     PsiTestUtil.addExcludedRoot(module, excludedDir)
     fileIndex.assertScope(file, IN_LIBRARY)
 
-    PsiTestUtil.removeExcludedRoot(module, excludedDir)
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(excludedDir.url)
     }
+    fileIndex.assertScope(file, EXCLUDED, module)
+    
+    PsiTestUtil.removeExcludedRoot(module, excludedDir)
     fileIndex.assertScope(file, IN_CONTENT, module)
 
     projectModel.modifyLibrary(library) {
