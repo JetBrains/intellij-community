@@ -51,6 +51,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private int hoverTab = -1;
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
+  private boolean tabBackgroundOnlyForHover;
 
   private static final JBValue OFFSET = new JBValue.Float(1);
 
@@ -72,6 +73,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       tabPane.setLayout(new WrappingLayout((TabbedPaneLayout)tabPane.getLayout()));
       tabPane.add(myShowHiddenTabsButton = new ShowHiddenTabsButton());
     }
+    tabBackgroundOnlyForHover = Boolean.TRUE.equals(tabPane.getClientProperty("TabbedPane.tabBackgroundOnlyForHover"));
   }
 
   @Override
@@ -312,6 +314,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
         g.setColor(c);
       }
+    }
+
+    if (tabBackgroundOnlyForHover && tabIndex != hoverTab) {
+      return;
     }
 
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {

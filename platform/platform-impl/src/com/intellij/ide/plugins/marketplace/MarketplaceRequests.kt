@@ -10,9 +10,7 @@ import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -423,6 +421,25 @@ class MarketplaceRequests : PluginInfoProvider {
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
+  fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
+    val externalPluginId = pluginNode.externalPluginId ?: return null
+
+    try {
+      return readOrUpdateFile(
+        Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
+        "${pluginManagerUrl}/files/${externalPluginId}/meta.json",
+        null,
+        ""
+      ) { objectMapper.readValue(it, object : TypeReference<IntellijPluginMetadata>() {}) }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      return null
+    }
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(
     pluginId: PluginId,
@@ -517,6 +534,27 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   private fun parseXmlIds(input: InputStream) = objectMapper.readValue(input, object : TypeReference<Set<PluginId>>() {})
+
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  fun loadPluginReviews(pluginNode: PluginNode, page: Int): List<PluginReviewComment>? {
+    try {
+      val pluginId = URLUtil.encodeURIComponent(pluginNode.pluginId.idString)
+      val pageValue = if (page == 1) "" else "?page=$page"
+      return HttpRequests
+        .request(Urls.newFromEncoded("${pluginManagerUrl}/api/products/intellij/plugins/${pluginId}/comments${pageValue}"))
+        .setHeadersViaTuner()
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
+        }
+    }
+    catch (e: IOException) {
+      LOG.error(e)
+      return null
+    }
+  }
 }
 
 /**

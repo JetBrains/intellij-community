@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -351,7 +352,8 @@ public final class PluginManagerConfigurable
       @NotNull
       @Override
       protected PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModel, searchListener, true);
+        boolean multiTabs = Registry.is("plugins.show.multi.tabs", false);
+        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModel, searchListener, true, multiTabs);
         myPluginModel.addDetailPanel(detailPanel);
         return detailPanel;
       }
