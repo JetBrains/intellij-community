@@ -23,7 +23,6 @@ public abstract class ActionPlaces {
   public static final String MOUSE_SHORTCUT = "mouse shortcut";
   public static final String FORCE_TOUCH = "force touch";
   public static final String MAIN_MENU = "MainMenu";
-  public static final String MAIN_MENU_IN_POPUP = "MainMenuInPopup";
 
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
@@ -196,7 +195,6 @@ public abstract class ActionPlaces {
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
-           MAIN_MENU_IN_POPUP.equals(place) ||
            place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
   }
 
@@ -242,7 +240,7 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
-    MAIN_MENU_IN_POPUP, PROJECT_WIDGET_POPUP
+    PROJECT_WIDGET_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
