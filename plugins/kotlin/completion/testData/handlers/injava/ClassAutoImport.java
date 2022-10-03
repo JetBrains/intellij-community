@@ -5,3 +5,5 @@ public class Testing {
 }
 
 // INVOCATION_COUNT: 2
+// FIR_IDENTICAL
+// FIR_COMPARISON
