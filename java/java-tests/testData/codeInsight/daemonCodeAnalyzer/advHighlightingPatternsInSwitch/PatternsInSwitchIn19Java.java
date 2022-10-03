@@ -29,5 +29,12 @@ class X {
     return 2;
   }
 
+  void unconditionalGuardAndDefault(Object obj) {
+    switch (obj) {
+      case <error descr="'switch' has both a total pattern and a default label">Object o when true</error> -> {}
+      <error descr="'switch' has both a total pattern and a default label">default</error> -> {}
+    }
+  }
+
   native static boolean predicate();
 }
