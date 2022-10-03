@@ -11704,6 +11704,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testJvmOverloadsOnAnnotationClassConstructor() throws Exception {
             runTest("testData/quickfix/removeAnnotation/jvmOverloadsOnAnnotationClassConstructor.kt");
         }
+
+        @TestMetadata("wrongExtenstionFunctionType.kt")
+        public void testWrongExtenstionFunctionType() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/wrongExtenstionFunctionType.kt");
+        }
+
+        @TestMetadata("wrongExtenstionFunctionTypeWarning.kt")
+        public void testWrongExtenstionFunctionTypeWarning() throws Exception {
+            runTest("testData/quickfix/removeAnnotation/wrongExtenstionFunctionTypeWarning.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

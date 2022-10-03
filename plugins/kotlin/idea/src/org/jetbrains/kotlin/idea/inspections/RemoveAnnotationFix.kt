@@ -37,6 +37,13 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
         }
     }
 
+    object ExtensionFunctionType : KotlinSingleIntentionActionFactory() {
+        override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
+            val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
+            return RemoveAnnotationFix(KotlinBundle.message("remove.extension.function.type.annotation"), annotationEntry)
+        }
+    }
+
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): RemoveAnnotationFix? {
             val annotationEntry = diagnostic.psiElement as? KtAnnotationEntry ?: return null
