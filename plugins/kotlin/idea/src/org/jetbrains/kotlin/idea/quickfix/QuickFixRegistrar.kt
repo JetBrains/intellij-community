@@ -171,6 +171,8 @@ class QuickFixRegistrar : QuickFixContributor {
         NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
         TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.registerFactory(ImportForMismatchingArgumentsFix)
 
+        INFERRED_INTO_DECLARED_UPPER_BOUNDS.registerFactory(InsertExplicitTypeArgumentsIntention)
+
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(ImportFix)
 
         FUNCTION_EXPECTED.registerFactory(InvokeImportFix)
