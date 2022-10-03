@@ -18,7 +18,7 @@ import java.util.function.Consumer
 /**
  * @author ilyas
  */
-class OptimizeImportsTest extends LightGroovyTestCase {
+class GroovyOptimizeImportsTest extends LightGroovyTestCase {
 
   final String basePath = "${TestUtils.testDataPath}optimizeImports/"
 
