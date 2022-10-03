@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
+  private static final int MY_PARAM_LENGTH_LIMIT = 50;
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
     ParameterFlag.DISABLE, ParameterInfoUIContextEx.Flag.DISABLE,
@@ -84,10 +85,19 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     if (parameterHints == null) return;
 
     String[] hints = ArrayUtilRt.toStringArray(parameterHints.getHints());
+    String[] annotations = ArrayUtilRt.toStringArray(parameterHints.getAnnotations());
     if (context instanceof ParameterInfoUIContextEx) {
       //noinspection unchecked
       EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
       for (int i = 0; i < flags.length; i++) {
+        EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
+        if (!curFlags.contains(ParameterFlag.HIGHLIGHT) && i < hints.length && hints[i].length() > MY_PARAM_LENGTH_LIMIT &&
+            i < annotations.length) {
+          String annotation = annotations[i];
+          if (!annotation.isEmpty() && annotation.length() < hints[i].length()) {
+            hints[i] = annotation;
+          }
+        }
         flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
           .map(PARAM_FLAG_TO_UI_FLAG::get)
           .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
