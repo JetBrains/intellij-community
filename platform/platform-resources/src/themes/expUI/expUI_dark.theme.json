@@ -267,6 +267,11 @@
       }
     },
 
+    "MainMenu": {
+      "selectionForeground": "Grey12",
+      "selectionBackground": "Grey3"
+    },
+
     "MemoryIndicator": {
       "allocatedBackground": "Grey1",
       "usedBackground": "#35538F80"

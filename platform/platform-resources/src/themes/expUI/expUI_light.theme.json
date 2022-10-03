@@ -299,7 +299,7 @@
       "background": "Grey2",
       "foreground": "Grey11",
       "selectionForeground": "Grey11",
-      "selectionBackground": "Grey1"
+      "selectionBackground": "Grey3"
     },
 
     "MemoryIndicator": {
@@ -523,15 +523,15 @@
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "#383A42B3",
-        "pressedBackground": "#383A42B3"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "foreground": "Grey11",
         "borderInsets": "3,12,3,6",
         "background": "Grey2",
-        "hoverBackground": "#383A42B3",
-        "pressedBackground": "#383A42B3"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Button": {
         "buttonInsets": "0,0,0,0"
