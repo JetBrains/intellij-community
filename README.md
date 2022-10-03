@@ -77,14 +77,14 @@ The "Contribute Code" section of that site describes how you can contribute to I
 
 ## Running IntelliJ IDEA on CI/CD environment
 
-To run tests outside of IntelliJ IDEA, run the `tests. cmd` command in the `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
+To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in the `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
 
-Options to run tests are passed as system properties to the `tests. cmd` command.
+Options to run tests are passed as system properties to the `tests.cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
-* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intelliJ.util.ArrayUtilTest`
+* Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
-You may call it directly from IDEA, see run configuration `tests in the community for an example.
+You may call it directly from IDEA, see run configuration `tests in community' for an example.
