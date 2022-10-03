@@ -273,7 +273,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       })
     }
     else {
-      LOG.info("Nothing to push")
+      LOG.debug("Nothing to push")
     }
   }
 

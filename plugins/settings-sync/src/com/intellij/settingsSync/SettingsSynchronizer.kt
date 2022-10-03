@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
@@ -61,7 +60,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncing("Syncing settings on app focus")
+      scheduleSyncingOnAppFocus()
     }
   }
 
@@ -87,9 +86,9 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
   }
 
-  private fun scheduleSyncing(logMessage: String) {
+  private fun scheduleSyncingOnAppFocus() {
     executorService.schedule(Runnable {
-      LOG.info(logMessage)
+      LOG.debug("Syncing settings on app focus")
       syncSettings()
     }, 0, TimeUnit.SECONDS)
   }
@@ -98,7 +97,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
-      LOG.info("Syncing settings by timer")
+      LOG.debug("Syncing settings by timer")
       syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
   }
@@ -133,7 +132,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
           LOG.info("No file on server")
         }
         ServerState.UpToDate -> {
-          LOG.info("Updating settings is not needed, will check if push is needed")
+          LOG.debug("Updating settings is not needed, will check if push is needed")
           SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
         }
         is ServerState.Error -> {
