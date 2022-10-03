@@ -392,12 +392,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   public void resetView() {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       ((CoverageListRootNode)myTreeStructure.getRootElement()).reset();
-      resetModel();
+      myModel.reset(true);
     });
-  }
-
-  private void resetModel() {
-    myModel.reset();
   }
 
   private final class FlattenPackagesAction extends ToggleAction {
@@ -414,7 +410,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
-      resetModel();
+      myModel.reset(false);
     }
 
     @Override
