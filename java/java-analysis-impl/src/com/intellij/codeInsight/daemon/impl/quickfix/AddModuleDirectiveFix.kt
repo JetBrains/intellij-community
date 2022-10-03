@@ -42,15 +42,44 @@ class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: S
   }
 }
 
-class AddExportsDirectiveFix(module: PsiJavaModule,
-                             private val packageName: String,
-                             private val targetName: String) : AddModuleDirectiveFix(module) {
+class AddExportsDirectiveFix(
+  module: PsiJavaModule,
+  private val packageName: String,
+  targetName: String
+) : AddPackageAccessibilityFix(PsiKeyword.EXPORTS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
-    val existing = module.exports.find { packageName == it.packageName }
+    addPackageAccessibility(project, module, module.exports)
+  }
+}
+
+class AddOpensDirectiveFix(
+  module: PsiJavaModule,
+  private val packageName: String,
+  targetName: String
+) : AddPackageAccessibilityFix(PsiKeyword.OPENS, module, packageName, targetName) {
+  override fun getText(): String = QuickFixBundle.message("module.info.add.opens.name", packageName)
+
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+    addPackageAccessibility(project, module, module.opens)
+  }
+}
+
+abstract class AddPackageAccessibilityFix(
+  private val directive: String,
+  module: PsiJavaModule,
+  private val packageName: String,
+  private val targetName: String
+) : AddModuleDirectiveFix(module) {
+  protected fun addPackageAccessibility(
+    project: Project,
+    module: PsiJavaModule,
+    accessibilityStatements: Iterable<PsiPackageAccessibilityStatement>
+  ) {
+    val existing = accessibilityStatements.find { packageName == it.packageName }
     if (existing == null) {
-      PsiUtil.addModuleStatement(module, PsiKeyword.EXPORTS + ' ' + packageName)
+      PsiUtil.addModuleStatement(module, "$directive $packageName")
     }
     else if (!targetName.isEmpty()) {
       val targets = existing.moduleNames

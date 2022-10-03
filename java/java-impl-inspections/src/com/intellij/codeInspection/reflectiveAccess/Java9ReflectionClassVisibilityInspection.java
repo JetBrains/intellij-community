@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddOpensDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -85,7 +86,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
                 holder.registerProblem(classNameArgument, message, new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName()));
               } else {
                 final String message = JavaBundle.message("module.package.not.open", otherModule.getName(), packageName, javaModule.getName());
-                holder.registerProblem(classNameArgument, message);
+                holder.registerProblem(classNameArgument, message, new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName()));
               }
             }
           }
