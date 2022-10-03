@@ -64,6 +64,10 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
   }
 
+  fun update(interval: NotebookCellLines.Interval) {
+    update(interval.lines)
+  }
+
   fun update(lines: IntRange) {
     // TODO Hypothetically, there can be a race between cell addition/deletion and updating of old cells.
     updateQueue.queue(UpdateInlaysTask(this, lines))
@@ -395,7 +399,7 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 }
 
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager, lines: IntRange) : Update(Any()) {
-  private val linesList = SmartList(lines)
+  private val linesList = SmartList<IntRange>(lines)
 
   override fun run() {
     for (lines in linesList) {
