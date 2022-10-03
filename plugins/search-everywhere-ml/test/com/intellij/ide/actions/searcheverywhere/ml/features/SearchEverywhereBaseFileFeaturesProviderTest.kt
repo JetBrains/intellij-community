@@ -1,6 +1,5 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider
 import com.intellij.internal.statistic.local.TestFileTypeUsageSummaryProvider
 import com.intellij.openapi.application.WriteAction

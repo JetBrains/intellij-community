@@ -1,6 +1,5 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereClassOrFileFeaturesProvider.Companion.FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY

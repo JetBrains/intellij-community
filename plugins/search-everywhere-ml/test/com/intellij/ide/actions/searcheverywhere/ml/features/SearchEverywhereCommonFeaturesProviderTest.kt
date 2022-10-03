@@ -1,6 +1,5 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCommonFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCommonFeaturesProvider.Companion.PRIORITY_DATA_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereCommonFeaturesProvider.Companion.TOTAL_SYMBOLS_AMOUNT_DATA_KEY
 

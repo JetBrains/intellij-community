@@ -1,8 +1,6 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
-import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project

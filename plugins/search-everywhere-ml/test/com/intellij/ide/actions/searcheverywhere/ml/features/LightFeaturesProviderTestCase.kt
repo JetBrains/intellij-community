@@ -1,6 +1,5 @@
-package com.intellij.ide.actions.searcheverywhere.ml
+package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightPlatformTestCase
 
