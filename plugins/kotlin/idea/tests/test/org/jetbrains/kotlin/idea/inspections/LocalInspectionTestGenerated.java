@@ -10259,6 +10259,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/functionType.kt");
         }
 
+        @TestMetadata("inferredIntoUpperBounds.kt")
+        public void testInferredIntoUpperBounds() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inferredIntoUpperBounds.kt");
+        }
+
         @TestMetadata("ktij-10623.kt")
         public void testKtij_10623() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ktij-10623.kt");
