@@ -57,9 +57,9 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
 
     if (file != null && getSelectedFile() == file) return;
 
-    CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)myTodoTreeBuilder;
+    CurrentFileTodosTreeBuilder builder = (CurrentFileTodosTreeBuilder)getTreeBuilder();
     builder.setFile(file);
-    if (myTodoTreeBuilder.isUpdatable() || initialUpdate) {
+    if (builder.isUpdatable() || initialUpdate) {
       Object selectableElement = builder.getTodoTreeStructure().getFirstSelectableElement();
       if (selectableElement != null) {
         builder.select(selectableElement);

@@ -118,19 +118,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     ScopeBased
   }
 
-  @TestOnly
-  public TodoTreeBuilder getBuilderAndAllowUpdatesOnIt(Scope scope) {
-    TodoTreeBuilder builder = switch (scope) {
-      case AllTodos -> myAllTodos.myTodoTreeBuilder;
-      case ChangeList -> myChangeListTodosPanel.myTodoTreeBuilder;
-      case CurrentFile -> myCurrentFileTodosPanel.myTodoTreeBuilder;
-      case ScopeBased -> myScopeBasedTodosPanel.myTodoTreeBuilder;
-    };
-
-    builder.setUpdatable(true);
-    return builder;
-  }
-
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.getInstance();
@@ -263,7 +250,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
         if (myAllTodos != null) {
           for (TodoPanel panel : myPanels) {
-            panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
+            panel.getTreeBuilder().collectFiles(virtualFile -> {
               files.computeIfAbsent(panel, __ -> new HashSet<>()).add(virtualFile);
               return true;
             });
