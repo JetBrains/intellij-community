@@ -32,7 +32,7 @@ import static java.nio.file.StandardOpenOption.*;
  * TODO not all metrics types are supported now, see .toCSVLine()
  * MAYBE roll output files daily/hourly?
  */
-public class CsvMetricsExporter implements MetricExporter {
+public final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
 
   @NotNull

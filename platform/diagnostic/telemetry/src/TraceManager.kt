@@ -138,12 +138,8 @@ object TraceManager {
 
   private fun deriveMetricsFile(traceFile: String): String {
     val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
-    val datetimeStr = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
-      .format(sessionLocalDateTime)
-    val metricsFile =
-      (if (traceFile.endsWith(".json")) traceFile.replace(Regex(".json$"), "")
-      else traceFile) + ".metrics.$datetimeStr.csv"
-    return metricsFile
+    val dateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS").format(sessionLocalDateTime)
+    return (if (traceFile.endsWith(".json")) traceFile.replace(Regex(".json$"), "") else traceFile) + ".metrics.$dateTime.csv"
   }
 
   /**
