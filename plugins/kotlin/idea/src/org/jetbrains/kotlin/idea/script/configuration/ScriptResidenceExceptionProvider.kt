@@ -16,10 +16,10 @@ internal open class ScriptResidenceExceptionProvider(
 }
 
 internal val scriptResidenceExceptionProviders = listOf(
-    object : ScriptResidenceExceptionProvider(".gradle.kts", true) {},
-    object : ScriptResidenceExceptionProvider(".main.kts") {},
-    object : ScriptResidenceExceptionProvider(".space.kts") {},
-    object : ScriptResidenceExceptionProvider(".ws.kts", true) {},
+    ScriptResidenceExceptionProvider(".gradle.kts", true),
+    ScriptResidenceExceptionProvider(".main.kts"),
+    ScriptResidenceExceptionProvider(".space.kts"),
+    ScriptResidenceExceptionProvider(".ws.kts", true),
     object : ScriptResidenceExceptionProvider(".teamcity.kts", true) {
         override fun isSupportedScriptExtension(virtualFile: VirtualFile): Boolean {
             if (!virtualFile.name.endsWith(".kts")) return false
