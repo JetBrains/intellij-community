@@ -10,13 +10,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.await
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.OpenSourceUtil
 import kotlinx.coroutines.*
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 @Service(Service.Level.APP)
 private class AutoScrollToSourceTaskManager : Disposable {
@@ -31,14 +29,6 @@ private class AutoScrollToSourceTaskManager : Disposable {
 
     @JvmStatic
     fun getInstance(): AutoScrollToSourceTaskManager = ApplicationManager.getApplication().service()
-
-    private suspend fun ActionCallback.suspend() = suspendCancellableCoroutine { continuation ->
-      doWhenDone {
-        continuation.resume(Unit)
-      }.doWhenRejected { message ->
-        continuation.resumeWithException(RuntimeException(message))
-      }
-    }
 
     private fun AutoScrollToSourceHandler.canAutoScrollTo(file: VirtualFile?) =
       file == null || isAutoScrollEnabledFor(file)
@@ -55,7 +45,7 @@ private class AutoScrollToSourceTaskManager : Disposable {
     scope.launch(Dispatchers.EDT) {
       PlatformDataKeys.TOOL_WINDOW.getData(dataContext)
         ?.getReady(handler)
-        ?.suspend()
+        ?.await()
 
       val navigatable = withContext(Dispatchers.IO) {
         readAction {
