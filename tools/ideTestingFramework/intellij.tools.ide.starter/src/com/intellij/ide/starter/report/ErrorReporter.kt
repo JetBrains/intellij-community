@@ -14,10 +14,6 @@ import kotlin.io.path.listDirectoryEntries
 object ErrorReporter {
   private const val MAX_TEST_NAME_LENGTH = 250
 
-  private val listOfPatternsWhichShouldBeIgnored = listOf(
-    "No files have been downloaded for .+:.+".toRegex()
-  )
-
   /**
    * Read files from errors directories, written by performance testing plugin.
    * Report them as an individual failures on CI
@@ -36,9 +32,7 @@ object ErrorReporter {
         val messageText = generifyErrorMessage(messageFile.readText().trimIndent().trim())
         val stackTraceContent = stacktraceFile.readText().trimIndent().trim()
 
-        if (checkIfShouldBeIgnored(messageText)) {
-          return@forEach
-        }
+         val errorShouldBeIgnored = di.direct.instance<CIServer>().checkIfShouldBeIgnored(messageText)
 
         val testName: String
 
@@ -55,19 +49,17 @@ object ErrorReporter {
 
         val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext)
 
-        di.direct.instance<CIServer>().reportTestFailure(testName = generifyErrorMessage(testName),
-                                                         message = failureDetails,
-                                                         details = stackTraceContent)
+        if (errorShouldBeIgnored) {
+          di.direct.instance<CIServer>().ignoreTestFailure(testName = generifyErrorMessage(testName),
+                                                           message = failureDetails,
+                                                           details = stackTraceContent)
+        }
+        else {
+          di.direct.instance<CIServer>().reportTestFailure(testName = generifyErrorMessage(testName),
+                                                           message = failureDetails,
+                                                           details = stackTraceContent)
+        }
       }
     }
-  }
-
-  private fun checkIfShouldBeIgnored(message: String): Boolean {
-    listOfPatternsWhichShouldBeIgnored.forEach { pattern ->
-      if (pattern.containsMatchIn(message)) {
-        return true
-      }
-    }
-    return false
   }
 }
