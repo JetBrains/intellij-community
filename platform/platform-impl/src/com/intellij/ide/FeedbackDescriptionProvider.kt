@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 
 /**
@@ -12,5 +13,5 @@ interface FeedbackDescriptionProvider {
    * Return additional details which should be appended to the description of a created issue. It's important to return `null` if your plugin
    * isn't relevant for the passed `project` to avoid polluting created reports with unrelated data.
    */
-  fun getDescription(project: Project?): String?
+  fun getDescription(project: Project?, indicator: ProgressIndicator?): String?
 }
