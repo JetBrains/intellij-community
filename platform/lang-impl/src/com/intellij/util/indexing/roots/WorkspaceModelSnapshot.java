@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class WorkspaceModelSnapshot {
-  private final ImmutableMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> entitiesToOrigins;
+  private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins;
   private final LibrariesSnapshot libraries;
   private final SdkSnapshot sdks;
 
@@ -47,13 +47,13 @@ class WorkspaceModelSnapshot {
                                       SdkSnapshot.create(sdkIds));
   }
 
-  private WorkspaceModelSnapshot(@NotNull ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> builder,
+  private WorkspaceModelSnapshot(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder,
                                  @NotNull LibrariesSnapshot librariesSnapshot,
                                  @NotNull SdkSnapshot sdkSnapshot) {
     this(builder.build(), librariesSnapshot, sdkSnapshot);
   }
 
-  private WorkspaceModelSnapshot(@NotNull ImmutableMap<WorkspaceEntity, IndexableSetSelfDependentOrigin> entitiesToOrigins,
+  private WorkspaceModelSnapshot(@NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins,
                                  @NotNull LibrariesSnapshot librariesSnapshot,
                                  @NotNull SdkSnapshot sdkSnapshot) {
     this.entitiesToOrigins = entitiesToOrigins;
@@ -69,9 +69,10 @@ class WorkspaceModelSnapshot {
   }
 
   @NotNull
-  private static ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> createBuilder(@NotNull Project project,
-                                                                                                      @NotNull EntityStorage storage) {
-    ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> builder = new ImmutableMap.Builder<>();
+  private static ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> createBuilder(@NotNull Project project,
+                                                                                                                                 @NotNull EntityStorage storage) {
+    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder =
+      new ImmutableMap.Builder<>();
     for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (!(provider instanceof IndexableEntityProvider.ExistingEx<?>)) {
         continue;
@@ -92,7 +93,7 @@ class WorkspaceModelSnapshot {
   private static <E extends WorkspaceEntity> void handleProvider(@NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                                  @NotNull EntityStorage storage,
                                                                  @NotNull Project project,
-                                                                 @NotNull ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> entities) {
+                                                                 @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities) {
     Class<E> aClass = provider.getEntityClass();
     for (E entity : SequencesKt.asIterable(storage.entities(aClass))) {
       addOrigins(entities, entity, provider, storage, project);
@@ -103,8 +104,8 @@ class WorkspaceModelSnapshot {
   WorkspaceModelSnapshot createChangedIfNeeded(@NotNull VersionedStorageChange storageChange,
                                                @NotNull Project project) {
     EntityStorageSnapshot storage = storageChange.getStorageAfter();
-    Map<WorkspaceEntity, IndexableSetSelfDependentOrigin> toAdd = new HashMap<>();
-    Set<WorkspaceEntity> toRemove = new HashSet<>();
+    Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> toAdd = new HashMap<>();
+    Set<EntityReference<? extends WorkspaceEntity>> toRemove = new HashSet<>();
     for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof IndexableEntityProvider.ExistingEx<?>) {
         handleWorkspaceModelChange(toAdd, toRemove, storageChange, (IndexableEntityProvider.ExistingEx<?>)provider, storage, project);
@@ -114,17 +115,17 @@ class WorkspaceModelSnapshot {
     if (toAdd.isEmpty() && toRemove.isEmpty() && changedLibraries == null) {
       return null;
     }
-    ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> copy = new ImmutableMap.Builder<>();
-    for (Map.Entry<WorkspaceEntity, IndexableSetSelfDependentOrigin> entry : entitiesToOrigins.entrySet()) {
-      WorkspaceEntity entity = entry.getKey();
-      boolean removed = toRemove.remove(entity);
+    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> copy = new ImmutableMap.Builder<>();
+    for (Map.Entry<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entry : entitiesToOrigins.entrySet()) {
+      EntityReference<? extends WorkspaceEntity> entityReference = entry.getKey();
+      boolean removed = toRemove.remove(entityReference);
       if (!removed) {
-        IndexableSetSelfDependentOrigin add = toAdd.remove(entity);
+        IndexableSetSelfDependentOrigin add = toAdd.remove(entityReference);
         if (add == null) {
-          copy.put(entity, entry.getValue());
+          copy.put(entityReference, entry.getValue());
         }
         else {
-          copy.put(entity, add);
+          copy.put(entityReference, add);
         }
       }
     }
@@ -132,8 +133,8 @@ class WorkspaceModelSnapshot {
     return new WorkspaceModelSnapshot(copy, changedLibraries == null ? libraries : changedLibraries, sdks);
   }
 
-  private static <E extends WorkspaceEntity> void handleWorkspaceModelChange(@NotNull Map<WorkspaceEntity, IndexableSetSelfDependentOrigin> toAdd,
-                                                                             @NotNull Set<WorkspaceEntity> toRemove,
+  private static <E extends WorkspaceEntity> void handleWorkspaceModelChange(@NotNull Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> toAdd,
+                                                                             @NotNull Set<EntityReference<? extends WorkspaceEntity>> toRemove,
                                                                              @NotNull VersionedStorageChange storageChange,
                                                                              @NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                                              @NotNull EntityStorageSnapshot storage,
@@ -146,14 +147,14 @@ class WorkspaceModelSnapshot {
       }
       else if (change instanceof EntityChange.Replaced<E>) {
         E oldEntity = Objects.requireNonNull(change.getOldEntity());
-        toRemove.add(oldEntity);
+        toRemove.add(oldEntity.createReference());
 
         E newEntity = ((EntityChange.Replaced<E>)change).getNewEntity();
         addOrigins(toAdd, newEntity, provider, storage, project);
       }
       else if (change instanceof EntityChange.Removed<E>) {
         E entity = ((EntityChange.Removed<E>)change).getEntity();
-        toRemove.add(entity);
+        toRemove.add(entity.createReference());
       }
       else {
         throw new IllegalStateException("Unexpected change " + change.getClass());
@@ -165,7 +166,9 @@ class WorkspaceModelSnapshot {
       for (EntityChange<E> change : changes) {
         if (change instanceof EntityChange.Replaced<E>) {
           ContentRootEntity oldEntity = Objects.requireNonNull(((EntityChange.Replaced<ContentRootEntity>)change).getOldEntity());
-          toRemove.addAll(oldEntity.getSourceRoots());
+          for (SourceRootEntity root : oldEntity.getSourceRoots()) {
+            toRemove.add(root.createReference());
+          }
 
           ContentRootEntity newEntity = ((EntityChange.Replaced<ContentRootEntity>)change).getNewEntity();
           for (SourceRootEntity sourceRootEntity : newEntity.getSourceRoots()) {
@@ -176,25 +179,25 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static <E extends WorkspaceEntity> void addOrigins(@NotNull ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> entities,
+  private static <E extends WorkspaceEntity> void addOrigins(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities,
                                                              @NotNull E entity,
                                                              @NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                              @NotNull EntityStorage storage,
                                                              @NotNull Project project) {
     IndexableSetSelfDependentOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
     if (origin != null) {
-      entities.put(entity, origin);
+      entities.put(entity.createReference(), origin);
     }
   }
 
-  private static <E extends WorkspaceEntity> void addOrigins(@NotNull Map<WorkspaceEntity, IndexableSetSelfDependentOrigin> entities,
+  private static <E extends WorkspaceEntity> void addOrigins(@NotNull Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities,
                                                              @NotNull E entity,
                                                              @NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                              @NotNull EntityStorage storage,
                                                              @NotNull Project project) {
     IndexableSetSelfDependentOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
     if (origin != null) {
-      entities.put(entity, origin);
+      entities.put(entity.createReference(), origin);
     }
   }
 
@@ -203,15 +206,15 @@ class WorkspaceModelSnapshot {
                                                              @NotNull Project project) {
     if (entities.isEmpty()) return null;
     EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    Map<WorkspaceEntity, IndexableSetSelfDependentOrigin> refreshed = new HashMap<>();
+    Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> refreshed = new HashMap<>();
     for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof IndexableEntityProvider.ExistingEx<?>) {
         handleEntitiesRefresh((IndexableEntityProvider.ExistingEx<?>)provider, entities, project, storage, refreshed);
       }
     }
     if (refreshed.isEmpty()) return null;
-    ImmutableMap.Builder<WorkspaceEntity, IndexableSetSelfDependentOrigin> result = new ImmutableMap.Builder<>();
-    for (Map.Entry<WorkspaceEntity, IndexableSetSelfDependentOrigin> entry : entitiesToOrigins.entrySet()) {
+    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> result = new ImmutableMap.Builder<>();
+    for (Map.Entry<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entry : entitiesToOrigins.entrySet()) {
       IndexableSetSelfDependentOrigin newValue = refreshed.get(entry.getKey());
       if (newValue != null) {
         result.put(entry.getKey(), newValue);
@@ -227,7 +230,7 @@ class WorkspaceModelSnapshot {
                                                                         @NotNull List<? extends WorkspaceEntity> entities,
                                                                         @NotNull Project project,
                                                                         @NotNull EntityStorage storage,
-                                                                        @NotNull Map<WorkspaceEntity, IndexableSetSelfDependentOrigin> entitiesMap) {
+                                                                        @NotNull Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesMap) {
     Class<E> aClass = provider.getEntityClass();
     for (WorkspaceEntity entity : entities) {
       if (aClass.isInstance(entity)) {
@@ -237,7 +240,7 @@ class WorkspaceModelSnapshot {
           entities.remove(entity);
         }
         else {
-          entitiesMap.put(entity, origin);
+          entitiesMap.put(entity.createReference(), origin);
         }
       }
     }
