@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Comparator;
-
-import static com.intellij.ui.GuiUtils.getTextWithoutMnemonicEscaping;
 
 /**
  * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
@@ -30,7 +30,7 @@ public interface CheckoutProvider {
   @Deprecated(forRemoval = true)
   void doCheckout(@NotNull final Project project, @Nullable Listener listener);
 
-  @NonNls String getVcsName();
+  @Nls @NotNull String getVcsName();
 
   interface Listener {
     void directoryCheckedOut(File directory, VcsKey vcs);
@@ -40,7 +40,7 @@ public interface CheckoutProvider {
   class CheckoutProviderComparator implements Comparator<CheckoutProvider> {
     @Override
     public int compare(@NotNull final CheckoutProvider o1, @NotNull final CheckoutProvider o2) {
-      return getTextWithoutMnemonicEscaping(o1.getVcsName()).compareTo(getTextWithoutMnemonicEscaping(o2.getVcsName()));
+      return UIUtil.removeMnemonic(o1.getVcsName()).compareTo(UIUtil.removeMnemonic(o2.getVcsName()));
     }
   }
 
