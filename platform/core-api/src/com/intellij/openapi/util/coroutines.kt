@@ -5,7 +5,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-suspend fun ActionCallback.await() = suspendCancellableCoroutine { continuation ->
+suspend fun ActionCallback.await(): Unit = suspendCancellableCoroutine { continuation ->
   doWhenDone {
     continuation.resume(Unit)
   }.doWhenRejected { message ->
