@@ -19,7 +19,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
@@ -54,7 +53,7 @@ class NewThemeAction : AnAction() {
           .columns(30)
           .addValidationRule(DevKitThemesBundle.message("new.theme.dialog.name.empty")) { name.component.text.isBlank() }
       }
-      row(EMPTY_LABEL) {
+      row("") {
         isDark = checkBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text")).applyToComponent { isSelected = true }
       }
     }

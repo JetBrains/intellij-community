@@ -2,7 +2,6 @@
 package com.intellij.ide.util.projectWizard
 
 import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JComponent
@@ -21,7 +20,7 @@ class PanelBuilderSettingsStep(private val wizardContext: WizardContext, val bui
 
   override fun addSettingsComponent(component: JComponent) {
     with(builder) {
-      row(EMPTY_LABEL) {
+      row("") {
         cell(component).horizontalAlign(HorizontalAlign.FILL)
       }.bottomGap(BottomGap.SMALL)
     }

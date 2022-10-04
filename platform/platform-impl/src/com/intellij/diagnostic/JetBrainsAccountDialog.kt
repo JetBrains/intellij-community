@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.io.encodeUrlQueryParameter
@@ -42,7 +41,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
       cell(passwordField)
         .horizontalAlign(HorizontalAlign.FILL)
     }
-    row(EMPTY_LABEL) {
+    row("") {
       rememberCheckBox = checkBox(UIBundle.message("auth.remember.cb"))
         .applyToComponent { isSelected = remember }
         .component

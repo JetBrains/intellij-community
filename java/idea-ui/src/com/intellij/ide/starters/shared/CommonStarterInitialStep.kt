@@ -103,7 +103,7 @@ abstract class CommonStarterInitialStep(
 
     if (wizardContext.isCreatingNewProject) {
       // Git should not be enabled for single module
-      row(EMPTY_LABEL) {
+      row("") {
         checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
           .bindSelected(gitProperty)
       }.bottomGap(BottomGap.SMALL)
