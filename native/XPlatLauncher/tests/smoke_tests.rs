@@ -20,7 +20,7 @@ mod tests {
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
     fn correct_launcher_startup_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
-        let status = &run_launcher_with_default_args(&test, &[]).exit_status;
+        let status = &run_launcher_with_default_args_and_env(&test, &[], ("", "")).exit_status;
 
         let exit_status_string = exit_status_to_string(status);
         println!("Launcher's exit status:\n{exit_status_string}");
@@ -64,7 +64,7 @@ mod tests {
         let test = prepare_test_env(launcher_location);
 
         let args = &["arguments-test-123"];
-        let result = run_launcher_with_default_args(&test, args);
+        let result = run_launcher_with_default_args_and_env(&test, args, ("", ""));
         assert!(&result.exit_status.success());
 
         let dump = &result.dump.expect("Launcher exited successfully, but no dump received");
@@ -86,9 +86,14 @@ mod tests {
     #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
     fn jre_is_idea_jdk_test(#[case] launcher_location: &LayoutSpecification) {
-        let dump = run_launcher_and_get_dump(launcher_location);
+        let project_root = std::env::current_dir().unwrap();
+        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+        let dump = run_launcher_and_get_dump_with_envs(
+            launcher_location,
+            ("IU_JDK", launcher_jdk.to_str().unwrap())
+        );
 
-        assert!(std::env::var("IU_JDK").is_ok(), "IU_JDK is not set");
+        assert!(&dump.environmentVariables.contains_key("IU_JDK"), "IU_JDK is not set");
         assert!(
             !&dump.environmentVariables["IU_JDK"].is_empty(),
             "IU_JDK is not found in dumped env vars"
@@ -105,7 +110,7 @@ mod tests {
         );
         assert!(
             &dump.systemProperties["java.home"].starts_with(
-            &dump.environmentVariables["IU_JDK"]),
+                &dump.environmentVariables["IU_JDK"]),
             "Resolved java is not equal to env var"
         );
     }
@@ -172,7 +177,7 @@ mod tests {
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
     fn jre_is_jbr_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
-        let result = run_launcher_with_default_args(&test, &[]);
+        let result = run_launcher_with_default_args_and_env(&test, &[], ("", ""));
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
 
         let dump = result.dump.expect("Launcher exited successfully, but there is no output");
@@ -192,6 +197,7 @@ mod tests {
         assert!(jbr_dir.is_dir(), "Resolved JBR dir is not a directory");
         assert!(java_executable.exists(), "Resolved java executable is not exists");
         assert!(java_executable.is_executable(), "Resolved java executable is not executable");
+        // todo: turn on after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
         // assert_eq!(
         //     &dump.systemProperties["java.vendor"],
         //     "JetBrains s.r.o.",
@@ -205,6 +211,97 @@ mod tests {
         //     &dump.systemProperties["java.home"].contains("jbr"),
         //     "java.home property does not contains 'jbr' in path. Resolved java is not JBR"
         // );
+    }
+
+    #[rstest]
+    #[case::main_bin(& LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
+    #[case::plugins_bin(& LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
+    fn jre_is_jdk_home_test(#[case] launcher_location: &LayoutSpecification) {
+        let project_root = std::env::current_dir().unwrap();
+        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+        let dump = run_launcher_and_get_dump_with_envs(
+            launcher_location,
+            ("JDK_HOME", launcher_jdk.to_str().unwrap())
+        );
+
+        assert!(
+            std::env::var("IU_JDK").is_err(),
+            "IU_JDK var is present. It has a higher priority than tested var"
+        );
+
+        assert!(&dump.environmentVariables.contains_key("JDK_HOME"), "JDK_HOME is not set");
+
+        assert!(
+            &dump.environmentVariables.contains_key("JDK_HOME"),
+            "JDK_HOME not found in dump"
+        );
+        assert!(
+            !&dump.environmentVariables["JDK_HOME"].is_empty(),
+            "JDK_HOME is not found in dumped env vars"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["JDK_HOME"]))
+                .exists(),
+            "Java executable from JDK does not exists"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["JDK_HOME"]))
+                .is_executable(),
+            "Java executable from JDK is not executable"
+        );
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+                &dump.environmentVariables["JDK_HOME"]),
+            "Resolved java is not equal to env var"
+        );
+    }
+
+    #[rstest]
+    #[case::main_bin(& LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
+    #[case::plugins_bin(& LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
+    fn jre_is_java_home_test(#[case] launcher_location: &LayoutSpecification) {
+        let project_root = std::env::current_dir().unwrap();
+        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+        let dump = run_launcher_and_get_dump_with_envs(
+            launcher_location,
+            ("JAVA_HOME", launcher_jdk.to_str().unwrap())
+        );
+
+        assert!(
+            std::env::var("IU_JDK").is_err(),
+            "IU_JDK var is present. It has a higher priority than tested var"
+        );
+
+        assert!(
+            std::env::var("JDK_HOME").is_err(),
+            "JDK_HOME var is present. It has a higher priority than tested var"
+        );
+
+        assert!(&dump.environmentVariables.contains_key("JAVA_HOME"), "JAVA_HOME is not set");
+
+        assert!(
+            &dump.environmentVariables.contains_key("JAVA_HOME"),
+            "JAVA_HOME not found in dump"
+        );
+        assert!(
+            !&dump.environmentVariables["JAVA_HOME"].is_empty(),
+            "JAVA_HOME is not found in dumped env vars"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["JAVA_HOME"]))
+                .exists(),
+            "Java executable from JDK does not exists"
+        );
+        assert!(
+            get_bin_java_path(&Path::new(&dump.environmentVariables["JAVA_HOME"]))
+                .is_executable(),
+            "Java executable from JDK is not executable"
+        );
+        assert!(
+            &dump.systemProperties["java.home"].starts_with(
+                &dump.environmentVariables["JAVA_HOME"]),
+            "Resolved java is not equal to env var"
+        );
     }
 
 
