@@ -20,7 +20,6 @@ internal object ProjectFileIndexScopes {
   private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 1 shl 7
   const val EXCLUDED_FROM_MODULE_ONLY = 1 shl 8
   const val IN_LIBRARY_SOURCE_AND_CLASSES = IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_AND_CLASSES_FLAG
-  private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 128
   const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE = IN_CONTENT or IN_SOURCE or IN_LIBRARY or IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG
 
   fun ProjectFileIndex.assertInModule(file: VirtualFile,
@@ -49,7 +48,7 @@ internal object ProjectFileIndexScopes {
     checkScope(inContent || inLibrary || isExcluded, isInProjectOrExcluded(file), "project or excluded", file)
     val actualModule = getModuleForFile(file)
     val actualContentRoot = getContentRootForFile(file)
-    if (isExcluded) {
+    if (isExcluded || scope and EXCLUDED_FROM_MODULE_ONLY != 0) {
       assertNull(actualModule, "getModuleForFile() must return null for excluded file ${file.presentableUrl}")
       assertNull(actualContentRoot, "getContentRootForFile() must return null for excluded file ${file.presentableUrl}")
     }
