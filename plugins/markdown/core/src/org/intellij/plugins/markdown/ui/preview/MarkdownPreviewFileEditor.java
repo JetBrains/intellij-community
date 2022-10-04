@@ -66,42 +66,11 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myDocument = FileDocumentManager.getInstance().getDocument(myFile);
 
     if (myDocument != null) {
-      myDocument.addDocumentListener(new DocumentListener() {
-        @Override
-        public void beforeDocumentChange(@NotNull DocumentEvent event) {
-          myPooledAlarm.cancelAllRequests();
-        }
-
-        @Override
-        public void documentChanged(@NotNull DocumentEvent event) {
-          if (!myPooledAlarm.isDisposed()) {
-            myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
-          }
-        }
-      }, this);
+      myDocument.addDocumentListener(new ReparseContentDocumentListener(), this);
     }
 
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
-
-    myHtmlPanelWrapper.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        addImmediateRequest(mySwingAlarm, () -> {
-          if (myPanel == null) {
-            attachHtmlPanel();
-          }
-        });
-      }
-
-      @Override
-      public void componentHidden(ComponentEvent e) {
-        addImmediateRequest(mySwingAlarm, () -> {
-          if (myPanel != null) {
-            detachHtmlPanel();
-          }
-        });
-      }
-    });
+    myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
     if (isPreviewShown(project, file)) {
       attachHtmlPanel();
@@ -340,6 +309,40 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
     String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
     return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
+  }
+
+  private class ReparseContentDocumentListener implements DocumentListener {
+    @Override
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      myPooledAlarm.cancelAllRequests();
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      if (!myPooledAlarm.isDisposed()) {
+        myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
+      }
+    }
+  }
+
+  private class AttachPanelOnVisibilityChangeListener extends ComponentAdapter {
+    @Override
+    public void componentShown(ComponentEvent event) {
+      addImmediateRequest(mySwingAlarm, () -> {
+        if (myPanel == null) {
+          attachHtmlPanel();
+        }
+      });
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent event) {
+      addImmediateRequest(mySwingAlarm, () -> {
+        if (myPanel != null) {
+          detachHtmlPanel();
+        }
+      });
+    }
   }
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownSettings.ChangeListener {
