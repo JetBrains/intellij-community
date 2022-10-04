@@ -6,7 +6,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -766,7 +765,7 @@ public final class RedundantCastUtil {
             if (HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(switchBlock)) {
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
                 // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
-                if (SwitchBlockHighlightingModel.isNullType(branch)) return;
+                if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
                 // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
                 // applicable at another reference type T if T is downcast convertible to U (JEP 427)
                 // There is no rule that says that a reference type applies to a primitive type
@@ -781,7 +780,7 @@ public final class RedundantCastUtil {
               boolean hasDefault = false;
               for (PsiElement branch : SwitchUtils.getSwitchBranches(switchBlock)) {
                 // 14.11.1. A null case label element is compatible with e if the type of e is a reference type (JEP 406 and JEP 420)
-                if (SwitchBlockHighlightingModel.isNullType(branch)) return;
+                if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
                 needToCheckCompleteness |= branch instanceof PsiPattern;
                 hasDefault |= branch instanceof PsiDefaultCaseLabelElement ||
                               branch instanceof PsiSwitchLabelStatementBase label && label.isDefaultCase();
