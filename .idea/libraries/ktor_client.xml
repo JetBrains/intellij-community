@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="ktor-client" type="repository">
-    <properties maven-id="io.ktor:ktor-client-core-jvm:2.1.1">
+    <properties maven-id="io.ktor:ktor-client-core-jvm:2.1.2">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
@@ -12,25 +12,25 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.1.1/ktor-client-core-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.1.1/ktor-http-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.1/ktor-utils-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.1/ktor-io-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.1/ktor-events-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/2.1.1/ktor-websocket-serialization-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.1.1/ktor-serialization-jvm-2.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.1/ktor-websockets-jvm-2.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.1.2/ktor-client-core-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.1.2/ktor-http-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.2/ktor-utils-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.2/ktor-io-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.2/ktor-events-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/2.1.2/ktor-websocket-serialization-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.1.2/ktor-serialization-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.2/ktor-websockets-jvm-2.1.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.1.1/ktor-client-core-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.1.1/ktor-http-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.1/ktor-utils-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.1/ktor-io-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.1/ktor-events-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/2.1.1/ktor-websocket-serialization-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.1.1/ktor-serialization-jvm-2.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.1/ktor-websockets-jvm-2.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.1.2/ktor-client-core-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.1.2/ktor-http-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.2/ktor-utils-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.2/ktor-io-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.2/ktor-events-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/2.1.2/ktor-websocket-serialization-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.1.2/ktor-serialization-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.2/ktor-websockets-jvm-2.1.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
