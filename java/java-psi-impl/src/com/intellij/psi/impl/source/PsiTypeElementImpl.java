@@ -164,10 +164,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (parent instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)parent;
       if (parameter instanceof PsiPatternVariable) {
-        PsiRecordComponent recordComponent = JavaPsiPatternUtil.getRecordComponentForPattern(((PsiPatternVariable)parameter).getPattern());
-        if (recordComponent != null) {
-          return recordComponent.getType();
-        }
+        return JavaPsiPatternUtil.getDeconstructedImplicitPatternVariableType((PsiPatternVariable)parameter);
       }
       PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiForeachStatement) {
