@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
  * Method without project is preferable.
  */
 interface InlayHintsProviderFactory {
+  @Deprecated("Use getProvidersInfo without project", ReplaceWith("getProvidersInfo()"))
   fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> = getProvidersInfo()
 
   @JvmDefault
