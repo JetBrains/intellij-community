@@ -5,9 +5,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.project.DumbAware
-import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
@@ -18,11 +16,5 @@ internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, Acti
     val id = if (paths != null) "ProjectViewPopupMenu" else "Bookmarks.ToolWindow.PopupMenu"
     val group = CustomActionsSchema.getInstance().getCorrectedAction(id) as? ActionGroup
     return group?.getChildren(event) ?: EMPTY_ARRAY
-  }
-
-  init {
-    val place = "popup@BookmarksView"
-    val handler = PopupHandler.installPopupMenu(tree, this, place)
-    PopupMenuPreloader.install(tree, place, handler) { this }
   }
 }
