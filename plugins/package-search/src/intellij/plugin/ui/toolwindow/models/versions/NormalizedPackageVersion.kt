@@ -19,12 +19,12 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.version
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
-import kotlinx.serialization.Serializable
 
-@Serializable
 sealed class NormalizedPackageVersion<T : PackageVersion>(
     val originalVersion: T
 ) : Comparable<NormalizedPackageVersion<*>> {
+
+    companion object
 
     val versionName: String
         get() = originalVersion.versionName
@@ -38,7 +38,6 @@ sealed class NormalizedPackageVersion<T : PackageVersion>(
     val releasedAt: Long?
         get() = originalVersion.releasedAt
 
-    @Serializable
     data class Semantic(
         private val original: PackageVersion.Named,
         val semanticPart: String,
@@ -95,7 +94,6 @@ sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
-    @Serializable
     data class TimestampLike(
         private val original: PackageVersion.Named,
         val timestampPrefix: String,
@@ -127,7 +125,6 @@ sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
-    @Serializable
     data class Garbage(
         private val original: PackageVersion.Named
     ) : NormalizedPackageVersion<PackageVersion.Named>(original) {
@@ -149,7 +146,6 @@ sealed class NormalizedPackageVersion<T : PackageVersion>(
         }
     }
 
-    @Serializable
     object Missing : NormalizedPackageVersion<PackageVersion.Missing>(PackageVersion.Missing) {
 
         override fun compareTo(other: NormalizedPackageVersion<*>): Int =

@@ -17,7 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.util.text.VersionComparatorUtil
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchCompatBundle
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Nls
@@ -46,7 +46,7 @@ sealed class PackageVersion : Comparable<PackageVersion> {
         override val releasedAt: Long? = null
 
         @Nls
-        override val displayName = PackageSearchCompatBundle.message("packagesearch.ui.missingVersion")
+        override val displayName = PackageSearchBundle.message("packagesearch.ui.missingVersion")
 
         @NonNls
         override fun toString() = "[Missing version]"

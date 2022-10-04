@@ -765,7 +765,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" filepath="$PROJECT_DIR$/platform/built-in-server/client/node-rpc-client/intellij.nodeRpcClient.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" filepath="$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" filepath="$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" filepath="$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradle/tooling/intellij.packageSearch.gradle.tooling.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradle/tooling/intellij.packageSearch.gradle.tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" filepath="$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" />

@@ -93,10 +93,10 @@ Supports Maven and Gradle projects.
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
         <projectService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchProjectCachesService"/>
 
         <applicationService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.data.PackageSearchCachesService"/>
 
         <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchProjectCachesAction"/>
 

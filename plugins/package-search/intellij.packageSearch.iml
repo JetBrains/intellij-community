@@ -48,7 +48,6 @@
     <orderEntry type="library" name="package-search-api-models" level="project" />
     <orderEntry type="library" name="package-search-version-utils" level="project" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="intellij.packageSearch.compat" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
