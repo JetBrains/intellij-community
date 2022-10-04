@@ -386,7 +386,9 @@ internal class SingleContentLayout(
       if (jbTabs.tabs.size > 1 || twcui.dropOverIndex != -1) {
         labels.addAll(jbTabs.tabs.map { info ->
           info.changeSupport.addPropertyChangeListener(this)
-          MyContentTabLabel(FakeContent(supplier, info), this@SingleContentLayout).apply {
+          val content = FakeContent(supplier, info)
+          supplier.addSubContent(info, content)
+          MyContentTabLabel(content, this@SingleContentLayout).apply {
             addMouseListener(closeHandler)
           }
         })

@@ -9,7 +9,6 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
@@ -34,6 +33,7 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
@@ -261,6 +261,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
     else {
       content = oldDescriptor.attachedContent!!
+      SingleContentSupplier.removeSubContentsOfContent(content, rightNow = true)
       syncPublisher.contentRemoved(oldDescriptor, executor)
       Disposer.dispose(oldDescriptor) // is of the same category, can be reused
     }

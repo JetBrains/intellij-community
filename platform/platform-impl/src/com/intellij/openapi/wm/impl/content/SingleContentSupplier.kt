@@ -2,9 +2,11 @@
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 /**
  * Describes tabs and toolbar for the [SingleContentLayout].
@@ -80,8 +82,31 @@ interface SingleContentSupplier {
   @JvmDefault
   fun getContentToolbarPlace(): String = ActionPlaces.TOOLWINDOW_TITLE
 
+  @JvmDefault
+  fun addSubContent(tabInfo: TabInfo, content: Content) {
+  }
+
+  @JvmDefault
+  fun getSubContents(): Collection<Content> = emptyList()
+
   companion object {
     @JvmField
     val KEY = DataKey.create<SingleContentSupplier>("SingleContentSupplier")
+
+    @JvmStatic
+    fun removeSubContentsOfContent(content: Content, rightNow: Boolean) {
+      val supplier = (content.component as? DataProvider)?.let(KEY::getData)
+      if (supplier != null) {
+        val removeSubContents = {
+          for (subContent in supplier.getSubContents()) {
+            subContent.manager?.removeContent(subContent, true)
+          }
+        }
+        if (rightNow) {
+          removeSubContents()
+        }
+        else SwingUtilities.invokeLater { removeSubContents() }
+      }
+    }
   }
 }

@@ -136,6 +136,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
+        if (!Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
+          SingleContentSupplier.removeSubContentsOfContent(content, false);
+        }
+
         content.removePropertyChangeListener(propertyChangeListener);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
