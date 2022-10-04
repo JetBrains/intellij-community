@@ -1,0 +1,17 @@
+MODULES
+    SimpleProjectToProject
+    SimpleProjectToProject.a
+    SimpleProjectToProject.a.commonMain
+    SimpleProjectToProject.a.commonTest
+    SimpleProjectToProject.a.jvmMain
+    SimpleProjectToProject.a.jvmTest
+    SimpleProjectToProject.a.macosX64Main
+    SimpleProjectToProject.a.macosX64Test
+    SimpleProjectToProject.b
+    SimpleProjectToProject.b.commonMain
+    SimpleProjectToProject.b.commonTest
+    SimpleProjectToProject.b.jvmMain
+    SimpleProjectToProject.b.jvmTest
+    SimpleProjectToProject.b.macosX64Main
+    SimpleProjectToProject.b.macosX64Test
+

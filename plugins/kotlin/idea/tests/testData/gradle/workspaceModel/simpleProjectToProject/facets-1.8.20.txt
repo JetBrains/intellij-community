@@ -1,0 +1,123 @@
+MODULES
+    SimpleProjectToProject
+    SimpleProjectToProject.a
+    SimpleProjectToProject.a.commonMain
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+            Additional visible module names:
+            Additional compiler arguments:
+    SimpleProjectToProject.a.commonTest
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+            Additional visible module names:
+                :a:commonMain
+            Additional compiler arguments:
+    SimpleProjectToProject.a.jvmMain
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+                :a:commonMain
+            Additional visible module names:
+            Additional compiler arguments: -Xallow-no-source-files
+    SimpleProjectToProject.a.jvmTest
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+                :a:commonTest
+            Additional visible module names:
+            Additional compiler arguments: -Xallow-no-source-files -module-name a_test
+    SimpleProjectToProject.a.macosX64Main
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.7
+            MPP version: M3
+            dependsOn module names:
+                :a:commonMain
+            Additional visible module names:
+            Additional compiler arguments:
+    SimpleProjectToProject.a.macosX64Test
+        Settings from the Kotlin facet:
+            External project ID: :a
+            Language level: 1.8
+            API level: 1.7
+            MPP version: M3
+            dependsOn module names:
+                :a:commonTest
+            Additional visible module names:
+            Additional compiler arguments:
+    SimpleProjectToProject.b
+    SimpleProjectToProject.b.commonMain
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+            Additional visible module names:
+            Additional compiler arguments:
+    SimpleProjectToProject.b.commonTest
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+            Additional visible module names:
+                :b:commonMain
+            Additional compiler arguments:
+    SimpleProjectToProject.b.jvmMain
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+                :b:commonMain
+            Additional visible module names:
+            Additional compiler arguments: -Xallow-no-source-files
+    SimpleProjectToProject.b.jvmTest
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.8
+            MPP version: M3
+            dependsOn module names:
+                :b:commonTest
+            Additional visible module names:
+            Additional compiler arguments: -Xallow-no-source-files -module-name b_test
+    SimpleProjectToProject.b.macosX64Main
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.7
+            MPP version: M3
+            dependsOn module names:
+                :b:commonMain
+            Additional visible module names:
+            Additional compiler arguments:
+    SimpleProjectToProject.b.macosX64Test
+        Settings from the Kotlin facet:
+            External project ID: :b
+            Language level: 1.8
+            API level: 1.7
+            MPP version: M3
+            dependsOn module names:
+                :b:commonTest
+            Additional visible module names:
+            Additional compiler arguments:
+

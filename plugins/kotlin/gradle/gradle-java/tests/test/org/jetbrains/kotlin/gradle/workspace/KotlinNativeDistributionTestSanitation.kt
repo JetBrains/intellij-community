@@ -9,7 +9,7 @@ internal fun replaceNativeDistributionLibraries(libraries: Collection<LibraryPri
     replaceNativeDistribution(libraries, fakeLibraryForKotlinNativeDistribution)
 
 private fun <T : PrinterEntity> replaceNativeDistribution(elements: Collection<T>, replacement: T): Collection<T> {
-    val nativeDistributionEntries = elements.filterTo(LinkedHashSet()) {
+    val nativeDistributionEntries = elements.filterTo(mutableSetOf()) {
         NATIVE_DISTRIBUTION_LIBRARY_PATTERN.matches(it.presentableName)
     }
 
