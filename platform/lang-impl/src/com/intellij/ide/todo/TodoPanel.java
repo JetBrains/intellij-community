@@ -276,10 +276,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  void rebuildCache() {
-    myTodoTreeBuilder.rebuildCache();
-  }
-
   void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
     myTodoTreeBuilder.rebuildCache(files);
   }
