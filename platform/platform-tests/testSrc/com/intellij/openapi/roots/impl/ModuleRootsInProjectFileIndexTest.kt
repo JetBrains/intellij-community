@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_TEST_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.UNDER_IGNORED
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
@@ -51,8 +52,8 @@ class ModuleRootsInProjectFileIndexTest {
     fileIndex.assertScope(moduleDir, NOT_IN_PROJECT)
     fileIndex.assertScope(file, NOT_IN_PROJECT)
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(moduleDir, IN_CONTENT, module)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(moduleDir)
+    assertInModule(file)
     PsiTestUtil.removeContentEntry(module, moduleDir)
     fileIndex.assertScope(moduleDir, NOT_IN_PROJECT)
     fileIndex.assertScope(file, NOT_IN_PROJECT)
@@ -64,19 +65,19 @@ class ModuleRootsInProjectFileIndexTest {
     val excludedDir = projectModel.baseProjectDir.newVirtualDirectory("module/excluded")
     val excludedFile = projectModel.baseProjectDir.newVirtualFile("module/excluded/excluded.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
-    fileIndex.assertScope(excludedDir, IN_CONTENT, module)
-    fileIndex.assertScope(excludedFile, IN_CONTENT, module)
+    assertInModule(file)
+    assertInModule(excludedDir)
+    assertInModule(excludedFile)
 
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
-    fileIndex.assertScope(excludedDir, EXCLUDED, module)
-    fileIndex.assertScope(excludedFile, EXCLUDED, module)
+    assertInModule(file)
+    assertExcludedFromModule(excludedDir)
+    assertExcludedFromModule(excludedFile)
 
     PsiTestUtil.removeExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
-    fileIndex.assertScope(excludedDir, IN_CONTENT, module)
-    fileIndex.assertScope(excludedFile, IN_CONTENT, module)
+    assertInModule(file)
+    assertInModule(excludedDir)
+    assertInModule(excludedFile)
   }
 
   @Test
@@ -84,13 +85,13 @@ class ModuleRootsInProjectFileIndexTest {
     val file = projectModel.baseProjectDir.newVirtualFile("module/src/A.java")
     val srcDir = file.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
 
     PsiTestUtil.addSourceRoot(module, srcDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
 
     PsiTestUtil.removeSourceRoot(module, srcDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
   }
 
   @Test
@@ -99,7 +100,8 @@ class ModuleRootsInProjectFileIndexTest {
     val testDir = projectModel.baseProjectDir.newVirtualFile("module/test/java")
     val resourceDir = projectModel.baseProjectDir.newVirtualFile("module/main/resources")
     val testResourceDir = projectModel.baseProjectDir.newVirtualFile("module/test/resources")
-    PsiTestUtil.addContentRoot(module, srcDir.parent.parent)
+    val contentRoot = srcDir.parent.parent
+    PsiTestUtil.addContentRoot(module, contentRoot)
     PsiTestUtil.addSourceRoot(module, srcDir)
     PsiTestUtil.addSourceRoot(module, testDir, true)
     PsiTestUtil.addSourceRoot(module, resourceDir, JavaResourceRootType.RESOURCE)
@@ -109,7 +111,7 @@ class ModuleRootsInProjectFileIndexTest {
     roots.forEach { dir ->
       val isTest = dir.parent.name == "test"
       val isResources = dir.name == "resources"
-      fileIndex.assertScope(dir, if (isTest) IN_CONTENT or IN_SOURCE or IN_TEST_SOURCE else IN_CONTENT or IN_SOURCE, module)
+      fileIndex.assertInModule(dir, module, contentRoot, if (isTest) IN_CONTENT or IN_SOURCE or IN_TEST_SOURCE else IN_CONTENT or IN_SOURCE)
       assertEquals(isTest, fileIndex.isUnderSourceRootOfType(dir, JavaModuleSourceRootTypes.TESTS))
       assertEquals(!isTest, fileIndex.isUnderSourceRootOfType(dir, JavaModuleSourceRootTypes.PRODUCTION))
       assertEquals(isResources, fileIndex.isUnderSourceRootOfType(dir, JavaModuleSourceRootTypes.RESOURCES))
@@ -124,14 +126,14 @@ class ModuleRootsInProjectFileIndexTest {
     val excludedDir = srcDir.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
 
     PsiTestUtil.addSourceRoot(module, srcDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(srcDir, file), listOf(excludedDir))
 
     PsiTestUtil.removeSourceRoot(module, srcDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
   }
 
   @Test
@@ -141,13 +143,13 @@ class ModuleRootsInProjectFileIndexTest {
     val srcDir = contentDir.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
     PsiTestUtil.addSourceRoot(module, srcDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
 
     PsiTestUtil.addContentRoot(module, contentDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, contentDir)
 
     PsiTestUtil.removeContentEntry(module, contentDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
   }
 
   @Test
@@ -158,17 +160,17 @@ class ModuleRootsInProjectFileIndexTest {
     val excludedDir = contentSourceDir.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
 
     PsiTestUtil.addContentRoot(module, contentSourceDir)
     PsiTestUtil.addSourceRoot(module, contentSourceDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
-    fileIndex.assertScope(excludedFile, EXCLUDED, module)
+    fileIndex.assertInModule(file, module, contentSourceDir, IN_CONTENT or IN_SOURCE)
+    assertExcludedFromModule(excludedFile)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, contentSourceDir), listOf(excludedDir, excludedFile))
 
     PsiTestUtil.removeSourceRoot(module, contentSourceDir)
     PsiTestUtil.removeContentEntry(module, contentSourceDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
     DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file, contentSourceDir, excludedDir, excludedFile))
   }
 
@@ -179,18 +181,18 @@ class ModuleRootsInProjectFileIndexTest {
     val excludedDir = excludedSourceDir.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
     PsiTestUtil.addExcludedRoot(module, excludedDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
 
     PsiTestUtil.addSourceRoot(module, excludedSourceDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
 
     PsiTestUtil.addExcludedRoot(module, excludedSourceDir)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
     DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file, excludedSourceDir, excludedDir))
 
     PsiTestUtil.removeExcludedRoot(module, excludedSourceDir)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(file, excludedSourceDir), listOf(excludedDir))
   }
 
@@ -198,9 +200,9 @@ class ModuleRootsInProjectFileIndexTest {
   fun `excluded content root`() {
     PsiTestUtil.addContentRoot(module, moduleDir)
     PsiTestUtil.addExcludedRoot(module, moduleDir)
-    fileIndex.assertScope(moduleDir, EXCLUDED, module)
+    assertExcludedFromModule(moduleDir)
     val file = projectModel.baseProjectDir.newVirtualFile("module/file.txt")
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
   }
 
   @Test
@@ -210,9 +212,9 @@ class ModuleRootsInProjectFileIndexTest {
     val srcDir = file.parent
     PsiTestUtil.addSourceRoot(module, srcDir)
     PsiTestUtil.addExcludedRoot(module, srcDir)
-    fileIndex.assertScope(moduleDir, IN_CONTENT, module)
-    fileIndex.assertScope(srcDir, EXCLUDED, module)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertInModule(moduleDir)
+    assertExcludedFromModule(srcDir)
+    assertExcludedFromModule(file)
   }
 
   @Test
@@ -224,9 +226,9 @@ class ModuleRootsInProjectFileIndexTest {
     PsiTestUtil.addExcludedRoot(module, excludedDir)
     PsiTestUtil.addSourceRoot(module, srcDir)
     PsiTestUtil.addExcludedRoot(module, srcDir)
-    fileIndex.assertScope(moduleDir, IN_CONTENT, module)
-    fileIndex.assertScope(srcDir, EXCLUDED, module)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertInModule(moduleDir)
+    assertExcludedFromModule(srcDir)
+    assertExcludedFromModule(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir), listOf(file, srcDir, excludedDir))
   }
 
@@ -236,7 +238,7 @@ class ModuleRootsInProjectFileIndexTest {
     fileIndex.assertScope(file, NOT_IN_PROJECT)
 
     PsiTestUtil.addContentRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, file)
 
     PsiTestUtil.removeContentEntry(module, file)
     fileIndex.assertScope(file, NOT_IN_PROJECT)
@@ -246,27 +248,27 @@ class ModuleRootsInProjectFileIndexTest {
   fun `file as source root`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/source.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
 
     PsiTestUtil.addSourceRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT or IN_SOURCE, module)
+    assertInContentSource(file)
 
     PsiTestUtil.removeSourceRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
   }
 
   @Test
   fun `file as excluded root`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/excluded.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
 
     PsiTestUtil.addExcludedRoot(module, file)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    assertExcludedFromModule(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir), listOf(file))
 
     PsiTestUtil.removeExcludedRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(moduleDir, file), emptyList())
   }
 
@@ -274,14 +276,14 @@ class ModuleRootsInProjectFileIndexTest {
   fun `file as excluded content root`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/excluded.txt")
     PsiTestUtil.addContentRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, file)
 
     PsiTestUtil.addExcludedRoot(module, file)
-    fileIndex.assertScope(file, EXCLUDED, module)
+    fileIndex.assertInModule(file, module, file, EXCLUDED)
     DirectoryIndexTestCase.assertIteratedContent(module, emptyList(), listOf(file))
 
     PsiTestUtil.removeExcludedRoot(module, file)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, file)
     DirectoryIndexTestCase.assertIteratedContent(module, listOf(file), emptyList())
   }
 
@@ -303,7 +305,7 @@ class ModuleRootsInProjectFileIndexTest {
     fileIndex.assertScope(file, UNDER_IGNORED)
 
     PsiTestUtil.addContentRoot(module, contentDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, contentDir)
   }
 
   @Test
@@ -316,14 +318,14 @@ class ModuleRootsInProjectFileIndexTest {
     fileIndex.assertScope(file, UNDER_IGNORED)
 
     PsiTestUtil.addContentRoot(module, ignoredContentDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    fileIndex.assertInModule(file, module, ignoredContentDir)
   }
 
   @Test
   fun `change ignored files list`() {
     val file = projectModel.baseProjectDir.newVirtualFile("module/newDir/file.txt")
     PsiTestUtil.addContentRoot(module, moduleDir)
-    fileIndex.assertScope(file, IN_CONTENT, module)
+    assertInModule(file)
 
     val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerEx
     val oldValue = fileTypeManager.ignoredFilesList
@@ -333,8 +335,19 @@ class ModuleRootsInProjectFileIndexTest {
     }
     finally {
       runWriteAction { fileTypeManager.ignoredFilesList = oldValue }
-      fileIndex.assertScope(file, IN_CONTENT, module)
+      assertInModule(file)
     }
   }
 
+  private fun assertInModule(file: VirtualFile) {
+    fileIndex.assertInModule(file, module, moduleDir)
+  }
+
+  private fun assertExcludedFromModule(file: VirtualFile) {
+    fileIndex.assertInModule(file, module, moduleDir, EXCLUDED)
+  }
+
+  private fun assertInContentSource(file: VirtualFile) {
+    fileIndex.assertInModule(file, module, moduleDir, IN_CONTENT or IN_SOURCE)
+  }
 }
