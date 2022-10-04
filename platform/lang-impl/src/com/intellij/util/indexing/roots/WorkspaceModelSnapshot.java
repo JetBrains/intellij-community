@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class WorkspaceModelSnapshot {
+  private static volatile Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> GENERATORS;
   private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins;
   private final LibrariesSnapshot libraries;
   private final SdkSnapshot sdks;
@@ -45,6 +46,30 @@ class WorkspaceModelSnapshot {
     return new WorkspaceModelSnapshot(createBuilder(project, entityStorage),
                                       snapshot.toImmutableSnapshot(),
                                       SdkSnapshot.create(sdkIds));
+  }
+
+  private static Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> createGenerators() {
+    Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> map = new HashMap<>();
+    for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
+      if (!(provider instanceof IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>)) {
+        continue;
+      }
+      Class<? extends WorkspaceEntity> entityClass = provider.getEntityClass();
+      IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity> otherProvider =
+        map.put(entityClass, (IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>)provider);
+      if (otherProvider != null) {
+        throw new IllegalStateException("Multiple IndexableEntityProvider.ExistingEx providers for entity class " + entityClass + ": " +
+                                        otherProvider.getClass() + ", " + provider.getClass());
+      }
+    }
+    return Map.copyOf(map);
+  }
+
+  static {
+    GENERATORS = createGenerators();
+    IndexableEntityProvider.EP_NAME.addChangeListener(() -> {
+      GENERATORS = createGenerators();
+    }, null);
   }
 
   private WorkspaceModelSnapshot(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder,
@@ -73,10 +98,7 @@ class WorkspaceModelSnapshot {
                                                                                                                                  @NotNull EntityStorage storage) {
     ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder =
       new ImmutableMap.Builder<>();
-    for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-      if (!(provider instanceof IndexableEntityProvider.ExistingEx<?>)) {
-        continue;
-      }
+    for (IndexableEntityProvider.ExistingEx<?> provider : GENERATORS.values()) {
       handleProvider((IndexableEntityProvider.ExistingEx<?>)provider, storage, project, builder);
     }
     return builder;
@@ -106,8 +128,10 @@ class WorkspaceModelSnapshot {
     EntityStorageSnapshot storage = storageChange.getStorageAfter();
     Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> toAdd = new HashMap<>();
     Set<EntityReference<? extends WorkspaceEntity>> toRemove = new HashSet<>();
-    for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-      if (provider instanceof IndexableEntityProvider.ExistingEx<?>) {
+    Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> generators = GENERATORS;
+    for (EntityChange<?> change : SequencesKt.asIterable(storageChange.getAllChanges())) {
+      IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity> provider = generators.get(getEntityInterface(change));
+      if (provider != null) {
         handleWorkspaceModelChange(toAdd, toRemove, storageChange, (IndexableEntityProvider.ExistingEx<?>)provider, storage, project);
       }
     }
@@ -131,6 +155,22 @@ class WorkspaceModelSnapshot {
     }
     copy.putAll(toAdd);
     return new WorkspaceModelSnapshot(copy, changedLibraries == null ? libraries : changedLibraries, sdks);
+  }
+
+  @NotNull
+  private static Class<? extends WorkspaceEntity> getEntityInterface(EntityChange<?> change) {
+    if (change instanceof EntityChange.Added<?>) {
+      return ((EntityChange.Added<?>)change).getEntity().getEntityInterface();
+    }
+    else if (change instanceof EntityChange.Replaced<?>) {
+      return change.getNewEntity().getEntityInterface();
+    }
+    else if (change instanceof EntityChange.Removed<?>) {
+      return change.getOldEntity().getEntityInterface();
+    }
+    else {
+      throw new IllegalStateException("Unexpected change " + change);
+    }
   }
 
   private static <E extends WorkspaceEntity> void handleWorkspaceModelChange(@NotNull Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> toAdd,
@@ -207,10 +247,8 @@ class WorkspaceModelSnapshot {
     if (entities.isEmpty()) return null;
     EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> refreshed = new HashMap<>();
-    for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-      if (provider instanceof IndexableEntityProvider.ExistingEx<?>) {
-        handleEntitiesRefresh((IndexableEntityProvider.ExistingEx<?>)provider, entities, project, storage, refreshed);
-      }
+    for (IndexableEntityProvider.ExistingEx<?> provider : GENERATORS.values()) {
+      handleEntitiesRefresh((IndexableEntityProvider.ExistingEx<?>)provider, entities, project, storage, refreshed);
     }
     if (refreshed.isEmpty()) return null;
     ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> result = new ImmutableMap.Builder<>();
