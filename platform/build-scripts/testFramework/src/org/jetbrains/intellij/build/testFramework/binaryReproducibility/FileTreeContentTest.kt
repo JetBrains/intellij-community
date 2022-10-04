@@ -34,6 +34,10 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       process("unsquashfs", "-help").exitCode == 0
     }
 
+    val isDiffoscopeAvailable by lazy {
+      process("diffoscope", "--version").exitCode == 0
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
       require(args.count() == 2)
@@ -173,7 +177,16 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     return unpackingDir
   }
 
-  private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2", ignoreExitCode = true).stdOut
+  private fun diff(path1: Path, path2: Path): String {
+    return if (isDiffoscopeAvailable) {
+      process("diffoscope", "$path1", "$path2",
+              ignoreExitCode = true).stdOut
+    }
+    else {
+      process("git", "diff", "--no-index", "--", "$path1", "$path2",
+              ignoreExitCode = true).stdOut
+    }
+  }
 
   private fun <T> Path.mountDmg(action: (mountPoint: Path) -> T): T {
     require(SystemInfo.isMac)
