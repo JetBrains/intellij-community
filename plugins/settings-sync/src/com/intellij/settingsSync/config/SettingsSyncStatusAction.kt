@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.config
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -10,9 +11,11 @@ import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.SettingsSyncStatusTracker
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
+import com.intellij.ui.BadgeIconSupplier
 import icons.SettingsSyncIcons
+import javax.swing.Icon
 
-class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")) {
+class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync")), SettingsSyncStatusTracker.Listener {
 
   private enum class SyncStatus {ON, OFF, FAILED}
 
@@ -26,6 +29,10 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
       else
         return SyncStatus.OFF
     }
+  }
+
+  init {
+    SettingsSyncStatusTracker.getInstance().addListener(this)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -56,6 +63,20 @@ class SettingsSyncStatusAction : DumbAwareAction(message("title.settings.sync"))
         p.text = message("status.action.settings.sync.failed")
       }
     }
+  }
+
+  class IconCustomizer : SettingsEntryPointAction.IconCustomizer {
+    override fun getCustomIcon(supplier: BadgeIconSupplier): Icon? {
+      return if (getStatus() == SyncStatus.FAILED) {
+        supplier.getErrorIcon(true)
+      }
+      else null
+    }
+
+  }
+
+  override fun syncStatusChanged() {
+    SettingsEntryPointAction.updateState()
   }
 
 }

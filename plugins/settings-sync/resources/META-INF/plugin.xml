@@ -38,6 +38,8 @@
     <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
+
+    <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
   </extensions>
 
   <applicationListeners>
