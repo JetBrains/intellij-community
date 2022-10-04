@@ -39,9 +39,9 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PresentationFactory factory = new PresentationFactory();
-    String popupPlace = ActionPlaces.getActionGroupPopupPlace(getClass().getSimpleName());
     ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      LangBundle.message("popup.title.copy"), this, e.getDataContext(), true, true, false, true, null, -1, null, popupPlace, factory, false) {
+      LangBundle.message("popup.title.copy"), this, e.getDataContext(), true, true, false, true,
+      null, -1, null, ActionPlaces.COPY_REFERENCE_POPUP, factory, false) {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
         return new PopupListElementRenderer<>(this) {

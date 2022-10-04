@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -29,27 +30,44 @@ abstract class CopyPathProvider : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project
+    val project = e.project ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val editor = e.getData(CommonDataKeys.EDITOR)
-    val qName = if (project == null) null else getQualifiedName(project, getElementsToCopy(editor, e.dataContext), editor, e.dataContext)
-    e.presentation.isEnabledAndVisible = project != null && qName != null
+    val customize = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = try {
+      getQualifiedName(project, elements, editor, customize)
+    }
+    catch (e: IndexNotReadyException) {
+      null
+    }
+    e.presentation.isEnabledAndVisible = qName != null
     e.presentation.putClientProperty(QUALIFIED_NAME, qName)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = getEventProject(e)
-    val dataContext = e.dataContext
-    val editor = CommonDataKeys.EDITOR.getData(dataContext)
+    val project = getEventProject(e) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR)
 
-    val customDataContext = createCustomDataContext(dataContext)
-    val elements = getElementsToCopy(editor, customDataContext)
-    project?.let {
-      val copy = getQualifiedName(project, elements, editor, customDataContext)
-      CopyPasteManager.getInstance().setContents(StringSelection(copy))
-      CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", copy))
-
-      CopyReferenceUtil.highlight(editor, project, elements)
+    val customized = createCustomDataContext(e.dataContext)
+    val elements = try {
+      getElementsToCopy(editor, customized)
     }
+    catch (e: IndexNotReadyException) {
+      emptyList()
+    }
+    val qName = getQualifiedName(project, elements, editor, customized)
+    CopyPasteManager.getInstance().setContents(StringSelection(qName))
+    CopyReferenceUtil.setStatusBarText(project, IdeBundle.message("message.path.to.fqn.has.been.copied", qName))
+
+    CopyReferenceUtil.highlight(editor, project, elements)
   }
 
   private fun createCustomDataContext(dataContext: DataContext): DataContext {
