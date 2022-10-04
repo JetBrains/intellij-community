@@ -113,20 +113,19 @@ fun KtExpression.convertToIfNotNullExpression(
     thenClause: KtExpression,
     elseClause: KtExpression?
 ): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 != null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 != null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause, elseClause)
 }
 
 fun KtExpression.convertToIfNullExpression(conditionLhs: KtExpression, thenClause: KtExpression): KtIfExpression {
-    val condition = KtPsiFactory(this).createExpressionByPattern("$0 == null", conditionLhs)
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 == null", conditionLhs)
     return this.convertToIfStatement(condition, thenClause)
 }
 
 fun KtExpression.convertToIfStatement(condition: KtExpression, thenClause: KtExpression, elseClause: KtExpression? = null): KtIfExpression =
-    replaced(KtPsiFactory(this).createIf(condition, thenClause, elseClause))
+    replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause))
 
 fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
-    val project = this.project
     val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide

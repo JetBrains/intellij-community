@@ -45,7 +45,7 @@ class IndentRawStringIntention : SelfTargetingOffsetIndependentIntention<KtStrin
             }
         }
 
-        element.replace(KtPsiFactory(element).createExpression("\"\"\"$newString\"\"\".trimIndent()"))
+        element.replace(KtPsiFactory(project).createExpression("\"\"\"$newString\"\"\".trimIndent()"))
     }
 
 }

@@ -45,8 +45,8 @@ internal val fixTypeMismatchDiagnosticBasedProcessing =
                     && realType.isNullable()
                     && !expectedType.isNullable()
             -> {
-                val factory = KtPsiFactory(element)
-                element.replace(factory.createExpressionByPattern("($0)!!", element.text))
+                val psiFactory = KtPsiFactory(element.project)
+                element.replace(psiFactory.createExpressionByPattern("($0)!!", element.text))
             }
 
             element is KtExpression

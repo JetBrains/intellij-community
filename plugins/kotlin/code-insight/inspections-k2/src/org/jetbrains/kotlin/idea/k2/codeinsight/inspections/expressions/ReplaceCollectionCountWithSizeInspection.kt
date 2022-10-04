@@ -41,7 +41,7 @@ internal class ReplaceCollectionCountWithSizeInspection :
             expression.calleeExpression?.text == "count" && expression.valueArguments.isEmpty()
         }
         applyTo { expression, _ ->
-            expression.replace(KtPsiFactory(expression).createExpression("size"))
+            expression.replace(KtPsiFactory(expression.project).createExpression("size"))
         }
     }
 }

@@ -22,7 +22,7 @@ class AddIsToWhenConditionFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val replaced = expression.replaced(KtPsiFactory(expression).createWhenCondition("is ${expression.text}"))
+        val replaced = expression.replaced(KtPsiFactory(project).createWhenCondition("is ${expression.text}"))
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }
 

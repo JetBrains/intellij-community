@@ -23,7 +23,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
             return null;
         }
 
-        KtPsiFactory psiFactory = KtPsiFactoryKt.KtPsiFactory(project);
+        KtPsiFactory psiFactory = new KtPsiFactory(project);
         KtCallExpression callExpression = (KtCallExpression) psiFactory.createExpression("run {\n}");
         callExpression = (KtCallExpression) container.addAfter(callExpression, statements[statements.length - 1]);
         container.addBefore(psiFactory.createWhiteSpace(), callExpression);

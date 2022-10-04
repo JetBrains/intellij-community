@@ -96,7 +96,7 @@ private fun KtAnalysisSession.createContextForDeclaration(
 }
 
 private fun generateBody(body: KtExpression, context: ConvertToBlockBodyIntention.Context, returnsValue: Boolean): KtExpression {
-    val factory = KtPsiFactory(body)
+    val factory = KtPsiFactory(body.project)
     if (context.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
     val needReturn = returnsValue && (!context.bodyTypeIsUnit && !context.bodyTypeIsNothing)
     return if (needReturn) {

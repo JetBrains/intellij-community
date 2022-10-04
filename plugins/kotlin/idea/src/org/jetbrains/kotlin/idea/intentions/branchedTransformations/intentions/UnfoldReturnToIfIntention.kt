@@ -34,7 +34,7 @@ class UnfoldReturnToIfIntention : LowPriorityAction, SelfTargetingRangeIntention
         val newThenExpr = newIfExpression.then!!.lastBlockStatementOrThis()
         val newElseExpr = newIfExpression.`else`!!.lastBlockStatementOrThis()
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val context = element.analyze()
 
         val labelName = element.getLabelName()

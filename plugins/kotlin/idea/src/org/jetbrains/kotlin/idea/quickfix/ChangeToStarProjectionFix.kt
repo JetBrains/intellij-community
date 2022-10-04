@@ -44,7 +44,7 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
 
     public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val star = KtPsiFactory(file).createStar()
+        val star = KtPsiFactory(project).createStar()
         element.typeArgumentsAsTypes.forEach { it?.replace(star) }
     }
 

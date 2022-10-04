@@ -31,7 +31,8 @@ class MovePropertyToClassBodyIntention : SelfTargetingIntention<KtParameter>(
     override fun applyTo(element: KtParameter, editor: Editor?) {
         val parentClass = PsiTreeUtil.getParentOfType(element, KtClass::class.java) ?: return
 
-        val propertyDeclaration = KtPsiFactory(element).createProperty("${element.valOrVarKeyword?.text} ${element.name} = ${element.name}")
+        val propertyDeclaration = KtPsiFactory(element.project)
+            .createProperty("${element.valOrVarKeyword?.text} ${element.name} = ${element.name}")
 
         val firstProperty = parentClass.getProperties().firstOrNull()
         parentClass.addDeclarationBefore(propertyDeclaration, firstProperty).apply {
@@ -55,7 +56,7 @@ class MovePropertyToClassBodyIntention : SelfTargetingIntention<KtParameter>(
 
         val hasVararg = element.hasModifier(KtTokens.VARARG_KEYWORD)
         if (parameterAnnotationsText != null) {
-            element.modifierList?.replace(KtPsiFactory(element).createModifierList(parameterAnnotationsText))
+            element.modifierList?.replace(KtPsiFactory(element.project).createModifierList(parameterAnnotationsText))
         } else {
             element.modifierList?.delete()
         }

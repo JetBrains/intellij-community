@@ -39,7 +39,7 @@ class ReturnSaver(val function: KtNamedFunction) {
     fun restore(lambda: KtLambdaExpression, label: Name) {
         clear()
 
-        val factory = KtPsiFactory(lambda)
+        val psiFactory = KtPsiFactory(lambda.project)
 
         val lambdaBody = lambda.bodyExpression!!
 
@@ -50,9 +50,9 @@ class ReturnSaver(val function: KtNamedFunction) {
             val replaceWith = if (value != null && returnExpression.isValueOfBlock(lambdaBody)) {
                 value
             } else if (value != null) {
-                factory.createExpressionByPattern("return@$0 $1", label, value)
+                psiFactory.createExpressionByPattern("return@$0 $1", label, value)
             } else {
-                factory.createExpressionByPattern("return@$0", label)
+                psiFactory.createExpressionByPattern("return@$0", label)
             }
 
             returnExpression.replace(replaceWith)

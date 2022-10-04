@@ -53,5 +53,5 @@ class ReplaceWithClassJavaFix(
 }
 
 private fun KtDotQualifiedExpression.replace(pattern: String) {
-    replace(KtPsiFactory(this).createExpressionByPattern(pattern, receiverExpression))
+    replace(KtPsiFactory(project).createExpressionByPattern(pattern, receiverExpression))
 }

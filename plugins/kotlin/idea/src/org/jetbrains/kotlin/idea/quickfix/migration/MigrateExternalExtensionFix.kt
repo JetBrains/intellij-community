@@ -117,8 +117,8 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
         runWriteAction {
             fixAnnotations(declaration, annotations, editor)
 
-            val ktPsiFactory = KtPsiFactory(declaration)
-            val body = ktPsiFactory.buildExpression {
+            val psiFactory = KtPsiFactory(declaration.project)
+            val body = psiFactory.buildExpression {
                 appendName(Name.identifier("asDynamic"))
                 when {
                     annotations.isGetter -> {
@@ -161,20 +161,20 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
                 declaration.equalsToken?.delete()
 
                 if (annotations.isSetter || annotations.isInvoke) {
-                    val blockBody = ktPsiFactory.createSingleStatementBlock(body)
+                    val blockBody = psiFactory.createSingleStatementBlock(body)
                     declaration.add(blockBody)
                 } else {
-                    declaration.add(ktPsiFactory.createEQ())
+                    declaration.add(psiFactory.createEQ())
                     declaration.add(body)
                 }
             } else if (declaration is KtProperty) {
                 declaration.setter?.delete()
                 declaration.getter?.delete()
-                val getter = ktPsiFactory.createPropertyGetter(body)
+                val getter = psiFactory.createPropertyGetter(body)
                 declaration.add(getter)
 
                 if (declaration.isVar) {
-                    val setterBody = ktPsiFactory.buildExpression {
+                    val setterBody = psiFactory.buildExpression {
                         appendName(Name.identifier("asDynamic"))
                         appendFixedText("().")
                         appendName(name)
@@ -182,7 +182,7 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
                         appendName(Name.identifier("value"))
                     }
 
-                    val setterStubProperty = ktPsiFactory.createProperty("val x: Unit set(value) { Unit }")
+                    val setterStubProperty = psiFactory.createProperty("val x: Unit set(value) { Unit }")
                     val block = setterStubProperty.setter!!.bodyBlockExpression!!
                     block.statements.single().replace(setterBody)
                     declaration.add(setterStubProperty.setter!!)

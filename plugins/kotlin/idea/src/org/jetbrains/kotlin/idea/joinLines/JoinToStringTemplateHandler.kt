@@ -66,7 +66,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
 
     private fun createStringTemplate(left: KtStringTemplateExpression, rightText: String): KtStringTemplateExpression {
         val leftText = ConvertToStringTemplateIntention.buildText(left, false)
-        return KtPsiFactory(left).createExpression("\"$leftText$rightText\"") as KtStringTemplateExpression
+        return KtPsiFactory(left.project).createExpression("\"$leftText$rightText\"") as KtStringTemplateExpression
     }
 
     override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = -1

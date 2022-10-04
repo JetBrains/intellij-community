@@ -68,7 +68,7 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
 
     val commentSaver = CommentSaver(bodyBlock)
 
-    val factory = KtPsiFactory(this)
+    val factory = KtPsiFactory(project)
     val eq = addBefore(factory.createEQ(), bodyBlockExpression)
     addAfter(factory.createWhiteSpace(), eq)
 
@@ -86,10 +86,8 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
  * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
  * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
  */
-private fun Editor.correctRightMargin(
-    declaration: KtDeclarationWithBody, newBody: KtExpression
-) {
-    val kotlinFactory = KtPsiFactory(declaration)
+private fun Editor.correctRightMargin(declaration: KtDeclarationWithBody, newBody: KtExpression) {
+    val kotlinFactory = KtPsiFactory(declaration.project)
     val startOffset = newBody.startOffset
     val startLine = document.getLineNumber(startOffset)
     val rightMargin = settings.getRightMargin(project)

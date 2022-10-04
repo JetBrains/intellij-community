@@ -21,16 +21,17 @@ class UnsupportedYieldFix(psiElement: PsiElement) : KotlinQuickFixAction<PsiElem
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val psiElement = element ?: return
+        val psiFactory = KtPsiFactory(project)
 
         if (psiElement is KtCallExpression) {
             val ktExpression = (psiElement as KtCallElement).calleeExpression ?: return
 
             // Add after "yield" reference in call
-            psiElement.addAfter(KtPsiFactory(psiElement).createCallArguments("()"), ktExpression)
+            psiElement.addAfter(psiFactory.createCallArguments("()"), ktExpression)
         }
 
         if (psiElement.node.elementType == KtTokens.IDENTIFIER) {
-            psiElement.replace(KtPsiFactory.contextual(psiElement).createIdentifier("`yield`"))
+            psiElement.replace(psiFactory.createIdentifier("`yield`"))
         }
     }
 

@@ -73,7 +73,7 @@ class ReplaceGuardClauseWithFunctionCallInspection : AbstractApplicabilityBasedI
         val call = element.getCallExpression() ?: return
         val argument = call.valueArguments.firstOrNull()?.getArgumentExpression()
         val commentSaver = CommentSaver(element)
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
         val replaced = when (val kotlinFunction = element.getKotlinFunction(call)) {
             KotlinFunction.CHECK, KotlinFunction.REQUIRE -> {
                 val (excl, newCondition) = if (condition is KtPrefixExpression && condition.operationToken == KtTokens.EXCL) {

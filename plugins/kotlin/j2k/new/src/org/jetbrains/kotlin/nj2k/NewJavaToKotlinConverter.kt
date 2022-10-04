@@ -63,13 +63,8 @@ class NewJavaToKotlinConverter(
                         phase = J2KConversionPhase.CREATE_FILES,
                         description = "Creating files..."
                     )
-                    KtPsiFactory(project).createFileWithLightClassSupport(
-                        javaFile.name.replace(".java", ".kt"),
-                        result!!.text,
-                        files[i]
-                    ).apply {
-                        addImports(result.importsToAdd)
-                    }
+                    KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                        .also { it.addImports(result.importsToAdd) }
                 }
 
             }
@@ -179,11 +174,11 @@ class NewJavaToKotlinConverter(
 
     companion object {
         fun KtFile.addImports(imports: Collection<FqName>) {
-            val factory = KtPsiFactory(this)
+            val psiFactory = KtPsiFactory(project)
 
 
             if (imports.isEmpty()) return
-            val importPsi = factory.createImportDirectives(
+            val importPsi = psiFactory.createImportDirectives(
                 imports.map { ImportPath(it, isAllUnder = false) }
             )
             val createdImportList = importPsi.first().parent as KtImportList

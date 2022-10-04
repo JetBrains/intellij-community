@@ -26,7 +26,7 @@ object ReplaceGetOrSetInspectionUtils {
 
     fun replaceGetOrSetWithPropertyAccessor(expression: KtDotQualifiedExpression, isSet: Boolean, editor: Editor?) {
         val callExpression = (expression.selectorExpression as? KtCallExpression) ?: return
-        val newExpression = KtPsiFactory(expression).buildExpression {
+        val newExpression = KtPsiFactory(expression.project).buildExpression {
             val allArguments = callExpression.valueArguments
 
             appendExpression(expression.receiverExpression)

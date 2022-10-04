@@ -59,7 +59,7 @@ class ConvertArrayParameterToVarargIntention : SelfTargetingIntention<KtParamete
             ?: typeReference.typeElement?.typeArgumentsAsTypes?.firstOrNull()?.text
             ?: return
 
-        typeReference.replace(KtPsiFactory(element).createType(newType))
+        typeReference.replace(KtPsiFactory(element.project).createType(newType))
         element.addModifier(KtTokens.VARARG_KEYWORD)
     }
 }

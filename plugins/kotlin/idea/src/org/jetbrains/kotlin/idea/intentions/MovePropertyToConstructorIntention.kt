@@ -64,7 +64,7 @@ class MovePropertyToConstructorIntention :
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
         val parentClass = PsiTreeUtil.getParentOfType(element, KtClass::class.java) ?: return
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val primaryConstructor = parentClass.createPrimaryConstructorIfAbsent()
         val constructorParameter = element.findConstructorParameter()
 
@@ -90,7 +90,7 @@ class MovePropertyToConstructorIntention :
                 constructorParameter.defaultValue?.text?.let { append(" = $it") }
             }
 
-            constructorParameter.replace(factory.createParameter(parameterText)).apply {
+            constructorParameter.replace(psiFactory.createParameter(parameterText)).apply {
                 commentSaver.restore(this)
             }
         } else {
@@ -107,7 +107,7 @@ class MovePropertyToConstructorIntention :
                 element.initializer?.text?.let { append(" = $it") }
             }
 
-            primaryConstructor.valueParameterList?.addParameter(factory.createParameter(parameterText))?.apply {
+            primaryConstructor.valueParameterList?.addParameter(psiFactory.createParameter(parameterText))?.apply {
                 ShortenReferences.DEFAULT.process(this)
                 commentSaver.restore(this)
             }

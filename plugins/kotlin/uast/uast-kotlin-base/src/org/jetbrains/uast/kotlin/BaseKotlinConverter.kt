@@ -412,11 +412,8 @@ interface BaseKotlinConverter {
                             declarationsExpression
                         )
                         val destructuringAssignments = expression.entries.mapIndexed { i, entry ->
-                            val psiFactory = KtPsiFactory(expression.project)
-                            val initializer = psiFactory.createAnalyzableExpression(
-                                "${tempAssignment.name}.component${i + 1}()",
-                                expression.containingFile
-                            )
+                            val psiFactory = KtPsiFactory.contextual(expression.containingFile)
+                            val initializer = psiFactory.createExpression("${tempAssignment.name}.component${i + 1}()")
                             initializer.destructuringDeclarationInitializer = true
                             KotlinULocalVariable(
                                 UastKotlinPsiVariable.create(entry, tempAssignment.javaPsi, declarationsExpression, initializer),
@@ -774,19 +771,5 @@ interface BaseKotlinConverter {
 
     fun convertOrNull(expression: KtExpression?, parent: UElement?): UExpression? {
         return if (expression != null) convertExpression(expression, parent, DEFAULT_EXPRESSION_TYPES_LIST) else null
-    }
-
-    fun KtPsiFactory.createAnalyzableExpression(text: String, context: PsiElement): KtExpression =
-        createAnalyzableProperty("val x = $text", context).initializer ?: error("Failed to create expression from text: '$text'")
-
-    fun KtPsiFactory.createAnalyzableProperty(text: String, context: PsiElement): KtProperty =
-        createAnalyzableDeclaration(text, context)
-
-    fun <TDeclaration : KtDeclaration> KtPsiFactory.createAnalyzableDeclaration(text: String, context: PsiElement): TDeclaration {
-        val file = createAnalyzableFile("dummy.kt", text, context)
-        val declarations = file.declarations
-        assert(declarations.size == 1) { "${declarations.size} declarations in $text" }
-        @Suppress("UNCHECKED_CAST")
-        return declarations.first() as TDeclaration
     }
 }

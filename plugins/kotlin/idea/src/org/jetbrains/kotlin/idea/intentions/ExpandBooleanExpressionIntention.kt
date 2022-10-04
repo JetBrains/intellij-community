@@ -33,7 +33,7 @@ class ExpandBooleanExpressionIntention : SelfTargetingRangeIntention<KtExpressio
             this is KtQualifiedExpression || this is KtOperationExpression || this is KtParenthesizedExpression
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
-        val ifExpression = KtPsiFactory(element).createExpressionByPattern("if ($0) {\ntrue\n} else {\nfalse\n}", element)
+        val ifExpression = KtPsiFactory(element.project).createExpressionByPattern("if ($0) {\ntrue\n} else {\nfalse\n}", element)
         val replaced = element.replace(ifExpression)
         if (replaced != null) {
             editor?.caretModel?.moveToOffset(replaced.startOffset)

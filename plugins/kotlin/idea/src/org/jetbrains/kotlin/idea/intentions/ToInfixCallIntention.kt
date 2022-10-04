@@ -45,7 +45,7 @@ class ToInfixCallIntention : SelfTargetingIntention<KtCallExpression>(
         val argument = element.valueArguments.single().getArgumentExpression()!!
         val name = element.calleeExpression!!.text
 
-        val newCall = KtPsiFactory(element).createExpressionByPattern("$0 $name $1", receiver, argument)
+        val newCall = KtPsiFactory(element.project).createExpressionByPattern("$0 $name $1", receiver, argument)
         dotQualified.replace(newCall)
     }
 }

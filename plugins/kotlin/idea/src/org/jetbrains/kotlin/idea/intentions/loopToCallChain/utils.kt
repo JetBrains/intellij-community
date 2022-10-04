@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun generateLambda(inputVariable: KtCallableDeclaration, expression: KtExpression, reformat: Boolean): KtLambdaExpression {
-    val psiFactory = KtPsiFactory(expression)
+    val psiFactory = KtPsiFactory(expression.project)
 
     val lambdaExpression = psiFactory.createExpressionByPattern(
         "{ $0 -> $1 }", inputVariable.nameAsSafeName, expression,
@@ -95,12 +95,12 @@ fun removePlusPlus(indexPlusPlus: KtUnaryExpression, reformat: Boolean) {
     val replacement = if (indexPlusPlus is KtPostfixExpression) // index++
         operand
     else // ++index
-        KtPsiFactory(operand).createExpressionByPattern("$0 + 1", operand, reformat = reformat)
+        KtPsiFactory(operand.project).createExpressionByPattern("$0 + 1", operand, reformat = reformat)
     indexPlusPlus.replace(replacement)
 }
 
 fun generateLambda(expression: KtExpression, vararg inputVariables: KtCallableDeclaration, reformat: Boolean): KtLambdaExpression {
-    return KtPsiFactory(expression).buildExpression(reformat = reformat) {
+    return KtPsiFactory(expression.project).buildExpression(reformat = reformat) {
         appendFixedText("{")
 
         for ((index, variable) in inputVariables.withIndex()) {
@@ -216,8 +216,8 @@ fun KtExpression.isSimpleCollectionInstantiation(): CollectionKind? {
 }
 
 fun canChangeLocalVariableType(variable: KtProperty, newTypeText: String, loop: KtForExpression): Boolean {
-    return tryChangeAndCheckErrors(variable, loop) {
-        it.typeReference = KtPsiFactory(it).createType(newTypeText)
+    return tryChangeAndCheckErrors(variable, loop) { property ->
+        property.typeReference = KtPsiFactory(property.project).createType(newTypeText)
     }
 }
 

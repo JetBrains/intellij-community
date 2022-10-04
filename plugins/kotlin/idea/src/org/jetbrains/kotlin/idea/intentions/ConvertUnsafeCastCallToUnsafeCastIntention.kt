@@ -34,7 +34,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQ
 
     override fun applyTo(element: KtDotQualifiedExpression, editor: Editor?) {
         val type = element.callExpression?.typeArguments?.singleOrNull() ?: return
-        val newExpression = KtPsiFactory(element).createExpressionByPattern("$0 as $1", element.receiverExpression, type.text)
+        val newExpression = KtPsiFactory(element.project).createExpressionByPattern("$0 as $1", element.receiverExpression, type.text)
         element.replace(newExpression)
     }
 

@@ -52,7 +52,7 @@ object CreateIteratorFunctionActionFactory : CreateCallableMemberFromUsageFactor
             OperatorNameConventions.ITERATOR.asString(),
             iterableType,
             returnType,
-            modifierList = KtPsiFactory(element).createModifierList(KtTokens.OPERATOR_KEYWORD)
+            modifierList = KtPsiFactory(element.project).createModifierList(KtTokens.OPERATOR_KEYWORD)
         )
     }
 }

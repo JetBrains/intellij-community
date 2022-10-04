@@ -258,7 +258,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 
     private fun replaceWithPropertyGet(callExpression: KtCallExpression, propertyName: Name): KtExpression {
-        val newExpression = KtPsiFactory(callExpression).createExpression(propertyName.render())
+        val newExpression = KtPsiFactory(callExpression.project).createExpression(propertyName.render())
         return callExpression.replaced(newExpression)
     }
 
@@ -277,6 +277,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
         val qualifiedExpression = callToConvert.getQualifiedExpressionForSelector()
         val argument = callToConvert.valueArguments.single()
+
+        val psiFactory = KtPsiFactory(callToConvert.project)
+
         if (qualifiedExpression != null) {
             val pattern = when (qualifiedExpression) {
                 is KtDotQualifiedExpression -> "$0.$1=$2"
@@ -284,7 +287,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
                 else -> error(qualifiedExpression) //TODO: make it sealed?
             }
 
-            val newExpression = KtPsiFactory(callToConvert).createExpressionByPattern(
+            val newExpression = psiFactory.createExpressionByPattern(
                 pattern,
                 qualifiedExpression.receiverExpression,
                 propertyName,
@@ -293,8 +296,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
             )
             return qualifiedExpression.replaced(newExpression)
         } else {
-            val newExpression =
-                KtPsiFactory(callToConvert).createExpressionByPattern("$0=$1", propertyName, argument.getArgumentExpression()!!)
+            val newExpression = psiFactory.createExpressionByPattern("$0=$1", propertyName, argument.getArgumentExpression()!!)
             return callToConvert.replaced(newExpression)
         }
     }

@@ -161,7 +161,7 @@ internal class ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody :
         val returnedExpression = element.singleBodyStatementExpression() ?: return
 
         val commentSaver = CommentSaver(body)
-        element.addBefore(KtPsiFactory(element).createEQ(), body)
+        element.addBefore(KtPsiFactory(element.project).createEQ(), body)
         val newBody = body.replaced(returnedExpression)
         commentSaver.restore(newBody)
     }
@@ -218,7 +218,7 @@ internal class UninitializedVariableReferenceFromInitializerToThisReferenceProce
     }
 
     override fun apply(element: KtSimpleNameExpression) {
-        element.replaced(KtPsiFactory(element).createThisExpression())
+        element.replaced(KtPsiFactory(element.project).createThisExpression())
     }
 }
 
@@ -234,7 +234,7 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
     }
 
     override fun apply(element: KtSimpleNameExpression) {
-        element.replaced(KtPsiFactory(element).createThisExpression())
+        element.replaced(KtPsiFactory(element.project).createThisExpression())
     }
 }
 
@@ -259,8 +259,8 @@ internal class VarToValProcessing : InspectionLikeProcessingForElement<KtPropert
     }
 
     override fun apply(element: KtProperty) {
-        val factory = KtPsiFactory(element)
-        element.valOrVarKeyword.replace(factory.createValKeyword())
+        val psiFactory = KtPsiFactory(element.project)
+        element.valOrVarKeyword.replace(psiFactory.createValKeyword())
     }
 }
 
@@ -277,9 +277,9 @@ internal class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessing
     }
 
     override fun apply(element: KtCallExpression) {
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         element.getQualifiedExpressionForSelectorOrThis().replace(
-            factory.createExpressionByPattern(
+            psiFactory.createExpressionByPattern(
                 "($0 == $1)",
                 element.valueArguments[0].getArgumentExpression() ?: return,
                 element.valueArguments[1].getArgumentExpression() ?: return
@@ -401,8 +401,9 @@ internal class CanBeValInspectionBasedProcessing : InspectionLikeProcessingForEl
         CanBeValInspection.canBeVal(element, ignoreNotUsedVals = false)
 
     override fun apply(element: KtDeclaration) {
+        val project = element.project
         if (element !is KtValVarKeywordOwner) return
-        element.valOrVarKeyword?.replace(KtPsiFactory(element).createValKeyword())
+        element.valOrVarKeyword?.replace(KtPsiFactory(project).createValKeyword())
     }
 }
 

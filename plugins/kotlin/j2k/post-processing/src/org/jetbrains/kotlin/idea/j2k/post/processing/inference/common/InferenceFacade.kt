@@ -38,11 +38,11 @@ class InferenceFacade(
                         element.addTypeVariablesNames()
                     }
                     for (element in elements) {
-                        val factory = KtPsiFactory(element)
-                        element.add(factory.createNewLine(lineBreaks = 2))
+                        val psiFactory = KtPsiFactory(element.project)
+                        element.add(psiFactory.createNewLine(lineBreaks = 2))
                         for (constraint in initialConstraints!!) {
-                            element.add(factory.createComment("//${constraint.asString()}"))
-                            element.add(factory.createNewLine(lineBreaks = 1))
+                            element.add(psiFactory.createComment("//${constraint.asString()}"))
+                            element.add(psiFactory.createNewLine(lineBreaks = 1))
                         }
                     }
                 }

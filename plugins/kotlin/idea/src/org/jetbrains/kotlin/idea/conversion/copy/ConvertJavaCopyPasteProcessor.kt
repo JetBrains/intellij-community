@@ -211,7 +211,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             append(contextSuffix)
         }
 
-        val dummyFile = KtPsiFactory(targetFile.project).createAnalyzableFile("dummy.kt", fileText, targetFile)
+        val dummyFile = KtPsiFactory.contextual(targetFile).createFile("dummy.kt", fileText)
         val startOffset = blockStart
         val endOffset = blockEnd
         return KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset)).map {

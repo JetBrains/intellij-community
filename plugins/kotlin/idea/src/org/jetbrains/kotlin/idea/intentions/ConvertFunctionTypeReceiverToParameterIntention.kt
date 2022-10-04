@@ -318,7 +318,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         val elementBefore = data.functionType() ?: return null
         val elementAfter = elementBefore.copied().apply {
             parameterList?.addParameterBefore(
-                KtPsiFactory(element).createFunctionTypeParameter(element),
+                KtPsiFactory(project).createFunctionTypeParameter(element),
                 parameterList?.parameters?.firstOrNull()
             )
             setReceiverTypeReference(null)

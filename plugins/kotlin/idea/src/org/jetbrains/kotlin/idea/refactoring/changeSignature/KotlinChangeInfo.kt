@@ -380,7 +380,7 @@ open class KotlinChangeInfo(
     fun getOrCreateJavaChangeInfos(): List<JavaChangeInfo>? {
         fun initCurrentSignatures(currentPsiMethods: List<PsiMethod>): List<JvmOverloadSignature> {
             val parameterInfoToPsi = methodDescriptor.original.parameters.zip(originalParameters).toMap()
-            val dummyParameter = KtPsiFactory(method).createParameter("dummy")
+            val dummyParameter = KtPsiFactory(method.project).createParameter("dummy")
             return makeSignatures(
                 parameters = newParameters,
                 psiMethods = currentPsiMethods,

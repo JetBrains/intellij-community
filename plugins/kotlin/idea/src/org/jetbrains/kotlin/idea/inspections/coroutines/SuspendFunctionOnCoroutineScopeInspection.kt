@@ -166,15 +166,15 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                 }
             }
 
-            val factory = KtPsiFactory(function)
+            val psiFactory = KtPsiFactory(project)
             val blockExpression = function.bodyBlockExpression
             project.executeWriteCommand(name, this) {
                 val result = when {
                     expressionToWrap != bodyExpression -> expressionToWrap.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", expressionToWrap)
                     )
                     blockExpression == null -> bodyExpression.replaced(
-                        factory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
+                        psiFactory.createExpressionByPattern("$COROUTINE_SCOPE_WRAPPER { $0 }", bodyExpression)
                     )
                     else -> {
                         val bodyText = buildString {
@@ -184,7 +184,7 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
                             }
                         }
                         blockExpression.replaced(
-                            factory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
+                            psiFactory.createBlock("$COROUTINE_SCOPE_WRAPPER { $bodyText }")
                         )
                     }
                 }

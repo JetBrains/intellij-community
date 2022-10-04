@@ -46,8 +46,8 @@ object SpecifySuperTypeFixFactory {
     private fun KtSuperExpression.specifySuperType(superType: TypeStringWithoutArgs) {
         project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
-            val replaced =
-                replace(KtPsiFactory(this).createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
+            val psiFactory = KtPsiFactory(project)
+            val replaced = replace(psiFactory.createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
             shortenReferences(replaced)
         }
     }

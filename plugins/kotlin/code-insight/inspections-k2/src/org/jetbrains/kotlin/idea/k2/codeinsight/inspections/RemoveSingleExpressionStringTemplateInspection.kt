@@ -29,7 +29,7 @@ class RemoveSingleExpressionStringTemplateInspection() :
             val newElement = if (input.isString) {
                 expression
             } else {
-                KtPsiFactory(stringTemplateExpression).createExpressionByPattern(
+                KtPsiFactory(stringTemplateExpression.project).createExpressionByPattern(
                     pattern = "$0.$1()", expression, "toString"
                 )
             }

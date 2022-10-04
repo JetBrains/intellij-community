@@ -51,7 +51,7 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement as KtExpression
-            val factory = KtPsiFactory(expression)
+            val factory = KtPsiFactory(project)
             expression.replace(factory.createExpression("field"))
         }
     }

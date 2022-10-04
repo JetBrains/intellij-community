@@ -146,7 +146,7 @@ fun thisExpressionItems(
 ): Collection<ThisItemLookupObject> {
     val scope = position.getResolutionScope(bindingContext, resolutionFacade)
 
-    val psiFactory = KtPsiFactory(position)
+    val psiFactory = KtPsiFactory(resolutionFacade.project)
 
     val result = ArrayList<ThisItemLookupObject>()
     for ((receiver, expressionFactory) in scope.getImplicitReceiversWithInstanceToExpression()) {

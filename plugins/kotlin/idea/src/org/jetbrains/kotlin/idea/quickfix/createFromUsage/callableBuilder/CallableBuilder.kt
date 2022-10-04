@@ -482,7 +482,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 val returnTypeString = if (skipReturnType || assignmentToReplace != null) "" else ": Any"
                 val header = "$ownerTypeString${callableInfo.name.quoteIfNeeded()}$paramList$returnTypeString"
 
-                val psiFactory = KtPsiFactory(currentFile)
+                val psiFactory = KtPsiFactory(currentFile.project)
 
                 val modifiers = buildString {
                     val modifierList = callableInfo.modifierList?.copied() ?: psiFactory.createEmptyModifierList()
@@ -669,7 +669,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         ) {
             if (config.isExtension) {
                 val receiverTypeText = receiverTypeCandidate!!.theType.renderLong(typeParameterNameMap).first()
-                val replacingTypeRef = KtPsiFactory(declaration).createType(receiverTypeText)
+                val replacingTypeRef = KtPsiFactory(declaration.project).createType(receiverTypeText)
                 (declaration as KtCallableDeclaration).setReceiverTypeReference(replacingTypeRef)!!
             }
 
@@ -729,7 +729,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 if (skipReturnType) "Unit" else (func as? KtFunction)?.typeReference?.text ?: "",
                 receiverClassDescriptor?.importableFqName ?: receiverClassDescriptor?.name?.let { FqName.topLevel(it) }
             )
-            oldBody.replace(KtPsiFactory(func).createBlock(bodyText))
+            oldBody.replace(KtPsiFactory(func.project).createBlock(bodyText))
         }
 
         private fun setupCallTypeArguments(callElement: KtCallElement, typeParameters: List<TypeParameterDescriptor>) {
@@ -741,7 +741,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             if (renderedTypeArgs.isEmpty()) {
                 oldTypeArgumentList.delete()
             } else {
-                oldTypeArgumentList.replace(KtPsiFactory(callElement).createTypeArguments(renderedTypeArgs.joinToString(", ", "<", ">")))
+                val psiFactory = KtPsiFactory(callElement.project)
+                oldTypeArgumentList.replace(psiFactory.createTypeArguments(renderedTypeArgs.joinToString(", ", "<", ">")))
                 elementsToShorten.add(callElement.typeArgumentList!!)
             }
         }
@@ -861,7 +862,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
         private fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration): Boolean {
             fun convertToJava(targetClass: PsiClass): PsiMember? {
-                val psiFactory = KtPsiFactory(declaration)
+                val psiFactory = KtPsiFactory(declaration.project)
 
                 psiFactory.createPackageDirectiveIfNeeded(config.currentFile.packageFqName)?.let {
                     declaration.containingFile.addBefore(it, null)
@@ -940,9 +941,11 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
         private fun setupEditor(declaration: KtNamedDeclaration) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
+                val psiFactory = KtPsiFactory(declaration.project)
+
                 val defaultValueType = typeCandidates[callableInfo.returnTypeInfo]!!.firstOrNull()?.theType
-                val defaultValue = defaultValueType?.let { it.getDefaultInitializer() } ?: "null"
-                val initializer = declaration.setInitializer(KtPsiFactory(declaration).createExpression(defaultValue))!!
+                val defaultValue = defaultValueType?.getDefaultInitializer() ?: "null"
+                val initializer = declaration.setInitializer(psiFactory.createExpression(defaultValue))!!
                 val range = initializer.textRange
                 containingFileEditor.selectionModel.setSelection(range.startOffset, range.endOffset)
                 containingFileEditor.caretModel.moveToOffset(range.endOffset)
@@ -1089,7 +1092,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
     anchor: PsiElement,
     fileToEdit: KtFile = container.containingFile as KtFile
 ): D {
-    val psiFactory = KtPsiFactory.contextual(container)
+    val psiFactory = KtPsiFactory(container.project)
     val newLine = psiFactory.createNewLine()
 
     fun calcNecessaryEmptyLines(decl: KtDeclaration, after: Boolean): Int {

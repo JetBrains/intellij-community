@@ -141,7 +141,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
             is KtSimpleNameExpression -> {
                 val call = refElement.parent as? KtCallExpression ?: return
-                val psiFactory = KtPsiFactory(refElement)
+                val psiFactory = KtPsiFactory(refElement.project)
                 val argumentList =
                     call.valueArgumentList
                         ?: call.addAfter(psiFactory.createCallArguments("()"), call.typeArgumentList ?: refElement) as KtValueArgumentList

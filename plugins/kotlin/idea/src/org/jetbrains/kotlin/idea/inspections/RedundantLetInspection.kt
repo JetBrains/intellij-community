@@ -168,7 +168,7 @@ private fun KtCallExpression.applyTo(element: KtCallExpression, functionLiteral:
         reference?.replace(parent.receiverExpression)
         parent.replaced(this)
     } else {
-        reference?.replace(KtPsiFactory(this).createThisExpression())
+        reference?.replace(KtPsiFactory(project).createThisExpression())
         element.replaced(this)
     }
     editor?.caretModel?.moveToOffset(replaced.startOffset)

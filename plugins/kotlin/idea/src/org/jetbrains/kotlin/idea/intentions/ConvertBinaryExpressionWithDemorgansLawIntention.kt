@@ -53,7 +53,7 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
             }
             val context by lazy { expr.analyze(BodyResolveMode.PARTIAL) }
             val operands = splitBooleanSequence(expr) { context }?.asReversed() ?: return
-            val newExpression = KtPsiFactory(expr).buildExpression {
+            val newExpression = KtPsiFactory(expr.project).buildExpression {
                 val negatedOperands = operands.map {
                     it.safeAs<KtQualifiedExpression>()?.invertSelectorFunction(context) ?: it.negate()
                 }

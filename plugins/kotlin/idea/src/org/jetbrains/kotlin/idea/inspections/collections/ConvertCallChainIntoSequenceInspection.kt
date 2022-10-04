@@ -91,7 +91,7 @@ private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
         val last = lastCall.getQualifiedExpressionForSelector() ?: return
         val endWithTermination = lastCall.isTermination(context)
 
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
         val dot = buildString {
             if (first is KtQualifiedExpression
                 && first.receiverExpression.siblings().filterIsInstance<PsiWhiteSpace>().any { it.textContains('\n') }

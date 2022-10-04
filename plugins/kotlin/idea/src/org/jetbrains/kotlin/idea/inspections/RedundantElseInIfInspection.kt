@@ -68,7 +68,7 @@ private class RemoveRedundantElseFix : LocalQuickFix {
 
         val elseStartLine = (elseExpression as? KtBlockExpression)?.statements?.firstOrNull()?.getLineNumber()
         if (elseStartLine == null || elseKeywordLineNumber == lastThenEndLine && elseKeywordLineNumber == elseStartLine) {
-            parent.addAfter(KtPsiFactory(ifExpression).createNewLine(), ifExpression)
+            parent.addAfter(KtPsiFactory(project).createNewLine(), ifExpression)
         }
 
         elseExpression.parent.delete()

@@ -41,7 +41,7 @@ class ReplaceMapGetOrDefaultIntention : SelfTargetingRangeIntention<KtDotQualifi
         val callExpression = element.callExpression ?: return
         val (firstArg, secondArg) = callExpression.arguments() ?: return
         val replaced = element.replaced(
-            KtPsiFactory(element).createExpressionByPattern("$0[$1] ?: $2", element.receiverExpression, firstArg, secondArg)
+            KtPsiFactory(element.project).createExpressionByPattern("$0[$1] ?: $2", element.receiverExpression, firstArg, secondArg)
         )
 
         replaced.findDescendantOfType<KtArrayAccessExpression>()?.leftBracket?.startOffset?.let {

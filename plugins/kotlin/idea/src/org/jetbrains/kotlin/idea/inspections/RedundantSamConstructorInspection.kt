@@ -155,7 +155,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             private val newArguments: List<ValueArgument>
 
             init {
-                val factory = KtPsiFactory(callElement)
+                val factory = KtPsiFactory(callElement.project)
                 newArguments = original.valueArguments.map { argument ->
                     val call = callArgumentMapToConvert[argument]
                     val newExpression = call?.samConstructorValueArgument()?.getArgumentExpression() ?: return@map argument

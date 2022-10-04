@@ -137,7 +137,7 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != null && oldPsi.rBrace != null
 
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
-    private val psiFactory = KtPsiFactory(project)
+    private val psiFactory = KtPsiFactory.contextual(project)
 
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {

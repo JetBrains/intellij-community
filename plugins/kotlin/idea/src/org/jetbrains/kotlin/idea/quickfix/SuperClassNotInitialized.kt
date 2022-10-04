@@ -198,7 +198,7 @@ object SuperClassNotInitialized : KotlinIntentionActionsFactory() {
                     } else {
                         nameRendered + ":" + IdeDescriptorRenderers.SOURCE_CODE.renderType(parameter.type)
                     } + defaultValue
-                    parametersToAdd.add(KtPsiFactory(element).createParameter(parameterText))
+                    parametersToAdd.add(KtPsiFactory(element.project).createParameter(parameterText))
                 }
 
                 return AddParametersFix(element, classDeclaration, parametersToAdd, argumentText.toString(), text)

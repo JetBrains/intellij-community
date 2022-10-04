@@ -54,15 +54,15 @@ class IfThenToElvisInspection @JvmOverloads constructor(
         fun convert(element: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
             val ifThenToSelectData = element.buildSelectTransformationData() ?: return
 
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
 
             val commentSaver = CommentSaver(element, saveLineBreaks = false)
             val margin = element.containingKtFile.rightMarginOrDefault
             val elvis = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(factory)
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
                 val negatedClause = ifThenToSelectData.negatedClause!!
                 val newExpr = element.replaced(
-                    factory.createExpressionByPattern(
+                    psiFactory.createExpressionByPattern(
                         elvisPattern(replacedBaseClause.textLength + negatedClause.textLength + 5 >= margin),
                         replacedBaseClause,
                         negatedClause

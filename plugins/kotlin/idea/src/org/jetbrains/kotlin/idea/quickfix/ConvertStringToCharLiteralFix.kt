@@ -35,7 +35,7 @@ class ConvertStringToCharLiteralFix(element: KtStringTemplateExpression) : Kotli
 
         private fun KtStringTemplateEntry.charLiteral(): KtExpression {
             val text = text.replace("'", "\\'").replace("\\\"", "\"")
-            return KtPsiFactory(this).createExpression("'$text'")
+            return KtPsiFactory(project).createExpression("'$text'")
         }
     }
 }

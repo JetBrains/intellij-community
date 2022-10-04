@@ -56,7 +56,7 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
             val receiverNames = suggestReceiverNames(project, descriptor)
             val defaultReceiverName = receiverNames.first()
             val receiverTypeRef = function.receiverTypeReference!!
-            val psiFactory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(project)
             val newParameter = psiFactory.createParameter("$defaultReceiverName: Dummy").apply { typeReference!!.replace(receiverTypeRef) }
 
             project.executeWriteCommand(text) {

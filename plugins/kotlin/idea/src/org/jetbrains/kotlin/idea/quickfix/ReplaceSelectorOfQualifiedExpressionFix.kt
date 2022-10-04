@@ -17,7 +17,7 @@ class ReplaceSelectorOfQualifiedExpressionFix(private val newSelector: String) :
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         (descriptor.psiElement as? KtQualifiedExpression)?.let {
-            it.replace(KtPsiFactory(it).createExpressionByPattern("$0.$newSelector", it.receiverExpression))
+            it.replace(KtPsiFactory(project).createExpressionByPattern("$0.$newSelector", it.receiverExpression))
         }
     }
 }

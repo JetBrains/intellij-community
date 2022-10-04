@@ -70,12 +70,12 @@ object WrapWithSafeLetCallFixFactories {
                 return@applyTo
             }
             val suggestedVariableName = input.suggestedVariableName
-            val factory = KtPsiFactory(targetExpression)
+            val psiFactory = KtPsiFactory(targetExpression.project)
 
             fun getNewExpression(nullableExpressionText: String, expressionUnderLetText: String): KtExpression {
                 return when (suggestedVariableName) {
-                    "it" -> factory.createExpressionByPattern("$0?.let { $1 }", nullableExpressionText, expressionUnderLetText)
-                    else -> factory.createExpressionByPattern(
+                    "it" -> psiFactory.createExpressionByPattern("$0?.let { $1 }", nullableExpressionText, expressionUnderLetText)
+                    else -> psiFactory.createExpressionByPattern(
                         "$0?.let { $1 -> $2 }",
                         nullableExpressionText,
                         suggestedVariableName,
@@ -120,7 +120,7 @@ object WrapWithSafeLetCallFixFactories {
                 if (qualifiedExpression == targetExpression) {
                     targetExpression.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
                 } else {
-                    qualifiedExpression.replace(factory.createExpression(newInvokeCallText))
+                    qualifiedExpression.replace(psiFactory.createExpression(newInvokeCallText))
                     targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
                 }
 
@@ -129,7 +129,7 @@ object WrapWithSafeLetCallFixFactories {
                     is KtBinaryExpression, is KtBinaryExpressionWithTypeRHS -> "(${nullableExpression.text})"
                     else -> nullableExpression.text
                 }
-                nullableExpression.replace(factory.createExpression(suggestedVariableName))
+                nullableExpression.replace(psiFactory.createExpression(suggestedVariableName))
                 targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
             }
         }

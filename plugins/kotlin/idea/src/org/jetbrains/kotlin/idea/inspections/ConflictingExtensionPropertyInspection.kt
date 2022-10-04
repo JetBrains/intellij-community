@@ -239,7 +239,7 @@ class ConflictingExtensionPropertyInspection : AbstractKotlinInspection() {
 
         //TODO: move into PSI?
         private fun KtNamedDeclaration.addAnnotationWithLineBreak(annotationEntry: KtAnnotationEntry): KtAnnotationEntry {
-            val newLine = KtPsiFactory(this).createNewLine()
+            val newLine = KtPsiFactory(project).createNewLine()
             return if (modifierList != null) {
                 val result = addAnnotationEntry(annotationEntry)
                 modifierList!!.addAfter(newLine, result)

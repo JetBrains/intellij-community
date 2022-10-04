@@ -42,7 +42,7 @@ class ConvertTrimIndentToTrimMarginIntention : SelfTargetingIntention<KtCallExpr
                 }
             }
         }
-        qualifiedExpression.replace(KtPsiFactory(element).createExpression("\"\"\"$newTemplate\"\"\".trimMargin()"))
+        qualifiedExpression.replace(KtPsiFactory(element.project).createExpression("\"\"\"$newTemplate\"\"\".trimMargin()"))
     }
 
     companion object {

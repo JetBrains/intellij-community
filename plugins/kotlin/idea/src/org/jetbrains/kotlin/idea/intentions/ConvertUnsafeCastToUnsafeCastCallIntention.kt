@@ -36,7 +36,7 @@ class ConvertUnsafeCastToUnsafeCastCallIntention : SelfTargetingIntention<KtBina
 
     override fun applyTo(element: KtBinaryExpressionWithTypeRHS, editor: Editor?) {
         val right = element.right ?: return
-        val newExpression = KtPsiFactory(element).createExpressionByPattern("$0.unsafeCast<$1>()", element.left, right)
+        val newExpression = KtPsiFactory(element.project).createExpressionByPattern("$0.unsafeCast<$1>()", element.left, right)
         element.replace(newExpression)
     }
 

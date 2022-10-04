@@ -28,7 +28,7 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
             binaryExpressionParent.right == element
         ) {
             binaryExpressionParent.replace(
-                KtPsiFactory(element).createExpressionByPattern(
+                KtPsiFactory(element.project).createExpressionByPattern(
                     "$0 $1 $2 $3 $4",
                     binaryExpressionParent.left!!.text,
                     binaryExpressionParent.operationReference.text,
@@ -41,7 +41,7 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
             element.replace(innerExpression)
 
         if (innerExpression.firstChild is KtLambdaExpression) {
-            KtPsiFactory(element).appendSemicolonBeforeLambdaContainingElement(replaced)
+            KtPsiFactory(element.project).appendSemicolonBeforeLambdaContainingElement(replaced)
         }
 
         commentSaver.restore(replaced)

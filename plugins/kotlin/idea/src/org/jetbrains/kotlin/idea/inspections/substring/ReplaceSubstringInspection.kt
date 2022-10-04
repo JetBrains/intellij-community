@@ -52,7 +52,7 @@ abstract class ReplaceSubstringInspection : AbstractApplicabilityBasedInspection
     }
 
     protected fun KtDotQualifiedExpression.replaceWith(pattern: String, argument: KtExpression) {
-        val psiFactory = KtPsiFactory(this)
+        val psiFactory = KtPsiFactory(project)
         replace(psiFactory.createExpressionByPattern(pattern, receiverExpression, argument))
     }
 }

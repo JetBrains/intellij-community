@@ -115,17 +115,12 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
                 )
             }
 
-            val factory = KtPsiFactory(project)
+            val factory = KtPsiFactory.contextual(context)
             val className = runReadAction { referenced.containingClass?.qualifiedName }
             val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
             val file = runReadAction {
-                factory.createAnalyzableFile(
-                    fileName = "dummy.kt",
-                    text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}",
-                    contextToAnalyzeIn = context,
-                ).also {
-                    it.addImports(j2kResult.importsToAdd)
-                }
+                factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
+                    .also { it.addImports(j2kResult.importsToAdd) }
             }
 
             postProcessor.doAdditionalProcessing(
@@ -157,7 +152,7 @@ private fun unwrapElement(unwrappedUsage: KtReferenceExpression, referenced: Psi
     val argument = assignment.right ?: return unwrappedUsage
     if (unwrappedUsage.resolveToCall()?.resultingDescriptor?.isSynthesized != true) return unwrappedUsage
 
-    val psiFactory = KtPsiFactory(unwrappedUsage)
+    val psiFactory = KtPsiFactory(unwrappedUsage.project)
     val callExpression = psiFactory.createExpressionByPattern("$name($0)", argument) as? KtCallExpression ?: return unwrappedUsage
     val resultExpression = assignment.replaced(unwrappedUsage.replaced(callExpression).getQualifiedExpressionForSelectorOrThis())
     return resultExpression.getQualifiedElementSelector() as KtReferenceExpression

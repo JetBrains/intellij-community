@@ -137,7 +137,7 @@ private fun Info.adjust(
 
 private fun KtSuperExpression.specifySuperType(superType: FqName) {
     val label = labelQualifier?.text ?: ""
-    val replaced = replaced(KtPsiFactory(this).createExpression("super<${superType.asString()}>$label"))
+    val replaced = replaced(KtPsiFactory(project).createExpression("super<${superType.asString()}>$label"))
     ShortenReferences.DEFAULT.process(replaced)
 }
 

@@ -128,7 +128,7 @@ private fun KtExpression.isSelectorOfDotQualifiedExpression(): Boolean {
 private fun KtExpression.addImplicitThis(input: ImplicitThisInspection.ImplicitReceiverInfo) {
     val reference = if (this is KtCallableReferenceExpression) callableReference else this
     val thisExpressionText = if (input.isUnambiguousLabel) "this" else "this@${input.receiverLabel?.render()}"
-    val factory = KtPsiFactory(this)
+    val factory = KtPsiFactory(project)
     with(reference) {
         when (parent) {
             is KtCallExpression -> parent.replace(factory.createExpressionByPattern("$0.$1", thisExpressionText, parent))

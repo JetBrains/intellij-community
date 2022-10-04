@@ -83,22 +83,22 @@ class AddThrowsAnnotationIntention : SelfTargetingIntention<KtThrowExpression>(
 
             containingDeclaration.addAnnotation(annotationFqName, annotationArgumentText, whiteSpaceText)
         } else {
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val argument = annotationEntry.valueArguments.firstOrNull()
             val expression = argument?.getArgumentExpression()
             val added = when {
                 argument?.getArgumentName() == null ->
-                    annotationEntry.valueArgumentList?.addArgument(factory.createArgument(annotationArgumentText))
+                    annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationArgumentText))
                 expression is KtCallExpression ->
-                    expression.valueArgumentList?.addArgument(factory.createArgument(annotationArgumentText))
+                    expression.valueArgumentList?.addArgument(psiFactory.createArgument(annotationArgumentText))
                 expression is KtClassLiteralExpression -> {
                     expression.replaced(
-                        factory.createCollectionLiteral(listOf(expression), annotationArgumentText)
+                        psiFactory.createCollectionLiteral(listOf(expression), annotationArgumentText)
                     ).getInnerExpressions().lastOrNull()
                 }
                 expression is KtCollectionLiteralExpression -> {
                     expression.replaced(
-                        factory.createCollectionLiteral(expression.getInnerExpressions(), annotationArgumentText)
+                        psiFactory.createCollectionLiteral(expression.getInnerExpressions(), annotationArgumentText)
                     ).getInnerExpressions().lastOrNull()
                 }
                 else -> null

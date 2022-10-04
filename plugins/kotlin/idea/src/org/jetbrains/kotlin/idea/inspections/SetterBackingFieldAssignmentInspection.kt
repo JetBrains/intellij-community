@@ -83,6 +83,6 @@ private class AssignBackingFieldFix : LocalQuickFix {
             ?.singleOrNull { it is PsiWhiteSpace }
             ?.also { it.delete() }
 
-        bodyExpression.addBefore(KtPsiFactory(setter).createExpression("field = ${parameter.name}"), bodyExpression.rBrace)
+        bodyExpression.addBefore(KtPsiFactory(project).createExpression("field = ${parameter.name}"), bodyExpression.rBrace)
     }
 }

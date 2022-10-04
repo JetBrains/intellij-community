@@ -60,7 +60,7 @@ class AnonymousFunctionToLambdaIntention : SelfTargetingRangeIntention<KtNamedFu
         val commentSaver = CommentSaver(element)
         val returnSaver = ReturnSaver(element)
         val body = element.bodyExpression!!
-        val newExpression = KtPsiFactory(element).buildExpression {
+        val newExpression = KtPsiFactory(element.project).buildExpression {
             if (!returnSaver.isEmpty) {
                 val returnLabels = element.bodyExpression
                     ?.collectDescendantsOfType<KtExpression>()

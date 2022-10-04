@@ -47,7 +47,7 @@ private fun getApplicableComponentFunctions(
 
     val scope = contextExpression.getResolutionScope(context, facade)
 
-    val psiFactory = KtPsiFactory(contextExpression)
+    val psiFactory = KtPsiFactory(contextExpression.project)
     @Suppress("UNCHECKED_CAST")
     return generateSequence(1) { it + 1 }.map {
             val componentCallExpr = psiFactory.createExpressionByPattern("$0.$1", receiverExpression ?: contextExpression, "component$it()")

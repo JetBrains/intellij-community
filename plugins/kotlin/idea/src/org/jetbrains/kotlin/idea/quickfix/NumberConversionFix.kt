@@ -54,7 +54,7 @@ class NumberConversionFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val psiFactory = KtPsiFactory(file)
+        val psiFactory = KtPsiFactory(project)
         val apiVersion = element.languageVersionSettings.apiVersion
         val dot = if (fromNullable) "?." else "."
         val expressionToInsert = when {

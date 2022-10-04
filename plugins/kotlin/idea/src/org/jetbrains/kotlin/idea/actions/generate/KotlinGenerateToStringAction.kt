@@ -185,7 +185,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val superToString = info.classDescriptor.getSuperClassOrAny().findDeclaredToString(true)!!
         return generateFunctionSkeleton(superToString, targetClass).apply {
             replaceBody {
-                KtPsiFactory(targetClass).createBlock(info.generator.generate(info))
+                KtPsiFactory(project).createBlock(info.generator.generate(info))
             }
         }
     }
