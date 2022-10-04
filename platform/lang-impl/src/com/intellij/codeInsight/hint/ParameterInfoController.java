@@ -494,6 +494,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
       LookupImpl activeLookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
       Rectangle lookupBounds = !ApplicationManager.getApplication().isUnitTestMode()
+                               && !ApplicationManager.getApplication().isHeadlessEnvironment()
                                && activeLookup != null
                                && activeLookup.isShown()
                                ? activeLookup.getBounds()
