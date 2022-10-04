@@ -4,6 +4,7 @@ package com.intellij.ide.feedback
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.AboutDialog
+import com.intellij.ide.actions.ReportProblemAction
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
@@ -116,7 +117,7 @@ class FeedbackForm(
             .gap(RightGap.SMALL)
             .visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
           text(ApplicationBundle.message("feedback.form.issue")) {
-            SendFeedbackAction.submit(project, ApplicationInfoEx.getInstanceEx().youtrackUrl, SendFeedbackAction.getDescription(project))
+            ReportProblemAction.submit(project)
           }.visibleIf(topicComboBox.selectedValueMatches { it?.id == "ij_bug" })
         }
       }

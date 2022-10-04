@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.FeedbackDescriptionProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.feedback.FeedbackForm;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,6 +14,9 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.ZenDeskForm;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -67,7 +71,13 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static void submit(@Nullable Project project) {
-    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("reportProblemAction.progress.title.submitting")) {
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project, indicator));
+      }
+    });
   }
 
   public static void submit(@Nullable Project project, @NotNull String description) {
@@ -87,7 +97,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     BrowserUtil.browse(url, project);
   }
 
-  public static @NotNull String getDescription(@Nullable Project project) {
+  public static @NotNull String getDescription(@Nullable Project project, @Nullable ProgressIndicator progressIndicator) {
     @NonNls StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -130,7 +140,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       }
     }
     for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {
-      String pluginDescription = ext.getDescription(project);
+      String pluginDescription = ext.getDescription(project, progressIndicator);
       if (pluginDescription != null && pluginDescription.length() > 0) {
         sb.append("\n").append(pluginDescription);
       }
