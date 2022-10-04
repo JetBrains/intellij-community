@@ -10,13 +10,15 @@ import org.junit.jupiter.api.fail
 
 internal object ProjectFileIndexScopes {
   const val NOT_IN_PROJECT = 0
-  const val IN_CONTENT = 1
-  const val IN_LIBRARY = 2
-  const val EXCLUDED = 4
-  const val IN_SOURCE = 8
-  const val IN_TEST_SOURCE = 16
-  const val UNDER_IGNORED = 32
-  private const val IN_LIBRARY_SOURCE_AND_CLASSES_FLAG = 64
+  const val IN_CONTENT = 1 shl 0 
+  const val IN_LIBRARY = 1 shl 1
+  const val EXCLUDED = 1 shl 2
+  const val IN_SOURCE = 1 shl 3
+  const val IN_TEST_SOURCE = 1 shl 4
+  const val UNDER_IGNORED = 1 shl 5
+  private const val IN_LIBRARY_SOURCE_AND_CLASSES_FLAG = 1 shl 6
+  private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 1 shl 7
+  const val EXCLUDED_FROM_MODULE_ONLY = 1 shl 8
   const val IN_LIBRARY_SOURCE_AND_CLASSES = IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_AND_CLASSES_FLAG
   private const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG = 128
   const val IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE = IN_CONTENT or IN_SOURCE or IN_LIBRARY or IN_MODULE_SOURCE_BUT_NOT_IN_LIBRARY_SOURCE_FLAG
