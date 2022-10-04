@@ -93,7 +93,7 @@ internal class MarketplaceSearchPluginData(
   var isPaid: Boolean = false,
   val rating: Double = 0.0,
   val name: String = "",
-  private val cdate: Long? = null,
+  val cdate: Long? = null,
   val organization: String = "",
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,

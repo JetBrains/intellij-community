@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.io.URLUtil;
@@ -129,7 +130,7 @@ public class ReviewCommentComponent extends JPanel {
       setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
     else if (state == EventHandler.SelectionType.HOVER) {
-      setBackground(Gray.xF8);
+      setBackground(new JBColor(Gray.xF8, JBUI.CurrentTheme.Table.Hover.background(true)));
     }
     myMoreButton.setVisible(state == EventHandler.SelectionType.HOVER || myShowPopup);
     myState = state;

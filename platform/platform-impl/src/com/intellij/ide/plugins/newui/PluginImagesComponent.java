@@ -229,6 +229,35 @@ public class PluginImagesComponent extends JPanel {
     else if (new Rectangle(x + offset, y, width - offset, height - offset).contains(mouseX, mouseY)) {
       handleFullScreen();
     }
+    else {
+      int count;
+      synchronized (myLock) {
+        if (ContainerUtil.isEmpty(myImages)) {
+          return;
+        }
+        count = myImages.size();
+      }
+
+      int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
+      int ovalGap = JBUI.scale(14);
+      int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
+      int ovalX = x + (width - ovalsWidth) / 2;
+      int ovalY = insets.top + height - (offset + ovalSize) / 2;
+      Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
+
+      for (int i = 0; i < count; i++) {
+        if (bounds.contains(mouseX, mouseY)) {
+          synchronized (myLock) {
+            if (myCurrentImage != i) {
+              myCurrentImage = i;
+              repaint();
+            }
+          }
+          return;
+        }
+        bounds.x += ovalSize + ovalGap;
+      }
+    }
   }
 
   private void handleFullScreen() {
