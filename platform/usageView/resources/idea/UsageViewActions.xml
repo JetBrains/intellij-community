@@ -16,6 +16,7 @@
     <registryKey key="similarity.find.usages.use.parent.features.with.child.number" defaultValue="false"
                  description="Take in account what child number is in parent node"/>
     <registryKey defaultValue="true" description="Use information from parent nodes" key="similarity.find.usages.use.parent.features"/>
+    <registryKey defaultValue="true" description="Enable similarity clustering for Java usages" key="similarity.find.usages.java.clustering.enable"/>
     <registryKey defaultValue="true" description="Enable similarity clustering for Kotlin usages"
                  key="similarity.find.usages.kotlin.clustering.enable"/>
     <registryKey defaultValue="true" description="Clustering without resolve" key="similarity.find.usages.fast.clustering"/>

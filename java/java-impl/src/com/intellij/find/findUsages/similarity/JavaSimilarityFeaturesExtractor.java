@@ -23,7 +23,9 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   }
 
   public @NotNull Bag getFeatures() {
-    myContext.accept(this);
+    if (Registry.is("similarity.find.usages.java.clustering.enable")) {
+      myContext.accept(this);
+    }
     return myUsageSimilarityFeaturesRecorder.getFeatures();
   }
 
