@@ -347,11 +347,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             if (indexType == null || !indexType.fqNameEquals("kotlin.Int")) {
                 if (lastIndex && storedValue != null) {
-                    processExpression(storedValue)
-                    addInstruction(PopInstruction())
+                    processUnknownArrayStore(storedValue)
+                } else {
+                    addInstruction(EvalUnknownInstruction(anchor, 2, expectedType))
+                    addInstruction(FlushFieldsInstruction())
                 }
-                addInstruction(EvalUnknownInstruction(anchor, 2, expectedType))
-                addInstruction(FlushFieldsInstruction())
                 continue
             }
             if (curType != null && KotlinBuiltIns.isArrayOrPrimitiveArray(curType)) {
@@ -370,40 +370,55 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
                 curType = elementType
             } else {
-                if (KotlinBuiltIns.isString(kotlinType)) {
-                    if (indexType.canBeNull()) {
-                        addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                when {
+                    KotlinBuiltIns.isString(kotlinType) -> {
+                        if (indexType.canBeNull()) {
+                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                        }
+                        val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
+                        addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
+                        if (lastIndex && storedValue != null) {
+                            processExpression(storedValue)
+                            addInstruction(PopInstruction())
+                        }
+                        addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
                     }
-                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
-                    addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
-                    if (lastIndex && storedValue != null) {
-                        processExpression(storedValue)
-                        addInstruction(PopInstruction())
+                    isList(kotlinType) -> {
+                        if (indexType.canBeNull()) {
+                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                        }
+                        val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
+                        addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
+                        if (lastIndex && storedValue != null) {
+                            processExpression(storedValue)
+                            addInstruction(PopInstruction())
+                        }
+                        pushUnknown()
                     }
-                    addInstruction(PushValueInstruction(DfTypes.typedObject(PsiType.CHAR, Nullability.UNKNOWN), anchor))
-                } else if (kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
-                    kotlinType.supertypes().any { type -> KotlinBuiltIns.isListOrNullableList(type) })) {
-                    if (indexType.canBeNull()) {
-                        addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
-                    }
-                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
-                    addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
-                    if (lastIndex && storedValue != null) {
-                        processExpression(storedValue)
-                        addInstruction(PopInstruction())
-                    }
-                    pushUnknown()
-                } else {
-                    if (lastIndex && storedValue != null) {
-                        processExpression(storedValue)
-                        addCall(storedValue.parent as KtExpression, 3)
-                    } else {
-                        addCall(expr, 2)
+                    else -> {
+                        if (lastIndex && storedValue != null) {
+                            processUnknownArrayStore(storedValue)
+                        } else {
+                            addCall(expr, 2)
+                        }
                     }
                 }
             }
         }
     }
+
+    private fun processUnknownArrayStore(storedValue: KtExpression) {
+        // stack before: <array_expression> <index_expression>
+        processExpression(storedValue)
+        val parent = storedValue.parent
+        assert(parent is KtExpression) { "parent must be assignment expression, got ${parent::class}" }
+        // process a[b] = c like a call with arguments a, b, c.
+        addCall(parent as KtExpression, 3)
+    }
+
+    private fun isList(kotlinType: KotlinType?) =
+        kotlinType != null && (KotlinBuiltIns.isListOrNullableList(kotlinType) ||
+                kotlinType.supertypes().any { type -> KotlinBuiltIns.isListOrNullableList(type) })
 
     private fun processIsExpression(expr: KtIsExpression) {
         processExpression(expr.leftHandSide)
