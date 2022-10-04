@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -19,6 +18,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,17 +122,19 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       value.addListener(cancelingListener, this);
     }
 
-    RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
-    AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener((thread, runnable) -> {
-      if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize.asInteger() &&
-          ApplicationInfoImpl.getShadowInstance().isEAP()) {
-        String message = "Too many pooled threads created (" + service.getBackendPoolExecutorSize() + " > " + ourReasonableThreadPoolSize + ")";
-        File file = doDumpThreads("newPooledThread/", true, message);
-        LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
-      }
-    });
-
+    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+      RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
+      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+      final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
+      service.setNewThreadListener((__, ___) -> {
+        int executorSize = service.getBackendPoolExecutorSize();
+        if (executorSize > ourReasonableThreadPoolSize.asInteger() + AVAILABLE_PROCESSORS) {
+          String message = "Too many threads: " + executorSize + " created in the global Application pool. (" + ourReasonableThreadPoolSize+", available processors: "+AVAILABLE_PROCESSORS+")";
+          File file = doDumpThreads("newPooledThread/", true, message);
+          LOG.info(message + (file == null ? "" : "; thread dump is saved to '" + file.getPath() + "'"));
+        }
+      });
+    }
     reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
