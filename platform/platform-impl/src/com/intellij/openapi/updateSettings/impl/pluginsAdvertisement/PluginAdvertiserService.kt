@@ -151,10 +151,11 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { PluginManagerCore.isDisabled(it.pluginId) }
       .filterNot { PluginManagerCore.isBrokenPlugin(it) }
-      .filterNot { loadedPlugin ->
-        PluginManagerCore.getPlugin(loadedPlugin.pluginId)?.let {
-          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, it) <= 0
-        } ?: false
+      .filter { loadedPlugin ->
+        when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
+          null -> true
+          else -> PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
+        }
       }.filter { org.allowInstallingPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
       .toList()
