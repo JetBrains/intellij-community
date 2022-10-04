@@ -485,6 +485,9 @@ public final class IdeEventQueue extends EventQueue {
     }
     finally {
       Thread.interrupted();
+      if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
+        processIdleActivityListeners(e);
+      }
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
       }
@@ -711,9 +714,8 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-      processIdleActivityListeners(e);
-    }
+    // Increment the activity counter before performing the action so that they are called with data providers with fresh data
+    ActivityTracker.getInstance().inc();
 
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
@@ -776,6 +778,7 @@ public final class IdeEventQueue extends EventQueue {
                                    MouseEvent.MOUSE_RELEASED == e.getID() ||
                                    MouseEvent.MOUSE_CLICKED == e.getID();
     if (isActivityInputEvent || !(e instanceof InputEvent)) {
+      // Increment the activity counter right before notifying listeners so that the listeners would get data providers with fresh data
       ActivityTracker.getInstance().inc();
     }
     synchronized (myLock) {
