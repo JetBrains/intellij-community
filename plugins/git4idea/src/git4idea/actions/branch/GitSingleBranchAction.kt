@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import git4idea.GitBranch
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.function.Supplier
 
@@ -31,7 +32,7 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, branches)
 
     //TODO: check and i18n
-    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), "Action")
+    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), GitBundle.message("action.not.possible.in.fresh.repo.generic"))
 
     if (e.presentation.isEnabledAndVisible) {
       updateIfEnabledAndVisible(e, project!!, repositories!!, branches!!.single())
