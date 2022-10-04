@@ -86,12 +86,16 @@ class ModuleRootsInProjectFileIndexTest {
     val srcDir = file.parent
     PsiTestUtil.addContentRoot(module, moduleDir)
     assertInModule(file)
+    assertNull(fileIndex.getSourceRootForFile(file))
 
     PsiTestUtil.addSourceRoot(module, srcDir)
     assertInContentSource(file)
+    assertEquals(srcDir, fileIndex.getSourceRootForFile(file))
+    assertNull(fileIndex.getClassRootForFile(file))
 
     PsiTestUtil.removeSourceRoot(module, srcDir)
     assertInModule(file)
+    assertNull(fileIndex.getSourceRootForFile(file))
   }
 
   @Test
