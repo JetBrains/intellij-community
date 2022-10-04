@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -323,6 +324,27 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
     assertNotNull(throwable);
     assertEquals(failureMessage, ExceptionUtil.getRootCause(throwable).getMessage());
+  }
+
+  @Test
+  public void testStartBlockingExceptionPropagation() {
+    Assume.assumeTrue(myOnEdt); // non-EDT implementation doesn't go through startBlocking()
+
+    var t = new RuntimeException();
+    class ThrowingIndicator extends EmptyProgressIndicator implements BlockingProgressIndicator {
+      @Override
+      public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
+        throw t;
+      }
+    }
+
+    ProgressResult<?> result = new ProgressRunner<>(EmptyRunnable.getInstance())
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(new ThrowingIndicator())
+      .modal()
+      .submitAndGet();
+    assertFalse(result.isCanceled());
+    assertSame(t, result.getThrowable());
   }
 
   @Override
