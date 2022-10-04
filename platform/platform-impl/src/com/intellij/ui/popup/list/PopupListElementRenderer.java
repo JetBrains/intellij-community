@@ -186,13 +186,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.add(myIconBar, BorderLayout.WEST);
     }
 
-    JPanel result = new JPanel();
+    JPanel result;
     if (ExperimentalUI.isNewUI()) {
       result = new SelectablePanel();
       result.setOpaque(false);
-      PopupUtil.configListRendererFlexibleHeight(((SelectablePanel)result));
+      PopupUtil.configListRendererFixedHeight(((SelectablePanel)result));
     }
     else {
+      result = new JPanel();
       result.setBorder(JBUI.Borders.empty());
     }
     result.setLayout(new GridBagLayout());
