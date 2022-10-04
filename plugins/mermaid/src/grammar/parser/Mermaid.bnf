@@ -47,7 +47,7 @@ pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
 
 
-pieDocument ::= pieLines
+pieDocument ::= pieLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private pieLines ::= pieLine [pieLines]
 private pieLine ::= pieStatement [EOL] | EOL
 pieStatement ::= string COLON VALUE
@@ -56,7 +56,7 @@ pieStatement ::= string COLON VALUE
 	| accStatement
 
 
-journeyDocument ::= journeyLines
+journeyDocument ::= journeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
 private journeyLine ::= journeyStatement [EOL] | EOL
 journeyStatement ::= journeyDataStatement
@@ -68,7 +68,7 @@ journeyStatement ::= journeyDataStatement
 journeyDataStatement ::= complexTaskName COLON (IGNORED | recTaskData (COLON recTaskData)+)
 
 journeySectionStatement ::= SECTION complexSectionTitle journeySectionDocument
-journeySectionDocument ::= journeySectionLines
+journeySectionDocument ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private journeySectionLines ::= (journeySectionLine | IGNORED) [journeySectionLines]
 private journeySectionLine ::= journeySectionInnerStatement [EOL] | EOL
 journeySectionInnerStatement ::= journeyDataStatement
@@ -80,7 +80,7 @@ private recTaskData ::= complexTaskData [COMMA recTaskData]
 
 flowchartHeader ::= FLOWCHART [DIR]
 
-flowchartDocument ::= flowchartLines
+flowchartDocument ::= flowchartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 private flowchartLine ::= flowchartStatement [separator] | separator
 flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
@@ -115,10 +115,10 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
 nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
 complexLinkText ::= LINK_TEXT+
 
-subgraphStatement ::= subgraphHeader EOL subgraphDocument? END
+subgraphStatement ::= subgraphHeader EOL subgraphDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 subgraphHeader ::= SUBGRAPH subgraphName
 subgraphName ::= complexIdentifier
-subgraphDocument ::= subgraphLines
+subgraphDocument ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
 private subgraphLine ::= subgraphInnerStatement [separator] | separator
 private subgraphInnerStatement ::= flowchartStatement
@@ -136,7 +136,7 @@ flowchartClassStatement ::= CLASS ID (COMMA ID)* STYLE_TARGET
 styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
 
 
-sequenceDocument ::= sequenceLines
+sequenceDocument ::= sequenceLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 private sequenceLine ::= sequenceStatement [separator] | separator
 sequenceStatement ::= actorStatement
@@ -147,13 +147,13 @@ sequenceStatement ::= actorStatement
 	| noteStatement
 	| linksStatement
 	| linkStatement
-	| LOOP [complexMessage] EOL sequenceDocument? END
-	| RECT [complexMessage] EOL sequenceDocument? END
-	| OPT [complexMessage] EOL sequenceDocument? END
-	| BREAK [complexMessage] EOL sequenceDocument? END
-	| ALT [complexMessage] EOL elseSections END
-	| PAR [complexMessage] EOL parSections END
-	| CRITICAL [complexMessage] EOL optionSections END
+	| loopStatement
+	| rectStatement
+	| optStatement
+	| breakStatement
+	| altStatement
+	| parStatement
+	| criticalStatement
 	| directive
 	| accStatement
 
@@ -172,6 +172,14 @@ signalType ::= SOLID_OPEN_ARROW
   | SOLID_POINT
   | DOTTED_POINT
 
+loopStatement ::= LOOP [complexMessage] EOL sequenceDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+rectStatement ::= RECT [complexMessage] EOL sequenceDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+optStatement ::= OPT [complexMessage] EOL sequenceDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+breakStatement ::= BREAK [complexMessage] EOL sequenceDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+altStatement ::= ALT [complexMessage] EOL elseSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+parStatement ::= PAR [complexMessage] EOL parSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+criticalStatement ::= CRITICAL [complexMessage] EOL optionSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+
 noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessage
   | NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON complexMessage
 
@@ -187,7 +195,7 @@ optionSections ::= sequenceDocument? [OPTION [complexMessage] EOL optionSections
 
 complexMessage ::= MESSAGE+
 
-classDocument ::= classLines
+classDocument ::= classLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private classLines ::= classLine [classLines]
 private classLine ::= classDiagramStatement [EOL] | EOL
 classDiagramStatement ::= directionStatement
@@ -209,7 +217,7 @@ complexLabel ::= LABEL+
 annotationStatement ::= annotation identifier
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
-classMembersDocument ::= memberLines
+classMembersDocument ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private memberLines ::= memberLine [memberLines]
 private memberLine ::= classMemberStatement [EOL] | EOL
 classMemberStatement ::= attrOrMethod | annotation | directive
@@ -242,13 +250,13 @@ relationTypeRight ::= AGGREGATION
 lineType ::= LINE | DOTTED_LINE
 
 
-stateDocument ::= stateLines
+stateDocument ::= stateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private stateLines ::= stateLine [stateLines]
 private stateLine ::= stateDiagramStatement [EOL] | EOL
 stateDiagramStatement ::= stateDeclaration
   | stateId ARROW stateId [COLON complexLabel]
   | stateId
-  | noteHeader noteContent
+  | stateNote
   | directionStatement
   | directive
 	| accStatement
@@ -258,7 +266,7 @@ stateDeclaration ::= stateId COLON complexLabel
   | STATE stateId OPEN_CURLY innerStateDocument CLOSE_CURLY
   | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
-innerStateDocument ::= innerStateLines
+innerStateDocument ::= innerStateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private innerStateLines ::= innerStateLine [innerStateLines]
 private innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
 private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
@@ -267,6 +275,8 @@ dividerStatement ::= DIVIDER
 
 stateId ::= identifier | OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
+
+stateNote ::= noteHeader noteContent { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 noteHeader ::= NOTE (RIGHT_OF | LEFT_OF) stateId
 private noteContent ::= EOL complexNoteContent? END
   | COLON [simpleNoteContent]
@@ -277,7 +287,7 @@ private noteLines ::= noteLine [noteLines]
 private noteLine ::= simpleNoteContent [EOL] | EOL
 
 
-erDocument ::= erLines
+erDocument ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
 erStatement ::= identifier relationship identifier COLON (complexLabel | string)
@@ -292,13 +302,13 @@ relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRi
 private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE
 private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MORE_RIGHT | ONLY_ONE
 
-erAttributesDocument ::= erAttributesLines
+erAttributesDocument ::= erAttributesLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [string]
 
 
-ganttDocument ::= ganttLines
+ganttDocument ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private ganttLines ::= ganttLine [ganttLines]
 private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
 ganttStatement ::= DATE_FORMAT
@@ -316,13 +326,13 @@ ganttStatement ::= DATE_FORMAT
 ganttDataStatement ::= complexTaskName COLON recTaskData
 
 ganttSectionStatement ::= SECTION complexSectionTitle ganttSectionDocument
-ganttSectionDocument ::= ganttSectionLines
+ganttSectionDocument ::= ganttSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private ganttSectionLines ::= (ganttSectionLine | IGNORED) [ganttSectionLines]
 private ganttSectionLine ::= ganttSectionInnerStatement [EOL] | EOL
 ganttSectionInnerStatement ::= ganttDataStatement
 
 
-requirementDocument ::= requirementLines
+requirementDocument ::= requirementLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private requirementLines ::= requirementLine [requirementLines]
 private requirementLine ::= requirementStatement [EOL] | EOL
 requirementStatement ::= requirementDef
@@ -340,7 +350,7 @@ requirementType ::= REQUIREMENT
   | DESIGN_CONSTRAINT
 private requirementValue ::= complexLabel | string
 
-requirementBody ::= requirementBodyLines
+requirementBody ::= requirementBodyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private requirementBodyLines ::= requirementBodyLine [requirementBodyLines]
 private requirementBodyLine ::= requirementBodyStatement [EOL] | EOL
 requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
@@ -353,7 +363,7 @@ verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
 
 elementDef ::= ELEMENT identifier OPEN_CURLY EOL elementBody? CLOSE_CURLY
 
-elementBody ::= elementBodyLines
+elementBody ::= elementBodyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 private elementBodyLines ::= elementBodyLine [elementBodyLines]
 private elementBodyLine ::= elementBodyStatement [EOL] | EOL
 elementBodyStatement ::= TYPE COLON requirementValue
@@ -365,7 +375,7 @@ relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
 reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
 
 
-gitGraphDocument ::= gitGraphLines
+gitGraphDocument ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private gitGraphLines ::= gitGraphLine [gitGraphLines]
 private gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
 gitGraphStatement ::= commitStatement
@@ -492,7 +502,7 @@ c4Header ::= C4_CONTEXT
   | C4_DYNAMIC
   | C4_DEPLOYMENT
 
-c4Document ::= c4Lines
+c4Document ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private c4Lines ::= c4Line [c4Lines]
 private c4Line ::= c4Statement [EOL] | EOL
 c4Statement ::= PERSON c4Attributes 
@@ -537,10 +547,8 @@ private c4AttributesRec ::= [c4Attr] [COMMA c4AttributesRec]
 c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | string
 c4AttrComplexName ::= (C4_ATTRIBUTE | DOLLAR | EQUALITY)+
 
-boundaryStatement ::= boundaryStartStatement c4Document? boundaryStopStatement
-boundaryStartStatement ::= boundaryStart OPEN_CURLY EOL
-  | boundaryStart EOL OPEN_CURLY
-  | boundaryStart EOL OPEN_CURLY EOL
+boundaryStatement ::= boundaryStart OPEN_CURLY boundaryBody? CLOSE_CURLY
+boundaryBody ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
 
 boundaryStart ::= ENTERPRISE_BOUNDARY c4Attributes
   | SYSTEM_BOUNDARY c4Attributes
@@ -549,8 +557,6 @@ boundaryStart ::= ENTERPRISE_BOUNDARY c4Attributes
   | NODE c4Attributes
   | NODE_L c4Attributes
   | NODE_R c4Attributes
-
-boundaryStopStatement ::= CLOSE_CURLY
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]

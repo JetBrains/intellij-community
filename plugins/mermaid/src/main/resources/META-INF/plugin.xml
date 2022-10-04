@@ -44,5 +44,8 @@
     <enterHandlerDelegate id="MermaidEnterHandler"
                           implementation="com.intellij.mermaid.editor.MermaidEnterHandler"/>
 
+    <lang.foldingBuilder language="Mermaid"
+                         implementationClass="com.intellij.mermaid.lang.folding.MermaidFoldingBuilder"/>
+
   </extensions>
 </idea-plugin>
