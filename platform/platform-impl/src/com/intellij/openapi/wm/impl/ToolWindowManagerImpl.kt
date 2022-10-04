@@ -658,6 +658,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     if (!entry.readOnlyWindowInfo.isVisible) {
+      info.isActiveOnStart = autoFocusContents
       showToolWindowImpl(entry, info, dirtyMode = false, source = source)
     }
 
@@ -944,9 +945,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     entry.applyWindowInfo(snapshotInfo)
     doShowWindow(entry, snapshotInfo, dirtyMode)
 
-    if (entry.readOnlyWindowInfo.type == ToolWindowType.WINDOWED && entry.toolWindow.getComponentIfInitialized() != null) {
-      UIUtil.toFront(ComponentUtil.getWindow(entry.toolWindow.component))
-    }
     return true
   }
 
@@ -1873,7 +1871,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         hideToolWindow(id, false)
       }
     }
-    windowedDecorator.show(false)
+
+    window.isAutoRequestFocus = info.isActiveOnStart
+    try {
+      windowedDecorator.show(false)
+    } finally {
+      window.isAutoRequestFocus = true
+    }
 
     val rootPane = (window as RootPaneContainer).rootPane
     val rootPaneBounds = rootPane.bounds
@@ -1884,7 +1888,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     if (shouldBeMaximized && window is Frame) {
       window.extendedState = Frame.MAXIMIZED_BOTH
     }
-    window.toFront()
   }
 
   internal fun toolWindowAvailable(toolWindow: ToolWindowImpl) {

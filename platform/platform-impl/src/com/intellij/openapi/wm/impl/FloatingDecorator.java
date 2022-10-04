@@ -118,9 +118,13 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     UIUtil.decorateWindowHeader(rootPane);
     ToolbarUtil.setTransparentTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     boolean isActive = myInfo.isActiveOnStart();
-    setFocusableWindowState(isActive);
 
-    super.show();
+    setAutoRequestFocus(isActive);
+    try {
+      super.show();
+    } finally {
+      setAutoRequestFocus(true);
+    }
 
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getState().getEnableAlphaMode()) {
@@ -136,8 +140,6 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
 
     // this prevents annoying flick
     paint(getGraphics());
-
-    setFocusableWindowState(true);
 
     ApplicationManager.getApplication().getMessageBus().connect(myDelayAlarm).subscribe(UISettingsListener.TOPIC, myUISettingsListener);
   }
