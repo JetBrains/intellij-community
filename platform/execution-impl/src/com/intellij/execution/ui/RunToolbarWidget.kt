@@ -8,8 +8,6 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.impl.ExecutionManagerImpl.Companion.isProcessRunning
-import com.intellij.execution.impl.isOfSameType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
@@ -445,17 +443,6 @@ private class RunToolbarWidgetRunAction(
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val project = e.project ?: return
-    val configuration = getSelectedConfiguration(e) ?: return
-    val isRunning = configuration.isRunning(project, myExecutor.id)
-    if (isRunning && !configuration.configuration.isAllowRunningInParallel) {
-      e.presentation.icon = AllIcons.Actions.Restart
-      e.presentation.text = reword(myExecutor, true, configuration.shortenName())
-    }
-    else {
-      e.presentation.icon = myExecutor.icon
-      e.presentation.text = reword(myExecutor,false, configuration.shortenName())
-    }
     if (hideIfDisable) {
       e.presentation.isVisible = e.presentation.isEnabled
     }
@@ -769,20 +756,6 @@ private class RunDropDownButtonUI : BasicButtonUI() {
       }
 
       super.mousePressed(e)
-    }
-  }
-}
-
-private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: String? = null) : Boolean {
-  return with(ExecutionManagerImpl.getInstance(project)) {
-    getRunningDescriptors {
-      s -> s.isOfSameType(this@isRunning)
-    }.any {
-      if (execId != null) {
-        getExecutors(it).asSequence().map(Executor::getId).contains(execId)
-      } else {
-        isProcessRunning(it)
-      }
     }
   }
 }
