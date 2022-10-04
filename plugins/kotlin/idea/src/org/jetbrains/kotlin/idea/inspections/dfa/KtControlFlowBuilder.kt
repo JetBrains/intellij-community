@@ -1016,18 +1016,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(range)
         if (range != null) {
             val kotlinType = range.getKotlinType()
-            val lengthField = findSpecialField(kotlinType)
-            if (lengthField != null && lengthField != SpecialField.ENUM_ORDINAL) {
-                val collectionVar = flow.createTempVariable(kotlinType.toDfType())
-                addInstruction(JvmAssignmentInstruction(null, collectionVar))
-                addInstruction(PopInstruction())
-                return {
-                    addInstruction(JvmPushInstruction(lengthField.createValue(factory, collectionVar), null))
-                    addInstruction(PushValueInstruction(DfTypes.intValue(0)))
-                    addInstruction(BooleanBinaryInstruction(RelationType.GT, false, null))
-                    pushUnknown()
-                    addInstruction(BooleanAndOrInstruction(false, KotlinForVisitedAnchor(expr)))
+            when (val lengthField = findSpecialField(kotlinType)) {
+                SpecialField.ARRAY_LENGTH, SpecialField.STRING_LENGTH, SpecialField.COLLECTION_SIZE -> {
+                    val collectionVar = flow.createTempVariable(kotlinType.toDfType())
+                    addInstruction(JvmAssignmentInstruction(null, collectionVar))
+                    addInstruction(PopInstruction())
+                    return {
+                        addInstruction(JvmPushInstruction(lengthField.createValue(factory, collectionVar), null))
+                        addInstruction(PushValueInstruction(DfTypes.intValue(0)))
+                        addInstruction(BooleanBinaryInstruction(RelationType.GT, false, null))
+                        pushUnknown()
+                        addInstruction(BooleanAndOrInstruction(false, KotlinForVisitedAnchor(expr)))
+                    }
                 }
+                SpecialField.UNBOX, SpecialField.OPTIONAL_VALUE, SpecialField.ENUM_ORDINAL, SpecialField.CONSUMED_STREAM, null -> {}
             }
         }
         addInstruction(PopInstruction())
