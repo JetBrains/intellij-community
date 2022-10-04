@@ -269,7 +269,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       }
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
-        val problem = runBackgroundBeforeCommitChecks(commitInfo)
+        val problem = runNonModalBeforeCommitChecks(commitInfo)
         handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo.asStaticInfo())
       }
     }
@@ -277,7 +277,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return true
   }
 
-  private suspend fun runBackgroundBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
+  private suspend fun runNonModalBeforeCommitChecks(commitInfo: DynamicCommitInfo): CommitProblem? {
     try {
       val handlers = workflow.commitHandlers
       val commitChecks = handlers
