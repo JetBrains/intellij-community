@@ -14,8 +14,22 @@ interface InlayHintsProviderFactory {
   @Deprecated("Use getProvidersInfo without project", ReplaceWith("getProvidersInfo()"))
   fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> = getProvidersInfo()
 
+  /**
+   * Consider implementing [getProvidersInfoForLanguage] and [getLanguages] to avoid triggering cascade of classes to load provider for unrelated language
+   */
   @JvmDefault
   fun getProvidersInfo(): List<ProviderInfo<out Any>> = emptyList()
+
+  @JvmDefault
+  fun getProvidersInfoForLanguage(language: Language): List<InlayHintsProvider<out Any>> {
+    val providersInfo = getProvidersInfo()
+    return providersInfo.filter { it.language == language }.map { it.provider }
+  }
+
+  @JvmDefault
+  fun getLanguages() : Iterable<Language> {
+    return getProvidersInfo().map { it.language }
+  }
 
   companion object {
     @JvmStatic

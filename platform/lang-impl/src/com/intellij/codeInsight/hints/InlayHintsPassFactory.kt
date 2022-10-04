@@ -95,7 +95,7 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       val project = element.project
       val isDumbMode = DumbService.isDumb(project)
 
-      return HintUtils.getHintProvidersForLanguage(language, project)
+      return HintUtils.getHintProvidersForLanguage(language)
         .filter {
           (!isDumbMode || DumbService.isDumbAware(it.provider))
           && !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) // to avoid cases when old and new code vision UI are shown

@@ -6,22 +6,21 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 
 internal object HintUtils {
-  fun getLanguagesWithNewInlayHints(project: Project): Set<Language> {
+  fun getLanguagesWithNewInlayHints(): Set<Language> {
     val languages = HashSet<Language>()
-    InlayHintsProviderFactory.EP.extensionList.flatMapTo(languages) { it.getProvidersInfo(project).map { info -> info.language } }
+    InlayHintsProviderFactory.EP.extensionList.flatMapTo(languages) { it.getProvidersInfo().map { info -> info.language } }
     return languages
   }
 
-  fun getHintProvidersForLanguage(language: Language, project: Project): List<ProviderWithSettings<out Any>> {
+  fun getHintProvidersForLanguage(language: Language): List<ProviderWithSettings<out Any>> {
     val config = InlayHintsSettings.instance()
     return InlayHintsProviderFactory.EP.extensionList
-      .flatMap { it.getProvidersInfo(project) }
-      .filter { language.isKindOf(it.language) && it.provider.isLanguageSupported(language) }
-      .map { it.provider.withSettings(it.language, config) }
+      .flatMap { it.getProvidersInfoForLanguage(language) }
+      .filter { it.isLanguageSupported(language) }
+      .map { it.withSettings(language, config) }
   }
 }
 
