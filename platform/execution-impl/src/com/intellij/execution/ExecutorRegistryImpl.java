@@ -364,7 +364,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
-        text = myExecutor.getStartActionText(configuration.getName());
+
+        if (ExperimentalUI.isNewUI() &&
+            needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
+          text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+        }
+        else {
+          text = myExecutor.getStartActionText(configuration.getName());
+        }
       }
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
@@ -517,7 +524,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (configuration instanceof RunnerIconProvider) {
         RunnerIconProvider provider = (RunnerIconProvider)configuration;
@@ -527,11 +533,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      List<RunContentDescriptor> runningDescriptors =
-        executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
-      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
+      List<RunContentDescriptor> runningDescriptors = getRunningDescriptors(project, selectedConfiguration);
 
-      if (!configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty()) {
+      if (needRerunPresentation(configuration, runningDescriptors)) {
         if (ExperimentalUI.isNewUI() && myExecutor.getIcon() != myExecutor.getRerunIcon()) {
           return myExecutor.getRerunIcon();
         }
@@ -549,6 +553,20 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       else {
         return IconUtil.addText(myExecutor.getIcon(), Integer.toString(runningDescriptors.size()));
       }
+    }
+
+    private static boolean needRerunPresentation(RunConfiguration configuration, List<RunContentDescriptor> runningDescriptors) {
+      return !configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty();
+    }
+
+    @NotNull
+    private List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
+                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+      List<RunContentDescriptor> runningDescriptors =
+        executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
+      runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
+      return runningDescriptors;
     }
 
     protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
