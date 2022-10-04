@@ -1,17 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressWindowTest.TestProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -23,11 +22,14 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -261,6 +263,33 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertTrue(result.isCanceled());
     assertInstanceOf(result.getThrowable(), ProcessCanceledException.class);
     task.assertNotFinished();
+  }
+
+  @Test
+  public void testToPooledThreadWithProgressWindowWithCanceledInvokeAndWait() throws Throwable {
+    Assume.assumeTrue(myOnEdt);
+
+    var result = new ProgressRunner<>(() -> {
+      var progressWindow = (TestProgressWindow)ProgressIndicatorProvider.getGlobalProgressIndicator();
+      var cancelled = new Semaphore(1);
+      EventQueue.invokeLater(() -> {
+        var modalComponent = progressWindow.getDialog$intellij_platform_tests().getPanel();
+        var escapeEvent = new KeyEvent(modalComponent, KeyEvent.KEY_PRESSED, System.nanoTime(), 0, KeyEvent.VK_ESCAPE, '');
+        IdeEventQueue.getInstance().postEvent(escapeEvent);
+        EventQueue.invokeLater(() -> cancelled.up());
+      });
+      Assert.assertTrue(cancelled.waitFor(1000));
+    })
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(new TestProgressWindow(getProject()))
+      .modal()
+      .sync()
+      .submitAndGet();
+    var throwable = result.getThrowable();
+    if (throwable != null) {
+      throw throwable;
+    }
+    assertTrue(result.isCanceled());
   }
 
   @Test
