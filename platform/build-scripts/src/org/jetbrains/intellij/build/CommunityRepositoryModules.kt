@@ -295,6 +295,8 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
       spec.withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
       spec.withProjectLibrary("layoutlib")
+
+      spec.withProjectLibrary("studio-analytics-proto")
       // :libs
 
       //"resources": [
