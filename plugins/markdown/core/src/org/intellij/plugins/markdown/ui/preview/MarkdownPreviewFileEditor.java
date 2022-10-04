@@ -33,11 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
@@ -366,39 +363,6 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
       });
-    }
-  }
-
-  private static class PreciseVerticalScrollHelper extends MouseAdapter {
-    private final @NotNull EditorImpl editor;
-    private final @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier;
-    private int lastOffset = 0;
-
-    private PreciseVerticalScrollHelper(@NotNull EditorImpl editor, @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier) {
-      this.editor = editor;
-      this.htmlPanelSupplier = htmlPanelSupplier;
-    }
-
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent event) {
-      final var currentOffset = editor.getScrollingModel().getVerticalScrollOffset();
-      if (lastOffset == currentOffset) {
-        boundaryReached(event);
-      } else {
-        lastOffset = currentOffset;
-      }
-    }
-
-    private void boundaryReached(MouseWheelEvent event) {
-      final var actualPanel = htmlPanelSupplier.get();
-      if (actualPanel == null) {
-        return;
-      }
-      if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-        final var multiplier = Registry.intValue("ide.browser.jcef.osr.wheelRotation.factor", 1);
-        final var amount = event.getScrollAmount() * event.getWheelRotation() * multiplier;
-        actualPanel.scrollBy(0, amount);
-      }
     }
   }
 }
