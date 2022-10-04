@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
@@ -69,15 +70,16 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
     if (myDocument != null) {
       myDocument.addDocumentListener(new DocumentListener() {
-
         @Override
-        public void beforeDocumentChange(@NotNull DocumentEvent e) {
+        public void beforeDocumentChange(@NotNull DocumentEvent event) {
           myPooledAlarm.cancelAllRequests();
         }
 
         @Override
-        public void documentChanged(@NotNull DocumentEvent e) {
-          myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
+        public void documentChanged(@NotNull DocumentEvent event) {
+          if (!myPooledAlarm.isDisposed()) {
+            myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
+          }
         }
       }, this);
     }
@@ -87,20 +89,20 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myHtmlPanelWrapper.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
-        mySwingAlarm.addRequest(() -> {
+        addImmediateRequest(mySwingAlarm, () -> {
           if (myPanel == null) {
             attachHtmlPanel();
           }
-        }, 0, ModalityState.stateForComponent(getComponent()));
+        });
       }
 
       @Override
       public void componentHidden(ComponentEvent e) {
-        mySwingAlarm.addRequest(() -> {
+        addImmediateRequest(mySwingAlarm, () -> {
           if (myPanel != null) {
             detachHtmlPanel();
           }
-        }, 0, ModalityState.stateForComponent(getComponent()));
+        });
       }
     });
 
@@ -113,24 +115,24 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
     messageBusConnection.subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, fromSettingsDialog -> {
       if (!fromSettingsDialog) {
-        mySwingAlarm.addRequest(() -> {
+        addImmediateRequest(mySwingAlarm, () -> {
           if (myPanel != null) {
             myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
           }
-        }, 0, ModalityState.stateForComponent(getComponent()));
+        });
       }
     });
   }
 
   private void setupScrollHelper() {
-    final var actualEditor = (mainEditor instanceof EditorImpl)? (EditorImpl)mainEditor : null;
+    final var actualEditor = ObjectUtils.tryCast(mainEditor, EditorImpl.class);
     if (actualEditor == null) {
       return;
     }
     final var scrollPane = actualEditor.getScrollPane();
     final var helper = new PreciseVerticalScrollHelper(
       actualEditor,
-      () -> (myPanel instanceof MarkdownHtmlPanelEx)? (MarkdownHtmlPanelEx)myPanel : null
+      () -> ObjectUtils.tryCast(myPanel, MarkdownHtmlPanelEx.class)
     );
     scrollPane.addMouseWheelListener(helper);
   }
@@ -153,6 +155,9 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     }
 
     synchronized (REQUESTS_LOCK) {
+      if (mySwingAlarm.isDisposed()) {
+        return;
+      }
       if (myLastScrollRequest != null) {
         mySwingAlarm.cancelRequest(myLastScrollRequest);
       }
@@ -268,6 +273,9 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     }
 
     synchronized (REQUESTS_LOCK) {
+      if (mySwingAlarm.isDisposed()) {
+        return;
+      }
       if (myLastHtmlOrRefreshRequest != null) {
         mySwingAlarm.cancelRequest(myLastHtmlOrRefreshRequest);
       }
@@ -316,6 +324,12 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myPooledAlarm.addRequest(() -> updateHtml(), 0);
   }
 
+  private void addImmediateRequest(@NotNull Alarm alarm, @NotNull Runnable request) {
+    if (!alarm.isDisposed()) {
+      alarm.addRequest(request, 0, ModalityState.stateForComponent(getComponent()));
+    }
+  }
+
   private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
     MarkdownSplitEditorProvider provider = FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtension(MarkdownSplitEditorProvider.class);
     if (provider == null) {
@@ -337,7 +351,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
     @Override
     public void settingsChanged(@NotNull MarkdownSettings settings) {
-      mySwingAlarm.addRequest(() -> {
+      addImmediateRequest(mySwingAlarm, () -> {
         if (settings.getSplitLayout() != TextEditorWithPreview.Layout.SHOW_EDITOR) {
           if (myPanel == null) {
             attachHtmlPanel();
@@ -351,7 +365,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
         if (myPanel != null) {
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
-      }, 0, ModalityState.stateForComponent(getComponent()));
+      });
     }
   }
 
