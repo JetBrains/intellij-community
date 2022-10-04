@@ -24,40 +24,46 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-        PsiReferenceExpression methodRef = expression.getMethodExpression();
-        if (!GET_CHILDREN_METHOD_NAME.equals(methodRef.getReferenceName())) return;
-
-        PsiElement methodElement = methodRef.resolve();
-        if (!(methodElement instanceof PsiMethod)) return;
-        PsiMethod method = (PsiMethod)methodElement;
-
-        Project project = holder.getProject();
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
-        PsiClass aClass = method.getContainingClass();
-        PsiClass virtualFileClass = facade.findClass(VIRTUAL_FILE_CLASS_NAME, GlobalSearchScope.allScope(project));
-        if (!InheritanceUtil.isInheritorOrSelf(aClass, virtualFileClass, true)) return;
-
-        PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-        if (containingMethod == null) return;
-
-        String containingMethodName = containingMethod.getName();
-        Ref<Boolean> result = Ref.create();
-        containingMethod.accept(new JavaRecursiveElementVisitor() {
-          @Override
-          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression2) {
-            super.visitMethodCallExpression(expression2);
-            if (expression2 != expression &&
-                containingMethodName.equals(expression2.getMethodExpression().getReferenceName()) &&
-                expression2.resolveMethod() == containingMethod) {
-              result.set(Boolean.TRUE);
-            }
-          }
-        });
-        if (!result.isNull()) {
+        if (isVirtualFileGetChildrenMethodCall(expression, holder.getProject()) && isCalledInRecursiveMethod(expression)) {
           holder.registerProblem(expression, DevKitBundle.message("inspections.unsafe.vfs.recursion"));
         }
       }
     };
+  }
+
+  private static boolean isVirtualFileGetChildrenMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull Project project) {
+    PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    if (!GET_CHILDREN_METHOD_NAME.equals(methodExpression.getReferenceName())) return false;
+
+    PsiElement methodElement = methodExpression.resolve();
+    if (!(methodElement instanceof PsiMethod)) return false;
+    PsiMethod getChildrenMethod = (PsiMethod)methodElement;
+
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+
+    PsiClass aClass = getChildrenMethod.getContainingClass();
+    PsiClass virtualFileClass = facade.findClass(VIRTUAL_FILE_CLASS_NAME, GlobalSearchScope.allScope(project));
+
+    return InheritanceUtil.isInheritorOrSelf(aClass, virtualFileClass, true);
+  }
+
+  private static boolean isCalledInRecursiveMethod(@NotNull PsiMethodCallExpression expression) {
+    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+    if (containingMethod == null) return false;
+
+    String containingMethodName = containingMethod.getName();
+    Ref<Boolean> result = Ref.create();
+    containingMethod.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression2) {
+        super.visitMethodCallExpression(expression2);
+        if (expression2 != expression &&
+            containingMethodName.equals(expression2.getMethodExpression().getReferenceName()) &&
+            expression2.resolveMethod() == containingMethod) {
+          result.set(Boolean.TRUE);
+        }
+      }
+    });
+    return !result.isNull();
   }
 }
