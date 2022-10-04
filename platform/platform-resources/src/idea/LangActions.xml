@@ -553,6 +553,8 @@
           <action id="CollapseDocComments" class="com.intellij.codeInsight.folding.impl.actions.CollapseDocCommentsAction"/>
         </group>
         <separator/>
+        <action id="ExpandCollapseToggleAction" class="com.intellij.codeInsight.folding.impl.actions.ExpandCollapseToggleAction" />
+        <separator/>
         <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
         <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
       </group>
