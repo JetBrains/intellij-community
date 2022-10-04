@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal fun interface SettingsSyncEnabledStateListener : EventListener {
@@ -88,5 +89,13 @@ internal class SettingsSyncSettings :
     var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
 
     var migrationFromOldStorageChecked by property(false)
+
+    @TestOnly
+    internal fun reset() {
+      syncEnabled = false
+      disabledCategories = mutableListOf()
+      disabledSubcategories = mutableMapOf()
+      migrationFromOldStorageChecked = false
+    }
   }
 }

@@ -94,6 +94,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   override fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot {
     val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
                                                      withExportable = false)
+      .filterKeys { isSyncEnabled(it.rawFileSpec, RoamingType.DEFAULT) }
     val filesToExport = getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
 
     val fileStates = collectFileStatesFromFiles(filesToExport, appConfigPath)
