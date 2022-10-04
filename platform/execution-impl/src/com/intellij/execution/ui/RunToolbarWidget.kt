@@ -199,7 +199,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 }
 
-internal fun createRunConfigurationsActionGroup(project: Project, extendableAllConfigurations: Boolean, addHeader: Boolean = true): ActionGroup {
+internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
@@ -218,7 +218,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, extendableAllC
     actions.add(actionGroupWithInlineActions)
   }
   actions.add(Separator.create())
-  if (extendableAllConfigurations) {
+  if (Registry.`is`("ide.experimental.ui.redesigned.run.popup")) {
     val allRunConfigurationsToggle = AllRunConfigurationsToggle()
     actions.add(allRunConfigurationsToggle)
 
@@ -306,7 +306,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
 }
 
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
-  val actions = createRunConfigurationsActionGroup(project, extendableAllConfigurations = false)
+  val actions = createRunConfigurationsActionGroup(project)
   return JBPopupFactory.getInstance().createActionGroupPopup(
     null,
     actions,
