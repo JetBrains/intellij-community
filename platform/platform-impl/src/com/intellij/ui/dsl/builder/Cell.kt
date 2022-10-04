@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
@@ -213,6 +213,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
    */
   fun errorOnApply(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
+
+  /**
+   * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
+   */
+  fun addValidationRule(@NlsContexts.DialogMessage message: String, condition: (T) -> Boolean): Cell<T>
 
   /**
    * Registers [callback] that will be called for [component] from [DialogPanel.apply] method
