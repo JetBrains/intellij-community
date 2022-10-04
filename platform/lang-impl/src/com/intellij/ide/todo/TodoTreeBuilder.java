@@ -76,7 +76,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
 
-  private final JTree myTree;
+  private final @NotNull JTree myTree;
   /**
    * If this flag is false then the refresh() method does nothing. But when
    * the flag becomes true and myDirtyFileSet isn't empty the update is invoked.
@@ -101,6 +101,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myTree = tree;
     myProject = project;
 
+    Disposer.register(myProject, this);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     //setCanYieldUpdate(true);
@@ -381,7 +382,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       updateTree();
     }
   }
-  
+
   void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     PsiTodoSearchHelper searchHelper = getSearchHelper();

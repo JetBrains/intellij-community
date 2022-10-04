@@ -41,7 +41,8 @@ import java.util.concurrent.Callable;
 
 @State(name = "TodoView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TodoView implements PersistentStateComponent<TodoView.State>, Disposable {
-  private final Project myProject;
+
+  private final @NotNull Project myProject;
 
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;

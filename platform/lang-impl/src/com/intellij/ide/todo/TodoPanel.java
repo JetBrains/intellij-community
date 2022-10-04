@@ -61,15 +61,15 @@ import java.util.Set;
 public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
 
-  protected Project myProject;
-  private final TodoPanelSettings mySettings;
+  protected final @NotNull Project myProject;
+  private final @NotNull TodoPanelSettings mySettings;
   private final boolean myCurrentFileMode;
-  private final Content myContent;
+  private final @NotNull Content myContent;
 
-  private final Tree myTree;
-  private final TreeExpander myTreeExpander;
-  private final MyOccurenceNavigator myOccurenceNavigator;
-  protected final TodoTreeBuilder myTodoTreeBuilder;
+  private final @NotNull Tree myTree;
+  private final @NotNull TreeExpander myTreeExpander;
+  private final @NotNull MyOccurenceNavigator myOccurenceNavigator;
+  protected final @NotNull TodoTreeBuilder myTodoTreeBuilder;
   private MyVisibilityWatcher myVisibilityWatcher;
   private UsagePreviewPanel myUsagePreviewPanel;
   private MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
@@ -80,7 +80,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  TodoPanel(Project project, TodoPanelSettings settings, boolean currentFileMode, Content content) {
+  TodoPanel(@NotNull Project project,
+            @NotNull TodoPanelSettings settings,
+            boolean currentFileMode,
+            @NotNull Content content) {
     super(false, true);
 
     myProject = project;
@@ -93,7 +96,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myTreeExpander = new DefaultTreeExpander(myTree);
     myOccurenceNavigator = new MyOccurenceNavigator();
     initUI();
+
     myTodoTreeBuilder = setupTreeStructure();
+    Disposer.register(this, myTodoTreeBuilder);
+
     updateTodoFilter();
     myTodoTreeBuilder.setShowPackages(mySettings.arePackagesShown);
     myTodoTreeBuilder.setShowModules(mySettings.areModulesShown);
@@ -103,11 +109,12 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myVisibilityWatcher.install(this);
   }
 
-  private TodoTreeBuilder setupTreeStructure() {
+  private @NotNull TodoTreeBuilder setupTreeStructure() {
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
-    Disposer.register(this, todoTreeBuilder);
+
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel<TodoTreeStructure> structureTreeModel = new StructureTreeModel<>(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR, myProject);
+    StructureTreeModel<TodoTreeStructure> structureTreeModel =
+      new StructureTreeModel<>(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR, myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
     asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));
@@ -119,7 +126,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return todoTreeBuilder;
   }
 
-  protected Tree getTree() {
+  protected @NotNull Tree getTree() {
     return myTree;
   }
 
@@ -232,7 +239,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   private void updatePreviewPanel() {
-    if (myProject == null || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
+    
     List<UsageInfo> infos = new ArrayList<>();
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
@@ -266,7 +274,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       myVisibilityWatcher.deinstall(this);
       myVisibilityWatcher = null;
     }
-    myProject = null;
   }
 
   void rebuildCache() {
@@ -341,7 +348,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return PsiUtilCore.getVirtualFile(file);
     }
     else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement selectedElement = myProject != null ? TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor) : null;
+      PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor);
       if (selectedElement != null) return selectedElement;
       return TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
     }

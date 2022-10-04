@@ -27,7 +27,10 @@ import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
 abstract class CurrentFileTodosPanel extends TodoPanel {
-  CurrentFileTodosPanel(Project project, TodoPanelSettings settings, Content content) {
+
+  CurrentFileTodosPanel(@NotNull Project project,
+                        @NotNull TodoPanelSettings settings,
+                        @NotNull Content content) {
     super(project, settings, true, content);
 
     VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
@@ -48,7 +51,7 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
   private void setFile(PsiFile file, boolean initialUpdate) {
     // setFile method is invoked in LaterInvocator so PsiManager
     // can be already disposed, so we need to check this before using it.
-    if (myProject == null || PsiManager.getInstance(myProject).isDisposed()) {
+    if (PsiManager.getInstance(myProject).isDisposed()) {
       return;
     }
 
