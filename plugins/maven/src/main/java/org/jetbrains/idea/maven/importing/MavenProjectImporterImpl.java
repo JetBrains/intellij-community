@@ -43,7 +43,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
 
-  private Module myDummyModule;
+  private Module myPreviewModule;
 
   private final List<Module> myCreatedModules = new ArrayList<>();
 
@@ -57,11 +57,11 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
                            boolean importModuleGroupsRequired,
                            @NotNull IdeModifiableModelsProvider modelsProvider,
                            @NotNull MavenImportingSettings importingSettings,
-                           @Nullable Module dummyModule) {
+                           @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
-    myFileToModuleMapping = getFileToModuleMapping(p, dummyModule, modelsProvider);
+    myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
-    myDummyModule = dummyModule;
+    myPreviewModule = previewModule;
   }
 
   @Override
@@ -112,9 +112,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
         ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
           setMavenizedModules(obsoleteModules, false);
           List<Module> toDelete = new ArrayList<>();
-          if (myDummyModule != null) {
-            toDelete.add(myDummyModule);
-            myDummyModule = null;
+          if (myPreviewModule != null) {
+            toDelete.add(myPreviewModule);
+            myPreviewModule = null;
           }
           if (isDeleteObsoleteModules) {
             toDelete.addAll(obsoleteModules);
@@ -306,7 +306,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     List<Module> obsolete = new ArrayList<>();
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     for (Module each : remainingModules) {
-      if (manager.isMavenizedModule(each) && myDummyModule != each) {
+      if (manager.isMavenizedModule(each) && myPreviewModule != each) {
         obsolete.add(each);
       }
     }
@@ -351,9 +351,9 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     Set<MavenProject> projectsWithNewlyCreatedModules = new HashSet<>();
 
     if (projectsWithChanges.size() > 0) {
-      if (null != myDummyModule) {
-        deleteModules(List.of(myDummyModule));
-        myDummyModule = null;
+      if (null != myPreviewModule) {
+        deleteModules(List.of(myPreviewModule));
+        myPreviewModule = null;
       }
     }
 
@@ -395,7 +395,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
   private boolean ensureModuleCreated(MavenProject project) {
     Module existingModule = myMavenProjectToModule.get(project);
-    if (existingModule != null && existingModule != myDummyModule) return false;
+    if (existingModule != null && existingModule != myPreviewModule) return false;
     final String path = myMavenProjectToModulePath.get(project);
     String moduleName = ModulePathKt.getModuleNameByFilePath(path);
 
@@ -555,13 +555,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
   private static Map<VirtualFile, Module> getFileToModuleMapping(
     Project project,
-    Module myDummyModule,
+    Module myPreviewModule,
     IdeModifiableModelsProvider modelsProvider) {
     return MavenProjectsManager.getInstance(project)
       .getFileToModuleMapping(new MavenModelsProvider() {
         @Override
         public Module[] getModules() {
-          return ArrayUtil.remove(modelsProvider.getModules(), myDummyModule);
+          return ArrayUtil.remove(modelsProvider.getModules(), myPreviewModule);
         }
 
         @Override

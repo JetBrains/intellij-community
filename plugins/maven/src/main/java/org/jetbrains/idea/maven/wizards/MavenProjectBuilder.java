@@ -199,7 +199,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         getImportingSettings(),
         getGeneralSettings(),
         MavenImportSpec.EXPLICIT_IMPORT
-      ).getDummyModulesCreated();
+      ).getPreviewModulesCreated();
 
       if (dummy != null) {
         return Collections.singletonList(dummy);
@@ -210,9 +210,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     }
 
     if (isVeryNewProject && Registry.is("maven.create.dummy.module.on.first.import")) {
-      Module dummyModule = createDummyModule(project);
-      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, dummyModule);
-      return Collections.singletonList(dummyModule);
+      Module previewModule = createPreviewModule(project);
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, previewModule);
+      return Collections.singletonList(previewModule);
     }
     else {
       manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles, null);
@@ -242,13 +242,13 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return manager.importProjects();
   }
 
-  private @Nullable Module createDummyModule(Project project) {
+  private @Nullable Module createPreviewModule(Project project) {
     if (ModuleManager.getInstance(project).getModules().length == 0) {
       MavenProject root = ContainerUtil.getFirstItem(getParameters().mySelectedProjects);
       if (root == null) return null;
       VirtualFile contentRoot = root.getDirectoryFile();
 
-      return MavenImportUtil.createDummyModule(project, contentRoot);
+      return MavenImportUtil.createPreviewModule(project, contentRoot);
     }
     return null;
   }

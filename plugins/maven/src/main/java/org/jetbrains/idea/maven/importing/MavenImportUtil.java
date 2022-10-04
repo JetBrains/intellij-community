@@ -240,7 +240,7 @@ public final class MavenImportUtil {
     return moduleName;
   }
 
-  public static Module createDummyModule(Project project, VirtualFile contentRoot) {
+  public static Module createPreviewModule(Project project, VirtualFile contentRoot) {
     return WriteAction.compute(() -> {
       Module module = ModuleManager.getInstance(project)
         .newModule(contentRoot.toNioPath(), ModuleTypeManager.getInstance().getDefaultModuleType().getId());

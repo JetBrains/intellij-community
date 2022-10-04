@@ -126,7 +126,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private volatile MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
-  private Module myDummyModule;
+  private Module myPreviewModule;
   private transient boolean forceUpdateSnapshots = false;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
@@ -632,8 +632,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
 
-  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module dummyModuleToDelete) {
-    myDummyModule = dummyModuleToDelete;
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
+    myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
       initNew(files, profiles);
     }
@@ -1386,7 +1386,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       try {
         MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
           myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
-          modelsProvider, getImportingSettings(), myDummyModule, activity
+          modelsProvider, getImportingSettings(), myPreviewModule, activity
         );
         importer.set(projectImporter);
         postTasks.set(projectImporter.importProject());

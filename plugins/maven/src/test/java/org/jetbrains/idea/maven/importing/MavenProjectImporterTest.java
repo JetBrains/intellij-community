@@ -11,9 +11,9 @@ import java.util.List;
 public class MavenProjectImporterTest extends DependenciesSubstitutionTest {
   @Test
   public void testMavenImportModulesProperlyNamed() {
-    var dummyModule = MavenImportUtil.createDummyModule(myProject, myProjectRoot);
+    var previewModule = MavenImportUtil.createPreviewModule(myProject, myProjectRoot);
 
-    myProjectsManager.addManagedFilesWithProfiles(List.of(myProjectRoot), new MavenExplicitProfiles(Collections.emptyList(), Collections.emptyList()), dummyModule);
+    myProjectsManager.addManagedFilesWithProfiles(List.of(myProjectRoot), new MavenExplicitProfiles(Collections.emptyList(), Collections.emptyList()), previewModule);
 
     var parentFile = createProjectPom("""
                 <groupId>group</groupId>
