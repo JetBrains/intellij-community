@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 
 public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel implements Disposable {
-  private static final int CLUSTER_LIMIT = 3;
+  private static final int CLUSTER_LIMIT = 10;
   private final @NotNull Project myProject;
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
