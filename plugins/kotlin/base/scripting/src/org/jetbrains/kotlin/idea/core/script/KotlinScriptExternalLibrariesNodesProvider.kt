@@ -27,10 +27,11 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
     override fun createNode(entity: KotlinScriptEntity, project: Project, settings: ViewSettings?): AbstractTreeNode<*>? {
         if (!scriptsAsEntities) return null
 
-        val (compiled, sources) = entity.listDependencies()
+        val dependencies = entity.listDependencies()
         val scriptFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(entity.path))
             ?: error("Cannot find file: ${entity.path}")
-        val library = KotlinScriptDependenciesLibrary("Script: ${scriptFile.relativeName(project)}", compiled, sources)
+        val library = KotlinScriptDependenciesLibrary("Script: ${scriptFile.relativeName(project)}",
+                                                      dependencies.compiled, dependencies.sources)
 
         return SyntheticLibraryElementNode(project, library, library, settings)
     }
@@ -49,7 +50,7 @@ private data class KotlinScriptDependenciesLibrary(val name: String, val classes
     override fun getIcon(unused: Boolean): Icon = KotlinIcons.SCRIPT
 }
 
-private fun KotlinScriptEntity.listDependencies(): Pair<List<VirtualFile>, List<VirtualFile>> {
+private fun KotlinScriptEntity.listDependencies(): ScriptDependencies {
     fun List<LibraryRoot>.files() = asSequence()
         .mapNotNull { it.url.virtualFile }
         .filter { it.isValid }
@@ -59,5 +60,14 @@ private fun KotlinScriptEntity.listDependencies(): Pair<List<VirtualFile>, List<
         .flatMap { it.roots }
         .partition { it.type == LibraryRootTypeId.COMPILED }
 
-    return Pair(compiledRoots.files(), sourceRoots.files())
+    return ScriptDependencies(Pair(compiledRoots.files(), sourceRoots.files()))
+}
+
+@JvmInline
+private value class ScriptDependencies(private val compiledAndSources: Pair<List<VirtualFile>, List<VirtualFile>>) {
+    val compiled
+        get() = compiledAndSources.first
+
+    val sources
+        get() = compiledAndSources.second
 }
