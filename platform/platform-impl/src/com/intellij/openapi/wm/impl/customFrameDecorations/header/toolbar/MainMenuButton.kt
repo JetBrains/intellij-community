@@ -136,7 +136,7 @@ internal class MainMenuButton {
       val mainMenu = getMainMenuGroup()
       val popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
-                                ActionPlaces.MAIN_MENU_IN_POPUP)
+                                ActionPlaces.MAIN_MENU)
         .apply { setShowSubmenuOnHover(true) }
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
         as ListPopupImpl
@@ -167,7 +167,7 @@ internal class MainMenuButton {
 
 private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
-                                     ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40)) {
+                                     ActionPlaces.MAIN_MENU, Dimension(40, 40)) {
     override fun getDataContext(): DataContext {
       return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
     }

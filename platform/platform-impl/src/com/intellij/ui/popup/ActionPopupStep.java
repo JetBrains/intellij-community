@@ -50,15 +50,15 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myItems = items;
     myTitle = title;
     myContext = context;
-    myActionPlace = ActionPlaces.getPopupPlace(actionPlace);
+    myActionPlace = getPopupOrMainMenuPlace(actionPlace);
     myEnableMnemonics = enableMnemonics;
     myPresentationFactory = presentationFactory;
     myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
     myPreselectActionCondition = preselectActionCondition;
     myAutoSelectionEnabled = autoSelection;
     myShowDisabledActions = showDisabledActions;
-    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
-      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+    if (actionPlace != null && !isPopupOrMainMenuPlace(actionPlace)) {
+      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
     }
   }
 
@@ -115,9 +115,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                     boolean honorActionMnemonics,
                                                                     @Nullable String actionPlace,
                                                                     @Nullable PresentationFactory presentationFactory) {
-    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
-      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
-      actionPlace = ActionPlaces.getPopupPlace(actionPlace);
+    if (actionPlace != null && !isPopupOrMainMenuPlace(actionPlace)) {
+      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+      actionPlace = getPopupOrMainMenuPlace(actionPlace);
     }
     DataContext wrappedContext = Utils.wrapDataContext(dataContext);
     ActionStepBuilder builder = new ActionStepBuilder(
@@ -303,5 +303,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public SpeedSearchFilter<PopupFactoryImpl.ActionItem> getSpeedSearchFilter() {
     return this;
+  }
+
+  private static boolean isPopupOrMainMenuPlace(@NotNull String place) {
+    return ActionPlaces.isPopupPlace(place) || ActionPlaces.MAIN_MENU.equals(place);
+  }
+
+  private static @NotNull String getPopupOrMainMenuPlace(@Nullable String place) {
+    return place != null && isPopupOrMainMenuPlace(place) ? place : ActionPlaces.getPopupPlace(place);
   }
 }
