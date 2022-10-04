@@ -216,52 +216,6 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static <E extends WorkspaceEntity> void handleWorkspaceModelChange(@NotNull Map<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> toAdd,
-                                                                             @NotNull Set<EntityReference<? extends WorkspaceEntity>> toRemove,
-                                                                             @NotNull VersionedStorageChange storageChange,
-                                                                             @NotNull IndexableEntityProvider.ExistingEx<E> provider,
-                                                                             @NotNull EntityStorageSnapshot storage,
-                                                                             @NotNull Project project) {
-    List<EntityChange<E>> changes = storageChange.getChanges(provider.getEntityClass());
-    for (EntityChange<E> change : changes) {
-      if (change instanceof EntityChange.Added<E>) {
-        E entity = ((EntityChange.Added<E>)change).getEntity();
-        addOrigins(toAdd, entity, provider, storage, project);
-      }
-      else if (change instanceof EntityChange.Replaced<E>) {
-        E oldEntity = Objects.requireNonNull(change.getOldEntity());
-        toRemove.add(oldEntity.createReference());
-
-        E newEntity = ((EntityChange.Replaced<E>)change).getNewEntity();
-        addOrigins(toAdd, newEntity, provider, storage, project);
-      }
-      else if (change instanceof EntityChange.Removed<E>) {
-        E entity = ((EntityChange.Removed<E>)change).getEntity();
-        toRemove.add(entity.createReference());
-      }
-      else {
-        throw new IllegalStateException("Unexpected change " + change.getClass());
-      }
-    }
-    if (provider instanceof ContentRootIndexableEntityProvider) {//todo[lene] integrate l8r
-      SourceRootIndexableEntityProvider sourceRootProvider =
-        IndexableEntityProvider.EP_NAME.findExtensionOrFail(SourceRootIndexableEntityProvider.class);
-      for (EntityChange<E> change : changes) {
-        if (change instanceof EntityChange.Replaced<E>) {
-          ContentRootEntity oldEntity = Objects.requireNonNull(((EntityChange.Replaced<ContentRootEntity>)change).getOldEntity());
-          for (SourceRootEntity root : oldEntity.getSourceRoots()) {
-            toRemove.add(root.createReference());
-          }
-
-          ContentRootEntity newEntity = ((EntityChange.Replaced<ContentRootEntity>)change).getNewEntity();
-          for (SourceRootEntity sourceRootEntity : newEntity.getSourceRoots()) {
-            addOrigins(toAdd, sourceRootEntity, sourceRootProvider, storage, project);
-          }
-        }
-      }
-    }
-  }
-
   private static <E extends WorkspaceEntity> void addOrigins(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities,
                                                              @NotNull E entity,
                                                              @NotNull IndexableEntityProvider.ExistingEx<E> provider,

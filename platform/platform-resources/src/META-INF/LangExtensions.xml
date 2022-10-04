@@ -1487,6 +1487,7 @@
     <indexableIteratorBuilderHandler
       implementation="com.intellij.util.indexing.roots.builders.IndexableSetContributorIndexableIteratorHandler"/>
     <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ExcludeUrlEntityInducedChangesProvider"/>
+    <indexableEntityInducedChangesProvider implementation="com.intellij.util.indexing.roots.ContentRootEntityInducedChangesProvider"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
