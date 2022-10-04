@@ -197,7 +197,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           && pluginId.idString != "com.intellij.clion-swift"
           && pluginId.idString != "com.intellij.appcode"
           && pluginId.idString != "com.intellij.clion-compdb"
-          && pluginId.idString != "com.intellij.kmm") {
+          && pluginId.idString != "com.intellij.kmm"
+          && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
       }
