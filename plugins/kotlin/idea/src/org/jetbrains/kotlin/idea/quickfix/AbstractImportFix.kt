@@ -3,19 +3,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.ImportFilter
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -101,19 +95,6 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         suggestions.value
     }
 
-    protected fun doFixSilently(editor: Editor): Boolean {
-        assert(this is HintAction) { "doFixSilently is available for HintAction only" }
-
-        if (isOutdated()) return false
-        val element = element ?: return false
-        val project = element.project
-        val addImportAction = createActionWithAutoImportsFilter(project, editor, element)
-        return if (addImportAction.isUnambiguous()) {
-            addImportAction.execute()
-            true
-        } else false
-    }
-
     protected fun suggestions() = suggestions.value
 
     protected open val supportedErrors = factory.supportedErrors.toSet()
@@ -121,18 +102,6 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     protected abstract val importNames: Collection<Name>
     protected abstract fun getCallTypeAndReceiver(): CallTypeAndReceiver<*, *>?
     protected open fun getReceiverTypeFromDiagnostic(): KotlinType? = null
-
-    open fun showHint(editor: Editor): Boolean {
-        val element = element?.takeIf(PsiElement::isValid) ?: return false
-
-        if (isOutdated()) return false
-
-        if (ApplicationManager.getApplication().isHeadlessEnvironment || HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
-
-        if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
-
-        return createAction(project, editor, element).showHint()
-    }
 
     private fun calculateText(): String {
         val descriptor = suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }.singleOrNull()
@@ -303,11 +272,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         final override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             return try {
-                createImportAction(diagnostic)?.apply {
-                    if (AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)) {
-                        computeSuggestions()
-                    }
-                }
+                createImportAction(diagnostic)
             } catch (ex: KotlinExceptionWithAttachments) {
                 // Sometimes fails with
                 // <production sources for module light_idea_test_case> is a module[ModuleDescriptorImpl@508c55a2] is not contained in resolver...
@@ -627,13 +592,10 @@ internal class IteratorImportFix(expression: KtExpression) : OrdinaryImportFixBa
 
 internal open class ArrayAccessorImportFix(
     element: KtArrayAccessExpression,
-    override val importNames: Collection<Name>,
-    private val showHint: Boolean
+    override val importNames: Collection<Name>
 ) : OrdinaryImportFixBase<KtArrayAccessExpression>(element, MyFactory) {
 
     override fun getCallTypeAndReceiver() = element?.let { CallTypeAndReceiver.OPERATOR(it.arrayExpression!!) }
-
-    override fun showHint(editor: Editor) = showHint && super.showHint(editor)
 
     companion object MyFactory : FactoryWithUnresolvedReferenceQuickFix() {
         private fun importName(diagnostic: Diagnostic): Name {
@@ -650,7 +612,7 @@ internal open class ArrayAccessorImportFix(
 
             val element = diagnostic.psiElement
             if (element is KtArrayAccessExpression && element.arrayExpression != null) {
-                return ArrayAccessorImportFix(element, listOf(importName(diagnostic)), true)
+                return ArrayAccessorImportFix(element, listOf(importName(diagnostic)))
             }
 
             return null
@@ -857,7 +819,7 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
         when (val name = operatorDescriptor.name) {
             OperatorNameConventions.GET, OperatorNameConventions.SET -> {
                 if (element is KtArrayAccessExpression) {
-                    return object : ArrayAccessorImportFix(element, listOf(name), false) {
+                    return object : ArrayAccessorImportFix(element, listOf(name)) {
                         override val supportedErrors = setOf(Errors.OPERATOR_MODIFIER_REQUIRED)
                     }
                 }
@@ -894,17 +856,10 @@ object AbstractImportFixInfo {
     @Volatile
     internal var IGNORE_MODULE_ERROR = false
 
-    private val lazyImportSuggestionCalculation = Registry.`is`("kotlin.lazy.import.suggestions", false)
-
     @TestOnly
     fun ignoreModuleError(disposable: Disposable) {
         IGNORE_MODULE_ERROR = true
         Disposer.register(disposable) { IGNORE_MODULE_ERROR = false }
     }
 
-    fun isHintsEnabled(file: PsiFile): Boolean {
-        return !lazyImportSuggestionCalculation ||
-                DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled ||
-                ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)
-    }
 }

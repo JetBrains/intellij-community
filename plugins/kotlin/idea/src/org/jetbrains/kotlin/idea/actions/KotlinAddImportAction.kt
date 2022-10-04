@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.Editor
@@ -46,8 +44,6 @@ import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.ImportPath
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -149,34 +145,6 @@ class KotlinAddImportAction internal constructor(
                 variantsList()
             }.orEmpty()
         }
-    }
-
-    fun showHint(): Boolean {
-        val iterator = variants.iterator()
-        if (!iterator.hasNext()) return false
-
-        val first = iterator.next().variant
-        val multiple = if (iterator.hasNext()) {
-            true
-        } else {
-            singleImportVariant = first
-            false
-        }
-
-        val hintText = ShowAutoImportPass.getMessage(multiple, first.hint)
-        HintManager.getInstance().showQuestionHint(editor, hintText, element.startOffset, element.endOffset, this)
-
-        return true
-    }
-
-    fun isUnambiguous(): Boolean {
-        singleImportVariant = variants.singleOrNull()?.variant?.takeIf { variant ->
-            variant.descriptorsToImport.all { it is ClassDescriptor } ||
-                    variant.descriptorsToImport.all { it is FunctionDescriptor } ||
-                    variant.descriptorsToImport.all { it is PropertyDescriptor }
-        }
-
-        return singleImportVariant != null
     }
 
     override fun execute(): Boolean {

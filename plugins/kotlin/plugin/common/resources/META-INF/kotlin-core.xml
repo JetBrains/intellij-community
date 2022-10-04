@@ -343,11 +343,6 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.editor.KDocCopyPastePreProcessor"/>
 
-    <registryKey key="kotlin.lazy.import.suggestions"
-                 description="Calculate import quick fix suggestion lazy."
-                 defaultValue="false"
-                 restartRequired="true"/>
-
     <registryKey
             key="kotlin.enable.inlay.hint.for.lambda.return.type"
             description="Show inlay hint for lambda return type"
