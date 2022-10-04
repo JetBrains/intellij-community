@@ -15,19 +15,17 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
@@ -57,9 +55,6 @@ import javax.swing.SwingUtilities
 internal class SingleContentLayout(
   ui: ToolWindowContentUi
 ) : TabContentLayout(ui) {
-
-  private var isSingleContentView: Boolean = false
-
   private var tabAdapter: TabAdapter? = null
   private val toolbars = mutableMapOf<ToolbarType, ActionToolbar>()
   private var wrapper: JComponent? = null
@@ -71,6 +66,10 @@ internal class SingleContentLayout(
 
   override fun rebuild() {
     super.rebuild()
+
+    if (isSingleContentView) {
+      resetSingleContentView()
+    }
     tryUpdateContentView()
   }
 
@@ -81,11 +80,7 @@ internal class SingleContentLayout(
   fun getSupplier() = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
-    return findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
-  }
-
-  private fun findTopLevelContentManager(): ContentManagerImpl? {
-    return InternalDecoratorImpl.findTopLevelDecorator(ui.component)?.contentManager as? ContentManagerImpl
+    return ui.contentManager.contents.singleOrNull()?.takeIf { it !is FakeContent }
   }
 
   private fun tryUpdateContentView() {
@@ -231,7 +226,7 @@ internal class SingleContentLayout(
       val component = ui.tabComponent
       component.bounds = component.bounds.apply { width = component.parent.width }
 
-      val labelWidth = idLabel.x + idLabel.preferredSize.width
+      val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
       var mainToolbarWidth = toolbars[ToolbarType.MAIN]?.component?.preferredSize?.width ?: 0
       val contentToolbarWidth = toolbars[ToolbarType.CLOSE_GROUP]?.component?.preferredSize?.width ?: 0
@@ -295,7 +290,7 @@ internal class SingleContentLayout(
     if (isNewUI()) it else "$it:"
   } ?: title
 
-  private inner class TabAdapter(
+  internal inner class TabAdapter(
     val content: Content,
     val jbTabs: JBTabs,
     val tabPainter: JBTabPainter,
@@ -356,6 +351,10 @@ internal class SingleContentLayout(
         labels.find { it.content.info == jbTabs.selectedInfo }
       }
 
+      if (twcui.dropOverIndex != -1) {
+        add(dropOverPlaceholder, twcui.dropOverIndex.coerceAtMost(this.componentCount))
+      }
+
       add(popupToolbar, HorizontalTabLayoutWithHiddenControl.CONTROL)
     }
 
@@ -384,7 +383,7 @@ internal class SingleContentLayout(
       }
 
       val supplier = getSingleContentOrNull()?.getSupplier() ?: return
-      if (jbTabs.tabs.size > 1) {
+      if (jbTabs.tabs.size > 1 || twcui.dropOverIndex != -1) {
         labels.addAll(jbTabs.tabs.map { info ->
           info.changeSupport.addPropertyChangeListener(this)
           MyContentTabLabel(FakeContent(supplier, info), this@SingleContentLayout).apply {
@@ -396,7 +395,7 @@ internal class SingleContentLayout(
       updateLabels(labels)
     }
 
-    fun updateLabels(labels: List<MyContentTabLabel>) {
+    private fun updateLabels(labels: List<MyContentTabLabel>) {
       labels.associateBy { it.content.info }.forEach(::copyValues)
     }
 
@@ -578,7 +577,7 @@ internal class SingleContentLayout(
    *
    * All unused methods throw [IllegalStateException].
    */
-  internal class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : Content {
+  internal class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : ContentImpl(info.component, info.text, false) {
 
     private val pcs = PropertyChangeSupport(this)
 
@@ -598,189 +597,8 @@ internal class SingleContentLayout(
       return supplier.isClosable(info)
     }
 
-    override fun isPinned(): Boolean {
-      return false
-    }
-
-    override fun getManager(): ContentManager? {
-      return null
-    }
-
     override fun getIcon(): Icon? {
       return info.icon
-    }
-
-    @NlsSafe
-    override fun getDisplayName(): String {
-      return info.text
-    }
-
-    override fun <T : Any?> getUserData(key: Key<T>): T? {
-      error("An operation is not supported")
-    }
-
-    override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
-      error("An operation is not supported")
-    }
-
-    override fun dispose() {
-      error("An operation is not supported")
-    }
-
-    override fun getComponent(): JComponent {
-      error("An operation is not supported")
-    }
-
-    override fun getPreferredFocusableComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun setComponent(component: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPreferredFocusableComponent(component: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPreferredFocusedComponent(computable: Computable<out JComponent>?) {
-      error("An operation is not supported")
-    }
-
-    override fun setIcon(icon: Icon?) {
-      error("An operation is not supported")
-    }
-
-    override fun setDisplayName(displayName: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun setTabName(tabName: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun getTabName(): String {
-      error("An operation is not supported")
-    }
-
-    override fun getToolwindowTitle(): String {
-      error("An operation is not supported")
-    }
-
-    override fun setToolwindowTitle(toolwindowTitle: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun getDisposer(): Disposable? {
-      error("An operation is not supported")
-    }
-
-    override fun setDisposer(disposer: Disposable) {
-      error("An operation is not supported")
-    }
-
-    override fun setShouldDisposeContent(value: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun getDescription(): String? {
-      error("An operation is not supported")
-    }
-
-    override fun setDescription(description: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun release() {
-      error("An operation is not supported")
-    }
-
-    override fun isValid(): Boolean {
-      error("An operation is not supported")
-    }
-
-    override fun setPinned(locked: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun setPinnable(pinnable: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun isPinnable(): Boolean {
-      error("An operation is not supported")
-    }
-
-    override fun setCloseable(closeable: Boolean) {
-      error("An operation is not supported")
-    }
-
-    override fun setActions(actions: ActionGroup?, place: String?, contextComponent: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun getActions(): ActionGroup? {
-      error("An operation is not supported")
-    }
-
-    override fun setSearchComponent(comp: JComponent?) {
-      error("An operation is not supported")
-    }
-
-    override fun getSearchComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun getPlace(): String {
-      error("An operation is not supported")
-    }
-
-    override fun getActionsContextComponent(): JComponent? {
-      error("An operation is not supported")
-    }
-
-    override fun setAlertIcon(icon: AlertIcon?) {
-      error("An operation is not supported")
-    }
-
-    override fun getAlertIcon(): AlertIcon? {
-      error("An operation is not supported")
-    }
-
-    override fun fireAlert() {
-      error("An operation is not supported")
-    }
-
-    override fun getBusyObject(): BusyObject? {
-      error("An operation is not supported")
-    }
-
-    override fun setBusyObject(`object`: BusyObject?) {
-      error("An operation is not supported")
-    }
-
-    override fun getSeparator(): String {
-      error("An operation is not supported")
-    }
-
-    override fun setSeparator(separator: String?) {
-      error("An operation is not supported")
-    }
-
-    override fun setPopupIcon(icon: Icon?) {
-      error("An operation is not supported")
-    }
-
-    override fun getPopupIcon(): Icon? {
-      error("An operation is not supported")
-    }
-
-    override fun setExecutionId(executionId: Long) {
-      error("An operation is not supported")
-    }
-
-    override fun getExecutionId(): Long {
-      error("An operation is not supported")
     }
   }
 

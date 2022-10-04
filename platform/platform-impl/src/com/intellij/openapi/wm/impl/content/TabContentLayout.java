@@ -39,7 +39,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
 
-  private JLabel dropOverPlaceholder;
+  protected boolean isSingleContentView = false;
+  protected JLabel dropOverPlaceholder;
   private LayoutData lastLayout;
 
   final List<ContentTabLabel> tabs = new ArrayList<>();
@@ -144,6 +145,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       idLabel.setBounds(data.eachX, data.eachY, idLabel.getPreferredSize().width, bounds.height);
       data.eachX += idLabel.getPreferredSize().width;
     }
+    else {
+      idLabel.setBounds(data.eachX, data.eachY, 0, 0);
+    }
     int tabsStart = data.eachX;
 
     if (manager.getContentCount() == 0) return;
@@ -173,9 +177,10 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         data.toLayout.add(eachTab);
       }
 
-      if (ui.dropOverIndex != -1) {
+      if (ui.dropOverIndex != -1 && !isSingleContentView) {
         data.requiredWidth += ui.dropOverWidth;
-        data.toLayout.add(Math.max(0, ui.dropOverIndex - 1), dropOverPlaceholder);
+        int index = Math.min(data.toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
+        data.toLayout.add(index, dropOverPlaceholder);
       }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;
@@ -374,8 +379,9 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       ui.getTabComponent().add(each);
       ToolWindowContentUi.initMouseListeners(each, ui, false);
     }
-    if (ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
-      ui.getTabComponent().add(dropOverPlaceholder, ui.dropOverIndex);
+    if (!isSingleContentView && ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
+      int index = Math.min(ui.dropOverIndex, ui.getTabComponent().getComponentCount());
+      ui.getTabComponent().add(dropOverPlaceholder, index);
     }
   }
 

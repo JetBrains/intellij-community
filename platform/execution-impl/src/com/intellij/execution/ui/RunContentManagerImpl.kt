@@ -154,9 +154,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       stripeTitle = executor::getActionName
     ))
     toolWindow.setToHideOnEmptyContent(true)
-    if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
-      toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
-    }
+    toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
       override fun getData(dataId: String): Any? {

@@ -6,9 +6,10 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
+import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
+import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -23,10 +24,7 @@ import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
-import javax.swing.JComponent
-import javax.swing.JDialog
-import javax.swing.JLabel
-import javax.swing.SwingUtilities
+import javax.swing.*
 
 internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
   private var sourceDecorator = null as InternalDecoratorImpl?
@@ -49,7 +47,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       if (decorator != null &&
           ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
-          child is ContentTabLabel && child.parent is ToolWindowContentUi.TabPanel) {
+          child is ContentTabLabel &&
+          (child.parent is ToolWindowContentUi.TabPanel || child.parent is SingleContentLayout.TabAdapter)) {
         return child
       }
       else {
@@ -74,49 +73,55 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     myInitialOffset.location = relativePoint.getPoint(contentTabLabel)
     myDraggingTab = contentTabLabel
     sourceDecorator = InternalDecoratorImpl.findNearestDecorator(contentTabLabel)
-    myInitialIndex = contentTabLabel.getIndex()
+    myInitialIndex = getInitialIndex(contentTabLabel)
     myCurrentDecorator = sourceDecorator
     myDialog = MyDialog(pane, this, createThumbnailDragImage(contentTabLabel, -1))
   }
 
-  fun ContentTabLabel.getIndex() = content.manager!!.getIndexOfContent(content)
+  private fun getInitialIndex(tabLabel: ContentTabLabel): Int {
+    val content = tabLabel.content
+    return if (content is SingleContentLayout.FakeContent && sourceDecorator?.isSingleContentLayout() == true) {
+      content.supplier.getTabs().getIndexOf(content.info)
+    }
+    else content.manager!!.getIndexOfContent(content)
+  }
 
-  private fun getIndex(point: RelativePoint): Int {
-    var p = point.getPoint(pane)
+  private fun getTabIndex(point: RelativePoint): Int {
+    val p = point.getPoint(pane)
     val componentBelowCursor = SwingUtilities.getDeepestComponentAt(pane, p.x, p.y)
     val tabPanel = ComponentUtil.getParentOfType(ToolWindowContentUi.TabPanel::class.java, componentBelowCursor)
     if (tabPanel == null) {
       return -1
     }
-    p = point.getPoint(tabPanel)
-    var placeholderIndex = -1
-    for (i in 0 until tabPanel.componentCount) {
-      val child = tabPanel.components[i]
-      if (child is JLabel && child !is BaseLabel) { //com.intellij.openapi.wm.impl.content.TabContentLayout.myDropOverPlaceholder
-        placeholderIndex = i
-      }
+    val tabAdapter = tabPanel.components.filterIsInstance<SingleContentLayout.TabAdapter>().singleOrNull()
+    return if (tabAdapter != null) {
+      doGetTabIndex(tabAdapter, point)
     }
-    for (i in 0 until tabPanel.componentCount) {
-      val child = tabPanel.components[i]
-      if (child is BaseLabel && child !is ContentTabLabel) {
-        continue//See com.intellij.openapi.wm.impl.content.ContentLayout.myIdLabel
-      }
+    else doGetTabIndex(tabPanel, point).coerceAtLeast(1)
+  }
+
+  private fun doGetTabIndex(tabContainer: JComponent, point: RelativePoint): Int {
+    val p = point.getPoint(tabContainer)
+    // com.intellij.openapi.wm.impl.content.TabContentLayout.myDropOverPlaceholder
+    val placeholderIndex = tabContainer.components.indexOfLast { it is JLabel && it !is BaseLabel }
+    for (i in 0 until tabContainer.componentCount) {
+      val child = tabContainer.components[i]
+      if (child !is ContentTabLabel) continue
       val childBounds = child.bounds
       if (placeholderIndex != -1 && i < placeholderIndex) {
         if (p.x < childBounds.minX) {
-          return i.coerceAtLeast(1)
+          return i
         }
       }
       if (placeholderIndex != -1 && i > placeholderIndex) {
         if (p.x > childBounds.maxX)
-          return (i + 1).coerceAtMost(tabPanel.componentCount - 1)
+          return i.coerceAtMost(tabContainer.components.indexOfLast { it is JLabel })
         else
           return placeholderIndex
       }
-      if (childBounds.contains(p))
-        return i
+      if (childBounds.contains(p)) return i
     }
-    return tabPanel.componentCount - 1
+    return tabContainer.components.indexOfLast { it is JLabel }.coerceAtLeast(0)
   }
 
   override fun mouseReleased(e: MouseEvent?) {
@@ -125,42 +130,68 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   }
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
-    if (sourceDecorator == null || myCurrentDecorator == null) {
+    val sourceDecorator = sourceDecorator
+    val curDecorator = myCurrentDecorator
+    if (sourceDecorator == null || curDecorator == null) {
       return
     }
 
     val content = myDraggingTab!!.content
+    val contentManager = sourceDecorator.contentManager
 
-    val contentManager = sourceDecorator!!.contentManager
-    if (sourceDecorator == myCurrentDecorator) {
-      if (contentManager.contentCount > 0) {
-        sourceDecorator!!.splitWithContent(content, currentDropSide, currentDropIndex - 1)
+    if (content is SingleContentLayout.FakeContent && curDecorator.isSingleContentLayout()) {
+      val tabs = content.supplier.getTabs()
+      if (currentDropIndex != -1) {
+        tabs.addTab(content.info, currentDropIndex)
+      }
+      else if (currentDropSide == -1 || currentDropSide == SwingConstants.CENTER) {
+        val index = if (sourceDecorator == curDecorator) myInitialIndex else tabs.tabCount
+        tabs.addTab(content.info, index)
       }
       else {
-        contentManager.addContent(myDraggingTab!!.content)
+        curDecorator.splitWithContent(content, currentDropSide, -1)
       }
-      return
     }
+    else {
+      fun splitWithContent(decorator: InternalDecoratorImpl) {
+        val index = if (currentDropIndex != -1) (currentDropIndex - 1).coerceIn(0, decorator.contentManager.contentCount) else -1
+        decorator.splitWithContent(content, currentDropSide, index)
+      }
 
-    content.putUserData(TEMPORARY_REMOVED_KEY, true)
-    try {
-      myCurrentDecorator!!.splitWithContent(content, currentDropSide, currentDropIndex - 1)
-    }
-    finally {
-      content.putUserData(TEMPORARY_REMOVED_KEY, null)
+      if (sourceDecorator == curDecorator) {
+        if (contentManager.contentCount > 0) {
+          splitWithContent(sourceDecorator)
+        }
+        else {
+          contentManager.addContent(content)
+        }
+        return
+      }
+
+      content.putUserData(TEMPORARY_REMOVED_KEY, true)
+      try {
+        splitWithContent(curDecorator)
+      }
+      finally {
+        content.putUserData(TEMPORARY_REMOVED_KEY, null)
+      }
     }
 
     if (contentManager.isEmpty) {
-      sourceDecorator!!.unsplit(null)
+      sourceDecorator.unsplit(null)
     }
   }
 
   override fun cancelDragging(): Boolean {
     if (super.cancelDragging()) {
-      with(myDraggingTab!!.content as ContentImpl) {
+      val content = myDraggingTab!!.content
+      if (content is SingleContentLayout.FakeContent && sourceDecorator!!.isSingleContentLayout()) {
+        val tabs = content.supplier.getTabs()
+        tabs.addTab(content.info, myInitialIndex.coerceAtMost(tabs.tabCount))
+      }
+      else {
         val contentManager = sourceDecorator!!.contentManager
-        contentManager.addContent(this, myInitialIndex.coerceAtMost(contentManager.contentCount))
-        putUserData(TEMPORARY_REMOVED_KEY, null)
+        contentManager.addContent(content, myInitialIndex.coerceAtMost(contentManager.contentCount))
       }
       stopDrag()
       return true
@@ -202,24 +233,33 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   }
 
   private fun startDrag() {
-    if (sourceDecorator == null || sourceDecorator?.contentManager?.contentCount == 0 || myDialog == null) {
+    val sourceDecorator = sourceDecorator
+    if (sourceDecorator == null || sourceDecorator.contentManager.contentCount == 0 || myDialog == null) {
       return
     }
 
-    val manager = myDraggingTab!!.content.manager
-    if (manager != null) {
-      with(myDraggingTab!!.content as ContentImpl) {
-        this.putUserData(TEMPORARY_REMOVED_KEY, true)
-        val index = manager.getIndexOfContent(this) + 1
-        SwingUtilities.invokeLater {
-          try {
-            sourceDecorator!!.isSplitUnsplitInProgress = true
-            manager.removeContent(this, false)
-            sourceDecorator!!.setDropInfoIndex(index, myDraggingTab!!.width)
-          }
-          finally {
-            sourceDecorator!!.isSplitUnsplitInProgress = false
-          }
+    val content = myDraggingTab!!.content
+    content.putUserData(TEMPORARY_REMOVED_KEY, true)
+    if (content is SingleContentLayout.FakeContent && sourceDecorator.isSingleContentLayout()) {
+      val tabs = content.supplier.getTabs()
+      val tabInfo = content.info
+      val index = tabs.getIndexOf(tabInfo)
+      SwingUtilities.invokeLater {
+        tabs.removeTab(tabInfo)
+        sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+      }
+    }
+    else {
+      val manager = sourceDecorator.contentManager
+      val index = manager.getIndexOfContent(content) + 1
+      SwingUtilities.invokeLater {
+        try {
+          sourceDecorator.isSplitUnsplitInProgress = true
+          manager.removeContent(content, false)
+          sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+        }
+        finally {
+          sourceDecorator.isSplitUnsplitInProgress = false
         }
       }
     }
@@ -248,7 +288,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       val dropArea = Rectangle(myCurrentDecorator!!.size)
       TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
       dropArea.bounds = SwingUtilities.convertRectangle(myCurrentDecorator!!, dropArea, pane.rootPane.glassPane)
-      currentDropIndex = getIndex(relativePoint)
+      currentDropIndex = getTabIndex(relativePoint)
       if (currentDropIndex != -1) {
         myCurrentDecorator!!.setDropInfoIndex(currentDropIndex, myDialog!!.width)
         highlighter.bounds = Rectangle()
@@ -272,6 +312,10 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       return InternalDecoratorImpl.findNearestDecorator(component)
     }
     return null
+  }
+
+  private fun InternalDecoratorImpl.isSingleContentLayout(): Boolean {
+    return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.FakeContent }
   }
 
   private class MyDialog(owner: JComponent, val helper: ToolWindowInnerDragHelper, tabImage: BufferedImage)
