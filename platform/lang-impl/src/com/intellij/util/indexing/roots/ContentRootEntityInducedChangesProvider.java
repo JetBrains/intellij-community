@@ -32,4 +32,9 @@ public class ContentRootEntityInducedChangesProvider implements IndexableEntityI
   private static List<OriginChange> createOriginChanges(ContentRootEntity change, OriginAction setOrigin) {
     return ContainerUtil.map(change.getSourceRoots(), root -> new OriginChange(root, setOrigin));
   }
+
+  @Override
+  public @NotNull Collection<OriginChange> getInducedChangesFromRefresh(@NotNull ContentRootEntity entity) {
+    return createOriginChanges(entity, OriginAction.SetOrigin);
+  }
 }

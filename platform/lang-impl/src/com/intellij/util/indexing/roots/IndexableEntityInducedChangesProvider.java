@@ -52,4 +52,7 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
   default Collection<OriginChange> getChangesFromReplaced(@NotNull E oldEntity, @NotNull E newEntity) {
     return Collections.emptyList();
   }
+
+  @NotNull
+  Collection<OriginChange> getInducedChangesFromRefresh(@NotNull E entity);
 }

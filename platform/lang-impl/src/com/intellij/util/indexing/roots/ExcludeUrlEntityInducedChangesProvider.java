@@ -47,4 +47,9 @@ public class ExcludeUrlEntityInducedChangesProvider implements IndexableEntityIn
     list.addAll(getRootChanges(newEntity));
     return list;
   }
+
+  @Override
+  public @NotNull Collection<OriginChange> getInducedChangesFromRefresh(@NotNull ExcludeUrlEntity entity) {
+    return getRootChanges(entity);
+  }
 }
