@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns.isArray
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns.isPrimitiveArray
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -76,7 +75,7 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
                 val receiverTypeArgument = receiverType.arguments.singleOrNull()?.type ?: return null
                 when {
                     isArray(receiverType) -> if (!isArray(receiverTypeArgument)) return null
-                    else -> if (!receiverTypeArgument.isIterable(DefaultBuiltIns.Instance)) return null
+                    else -> if (!receiverTypeArgument.isIterable()) return null
                 }
                 return "flatten()"
             }),
