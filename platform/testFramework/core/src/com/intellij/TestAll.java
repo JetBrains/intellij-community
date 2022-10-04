@@ -256,7 +256,7 @@ public class TestAll implements Test {
 
     // to make it easier to reproduce order-dependent failures locally
     System.out.println("------");
-    System.out.println("Running tests:");
+    System.out.println("Running tests classes:");
     for (Class<?> aClass : classes) {
       System.out.println(aClass.getName());
     }
@@ -317,7 +317,7 @@ public class TestAll implements Test {
     if (recorderClassName != null) {
       try {
         Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder) recorderClass.newInstance();
+        myTestRecorder = (TestRecorder)recorderClass.newInstance();
       }
       catch (Exception e) {
         System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);

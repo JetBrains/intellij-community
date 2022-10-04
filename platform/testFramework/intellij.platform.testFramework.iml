@@ -39,5 +39,9 @@
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
+    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" scope="TEST" name="http-client" level="project" />
   </component>
 </module>

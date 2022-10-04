@@ -40,7 +40,9 @@ public class TestCaseLoader {
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
+  public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
+  public static final String NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG = "idea.enable.nostradamus.test.distributor";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
   private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
@@ -48,6 +50,7 @@ public class TestCaseLoader {
   private static final boolean RUN_ONLY_AFFECTED_TESTS = Boolean.getBoolean(RUN_ONLY_AFFECTED_TEST_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   private static final boolean HARDWARE_AGENT_REQUIRED = Boolean.getBoolean(HARDWARE_AGENT_REQUIRED_FLAG);
+  public static final boolean IS_VERBOSE_LOG_ENABLED = Boolean.getBoolean(VERBOSE_LOG_ENABLED_FLAG);
 
   private static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
@@ -58,6 +61,11 @@ public class TestCaseLoader {
    * Distribute tests equally among the buckets
    */
   private static final boolean IS_FAIR_BUCKETING = Boolean.getBoolean(FAIR_BUCKETING_FLAG);
+
+  /**
+   * Intelligent test distribution to shorten time of tests run (ultimately - predict what tests to run on a changeset)
+   */
+  private static final boolean IS_NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -165,7 +173,9 @@ public class TestCaseLoader {
         }
       }
     }
-    System.out.println("No affected tests were found, will run with the standard test filter");
+    else {
+      System.out.println("Affected tests discovery is disabled. Will run with the standard test filter");
+    }
     return null;
   }
 
@@ -232,6 +242,7 @@ public class TestCaseLoader {
     }
 
     testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
+    System.out.println("Fair bucketing initialization finished.");
   }
 
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
@@ -246,9 +257,11 @@ public class TestCaseLoader {
     if (value != null) {
       var isMatchedBucket = value == testRunnerIndex;
 
-      System.out.printf(
-        "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
-        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+      if (IS_VERBOSE_LOG_ENABLED) {
+        System.out.printf(
+          "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
+          testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+      }
 
       return isMatchedBucket;
     }
@@ -260,8 +273,10 @@ public class TestCaseLoader {
 
     var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
 
-    System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
-                      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+    if (IS_VERBOSE_LOG_ENABLED) {
+      System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
+                        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+    }
 
     return isMatchedBucket;
   }
@@ -353,7 +368,7 @@ public class TestCaseLoader {
     return myClassLoadingErrors;
   }
 
-  private static int getRank(Class<?> aClass) {
+  public static int getRank(Class<?> aClass) {
     if (runFirst(aClass)) return 0;
 
     // `PlatformLiteFixture` is a very special test case, because it doesn't load all the XMLs with component/extension declarations
@@ -364,7 +379,7 @@ public class TestCaseLoader {
     // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
     // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
     if (isPlatformLiteFixture(aClass)) {
-      return 2;
+      return Integer.MAX_VALUE;
     }
 
     return 1;
@@ -406,14 +421,26 @@ public class TestCaseLoader {
       result.add(myLastTestClass);
     }
 
+    if (IS_VERBOSE_LOG_ENABLED) {
+      System.out.println("Sorted classes: ");
+      result.forEach(clazz -> System.out.println(clazz.getName()));
+    }
     return result;
   }
 
   private static TestSorter loadTestSorter() {
     String sorter = System.getProperty("intellij.build.test.sorter");
+
+    // use Nostradamus test sorter in case, if no other is specified
+    if (sorter == null && IS_NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+      sorter = "com.intellij.nostradamus.NostradamusTestCaseSorter";
+    }
+
     if (sorter != null) {
       try {
-        return (TestSorter)Class.forName(sorter).getConstructor().newInstance();
+        var testSorter = (TestSorter)Class.forName(sorter).getConstructor().newInstance();
+        System.out.printf("Using test sorter from %s%n", sorter);
+        return testSorter;
       }
       catch (Throwable t) {
         System.err.println("Sorter initialization failed: " + sorter);
@@ -421,11 +448,14 @@ public class TestCaseLoader {
       }
     }
 
+    System.out.println("Using default test sorter (natural order)");
+
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> tests, @NotNull ToIntFunction<? super Class<?>> ranker) {
-        return ContainerUtil.sorted(tests, Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
+      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+        return ContainerUtil.sorted(testClasses,
+                                    Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }
     };
   }
