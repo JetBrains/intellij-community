@@ -268,7 +268,7 @@ internal interface ComparablePriority : Comparable<ComparablePriority>
 
 internal data class VariantWithPriority(val variant: AutoImportVariant, val priority: ComparablePriority)
 
-private class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
+internal class Prioritizer(private val file: KtFile, private val compareNames: Boolean = true) {
     private val classifier = ImportableFqNameClassifier(file){
         ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
     }

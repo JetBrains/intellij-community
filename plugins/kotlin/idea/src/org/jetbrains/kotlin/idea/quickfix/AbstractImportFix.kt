@@ -25,11 +25,12 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
+import org.jetbrains.kotlin.idea.actions.*
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
@@ -74,6 +76,7 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.TreeSet
 
 /**
  * Check possibility and perform fix for unresolved references.
@@ -104,41 +107,69 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     protected open fun getReceiverTypeFromDiagnostic(): KotlinType? = null
 
     private fun calculateText(): String {
-        val descriptor = suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }.singleOrNull()
+        val descriptors  =
+            suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }
 
-        val kind = when {
-            descriptor?.isExtensionProperty == true -> KotlinBundle.message("text.extension.property")
-            descriptor is PropertyDescriptor -> KotlinBundle.message("text.property")
-            descriptor is ClassConstructorDescriptor -> KotlinBundle.message("text.class")
-            descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
-            descriptor is FunctionDescriptor -> KotlinBundle.message("text.function")
-            descriptor != null && DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
-            descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
-            else -> null
-        } ?: return KotlinBundle.message("fix.import")
+        val ktFile = element?.containingKtFile ?: return KotlinBundle.message("fix.import")
+        val languageVersionSettings = ktFile.languageVersionSettings
+        val prioritizer = Prioritizer(ktFile)
 
-        val name = buildString {
-            descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
-                val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
-                if (extensionReceiverParameter != null) {
-                    extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
-                        append(it.asString())
-                    }
-                } else {
-                    callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
-                        append(it.asString())
+        val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
+            val kind = when {
+                descriptor.isExtensionProperty -> KotlinBundle.message("text.extension.property")
+                descriptor is PropertyDescriptor -> KotlinBundle.message("text.property")
+                descriptor is ClassConstructorDescriptor -> KotlinBundle.message("text.class")
+                descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
+                descriptor is FunctionDescriptor -> KotlinBundle.message("text.function")
+                DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
+                descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
+                else -> null
+            } ?: return@mapNotNull null
+
+            val name = buildString {
+                descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
+                    val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
+                    if (extensionReceiverParameter != null) {
+                        extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
+                            append(it.asString())
+                        }
+                    } else {
+                        callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
+                            append(it.asString())
+                        }
                     }
                 }
-            }
 
-            descriptor?.name?.takeUnless { it.isSpecial }?.let {
-                if (this.isNotEmpty()) append('.')
-                append(it.asString())
+                descriptor.name.takeUnless { it.isSpecial }?.let {
+                    if (this.isNotEmpty()) append('.')
+                    append(it.asString())
+                }
             }
+            ImportName(kind, name, prioritizer.priority(descriptor, languageVersionSettings))
+        }.groupBy(keySelector = { it.kind }) { it }
+
+        return if (kindNameGroupedByKind.size == 1) {
+            val (kind, names) = kindNameGroupedByKind.entries.first()
+            val sortedNames = TreeSet<ImportName>(compareBy({ it.priority }, { it.kind }, { it.name }))
+            sortedNames.addAll(names)
+            val firstName = sortedNames.first().name
+            val singlePackage = suggestions.value.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+
+            if (singlePackage) {
+                if (sortedNames.size == 2) {
+                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind, firstName, sortedNames.last().name)
+                } else {
+                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind, firstName, sortedNames.size - 1)
+                }
+            } else {
+                KotlinBundle.message("fix.import.kind.0.name.1.2", kind, firstName, 0)
+            }
+        } else {
+            KotlinBundle.message("fix.import")
         }
-
-        return KotlinBundle.message("fix.import.kind.0.name.1", kind, name)
     }
+
+    private class ImportName(val kind: String, val name: String, val priority: ComparablePriority)
 
     override fun getText(): String = text.value
 

@@ -320,6 +320,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/importAliasPropertyAlreadyExists.before.Main.kt");
         }
 
+        @TestMetadata("importClass.before.Main.kt")
+        public void testImportClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importClass.before.Main.kt");
+        }
+
+        @TestMetadata("importDelegateFunctions.before.Main.kt")
+        public void testImportDelegateFunctions() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/importDelegateFunctions.before.Main.kt");
+        }
+
         @TestMetadata("importFromRoot.before.Main.kt")
         public void testImportFromRoot() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/importFromRoot.before.Main.kt");
