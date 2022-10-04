@@ -50,6 +50,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
       return null;
     }
     VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
+    if (root == null) return null;
     List<VirtualFile> excludedFiles =
       IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
     return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles);
