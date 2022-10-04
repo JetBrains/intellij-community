@@ -44,7 +44,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowLeftToolbar) 
 
     private fun createPresentation(): Presentation {
       val presentation = Presentation()
-      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20f)
+      presentation.icon = IconLoader.loadCustomVersionOrScale(AllIcons.Actions.MoreHorizontal as ScalableIcon, 20)
       presentation.isEnabledAndVisible = true
       return presentation
     }

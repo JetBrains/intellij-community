@@ -116,7 +116,7 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 
 private fun scaleIcon(presentation: Presentation) {
   if (presentation.icon is ScalableIcon && presentation.icon.iconWidth != 20) {
-    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20f)
+    presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, 20)
   }
 }
 
