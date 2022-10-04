@@ -57,7 +57,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         continue;
       }
       if (!consumer.process(subMethod) || !parameters.isCheckDeep()) {
-        return false;
+        return true;
       }
     }
     return true;
