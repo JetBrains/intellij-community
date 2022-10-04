@@ -211,6 +211,7 @@
 
     <extensionPoint name="indexableEntityProvider" interface="com.intellij.util.indexing.roots.IndexableEntityProvider" dynamic="true"/>
     <extensionPoint name="indexableIteratorBuilderHandler" interface="com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler" dynamic="true"/>
+    <extensionPoint name="indexableEntityInducedChangesProvider" interface="com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider" dynamic="true"/>
 
     <extensionPoint name="symbolPresentation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="forClass" implements="com.intellij.model.Symbol"/>
