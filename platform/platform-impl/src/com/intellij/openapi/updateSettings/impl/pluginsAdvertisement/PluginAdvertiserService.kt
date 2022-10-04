@@ -154,7 +154,8 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
       .filter { loadedPlugin ->
         when (val installedPlugin = PluginManagerCore.getPluginSet().findInstalledPlugin(loadedPlugin.pluginId)) {
           null -> true
-          else -> PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
+          else -> (!installedPlugin.isBundled || installedPlugin.allowBundledUpdate())
+                  && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.version, installedPlugin) > 0
         }
       }.filter { org.allowInstallingPlugin(it) }
       .map { PluginDownloader.createDownloader(it) }
