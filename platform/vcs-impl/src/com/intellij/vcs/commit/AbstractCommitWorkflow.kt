@@ -230,7 +230,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
-      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
@@ -326,7 +326,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
-    suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
+    suspend fun runMetaHandlers(@Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>) {
       EDT.assertIsEdt()
       // reversed to have the same order as when wrapping meta handlers into each other
       for (metaHandler in metaHandlers.reversed()) {
@@ -412,7 +412,7 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {
-      checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
+      @Suppress("DEPRECATION") checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
     }
     if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
     return UnknownCommitProblem(result)

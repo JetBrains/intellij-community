@@ -287,7 +287,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
-      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       if (metaHandlers.isNotEmpty() || modificationChecks.isNotEmpty()) {
         workflow.runModificationCommitChecks {
           AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
