@@ -37,7 +37,7 @@ public abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase ext
     String fileNameAfter = testName + "_after." + getFileExtension();
     myFixture.testHighlighting(fileNameBefore);
     IntentionAction intention = myFixture.findSingleIntention(fixName);
-    myFixture.launchAction(intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
     myFixture.checkResultByFile(fileNameBefore, fileNameAfter, true);
   }
 

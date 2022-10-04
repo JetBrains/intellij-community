@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnsafeVisitReturnStatementUsedInJavaRecursiveElementWalkingVisitor {
 
   public void methodUsingUnsafeVisitReturnStatementAndNoSafeMethodsPresent(PsiElement element) {
-    element.accept(new <warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">JavaRecursiveElementWalkingVisitor</warning>() {
+    element.accept(new <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">JavaRecursiveElementWalkingVisitor</warning>() {
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         // do something
@@ -13,7 +13,7 @@ public class UnsafeVisitReturnStatementUsedInJavaRecursiveElementWalkingVisitor 
   }
 
   public void methodUsingUnsafeVisitReturnStatementButVisitClassPresent(PsiElement element) {
-    element.accept(new <warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">JavaRecursiveElementWalkingVisitor</warning>() {
+    element.accept(new <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">JavaRecursiveElementWalkingVisitor</warning>() {
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         // do something
@@ -27,7 +27,7 @@ public class UnsafeVisitReturnStatementUsedInJavaRecursiveElementWalkingVisitor 
   }
 
   public void methodUsingUnsafeVisitReturnStatementButVisitLambdaExpressionPresent(PsiElement element) {
-    element.accept(new <warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">JavaRecursiveElementWalkingVisitor</warning>() {
+    element.accept(new <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">JavaRecursiveElementWalkingVisitor</warning>() {
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         // do something
@@ -42,14 +42,14 @@ public class UnsafeVisitReturnStatementUsedInJavaRecursiveElementWalkingVisitor 
 
 }
 
-<warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">class UnsafeVisitReturnStatementWalkingVisitor extends JavaRecursiveElementWalkingVisitor</warning> {
+class <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">UnsafeVisitReturnStatementWalkingVisitor</warning> extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
     // do something
   }
 }
 
-<warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">class UnsafeVisitReturnStatementWalkingVisitorWithVisitLambdaExpression extends JavaRecursiveElementWalkingVisitor</warning> {
+class <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">UnsafeVisitReturnStatementWalkingVisitorWithVisitLambdaExpression</warning> extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
     // do something
@@ -62,7 +62,7 @@ public class UnsafeVisitReturnStatementUsedInJavaRecursiveElementWalkingVisitor 
 }
 
 
-<warning descr="Recursive visitors which visit return statements most probably should specifically process anonymous/local classes as well as lambda expressions">class UnsafeVisitReturnStatementWalkingVisitorWithVisitClass extends JavaRecursiveElementWalkingVisitor</warning> {
+class <warning descr="Recursive visitors with 'visitReturnStatement' most probably should specifically process anonymous/local classes ('visitClass') and lambda expressions ('visitLambdaExpression')">UnsafeVisitReturnStatementWalkingVisitorWithVisitClass</warning> extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
     // do something

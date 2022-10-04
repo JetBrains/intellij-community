@@ -2,7 +2,9 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
@@ -30,5 +32,15 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
 
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return super.buildVisitor(holder, isOnTheFly);
+  }
+
+  protected static @NotNull ProblemsHolder createProblemsHolder(@NotNull UElement uElement,
+                                                                @NotNull InspectionManager manager,
+                                                                boolean isOnTheFly) {
+    PsiElement sourcePsi = uElement.getSourcePsi();
+    if (sourcePsi != null) {
+      return new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
+    }
+    throw new IllegalStateException("Could not create problems holder");
   }
 }
