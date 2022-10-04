@@ -578,7 +578,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(fileSourceRoot);
   }
 
-  public void testFileModuleExcludeRootUnderDirectoryRoot() {
+  public void flaky_testFileModuleExcludeRootUnderDirectoryRoot() {
     VirtualFile fileExcludeRoot = createChildData(mySrcDir1, "fileExcludeRoot.txt");
     assertIndexed(fileExcludeRoot);
 
@@ -590,7 +590,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertIndexed(fileExcludeRoot);
   }
 
-  public void testFileModuleExcludeRootUnderFileRoot() {
+  public void flaky_testFileModuleExcludeRootUnderFileRoot() {
     VirtualFile fileRoot = createChildData(myRootVFile, "fileRoot.txt");
     PsiTestUtil.addContentRoot(myModule, fileRoot);
     checkInfo(fileRoot);
