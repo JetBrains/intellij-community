@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import java.awt.Color
@@ -56,4 +57,34 @@ fun paintCellStripe(
 ) {
   g.color = stripe
   g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineWidth(), height)
+}
+
+/**
+ * Paints green or blue stripe depending on cell type
+ */
+fun paintCellGutter(inlayBounds: Rectangle,
+                    lines: IntRange,
+                    editor: EditorImpl,
+                    g: Graphics,
+                    r: Rectangle) {
+  val appearance = editor.notebookAppearance
+  appearance.getCellStripeColor(editor, lines)?.let { stripeColor ->
+    paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height)
+  }
+}
+
+fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
+  if (editor.settings.isCaretRowShown) {
+    val caretModel = editor.caretModel
+    val caretLine = caretModel.logicalPosition.line
+    if (caretLine in lines) {
+      g.color = editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
+      g.fillRect(
+        0,
+        editor.visualLineToY(caretModel.visualPosition.line),
+        g.clipBounds.width,
+        editor.lineHeight
+      )
+    }
+  }
 }

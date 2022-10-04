@@ -28,6 +28,7 @@ interface NotebookEditorAppearanceSizes {
   val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT : Int
   val INNER_CELL_TOOLBAR_HEIGHT : Int
   val CELL_BORDER_HEIGHT : Int
+  val SPACER_HEIGHT : Int
   val SPACE_BELOW_CELL_TOOLBAR : Int
   val CELL_TOOLBAR_TOTAL_HEIGHT : Int
   val PROGRESS_STATUS_HEIGHT : Int
@@ -86,6 +87,7 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 6
   override val INNER_CELL_TOOLBAR_HEIGHT = 25
   override val CELL_BORDER_HEIGHT = 20
+  override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
   override val SPACE_BELOW_CELL_TOOLBAR = 12
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
   override val PROGRESS_STATUS_HEIGHT = 2
