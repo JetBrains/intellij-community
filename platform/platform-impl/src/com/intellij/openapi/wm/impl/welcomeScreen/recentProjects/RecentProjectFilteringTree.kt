@@ -230,7 +230,7 @@ internal class RecentProjectFilteringTree(
       val item = TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, treePath) ?: return
 
       // Avoid double-clicking an arrow button
-      if (item is ProjectsGroupItem && intersectWithArrowIcon(point)) {
+      if (item is ProjectsGroupItem && TreeUtil.isLocationInExpandControl(tree, point.x, point.y)) {
         return
       }
 
@@ -277,15 +277,6 @@ internal class RecentProjectFilteringTree(
           .build()
       }
       popupMenu.component.show(component, x, y)
-    }
-
-    private fun intersectWithArrowIcon(point: Point): Boolean {
-      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
-      val bounds = tree.getRowBounds(row)
-      val icon = AllIcons.Ide.Notification.Expand
-      val iconBounds = Rectangle(0, bounds.y + (bounds.height - icon.iconHeight) / 2, icon.iconWidth, icon.iconHeight)
-
-      return iconBounds.contains(point)
     }
 
     private fun intersectWithActionIcon(point: Point): Boolean {
