@@ -711,6 +711,10 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
+    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
+      processIdleActivityListeners(e);
+    }
+
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
@@ -748,12 +752,6 @@ public final class IdeEventQueue extends EventQueue {
     }
     else {
       defaultDispatchEvent(e);
-    }
-
-    myEventCount++;
-
-    if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-      processIdleActivityListeners(e);
     }
   }
 
