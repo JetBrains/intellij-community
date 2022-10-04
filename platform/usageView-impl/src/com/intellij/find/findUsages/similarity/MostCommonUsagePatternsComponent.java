@@ -83,7 +83,6 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
-    SimilarUsagesCollector.logMostCommonUsagePatternsShow(myProject, myUsageView);
     mySortedClusters = new Ref<>(null);
     mySelectedUsages = myUsageView.getSelectedUsages();
     myNonClusteredUsages = mySelectedUsages.stream().filter(e -> !(e instanceof SimilarUsage)).collect(Collectors.toCollection(HashSet::new));
@@ -129,7 +128,12 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return myMostCommonUsageScrollPane.getVerticalScrollBar().getValue() != 0;
   }
 
-  public void refresh() {
+  public void loadSnippets() {
+    SimilarUsagesCollector.logMostCommonUsagePatternsShown(myProject, myUsageView);
+    refresh();
+  }
+
+  private void refresh() {
     isRefreshing.set(true);
     mySortedClusters.set(null);
     mySelectedUsages.clear();

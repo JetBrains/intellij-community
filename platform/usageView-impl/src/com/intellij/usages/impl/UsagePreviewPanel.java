@@ -37,8 +37,7 @@ import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
-import com.intellij.usages.similarity.clustering.UsageCluster;
-import com.intellij.util.ObjectUtils;
+import com.intellij.usages.similarity.clustering.UsageCluster;import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
@@ -453,7 +452,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
         Disposer.register(this, myMostCommonUsagePatternsComponent);
       }
       add(myMostCommonUsagePatternsComponent);
-      myMostCommonUsagePatternsComponent.refresh();
+      myMostCommonUsagePatternsComponent.loadSnippets();
     }
   }
 
