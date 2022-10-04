@@ -6,7 +6,7 @@ class Test {
 
   void foo(Object obj) {
     switch (obj) {
-      case Rect(Point(double x, double y) point1, Point point2) rect<caret> -> {}
+      case Rect(Point(double x, double y), Point point2) rect -> {}
       default -> {}
     }
   }

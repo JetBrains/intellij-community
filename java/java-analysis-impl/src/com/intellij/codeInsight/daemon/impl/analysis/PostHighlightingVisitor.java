@@ -38,6 +38,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.source.tree.java.PsiDeconstructionPatternVariableImpl;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
@@ -146,8 +147,7 @@ class PostHighlightingVisitor {
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
           ProgressManager.checkCanceled();
-          if (element instanceof PsiIdentifier) {
-            PsiIdentifier identifier = (PsiIdentifier)element;
+          if (element instanceof PsiIdentifier identifier) {
             HighlightInfo info = processIdentifier(identifier, progress, globalUsageHelper);
             if (info != null) {
               errorFound |= info.getSeverity() == HighlightSeverity.ERROR;
@@ -405,8 +405,7 @@ class PostHighlightingVisitor {
     if (PsiUtil.isIgnoredName(parameter.getName())) return null;
     PsiElement declarationScope = parameter.getDeclarationScope();
     QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
-    if (declarationScope instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)declarationScope;
+    if (declarationScope instanceof PsiMethod method) {
       if (PsiUtilCore.hasErrorElementChild(method)) return null;
       if ((method.isConstructor() ||
            method.hasModifierProperty(PsiModifier.PRIVATE) ||
@@ -436,7 +435,12 @@ class PostHighlightingVisitor {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         if (declarationScope.getParent() instanceof PsiSwitchBlock) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, false));
+          if (variable instanceof PsiDeconstructionPatternVariableImpl) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createDeleteFix(parameter));
+          }
+          else {
+            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createRenameToIgnoredFix(parameter, false));
+          }
         }
         else if (!(variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList)) {
           QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createDeleteFix(parameter));

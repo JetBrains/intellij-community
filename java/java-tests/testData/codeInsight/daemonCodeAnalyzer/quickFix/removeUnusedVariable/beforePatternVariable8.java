@@ -1,4 +1,4 @@
-// "Remove pattern variable" "true-preview"
+// "Remove pattern variable" "false"
 class Test {
   record Point(double x, double y) {}
 
@@ -6,7 +6,7 @@ class Test {
 
   void foo(Object obj) {
     switch (obj) {
-      case Rect(Point(double x, double y) point1, Point point2) rect<caret> -> {}
+      case Rect(Point(double x, double y<caret>) point1, Point point2) rect -> {}
       default -> {}
     }
   }
