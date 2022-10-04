@@ -34,12 +34,12 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager,
     handler: AutoScrollToSourceHandler,
     dataContext: DataContext,
   ) {
+    val asyncDataContext = wrapToAsyncDataContext(dataContext)
+
     scope.launch(Dispatchers.EDT) {
-      PlatformDataKeys.TOOL_WINDOW.getData(dataContext)
+      PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
         ?.getReady(handler)
         ?.await()
-
-      val asyncDataContext = wrapToAsyncDataContext(dataContext)
 
       val navigatable = readAction {
         if (handler.canAutoScrollTo(CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext)))
