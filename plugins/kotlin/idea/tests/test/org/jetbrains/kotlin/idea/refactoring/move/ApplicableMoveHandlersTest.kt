@@ -44,7 +44,7 @@ class ApplicableMoveHandlersTest : KotlinLightCodeInsightFixtureTestCase() {
         val expectedHandlers = listOf(
             "MoveKotlinDeclarationsHandler" to null,
             "KotlinMoveFilesOrDirectoriesHandler" to "Move File…",
-            "JavaMoveClassesOrPackagesHandler" to "Move Classes...",
+            "JavaMoveClassesOrPackagesHandler" to "Move Classes…",
             "JavaMoveFilesOrDirectoriesHandler" to "Move File…",
             "MoveFilesOrDirectoriesHandler" to "Move File…",
         )
