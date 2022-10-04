@@ -119,7 +119,7 @@ mod tests {
     #[rstest]
     #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE)]
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE)]
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[cfg(target_os = "macos")]
     fn jre_is_user_jre_test(#[case] launcher_location: &LayoutSpecification) {
         let dump = run_launcher_and_get_dump(launcher_location);
 
@@ -137,7 +137,28 @@ mod tests {
             jbr_home.to_str().unwrap(),
             "Resolved java is not from .config"
         );
+    }
 
+    #[rstest]
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE)]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    fn jre_is_user_jre_test(#[case] launcher_location: &LayoutSpecification) {
+        let dump = run_launcher_and_get_dump(launcher_location);
+
+        let idea_jdk = get_custom_user_file_with_java_path().join("idea.jdk");
+        let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
+        let resolved_jdk_path = Path::new(&idea_jdk_content);
+        let metadata = idea_jdk.metadata().unwrap();
+
+        assert!(idea_jdk.exists(), "Config file is not exists");
+        assert_ne!(0, metadata.len(), "Config file is empty");
+        assert!(resolved_jdk_path.exists(), "JDK from idea.jdk is not exists");
+        assert_eq!(
+            &dump.systemProperties["java.home"],
+            &idea_jdk_content.to_string(),
+            "Resolved java is not from .config"
+        );
     }
 
     // if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then
