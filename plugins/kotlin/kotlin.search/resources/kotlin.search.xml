@@ -1,11 +1,11 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.search">
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.search">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.directKotlinClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <searcher forClass="org.jetbrains.kotlin.idea.search.DirectKotlinClassInheritorsSearch$SearchParameters"
-              implementationClass="org.jetbrains.kotlin.idea.search.DirectKotlinClassInheritorsSearcher"/>
-    <searcher forClass="org.jetbrains.kotlin.idea.search.DirectKotlinClassInheritorsSearch$SearchParameters" 
-              implementationClass="org.jetbrains.kotlin.idea.search.DirectKotlinClassDelegatedSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.k2.search.DirectKotlinClassInheritorsSearch$SearchParameters"
+              implementationClass="org.jetbrains.kotlin.idea.k2.search.DirectKotlinClassInheritorsSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.k2.search.DirectKotlinClassInheritorsSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.k2.search.DirectKotlinClassDelegatedSearcher"/>
   </extensions>
 </idea-plugin>
