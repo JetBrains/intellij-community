@@ -66,25 +66,6 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
       return file.manager.modificationTracker.modificationCount
     }
 
-    private fun isHintsEnabledForEditor(editor: Editor): Boolean {
-      return editor.getUserData(HINTS_DISABLED_FOR_EDITOR) != true
-    }
-
-    /**
-     * Enables/disables hints for a given editor
-     */
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun setHintsEnabled(editor: Editor, value: Boolean) {
-      if (value) {
-        editor.putUserData(HINTS_DISABLED_FOR_EDITOR, null)
-      }
-      else {
-        editor.putUserData(HINTS_DISABLED_FOR_EDITOR, true)
-      }
-      forceHintsUpdateOnNextPass()
-    }
-
     private fun isProviderAlwaysEnabledForEditor(editor: Editor, providerKey: SettingsKey<*>): Boolean {
       val alwaysEnabledProviderKeys = editor.getUserData(ALWAYS_ENABLED_HINTS_PROVIDERS)
       if (alwaysEnabledProviderKeys == null) return false
@@ -108,8 +89,6 @@ class InlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     }
 
     private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWithSettings<out Any>> {
-      if (!isHintsEnabledForEditor(editor)) return emptyList()
-
       val settings = InlayHintsSettings.instance()
       val language = element.language
 
