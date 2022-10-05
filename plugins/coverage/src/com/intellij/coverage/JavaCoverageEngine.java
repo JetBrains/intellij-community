@@ -24,6 +24,7 @@ import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +44,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -333,11 +335,11 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
 
-    final VirtualFile outputpath = compilerModuleExtension.getCompilerOutputPath();
-    final VirtualFile testOutputpath = compilerModuleExtension.getCompilerOutputPathForTests();
+    final @Nullable File outputpath = getOutputpath(compilerModuleExtension);
+    final @Nullable File testOutputpath = getTestOutputpath(compilerModuleExtension);
 
-    if (outputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.SOURCE)
-        || suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.TEST_SOURCE)) {
+    if (isModuleOutputNeededAndisMissing(module, JavaSourceRootType.SOURCE, outputpath)
+        || suite.isTrackTestFolders() && isModuleOutputNeededAndisMissing(module, JavaSourceRootType.TEST_SOURCE, testOutputpath)) {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
@@ -368,9 +370,27 @@ public class JavaCoverageEngine extends CoverageEngine {
     return false;
   }
 
+  @Nullable
+  private static File getOutputpath(CompilerModuleExtension compilerModuleExtension) {
+    final @Nullable String outputpathUrl = compilerModuleExtension.getCompilerOutputUrl();
+    final @Nullable File outputpath = outputpathUrl != null ? new File(VfsUtilCore.urlToPath(outputpathUrl)) : null;
+    return outputpath;
+  }
+
+  @Nullable
+  private static File getTestOutputpath(CompilerModuleExtension compilerModuleExtension) {
+    final @Nullable String outputpathUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
+    final @Nullable File outputpath = outputpathUrl != null ? new File(VfsUtilCore.urlToPath(outputpathUrl)) : null;
+    return outputpath;
+  }
+
   private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
     CompilerManager compilerManager = CompilerManager.getInstance(module.getProject());
     return ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream().anyMatch(vFile -> !compilerManager.isExcludedFromCompilation(vFile));
+  }
+
+  private static boolean isModuleOutputNeededAndisMissing(Module module, final JavaSourceRootType rootType, @Nullable File outputPath) {
+    return (outputPath == null || !outputPath.exists()) && isModuleOutputNeeded(module, rootType);
   }
 
   @Override
@@ -440,11 +460,14 @@ public class JavaCoverageEngine extends CoverageEngine {
       return Collections.emptySet();
     }
     final Set<File> classFiles = new HashSet<>();
-    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+    final @Nullable File outputpath = getOutputpath(CompilerModuleExtension.getInstance(module));
+    final @Nullable File testOutputpath = getTestOutputpath(CompilerModuleExtension.getInstance(module));
+
+    final @Nullable VirtualFile outputpathVirtualFile = fileToVirtualFileWithRefresh(outputpath);
+    final @Nullable VirtualFile testOutputpathVirtualFile = fileToVirtualFileWithRefresh(testOutputpath);
 
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
-      if (extension.collectOutputFiles(srcFile, outputpath, testOutputpath, suite, classFiles)) return classFiles;
+      if (extension.collectOutputFiles(srcFile, outputpathVirtualFile, testOutputpathVirtualFile, suite, classFiles)) return classFiles;
     }
 
     final String packageFQName = getPackageName(srcFile);
@@ -454,7 +477,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final File vDir =
       outputpath == null
       ? null : !packageVmName.isEmpty()
-               ? new File(outputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(outputpath);
+               ? new File(outputpath, packageVmName) : outputpath;
     if (vDir != null && vDir.exists()) {
       Collections.addAll(children, vDir.listFiles());
     }
@@ -463,7 +486,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       final File testDir =
         testOutputpath == null
         ? null : !packageVmName.isEmpty()
-                 ? new File(testOutputpath.getPath() + File.separator + packageVmName) : VfsUtilCore.virtualToIoFile(testOutputpath);
+                 ? new File(testOutputpath, packageVmName) : testOutputpath;
       if (testDir != null && testDir.exists()) {
         Collections.addAll(children, testDir.listFiles());
       }
@@ -483,6 +506,12 @@ public class JavaCoverageEngine extends CoverageEngine {
       }
     }
     return classFiles;
+  }
+
+  @Nullable
+  private static VirtualFile fileToVirtualFileWithRefresh(@Nullable File file) {
+    if (file == null) return null;
+    return WriteAction.computeAndWait(() -> VfsUtil.findFileByIoFile(file, true));
   }
 
   @Override
