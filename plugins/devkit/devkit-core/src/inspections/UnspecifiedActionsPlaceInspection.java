@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -12,7 +12,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class UniqueToolbarIdInspection extends DevKitInspectionBase {
+public class UnspecifiedActionsPlaceInspection extends DevKitInspectionBase {
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -32,7 +32,7 @@ public class UniqueToolbarIdInspection extends DevKitInspectionBase {
                 if (expressions.length > 0) {
                   String text = expressions[0].getText();
                   if (text.equals("\"\"") || text.endsWith(".UNKNOWN")) {
-                    holder.registerProblem(expressions[0], DevKitBundle.message("inspections.unique.toolbar.id"));
+                    holder.registerProblem(expressions[0], DevKitBundle.message("inspections.unspecified.actions.place.toolbar"));
                   }
                 }
               }
@@ -47,6 +47,6 @@ public class UniqueToolbarIdInspection extends DevKitInspectionBase {
   @NotNull
   @Override
   public String getShortName() {
-    return "InspectionUniqueToolbarId";
+    return "UnspecifiedActionsPlace";
   }
 }

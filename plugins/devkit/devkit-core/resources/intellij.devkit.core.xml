@@ -112,8 +112,8 @@
     <localInspection language="JAVA" shortName="InspectionUniqueToolbarId"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"
-                     key="inspection.inspection.unique.toolbar.id.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspection"
+                     key="inspection.inspection.unspecified.actions.place.display.name"/>
     <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
