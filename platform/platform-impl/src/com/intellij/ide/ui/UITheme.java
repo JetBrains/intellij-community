@@ -310,7 +310,7 @@ public final class UITheme {
       Map.entry("Checkbox.Foreground.Disabled", "#ABABAB"),
       Map.entry("Checkbox.Foreground.Disabled.Dark", "#606060"),
       Map.entry("Checkbox.Background.Selected", "#4F9EE3"),
-      Map.entry("Checkbox.Background.Selected.Dark", "#43494A"),
+      Map.entry("Checkbox.Background.Selected.Dark", "#43494B"),
       Map.entry("Checkbox.Border.Selected", "#4B97D9"),
       Map.entry("Checkbox.Border.Selected.Dark", "#6B6B6B"),
       Map.entry("Checkbox.Foreground.Selected", "#FEFEFE"),
