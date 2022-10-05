@@ -1,7 +1,10 @@
 package com.intellij.settingsSync
 
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -49,6 +52,8 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   @RequiresBackgroundThread
   internal fun initialize(initMode: InitMode) {
+    saveIdeSettings()
+
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -58,6 +63,12 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     applyInitialChanges(initMode)
 
     queue.activate()
+  }
+
+  private fun saveIdeSettings() {
+    runBlockingMaybeCancellable {
+      saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+    }
   }
 
   private fun applyInitialChanges(initMode: InitMode) {

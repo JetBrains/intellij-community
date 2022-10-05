@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -13,7 +12,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -70,9 +68,6 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
 
   private fun initializeSyncing(initMode: SettingsSyncBridge.InitMode): Runnable = Runnable {
     LOG.info("Initializing settings sync")
-    runBlocking {
-      saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
-    }
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
     syncSettings()
