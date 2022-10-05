@@ -114,10 +114,6 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
            });
     }
 
-    for (LineMarkerInfo<?> info : lineMarkers) {
-      info.updatePass = getId();
-    }
-
     myMarkers = mergeLineMarkers(lineMarkers, getDocument());
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+myMarkers);

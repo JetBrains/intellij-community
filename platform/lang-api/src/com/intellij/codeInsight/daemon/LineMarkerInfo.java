@@ -39,6 +39,10 @@ public class LineMarkerInfo<T extends PsiElement> {
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
 
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
@@ -141,7 +145,6 @@ public class LineMarkerInfo<T extends PsiElement> {
     myNavigationHandler = navHandler;
     startOffset = range.getStartOffset();
     endOffset = range.getEndOffset();
-    updatePass = 11; //Pass.LINE_MARKERS;
   }
 
   /**
@@ -285,6 +288,8 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   @Override
   public String toString() {
-    return "(" + startOffset + "," + endOffset + ") -> " + elementRef + " (icon: " + myIcon + ")";
+    return "(" + startOffset + "," + endOffset + ") -> " + elementRef
+           + (myIcon == null ? "" : " (icon: " + myIcon + ")")
+           + " ["+(highlighter == null ? " " : highlighter.isValid() ? "V" : "X")+"]";
   }
 }
