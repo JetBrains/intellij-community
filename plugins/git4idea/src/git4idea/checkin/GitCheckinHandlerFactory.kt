@@ -258,7 +258,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
       message
         .appendRaw(GitBundle.message("warning.message.commit.with.unfinished.rebase", rootPath.toString()))
         .br()
-        .appendLink("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html",
+        .appendLink("https://git-scm.com/docs/git-rebase",
                     GitBundle.message("link.label.commit.with.unfinished.rebase.read.more"))
     }
     else {
@@ -266,7 +266,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
       message
         .appendRaw(GitBundle.message("warning.message.commit.with.detached.head", rootPath.toString()))
         .br()
-        .appendLink("http://gitolite.com/detached-head.html",
+        .appendLink("https://git-scm.com/docs/git-checkout#_detached_head",
                     GitBundle.message("link.label.commit.with.detached.head.read.more"))
     }
 
