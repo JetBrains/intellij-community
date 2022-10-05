@@ -304,7 +304,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 getClasspathType(module)
             }
             val jreHome = if (myConfiguration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
-            JavaParametersUtil.configureModule(module, params, classPathType, jreHome)
+            ReadAction.run<RuntimeException> { JavaParametersUtil.configureModule(module, params, classPathType, jreHome) }
             setupJavaParameters(params)
             params.setShortenCommandLine(myConfiguration.shortenCommandLine, module.project)
             params.mainClass = myConfiguration.runClass
