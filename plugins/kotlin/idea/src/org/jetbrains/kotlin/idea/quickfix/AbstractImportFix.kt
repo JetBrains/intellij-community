@@ -116,13 +116,13 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         val kindNameGroupedByKind = descriptors.mapNotNull { descriptor ->
             val kind = when {
-                descriptor.isExtensionProperty -> KotlinBundle.message("text.extension.property")
-                descriptor is PropertyDescriptor -> KotlinBundle.message("text.property")
-                descriptor is ClassConstructorDescriptor -> KotlinBundle.message("text.class")
-                descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
-                descriptor is FunctionDescriptor -> KotlinBundle.message("text.function")
-                DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
-                descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
+                descriptor.isExtensionProperty -> ImportKind.EXTENSION_PROPERTY
+                descriptor is PropertyDescriptor -> ImportKind.PROPERTY
+                descriptor is ClassConstructorDescriptor -> ImportKind.CLASS
+                descriptor is FunctionDescriptor && descriptor.isExtension -> ImportKind.EXTENSION_FUNCTION
+                descriptor is FunctionDescriptor -> ImportKind.FUNCTION
+                DescriptorUtils.isObject(descriptor) -> ImportKind.OBJECT
+                descriptor is ClassDescriptor -> ImportKind.CLASS
                 else -> null
             } ?: return@mapNotNull null
 
@@ -156,20 +156,32 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
             val singlePackage = suggestions.value.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
 
             if (singlePackage) {
-                if (sortedNames.size == 2) {
-                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind, firstName, sortedNames.last().name)
+                val size = sortedNames.size
+                if (size == 2) {
+                    KotlinBundle.message("fix.import.kind.0.name.1.and.name.2", kind.toText(size), firstName, sortedNames.last().name)
                 } else {
-                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind, firstName, sortedNames.size - 1)
+                    KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(size), firstName, size - 1)
                 }
             } else {
-                KotlinBundle.message("fix.import.kind.0.name.1.2", kind, firstName, 0)
+                KotlinBundle.message("fix.import.kind.0.name.1.2", kind.toText(1), firstName, 0)
             }
         } else {
             KotlinBundle.message("fix.import")
         }
     }
 
-    private class ImportName(val kind: String, val name: String, val priority: ComparablePriority)
+    private class ImportName(val kind: ImportKind, val name: String, val priority: ComparablePriority)
+
+    private enum class ImportKind(private val key: String) {
+        CLASS("text.class.0"),
+        PROPERTY("text.property.0"),
+        OBJECT("text.object.0"),
+        FUNCTION("text.function.0"),
+        EXTENSION_PROPERTY("text.extension.property.0"),
+        EXTENSION_FUNCTION("text.extension.function.0");
+
+        fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
+    }
 
     override fun getText(): String = text.value
 
