@@ -98,6 +98,8 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
 
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
+
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CodeAnalysisCommitProblem? {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  */
 @ApiStatus.Experimental
 interface CommitCheck : PossiblyDumbAware {
-  fun getExecutionOrder(): ExecutionOrder = ExecutionOrder.LATE
+  fun getExecutionOrder(): ExecutionOrder
 
   /**
    * Indicates if commit check should be run for the commit.
