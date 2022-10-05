@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -15,7 +14,6 @@ import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -40,12 +38,6 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .align(Align.FILL)
-          .also {
-            DataManager.registerDataProvider(it.component) { key ->
-              if (GHAccountsHost.KEY.`is`(key)) accountsModel
-              else null
-            }
-          }
       }.resizableRow()
 
       row {
