@@ -99,6 +99,5 @@
     <action id="MinimapFilter" class="com.intellij.ide.minimap.actions.MinimapFilterActionGroup"/>
     <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
-    <action id="ToggleMinimapResizable" class="com.intellij.ide.minimap.actions.ToggleMinimapResizableAction"/>
   </actions>
 </idea-plugin>

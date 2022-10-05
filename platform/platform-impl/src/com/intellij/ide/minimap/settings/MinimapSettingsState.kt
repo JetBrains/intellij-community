@@ -4,7 +4,6 @@ package com.intellij.ide.minimap.settings
 /**
  * @param filterType Filter type for downscale the image. Could affect both quality and performance.
  * @param enabled Enables Minimap for selected filetypes.
- * @param resizable Minimap resize is enabled.
  * @param width Default width
  * @param rightAligned If false, Minimap will be on the left side
  * @param fileTypes List of file extensions for which we want to show Minimap. For example txt;kt;java;zpln. By default, enabled only for
@@ -12,7 +11,6 @@ package com.intellij.ide.minimap.settings
  */
 data class MinimapSettingsState(var filterType: FilterType = FilterType.Nearest,
                                 var enabled: Boolean = true,
-                                var resizable: Boolean = true,
                                 var width: Int = 200,
                                 var rightAligned: Boolean = true,
                                 var fileTypes: List<String> = listOf("zpln"))
