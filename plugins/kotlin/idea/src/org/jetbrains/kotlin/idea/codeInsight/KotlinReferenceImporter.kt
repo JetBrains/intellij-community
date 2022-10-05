@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.ReferenceImporter
-import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -65,20 +64,19 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         }.ifEmpty { return null }
 
         val quickFixProvider = Fe10QuickFixProvider.getInstance(reference.project)
-        val importFixBases = buildList {
+
+        return sequence {
             diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
                 sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
                     val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
                     for (action in quickFixes.values()) {
                         if (action is ImportFixBase<*>) {
-                            this.add(action)
+                            this.yield(action)
                         }
                     }
                 }
             }
-        }.ifEmpty { return null }
-
-        return importFixBases.firstNotNullOfOrNull { action ->
+        }.firstNotNullOfOrNull { action ->
             val suggestions = filterSuggestions(file, action.collectSuggestions())
             if (suggestions.size != 1) {
                 null
@@ -115,12 +113,12 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         } ?: return null
 
         return BooleanSupplier {
-            doImport(file, action)
+            doImport(action)
         }
     }
 
-    private fun doImport(file: PsiFile, action: KotlinAddImportAction): Boolean {
-        var res = false;
+    private fun doImport(action: KotlinAddImportAction): Boolean {
+        var res = false
         CommandProcessor.getInstance().runUndoTransparentAction {
             res = action.execute()
         }

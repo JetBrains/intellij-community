@@ -33,7 +33,7 @@ class Fe10QuickFixProviderImpl : Fe10QuickFixProvider {
         for (intentionActionsFactory in intentionActionsFactories) {
             if (replaceUnresolvedReferenceQuickFix && intentionActionsFactory is UnresolvedReferenceQuickFixFactory) {
                 if (intentionActionsFactory.areActionsAvailable(first)) {
-                    actions.putValues(first, listOf(RegisterQuickFixesLaterIntentionAction))
+                    actions.putValue(first, RegisterQuickFixesLaterIntentionAction)
                     continue
                 }
             }
