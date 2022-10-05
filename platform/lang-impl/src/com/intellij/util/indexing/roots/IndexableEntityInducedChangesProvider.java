@@ -3,6 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +26,12 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
   Class<E> getEntityInterface();
 
   @NotNull
-  default Collection<OriginChange> getInducedChanges(EntityChange<? extends E> change) {
+  default Collection<OriginChange> getInducedChanges(@NotNull EntityChange<? extends E> change, @NotNull EntityStorage storageAfter) {
     if (change instanceof EntityChange.Added<?>) {
       return getChangesFromAdded(change.getNewEntity());
     }
     else if (change instanceof EntityChange.Removed<?>) {
-      return getChangesFromRemoved(change.getOldEntity());
+      return getChangesFromRemoved(change.getOldEntity(), storageAfter);
     }
     else if (change instanceof EntityChange.Replaced<?>) {
       return getChangesFromReplaced(change.getOldEntity(), change.getNewEntity());
@@ -44,7 +45,7 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
   }
 
   @NotNull
-  default Collection<OriginChange> getChangesFromRemoved(@NotNull E entity) {
+  default Collection<OriginChange> getChangesFromRemoved(@NotNull E entity, @NotNull EntityStorage storageAfter) {
     return Collections.emptyList();
   }
 

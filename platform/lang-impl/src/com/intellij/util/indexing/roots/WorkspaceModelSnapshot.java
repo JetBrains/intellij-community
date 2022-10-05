@@ -147,7 +147,7 @@ class WorkspaceModelSnapshot {
       }
       for (IndexableEntityInducedChangesProvider<? extends WorkspaceEntity> changesProvider : IndexableEntityInducedChangesProvider.EP_NAME.getExtensionList()) {
         if (entityInterface.equals(changesProvider.getEntityInterface())) {
-          handleInducedChanges(entitiesToRegenerate, change, changesProvider, generators);
+          handleInducedChanges(entitiesToRegenerate, change, storage, changesProvider, generators);
         }
       }
     }
@@ -204,13 +204,14 @@ class WorkspaceModelSnapshot {
 
   private static <E extends WorkspaceEntity> void handleInducedChanges(@NotNull Map<EntityReference<? extends WorkspaceEntity>, OriginChange> entitiesToRegenerate,
                                                                        @NotNull EntityChange<E> change,
+                                                                       @NotNull EntityStorage storageAfter,
                                                                        @NotNull IndexableEntityInducedChangesProvider<?> changesProvider,
                                                                        @NotNull Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> generators) {
     //noinspection unchecked
-    Collection<OriginChange> changes = ((IndexableEntityInducedChangesProvider<E>)changesProvider).getInducedChanges(change);
-    for (OriginChange providerChange : changes) {
-      if (generators.containsKey(providerChange.entity().getEntityInterface())) {
-        entitiesToRegenerate.put(providerChange.entity().createReference(), providerChange);
+    Collection<OriginChange> inducedChanges = ((IndexableEntityInducedChangesProvider<E>)changesProvider).getInducedChanges(change, storageAfter);
+    for (OriginChange inducedChange : inducedChanges) {
+      if (generators.containsKey(inducedChange.entity().getEntityInterface())) {
+        entitiesToRegenerate.put(inducedChange.entity().createReference(), inducedChange);
       }
     }
   }
