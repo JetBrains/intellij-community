@@ -45,8 +45,7 @@ public interface ConfigImportSettings {
   default void processPluginsToMigrate(@NotNull Path newConfigDir,
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
-                                       @NotNull Map<? super PluginId, ? extends IdeaPluginDescriptor> pluginIdMap) { }
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}
