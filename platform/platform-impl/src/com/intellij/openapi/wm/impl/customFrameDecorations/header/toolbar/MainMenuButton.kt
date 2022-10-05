@@ -177,8 +177,15 @@ private fun createMenuButton(action: AnAction): ActionButton {
   return button
 }
 
-private fun getMainMenuGroup() =
-  CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
+private fun getMainMenuGroup(): ActionGroup {
+  val mainMenuGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU)
+  mainMenuGroup as ActionGroup
+  // Mark top level main menu action groups as popups to avoid expanding into top-level actions (IDEA-294669)
+  for (topLevelGroup in mainMenuGroup.getChildren(null)) {
+    topLevelGroup.templatePresentation.isPopupGroup = true
+  }
+  return mainMenuGroup
+}
 
 const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
