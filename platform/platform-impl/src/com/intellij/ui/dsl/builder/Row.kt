@@ -192,8 +192,8 @@ interface Row {
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
    * If there is a binding [ButtonsGroup.bind] for the buttons group then:
    * * [value] must be provided with correspondent to binding type for all radio buttons in the group
-   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true, such button will be selected by default in case
-   * initial bound variable value is not equal to values of radio button in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true. Such button will be selected by default in case
+   * initial value of bound variable doesn't equal any values of radio buttons in the group
    *
    * If there is no binding, then values of all radio buttons in the group must be null
    */
