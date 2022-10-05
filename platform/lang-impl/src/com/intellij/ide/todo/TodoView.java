@@ -205,16 +205,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myPanels.add(myScopeBasedTodosPanel);
   }
 
-  @TestOnly
-  public void disposePanels() {
-    Disposer.dispose(myAllTodos);
-    if (myChangeListTodosPanel != null) {
-      Disposer.dispose(myChangeListTodosPanel);
-    }
-    Disposer.dispose(myCurrentFileTodosPanel);
-    Disposer.dispose(myScopeBasedTodosPanel);
-  }
-
   protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
                                                               @NotNull Project project) {
     return new AllTodosTreeBuilder(tree, project);
