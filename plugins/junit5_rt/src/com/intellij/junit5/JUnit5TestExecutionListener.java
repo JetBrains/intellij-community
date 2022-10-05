@@ -264,7 +264,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         ComparisonFailureData failureData = null;
         if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
           for (Throwable assertionError : ((MultipleFailuresError)ex).getFailures()) {
-            testFailure(methodName, id, parentId, messageName, assertionError, duration, reason, false);
+            testFailure(methodName, id, parentId, messageName, assertionError, duration, reason, true);
           }
         }
         else if (ex instanceof AssertionFailedError && !(ex instanceof FileComparisonData) && ((AssertionFailedError)ex).isActualDefined() && ((AssertionFailedError)ex).isExpectedDefined()) {
