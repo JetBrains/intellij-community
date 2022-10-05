@@ -398,6 +398,7 @@ final class PaintersHelper implements Painter.Listener {
     private final JComponent rootComponent;
     private final String propertyName;
 
+    private ImageLoadSettings imageLoadSettings;
     private Image image;
     private float alpha;
     private Insets insets;
@@ -437,13 +438,21 @@ final class PaintersHelper implements Painter.Listener {
       return image != null;
     }
 
-    private void resetImage(String value, Image newImage, float newAlpha, IdeBackgroundUtil.Fill newFill, IdeBackgroundUtil.Anchor newAnchor) {
+    private void resetImage(
+      String value,
+      ImageLoadSettings newImageLoadSettings,
+      Image newImage,
+      float newAlpha,
+      IdeBackgroundUtil.Fill newFill,
+      IdeBackgroundUtil.Anchor newAnchor
+    ) {
       if (!Objects.equals(current, value)) {
         return;
       }
 
       boolean prevOk = image != null;
       clearImages(-1);
+      imageLoadSettings = newImageLoadSettings;
       image = newImage;
       insets = JBInsets.emptyInsets();
       alpha = newAlpha;
@@ -468,19 +477,25 @@ final class PaintersHelper implements Painter.Listener {
       IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? Strings.toUpperCase(parts[3]) : "", IdeBackgroundUtil.Anchor.CENTER, IdeBackgroundUtil.Anchor.class);
       String flip = parts.length > 4 ? parts[4] : "none";
       String filePath = parts[0];
+      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
+      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
+      ImageLoadSettings newLoadSettings = new ImageLoadSettings(filePath, flipH, flipV);
 
       if (Strings.isEmpty(filePath)) {
-        resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
+        resetImage(propertyValue, newLoadSettings, null, newAlpha, newFillType, newAnchor);
+        return;
+      }
+
+      if (Objects.equals(imageLoadSettings, newLoadSettings)) {
+        resetImage(propertyValue, newLoadSettings, image, newAlpha, newFillType, newAnchor);
         return;
       }
 
       ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
-      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Image newImage = filterImage(loadImage(filePath), filePath, flipH, flipV);
+        Image newImage = filterImage(loadImage(newLoadSettings), newLoadSettings);
         ApplicationManager.getApplication().invokeLater(() -> {
-          resetImage(propertyValue, newImage, newAlpha, newFillType, newAnchor);
+          resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor);
         }, modalityState);
       });
     }
@@ -500,7 +515,8 @@ final class PaintersHelper implements Painter.Listener {
       return stream;
     }
 
-    private static @Nullable Image loadImage(String filePath) {
+    private static @Nullable Image loadImage(ImageLoadSettings imageLoadSettings) {
+      String filePath = imageLoadSettings.filePath();
       try (InputStream stream = openImageInputStream(filePath)) {
         if (isSvg(filePath)) {
           return SVGLoader.load(stream, 1);
@@ -515,12 +531,14 @@ final class PaintersHelper implements Painter.Listener {
       }
     }
 
-    private static @Nullable Image filterImage(@Nullable Image image, String filePath, boolean flipH, boolean flipV) {
+    private static @Nullable Image filterImage(@Nullable Image image, ImageLoadSettings imageLoadSettings) {
       if (image == null) {
         return null;
       }
       try {
-        boolean isSvg = isSvg(filePath);
+        boolean flipV = imageLoadSettings.flipV();
+        boolean flipH = imageLoadSettings.flipH();
+        boolean isSvg = imageLoadSettings.isSvg();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
         return ImageLoader.convertImage(
           image,
@@ -540,6 +558,13 @@ final class PaintersHelper implements Painter.Listener {
     private static boolean isSvg(String filePath) {
       return filePath.endsWith(".svg");
     }
+
+    record ImageLoadSettings(String filePath, boolean flipH, boolean flipV) {
+      public boolean isSvg() {
+        return filePath.endsWith(".svg");
+      }
+    }
+
   }
 
 }
