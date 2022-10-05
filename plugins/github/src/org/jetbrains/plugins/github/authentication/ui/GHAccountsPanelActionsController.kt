@@ -8,12 +8,15 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import javax.swing.JComponent
 
-internal class GHAccountsPanelActionsController(private val project: Project, private val host: GHAccountsHost)
+internal class GHAccountsPanelActionsController(private val project: Project, private val model: GHAccountsListModel)
   : AccountsPanelActionsController<GithubAccount> {
 
   private val actionManager = ActionManager.getInstance()
@@ -21,8 +24,16 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
   override val isAddActionWithPopup: Boolean = true
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
-    val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
-    
+    val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean = { name, server ->
+      model.accounts.none { it.name == name && it.server.equals(server, true) }
+    }
+
+    val group = GHAccountsUtil.createAddAccountActionGroup(project, parentComponent, isAccountUnique) { server, login, token ->
+      val account = GHAccountManager.createAccount(login, server)
+      model.add(account, token)
+    }
+
+
     val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
     JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(parentComponent),
@@ -38,6 +49,6 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
     if (authData == null) return
 
     account.name = authData.login
-    host.updateAccount(authData.account, authData.token)
+    model.update(authData.account, authData.token)
   }
 }
