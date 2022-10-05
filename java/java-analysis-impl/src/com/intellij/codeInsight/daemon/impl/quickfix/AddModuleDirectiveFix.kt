@@ -2,14 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
 abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIntentionActionOnPsiElement(module) {
@@ -19,23 +18,23 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIn
     startElement is PsiJavaModule && PsiUtil.isLanguageLevel9OrHigher(file) && BaseIntentionAction.canModify(startElement)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Unit =
-    invoke(project, file, editor, startElement as PsiJavaModule)
+    invoke(project, startElement as PsiJavaModule)
 
-  protected abstract fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule)
+  protected abstract fun invoke(project: Project, module: PsiJavaModule)
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val moduleFile =  IntentionPreviewUtils.obtainCopyForPreview(startElement.containingFile)
-    val copy = (getFileModifierForPreview(moduleFile) as? IntentionAction) ?: return IntentionPreviewInfo.FALLBACK_DIFF
-    val beforeText = moduleFile.text
-    copy.invoke(project, editor, file)
-    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, beforeText, moduleFile.text)
+    val moduleFile = (startElement.containingFile.copy() as? PsiFile) ?: return IntentionPreviewInfo.EMPTY
+    val module = (PsiTreeUtil.findSameElementInCopy(startElement, moduleFile) as? PsiJavaModule) ?: return IntentionPreviewInfo.EMPTY
+    val beforeText = module.text
+    invoke(project, module)
+    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, beforeText, module.text)
   }
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+  override fun invoke(project: Project, module: PsiJavaModule) {
     if (module.requires.find { requiredName == it.moduleName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.REQUIRES + ' ' + requiredName)
     }
@@ -49,7 +48,7 @@ class AddExportsDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.EXPORTS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+  override fun invoke(project: Project, module: PsiJavaModule) {
     addPackageAccessibility(project, module, module.exports)
   }
 }
@@ -61,7 +60,7 @@ class AddOpensDirectiveFix(
 ) : AddPackageAccessibilityFix(PsiKeyword.OPENS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.opens.name", packageName)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+  override fun invoke(project: Project, module: PsiJavaModule) {
     addPackageAccessibility(project, module, module.opens)
   }
 }
@@ -93,7 +92,7 @@ abstract class AddPackageAccessibilityFix(
 class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.uses.name", svcName)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+  override fun invoke(project: Project, module: PsiJavaModule) {
     if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }
