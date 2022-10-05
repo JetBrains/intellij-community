@@ -25,7 +25,7 @@ internal class PortableCompilationCacheDownloader(
 ) {
   private val remoteCacheUrl = remoteCacheUrl.trimEnd('/')
 
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
 
   /**
    * If true then latest commit in current repository will be used to download caches.

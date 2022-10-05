@@ -36,7 +36,7 @@ internal class PortableCompilationCacheUploader(
 ) {
   private val uploadedOutputCount = AtomicInteger()
 
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
   private val uploader = Uploader(remoteCacheUrl)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))

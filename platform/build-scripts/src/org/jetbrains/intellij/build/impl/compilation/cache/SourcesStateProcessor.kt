@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 
-class SourcesStateProcessor(dataStorageRoot: Path, private val buildOutputRoot: Path) {
+class SourcesStateProcessor(dataStorageRoot: Path, private val classesOutputDirectory: Path) {
   companion object {
     private val SOURCES_STATE_TYPE = object : TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.type
 
@@ -46,7 +46,7 @@ class SourcesStateProcessor(dataStorageRoot: Path, private val buildOutputRoot: 
                                     firstUploadParam: String,
                                     secondUploadParam: String,
                                     currentSourcesState: Map<String, Map<String, BuildTargetState>>): List<CompilationOutput> {
-    val root = buildOutputRoot.resolve("classes").toFile()
+    val root = classesOutputDirectory.toFile()
 
     val firstParamMap = currentSourcesState[firstUploadParam]!!
     val secondParamMap = currentSourcesState[secondUploadParam]!!
