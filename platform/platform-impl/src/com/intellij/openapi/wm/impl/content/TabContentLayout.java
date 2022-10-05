@@ -395,7 +395,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     else {
       tab = new ContentTabLabel(content, this);
     }
-    tabs.add(event.getIndex(), tab);
+    tabs.add(Math.min(event.getIndex(), tabs.size()), tab);
     contentToTabs.put(content, tab);
 
     DnDTarget target = getDnDTarget(content);

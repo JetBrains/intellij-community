@@ -30,6 +30,7 @@ import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
@@ -53,6 +54,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -124,8 +126,32 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void contentAdded(@NotNull ContentManagerEvent event) {
+        Content content = event.getContent();
+        ContentManager manager = content.getManager();
+        // merge subContents to main content if they are together inside one content manager
+        if (manager != null && !(content instanceof SingleContentLayout.FakeContent)) {
+          List<Content> contents = manager instanceof ContentManagerImpl managerImpl
+                                   ? managerImpl.getContentsRecursively()
+                                   : Arrays.asList(manager.getContents());
+          List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.FakeContent)).toList();
+          List<Content> subContents = contents.stream().filter(c -> c instanceof SingleContentLayout.FakeContent).toList();
+          if (mainContents.size() == 1) {
+            Content mainContent = mainContents.get(0);
+            JComponent component = mainContent.getComponent();
+            SingleContentSupplier supplier = component instanceof DataProvider provider
+                                             ? SingleContentSupplier.KEY.getData(provider) : null;
+            if (supplier != null && supplier.getSubContents().containsAll(subContents)) {
+              for (Content subContent : subContents) {
+                ContentManager m = subContent.getManager();
+                if (m != null) m.removeContent(subContent, false);
+                supplier.getTabs().addTab(((SingleContentLayout.FakeContent)subContent).getInfo());
+              }
+            }
+          }
+        }
+
         getCurrentLayout().contentAdded(event);
-        event.getContent().addPropertyChangeListener(propertyChangeListener);
+        content.addPropertyChangeListener(propertyChangeListener);
         rebuild();
 
         if (window.isToHideOnEmptyContent()) {
