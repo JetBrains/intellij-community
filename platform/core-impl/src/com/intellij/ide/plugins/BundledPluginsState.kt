@@ -12,7 +12,10 @@ import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readLines
 
 @ApiStatus.Internal
 class BundledPluginsState {
@@ -28,32 +31,46 @@ class BundledPluginsState {
 
     private val LOG = logger<BundledPluginsState>()
 
-    val loadedPluginIds: Set<PluginId>
+    val loadedPlugins: Set<IdeaPluginDescriptor>
       @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins()
         .asSequence()
         .filter { it.isBundled }
-        .map { it.pluginId }
         .toSet()
 
     @VisibleForTesting
     fun writePluginIdsToFile(
-      pluginIds: Set<PluginId>,
+      pluginIds: Set<IdeaPluginDescriptor>,
       configDir: Path = PathManager.getConfigDir(),
     ) {
       PluginManagerCore.writePluginIdsToFile(
         configDir.resolve(BUNDLED_PLUGINS_FILENAME),
-        pluginIds,
+        pluginIds.map { "${it.pluginId.idString}|${it.category}\n" },
       )
     }
 
-    fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<PluginId> {
-      return try {
-        PluginManagerCore.tryReadPluginIdsFromFile(configDir.resolve(BUNDLED_PLUGINS_FILENAME), LOG)
+    @JvmStatic
+    fun readPluginIdsFromFile(path: Path = PathManager.getConfigDir()): Set<Pair<PluginId, Category>> {
+      val file = path.resolve(BUNDLED_PLUGINS_FILENAME)
+      if (!file.exists()) {
+        return emptySet()
+      }
+      else if (!Files.isRegularFile(file)) {
+        return emptySet()
+      }
+      val bundledPlugins = mutableSetOf<Pair<PluginId, Category>>()
+      try {
+        file.readLines().map(String::trim)
+          .filter { !it.isEmpty() }.map {
+            val splitResult = it.split("|")
+            val id = splitResult.first()
+            val category = splitResult.getOrNull(1)
+            bundledPlugins.add(Pair(PluginId.getId(id), if (category == "null") null else category))
+          }
       }
       catch (e: IOException) {
-        LOG.warn("Unable to load bundled plugins list", e)
-        emptySet()
+        LOG.warn("Unable to load bundled plugins list from $file", e)
       }
+      return bundledPlugins
     }
   }
 
@@ -66,7 +83,7 @@ class BundledPluginsState {
                      || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
 
     if (shouldSave) {
-      val bundledPluginIds = loadedPluginIds
+      val bundledPluginIds = loadedPlugins
 
       ProcessIOExecutorService.INSTANCE.execute {
         try {
@@ -81,3 +98,5 @@ class BundledPluginsState {
     }
   }
 }
+
+typealias Category = String?
