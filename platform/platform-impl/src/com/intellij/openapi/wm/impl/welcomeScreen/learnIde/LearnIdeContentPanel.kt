@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts.HeaderColor
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.edutools.EduToolsInteractiveCoursePanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
@@ -100,8 +101,12 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     if (coursesList.isNotEmpty()) {
       var actionButton: JButton? = null
       for (interactiveCourse in coursesList) {
-        interactiveCoursesPanel.add(rigid(0, 12))
-        val interactiveCoursePanel = InteractiveCoursePanel(interactiveCourse)
+        val interactiveCoursePanel = if (interactiveCourse.isEduTools()) {
+          EduToolsInteractiveCoursePanel(interactiveCourse)
+        }
+        else {
+          InteractiveCoursePanel(interactiveCourse)
+        }
         interactiveCoursesPanel.add(interactiveCoursePanel)
         if (actionButton == null) actionButton = interactiveCoursePanel.startLearningButton
       }

@@ -13,7 +13,7 @@ import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.LabelUI
 
-class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel() {
+open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : JPanel() {
 
   val startLearningButton = JButton()
 
@@ -21,7 +21,7 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
 
   private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
-  private val interactiveCourseContent = createInteractiveCourseContent()
+  private val interactiveCourseContent: JPanel
 
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
@@ -30,7 +30,8 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     isOpaque = false
     alignmentX = LEFT_ALIGNMENT
 
-    add(interactiveCourseContent)
+    interactiveCourseContent = createInteractiveCourseContent()
+    this.add(interactiveCourseContent)
   }
 
   override fun getMaximumSize(): Dimension {
@@ -70,17 +71,22 @@ class InteractiveCoursePanel(private val data: InteractiveCourseData) : JPanel()
     panel.add(interactiveCourseDescription)
     panel.add(rigid(4, 9))
 
-    startLearningButton.action = data.getAction()
-    startLearningButton.margin = Insets(0, 0, 0, 0)
-    startLearningButton.isOpaque = false
-    startLearningButton.alignmentX = LEFT_ALIGNMENT
-
-    val buttonPlace = buttonPixelHunting(startLearningButton)
-    panel.add(buttonPlace)
+    panel.add(this.createSouthPanel())
 
     panel.add(rigid(18, 21))
 
     return panel
+  }
+
+  protected open fun createSouthPanel() = createButtonPanel(data.getAction())
+
+  protected fun createButtonPanel(action: Action): JPanel {
+    startLearningButton.action = action
+    startLearningButton.margin = Insets(0, 0, 0, 0)
+    startLearningButton.isOpaque = false
+    startLearningButton.alignmentX = LEFT_ALIGNMENT
+
+    return buttonPixelHunting(startLearningButton)
   }
 
   private fun buttonPixelHunting(button: JButton): JPanel {
