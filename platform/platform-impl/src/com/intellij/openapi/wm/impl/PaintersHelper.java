@@ -478,32 +478,9 @@ final class PaintersHelper implements Painter.Listener {
       boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
       boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Image image = null;
-        try (InputStream stream = openImageInputStream(filePath)) {
-          boolean isSvg = filePath.endsWith(".svg");
-          if (isSvg) {
-            image = SVGLoader.load(stream, 1);
-          }
-          else {
-            image = ImageIO.read(new MemoryCacheImageInputStream(stream));
-          }
-
-          BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-          image = ImageLoader.convertImage(
-            image,
-            flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-            ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
-            true,
-            !isSvg,
-            1,
-            isSvg);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-        Image finalImage = image;
+        Image newImage = filterImage(loadImage(filePath), filePath, flipH, flipV);
         ApplicationManager.getApplication().invokeLater(() -> {
-          resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
+          resetImage(propertyValue, newImage, newAlpha, newFillType, newAnchor);
         }, modalityState);
       });
     }
@@ -521,6 +498,47 @@ final class PaintersHelper implements Painter.Listener {
         stream = Files.newInputStream(path.normalize());
       }
       return stream;
+    }
+
+    private static @Nullable Image loadImage(String filePath) {
+      try (InputStream stream = openImageInputStream(filePath)) {
+        if (isSvg(filePath)) {
+          return SVGLoader.load(stream, 1);
+        }
+        else {
+          return ImageIO.read(new MemoryCacheImageInputStream(stream));
+        }
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        return null;
+      }
+    }
+
+    private static @Nullable Image filterImage(@Nullable Image image, String filePath, boolean flipH, boolean flipV) {
+      if (image == null) {
+        return null;
+      }
+      try {
+        boolean isSvg = isSvg(filePath);
+        BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
+        return ImageLoader.convertImage(
+          image,
+          flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
+          ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+          true,
+          !isSvg,
+          1,
+          isSvg);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        return null;
+      }
+    }
+
+    private static boolean isSvg(String filePath) {
+      return filePath.endsWith(".svg");
     }
   }
 
