@@ -210,7 +210,7 @@ private abstract class TogglePopupAction : ToggleAction {
 }
 
 private class MoreRunToolbarActions : TogglePopupAction(
-  IdeBundle.message("show.options.menu"), IdeBundle.message("show.options.menu"), AllIcons.Actions.More
+  IdeBundle.message("inline.actions.more.actions.text"), null, AllIcons.Actions.More
 ), DumbAware {
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
