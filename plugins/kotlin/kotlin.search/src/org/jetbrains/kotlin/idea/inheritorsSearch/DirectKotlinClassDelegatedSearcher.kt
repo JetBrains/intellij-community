@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.search
+package org.jetbrains.kotlin.idea.inheritorsSearch
 
 import com.intellij.model.search.Searcher
 import com.intellij.psi.PsiClass
@@ -7,7 +7,6 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.util.Query
 import com.intellij.util.QueryFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.asJava.toFakeLightClass
@@ -22,7 +21,6 @@ private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassI
 }
 
 internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, KtClassOrObjectSymbol> {
-    @ApiStatus.OverrideOnly
     @RequiresReadLock
     override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out KtClassOrObjectSymbol> {
         val baseClass = parameters.ktClass
@@ -33,10 +31,8 @@ internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassIn
             analyze(baseClass) {
                 it.getNamedClassSymbol()
             }
-        }.filtering {
-            it != null
-        }.mapping {
-            it!!
+        }.transforming {
+            if (it != null) listOf(it) else emptyList()
         }
     }
 }
