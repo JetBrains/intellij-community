@@ -917,6 +917,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.analysis-api-providers"),
     jetbrainsLibrary("kotlinc.analysis-project-structure"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
+    jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),
     jetbrainsLibrary("kotlinc.high-level-api"),
     jetbrainsLibrary("kotlinc.high-level-api-fe10"),
     jetbrainsLibrary("kotlinc.high-level-api-fir"),
