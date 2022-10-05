@@ -61,6 +61,13 @@ private fun BuilderSnapshot.syncScriptEntities(filesToAddOrUpdate: Sequence<Virt
                 this.dependencies = scriptDependencies
             })
         } else {
+            val outdatedDependencies =
+                builder.entitiesBySource { it == scriptEntity.entitySource }[scriptEntity.entitySource]
+                    ?.get(LibraryEntity::class.java)
+                    ?.let { it.toSet() - scriptDependencies.toSet() }
+
+            outdatedDependencies?.forEach { builder.removeEntity(it) }
+
             builder.modifyEntity(scriptEntity) {
                 this.dependencies = scriptDependencies
             }
@@ -99,7 +106,7 @@ private fun MutableEntityStorage.addOrUpdateScriptDependencies(scriptFile: Virtu
     val scriptSdk = configurationManager.getScriptSdk(scriptFile)
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
 
-    if (scriptSdk != projectSdk) {
+    if (scriptSdk?.homePath != projectSdk?.homePath) {
         val sdkClassFiles = configurationManager.getScriptSdkDependenciesClassFiles(scriptFile)
         val sdkSourceFiles = configurationManager.getScriptSdkDependenciesSourceFiles(scriptFile)
 
