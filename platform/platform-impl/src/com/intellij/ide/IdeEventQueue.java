@@ -851,14 +851,24 @@ public final class IdeEventQueue extends EventQueue {
 
   private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
     for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
     for (EventDispatcher eachDispatcher : DISPATCHERS_EP.getExtensionsIfPointIsRegistered()) {
-      if (eachDispatcher.dispatch(e)) {
-        return true;
+      try {
+        if (eachDispatcher.dispatch(e)) {
+          return true;
+        }
+      }
+      catch (Throwable t) {
+        processException(t);
       }
     }
 
