@@ -289,6 +289,7 @@ class QuickFixRegistrar : QuickFixContributor {
         RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceInfixOrOperatorCallFixFactory)
         RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
 
+        APPROXIMATED_LOCAL_TYPE_WILL_BECOME_NULLABLE.registerActions(SpecifyTypeExplicitlyFix(convertToNullable = true))
         AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
         PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
         MUST_BE_INITIALIZED.registerActions(SpecifyTypeExplicitlyFix())

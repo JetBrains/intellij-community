@@ -13217,6 +13217,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/specifyTypeExplicitly")
+    public static class SpecifyTypeExplicitly extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("approximatedLocalTypeWillBecomeNullable.kt")
+        public void testApproximatedLocalTypeWillBecomeNullable() throws Exception {
+            runTest("testData/quickfix/specifyTypeExplicitly/approximatedLocalTypeWillBecomeNullable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/specifyVisibilityInExplicitApiMode")
     public static class SpecifyVisibilityInExplicitApiMode extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
