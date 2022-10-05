@@ -21,6 +21,7 @@ import com.intellij.util.PathsList;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -80,6 +81,34 @@ public class ModuleScopesTest extends JavaModuleTestCase {
     LibraryScope scope = new LibraryScope(myProject, library);
     assertTrue(scope.contains(libraryClass));
     assertTrue(scope.contains(librarySrc));
+  }
+
+  public void testLibraryScopeCompare() {
+    VirtualFile root1 = myFixture.findOrCreateDir("root1");
+    VirtualFile root2 = myFixture.findOrCreateDir("root2");
+    Library lib = PsiTestUtil.addProjectLibrary(getModule(), "lib", List.of(root1, root2), Collections.emptyList());
+    LibraryScope libScope = new LibraryScope(getProject(), lib);
+
+    // Compare files within the same library.
+    VirtualFile file1 = createChildData(root1, "file1");
+    VirtualFile file2 = createChildData(root2, "file2");
+    assertTrue(libScope.compare(file1, file2) > 0);
+    assertTrue(libScope.compare(file2, file1) < 0);
+    assertEquals(0, libScope.compare(file1, file1));
+
+    // Compare against files from another library.
+    VirtualFile otherRoot = myFixture.findOrCreateDir("otherRoot");
+    PsiTestUtil.addProjectLibrary(getModule(), "otherLib", otherRoot);
+    VirtualFile fileInOtherLib = createChildData(otherRoot, "fileInOtherLib");
+    assertTrue(libScope.compare(file1, fileInOtherLib) > 0);
+    assertTrue(libScope.compare(fileInOtherLib, file1) < 0);
+    assertEquals(0, libScope.compare(fileInOtherLib, fileInOtherLib));
+
+    // Compare against files from outside the project.
+    VirtualFile fileOutsideProject = myFixture.createFile("outsideProject");
+    assertTrue(libScope.compare(file1, fileOutsideProject) > 0);
+    assertTrue(libScope.compare(fileOutsideProject, file1) < 0);
+    assertEquals(0, libScope.compare(fileOutsideProject, fileOutsideProject));
   }
 
   public void testTestOnlyModuleDependency() throws Exception {
