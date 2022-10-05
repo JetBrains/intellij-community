@@ -9,11 +9,8 @@ import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.runProcess
@@ -131,7 +128,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
         )
       }
       else {
-        val makeNsis = "${box}/NSIS/Bin/makensis"
+        val makeNsis = "${box}/NSIS/Bin/makensis${if (JvmArchitecture.currentJvmArch == JvmArchitecture.x64) "" else "-${JvmArchitecture.currentJvmArch.fileSuffix}"}"
         NioFiles.setExecutable(Path.of(makeNsis))
         runProcess(
           args = listOf(
