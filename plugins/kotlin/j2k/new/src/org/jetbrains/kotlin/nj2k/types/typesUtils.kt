@@ -239,3 +239,5 @@ fun JKType.replaceJavaClassWithKotlinClassType(symbolProvider: JKSymbolProvider)
             )
         } else null
     }
+
+fun JKLiteralExpression.isNull() = this.type == JKLiteralExpression.LiteralType.NULL

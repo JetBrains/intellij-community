@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
+import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -560,6 +561,18 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             NewExpression("java.lang.String")
                     convertTo Method("kotlin.text.String")
                     withByArgumentsFilter { it.isNotEmpty() },
+            Method("java.util.Arrays.asList")
+                    convertTo Method("kotlin.collections.mutableListOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.Set.of")
+                    convertTo Method("kotlin.collections.setOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && containsOnlyUnique(it.cast()) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.List.of")
+                    convertTo Method("kotlin.collections.listOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.singletonList")
                     convertTo Method("kotlin.collections.listOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
@@ -640,6 +653,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         if (expression.selector.identifier?.fqName in neutralLocaleFQNames) return JKArgumentList()
         return arguments
     }
+
+    private fun containsOnlyLiterals(list: List<JKExpression>): Boolean = list.all { it is JKLiteralExpression }
+    private fun containsOnlyUnique(list: List<JKLiteralExpression>): Boolean = list.size == list.distinctBy { it.literal }.size
+    private fun containsNull(list: List<JKLiteralExpression>): Boolean = list.any { it.isNull() }
 
     private val neutralLocaleFQNames = listOf(
         "java.util.Locale.ROOT",
