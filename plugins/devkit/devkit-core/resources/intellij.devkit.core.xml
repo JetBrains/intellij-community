@@ -147,7 +147,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MissingAccessibleContextInspection"
                      key="inspection.missing.accessible.context.display.name"/>
-    <localInspection language="JAVA" shortName="UnsafeVfsRecursion"
+    <localInspection language="UAST" shortName="UnsafeVfsRecursion"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspection"
