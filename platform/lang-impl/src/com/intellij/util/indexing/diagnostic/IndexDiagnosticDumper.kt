@@ -27,6 +27,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
@@ -186,15 +187,17 @@ class IndexDiagnosticDumper : Disposable {
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
       IndexDiagnosticDumperUtils.writeValue(diagnosticJson, jsonIndexDiagnostic)
-      diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
+      diagnosticHtml.bufferedWriter().use {
+        jsonIndexDiagnostic.generateHtml(it)
+      }
 
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
       val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
-      indexDiagnosticDirectory.resolve("report.html").write(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
-      )
+      indexDiagnosticDirectory.resolve("report.html").bufferedWriter().use {
+        createAggregateHtml(it, projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
+      }
     }
     catch (e: Exception) {
       LOG.warn("Failed to dump index diagnostic", e)
