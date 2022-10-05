@@ -21,8 +21,8 @@ import java.util.*;
  * @author maxim
  */
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMap = new HashMap<>(5);
-  private final Map<String, List<ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMapInsensitive = new HashMap<>(5);
+  private final Map<String, List<@NotNull ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMap = new HashMap<>(5);
+  private final Map<String, List<@NotNull ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMapInsensitive = new HashMap<>(5);
 
   public void registerProvider(@NonNls String @NotNull [] names,
                                @NotNull ElementPattern<?> filter,

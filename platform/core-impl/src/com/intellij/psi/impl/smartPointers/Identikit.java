@@ -145,7 +145,7 @@ public abstract class Identikit {
     public String toString() {
       return "Identikit(" +
              "class='" + myElementClassName + '\'' +
-             ", elementType=" + myElementTypeId +
+             ", elementType=" + (myElementTypeId==-1 ? "-1" : IElementType.find(myElementTypeId)) +
              ", fileLanguage='" + myFileLanguageId + '\'' +
              ')';
     }

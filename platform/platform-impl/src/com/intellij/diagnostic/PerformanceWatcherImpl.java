@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -152,57 +153,54 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
       // Only report if on JetBrains jre
       if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
         String pid = Files.readString(pidFile);
-        File[] crashFiles = new File(SystemProperties.getUserHome()).listFiles(file -> {
-          return file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile();
-        });
-        if (crashFiles != null) {
-          long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
-          for (File file : crashFiles) {
-            if (file.lastModified() > appInfoFileLastModified) {
-              if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-                LOG.info("Crash file " + file + " is too big to report");
-                break;
-              }
-              String content = FileUtil.loadFile(file);
-              // TODO: maybe we need to notify the user
-              if (content.contains("fuck_the_regulations")) {
-                break;
-              }
-              Attachment attachment = new Attachment("crash.txt", content);
-              attachment.setIncluded(true);
-
-              // include plugins list
-              String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
-                .filter(d -> d.isEnabled() && !d.isBundled())
-                .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
-                .filter(PluginInfo::isSafeToReport)
-                .map(i -> i.getId() + " (" + i.getVersion() + ")")
-                .joining("\n", "Extra plugins:\n", "");
-              Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
-              attachment.setIncluded(true);
-
-              Attachment[] attachments = new Attachment[]{attachment, pluginsAttachment};
-
-              // look for extended crash logs
-              File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
-              if (extraLog != null) {
-                String jbrErrContent = FileUtil.loadFile(extraLog);
-                // Detect crashes caused by OOME
-                if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
-                  LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
-                }
-                Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
-                extraAttachment.setIncluded(true);
-                attachments = ArrayUtil.append(attachments, extraAttachment);
-              }
-
-              String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
-              IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
-              IdeaFreezeReporter.report(event);
-              LifecycleUsageTriggerCollector.onCrashDetected();
+        File[] crashFiles = ObjectUtils.notNull(new File(SystemProperties.getUserHome()).listFiles(file
+          -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile()), new File[0]);
+        long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
+        for (File file : crashFiles) {
+          if (file.lastModified() > appInfoFileLastModified) {
+            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+              LOG.info("Crash file " + file + " is too big to report");
               break;
             }
+            String content = FileUtil.loadFile(file);
+            // TODO: maybe we need to notify the user
+            if (content.contains("fuck_the_regulations")) {
+              break;
+            }
+            Attachment attachment = new Attachment("crash.txt", content);
+            attachment.setIncluded(true);
+
+            // include plugins list
+            String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
+              .filter(d -> d.isEnabled() && !d.isBundled())
+              .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+              .filter(PluginInfo::isSafeToReport)
+              .map(i -> i.getId() + " (" + i.getVersion() + ")")
+              .joining("\n", "Extra plugins:\n", "");
+            Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
+            attachment.setIncluded(true);
+
+            Attachment[] attachments = {attachment, pluginsAttachment};
+
+            // look for extended crash logs
+            File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
+            if (extraLog != null) {
+              String jbrErrContent = FileUtil.loadFile(extraLog);
+              // Detect crashes caused by OOME
+              if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+                LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true);
+              }
+              Attachment extraAttachment = new Attachment("jbr_err.txt", jbrErrContent);
+              extraAttachment.setIncluded(true);
+              attachments = ArrayUtil.append(attachments, extraAttachment);
+            }
+
+            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
+            IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
+            IdeaFreezeReporter.report(event);
+            LifecycleUsageTriggerCollector.onCrashDetected();
+            break;
           }
         }
       }
