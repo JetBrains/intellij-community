@@ -1193,7 +1193,7 @@ public final class HighlightMethodUtil {
         && !aClass.isInterface()
         && !PsiUtilCore.hasErrorElementChild(method)) {
       int start = method.getModifierList().getTextRange().getStartOffset();
-      int end = method.getTextRange().getEndOffset();
+      int end = Math.max(start, method.getTextRange().getEndOffset());
 
       String description = JavaErrorBundle.message("missing.method.body");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).create();
