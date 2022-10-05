@@ -302,6 +302,8 @@
 
     <group id="popup@ExpandableBookmarkContextMenu" popup="true" searchable="false">
       <reference ref="popup@BookmarkContextMenu"/>
+
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="ReopenClosedTab"/>
     </group>
 
     <group id="EditBookmarksGroup" popup="true" searchable="false">
