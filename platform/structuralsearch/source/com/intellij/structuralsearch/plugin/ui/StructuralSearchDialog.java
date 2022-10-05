@@ -237,7 +237,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
     init();
     loadUIState();
-    myConfiguration = createConfiguration(null);
+    if (!myConfigurationLoaded) {
+      myConfiguration = createConfiguration(null);
+    }
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     setValidationDelay(100);
   }
