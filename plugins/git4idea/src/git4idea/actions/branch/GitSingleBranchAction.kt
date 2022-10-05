@@ -31,7 +31,6 @@ abstract class GitSingleBranchAction(dynamicText: Supplier<@NlsActions.ActionTex
     val branches = e.getData(GitBranchActionsUtil.BRANCHES_KEY)
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(project, repositories, branches)
 
-    //TODO: check and i18n
     DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), GitBundle.message("action.not.possible.in.fresh.repo.generic"))
 
     if (e.presentation.isEnabledAndVisible) {
