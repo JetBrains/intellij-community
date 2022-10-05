@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inheritorsSearch
 
 import com.intellij.model.search.Searcher
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
@@ -15,9 +16,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterS
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 
-internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, KtClassOrObjectSymbol> {
+internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
-    override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out KtClassOrObjectSymbol>? {
+    override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out PsiElement>? {
         val baseClass = parameters.ktClass
 
         val baseClassName = baseClass.name ?: return null
@@ -47,8 +48,8 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
         analyze(baseClass) {
             val baseSymbol = baseClass.getSymbol() as? KtClassOrObjectSymbol ?: return null
             val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
-            return object : AbstractQuery<KtClassOrObjectSymbol>() {
-                override fun processResults(consumer: Processor<in KtClassOrObjectSymbol>): Boolean {
+            return object : AbstractQuery<PsiElement>() {
+                override fun processResults(consumer: Processor<in PsiElement>): Boolean {
                     names.forEach { name ->
                         ProgressManager.checkCanceled()
                         KotlinSuperClassIndex
@@ -58,7 +59,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                                 analyze(ktClassOrObject) {
                                     val ktSymbol = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return@map null
                                     if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) return@map null
-                                    return@map if (ktSymbol.isSubClassOf(baseSymbol)) ktSymbol else null
+                                    return@map if (ktSymbol.isSubClassOf(baseSymbol)) ktClassOrObject else null
                                 }
                             }
                             .forEach { candidate ->

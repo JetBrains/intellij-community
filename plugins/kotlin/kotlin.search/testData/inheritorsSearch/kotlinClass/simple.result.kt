@@ -1,2 +1,2 @@
-KtFirNamedClassOrObjectSymbol: B
-KtFirNamedClassOrObjectSymbol: C
+KtClass: B
+KtClass: C

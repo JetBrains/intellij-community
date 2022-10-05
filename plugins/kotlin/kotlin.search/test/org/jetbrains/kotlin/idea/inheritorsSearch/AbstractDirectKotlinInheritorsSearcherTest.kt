@@ -11,13 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewLongNameLocation
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.utils.keysToMap
 import java.nio.file.Paths
 
 abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -33,12 +29,12 @@ abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsig
             myFixture.configureByFile(testFilePath.replace("kt", "java"))
         }
 
-        val result = ProgressManager.getInstance().run(object : Task.WithResult<Map<KtClassOrObjectSymbol, String>, RuntimeException>(myFixture.project, "", false) {
-            override fun compute(indicator: ProgressIndicator): Map<KtClassOrObjectSymbol, String> {
-                return runReadAction { analyze(ktClass) { DirectKotlinClassInheritorsSearch.search(ktClass).keysToMap { it.nameOrAnonymous.asString() } } }
+        val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
+            override fun compute(indicator: ProgressIndicator): List<PsiElement> {
+                return runReadAction { DirectKotlinClassInheritorsSearch.search(ktClass).toList() }
             }
         })
-        val actual = render(result.keys) { result[it]!!}
+        val actual = render(result)
         KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
     }
     
@@ -54,17 +50,14 @@ abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsig
                 return runReadAction { ClassInheritorsSearch.search(psiClass, false).toList() }
             }
         })
-        val actual = render(result) { ElementDescriptionUtil.getElementDescription(it, UsageViewLongNameLocation.INSTANCE) }
+        val actual = render(result)
         KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
     }
 
-    private fun <T> render(elements: Collection<T>, toStr : (T) -> String): String = buildList {
+    private fun render(elements: Collection<PsiElement>): String = buildList {
         for (declaration in elements) {
-          val name = toStr(declaration)
-          add(declaration!!::class.simpleName!! + ": " + name)
+          val name = ElementDescriptionUtil.getElementDescription(declaration, UsageViewLongNameLocation.INSTANCE)
+          add(declaration::class.simpleName!! + ": " + name)
         }
     }.sorted().joinToString(separator = "\n")
 }
-
-class A : B() //mod1 -> mod2
-open class B //mod2

@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.inheritorsSearch
 
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.psi.KtClass
 
 class DirectKotlinClassInheritorsSearch {
@@ -14,7 +14,7 @@ class DirectKotlinClassInheritorsSearch {
         val ktClass: KtClass,
         val searchScope: SearchScope,
         val includeAnonymous: Boolean = true
-    ) : com.intellij.model.search.SearchParameters<KtClassOrObjectSymbol> {
+    ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
             return ktClass.project
         }
@@ -26,15 +26,15 @@ class DirectKotlinClassInheritorsSearch {
     
     companion object {
 
-        fun search(klass: KtClass): Query<KtClassOrObjectSymbol> {
+        fun search(klass: KtClass): Query<PsiElement> {
             return search(SearchParameters(klass, klass.useScope))
         }
 
-        fun search(klass: KtClass, searchScope: SearchScope): Query<KtClassOrObjectSymbol> {
+        fun search(klass: KtClass, searchScope: SearchScope): Query<PsiElement> {
             return search(SearchParameters(klass, searchScope))
         }
 
-        fun search(parameters: SearchParameters): Query<KtClassOrObjectSymbol> {
+        fun search(parameters: SearchParameters): Query<PsiElement> {
             return SearchService.getInstance().searchParameters(parameters)
         }
     }
