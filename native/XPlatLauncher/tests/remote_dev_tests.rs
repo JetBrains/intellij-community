@@ -7,9 +7,9 @@ mod tests {
     use crate::utils::*;
 
     #[rstest]
-    #[case::main_bin(&LauncherLocation::MainBin)]
-    #[case::plugins_bin(&LauncherLocation::PluginsBin)]
-    fn remote_dev_args_test(#[case]launcher_location: &LauncherLocation) {
+    #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsJBR)]
+    #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
+    fn remote_dev_args_test(#[case]launcher_location: &LayoutSpecification) {
         let test = &prepare_test_env(launcher_location);
         let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
         let output_args = [

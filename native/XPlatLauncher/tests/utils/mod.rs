@@ -387,13 +387,16 @@ fn layout_launcher_impl(
 
     for (source, target_relative) in symlink_dirs {
         match layout_kind {
-            LayoutSpecification::LauncherLocationMainBinJavaIsJBR
-            | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR => {
+            LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
+            | LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar
+            | LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
+            | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
+            if target_relative.contains("jbr") => break,
+            _ => {
                 let target = &target_dir.join(target_relative);
                 fs::create_dir_all(target.parent_or_err()?)?;
                 symlink(source, target).context(format!("Failed to create symlink {target:?} pointing to {source:?}"))?;
             }
-            _ => break
         }
     }
 
@@ -499,7 +502,7 @@ pub fn get_custom_user_file_with_java_path() -> PathBuf {
     let config_home_path = get_config_home();
     config_home_path
         .join("JetBrains")
-        .join("IntellijIdea2022.3") //todo
+        .join("IntelliJIdea2022.3") //todo
 }
 
 // TODO: test for additionalJvmArguments in product-info.json being set
@@ -598,14 +601,14 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
 
 pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpecification) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, &[], ("", ""));
+    let result = run_launcher_with_default_args_and_env(&test, &[], (" ", ""));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
 pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpecification, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, args, ("", ""));
+    let result = run_launcher_with_default_args_and_env(&test, args, (" ", ""));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
