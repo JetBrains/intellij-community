@@ -39,8 +39,9 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -56,10 +57,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.JButton
-import javax.swing.JComponent
+import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
@@ -81,7 +79,7 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
 
-  private val descriptionLabel = Label(VcsBundle.message("merge.loading.merge.details"))
+  private lateinit var descriptionLabel: JLabel
 
   private var groupByDirectory: Boolean = false
     get() = when {
@@ -146,39 +144,49 @@ open class MultipleFileMergeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
-        descriptionLabel()
+        descriptionLabel = label(VcsBundle.message("merge.loading.merge.details")).component
       }
 
       row {
-        scrollPane(table).constraints(growX, growY, pushX, pushY)
+        scrollCell(table)
+          .verticalAlign(VerticalAlign.FILL)
+          .horizontalAlign(HorizontalAlign.FILL)
+          .resizableColumn()
 
-        cell(isVerticalFlow = true) {
-          JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {
-            it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedYours) }
-            acceptYoursButton = it
-          }(growX)
-          JButton(VcsBundle.message("multiple.file.merge.accept.theirs")).also {
-            it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedTheirs) }
-            acceptTheirsButton = it
-          }(growX)
-          val mergeAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent) {
-              showMergeDialog()
-            }
+        panel {
+          row {
+            acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
+              acceptRevision(MergeSession.Resolution.AcceptedYours)
+            }.horizontalAlign(HorizontalAlign.FILL)
+              .component
           }
-          mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
-          createJButtonForAction(mergeAction).also {
-            it.text = VcsBundle.message("multiple.file.merge.merge")
-            mergeButton = it
-          }(growX)
-        }
-      }
+          row {
+            acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
+              acceptRevision(MergeSession.Resolution.AcceptedTheirs)
+            }.horizontalAlign(HorizontalAlign.FILL)
+              .component
+          }
+          row {
+            val mergeAction = object : AbstractAction(VcsBundle.message("multiple.file.merge.merge")) {
+              override fun actionPerformed(e: ActionEvent) {
+                showMergeDialog()
+              }
+            }
+            mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
+            mergeButton = createJButtonForAction(mergeAction)
+            cell(mergeButton)
+              .horizontalAlign(HorizontalAlign.FILL)
+          }
+        }.verticalAlign(VerticalAlign.TOP)
+      }.resizableRow()
 
       if (project != null) {
         row {
-          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
-            toggleGroupByDirectory(component.isSelected)
-          }
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"))
+            .applyToComponent {
+              isSelected = groupByDirectory
+              addChangeListener { toggleGroupByDirectory(isSelected) }
+            }
         }
       }
     }
@@ -214,6 +222,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun toggleGroupByDirectory(state: Boolean) {
+    if (groupByDirectory == state) return
     groupByDirectory = state
     val firstSelectedFile = getSelectedFiles().firstOrNull()
     updateTree()
