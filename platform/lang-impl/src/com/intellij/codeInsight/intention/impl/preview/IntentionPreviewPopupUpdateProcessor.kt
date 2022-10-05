@@ -56,7 +56,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     if (!show) return
 
     if (!::popup.isInitialized || popup.isDisposed) {
-      component = IntentionPreviewComponent(project)
+      component = IntentionPreviewComponent(originalPopup ?: project)
 
       component.multiPanel.select(LOADING_PREVIEW, true)
 

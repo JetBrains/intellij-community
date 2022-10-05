@@ -4,8 +4,8 @@ package com.intellij.codeInsight.intention.impl.preview
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
@@ -22,8 +22,8 @@ import javax.swing.JEditorPane
 import javax.swing.JList
 import javax.swing.JPanel
 
-internal class IntentionPreviewComponent(project: Project) : JBLoadingPanel(BorderLayout(),
-                                                                            { panel -> IntentionPreviewLoadingDecorator(panel, project) }) {
+internal class IntentionPreviewComponent(parent: Disposable) :
+  JBLoadingPanel(BorderLayout(), { panel -> IntentionPreviewLoadingDecorator(panel, parent) }) {
   private var NO_PREVIEW_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.no.available.text"))
   private var LOADING_LABEL = setupLabel(CodeInsightBundle.message("intention.preview.loading.preview"))
 
