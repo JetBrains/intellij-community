@@ -10,20 +10,20 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
-import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";
+  private static final String GET_CHILDREN_PROPERTY_ACCESS_NAME = "children"; // for language with property access syntax
   @SuppressWarnings("unchecked")
-  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
-  public static final boolean DO_NOT_VISIT_CHILDREN = true;
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class};
 
   @Override
   @NotNull
@@ -32,13 +32,19 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression node) {
-        inspectCallExpression(node, holder);
+        inspectExpression(node, holder);
+        return true;
+      }
+
+      @Override
+      public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
+        inspectExpression(node, holder);
         return true;
       }
     }, HINTS);
   }
 
-  private static void inspectCallExpression(@NotNull UCallExpression expression, @NotNull ProblemsHolder holder) {
+  private static void inspectExpression(@NotNull UExpression expression, @NotNull ProblemsHolder holder) {
     if (isVirtualFileGetChildrenMethodCall(expression, holder.getProject()) && isCalledInRecursiveMethod(expression)) {
       PsiElement sourcePsi = expression.getSourcePsi();
       if (sourcePsi != null) {
@@ -47,35 +53,53 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
     }
   }
 
-  private static boolean isVirtualFileGetChildrenMethodCall(@NotNull UCallExpression expression, @NotNull Project project) {
-    if (!UastExpressionUtils.isMethodCall(expression)) return false;
-    String expressionMethodName = expression.getMethodName();
-    if (!GET_CHILDREN_METHOD_NAME.equals(expressionMethodName)) return false;
-
-    PsiMethod getChildrenMethod = expression.resolve();
+  private static boolean isVirtualFileGetChildrenMethodCall(@NotNull UExpression expression, @NotNull Project project) {
+    PsiMethod getChildrenMethod = tryToResolveGetVisitChildrenMethod(expression);
     if (getChildrenMethod == null) return false;
-
     PsiClass aClass = getChildrenMethod.getContainingClass();
     PsiClass virtualFileClass = JavaPsiFacade.getInstance(project).findClass(VIRTUAL_FILE_CLASS_NAME, GlobalSearchScope.allScope(project));
     return InheritanceUtil.isInheritorOrSelf(aClass, virtualFileClass, true);
   }
 
-  private static boolean isCalledInRecursiveMethod(@NotNull UCallExpression getChildrenMethodCall) {
+  @Nullable
+  private static PsiMethod tryToResolveGetVisitChildrenMethod(@NotNull UExpression expression) {
+    if (expression instanceof UCallExpression methodCall && UastExpressionUtils.isMethodCall(methodCall)) {
+      if (GET_CHILDREN_METHOD_NAME.equals(methodCall.getMethodName())) {
+        return methodCall.resolve();
+      }
+    }
+    else if (expression instanceof UQualifiedReferenceExpression qualifiedReference) {
+      PsiElement selectorPsi = qualifiedReference.getSelector().getSourcePsi();
+      if (selectorPsi == null) return null;
+      if (GET_CHILDREN_PROPERTY_ACCESS_NAME.equals(selectorPsi.getText())) {
+        PsiElement resolveResult = qualifiedReference.resolve();
+        return resolveResult instanceof PsiMethod ? (PsiMethod)resolveResult : null;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isCalledInRecursiveMethod(@NotNull UExpression getChildrenMethodCall) {
     UMethod containingMethod = UastUtils.getParentOfType(getChildrenMethodCall, UMethod.class);
     if (containingMethod == null) return false;
     String containingMethodName = containingMethod.getName();
 
     Ref<Boolean> isInRecursiveCall = Ref.create();
-    containingMethod.accept(new AbstractUastVisitor() {
+    PsiElement methodSourcePsi = containingMethod.getSourcePsi();
+    if (methodSourcePsi == null) return false;
+    methodSourcePsi.accept(new PsiRecursiveElementVisitor() {
+
       @Override
-      public boolean visitCallExpression(@NotNull UCallExpression potentialRecursiveCall) {
-        if (!UastExpressionUtils.isMethodCall(potentialRecursiveCall)) return DO_NOT_VISIT_CHILDREN;
+      public void visitElement(@NotNull PsiElement element) {
+        super.visitElement(element);
+        UCallExpression potentialRecursiveCall = UastContextKt.toUElement(element, UCallExpression.class);
+        if (potentialRecursiveCall == null) return;
+        if (!UastExpressionUtils.isMethodCall(potentialRecursiveCall)) return;
         if (potentialRecursiveCall != getChildrenMethodCall &&
             containingMethodName.equals(potentialRecursiveCall.getMethodName()) &&
             expressionResolvesToMethod(potentialRecursiveCall, containingMethod)) {
           isInRecursiveCall.set(Boolean.TRUE);
         }
-        return DO_NOT_VISIT_CHILDREN;
       }
 
       private static boolean expressionResolvesToMethod(@NotNull UCallExpression potentialRecursiveCall, @NotNull UMethod uMethod) {
