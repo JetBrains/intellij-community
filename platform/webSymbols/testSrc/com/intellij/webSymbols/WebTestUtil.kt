@@ -200,7 +200,7 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
   assert(caretOffset >= 0)
   str = str.substring(0, caretOffset) + str.substring(caretOffset + caretSignature.length)
   val pos = text.indexOf(str)
-  assertTrue("Failed to locate '$str'", pos >= 0)
+  assertTrue("Failed to locate '$str' in: \n $text", pos >= 0)
   return pos + caretOffset
 }
 
