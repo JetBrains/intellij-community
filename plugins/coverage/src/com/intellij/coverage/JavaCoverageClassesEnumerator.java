@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -112,7 +113,7 @@ public abstract class JavaCoverageClassesEnumerator {
       else if (productionRootsSet.contains(output)) {
         continue;
       }
-      final File outputRoot = PackageAnnotator.findRelativeFile(rootPackageVMName, output);
+      final File outputRoot = PackageAnnotator.findRelativeFile(rootPackageVMName, VfsUtilCore.virtualToIoFile(output));
       if (outputRoot.exists()) {
         visitRoot(outputRoot, rootPackageVMName, scope);
       }
