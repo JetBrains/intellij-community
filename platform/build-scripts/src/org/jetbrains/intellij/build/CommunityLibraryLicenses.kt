@@ -934,6 +934,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.noarg-compiler-plugin"),
     jetbrainsLibrary("kotlinc.parcelize-compiler-plugin"),
     jetbrainsLibrary("kotlinc.sam-with-receiver-compiler-plugin"),
+    jetbrainsLibrary("kotlinc.assignment-compiler-plugin"),
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
     jetbrainsLibrary("kotlinx-collections-immutable-jvm"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),

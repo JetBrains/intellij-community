@@ -120,6 +120,9 @@
 
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
 
+        <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignPluginResolutionAltererExtension"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.IdeAssignmentContainerContributor"/>
+
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
 

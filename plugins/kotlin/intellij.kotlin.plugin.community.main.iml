@@ -73,6 +73,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.value-container-assignment.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
@@ -173,6 +176,7 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.value-container-assignment-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-gradle-statistics" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.parcelize-compiler-plugin" level="project" />
