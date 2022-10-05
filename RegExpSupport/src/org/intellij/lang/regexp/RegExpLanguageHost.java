@@ -14,7 +14,21 @@ public interface RegExpLanguageHost {
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
   String[][] EMPTY_COMPLETION_ITEMS_ARRAY = new String[0][];
 
+  /**
+   * @deprecated Use {@link #characterNeedsEscaping(char, boolean)} instead.
+   */
+  @Deprecated
   boolean characterNeedsEscaping(char c);
+
+  /**
+   * Returns whether the given character needs to be escaped to be treated as a literal.
+   * @param c a character to be considered.
+   * @param isInClass whether the character is within a RegExpClass (ie, within "[...]").
+   */
+  default boolean characterNeedsEscaping(char c, boolean isInClass) {
+    return characterNeedsEscaping(c);
+  }
+
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
   default boolean isDuplicateGroupNamesAllowed(@NotNull RegExpGroup group) {
