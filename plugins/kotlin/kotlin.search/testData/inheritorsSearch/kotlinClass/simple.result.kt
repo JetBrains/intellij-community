@@ -1,0 +1,2 @@
+KtFirNamedClassOrObjectSymbol: B
+KtFirNamedClassOrObjectSymbol: C

@@ -53,6 +53,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2DebuggerTests()
     generateK2HighlighterTests()
     generateK2RefactoringsTests()
+    generateK2SearchTests()
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
