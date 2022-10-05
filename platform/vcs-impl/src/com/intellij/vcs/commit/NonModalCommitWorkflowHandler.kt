@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
@@ -287,12 +286,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         .map { it.asCommitCheck(commitInfo) }
         .groupBy { it.getExecutionOrder() }
 
-      runEarlyCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
-
+      val earlyChecks = commitChecks[CommitCheck.ExecutionOrder.EARLY].orEmpty()
+      val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
+      val lateChecks = commitChecks[CommitCheck.ExecutionOrder.LATE].orEmpty()
       @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-      runModificationCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], metaHandlers)?.let { return it }
 
-      runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runEarlyCommitChecks(commitInfo, earlyChecks)?.let { return it }
+
+      runModificationCommitChecks(commitInfo, modificationChecks, metaHandlers)?.let { return it }
+
+      runCommitChecks(commitInfo, lateChecks)?.let { return it }
 
       return null // checks passed
     }
@@ -307,11 +310,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): NonModalCommitChecksFailure? {
+  private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
     val problems = mutableListOf<CommitProblem>()
-    for (commitCheck in commitChecks.orEmpty()) {
-      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
-      problems.addIfNotNull(problem)
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
     }
     if (problems.isEmpty()) return null
 
@@ -321,10 +323,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private suspend fun runModificationCommitChecks(commitInfo: DynamicCommitInfo,
-                                                  commitChecks: List<CommitCheck>?,
+                                                  commitChecks: List<CommitCheck>,
                                                   @Suppress("DEPRECATION")
                                                   metaHandlers: List<CheckinMetaHandler>): NonModalCommitChecksFailure? {
-    if (metaHandlers.isEmpty() && commitChecks.isNullOrEmpty()) return null
+    if (metaHandlers.isEmpty() && commitChecks.isEmpty()) return null
 
     return workflow.runModificationCommitChecks underChangelist@{
       AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
@@ -335,13 +337,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  private suspend fun runCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>?): NonModalCommitChecksFailure? {
-    for (commitCheck in commitChecks.orEmpty()) {
-      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
-      if (problem != null) {
-        reportCommitCheckFailure(commitInfo.asStaticInfo(), problem)
-        return NonModalCommitChecksFailure.ERROR
-      }
+  private suspend fun runCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
+    for (commitCheck in commitChecks) {
+      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+      reportCommitCheckFailure(commitInfo.asStaticInfo(), problem)
+      return NonModalCommitChecksFailure.ERROR
     }
     return null
   }
