@@ -18,20 +18,26 @@ public class UnspecifiedActionsPlaceInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-        if (requiresSpecifiedActionPlace(expression)) {
-          PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-          if (expressions.length > 0 && actionPlaceIsUnspecified(expressions[0])) {
-            holder.registerProblem(expressions[0], DevKitBundle.message("inspections.unspecified.actions.place.toolbar"));
+        PsiMethod method = expression.resolveMethod();
+        if (method != null) {
+          String methodName = method.getName();
+          if (requiresSpecifiedActionPlace(method, methodName)) {
+            PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+            if (expressions.length > 0 && actionPlaceIsUnspecified(expressions[0])) {
+              String messageKey = "createActionToolbar".equals(methodName)
+                                  ? "inspections.unspecified.actions.place.toolbar"
+                                  : "inspections.unspecified.actions.place.popup.menu";
+              holder.registerProblem(expressions[0], DevKitBundle.message(messageKey));
+            }
           }
+          super.visitMethodCallExpression(expression);
         }
-        super.visitMethodCallExpression(expression);
       }
     };
   }
 
-  private static boolean requiresSpecifiedActionPlace(@NotNull PsiMethodCallExpression expression) {
-    PsiMethod method = expression.resolveMethod();
-    if (method != null && "createActionToolbar".equals(method.getName())) {
+  private static boolean requiresSpecifiedActionPlace(@NotNull PsiMethod method, @NotNull String methodName) {
+    if ("createActionToolbar".equals(methodName) || "createActionPopupMenu".equals(methodName)) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && ActionManager.class.getName().equals(aClass.getQualifiedName())) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -50,7 +56,7 @@ public class UnspecifiedActionsPlaceInspection extends DevKitInspectionBase {
 
   private static boolean actionPlaceIsUnspecified(PsiExpression placeArgument) {
     String text = placeArgument.getText();
-    if (text.equals("\"\"") || text.endsWith(".UNKNOWN")) {
+    if (text.equals("\"\"") || text.equals("\"unknown\"") || text.endsWith(".UNKNOWN")) {
       return true;
     }
     return false;
