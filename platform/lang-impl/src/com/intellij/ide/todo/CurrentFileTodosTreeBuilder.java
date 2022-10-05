@@ -17,12 +17,11 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
 
@@ -37,11 +36,11 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   @Override
-  protected void collectFiles(@NotNull Processor<? super VirtualFile> collector) {
+  protected void collectFiles(@NotNull Consumer<? super PsiFile> consumer) {
     CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
     PsiFile psiFile = treeStructure.getFile();
     if (treeStructure.accept(psiFile)) {
-      collector.process(psiFile.getVirtualFile());
+      consumer.accept(psiFile);
     }
   }
 

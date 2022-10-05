@@ -6,18 +6,15 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectView.BaseProjectViewTestCase;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
@@ -39,8 +36,8 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
       }
 
       @Override
-      protected void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-        super.rebuildCache(files);
+      protected void clearCache() {
+        super.clearCache();
         rebuildCacheCount.incrementAndGet();
       }
     }
@@ -48,9 +45,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     try {
       all.init();
       //second rebuild, e.g. switching scope in scope based t.o.d.o panel
-      all.rebuildCache();
-
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      all.rebuildCache().join();
 
       Assert.assertEquals(1, rebuildCacheCount.get());
 

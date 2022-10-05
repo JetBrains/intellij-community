@@ -28,6 +28,10 @@ final class FileTree {
     myStrictDirectory2Children = new ConcurrentHashMap<>();
   }
 
+  int size() {
+    return myFiles.size();
+  }
+
   void add(@NotNull VirtualFile file) {
     assertThreadIfNeeded();
 
@@ -174,8 +178,6 @@ final class FileTree {
   }
 
   boolean contains(@NotNull VirtualFile file) {
-    assertThreadIfNeeded();
-
     return myFiles.contains(file);
   }
 

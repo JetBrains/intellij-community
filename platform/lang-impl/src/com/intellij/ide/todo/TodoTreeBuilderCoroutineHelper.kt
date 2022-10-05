@@ -2,27 +2,23 @@
 package com.intellij.ide.todo
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.util.SmartList
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
+
+private val ASYNC_BATCH_SIZE = RegistryManager.getInstance().get("ide.tree.ui.async.batch.size")
 
 @ApiStatus.Internal
 private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBuilder) : Disposable {
 
   private val scope = CoroutineScope(SupervisorJob())
-  private val jobs = SmartList<Job>() // requires EDT
-
-  @Volatile
-  private var cacheSize = -1
-
-  private val loadingPanel: JBLoadingPanel?
-    get() = UIUtil.getParentOfType(JBLoadingPanel::class.java, treeBuilder.tree)
 
   init {
     Disposer.register(treeBuilder, this)
@@ -32,42 +28,76 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
     scope.cancel()
   }
 
-  @Synchronized
-  fun scheduleUpdateCacheAndTree() {
-    jobs.forEach { it.cancel() }
-    jobs.clear()
+  fun scheduleCacheAndTreeUpdate(
+    before: Runnable,
+    after: Runnable,
+    vararg constraints: ReadConstraint,
+  ): CompletableFuture<*> {
+    return scope.launch(Dispatchers.EDT) {
+      before.run()
+      constrainedReadAction(*constraints) {
+        treeBuilder.collectFiles()
+      }
+      after.run()
+    }.asCompletableFuture()
+  }
 
-    jobs += scope.launch(Dispatchers.EDT) {
-      loadingPanel?.startLoading()
+  fun scheduleCacheValidationAndTreeUpdate() {
+    scope.launch(Dispatchers.EDT) {
+      val pathsToSelect = TreeUtil.collectSelectedUserObjects(treeBuilder.tree).stream()
+      treeBuilder.tree.clearSelection()
 
       readAction {
-        val files = treeBuilder.collectFiles()
-
-        if (isOutdated(files)) {
-          treeBuilder.updateCacheAndTree(files)
-        }
+        treeBuilder.validateCacheAndUpdateTree()
       }
 
-      loadingPanel?.stopLoading()
+      TreeUtil.promiseSelect(
+        treeBuilder.tree,
+        pathsToSelect.map { TodoTreeBuilder.getVisitorFor(it) },
+      )
     }
   }
 
-  @Synchronized
-  private fun isOutdated(files: Set<VirtualFile>): Boolean {
-    val newCacheSize = files.size
-    val result = cacheSize != newCacheSize
-    if (result) {
-      cacheSize = newCacheSize
-    }
-    return result
+  fun scheduleUpdateTree(): CompletableFuture<*> {
+    return scope.launch(Dispatchers.Default) {
+      readActionBlocking {
+        treeBuilder.updateVisibleTree()
+      }
+    }.asCompletableFuture()
   }
 }
 
-private fun TodoTreeBuilder.collectFiles(): Set<VirtualFile> {
-  val files = mutableSetOf<VirtualFile>()
+@RequiresBackgroundThread
+@RequiresReadLock
+private fun TodoTreeBuilder.collectFiles() {
+  clearCache()
+
   collectFiles {
-    files += it
-    true
+    myFileTree.add(it.virtualFile)
+
+    if (myFileTree.size() % ASYNC_BATCH_SIZE.asInteger() == 0) {
+      validateCacheAndUpdateTree()
+    }
   }
-  return files
+
+  validateCacheAndUpdateTree()
+}
+
+@RequiresBackgroundThread
+@RequiresReadLock
+private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
+  todoTreeStructure.validateCache()
+  updateVisibleTree()
+}
+
+@RequiresBackgroundThread
+@RequiresReadLock
+private fun TodoTreeBuilder.updateVisibleTree() {
+  if (isUpdatable) {
+    if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+      validateCache()
+      todoTreeStructure.validateCache()
+    }
+    model.invalidateAsync()
+  }
 }

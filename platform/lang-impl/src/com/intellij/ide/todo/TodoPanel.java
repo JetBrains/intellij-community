@@ -63,7 +63,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   private final @NotNull Tree myTree;
   private final @NotNull TreeExpander myTreeExpander;
   private final @NotNull MyOccurenceNavigator myOccurenceNavigator;
-  protected final @NotNull TodoTreeBuilder myTodoTreeBuilder;
+  private final @NotNull TodoTreeBuilder myTodoTreeBuilder;
 
   private MyVisibilityWatcher myVisibilityWatcher;
   private final @NotNull UsagePreviewPanel myUsagePreviewPanel;
@@ -115,8 +115,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
 
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel<TodoTreeStructure> structureTreeModel =
-      new StructureTreeModel<>(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR, myProject);
+    StructureTreeModel<? extends TodoTreeStructure> structureTreeModel = new StructureTreeModel<>(structure,
+                                                                                                  TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR,
+                                                                                                  myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
     asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));
