@@ -672,9 +672,10 @@ object CommunityLibraryLicenses {
       .apache("https://square.github.io/okhttp/#license"),
     LibraryLicense(name = "Okio", libraryName = "okio", url = "https://github.com/square/okio")
       .apache("https://github.com/square/okio/blob/master/LICENSE.txt"),
-    LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/").apache(),
-    LibraryLicense(libraryName = "opentelemetry-exporter-otlp", url = "https://opentelemetry.io/").apache(),
-    LibraryLicense(libraryName = "opentelemetry-extension-kotlin", url = "https://opentelemetry.io/").apache(),
+    LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
+    LibraryLicense(libraryName = "opentelemetry-exporter-otlp", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
+    LibraryLicense(libraryName = "opentelemetry-exporter-otlp-common", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
+    LibraryLicense(libraryName = "opentelemetry-extension-kotlin", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
     LibraryLicense(name = "Package Search API Models", libraryName = "package-search-api-models",

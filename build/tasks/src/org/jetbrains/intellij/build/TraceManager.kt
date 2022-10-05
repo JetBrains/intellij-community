@@ -28,7 +28,7 @@ object TraceManager {
       .build()
     val openTelemetry = OpenTelemetrySdk.builder()
       .setTracerProvider(tracerProvider)
-      .buildAndRegisterGlobal()
+      .build()
     tracer = openTelemetry.getTracer("build-script")
     TracerProviderManager.tracerProvider = tracerProvider
   }

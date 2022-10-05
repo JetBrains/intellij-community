@@ -192,6 +192,7 @@ private fun getIgnoredNames(): Set<String> {
   val set = HashSet<String>()
   // compilation cache on TC
   set.add(".hash")
+  set.add("classpath.index")
   @Suppress("SpellCheckingInspection")
   set.add(".gitattributes")
   set.add("pom.xml")
