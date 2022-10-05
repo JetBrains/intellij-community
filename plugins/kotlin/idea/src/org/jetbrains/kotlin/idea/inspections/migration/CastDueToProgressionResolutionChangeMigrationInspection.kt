@@ -26,5 +26,5 @@ class CastDueToProgressionResolutionChangeMigrationInspection :
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.progression.resolution.change.migration.display.name")
 
     override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<PsiElement, *> =
-        Errors.PROGRESSIONS_CHANGING_RESOLVE.warningFactory
+        with(Errors.PROGRESSIONS_CHANGING_RESOLVE) { languageVersionSettings.chooseFactory() }
 }

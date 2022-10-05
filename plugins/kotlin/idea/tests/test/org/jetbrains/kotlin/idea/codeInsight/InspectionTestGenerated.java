@@ -93,6 +93,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/canBeVal/inspectionData/inspections.test");
         }
 
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test");
+        }
+
         @TestMetadata("conflictingExtensionProperty/inspectionData/inspections.test")
         public void testConflictingExtensionProperty_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/conflictingExtensionProperty/inspectionData/inspections.test");
