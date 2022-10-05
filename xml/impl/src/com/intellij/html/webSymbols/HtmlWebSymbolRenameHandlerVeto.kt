@@ -20,7 +20,7 @@ class HtmlWebSymbolRenameHandlerVeto : Condition<PsiElement> {
         else -> null
       }
       if (symbol != null && symbol.unwrapMatchedSymbols().any {
-          !it.extension && it !is WebSymbolsHtmlAdditionalContextProvider.StandardHtmlSymbol
+          !it.extension && it !is WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
         }) {
         return true
       }

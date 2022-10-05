@@ -8,7 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbolNamesProvider
-import com.intellij.webSymbols.framework.impl.findWebSymbolsFrameworkInContext
+import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import javax.swing.Icon
 
 abstract class WebSymbolsFramework {
@@ -25,9 +26,9 @@ abstract class WebSymbolsFramework {
                     name: String,
                     target: WebSymbolNamesProvider.Target): List<String> = emptyList()
 
-  fun isContext(context: PsiElement): Boolean = findWebSymbolsFrameworkInContext(context) == this
+  fun isInContext(location: PsiElement): Boolean = WebSymbolsContext.get(KIND_FRAMEWORK, location) == id
 
-  fun isContext(context: VirtualFile, project: Project): Boolean = findWebSymbolsFrameworkInContext(context, project) == this
+  fun isInContext(location: VirtualFile, project: Project): Boolean = WebSymbolsContext.get(KIND_FRAMEWORK, location, project) == id
 
   companion object {
 
@@ -39,10 +40,10 @@ abstract class WebSymbolsFramework {
     fun get(id: String): WebSymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun forContext(context: VirtualFile, project: Project) = findWebSymbolsFrameworkInContext(context, project)
+    fun inLocation(location: VirtualFile, project: Project) = WebSymbolsContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
-    fun forContext(context: PsiElement) = findWebSymbolsFrameworkInContext(context)
+    fun inLocation(location: PsiElement) = WebSymbolsContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
 
     @JvmStatic
     val all: List<WebSymbolsFramework>

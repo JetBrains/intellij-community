@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.Companion.hasOnlyStandardHtmlSymbolsOrExtensions
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.lang.html.HTMLLanguage
@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.xml.SchemaPrefix
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.xml.HtmlXmlExtension
-import org.jetbrains.annotations.ApiStatus
 
 open class WebSymbolsXmlExtension : HtmlXmlExtension() {
 

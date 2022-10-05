@@ -5,10 +5,10 @@
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebSymbolsFramework"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.frameworkContext"
-                    beanClass="com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtensionPoint"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.context"
+                    beanClass="com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebSymbolsFrameworkContext"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.context.WebSymbolsContextProvider"/>
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
@@ -19,8 +19,8 @@
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport$Factory"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.additionalContextProvider"
-                    interface="com.intellij.webSymbols.WebSymbolsAdditionalContextProvider"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.registryExtension"
+                    interface="com.intellij.webSymbols.WebSymbolsRegistryExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.filter"
                     beanClass="com.intellij.webSymbols.impl.WebSymbolsFilterEP"
@@ -55,7 +55,7 @@
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.dependencyProximityProvider"
-                    interface="com.intellij.webSymbols.framework.DependencyProximityProvider"
+                    interface="com.intellij.webSymbols.context.DependencyProximityProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

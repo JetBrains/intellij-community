@@ -12,34 +12,35 @@ import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbolsScope.Companion.applyScope
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.utils.hideFromCompletion
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsContainer>,
+internal class WebSymbolsRegistryImpl(private val rootContainers: List<WebSymbolsContainer>,
                                       override val namesProvider: WebSymbolNamesProvider,
                                       override val scope: WebSymbolsScope,
-                                      override val framework: FrameworkId?,
+                                      override val context: WebSymbolsContext,
                                       override val allowResolve: Boolean) : WebSymbolsRegistry {
 
   override fun hashCode(): Int =
-    Objects.hash(rootContext, framework, namesProvider, scope)
+    Objects.hash(rootContainers, context, namesProvider, scope)
 
   override fun equals(other: Any?): Boolean =
     other === this ||
     other is WebSymbolsRegistryImpl
-    && other.framework == framework
-    && other.rootContext == rootContext
+    && other.context == context
+    && other.rootContainers == rootContainers
     && other.namesProvider == namesProvider
     && other.scope == scope
 
   override fun createPointer(): Pointer<WebSymbolsRegistry> {
     val namesProviderPtr = this.namesProvider.createPointer()
-    val framework = this.framework
+    val context = this.context
     val allowResolve = this.allowResolve
     val scopePtr = this.scope.createPointer()
-    val rootContextPointers = this.rootContext.map { it.createPointer() }
+    val rootContextPointers = this.rootContainers.map { it.createPointer() }
     return Pointer<WebSymbolsRegistry> {
       @Suppress("UNCHECKED_CAST")
       val rootContext = rootContextPointers.map { it.dereference() }
@@ -51,7 +52,7 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
 
       val scope = scopePtr.dereference()
                   ?: return@Pointer null
-      WebSymbolsRegistryImpl(rootContext, namesProvider, scope, framework, allowResolve)
+      WebSymbolsRegistryImpl(rootContext, namesProvider, scope, context, allowResolve)
     }
   }
 
@@ -72,7 +73,7 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
     if (rules.isEmpty())
       this
     else
-      WebSymbolsRegistryImpl(rootContext, namesProvider.withRules(rules), scope, framework, allowResolve)
+      WebSymbolsRegistryImpl(rootContainers, namesProvider.withRules(rules), scope, context, allowResolve)
 
   internal fun runNameMatchQuery(path: List<String>, queryParams: WebSymbolsNameMatchQueryParams,
                                  context: List<WebSymbolsContainer>): List<WebSymbol> =
@@ -143,7 +144,7 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
 
 
   override fun getModificationCount(): Long =
-    rootContext.sumOf { it.modificationCount } + namesProvider.modificationCount + scope.modificationCount
+    rootContainers.sumOf { it.modificationCount } + namesProvider.modificationCount + scope.modificationCount
 
   private fun <T, P : WebSymbolsRegistryQueryParams> runQuery(
     path: List<String>,
@@ -158,7 +159,7 @@ internal class WebSymbolsRegistryImpl(private val rootContext: List<WebSymbolsCo
     val sections = parsePath(path)
     if (sections.isEmpty()) return emptyList()
 
-    val context = rootContext.toMutableSet()
+    val context = rootContainers.toMutableSet()
     initialContext.flatMapTo(context) {
       if (it is WebSymbol)
         it.contextContainers

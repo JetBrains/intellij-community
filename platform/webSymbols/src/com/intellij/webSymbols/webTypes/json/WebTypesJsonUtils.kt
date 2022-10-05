@@ -18,7 +18,8 @@ import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
-import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
+import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
@@ -199,8 +200,8 @@ internal fun Reference.codeCompletion(name: String,
   }
 }
 
-internal fun EnablementRules.wrap(): WebSymbolsFrameworksConfiguration.EnablementRules =
-  WebSymbolsFrameworksConfiguration.EnablementRules(
+internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
+  WebSymbolsContextKindRules.EnablementRules(
     nodePackages,
     fileExtensions,
     ideLibraries,
@@ -208,8 +209,8 @@ internal fun EnablementRules.wrap(): WebSymbolsFrameworksConfiguration.Enablemen
     scriptUrlPatterns.mapNotNull { it.toRegex() }
   )
 
-internal fun DisablementRules.wrap(): WebSymbolsFrameworksConfiguration.DisablementRules =
-  WebSymbolsFrameworksConfiguration.DisablementRules(
+internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRules =
+  WebSymbolsContextKindRules.DisablementRules(
     fileExtensions,
     fileNamePatterns.mapNotNull { it.toRegex() },
   )
@@ -446,4 +447,13 @@ internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.Ty
       else null
       else -> null
     }
+  }
+
+internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
+  when(this) {
+    is ContextKindName -> context[kind] == name
+    is ContextAllOf -> allOf.all { it.evaluate(context) }
+    is ContextAnyOf -> anyOf.any { it.evaluate(context) }
+    is ContextNot -> !not.evaluate(context)
+    else -> throw IllegalStateException(this.javaClass.simpleName)
   }

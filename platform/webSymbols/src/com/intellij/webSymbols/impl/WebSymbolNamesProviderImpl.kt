@@ -5,7 +5,6 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNamesProvider.Target.*
 import com.intellij.webSymbols.framework.WebSymbolsFramework
-import com.intellij.webSymbols.framework.WebSymbolsFrameworksConfiguration
 import java.util.*
 import java.util.function.Function
 
@@ -49,7 +48,7 @@ internal class WebSymbolNamesProviderImpl(
       @Suppress("UNCHECKED_CAST")
       val newConfiguration = configuration.map { it.dereference() }
                                .takeIf { it.all { config -> config != null } }
-                               as? List<WebSymbolsFrameworksConfiguration>
+                               as? List<WebSymbolNameConversionRules>
                              ?: return@Pointer null
       WebSymbolNamesProviderImpl(framework, newConfiguration)
     }

@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols.attributes
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.Companion.filterOutStandardHtmlSymbols
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.Companion.hasOnlyStandardHtmlSymbols
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.filterOutStandardHtmlSymbols
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.lang.html.HtmlCompatibleFile
@@ -67,7 +67,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   private fun List<WebSymbol>.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: WebSymbolsRegistry) =
     this.singleOrNull()
-      ?.asSafely<WebSymbolsHtmlAdditionalContextProvider.HtmlAttributeDescriptorBasedSymbol>()
+      ?.asSafely<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: WebSymbolHtmlAttributeInfo.create(attributeName, registry, this)
       ?.toAttributeDescriptor(context)

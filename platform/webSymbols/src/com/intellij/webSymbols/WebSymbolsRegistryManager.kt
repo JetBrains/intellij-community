@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsRegistryManager : Disposable {
 
-  fun get(contextElement: PsiElement?, allowResolve: Boolean = true): WebSymbolsRegistry
+  fun get(location: PsiElement?, allowResolve: Boolean = true): WebSymbolsRegistry
 
   @TestOnly
   fun addSymbolsContainer(container: WebSymbolsContainer, contextDirectory: VirtualFile?, disposable: Disposable)

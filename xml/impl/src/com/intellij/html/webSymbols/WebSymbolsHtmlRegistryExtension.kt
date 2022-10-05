@@ -20,6 +20,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.utils.match
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.XmlAttributeDescriptor
@@ -29,12 +30,12 @@ import com.intellij.xml.util.HtmlUtil
 import com.intellij.xml.util.XmlUtil.HTML_URI
 import java.util.*
 
-class WebSymbolsHtmlAdditionalContextProvider : WebSymbolsAdditionalContextProvider {
+class WebSymbolsHtmlRegistryExtension : WebSymbolsRegistryExtension {
 
-  override fun getAdditionalContext(project: Project,
-                                    element: PsiElement?,
-                                    framework: String?,
-                                    allowResolve: Boolean): List<WebSymbolsContainer> =
+  override fun getContainers(project: Project,
+                             element: PsiElement?,
+                             context: WebSymbolsContext,
+                             allowResolve: Boolean): List<WebSymbolsContainer> =
     ((element as? XmlAttribute)?.parent ?: element as? XmlTag)?.let {
       listOf(
         HtmlElementSymbolsContainer(it.project),

@@ -4,6 +4,8 @@ package com.intellij.webSymbols
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 
 /*
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
@@ -12,7 +14,9 @@ import com.intellij.openapi.util.text.StringUtil
 @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
 interface WebSymbolsRegistry : ModificationTracker {
 
-  val framework: FrameworkId?
+  val context: WebSymbolsContext
+
+  val framework: FrameworkId? get() = context[KIND_FRAMEWORK]
 
   @get:JvmName("allowResolve")
   val allowResolve: Boolean

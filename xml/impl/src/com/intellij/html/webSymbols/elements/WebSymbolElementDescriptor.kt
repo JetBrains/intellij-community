@@ -3,8 +3,8 @@ package com.intellij.html.webSymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.HtmlElementDescriptorBasedSymbol
-import com.intellij.html.webSymbols.WebSymbolsHtmlAdditionalContextProvider.StandardHtmlSymbol
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.HtmlElementDescriptorBasedSymbol
+import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.StandardHtmlSymbol
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl

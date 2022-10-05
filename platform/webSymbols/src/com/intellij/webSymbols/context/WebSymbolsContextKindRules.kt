@@ -1,16 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.framework
+package com.intellij.webSymbols.context
 
 import com.intellij.model.Pointer
-import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolNameConversionRules
+import com.intellij.webSymbols.ContextName
+import com.intellij.webSymbols.context.impl.WebSymbolsContextKindRulesImpl
 
-interface WebSymbolsFrameworksConfiguration : WebSymbolNameConversionRules {
+interface WebSymbolsContextKindRules {
 
-  val enableWhen: Map<FrameworkId, List<EnablementRules>>
-  val disableWhen: Map<FrameworkId, List<DisablementRules>>
-
-  override fun createPointer(): Pointer<out WebSymbolsFrameworksConfiguration>
+  val enable: Map<ContextName, List<EnablementRules>>
+  val disable: Map<ContextName, List<DisablementRules>>
 
   data class DisablementRules(val fileExtensions: List<String>,
                               val fileNamePatterns: List<Regex>)
@@ -20,5 +18,14 @@ interface WebSymbolsFrameworksConfiguration : WebSymbolNameConversionRules {
                              val ideLibraries: List<String>,
                              val fileNamePatterns: List<Regex>,
                              val scriptUrlPatterns: List<Regex>)
+
+  companion object {
+
+    @JvmStatic
+    fun create(enable: Map<ContextName, List<EnablementRules>>,
+               disable: Map<ContextName, List<DisablementRules>>): WebSymbolsContextKindRules =
+      WebSymbolsContextKindRulesImpl(enable, disable)
+
+  }
 
 }
