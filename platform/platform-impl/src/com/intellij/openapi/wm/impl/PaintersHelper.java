@@ -30,6 +30,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -478,28 +479,13 @@ final class PaintersHelper implements Painter.Listener {
       boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         Image image = null;
-        try {
-          InputStream stream;
+        try (InputStream stream = openImageInputStream(filePath)) {
           boolean isSvg = filePath.endsWith(".svg");
-          if (filePath.contains("://") && !filePath.startsWith("http")) {
-            stream = new URL(filePath).openStream();
+          if (isSvg) {
+            image = SVGLoader.load(stream, 1);
           }
           else {
-            Path path = Paths.get(filePath);
-            if (!path.isAbsolute()) {
-              path = PathManager.getConfigDir().resolve(path);
-            }
-            path.normalize();
-            stream = Files.newInputStream(path.normalize());
-          }
-
-          try (stream) {
-            if (isSvg) {
-              image = SVGLoader.load(stream, 1);
-            }
-            else {
-              image = ImageIO.read(new MemoryCacheImageInputStream(stream));
-            }
+            image = ImageIO.read(new MemoryCacheImageInputStream(stream));
           }
 
           BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
@@ -515,13 +501,27 @@ final class PaintersHelper implements Painter.Listener {
         catch (Exception e) {
           LOG.warn(e);
         }
-        finally {
-          Image finalImage = image;
-          ApplicationManager.getApplication().invokeLater(() -> {
-            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
-          }, modalityState);
-        }
+        Image finalImage = image;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
+        }, modalityState);
       });
     }
+
+    private static InputStream openImageInputStream(String filePath) throws IOException {
+      InputStream stream;
+      if (filePath.contains("://") && !filePath.startsWith("http")) {
+        stream = new URL(filePath).openStream();
+      }
+      else {
+        Path path = Paths.get(filePath);
+        if (!path.isAbsolute()) {
+          path = PathManager.getConfigDir().resolve(path);
+        }
+        stream = Files.newInputStream(path.normalize());
+      }
+      return stream;
+    }
   }
+
 }
