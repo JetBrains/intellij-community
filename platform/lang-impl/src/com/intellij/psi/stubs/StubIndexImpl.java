@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,16 +47,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
-  private static final boolean PRECISE_FILE_ELEMENT_TYPE_MOD_COUNT_TRACKING =
-    SystemProperties.getBooleanProperty("stub.index.precise.file.element.type.mod.count.tracking", true);
-
   public enum FileElementTypeChangeTrackingSource {
+    Disabled,
     ChangedFilesCollector,
     VfsEventMerger
   }
   public static final FileElementTypeChangeTrackingSource FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE;
   static {
-    int sourceId = SystemProperties.getIntProperty("stub.index.file.element.type.change.tracking.source", 0);
+    int sourceId = SystemProperties.getIntProperty("stub.index.file.element.type.change.tracking.source", 1);
     FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE = FileElementTypeChangeTrackingSource.values()[sourceId];
   }
 
@@ -70,14 +69,16 @@ public final class StubIndexImpl extends StubIndexEx {
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
+  private final @NotNull FileElementTypeModificationTracker myFileElementTypeModificationTracker;
+
   public StubIndexImpl() {
-    super(new FileElementTypeModificationCounterImpl(), new FileElementTypeModificationTracker());
     StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull StubIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         ID.unloadId(extension.getKey());
       }
     }, null);
+    myFileElementTypeModificationTracker = new FileElementTypeModificationTracker();
   }
 
   private AsyncState getAsyncState() {
@@ -408,36 +409,48 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
-  private static class FileElementTypeModificationTracker implements StubIndexEx.FileElementTypeModificationTracker {
+  @Override
+  public @NotNull ModificationTracker getFileElementTypeModTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
+    return () -> {
+      if (FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.ChangedFilesCollector) {
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+      }
+      return myFileElementTypeModificationTracker.myModCounts.getOrDefault(fileElementTypeClass, 0L);
+    };
+  }
+
+  @Override
+  public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
+    myFileElementTypeModificationTracker.processFileElementTypeUpdate(file);
+  }
+
+  private static class FileElementTypeModificationTracker {
     private final ConcurrentMap<String, Ref<Class<? extends IFileElementType>>> // ref is to store nulls
       myFileElementTypesCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Class<? extends IFileElementType>, Long> myModCounts = new ConcurrentHashMap<>();
+    private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
+      return (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    });
 
-    @Override
+    private void incModCount(@NotNull Class<? extends IFileElementType> fileElementType) {
+      myModCounts.compute(fileElementType, (__, value) -> {
+        if (value == null) return 1L;
+        return value + 1;
+      });
+    }
+
     public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
       int fileId = FileBasedIndex.getFileId(file);
-
-      var stubIndex = (StubIndexEx)StubIndex.getInstance();
-      var modCounter = stubIndex.getFileElementTypeModCount();
-
       FileContent indexedFile = makeIndexedFile(file);
-      var stubUpdatingIndexStorage =
-        (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
 
       var current = determineCurrentFileElementType(indexedFile);
       if (current != null) {
-        modCounter.incModCount(current);
+        incModCount(current);
       }
 
-      if (PRECISE_FILE_ELEMENT_TYPE_MOD_COUNT_TRACKING) {
-        var before = determinePreviousFileElementTypePrecisely(fileId, stubUpdatingIndexStorage);
-        if (before != null && before != current) {
-          modCounter.incModCount(before);
-        }
-      }
-      else {
-        if (determineFileElementTypeMightHaveChanged(fileId, indexedFile, stubUpdatingIndexStorage)) {
-          modCounter.incGlobalModCount();
-        }
+      var before = determinePreviousFileElementTypePrecisely(fileId, myStubUpdatingIndexStorage.get());
+      if (before != null && before != current) {
+        incModCount(before);
       }
     }
 
@@ -480,11 +493,6 @@ public final class StubIndexImpl extends StubIndexEx {
         if (value != null) return value;
         return Ref.create(StubBuilderType.getStubFileElementTypeFromVersion(storedVersion));
       }).get();
-    }
-
-    private static boolean determineFileElementTypeMightHaveChanged(int fileId, IndexedFile indexedFile, StubUpdatingIndexStorage index) {
-      var state = index.getIndexingStateForFile(fileId, indexedFile);
-      return state == FileIndexingState.OUT_DATED;
     }
   }
 }

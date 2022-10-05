@@ -40,10 +40,11 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   fun `test java file element type mod count increments on java file creation and change`() {
-    var lastModCount = 0
+    var lastModCount = 0L
     fun checkModCountIncreasedAtLeast(minInc: Int) {
-      val modCount = (StubIndex.getInstance() as StubIndexEx).fileElementTypeModCount.getModCount(JavaFileElementType::class.java)
-      assert(lastModCount <= modCount + minInc)
+      val modCount = (StubIndex.getInstance() as StubIndexEx)
+        .getFileElementTypeModTracker(JavaFileElementType::class.java).modificationCount
+      assert(lastModCount + minInc <= modCount)
       lastModCount = modCount
     }
     checkModCountIncreasedAtLeast(0)

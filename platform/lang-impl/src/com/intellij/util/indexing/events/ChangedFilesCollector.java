@@ -60,7 +60,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public ChangedFilesCollector() {
     super(changeInfo -> {
       if (StubIndexImpl.FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.VfsEventMerger) {
-        ((StubIndexImpl)StubIndex.getInstance()).getFileElementTypeModTracker().processFileElementTypeUpdate(changeInfo.getFile());
+        ((StubIndexImpl)StubIndex.getInstance()).processFileElementTypeUpdate(changeInfo.getFile());
       }
       return true;
     });
@@ -239,7 +239,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
       if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
       if (StubIndexImpl.FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.ChangedFilesCollector) {
-        ((StubIndexImpl)StubIndex.getInstance()).getFileElementTypeModTracker().processFileElementTypeUpdate(file);
+        ((StubIndexImpl)StubIndex.getInstance()).processFileElementTypeUpdate(file);
       }
       return true;
     });

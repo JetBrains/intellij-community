@@ -63,15 +63,6 @@ public abstract class StubIndexEx extends StubIndex {
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
-  private final @NotNull FileElementTypeModificationCounter myFileElementTypeModCount;
-  private final @NotNull FileElementTypeModificationTracker myFileElementTypeModTracker;
-
-  public StubIndexEx(@NotNull FileElementTypeModificationCounter fileElementTypeModificationCounter,
-                     @NotNull FileElementTypeModificationTracker fileElementTypeModificationTracker) {
-    myFileElementTypeModCount = fileElementTypeModificationCounter;
-    myFileElementTypeModTracker = fileElementTypeModificationTracker;
-  }
-
   @ApiStatus.Internal
   abstract void initializeStubIndexes();
 
@@ -558,27 +549,9 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public interface FileElementTypeModificationCounter {
-    int incModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
-    int getModCount(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
-    void incGlobalModCount();
-  }
+  abstract public @NotNull ModificationTracker getFileElementTypeModTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public @NotNull FileElementTypeModificationCounter getFileElementTypeModCount() {
-    return myFileElementTypeModCount;
-  }
-
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public interface FileElementTypeModificationTracker {
-    void processFileElementTypeUpdate(@NotNull VirtualFile file);
-  }
-
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public @NotNull FileElementTypeModificationTracker getFileElementTypeModTracker() {
-    return myFileElementTypeModTracker;
-  }
+  abstract public void processFileElementTypeUpdate(@NotNull VirtualFile file);
 }
