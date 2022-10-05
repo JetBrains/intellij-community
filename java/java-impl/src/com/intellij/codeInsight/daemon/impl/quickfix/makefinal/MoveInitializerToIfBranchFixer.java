@@ -1,18 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -20,67 +16,61 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private MakeVarEffectivelyFinalFix(@NotNull PsiLocalVariable variable) {
-    super(variable);
+final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
+  @Override
+  public boolean isAvailable(@NotNull PsiLocalVariable var) {
+    PsiExpression initializer = var.getInitializer();
+    Branched branched = extractInitMode(var);
+    // Do not add too many branches
+    return branched != null && branched.numberOfNonInitializedBranches() <= 3 &&
+           canReorder(initializer, branched);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiLocalVariable local)) return;
-    EffectivelyFinalFixer fixer = ContainerUtil.find(EffectivelyFinalFixer.values(), f -> f.isAvailable(local));
-    if (fixer == null) return;
-    fixer.fix(local);
+  public void fix(@NotNull PsiLocalVariable var) {
+    PsiExpression initializer = Objects.requireNonNull(var.getInitializer());
+    Branched branched = Objects.requireNonNull(extractInitMode(var));
+    PsiStatement statement = JavaPsiFacade.getElementFactory(var.getProject())
+      .createStatementFromText(var.getName() + "=" + initializer.getText() + ";", null);
+    branched.addInitializer(statement);
+    initializer.delete();
   }
 
-  @Override
-  public @NotNull String getText() {
-    return JavaAnalysisBundle.message("intention.name.make.variable.effectively.final");
-  }
-
-  @Override
-  public @NotNull String getFamilyName() {
-    return getText();
-  }
-
-  public static @Nullable MakeVarEffectivelyFinalFix createFix(@NotNull PsiVariable variable) {
-    if (!(variable instanceof PsiLocalVariable local)) return null;
-    if (!ContainerUtil.exists(EffectivelyFinalFixer.values(), f -> f.isAvailable(local))) return null;
-    return new MakeVarEffectivelyFinalFix(local);
-  }
-
-  enum EffectivelyFinalFixer {
-    MOVE_INITIALIZER_TO_IF_BRANCH {
-      @Override
-      boolean isAvailable(@NotNull PsiLocalVariable var) {
-        PsiExpression initializer = var.getInitializer();
-        if (!ExpressionUtils.isSafelyRecomputableExpression(initializer)) return false;
-        if (refersToNonFinalLocal(initializer)) return false;
-        Branched branched = extractInitMode(var);
-        // Do not add too many branches
-        return branched != null && branched.numberOfNonInitializedBranches() <= 3;
+  private static boolean canReorder(PsiExpression initializer, Branched branched) {
+    if (ExpressionUtils.isSafelyRecomputableExpression(initializer) && !refersToNonFinalLocal(initializer)) return true;
+    if (SideEffectChecker.mayHaveSideEffects(initializer)) return false;
+    PsiIfStatement ifStatement = branched.ifStatement();
+    PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(initializer, PsiDeclarationStatement.class);
+    if (declaration == null || declaration.getParent() != ifStatement.getParent()) return false;
+    PsiElement[] elements = declaration.getDeclaredElements();
+    if (elements.length > 1) {
+      int i = ContainerUtil.indexOf(Arrays.asList(elements), e -> PsiTreeUtil.isAncestor(e, initializer, true));
+      for (int j = i + 1; j < elements.length; j++) {
+        if (elements[j] instanceof PsiVariable var) {
+          PsiExpression nextInitializer = var.getInitializer();
+          if (nextInitializer != null && SideEffectChecker.mayHaveSideEffects(nextInitializer)) return false;
+        }
       }
-
-      @Override
-      void fix(@NotNull PsiLocalVariable var) {
-        PsiExpression initializer = Objects.requireNonNull(var.getInitializer());
-        Branched branched = Objects.requireNonNull(extractInitMode(var));
-        PsiStatement statement = JavaPsiFacade.getElementFactory(var.getProject())
-          .createStatementFromText(var.getName() + "=" + initializer.getText() + ";", null);
-        branched.addInitializer(statement);
-        initializer.delete();
+    }
+    PsiStatement nextStatement = declaration;
+    while (true) {
+      nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
+      if (nextStatement == null) return false;
+      if (nextStatement == ifStatement) break;
+      if (nextStatement instanceof PsiDeclarationStatement decl) {
+        if (StreamEx.of(decl.getDeclaredElements()).select(PsiLocalVariable.class).map(PsiLocalVariable::getInitializer).nonNull()
+          .anyMatch(SideEffectChecker::mayHaveSideEffects)) {
+          return false;
+        }
+        continue;
       }
-    };
-    abstract boolean isAvailable(@NotNull PsiLocalVariable var);
-
-    abstract void fix(@NotNull PsiLocalVariable var);
+      return false;
+    }
+    return branched.conditions().noneMatch(c -> SideEffectChecker.mayHaveSideEffects(c));
   }
 
   private static boolean refersToNonFinalLocal(PsiExpression initializer) {
@@ -141,6 +131,10 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
 
     int numberOfNonInitializedBranches();
 
+    default StreamEx<PsiExpression> conditions() {
+      return StreamEx.empty();
+    }
+
     private static InitMode fromInitializer(@NotNull PsiStatement statement, @NotNull InitMode origMode) {
       if (statement.getParent() instanceof PsiCodeBlock codeBlock && codeBlock.getParent() instanceof PsiBlockStatement block) {
         statement = block;
@@ -148,7 +142,8 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
       if (statement.getParent() instanceof PsiIfStatement ifStatement) {
         if (ifStatement.getThenBranch() == statement) {
           return new Branched(ifStatement, origMode, ExactMode.NOT_INITIALIZED);
-        } else {
+        }
+        else {
           return new Branched(ifStatement, ExactMode.NOT_INITIALIZED, origMode);
         }
       }
@@ -162,7 +157,8 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
         curMode = fromInitializer(current, curMode);
         if (curMode instanceof Branched branched) {
           current = branched.ifStatement();
-        } else {
+        }
+        else {
           return ExactMode.BOTTOM;
         }
       }
@@ -200,6 +196,12 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
     }
 
     @Override
+    public StreamEx<PsiExpression> conditions() {
+      return StreamEx.ofNullable(ifStatement.getCondition()).append(thenBranch().conditions())
+        .append(elseBranch().conditions());
+    }
+
+    @Override
     public int numberOfNonInitializedBranches() {
       return thenBranch().numberOfNonInitializedBranches() + elseBranch().numberOfNonInitializedBranches();
     }
@@ -212,7 +214,8 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
           branch = Objects.requireNonNull(ifStatement().getThenBranch());
         }
         BlockUtils.addBefore(branch, statement);
-      } else if (thenBranch() instanceof Branched branched) {
+      }
+      else if (thenBranch() instanceof Branched branched) {
         branched.addInitializer(statement);
       }
       if (elseBranch() == ExactMode.NOT_INITIALIZED) {

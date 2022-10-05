@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
