@@ -11,9 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
@@ -22,14 +24,14 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 
 abstract class AbstractDiagnosticBasedMigrationInspection<T : PsiElement>(val elementType: Class<T>) : AbstractKotlinInspection() {
-    abstract val diagnosticFactory: DiagnosticFactoryWithPsiElement<T, *>
+    abstract fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<T, *>
     open fun customIntentionFactory(): ((Diagnostic) -> IntentionAction?)? = null
     open fun customHighlightRangeIn(element: T): TextRange? = null
 
-    private fun getActionFactory(): (Diagnostic) -> List<IntentionAction> =
+    private fun getActionFactory(languageVersionSettings: LanguageVersionSettings): (Diagnostic) -> List<IntentionAction> =
         customIntentionFactory()?.let { factory -> { diagnostic -> listOfNotNull(factory(diagnostic)) } }
             ?: QuickFixes.getInstance()
-                .getActionFactories(diagnosticFactory)
+                .getActionFactories(getDiagnosticFactory(languageVersionSettings))
                 .singleOrNull()
                 ?.let { factory -> { diagnostic -> factory.createActions(diagnostic) } }
             ?: error("Must have one factory")
@@ -41,7 +43,10 @@ abstract class AbstractDiagnosticBasedMigrationInspection<T : PsiElement>(val el
         }
 
         val problemDescriptors = mutableListOf<ProblemDescriptor>()
-        val actionFactory = getActionFactory()
+        val languageVersionSettings = file.languageVersionSettings
+        val actionFactory = getActionFactory(languageVersionSettings)
+        val diagnosticFactory = getDiagnosticFactory(languageVersionSettings)
+
         file.accept(
             object : KtTreeVisitorVoid() {
                 override fun visitElement(element: PsiElement) {

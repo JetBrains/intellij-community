@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
@@ -12,8 +13,8 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 class DeclaringClassMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<PsiElement>(PsiElement::class.java), MigrationFix {
 
-    override val diagnosticFactory: DiagnosticFactory0<PsiElement>
-        get() = ErrorsJvm.ENUM_DECLARING_CLASS_DEPRECATED.warningFactory
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactory0<PsiElement> =
+        ErrorsJvm.ENUM_DECLARING_CLASS_DEPRECATED.warningFactory
 
     override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
         return migrationInfo.isLanguageVersionUpdate(
