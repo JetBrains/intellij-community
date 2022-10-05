@@ -46,6 +46,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
   private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
+  private boolean myIsInit;
+  private boolean myCallSetFullScreenAfterInit;
+
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
@@ -144,7 +147,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   @Override
   public void frameInit() {
+    myIsInit = true;
     myTabsHandler.frameInit();
+    if (myCallSetFullScreenAfterInit) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Sets full screen after init frame: " + myFrame);
+      }
+      myCallSetFullScreenAfterInit = false;
+      toggleFullScreen(true);
+    }
   }
 
   @Override
@@ -187,6 +198,14 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         promise.complete(null);
       }
       else {
+        if (!myIsInit && !myFrame.isValid()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Sets full screen before init frame: " + myFrame);
+          }
+          myCallSetFullScreenAfterInit = true;
+          promise.complete(false);
+          return;
+        }
         AtomicBoolean preEventReceived = new AtomicBoolean();
         FSAdapter listener = new FSAdapter() {
           @Override
