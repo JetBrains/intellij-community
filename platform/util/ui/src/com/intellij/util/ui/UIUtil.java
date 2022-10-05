@@ -2566,6 +2566,10 @@ public final class UIUtil {
     forEachComponentInHierarchy(component, c -> c.setForeground(bg));
   }
 
+  public static void setTooltipRecursively(@NotNull Component component, @Nls String text) {
+    forEachComponentInHierarchy(component, c -> ((JComponent)c).setToolTipText(text));
+  }
+
   public static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {
