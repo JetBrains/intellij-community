@@ -16674,6 +16674,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/wrapArgumentWithParentheses")
+    public static class WrapArgumentWithParentheses extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ModifierFormForNonBuiltInSuspend.kt")
+        public void testModifierFormForNonBuiltInSuspend() throws Exception {
+            runTest("testData/quickfix/wrapArgumentWithParentheses/ModifierFormForNonBuiltInSuspend.kt");
+        }
+
+        @TestMetadata("ModifierFormForNonBuiltInSuspendFun.kt")
+        public void testModifierFormForNonBuiltInSuspendFun() throws Exception {
+            runTest("testData/quickfix/wrapArgumentWithParentheses/ModifierFormForNonBuiltInSuspendFun.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/wrapWhenExpressionInParentheses")
     public static class WrapWhenExpressionInParentheses extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
