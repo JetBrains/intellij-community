@@ -831,7 +831,7 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
     }
 
     check(duplicatedPlugins.size <= 1) {
-      "Duplicated plugin description in productLayout.pluginLayouts: directory name $pluginDirectoryName"
+      "Duplicated plugin description in productLayout.pluginLayouts: directory name '$pluginDirectoryName', main modules: ${duplicatedPlugins.joinToString { it.mainModule }}"
     }
   }
 }
