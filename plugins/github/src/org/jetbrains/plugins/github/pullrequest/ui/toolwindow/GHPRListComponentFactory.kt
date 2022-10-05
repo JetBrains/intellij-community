@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.codereview.list.*
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBList
+import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -59,7 +59,7 @@ internal class GHPRListComponentFactory(private val listModel: ListModel<GHPullR
 
   private fun getMergeableStatus(mergeableState: GHPullRequestMergeableState): ReviewListItemPresentation.Status? {
     if (mergeableState == GHPullRequestMergeableState.CONFLICTING) {
-      return ReviewListItemPresentation.Status(AllIcons.RunConfigurations.TestFailed,
+      return ReviewListItemPresentation.Status(CollaborationToolsIcons.Review.NonMergeable,
                                                GithubBundle.message("pull.request.conflicts.merge.tooltip"))
     }
 
