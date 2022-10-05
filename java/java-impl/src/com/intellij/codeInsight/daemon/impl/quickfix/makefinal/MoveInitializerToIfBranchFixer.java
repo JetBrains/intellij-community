@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -38,6 +39,11 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
       .createStatementFromText(var.getName() + "=" + initializer.getText() + ";", null);
     branched.addInitializer(statement);
     initializer.delete();
+  }
+
+  @Override
+  public String getText(@NotNull PsiLocalVariable var) {
+    return JavaBundle.message("intention.make.final.fixer.if", var.getName());
   }
 
   private static boolean canReorder(PsiExpression initializer, Branched branched) {

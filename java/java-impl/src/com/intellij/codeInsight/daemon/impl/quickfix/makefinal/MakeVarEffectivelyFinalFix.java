@@ -12,8 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private MakeVarEffectivelyFinalFix(@NotNull PsiLocalVariable variable) {
+  @SafeFieldForPreview private final @NotNull EffectivelyFinalFixer myFixer;
+
+  private MakeVarEffectivelyFinalFix(@NotNull PsiLocalVariable variable, @NotNull EffectivelyFinalFixer fixer) {
     super(variable);
+    myFixer = fixer;
   }
 
   @Override
@@ -23,34 +26,25 @@ public class MakeVarEffectivelyFinalFix extends LocalQuickFixAndIntentionActionO
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (!(startElement instanceof PsiLocalVariable local)) return;
-    EffectivelyFinalFixer fixer = ContainerUtil.find(FIXERS, f -> f.isAvailable(local));
-    if (fixer == null) return;
-    fixer.fix(local);
+    if (!myFixer.isAvailable(local)) return;
+    myFixer.fix(local);
   }
 
   @Override
   public @NotNull String getText() {
-    return JavaAnalysisBundle.message("intention.name.make.variable.effectively.final");
+    if (!(getStartElement() instanceof PsiLocalVariable local)) return getFamilyName();
+    return myFixer.getText(local);
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return getText();
+    return JavaAnalysisBundle.message("intention.name.make.variable.effectively.final");
   }
 
   public static @Nullable MakeVarEffectivelyFinalFix createFix(@NotNull PsiVariable variable) {
     if (!(variable instanceof PsiLocalVariable local)) return null;
-    if (!ContainerUtil.exists(FIXERS, f -> f.isAvailable(local))) return null;
-    return new MakeVarEffectivelyFinalFix(local);
-  }
-
-  static final EffectivelyFinalFixer[] FIXERS = {
-    new MoveInitializerToIfBranchFixer()
-  };
-
-  sealed interface EffectivelyFinalFixer permits MoveInitializerToIfBranchFixer {
-    boolean isAvailable(@NotNull PsiLocalVariable var);
-
-    void fix(@NotNull PsiLocalVariable var);
+    EffectivelyFinalFixer fixer = ContainerUtil.find(EffectivelyFinalFixer.EP_NAME.getExtensionList(), f -> f.isAvailable(local));
+    if (fixer == null) return null;
+    return new MakeVarEffectivelyFinalFix(local, fixer);
   }
 }
