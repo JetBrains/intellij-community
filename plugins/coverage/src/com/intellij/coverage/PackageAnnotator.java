@@ -183,8 +183,7 @@ public final class PackageAnnotator {
     myRunner = runner;
   }
 
-  public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, VirtualFile output) {
-    File outputRoot = VfsUtilCore.virtualToIoFile(output);
+  public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
     outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
   }
@@ -196,7 +195,8 @@ public final class PackageAnnotator {
         .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
       final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
       if (moduleExtension == null) return null;
-      final VirtualFile outputPath = isInTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      final String outputPathUrl = isInTests ? moduleExtension.getCompilerOutputUrlForTests() : moduleExtension.getCompilerOutputUrl();
+      final File outputPath = outputPathUrl != null ? new File(VfsUtilCore.urlToPath(outputPathUrl)) : null;
 
       if (outputPath != null) {
         final String qualifiedName = psiClass.getQualifiedName();
