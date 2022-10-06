@@ -37,7 +37,9 @@ public class UsageCluster {
   }
 
   public @NotNull Set<@NotNull SimilarUsage> getUsages() {
-    return new HashSet<>(myUsages);
+    synchronized (myUsages) {
+      return new HashSet<>(myUsages);
+    }
   }
 
   public boolean contains(@Nullable UsageInfo usageInfo) {
