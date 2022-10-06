@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProject
 import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.AbstractK2MultiPlatformCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
@@ -161,6 +162,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
             model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractK2MultiPlatformCompletionTest> {
+            model("multiPlatform", isRecursive = false, pattern = DIRECTORY)
         }
 
         testClass<AbstractFirKeywordCompletionTest> {

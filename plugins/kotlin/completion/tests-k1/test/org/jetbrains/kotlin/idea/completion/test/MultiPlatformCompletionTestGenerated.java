@@ -28,6 +28,11 @@ public class MultiPlatformCompletionTestGenerated extends AbstractMultiPlatformC
         runTest("../testData/multiPlatform/classInCommon/");
     }
 
+    @TestMetadata("classInCommonNonImported")
+    public void testClassInCommonNonImported() throws Exception {
+        runTest("../testData/multiPlatform/classInCommonNonImported/");
+    }
+
     @TestMetadata("classInPlatform")
     public void testClassInPlatform() throws Exception {
         runTest("../testData/multiPlatform/classInPlatform/");

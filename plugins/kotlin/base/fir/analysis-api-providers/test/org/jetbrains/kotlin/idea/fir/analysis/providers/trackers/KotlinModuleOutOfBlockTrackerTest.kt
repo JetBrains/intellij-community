@@ -23,6 +23,8 @@ import java.io.File
 class KotlinModuleOutOfBlockTrackerTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory(): File = error("Should not be called")
 
+    override fun isFirPlugin(): Boolean = true
+
     fun testThatModuleOutOfBlockChangeInfluenceOnlySingleModule() {
         val moduleA = createModuleInTmpDir("a") {
             listOf(

@@ -14,6 +14,8 @@ import org.junit.Assert
 import java.io.File
 
 class ModuleStateTrackerTest : AbstractMultiModuleTest() {
+    override fun isFirPlugin(): Boolean = true
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
     fun testThatModuleModificationTrackedChangedAfterAddingModuleDependency() {
