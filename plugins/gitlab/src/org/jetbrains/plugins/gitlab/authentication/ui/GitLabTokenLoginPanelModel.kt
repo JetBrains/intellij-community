@@ -12,8 +12,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
-import org.jetbrains.plugins.gitlab.ui.GitLabBundle
-import java.lang.IllegalArgumentException
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabTokenLoginPanelModel(private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
   : LoginPanelModelBase(), LoginTokenGenerator {

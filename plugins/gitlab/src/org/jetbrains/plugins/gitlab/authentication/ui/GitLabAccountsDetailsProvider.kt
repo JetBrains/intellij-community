@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.ui.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
 internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
