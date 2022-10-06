@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
@@ -198,6 +199,7 @@ private abstract class TogglePopupAction : ToggleAction {
     val actionGroup = getActionGroup(e) ?: return
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
+    PopupImplUtil.setPopupToggleButton(popup, e.inputEvent.component)
     popup.showUnderneathOf(component)
   }
 

@@ -21,9 +21,9 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -42,7 +42,6 @@ internal val projectKey = Key.create<Project>("project-widget-project")
 
 internal class ProjectWidget(private val presentation: Presentation) : ToolbarComboWidget() {
 
-  private val popupState = PopupState.forPopup()
   private val project: Project?
     get() = presentation.getClientProperty(projectKey)
 
@@ -56,8 +55,6 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
   }
 
   override fun doExpand(e: InputEvent) {
-    if (popupState.isShowing || popupState.isRecentlyHidden) return
-
     val dataContext = DataManager.getInstance().getDataContext(this)
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
@@ -81,8 +78,8 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>, renderer: Function<ListCellRenderer<Any>, ListCellRenderer<out Any>>): ListPopup {
     val res = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
+    PopupImplUtil.setPopupToggleButton(res, this)
     res.setRequestFocus(false)
-    popupState.prepareToShow(res)
     return res
   }
 

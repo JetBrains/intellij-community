@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.IconManager
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -141,6 +142,7 @@ internal class MainMenuButton {
         .apply { setShowSubmenuOnHover(true) }
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
         as ListPopupImpl
+      PopupImplUtil.setPopupToggleButton(popup, button)
       popup.showUnderneathOf(button)
 
       if (actionToShow != null) {

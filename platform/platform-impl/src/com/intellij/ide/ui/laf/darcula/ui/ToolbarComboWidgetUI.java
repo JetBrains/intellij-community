@@ -315,7 +315,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   private static class ClickListener extends MyMouseTracker {
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mouseClicked(MouseEvent e) {
       if (!isSeparatorShown(comp)) {
         comp.doExpand(e);
         return;
