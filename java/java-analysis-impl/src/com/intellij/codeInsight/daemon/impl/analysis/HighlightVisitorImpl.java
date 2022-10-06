@@ -15,7 +15,6 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -90,10 +89,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
   private final Function<? super PsiElement, ? extends PsiClass> myInsideConstructorOfClass = this::findInsideConstructorClass;
   private final Map<PsiElement, PsiClass> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
-
-  private static class Holder {
-    private static final boolean CHECK_ELEMENT_LEVEL = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
-  }
 
   @NotNull
   protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
@@ -180,14 +175,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (Holder.CHECK_ELEMENT_LEVEL) {
-      ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(element);
-      element.accept(this);
-      ((CheckLevelHighlightInfoHolder)myHolder).enterLevel(null);
-    }
-    else {
-      element.accept(this);
-    }
+    element.accept(this);
   }
 
   private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
@@ -198,7 +186,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
     try {
-      prepare(Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder, file);
+      prepare(holder, file);
       if (updateWholeFile) {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress == null) throw new IllegalStateException("Must be run under progress");
@@ -1219,7 +1207,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (owner instanceof PsiClass) {
           PsiClass outerClass = (PsiClass)owner;
           if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
-            myHolder.add(HighlightClassUtil.checkIllegalEnclosingUsage(ref, null, (PsiClass)owner, ref));
+            myHolder.add(HighlightClassUtil.checkIllegalEnclosingUsage(ref, null, outerClass, ref));
           }
         }
         else if (owner instanceof PsiMethod) {
@@ -1299,7 +1287,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       if (!myHolder.hasErrorResults()) {
         try {
-          myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems,myFile));
+          myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, myUninitializedVarProblems, myFile));
         }
         catch (IndexNotReadyException ignored) { }
       }
