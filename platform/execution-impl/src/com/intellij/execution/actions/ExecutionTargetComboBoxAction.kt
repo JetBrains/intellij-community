@@ -81,7 +81,7 @@ class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware {
       actions.addAll(getTargetGroupActions(project, defaultGroup, null, activeTarget))
     }
 
-    for ((name, targetsGroup) in targetsGroups) {
+    for ((name, targetsGroup) in targetsGroups.entries.sortedBy { it.key }) {
       if (name == null) continue
       actions.addAll(getTargetGroupActions(project, targetsGroup, name, activeTarget))
     }
