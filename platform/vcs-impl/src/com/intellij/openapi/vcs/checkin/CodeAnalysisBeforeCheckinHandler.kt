@@ -15,6 +15,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressSink
@@ -39,7 +40,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
-import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
+import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.isGeneratedOrExcluded
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Companion.processFoundCodeSmells
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,6 +48,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
@@ -106,8 +108,18 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.analyzing.code"))
 
-    val changes = commitInfo.committedChanges
-    val files = filterOutGeneratedAndExcludedFiles(commitInfo.committedVirtualFiles, project)
+    val changesByFile = mutableMapOf<VirtualFile, Change>()
+    for (change in commitInfo.committedChanges) {
+      val changeFile = change.afterRevision?.file?.virtualFile ?: continue
+      if (isGeneratedOrExcluded(project, changeFile)) continue
+
+      val oldChange = changesByFile.put(changeFile, change)
+      if (oldChange != null) {
+        logger<CodeAnalysisCheckinHandlerFactory>().warn("Multiple changes for the same file: $oldChange, $change")
+      }
+    }
+    if (changesByFile.isEmpty()) return null
+
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
@@ -117,7 +129,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
       runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
-        codeSmells = findCodeSmells(changes, files)
+        codeSmells = findCodeSmells(changesByFile)
       }
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
@@ -135,16 +147,16 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.
    * The closure accepts a class instance and returns a set of PsiElement elements that are changed or added.
    */
-  private fun withCommittedElementsContext(changes: List<Change>, files: List<VirtualFile>): AccessToken {
+  private fun withCommittedElementsContext(changedFiles: Map<VirtualFile, Change>): AccessToken {
     val analyzeOnlyChangedProperties = Registry.`is`("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", false)
     if (!analyzeOnlyChangedProperties) return AccessToken.EMPTY_ACCESS_TOKEN
 
-    val psiFiles = runReadAction { files.mapNotNull { PsiManager.getInstance(project).findFile(it) } }
-    if (psiFiles.isEmpty()) return AccessToken.EMPTY_ACCESS_TOKEN
-
-    for (file in psiFiles) {
-      file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
-                       ConcurrentFactoryMap.createMap { getBeingCommittedPsiElements(changes, it) })
+    val psiFiles = mutableListOf<PsiFile>()
+    for ((file, change) in changedFiles) {
+      val psiFile = runReadAction { PsiManager.getInstance(project).findFile(file) } ?: continue
+      psiFile.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
+                          ConcurrentFactoryMap.createMap { clazz -> getBeingCommittedPsiElements(change, clazz) })
+      psiFiles += psiFile
     }
     return object : AccessToken() {
       override fun finish() {
@@ -158,22 +170,21 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   /**
    * Returns a set of PsiElements that are being committed
    */
-  private fun getBeingCommittedPsiElements(changes: List<Change>, clazz: Class<out PsiElement>): Set<PsiElement> {
-    val vcs = VcsFacadeImpl.getVcsInstance()
+  private fun getBeingCommittedPsiElements(change: Change, clazz: Class<out PsiElement>): Set<PsiElement> {
     val elementsExtractor = { virtualFile: VirtualFile ->
       val psiFile = runReadAction {
         PsiManager.getInstance(project).findFile(virtualFile)
       }
       PsiTreeUtil.findChildrenOfType(psiFile, clazz).toList()
     }
-    val beingCommittedPsiElements = vcs.getChangedElements(project, changes.toTypedArray(), elementsExtractor)
-    return beingCommittedPsiElements.toSet()
+    return VcsFacadeImpl.getVcsInstance().getChangedElements(project, arrayOf(change), elementsExtractor).toSet()
   }
 
-  private fun findCodeSmells(changes: List<Change>, files: List<VirtualFile>): List<CodeSmellInfo> {
-    withCommittedElementsContext(changes, files).use {
+  private fun findCodeSmells(changedFiles: Map<VirtualFile, Change>): List<CodeSmellInfo> {
+    withCommittedElementsContext(changedFiles).use {
       val indicator = ProgressManager.getGlobalProgressIndicator()
       val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
+      val files = changedFiles.keys.toList()
 
       if (files.size > newAnalysisThreshold) return CodeSmellDetector.getInstance(project).findCodeSmells(files)
 
