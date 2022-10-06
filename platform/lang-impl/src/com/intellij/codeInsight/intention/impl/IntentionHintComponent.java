@@ -140,8 +140,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     void cancelled(@NotNull IntentionListStep step) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (myListPopup.getListStep() == step && !myDisposed) {
-        // Root canceled. Create new popup. This one cannot be reused.
-        recreateMyPopup(this, step);
+        Disposer.dispose(myHint);
       }
     }
 
