@@ -181,7 +181,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     String contentFromVcs = getRevisionedContentFrom(change);
     if (contentFromVcs == null) return null;
 
-    return getRanges(document, contentFromVcs);
+    return computeRanges(document, contentFromVcs);
   }
 
   @NotNull
@@ -231,7 +231,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     if (tracker != null) {
       List<? extends Range> ranges = tracker.getRanges();
       if (ranges != null) {
-        return getChangedTextRanges(document, ranges);
+        return getChangedRangesInfo(document, ranges);
       }
     }
     return null;
@@ -239,18 +239,19 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @NotNull
   private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    return getChangedTextRanges(document, getRanges(document, contentFromVcs));
+    return getChangedRangesInfo(document, computeRanges(document, contentFromVcs));
   }
 
   @NotNull
-  private static List<Range> getRanges(@NotNull Document document,
-                                       @NotNull CharSequence contentFromVcs) {
-    return RangesBuilder.createRanges(document.getImmutableCharSequence(), StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
+  private static List<Range> computeRanges(@NotNull Document document,
+                                           @NotNull CharSequence contentFromVcs) {
+    return RangesBuilder.createRanges(document.getImmutableCharSequence(),
+                                      StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
   }
 
   @Override
   public int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    List<Range> changedRanges = getRanges(document, contentFromVcs);
+    List<Range> changedRanges = computeRanges(document, contentFromVcs);
     int linesChanges = 0;
     for (Range range : changedRanges) {
       int inserted = range.getLine2() - range.getLine1();
@@ -261,7 +262,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
-  private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
+  private static ChangedRangesInfo getChangedRangesInfo(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
     final List<TextRange> ranges = new ArrayList<>();
     final List<TextRange> insertedRanges = new ArrayList<>();
 
