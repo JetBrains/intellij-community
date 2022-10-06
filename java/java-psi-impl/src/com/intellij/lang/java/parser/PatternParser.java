@@ -97,6 +97,8 @@ public class PatternParser {
         isFirst = false;
       }
       else {
+        int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | ReferenceParser.VAR_TYPE;
+        myParser.getReferenceParser().parseType(builder, flags);
         error(builder, JavaPsiBundle.message("expected.pattern"));
         if (builder.getTokenType() == JavaTokenType.RPARENTH) {
           break;
