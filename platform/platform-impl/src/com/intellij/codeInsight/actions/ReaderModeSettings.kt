@@ -2,8 +2,7 @@
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -18,6 +17,8 @@ import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import java.util.concurrent.Callable
 
 @Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [
@@ -67,8 +68,12 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
-      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file)
-                        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+      val inLibraries = ReadAction.nonBlocking(
+        Callable {
+          FileIndexFacade.getInstance(project).isInLibraryClasses(file) || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+        })
+        .submit(AppExecutorUtil.getAppExecutorService()).get()
+
       val isWritable = file.isWritable
 
       return when (mode) {
