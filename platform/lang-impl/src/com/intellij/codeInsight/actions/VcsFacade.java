@@ -138,7 +138,7 @@ public class VcsFacade {
    * @return whether the file is NOT tracked by vcs: either not under vcs root or is unversioned ({@link com.intellij.openapi.vcs.FileStatus#UNKNOWN}).
    */
   public boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
-    return false;
+    return true;
   }
 
   /**

@@ -8,10 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ex.*;
@@ -59,16 +56,17 @@ public final class VcsFacadeImpl extends VcsFacade {
                             @NotNull Project project) {
     final Collection<Change> changes = ChangeListManager.getInstance(project).getChangesIn(file);
     for (Change change : changes) {
-      if (change.getType() == Change.Type.NEW || change.getType() == Change.Type.MODIFICATION) {
-        return true;
-      }
+      if (change.getType() == Change.Type.DELETED) continue;
+      return true;
     }
     return false;
   }
 
   @Override
-  public @NotNull Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
-    return VcsUtil.isFileUnderVcs(psiFile.getProject(), VcsUtil.getFilePath(psiFile.getVirtualFile()));
+  @NotNull
+  public Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(psiFile.getProject());
+    return vcsManager.getVcsFor(psiFile.getVirtualFile()) != null;
   }
 
   @Override
@@ -122,18 +120,12 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
-  private static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
-    Function<Change, PsiFile> changeToPsiFileMapper = new Function<>() {
-      private final PsiManager myPsiManager = PsiManager.getInstance(project);
-
-      @Override
-      public PsiFile fun(Change change) {
-        VirtualFile vFile = change.getVirtualFile();
-        return vFile != null ? myPsiManager.findFile(vFile) : null;
-      }
-    };
-
-    return ContainerUtil.mapNotNull(changes, changeToPsiFileMapper);
+  private static List<PsiFile> getChangedFiles(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
+    PsiManager psiManager = PsiManager.getInstance(project);
+    return ContainerUtil.mapNotNull(changes, change -> {
+      VirtualFile vFile = change.getVirtualFile();
+      return vFile != null ? psiManager.findFile(vFile) : null;
+    });
   }
 
   @NotNull
@@ -307,14 +299,11 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
-    boolean isUnderVcs = VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file.getVirtualFile()));
-    if (!isUnderVcs) return true;
-
-    if (ChangeListManager.getInstance(project).isUnversioned(file.getVirtualFile())) {
-      return true;
+    if (isFileUnderVcs(file)) {
+      FileStatus status = ChangeListManager.getInstance(project).getStatus(file.getVirtualFile());
+      return status == FileStatus.UNKNOWN || status == FileStatus.IGNORED;
     }
-
-    return false;
+    return true;
   }
 
   @Override
