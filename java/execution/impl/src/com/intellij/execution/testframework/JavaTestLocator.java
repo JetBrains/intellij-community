@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
+
 /**
  * Protocol format as follows:
  *
@@ -161,5 +163,15 @@ public class JavaTestLocator implements SMTestLocator {
   private static Location createClassNavigatable(String paramName, @NotNull PsiClass aClass) {
     return paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
                              : new PsiLocation<>(aClass.getProject(), aClass);
+  }
+
+  @NotNull
+  public static String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName) {
+    return protocol + SCHEME_SEPARATOR + fqClassName;
+  }
+
+  @NotNull
+  public static String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName, @NotNull String methodName) {
+    return createLocationUrl(protocol, fqClassName) + "/" + StringUtil.trimEnd(methodName, "()");
   }
 }
