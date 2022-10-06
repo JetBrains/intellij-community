@@ -7,9 +7,7 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings.Companion.getInstance
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
@@ -20,14 +18,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.IconLoader
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
-import com.intellij.util.ui.StartupUiUtil
 import java.io.InputStream
 import java.nio.file.Path
 import java.time.Instant
@@ -295,16 +290,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   // todo copypasted from the CloudConfigManager
   private fun updateUI() {
     // TODO: separate and move this code to specific managers
-    val lafManager = LafManager.getInstance()
-    val lookAndFeel = lafManager.currentLookAndFeel
-    if (lookAndFeel != null) {
-      lafManager.setCurrentLookAndFeel(lookAndFeel, true)
-    }
-    val darcula = StartupUiUtil.isUnderDarcula()
-    JBColor.setDark(darcula)
-    IconLoader.setUseDarkIcons(darcula)
-    ActionToolbarImpl.updateAllToolbarsImmediately()
-    lafManager.updateUI()
     getInstance().fireUISettingsChanged()
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
     EditorOptionsPanel.reinitAllEditors()
