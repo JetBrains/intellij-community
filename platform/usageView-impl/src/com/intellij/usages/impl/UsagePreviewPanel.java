@@ -350,7 +350,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void dispose() {
     isDisposed = true;
     releaseEditor();
-    disposeSimilarUsagesToolbar();
+    disposeAndRemoveSimilarUsagesToolbar();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:" + editor);
@@ -358,8 +358,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
   }
 
-  private void disposeSimilarUsagesToolbar() {
+  private void disposeAndRemoveSimilarUsagesToolbar() {
     if (myToolbarWithSimilarUsagesLink != null) {
+      remove(myToolbarWithSimilarUsagesLink);
+      revalidate();
       Disposer.dispose(myToolbarWithSimilarUsagesLink);
       myToolbarWithSimilarUsagesLink = null;
     }
@@ -406,7 +408,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @Override
   @RequiresEdt
   public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    disposeSimilarUsagesToolbar();
+    disposeAndRemoveSimilarUsagesToolbar();
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
       ClusteringSearchSession sessionInUsageView = findClusteringSessionInUsageView(usageViewImpl);
@@ -427,10 +429,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
   public void updateSimilarUsagesToolBar(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     if (Registry.is("similarity.find.usages.show.similar.usages.in.usage.preview")) {
-      if (myToolbarWithSimilarUsagesLink != null) {
-        remove(myToolbarWithSimilarUsagesLink);
-        revalidate();
-      }
       ClusteringSearchSession session = findClusteringSessionInUsageView(usageView);
       if (session != null) {
         UsageCluster cluster = session.findCluster(ContainerUtil.getFirstItem(infos));
