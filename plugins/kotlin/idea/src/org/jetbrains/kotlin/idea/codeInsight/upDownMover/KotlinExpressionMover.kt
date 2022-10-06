@@ -445,6 +445,7 @@ class KotlinExpressionMover : AbstractKotlinUpDownMover() {
             editor: Editor, down: Boolean
         ): Pair<PsiElement, PsiElement>? {
             if (down && sibling.siblings().none { it is KtExpression }) return null
+            if (!down && sibling !is KtExpression) return null
 
             var currentStart = start
             var currentEnd = end

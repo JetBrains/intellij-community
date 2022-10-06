@@ -865,6 +865,11 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
             runTest("testData/codeInsight/moveUpDown/expressions/hasComment6.kt");
         }
 
+        @TestMetadata("hasComment7.kt")
+        public void testHasComment7() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/hasComment7.kt");
+        }
+
         @TestMetadata("If1.kt")
         public void testIf1() throws Exception {
             runTest("testData/codeInsight/moveUpDown/expressions/If1.kt");
