@@ -2,11 +2,12 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
   }
 
   private static void inspectExpression(@NotNull UExpression expression, @NotNull ProblemsHolder holder) {
-    if (isVirtualFileGetChildrenMethodCall(expression, holder.getProject()) && isCalledInRecursiveMethod(expression)) {
+    if (isVirtualFileGetChildrenMethodCall(expression) && isCalledInRecursiveMethod(expression)) {
       PsiElement sourcePsi = expression.getSourcePsi();
       if (sourcePsi != null) {
         holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.unsafe.vfs.recursion"));
@@ -53,12 +54,10 @@ public class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
     }
   }
 
-  private static boolean isVirtualFileGetChildrenMethodCall(@NotNull UExpression expression, @NotNull Project project) {
+  private static boolean isVirtualFileGetChildrenMethodCall(@NotNull UExpression expression) {
     PsiMethod getChildrenMethod = tryToResolveGetVisitChildrenMethod(expression);
     if (getChildrenMethod == null) return false;
-    PsiClass aClass = getChildrenMethod.getContainingClass();
-    PsiClass virtualFileClass = JavaPsiFacade.getInstance(project).findClass(VIRTUAL_FILE_CLASS_NAME, GlobalSearchScope.allScope(project));
-    return InheritanceUtil.isInheritorOrSelf(aClass, virtualFileClass, true);
+    return InheritanceUtil.isInheritor(getChildrenMethod.getContainingClass(), VIRTUAL_FILE_CLASS_NAME);
   }
 
   @Nullable
