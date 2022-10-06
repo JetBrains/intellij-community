@@ -6235,6 +6235,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/syntheticProperty.kt");
             }
 
+            @TestMetadata("syntheticProperty_1_9.kt")
+            public void testSyntheticProperty_1_9() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/syntheticProperty_1_9.kt");
+            }
+
             @TestMetadata("threeParameters.kt")
             public void testThreeParameters() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/threeParameters.kt");
