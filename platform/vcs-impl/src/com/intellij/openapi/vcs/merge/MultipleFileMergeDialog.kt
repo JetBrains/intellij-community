@@ -75,7 +75,7 @@ open class MultipleFileMergeDialog(
   private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
   val processedFiles: MutableList<VirtualFile> = mutableListOf()
-  private lateinit var table: TreeTable
+  private val table: TreeTable
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
@@ -102,6 +102,11 @@ open class MultipleFileMergeDialog(
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
     title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
+
+    table = MergeConflictsTreeTable(tableModel)
+    table.setTreeCellRenderer(virtualFileRenderer)
+    table.rowHeight = virtualFileRenderer.preferredSize.height
+    table.preferredScrollableViewportSize = JBUI.size(600, 300)
 
     @Suppress("LeakingThis")
     init()
@@ -145,12 +150,7 @@ open class MultipleFileMergeDialog(
       }
 
       row {
-        scrollPane(MergeConflictsTreeTable(tableModel).also {
-          table = it
-          it.setTreeCellRenderer(virtualFileRenderer)
-          it.rowHeight = virtualFileRenderer.preferredSize.height
-          it.preferredScrollableViewportSize = JBUI.size(600, 300)
-        }).constraints(growX, growY, pushX, pushY)
+        scrollPane(table).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
           JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {
@@ -199,7 +199,8 @@ open class MultipleFileMergeDialog(
         customColumnNames = null
       }
       mergeInfoColumns.mapIndexedTo(columns) { index, columnInfo ->
-        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name) }
+        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name)
+      }
     }
     return columns.toTypedArray()
   }
@@ -237,7 +238,7 @@ open class MultipleFileMergeDialog(
     val selectedFiles = getSelectedFiles()
     val haveSelection = selectedFiles.any()
     val haveUnmergeableFiles = selectedFiles.any { mergeSession?.canMerge(it) == false }
-    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it)}
+    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it) }
 
     acceptYoursButton.isEnabled = haveSelection && !haveUnacceptableFiles
     acceptTheirsButton.isEnabled = haveSelection && !haveUnacceptableFiles
