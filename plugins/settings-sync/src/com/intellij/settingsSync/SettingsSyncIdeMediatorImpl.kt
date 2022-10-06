@@ -7,7 +7,6 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
@@ -290,7 +289,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   // todo copypasted from the CloudConfigManager
   private fun updateUI() {
     // TODO: separate and move this code to specific managers
-    getInstance().fireUISettingsChanged()
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
     EditorOptionsPanel.reinitAllEditors()
     EditorOptionsPanel.restartDaemons()
