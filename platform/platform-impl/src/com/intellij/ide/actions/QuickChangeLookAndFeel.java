@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -92,8 +92,12 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   }
 
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
+    switchLafAndUpdateUI(lafMan, lf, async, false);
+  }
+
+  public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, boolean force) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
-    if (cur == lf) return;
+    if (!force && cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 
     final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
