@@ -708,18 +708,50 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   static class MouseDragAwareCaret extends MarginAwareCaret {
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
-        boolean consumed = e.isConsumed();
-        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | ((InputEvent)e).getModifiersEx(), e.getX(),
-                           getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
-        if (consumed) e.consume();
+      switch (dragSelectionMode(e)) {
+        case ORIGINAL -> super.mouseDragged(e);
+        case WINDOWS -> mouseDraggedWindows(e);
       }
-      super.mouseDragged(e);
+    }
+
+    private void mouseDraggedWindows(MouseEvent e) {
+      mouseDragged(e, e.getX(), getComponent().getHeight() / 2);
+    }
+
+    private void mouseDragged(MouseEvent e, int x, int y) {
+      MouseEvent copy = new MouseEvent(
+        e.getComponent(),
+        e.getID(),
+        e.getWhen(),
+        e.getModifiers() | ((InputEvent)e).getModifiersEx(),
+        x,
+        y,
+        e.getClickCount(),
+        e.isPopupTrigger(),
+        e.getButton()
+      );
+      if (e.isConsumed()) {
+        copy.consume();
+      }
+      super.mouseDragged(copy);
+    }
+
+    private DragSelectionMode dragSelectionMode(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
+        return DragSelectionMode.WINDOWS;
+      } else {
+        return DragSelectionMode.ORIGINAL;
+      }
     }
 
     public boolean isMultiline(JTextComponent component) {
       return component.getText().contains("\n")
              || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
+    }
+
+    private enum DragSelectionMode {
+      ORIGINAL,
+      WINDOWS;
     }
   }
 
