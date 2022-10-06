@@ -80,13 +80,13 @@ compileTestKotlin {
 
 ##### Run with JUnit4
 
-[Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/tree/master/testSrc/com/intellij/ide/starter/tests/examples/junit4)
+[Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/blob/master/intellij.tools.ide.starter.tests/testSrc/com/intellij/ide/starter/tests/examples/junit4/IdeaJUnit4ExampleTests.kt)
 
 You should create appropriate classes in your tests for JUnit4StarterRule, IdeaCases (we don't provide that as an artifact yet)
 
 ##### Run with JUnit5
 
-[Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/tree/master/testSrc/com/intellij/ide/starter/tests/examples/junit5)
+[Example of simple test, that will download IntelliJ IDEA and start import of gradle project](https://github.com/JetBrains/intellij-ide-starter/blob/master/intellij.tools.ide.starter.tests/testSrc/com/intellij/ide/starter/tests/examples/junit5/IdeaJUnit5ExampleTest.kt)
 
 ##### Available commands from plugins
 
@@ -138,7 +138,7 @@ Dependency `performance-testing-gradle-commands`
 #### What behaviour might be extended / modified
 
 Everything, that initializes via DI framework (Kodein DI) might be modified in your code for your need.   
-[DI container initialization](https://github.com/JetBrains/intellij-community/blob/master/tools/intellij.ide.starter/src/com/intellij/ide/starter/di/diContainer.kt)  
+[DI container initialization](https://github.com/JetBrains/intellij-ide-starter/blob/master/intellij.tools.ide.starter/src/com/intellij/ide/starter/di/diContainer.kt)  
 For example, you might write your own implementation of CIServer and provide it via DI.
 
 NOTE: Be sure to use the same version of Kodein, that is used in `build.gradle` for starter project.
