@@ -135,6 +135,12 @@ Dependency `performance-testing-gradle-commands`
 
 - importGradleProject()
 
+### Metrics
+
+Dependency `com.jetbrains.intellij.tools:ide-metrics-collector`
+
+See [README](https://github.com/JetBrains/intellij-ide-starter/blob/master/intellij.tools.ide.metricsCollector/README.md) for more details.
+
 #### What behaviour might be extended / modified
 
 Everything, that initializes via DI framework (Kodein DI) might be modified in your code for your need.   
