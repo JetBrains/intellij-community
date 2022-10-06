@@ -85,8 +85,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val context = createBuildContext(productConfiguration = productConfiguration,
                                    request = request,
-                                   runDir = runDir,
-                                   isServerMode = isServerMode)
+                                   runDir = runDir)
 
   val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
 
@@ -139,10 +138,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
   return IdeBuilder(pluginBuilder = pluginBuilder, outDir = request.productionClassOutput, moduleNameToPlugin = moduleNameToPluginBuildDescriptor)
 }
 
-private suspend fun createBuildContext(productConfiguration: ProductConfiguration,
-                                       request: BuildRequest,
-                                       runDir: Path,
-                                       isServerMode: Boolean): BuildContext {
+private suspend fun createBuildContext(productConfiguration: ProductConfiguration, request: BuildRequest, runDir: Path): BuildContext {
   return coroutineScope {
     // ~1 second
     val productProperties = async {
@@ -158,7 +154,8 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
           communityHome = getCommunityHomePath(request.homePath),
           projectHome = request.homePath,
           buildOutputRootEvaluator = { _ -> runDir },
-          options = createBuildOptions(runDir).also { it.setupTracer = isServerMode }
+          setupTracer = false,
+          options = createBuildOptions(runDir),
         )
       }
     }

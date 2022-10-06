@@ -14,8 +14,6 @@ import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
-import io.opentelemetry.sdk.trace.export.SpanExporter
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +23,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.TimeUnit
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -50,24 +48,18 @@ object TraceManager {
     val serviceVersion = appInfo.build.asStringWithoutProductCode()
     val serviceNamespace = appInfo.build.productCode
 
-    val spanExporters = mutableListOf<SpanExporter>()
+    val spanExporters = mutableListOf<AsyncSpanExporter>()
     val metricExporters = mutableListOf<MetricExporter>()
     if (traceFile != null) {
-      val jsonSpanExporter = JaegerJsonSpanExporter()
-      JaegerJsonSpanExporter.setOutput(file = Path.of(traceFile),
-                                       serviceName = serviceName,
-                                       serviceVersion = serviceVersion,
-                                       serviceNamespace = serviceNamespace)
-      spanExporters.add(jsonSpanExporter)
-
-      val metricsFile = deriveMetricsFile(traceFile)
-      metricExporters.add(CsvMetricsExporter(metricsFile))
+      spanExporters.add(JaegerJsonSpanExporter(file = Path.of(traceFile),
+                                               serviceName = serviceName,
+                                               serviceVersion = serviceVersion,
+                                               serviceNamespace = serviceNamespace))
+      metricExporters.add(CsvMetricsExporter(deriveMetricsFile(traceFile)))
     }
 
     if (endpoint != null) {
-      val s = if (endpoint == "true") "http://0.0.0.0:4318/" else endpoint
-      spanExporters.add(OtlpSpanExporter(s, mainScope))
-      //spanExporters.add(OtlpGrpcSpanExporter.builder().setEndpoint(s).build())
+      spanExporters.add(OtlpSpanExporter(endpoint))
     }
 
     val resource = Resource.create(Attributes.of(
@@ -81,36 +73,34 @@ object TraceManager {
 
     if (spanExporters.isNotEmpty()) {
       val tracerProvider = SdkTracerProvider.builder()
-        .addSpanProcessor(BatchSpanProcessor.builder(SpanExporter.composite(spanExporters)).build())
+        .addSpanProcessor(BatchSpanProcessor(mainScope = mainScope, spanExporters = spanExporters))
         .setResource(resource)
         .build()
 
       otelSdkBuilder.setTracerProvider(tracerProvider)
 
       ShutDownTracker.getInstance().registerShutdownTask {
-        tracerProvider?.forceFlush()?.join(10, SECONDS)
-        JaegerJsonSpanExporter.finish()
+        tracerProvider.shutdown().join(10, TimeUnit.SECONDS)
       }
     }
 
     if (metricExporters.isNotEmpty()) {
-      assert(metricExporters.size == 1) { //no SpanExporter.composite() analog available
+      // no SpanExporter.composite() analog available
+      assert(metricExporters.size == 1) {
         "Only single MetricsExporter supported so far, but got: $metricExporters"
       }
       val metricsReader = PeriodicMetricReader.builder(metricExporters.first())
         .setInterval(Duration.ofMinutes(1)) // == default value, but to be explicit
         .build()
 
-      val metricsProvider = SdkMeterProvider.builder()
+      val meterProvider = SdkMeterProvider.builder()
         .registerMetricReader(metricsReader)
         .setResource(resource)
         .build()
 
-      otelSdkBuilder.setMeterProvider(metricsProvider)
+      otelSdkBuilder.setMeterProvider(meterProvider)
 
-      ShutDownTracker.getInstance().registerShutdownTask {
-        metricsProvider?.forceFlush()?.join(10, SECONDS)
-      }
+      ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
     }
 
     sdk = otelSdkBuilder.buildAndRegisterGlobal()

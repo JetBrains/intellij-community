@@ -12,14 +12,9 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.OutputStreamContent
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler
-import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 
 private val httpClient by lazy {
   // HttpTimeout is not used - CIO engine handles that
@@ -36,51 +31,24 @@ private val httpClient by lazy {
 // ktor type for protobuf uses "protobuf", but go otlp requires "x-" prefix
 private val Protobuf = ContentType("application", "x-protobuf")
 
-internal class OtlpSpanExporter(endpoint: String, mainScope: CoroutineScope) : SpanExporter {
-  private val unpublishedSpans = MutableSharedFlow<TraceRequestMarshaler>(extraBufferCapacity = 2_048)
+@Internal
+class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
+  private val traceUrl = "${(if (endpoint == "true") "http://127.0.0.1:4318/" else endpoint).removeSuffix("/")}/v1/traces"
 
-  private val traceUrl = "${endpoint.removeSuffix("/")}/v1/traces"
-
-  init {
-    mainScope.launch(Dispatchers.IO) {
-      unpublishedSpans
-        .collect {
-          export(item = it, url = traceUrl)
-        }
-    }
-  }
-
-  override fun export(spans: Collection<SpanData>): CompletableResultCode {
+  override suspend fun export(spans: Collection<SpanData>) {
     val item = TraceRequestMarshaler.create(spans)
-    check(unpublishedSpans.tryEmit(item)) {
-      "Too many unprocessed items"
+    try {
+      httpClient.post(traceUrl) {
+        setBody(OutputStreamContent(contentType = Protobuf, contentLength = item.binarySerializedSize.toLong(), body = {
+          item.writeBinaryTo(this)
+        }))
+      }
     }
-    return CompletableResultCode.ofSuccess()
-  }
-
-  override fun flush(): CompletableResultCode {
-    return CompletableResultCode.ofSuccess()
-  }
-
-  override fun shutdown(): CompletableResultCode {
-    return CompletableResultCode.ofSuccess()
-  }
-}
-
-private suspend fun export(item: TraceRequestMarshaler, url: String): CompletableResultCode {
-  try {
-    httpClient.post(url) {
-      setBody(OutputStreamContent(contentType = Protobuf, contentLength = item.binarySerializedSize.toLong(), body = {
-        item.writeBinaryTo(this)
-      }))
+    catch (e: CancellationException) {
+      throw e
     }
-    return CompletableResultCode.ofSuccess()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    Logger.getInstance(OtlpSpanExporter::class.java).error("Failed to export opentelemetry spans (url=$url)", e)
-    return CompletableResultCode.ofFailure()
+    catch (e: Throwable) {
+      Logger.getInstance(OtlpSpanExporter::class.java).error("Failed to export opentelemetry spans (url=$traceUrl)", e)
+    }
   }
 }
