@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.projectView.BaseProjectViewTestCase;
@@ -15,6 +15,7 @@ import org.junit.Assert;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
@@ -30,22 +31,21 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
 
   public void testToDo1() {
     AtomicInteger rebuildCacheCount = new AtomicInteger(0);
-    class TestTodoBuilder extends AllTodosTreeBuilder {
-      TestTodoBuilder() {
-        super(new Tree(), ToDoTreeStructureTest.this.myProject);
-      }
-
+    AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), this.myProject) {
       @Override
       protected void clearCache() {
         super.clearCache();
         rebuildCacheCount.incrementAndGet();
       }
-    }
-    TestTodoBuilder all = new TestTodoBuilder();
+    };
+
     try {
       all.init();
       //second rebuild, e.g. switching scope in scope based t.o.d.o panel
-      all.rebuildCache().join();
+      CompletableFuture<?> rebuildCache = all.rebuildCache();
+      while (!rebuildCache.isDone()) {
+        IdeEventQueue.getInstance().flushQueue();
+      }
 
       Assert.assertEquals(1, rebuildCacheCount.get());
 
@@ -74,7 +74,8 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     try {
       all.init();
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      IdeEventQueue.getInstance().flushQueue();
+
       AbstractTreeStructure structure = all.getTodoTreeStructure();
       ProjectViewTestUtil.assertStructureEqual(structure,
                                                """
