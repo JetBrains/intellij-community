@@ -69,6 +69,12 @@ private class ResolutionFacadeWithDebugInfo(
         }
     }
 
+    override fun fetchWithAllCompilerChecks(element: KtElement): AnalysisResult? {
+        return wrapExceptions({ ResolvingWhat(element = element) }) {
+            delegate.fetchWithAllCompilerChecks(element)
+        }
+    }
+
     override fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode): DeclarationDescriptor {
         return wrapExceptions({ ResolvingWhat(declaration, bodyResolveMode = bodyResolveMode) }) {
             delegate.resolveToDescriptor(declaration, bodyResolveMode)

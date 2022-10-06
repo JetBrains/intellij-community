@@ -358,6 +358,11 @@
                  description="Hold info about packages using strong references instead of soft ones"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.resolve.cache.uses.perfile.cache"
+                 description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
+                 defaultValue="true"
+                 restartRequired="true"/>
   </extensions>
 
   <!-- Tips and Tricks -->
