@@ -12,9 +12,9 @@ import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.codeInsight.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<HtmlTag>() {
 

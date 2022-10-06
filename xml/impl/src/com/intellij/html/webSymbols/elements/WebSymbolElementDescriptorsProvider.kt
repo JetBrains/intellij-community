@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlElementDescriptor
 

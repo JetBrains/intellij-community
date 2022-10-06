@@ -20,7 +20,12 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsRegistryExtension
 import com.intellij.webSymbols.utils.match
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.XmlAttributeDescriptor

@@ -14,8 +14,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
+import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.registry.WebSymbolNamesProvider
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
 import java.util.*
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts

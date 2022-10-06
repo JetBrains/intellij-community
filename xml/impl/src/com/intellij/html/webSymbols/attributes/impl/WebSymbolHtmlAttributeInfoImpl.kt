@@ -4,9 +4,9 @@ package com.intellij.html.webSymbols.attributes.impl
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.WebSymbolsRegistry
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.utils.asSingleSymbol
 import javax.swing.Icon
 

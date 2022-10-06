@@ -13,8 +13,8 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.codeInsight.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
 

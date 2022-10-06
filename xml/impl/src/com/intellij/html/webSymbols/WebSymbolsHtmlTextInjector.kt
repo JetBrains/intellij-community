@@ -20,7 +20,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
 

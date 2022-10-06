@@ -18,10 +18,15 @@ import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
-import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
-import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.parsePath
+import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
+import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.parsePath
+import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter

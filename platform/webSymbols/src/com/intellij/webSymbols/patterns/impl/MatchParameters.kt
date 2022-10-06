@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.patterns.impl
 
-import com.intellij.webSymbols.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 
 internal open class MatchParameters(val name: String,
                                     val registry: WebSymbolsRegistry) {

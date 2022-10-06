@@ -2,7 +2,7 @@
 package com.intellij.documentation.mdn
 
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
 abstract class MdnDocumentedSymbol : WebSymbol {
 

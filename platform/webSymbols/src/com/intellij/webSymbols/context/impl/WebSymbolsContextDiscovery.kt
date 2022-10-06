@@ -25,7 +25,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.WebSymbolsRegistryManager
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import com.intellij.webSymbols.context.DependencyProximityProvider
 import com.intellij.webSymbols.context.DependencyProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.context.DependencyProximityProvider.DependenciesKind
@@ -36,7 +36,7 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextProvider
 import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
-import com.intellij.webSymbols.impl.WebSymbolsRegistryManagerImpl
+import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryManagerImpl
 import com.intellij.webSymbols.utils.findOriginalFile
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

@@ -5,9 +5,9 @@ import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.WebSymbolsRegistryManager
-import com.intellij.webSymbols.findUsages.WebSymbolsUsageSearcher
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.search.WebSymbolsUsageSearcher
 
 class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
 

@@ -3,9 +3,13 @@ package com.intellij.webSymbols.webTypes.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.impl.*
+import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.webTypes.json.*
 
 internal fun NamePatternRoot.wrap(defaultDisplayName: String?): WebSymbolsPattern =

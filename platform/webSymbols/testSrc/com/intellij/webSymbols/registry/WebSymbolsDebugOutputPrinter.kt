@@ -2,6 +2,8 @@
 package com.intellij.webSymbols.registry
 
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import java.util.*
 
 open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {

@@ -12,13 +12,15 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
-import com.intellij.webSymbols.impl.SearchMap
+import com.intellij.webSymbols.registry.impl.SearchMap
+import com.intellij.webSymbols.registry.*
 import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper.Companion.wrap

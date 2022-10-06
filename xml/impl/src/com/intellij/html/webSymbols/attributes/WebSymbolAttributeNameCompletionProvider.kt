@@ -17,10 +17,10 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbolsRegistry
-import com.intellij.webSymbols.WebSymbolsRegistryManager
-import com.intellij.webSymbols.codeInsight.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.codeInsight.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
 

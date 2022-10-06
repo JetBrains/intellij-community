@@ -3,7 +3,10 @@ package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.*
+import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
 
 abstract class WebSymbolsPattern {
 

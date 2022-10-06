@@ -20,33 +20,33 @@
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport$Factory"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.registryExtension"
-                    interface="com.intellij.webSymbols.WebSymbolsRegistryExtension"
+                    interface="com.intellij.webSymbols.registry.WebSymbolsRegistryExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.filter"
-                    beanClass="com.intellij.webSymbols.impl.WebSymbolsFilterEP"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.filter"
+                    beanClass="com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.WebSymbolsFilter"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.documentationCustomizer"
-                    interface="com.intellij.webSymbols.WebSymbolDocumentationCustomizer"
+                    interface="com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.codeCompletionItemCustomizer"
-                    interface="com.intellij.webSymbols.WebSymbolCodeCompletionItemCustomizer"
+                    interface="com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.defaultIconProvider"
-                    interface="com.intellij.webSymbols.WebSymbolDefaultIconProvider"
+                    interface="com.intellij.webSymbols.registry.WebSymbolDefaultIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.scopeProvider"
-                    interface="com.intellij.webSymbols.WebSymbolsScopeProvider"
+                    interface="com.intellij.webSymbols.registry.WebSymbolsScopeProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
-                    interface="com.intellij.webSymbols.WebSymbolDeclarationProvider"
+                    interface="com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbolProvider"
                     interface="com.intellij.webSymbols.PsiSourcedWebSymbolProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbol"
-                    beanClass="com.intellij.webSymbols.findUsages.impl.WebSymbolPsiSourcedSymbolHostClassEP"
+                    beanClass="com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"

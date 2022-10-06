@@ -7,6 +7,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
 class WebSymbolsRegistryCompletionQueryTest : WebSymbolsMockRegistryTestBase() {
 

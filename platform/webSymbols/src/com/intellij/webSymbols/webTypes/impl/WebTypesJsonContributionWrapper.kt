@@ -12,8 +12,13 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Priority
-import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase

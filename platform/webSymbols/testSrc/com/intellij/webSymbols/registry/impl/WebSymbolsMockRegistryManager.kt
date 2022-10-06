@@ -1,14 +1,15 @@
 package com.intellij.webSymbols.registry.impl
 
-import com.intellij.webSymbols.impl.WebSymbolNamesProviderImpl
-import com.intellij.webSymbols.impl.WebSymbolsRegistryImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
+import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.registry.WebSymbolsScopeProvider
 
 class WebSymbolsMockRegistryManager : WebSymbolsRegistryManager {
 

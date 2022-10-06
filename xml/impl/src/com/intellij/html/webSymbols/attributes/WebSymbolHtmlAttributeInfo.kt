@@ -5,6 +5,8 @@ import com.intellij.html.webSymbols.attributes.impl.HtmlAttributeEnumConstValueS
 import com.intellij.html.webSymbols.attributes.impl.WebSymbolHtmlAttributeInfoImpl
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 

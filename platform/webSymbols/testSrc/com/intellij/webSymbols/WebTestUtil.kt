@@ -43,11 +43,14 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.webSymbols.declarations.WebSymbolDeclaration
+import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.registry.WebSymbolMatch
+import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File

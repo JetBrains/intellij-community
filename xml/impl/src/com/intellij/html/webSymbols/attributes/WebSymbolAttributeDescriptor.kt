@@ -14,7 +14,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
