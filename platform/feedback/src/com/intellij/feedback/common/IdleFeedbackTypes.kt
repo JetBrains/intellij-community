@@ -118,9 +118,6 @@ enum class IdleFeedbackTypes {
     private fun checkNewUIHasBeenEnabled(state: NewUIInfoState): Boolean {
       val enableNewUIDate = state.enableNewUIDate
       if (enableNewUIDate == null) {
-        if (Registry.get("ide.experimental.ui").asBoolean()) {
-          NewUIInfoService.getInstance().updateEnableNewUIDate()
-        }
         return false
       }
 
