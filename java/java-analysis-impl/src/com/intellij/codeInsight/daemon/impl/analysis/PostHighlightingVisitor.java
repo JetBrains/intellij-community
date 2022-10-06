@@ -38,7 +38,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.source.tree.java.PsiDeconstructionPatternVariableImpl;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
@@ -435,7 +434,7 @@ class PostHighlightingVisitor {
       HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         if (declarationScope.getParent() instanceof PsiSwitchBlock) {
-          if (variable instanceof PsiDeconstructionPatternVariableImpl) {
+          if (variable.getParent() instanceof PsiDeconstructionPattern) {
             QuickFixAction.registerQuickFixAction(highlightInfo, quickFixFactory.createDeleteFix(parameter));
           }
           else {
