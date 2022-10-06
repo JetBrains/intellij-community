@@ -10,5 +10,5 @@
     <plugin id="com.intellij.java"/>
   </dependencies>
 
-  <xi:include href="/k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

@@ -1,9 +1,13 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
-    <plugin id="com.intellij.modules.idea"/>
-    <plugin id="com.intellij.modules.java"/>
-  </dependencies>
+  <depends optional="true" config-file="gradle.xml">com.intellij.gradle</depends>
+  <depends optional="true" config-file="dep-groovy.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="maven-common.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="dep-maven.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.idea</depends>
+  <depends>com.intellij.modules.java</depends>
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
