@@ -46,8 +46,11 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
   override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null
+    val projectExist = e.project != null
+    if (projectExist) {
+      super.update(e)
+    }
+    e.presentation.isEnabledAndVisible = projectExist
   }
 
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)

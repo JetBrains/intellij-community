@@ -434,7 +434,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
 
   private fun isMainIconAt(point: Point, selected: Any): Boolean {
     val row = tree.getRowForLocation(point.x, point.y)
-    val rowBounds = tree.getRowBounds(row)
+    val rowBounds = tree.getRowBounds(row) ?: return false
     point.translate(-rowBounds.x, -rowBounds.y)
 
     val rowComponent = tree.cellRenderer
