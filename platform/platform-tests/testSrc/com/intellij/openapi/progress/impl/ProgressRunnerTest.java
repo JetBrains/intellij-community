@@ -33,7 +33,9 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -363,6 +365,15 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     class ThrowingIndicator extends EmptyProgressIndicator implements BlockingProgressIndicator {
       @Override
       public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
+        // "enter" modality
+        init.run();
+        // wait for task future to complete
+        try {
+          stopCondition.get(1000, TimeUnit.MILLISECONDS);
+        }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+          throw new RuntimeException(e);
+        }
         throw t;
       }
     }
