@@ -3,9 +3,18 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.PersistingReviewListSearchHistoryModel
 
-internal class GitLabMergeRequestsFiltersHistoryModel : PersistingReviewListSearchHistoryModel<GitLabMergeRequestsFiltersValue>() {
+internal class GitLabMergeRequestsFiltersHistoryModel(
+  private val persistentHistoryComponent: GitLabMergeRequestsPersistentFiltersHistory
+) : PersistingReviewListSearchHistoryModel<GitLabMergeRequestsFiltersValue>() {
+  override var lastFilter: GitLabMergeRequestsFiltersValue?
+    get() = persistentHistoryComponent.lastFilter
+    set(value) {
+      persistentHistoryComponent.lastFilter = value
+    }
 
-  override var persistentHistory: List<GitLabMergeRequestsFiltersValue> = emptyList()
-
-  override var lastFilter: GitLabMergeRequestsFiltersValue? = null
+  override var persistentHistory: List<GitLabMergeRequestsFiltersValue>
+    get() = persistentHistoryComponent.history
+    set(value) {
+      persistentHistoryComponent.history = value
+    }
 }

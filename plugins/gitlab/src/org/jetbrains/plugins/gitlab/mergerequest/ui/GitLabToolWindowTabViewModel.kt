@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
 
 internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
                                             private val connectionManager: GitLabProjectConnectionManager,
@@ -35,7 +36,7 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
     class MergeRequests(scope: CoroutineScope, connection: GitLabProjectConnection) : NestedViewModel {
       private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
         scope,
-        historyModel = GitLabMergeRequestsFiltersHistoryModel()
+        historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory())
       )
 
       val listVm: GitLabMergeRequestsListViewModel =
