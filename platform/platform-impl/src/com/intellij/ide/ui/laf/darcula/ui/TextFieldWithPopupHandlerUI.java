@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -19,6 +20,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -706,36 +708,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   static class MouseDragAwareCaret extends MarginAwareCaret {
+
+    private final MouseDragSelectionEventHandler handler = new MouseDragSelectionEventHandler(e -> {
+      super.mouseDragged(e);
+      return Unit.INSTANCE;
+    });
+
     @Override
     public void mouseDragged(MouseEvent e) {
-      switch (dragSelectionMode(e)) {
-        case ORIGINAL -> super.mouseDragged(e);
-        case WINDOWS -> mouseDraggedWindows(e);
-      }
-    }
-
-    private void mouseDraggedWindows(MouseEvent e) {
-      mouseDragged(e, e.getX(), getComponent().getHeight() / 2);
-    }
-
-    private void mouseDragged(MouseEvent e, int x, int y) {
-      final int originalX = e.getX();
-      final int originalY = e.getY();
-      e.translatePoint(x - originalX, y - originalY);
-      try {
-        super.mouseDragged(e);
-      }
-      finally {
-        e.translatePoint(originalX - x, originalY - y);
-      }
-    }
-
-    private DragSelectionMode dragSelectionMode(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
-        return DragSelectionMode.WINDOWS;
-      } else {
-        return DragSelectionMode.ORIGINAL;
-      }
+      handler.setNativeSelectionEnabled(!isMultiline(getComponent()));
+      handler.mouseDragged(e);
     }
 
     public boolean isMultiline(JTextComponent component) {
@@ -743,10 +725,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
              || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
 
-    private enum DragSelectionMode {
-      ORIGINAL,
-      WINDOWS;
-    }
   }
 
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
