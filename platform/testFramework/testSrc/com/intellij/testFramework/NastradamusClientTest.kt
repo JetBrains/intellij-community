@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.nostradamus.NastradamusClient
-import com.intellij.nostradamus.model.ChangeEntity
-import com.intellij.nostradamus.model.SortRequestEntity
-import com.intellij.nostradamus.model.TestCaseEntity
+import com.intellij.nastradamus.NastradamusClient
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.mapConcurrently
 import kotlinx.coroutines.runBlocking
@@ -17,7 +17,7 @@ class NastradamusClientTest {
   @Ignore("Do not use TC. Use mocks / test data")
   fun debugAuthOnTC() {
     val uri = URI(
-      "https://buildserver.labs.intellij.net/app/rest/buildTypes/id:ijplatform_master_IdeaSmokeTestsCompositeBuild_2_Nostradamus"
+      "https://buildserver.labs.intellij.net/app/rest/buildTypes/id:ijplatform_master_IdeaSmokeTestsCompositeBuild_2_Nastradamus"
     )
     TeamCityClient.get(uri)
   }

@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.nostradamus
+package com.intellij.nastradamus
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
-import com.intellij.nostradamus.model.ChangeEntity
-import com.intellij.nostradamus.model.SortRequestEntity
-import com.intellij.nostradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.ChangeEntity
+import com.intellij.nastradamus.model.SortRequestEntity
+import com.intellij.nastradamus.model.TestCaseEntity
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.HttpClient
 import com.intellij.tool.mapConcurrently
@@ -16,7 +16,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import java.net.URI
 
-class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nostradamus.url")).normalize()) {
+class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastradamus.url")).normalize()) {
 
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
     val url = baseUrl.resolve("/sort")

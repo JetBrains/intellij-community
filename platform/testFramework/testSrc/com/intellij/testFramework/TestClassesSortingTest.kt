@@ -2,7 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.TestCaseLoader
-import com.intellij.nostradamus.NastradamusTestCaseSorter
+import com.intellij.nastradamus.NastradamusTestCaseSorter
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
