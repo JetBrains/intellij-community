@@ -30,11 +30,17 @@ class NewUIInfoService : PersistentStateComponent<NewUIInfoState> {
       state.enableNewUIDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
     }
   }
+  fun updateDisableNewUIDate() {
+    if (state.disableNewUIDate == null) {
+      state.disableNewUIDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    }
+  }
 }
 
 @Serializable
 data class NewUIInfoState(
   var numberNotificationShowed: Int = 0,
   var feedbackSent: Boolean = false,
-  var enableNewUIDate: LocalDateTime? = null
+  var enableNewUIDate: LocalDateTime? = null,
+  var disableNewUIDate: LocalDateTime? = null
 )

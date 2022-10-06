@@ -51,6 +51,8 @@ class ExperimentalUIImpl : ExperimentalUI() {
   override fun onExpUIDisabled() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
+    NewUIInfoService.getInstance().updateDisableNewUIDate()
+    
     setRegistryKeyIfNecessary("ide.experimental.ui", false)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
     val mgr = LafManager.getInstance() as LafManagerImpl

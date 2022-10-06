@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
 import java.time.Duration
@@ -117,6 +118,9 @@ enum class IdleFeedbackTypes {
     private fun checkNewUIHasBeenEnabled(state: NewUIInfoState): Boolean {
       val enableNewUIDate = state.enableNewUIDate
       if (enableNewUIDate == null) {
+        if (Registry.get("ide.experimental.ui").asBoolean()) {
+          NewUIInfoService.getInstance().updateEnableNewUIDate()
+        }
         return false
       }
 
