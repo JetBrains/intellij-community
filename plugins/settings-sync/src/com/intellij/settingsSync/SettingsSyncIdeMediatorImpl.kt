@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import java.io.InputStream
@@ -245,15 +244,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
 
-    val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
-    schemeManagerFactory.process {
-      schemeManagersToReload.add(it)
-    }
-
     val changedComponentNames = LinkedHashSet<String>()
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
 
+    val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
     for (schemeManager in schemeManagersToReload) {
       if (schemeManager.fileSpec == "colors") {
         EditorColorsManager.getInstance().reloadKeepingActiveScheme()
@@ -276,6 +271,24 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       catch (e: Throwable) {
         LOG.error(e)
       }
+    }
+  }
+
+  private fun calcSchemeManagersToReload(pathsToCheck: List<String>,
+                                         schemeManagerFactory: SchemeManagerFactoryBase): List<SchemeManagerImpl<*, *>> {
+    val schemeManagersToReload = mutableListOf<SchemeManagerImpl<*, *>>()
+    schemeManagerFactory.process {
+      if (shouldReloadSchemeManager(it, pathsToCheck)) {
+        schemeManagersToReload.add(it)
+      }
+    }
+    return schemeManagersToReload
+  }
+
+  private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
+    val fileSpec = schemeManager.fileSpec
+    return pathsToCheck.any { path ->
+      fileSpec == path || path.startsWith("$fileSpec/")
     }
   }
 }
