@@ -719,21 +719,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     private void mouseDragged(MouseEvent e, int x, int y) {
-      MouseEvent copy = new MouseEvent(
-        e.getComponent(),
-        e.getID(),
-        e.getWhen(),
-        e.getModifiers() | ((InputEvent)e).getModifiersEx(),
-        x,
-        y,
-        e.getClickCount(),
-        e.isPopupTrigger(),
-        e.getButton()
-      );
-      if (e.isConsumed()) {
-        copy.consume();
+      final int originalX = e.getX();
+      final int originalY = e.getY();
+      e.translatePoint(x - originalX, y - originalY);
+      try {
+        super.mouseDragged(e);
       }
-      super.mouseDragged(copy);
+      finally {
+        e.translatePoint(originalX - x, originalY - y);
+      }
     }
 
     private DragSelectionMode dragSelectionMode(MouseEvent e) {
