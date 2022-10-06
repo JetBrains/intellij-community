@@ -13,9 +13,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 
 class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
-    private fun JKMethod.canBeGetterOrSetter() =
-        name.value.asGetterName() != null
-                || name.value.asSetterName() != null
 
     private fun JKMethod.canNotBeMerged(): Boolean =
         modality == Modality.ABSTRACT
@@ -24,8 +21,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                 || hasOtherModifier(OtherModifier.SYNCHRONIZED)
                 || psi<PsiMethod>()?.let { context.converter.converterServices.oldServices.referenceSearcher.hasOverrides(it) } == true
                 || annotationList.annotations.isNotEmpty()
-                || canBeGetterOrSetter()
-
+                || name.value.canBeGetterOrSetterName()
 
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClassBody) return recurse(element)
@@ -156,6 +152,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                             childOfSecond
                         )
                     }
+
                     childOfFirst is List<*> && childOfSecond is List<*> -> {
                         childOfFirst.zip(childOfSecond) { child1, child2 ->
                             areTheSameExpressions(
@@ -164,6 +161,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                             )
                         }.fold(true, Boolean::and)
                     }
+
                     else -> false
                 }
             }.fold(true, Boolean::and)
@@ -185,6 +183,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveApp
                 if (expression.receiver !is JKThisExpression) return null
                 expression.selector as? JKCallExpression
             }
+
             else -> null
         }
     }

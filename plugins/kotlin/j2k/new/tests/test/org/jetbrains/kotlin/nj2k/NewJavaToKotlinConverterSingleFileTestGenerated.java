@@ -1502,6 +1502,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/AccessInGetterWithThis.java");
         }
 
+        @TestMetadata("AccessorOverridesKotlinProperty.java")
+        public void testAccessorOverridesKotlinProperty() throws Exception {
+            runTest("testData/newJ2k/detectProperties/AccessorOverridesKotlinProperty.java");
+        }
+
         @TestMetadata("AccessorsImplementInterface.java")
         public void testAccessorsImplementInterface() throws Exception {
             runTest("testData/newJ2k/detectProperties/AccessorsImplementInterface.java");

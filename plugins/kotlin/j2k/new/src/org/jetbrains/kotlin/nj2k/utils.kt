@@ -20,7 +20,7 @@ internal inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<
     return mutableList
 }
 
-fun String.asGetterName() =
+fun String.asGetterName(): String? =
     takeIf { JvmAbi.isGetterName(it) }
         ?.removePrefix("get")
         ?.takeIf {
@@ -29,12 +29,15 @@ fun String.asGetterName() =
         }?.decapitalizeAsciiOnly()
         ?.escaped()
 
-fun String.asSetterName() =
+fun String.asSetterName(): String? =
     takeIf { JvmAbi.isSetterName(it) }
         ?.removePrefix("set")
         ?.takeIf { it.isNotEmpty() && it.first().isUpperCase() }
         ?.decapitalizeAsciiOnly()
         ?.escaped()
+
+fun String.canBeGetterOrSetterName(): Boolean =
+    asGetterName() != null || asSetterName() != null
 
 private val KEYWORDS = KtTokens.KEYWORDS.types.map { (it as KtKeywordToken).value }.toSet()
 
