@@ -4,40 +4,60 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.psi.*;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.util.UastExpressionUtils;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UnspecifiedActionsPlaceInspection extends DevKitInspectionBase {
+public class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
+
+  private static final boolean SKIP_CHILDREN = true;
+
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
+  public static final String CREATE_ACTION_TOOLBAR_METHOD_NAME = "createActionToolbar";
+  public static final String CREATE_ACTION_POPUP_MENU_METHOD_NAME = "createActionPopupMenu";
+
   @Override
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
       @Override
-      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-        PsiMethod method = expression.resolveMethod();
-        if (method != null) {
-          String methodName = method.getName();
-          if (requiresSpecifiedActionPlace(method, methodName)) {
-            PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-            if (expressions.length > 0 && actionPlaceIsUnspecified(expressions[0])) {
-              String messageKey = "createActionToolbar".equals(methodName)
-                                  ? "inspections.unspecified.actions.place.toolbar"
-                                  : "inspections.unspecified.actions.place.popup.menu";
-              holder.registerProblem(expressions[0], DevKitBundle.message(messageKey));
+      public boolean visitCallExpression(@NotNull UCallExpression node) {
+        if (UastExpressionUtils.isMethodCall(node)) {
+          PsiMethod method = node.resolve();
+          if (method != null) {
+            String methodName = node.getMethodName();
+            if (methodName != null && requiresSpecifiedActionPlace(method, methodName) && node.getValueArgumentCount() > 0) {
+              UExpression parameter = node.getArgumentForParameter(0);
+              if (parameter != null && actionPlaceIsUnspecified(parameter)) {
+                PsiElement reportedElement = parameter.getSourcePsi();
+                if (reportedElement == null) return SKIP_CHILDREN;
+                String messageKey = CREATE_ACTION_TOOLBAR_METHOD_NAME.equals(methodName)
+                                    ? "inspections.unspecified.actions.place.toolbar"
+                                    : "inspections.unspecified.actions.place.popup.menu";
+                holder.registerProblem(reportedElement, DevKitBundle.message(messageKey));
+              }
             }
           }
-          super.visitMethodCallExpression(expression);
         }
+        return SKIP_CHILDREN;
       }
-    };
+    }, HINTS);
   }
 
   private static boolean requiresSpecifiedActionPlace(@NotNull PsiMethod method, @NotNull String methodName) {
-    if ("createActionToolbar".equals(methodName) || "createActionPopupMenu".equals(methodName)) {
+    if (CREATE_ACTION_TOOLBAR_METHOD_NAME.equals(methodName) || CREATE_ACTION_POPUP_MENU_METHOD_NAME.equals(methodName)) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && ActionManager.class.getName().equals(aClass.getQualifiedName())) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -54,9 +74,9 @@ public class UnspecifiedActionsPlaceInspection extends DevKitInspectionBase {
     return false;
   }
 
-  private static boolean actionPlaceIsUnspecified(PsiExpression placeArgument) {
-    String text = placeArgument.getText();
-    if (text.equals("\"\"") || text.equals("\"unknown\"") || text.endsWith(".UNKNOWN")) {
+  private static boolean actionPlaceIsUnspecified(UExpression parameter) {
+    Object evaluatedExpression = parameter.evaluate();
+    if (evaluatedExpression instanceof String stringValue && (stringValue.isEmpty() || "unknown".equals(stringValue))) {
       return true;
     }
     return false;
