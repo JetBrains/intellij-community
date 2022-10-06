@@ -1,14 +1,11 @@
 package com.intellij.settingsSync
 
-import com.intellij.application.options.editor.EditorOptionsPanel
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
@@ -71,8 +68,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     // 3. after that update the rest of changed settings
     val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
     writeStatesToAppConfig(regularFileStates)
-
-    invokeLater { updateUI() }
   }
 
   override fun activateStreamProvider() {
@@ -282,13 +277,5 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
         LOG.error(e)
       }
     }
-  }
-
-  // todo copypasted from the CloudConfigManager
-  private fun updateUI() {
-    // TODO: separate and move this code to specific managers
-    ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    EditorOptionsPanel.reinitAllEditors()
-    EditorOptionsPanel.restartDaemons()
   }
 }
