@@ -22,7 +22,6 @@ The plugin supports Kotlin 1.7 and lower.
   <change-notes><![CDATA[
     <h3>1.7.20</h3>
     <ul>
-      <li>K2: support for the `all-open, `no-arg`, SAM-with-receiver, Lombok, Parcelize, AtomicFU, and `jvm-abi-gen` compiler plugins</li>
       <li>Language: experimental `..<` (`rangeUntil`) operator for ranges with the excluded end bound, deprecated inferring type variables into an empty intersection type, warning on potentially empty intersection types, improved script handling in source roots</li>
       <li>Language: builder inference in cases with multiple lambdas now requires explicit type arguments; using an uninferred stub type as a receiver in a call during type inference is now forbidden and leads to an error</li>
       <li>Kotlin/JVM: experimental generic inline classes, more optimized cases of delegated properties</li>
@@ -35,7 +34,6 @@ The plugin supports Kotlin 1.7 and lower.
     <br><br>
     <h3>1.7.0</h3>
     <ul>
-      <li>New Kotlin K2 compiler for JVM in Alpha</li>
       <li>Language: changes in builder inference, allowed implementation by delegation to inlined value of inline class, changes in Opt-in annotations</li>
       <li>Kotlin/JVM: performance improvements, removed `1.6` target version</li>
       <li>Kotlin/Native: performance improvement for the new memory manager, embeddable compiler jar for Kotlin/Native by default, returning `Void` instead of `KotlinUnit` from `suspend` functions by default, generation of standalone executable for androidNative targets by default, prohibited exceptions through Objective-C bridges</li>
@@ -204,6 +202,5 @@ The plugin supports Kotlin 1.7 and lower.
 
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
-  <xi:include href="k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="k1.xml"/>
 </idea-plugin>
