@@ -31,7 +31,7 @@ object URIUtil {
     }
   }
 
-  fun equalWithoutSchema(first: URI, second: URI) : Boolean {
+  fun equalWithoutSchema(first: URI, second: URI): Boolean {
     val stubScheme = "stub"
     return first.withScheme(stubScheme) == second.withScheme(stubScheme)
   }
@@ -42,4 +42,10 @@ object URIUtil {
   }
 }
 
-fun URI.resolveRelative(path: String) : URI = resolve("./$path")
+fun URI.resolveRelative(path: String): URI = resolve("./$path")
+
+fun URI.withQuery(searchQuery: String): URI {
+  if (searchQuery.isBlank()) return this
+  val rawUri = this.toString() // to avoid path decoding
+  return URI("$rawUri?$searchQuery")
+}

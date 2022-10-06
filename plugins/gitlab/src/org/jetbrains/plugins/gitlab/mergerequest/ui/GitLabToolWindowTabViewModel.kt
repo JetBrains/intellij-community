@@ -11,6 +11,9 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel.MergeRequests
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowTabViewModel.NestedViewModel.Selectors
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 
 internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
                                             private val connectionManager: GitLabProjectConnectionManager,
@@ -30,10 +33,14 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
     class Selectors(val selectorVm: GitLabRepositoryAndAccountSelectorViewModel) : NestedViewModel
 
     class MergeRequests(scope: CoroutineScope, connection: GitLabProjectConnection) : NestedViewModel {
+      private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
+        scope,
+        historyModel = GitLabMergeRequestsFiltersHistoryModel()
+      )
 
       val listVm: GitLabMergeRequestsListViewModel =
-        GitLabMergeRequestsListViewModelImpl(scope) {
-          GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository)
+        GitLabMergeRequestsListViewModelImpl(scope, filterVm) { filtersValue ->
+          GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
         }
     }
   }

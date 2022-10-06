@@ -7,7 +7,6 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -16,10 +15,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 
@@ -28,16 +24,12 @@ internal class GitLabMergeRequestsPanelFactory {
   fun create(scope: CoroutineScope, vm: GitLabMergeRequestsListViewModel): JComponent {
     val listModel = collectMergeRequests(scope, vm)
     val list = createMergeRequestListComponent(listModel)
-    val listLoaderPanel = createListLoaderPanel(scope, vm, list)
 
-    val searchPanel = createSearchPanel(scope)
-    val controlsPanel = JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-      add(searchPanel)
-    }
+    val listLoaderPanel = createListLoaderPanel(scope, vm, list)
+    val searchPanel = createSearchPanel(scope, vm)
 
     return JBUI.Panels.simplePanel(listLoaderPanel)
-      .addToTop(controlsPanel)
+      .addToTop(searchPanel)
       .andTransparent()
   }
 
@@ -125,10 +117,7 @@ internal class GitLabMergeRequestsPanelFactory {
     return progressStripe
   }
 
-  private fun createSearchPanel(scope: CoroutineScope): JComponent {
-    val historyModel = GitLabMergeRequestsFiltersHistoryModel()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope, historyModel)
-
-    return GitLabFiltersPanelFactory(filterVm).create(scope)
+  private fun createSearchPanel(scope: CoroutineScope, vm: GitLabMergeRequestsListViewModel): JComponent {
+    return GitLabFiltersPanelFactory(vm.filterVm).create(scope)
   }
 }

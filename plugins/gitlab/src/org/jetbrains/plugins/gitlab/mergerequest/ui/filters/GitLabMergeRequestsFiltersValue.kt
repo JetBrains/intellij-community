@@ -34,5 +34,6 @@ data class GitLabMergeRequestsFiltersValue(
 
   companion object {
     val EMPTY = GitLabMergeRequestsFiltersValue()
+    val DEFAULT = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.OPENED)
   }
 }
