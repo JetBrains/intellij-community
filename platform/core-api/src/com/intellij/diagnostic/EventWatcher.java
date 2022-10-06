@@ -45,6 +45,21 @@ public interface EventWatcher {
   @RequiresEdt
   void edtEventFinished(@NotNull AWTEvent event, long finishedAt);
 
+  /**
+   * Reports time (in nanoseconds) task was waited in queue before EDT starts its execution.
+   * BEWARE: other methods accept time _in milliseconds_, while this method takes nanos -- this
+   * is because 1 ms granularity is OK for outliers monitoring (which other methods do mostly),
+   * but is too coarse for detailed statistics (most events probably wait < 1 ms on a good machine)
+   * @param queueSize how many tasks were in queue at the moment this task was added.
+   *                  Note: there is significant statistical difference between queue size seen by arrived
+   *                  tasks, and queue size seen at random time moments -- those are two different kind of
+   *                  samplings, they are equivalent only if arrivals are poisson-distributed, which are
+   *                  rarely true for real workloads.
+   */
+  void logTimeWaitedInQueue(final @NotNull Runnable runnable,
+                            final long waitedInQueueNs,
+                            final int queueSize);
+
   void reset();
 
   void logTimeMillis(@NotNull String processId,

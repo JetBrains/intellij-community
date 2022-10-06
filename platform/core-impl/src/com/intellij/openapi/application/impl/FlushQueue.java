@@ -51,7 +51,8 @@ final class FlushQueue {
             @NotNull Condition<?> expired,
             @NotNull Runnable runnable) {
     synchronized (getQueueLock()) {
-      RunnableInfo info = new RunnableInfo(runnable, modalityState, expired);
+      final int queueSize = myQueue.size();
+      RunnableInfo info = new RunnableInfo(runnable, modalityState, expired, queueSize);
       myQueue.enqueue(info);
       requestFlush();
     }
@@ -107,9 +108,12 @@ final class FlushQueue {
   }
 
   private static void runNextEvent(@NotNull RunnableInfo info) {
-    EventWatcher watcher = EventWatcher.getInstanceOrNull();
-    Runnable runnable = info.runnable;
+    final EventWatcher watcher = EventWatcher.getInstanceOrNull();
+    final Runnable runnable = info.runnable;
     if (watcher != null) {
+      final long waitingFinishedNs = System.nanoTime();
+      final long waitedInQueueNs = waitingFinishedNs - info.queuedTimeNs;
+      watcher.logTimeWaitedInQueue(runnable, waitedInQueueNs, info.queueSize);
       watcher.runnableStarted(runnable, System.currentTimeMillis());
     }
     try {
@@ -178,23 +182,29 @@ final class FlushQueue {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
-    @NotNull
-    private final String clientId;
+    @NotNull private final String clientId;
+    private final long queuedTimeNs;
+    /** How many items were in queue at the momen this item was enqueued */
+    private final int queueSize;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
-                 @NotNull Condition<?> expired) {
+                 @NotNull Condition<?> expired,
+                 final int queueSize) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
       this.clientId = ClientId.getCurrentValue();
+      this.queuedTimeNs = System.nanoTime();
+      this.queueSize = queueSize;
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "")+"] ";
+      return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "") + "]{queued at: " +
+             queuedTimeNs + " ns, "+queueSize+" items were in front of}";
     }
   }
 }
