@@ -218,9 +218,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
-      return createActionsStep(
-        (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
-        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+      return getSubStep((ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
+                        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
       performAction(action, inputEvent);
@@ -230,6 +229,17 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       myFinalRunnable = () -> performAction(action, inputEvent);
       return FINAL_CHOICE;
     }
+  }
+
+  /** @noinspection SameParameterValue*/
+  protected @NotNull ListPopupStep<PopupFactoryImpl.ActionItem> getSubStep(
+    @NotNull ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers,
+    boolean showDisabledActions, @PopupTitle @Nullable String title, boolean honorActionMnemonics, boolean autoSelectionEnabled,
+    Supplier<? extends DataContext> contextSupplier, @Nullable String actionPlace, Condition<? super AnAction> preselectCondition,
+    int defaultOptionIndex, @Nullable PresentationFactory presentationFactory) {
+    return createActionsStep(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, title,
+                             honorActionMnemonics, autoSelectionEnabled, contextSupplier, actionPlace, preselectCondition,
+                             defaultOptionIndex, presentationFactory);
   }
 
   @Override
