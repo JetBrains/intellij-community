@@ -12,7 +12,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +22,9 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -52,7 +54,6 @@ import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -81,8 +82,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private final MavenShortcutsManager myShortcutsManager;
   private final MavenProjectsNavigator myProjectsNavigator;
 
-  private final SimpleTreeBuilder myTreeBuilder;
   private final RootNode myRoot = new RootNode();
+  private final StructureTreeModel<MavenProjectsStructure> myModel;
+  private final SimpleTree myTree;
   private volatile boolean isUnloading = false;
 
   private final Map<MavenProject, ProjectNode> myProjectToNodeMapping = new HashMap<>();
@@ -108,15 +110,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
     });
 
-    configureTree(tree);
-
-    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null) {
-      // unique class to simplify search through the logs
-    };
-    Disposer.register(projectsNavigator, myTreeBuilder);
-
-    myTreeBuilder.initRoot();
-    myTreeBuilder.expand(myRoot, null);
+    myTree = tree;
+    configureTree(myTree);
+    myModel = new StructureTreeModel<>(this, projectsNavigator);
+    tree.setModel(new AsyncTreeModel(myModel, projectsNavigator));
   }
 
   private void configureTree(final SimpleTree tree) {
@@ -164,7 +161,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   private void updateFrom(SimpleNode node) {
     if (node != null) {
-     ApplicationManager.getApplication().invokeLater(() -> myTreeBuilder.addSubtreeToUpdateByElement(node));
+      myModel.invalidate(node, true);
     }
   }
 
@@ -249,8 +246,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public void accept(SimpleNodeVisitor visitor) {
-    ((SimpleTree)myTreeBuilder.getTree()).accept(myTreeBuilder, visitor);
+  public void accept(@NotNull TreeVisitor visitor) {
+    ((AsyncTreeModel)myTree.getModel()).accept(visitor);
   }
 
   public void updateGoals() {
@@ -271,7 +268,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void select(SimpleNode node) {
-    myTreeBuilder.select(node, null);
+    myModel.select(node, myTree, treePath -> {});
   }
 
   private ProjectNode findNodeFor(MavenProject project) {
