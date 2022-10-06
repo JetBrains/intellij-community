@@ -15,7 +15,7 @@ class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
   val peer = template.createLazyPeer()
 
   override fun setupUI(builder: Panel) {
-    peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder))
+    peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder, parent))
 
     val errorLabel = JLabel("")
     errorLabel.foreground = JBColor.RED
