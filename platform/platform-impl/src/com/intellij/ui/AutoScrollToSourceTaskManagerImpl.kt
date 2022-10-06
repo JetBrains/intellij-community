@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.await
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.OpenSourceUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,6 +31,7 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager,
     scope.cancel()
   }
 
+  @RequiresEdt
   override fun scheduleScrollToSource(
     handler: AutoScrollToSourceHandler,
     dataContext: DataContext,

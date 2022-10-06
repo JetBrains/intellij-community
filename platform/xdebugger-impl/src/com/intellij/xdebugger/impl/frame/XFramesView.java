@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -82,6 +83,7 @@ public final class XFramesView extends XDebugView {
       @Override
       protected boolean needToCheckFocus() { return false; }
 
+      @RequiresEdt
       @Override
       protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {

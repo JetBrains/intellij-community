@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -15,6 +16,7 @@ interface AutoScrollToSourceTaskManager {
     fun getInstance(): AutoScrollToSourceTaskManager = ApplicationManager.getApplication().service()
   }
 
+  @RequiresEdt
   fun scheduleScrollToSource(
     handler: AutoScrollToSourceHandler,
     dataContext: DataContext,

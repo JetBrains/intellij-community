@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -173,6 +174,7 @@ public abstract class AutoScrollToSourceHandler {
     return file.getLength() <= PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
+  @RequiresEdt
   protected void scrollToSource(@NotNull Component tree) {
     AutoScrollToSourceTaskManager.getInstance()
       .scheduleScrollToSource(this,
