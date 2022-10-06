@@ -468,7 +468,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun getPreferredFocusableComponent(): JComponent = tree
 
   override fun onChildSelectedFor(value: Any) {
-    val path = value as TreePath
+    val path = value as? TreePath ?: return
     if (tree.selectionPath != path) {
       tree.selectionPath = path
     }
