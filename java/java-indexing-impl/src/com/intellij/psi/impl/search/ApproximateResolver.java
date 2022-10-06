@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,11 +101,9 @@ public final class ApproximateResolver {
   }
 
   @NotNull
-  public static List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> symbols, @NotNull String name, int callArgCount) {
-    return JBIterable.from(symbols).
-      flatMap(sym -> Arrays.asList(sym.findMethodsByName(name, true))).
-      filter(m -> canHaveArgCount(m, callArgCount)).
-      toList();
+  public static List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> classes, @NotNull String name, int callArgCount) {
+    return ContainerUtil.flatMap(classes,
+      aClass -> ContainerUtil.filter(aClass.findMethodsByName(name, true), m->canHaveArgCount(m, callArgCount)));
   }
 
   @NotNull

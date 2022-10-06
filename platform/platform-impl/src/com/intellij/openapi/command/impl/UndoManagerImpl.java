@@ -486,43 +486,43 @@ public class UndoManagerImpl extends UndoManager {
   /**
    * In case of global group blocking undo we can perform undo locally and separate undone changes from others stacks
    */
-  public boolean splitGlobalCommand(@NotNull UndoRedo undoRedo) {
-    var group = undoRedo.myUndoableGroup;
+  boolean splitGlobalCommand(@NotNull UndoRedo undoRedo) {
+    UndoableGroup group = undoRedo.myUndoableGroup;
     Collection<DocumentReference> refs = undoRedo.getDocRefs();
     if (refs == null || refs.size() != 1) return false;
-    var docRef = refs.iterator().next();
+    DocumentReference docRef = refs.iterator().next();
 
-    var clientState = getClientState(undoRedo.myEditor);
+    ClientState clientState = getClientState(undoRedo.myEditor);
     if (clientState == null) return false;
-    var stackHolder = getStackHolder(clientState, true);
+    UndoRedoStacksHolder stackHolder = getStackHolder(clientState, true);
 
-    var stack = stackHolder.getStack(docRef);
+    LinkedList<UndoableGroup> stack = stackHolder.getStack(docRef);
     if (stack.getLast() == group) {
-      var actions = separateLocalAndNonLocalActions(group.getActions(), docRef);
+      Pair<List<UndoableAction>, List<UndoableAction>> actions = separateLocalAndNonLocalActions(group.getActions(), docRef);
       if (actions.first.isEmpty()) return false;
 
       stack.removeLast();
 
-      var replacingGroup = new UndoableGroup(IdeBundle.message("undo.command.local.name") + group.getCommandName(),
-                                             false,
-                                             group.getCommandTimestamp(),
-                                             group.getStateBefore(),
-                                             group.getStateAfter(),
-                                             // only action that changes file locally
-                                             actions.first,
-                                             stackHolder, getProject(), group.getConfirmationPolicy(), group.isTransparent(),
-                                             group.isValid());
-      stack.add(replacingGroup);
-
-      var groupWithoutLocalChanges = new UndoableGroup(group.getCommandName(),
-                                                       group.isGlobal(),
+      UndoableGroup replacingGroup = new UndoableGroup(IdeBundle.message("undo.command.local.name") + group.getCommandName(),
+                                                       false,
                                                        group.getCommandTimestamp(),
                                                        group.getStateBefore(),
                                                        group.getStateAfter(),
-                                                       // all action except local
-                                                       actions.second,
+                                                       // only action that changes file locally
+                                                       actions.first,
                                                        stackHolder, getProject(), group.getConfirmationPolicy(), group.isTransparent(),
                                                        group.isValid());
+      stack.add(replacingGroup);
+
+      UndoableGroup groupWithoutLocalChanges = new UndoableGroup(group.getCommandName(),
+                                                                 group.isGlobal(),
+                                                                 group.getCommandTimestamp(),
+                                                                 group.getStateBefore(),
+                                                                 group.getStateAfter(),
+                                                                 // all action except local
+                                                                 actions.second,
+                                                                 stackHolder, getProject(), group.getConfirmationPolicy(), group.isTransparent(),
+                                                                 group.isValid());
 
       if (stackHolder.replaceOnStacks(group, groupWithoutLocalChanges)) {
         replacingGroup.setOriginalContext(new UndoableGroup.UndoableGroupOriginalContext(group, groupWithoutLocalChanges));
@@ -536,10 +536,10 @@ public class UndoManagerImpl extends UndoManager {
 
   private static Pair<List<UndoableAction>, List<UndoableAction>> separateLocalAndNonLocalActions(@NotNull List<? extends UndoableAction> actions,
                                                                                                   @NotNull DocumentReference affectedDocument) {
-    var localActions = new SmartList<UndoableAction>();
-    var nonLocalActions = new SmartList<UndoableAction>();
+    List<UndoableAction> localActions = new SmartList<>();
+    List<UndoableAction> nonLocalActions = new SmartList<>();
     for (UndoableAction action : actions) {
-      var affectedDocuments = action.getAffectedDocuments();
+      DocumentReference[] affectedDocuments = action.getAffectedDocuments();
       if (affectedDocuments != null && affectedDocuments.length == 1 && affectedDocuments[0].equals(affectedDocument)) {
         localActions.add(action);
       }
@@ -555,22 +555,22 @@ public class UndoManagerImpl extends UndoManager {
    * If we redo group that was splitted before, we gather that group into global cammand(as it was before splitting)
    * and recover that command on all stacks
    */
-  public void gatherGlobalCommand(@NotNull UndoRedo undoRedo) {
-    var group = undoRedo.myUndoableGroup;
+  void gatherGlobalCommand(@NotNull UndoRedo undoRedo) {
+    UndoableGroup group = undoRedo.myUndoableGroup;
     UndoableGroup.UndoableGroupOriginalContext context = group.getGroupOriginalContext();
     if (context == null) return;
 
     Collection<DocumentReference> refs = undoRedo.getDocRefs();
     if (refs.size() > 1) return;
-    var docRef = refs.iterator().next();
+    DocumentReference docRef = refs.iterator().next();
 
-    var clientState = getClientState(undoRedo.myEditor);
+    ClientState clientState = getClientState(undoRedo.myEditor);
     if (clientState == null) return;
-    var stackHolder = getStackHolder(clientState, true);
-    var stack = stackHolder.getStack(docRef);
+    UndoRedoStacksHolder stackHolder = getStackHolder(clientState, true);
+    LinkedList<UndoableGroup> stack = stackHolder.getStack(docRef);
     if (stack.getLast() != group) return;
 
-    var shouldGatherGroup = stackHolder.replaceOnStacks(context.getCurrentStackGroup(), context.getOriginalGroup());
+    boolean shouldGatherGroup = stackHolder.replaceOnStacks(context.getCurrentStackGroup(), context.getOriginalGroup());
     if (!shouldGatherGroup) return;
 
     stack.removeLast();
@@ -597,7 +597,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   static @NotNull Collection<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
-    ArrayList<DocumentReference> result = new ArrayList<>();
+    List<DocumentReference> result = new ArrayList<>();
 
     if (editor instanceof DocumentReferenceProvider) {
       result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());
