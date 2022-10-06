@@ -42,9 +42,11 @@ class MLServerCompletionSettings : PersistentStateComponent<GeneralState> {
   // ----------------------------------- State getters --------------------------------------- //
   override fun getState() = state
 
-  fun getLangState(language: Language): LangState = state.langStates[language.id]
-                                                    ?: language.baseLanguage?.let { state.langStates[it.id] }
+  fun getLangState(language: Language): LangState = getLangStateSafe(language)
                                                     ?: throw IllegalArgumentException("Language ${language.displayName} is not supported")
+
+  private fun getLangStateSafe(language: Language): LangState? = state.langStates[language.id]
+                                                                 ?: language.baseLanguage?.let { state.langStates[it.id] }
 
   // ------------------------------ Common settings getters ---------------------------------- //
 
@@ -80,6 +82,8 @@ class MLServerCompletionSettings : PersistentStateComponent<GeneralState> {
   fun getModelState(language: Language): ModelState = getModelState(getLangState(language))
 
   // --------------------------- Language-specific settings getters -------------------------- //
+
+  fun isLanguageSupported(language: Language): Boolean = getLangStateSafe(language) != null
 
   // Check if completion enabled for current language or if the current language is based on supported
   fun isEnabled(language: Language): Boolean {

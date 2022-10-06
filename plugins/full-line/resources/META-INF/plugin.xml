@@ -149,8 +149,12 @@
       serviceImplementation="org.jetbrains.completion.full.line.services.managers.LocalModelsManager"/>
     <completion.contributor language="any"
                             id="FullLineCompletionContributor"
-                            order="first, before KotlinCompletionContributor"
+                            order="first, before KotlinCompletionContributor, after ml_context"
                             implementationClass="org.jetbrains.completion.full.line.platform.FullLineContributor"/>
+    <completion.ml.contextFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineContextFeatureProvider"/>
+    <completion.ml.elementFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineElementFeatureProvider"/>
 
     <!-- HOST CONFIG BEGIN -->
     <registryKey key="full.line.server.host.python" defaultValue="https://python.flcc.iml.aws.intellij.net"

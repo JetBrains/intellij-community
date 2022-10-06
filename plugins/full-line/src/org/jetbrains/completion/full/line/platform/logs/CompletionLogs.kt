@@ -1,0 +1,81 @@
+package org.jetbrains.completion.full.line.platform.logs
+
+import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.ml.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.lang.Language
+import com.intellij.openapi.util.Key
+import org.jetbrains.completion.full.line.AnalyzedFullLineProposal
+import org.jetbrains.completion.full.line.platform.FullLineLookupElement
+import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
+
+private const val PROVIDERS_NAME = "full_line"
+private val FULL_LINE_AVAILABLE_KEY = Key.create<Boolean>("fl.available")
+
+class FullLineContextFeatureProvider : ContextFeatureProvider {
+  override fun getName(): String = PROVIDERS_NAME
+
+  override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
+    val language = environment.parameters.originalFile.language
+    val settings = MLServerCompletionSettings.getInstance()
+    if (!settings.isLanguageSupported(language)) return emptyMap()
+
+    environment.putUserData(FULL_LINE_AVAILABLE_KEY, true)
+
+    val result = mutableMapOf<String, MLFeatureValue>()
+    settings.capture(result, language)
+
+    return result
+  }
+
+  private fun MLServerCompletionSettings.capture(result: MutableMap<String, MLFeatureValue>, language: Language) {
+    result["installed"] = MLFeatureValue.binary(true)
+    val isEnabled = isEnabled(language)
+    result["enabled"] = MLFeatureValue.binary(isEnabled)
+
+    if (isEnabled) {
+      result["model_type"] = MLFeatureValue.categorical(getModelMode())
+    }
+  }
+}
+
+class FullLineElementFeatureProvider : ElementFeatureProvider {
+  override fun getName(): String = PROVIDERS_NAME
+
+  override fun calculateFeatures(element: LookupElement,
+                                 location: CompletionLocation,
+                                 contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
+    if (contextFeatures.getUserData(FULL_LINE_AVAILABLE_KEY) != true) return emptyMap()
+    val fullLineElement = element.asFullLineElement()
+    return if (fullLineElement != null) calculateFullLineFeatures(fullLineElement) else emptyMap()
+  }
+
+  private fun calculateFullLineFeatures(element: FullLineLookupElement): Map<String, MLFeatureValue> {
+    return mapOf(
+      "tab_selected" to MLFeatureValue.binary(element.selectedByTab),
+      *fromProposal(element.proposal)
+    )
+  }
+
+  private fun fromProposal(proposal: AnalyzedFullLineProposal): Array<Pair<String, MLFeatureValue>> {
+    return arrayOf(
+      "ref_validity" to MLFeatureValue.categorical(proposal.refCorrectness),
+      "syntax_validity" to MLFeatureValue.categorical(proposal.isSyntaxCorrect),
+      "suffix_length" to MLFeatureValue.float(proposal.suffix.length),
+      "score" to MLFeatureValue.float(proposal.score)
+    )
+  }
+
+  private fun LookupElement.asFullLineElement(): FullLineLookupElement? {
+    if (this is FullLineLookupElement) {
+      return this
+    }
+
+    if (this is LookupElementDecorator<*>) {
+      return delegate.asFullLineElement()
+    }
+
+    return null
+  }
+}
