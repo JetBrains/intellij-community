@@ -16,7 +16,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import java.net.URI
 
-class NostradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nostradamus.url")).normalize()) {
+class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nostradamus.url")).normalize()) {
 
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
     val url = baseUrl.resolve("/sort")
@@ -56,11 +56,21 @@ class NostradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nostrada
     }
   }
 
-  fun getSortedClasses(unsortedClasses: List<Class<*>>): List<Class<*>> {
-    val changesets = getTeamCityChangeset().map { ChangeEntity(it) }
-    val cases = unsortedClasses.map { TestCaseEntity(it.name) }
-    sendSortingRequest(SortRequestEntity(changes = changesets, tests = cases))
+  fun getRankedClasses(unsortedClasses: List<Class<*>>): Map<Class<*>, Int> {
+    return try {
+      val changesets = getTeamCityChangeset().map { ChangeEntity(it) }
+      val cases = unsortedClasses.map { TestCaseEntity(it.name) }
+      val sortedCases = sendSortingRequest(SortRequestEntity(changes = changesets, tests = cases))
 
-    return unsortedClasses.sortedByDescending { it.name }
+      var rank = 1
+      val ranked = sortedCases.associate { case -> case.name to rank++ }
+      unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: -1 }
+    }
+    catch (e: Exception) {
+      // fallback in case of any failure (just to get aggregator running)
+      System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple shuffle sorting")
+      var rank = 1
+      unsortedClasses.shuffled().associateWith { rank++ }
+    }
   }
 }

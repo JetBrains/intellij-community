@@ -2,7 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.TestCaseLoader
-import com.intellij.nostradamus.NostradamusTestCaseSorter
+import com.intellij.nostradamus.NastradamusTestCaseSorter
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,7 +37,7 @@ class TestClassesSortingTest {
       .shuffled()
       .toMutableList()
 
-    val sortedClasses: List<Class<*>> = NostradamusTestCaseSorter { _ -> rankedClasses.entries.sortedBy { it.value }.map { it.key } }
+    val sortedClasses: List<Class<*>> = NastradamusTestCaseSorter { _ -> rankedClasses }
       .sorted(unsortedClasses = shuffledSourceClasses, ranker = TestCaseLoader::getRank)
 
     val failureMessage =

@@ -5,37 +5,36 @@ import com.intellij.testFramework.TestSorter
 import org.jetbrains.annotations.TestOnly
 import java.util.function.ToIntFunction
 
-class NostradamusTestCaseSorter : TestSorter {
+class NastradamusTestCaseSorter : TestSorter {
 
-  private val sortedClassesProvider: (List<Class<*>>) -> List<Class<*>>
+  private val rankedClassesProvider: (List<Class<*>>) -> Map<Class<*>, Int>
 
   companion object {
     fun getRanker(rankedClasses: Map<Class<*>, Int>): ToIntFunction<in Class<*>> {
       return ToIntFunction { currentClass ->
         val rank = rankedClasses[currentClass]
-        requireNotNull(rank) { "Rank for class ${currentClass.name} isn't specified" }
+        requireNotNull(rank) { "Rank for class ${currentClass.name} isn't specified. Probably sorting didn't return anything for class" }
         rank
       }
     }
   }
 
   constructor() {
-    this.sortedClassesProvider = { unsortedClasses: List<Class<*>> -> getPrioritizedClasses(unsortedClasses) }
+    this.rankedClassesProvider = { unsortedClasses: List<Class<*>> -> getRankedClasses(unsortedClasses) }
   }
 
   @TestOnly
-  constructor(sortedClassesProvider: (List<Class<*>>) -> List<Class<*>>) {
-    this.sortedClassesProvider = sortedClassesProvider
+  constructor(rankedClassesProvider: (List<Class<*>>) -> Map<Class<*>, Int>) {
+    this.rankedClassesProvider = rankedClassesProvider
   }
 
-  private fun getPrioritizedClasses(unsortedClasses: List<Class<*>>): List<Class<*>> {
-    val sortedClasses: List<Class<*>> = NostradamusClient().getSortedClasses(unsortedClasses)
-    return sortedClasses
+  private fun getRankedClasses(unsortedClasses: List<Class<*>>): Map<Class<*>, Int> {
+    return NastradamusClient().getRankedClasses(unsortedClasses)
   }
 
-  private fun validateCollectionsEquality(firstItems: List<Class<*>>, secondItems: List<Class<*>>): Unit {
+  private fun validateCollectionsEquality(firstItems: List<Class<*>>, rankedItems: Map<Class<*>, Int>): Unit {
     val firstSet = firstItems.toSet()
-    val secondSet = secondItems.toSet()
+    val secondSet = rankedItems.keys
 
     val firstDiff = firstSet.minus(secondSet)
     val secondDiff = secondSet.minus(firstDiff)
@@ -49,7 +48,7 @@ class NostradamusTestCaseSorter : TestSorter {
         ${firstItems.joinToString(separator = System.lineSeparator()) { it.toString() }}
         
         Second:
-        ${secondItems.joinToString(separator = System.lineSeparator()) { it.toString() }}
+        ${secondSet.joinToString(separator = System.lineSeparator()) { it.toString() }}
         
         Diff first vs second:
         ${firstDiff.joinToString(separator = System.lineSeparator()) { it.toString() }}
@@ -61,19 +60,15 @@ class NostradamusTestCaseSorter : TestSorter {
   }
 
   override fun sorted(unsortedClasses: MutableList<Class<*>>, ranker: ToIntFunction<in Class<*>>): List<Class<*>> {
-    val sortedClasses = sortedClassesProvider(unsortedClasses)
+    val rankedClasses = rankedClassesProvider(unsortedClasses)
 
-    require(sortedClasses.size == unsortedClasses.size) {
+    require(rankedClasses.size == unsortedClasses.size) {
       """
-        Size of sorted classes ${sortedClasses.size}, unsorted classes ${unsortedClasses.size}. But they should be equal.
+        Not equal sizes of sorted classes ${rankedClasses.size} and unsorted classes ${unsortedClasses.size}.
       """
     }
 
-    validateCollectionsEquality(unsortedClasses, sortedClasses)
-
-    var rank = 1
-    // for faster lookup convert sorted list of classes to map with ranks
-    val rankedClasses: Map<Class<*>, Int> = sortedClasses.associateWith { rank++ }
+    validateCollectionsEquality(unsortedClasses, rankedClasses)
 
     return unsortedClasses.sortedWith(
       Comparator.comparingInt(ranker).thenComparingInt(getRanker(rankedClasses))

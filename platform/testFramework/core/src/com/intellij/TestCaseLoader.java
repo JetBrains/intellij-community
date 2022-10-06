@@ -42,7 +42,7 @@ public class TestCaseLoader {
   public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
-  public static final String NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG = "idea.enable.nostradamus.test.distributor";
+  public static final String NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG = "idea.enable.nostradamus.test.distributor";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
   private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
@@ -65,7 +65,7 @@ public class TestCaseLoader {
   /**
    * Intelligent test distribution to shorten time of tests run (ultimately - predict what tests to run on a changeset)
    */
-  private static final boolean IS_NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
+  private static final boolean IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -432,7 +432,7 @@ public class TestCaseLoader {
     String sorter = System.getProperty("intellij.build.test.sorter");
 
     // use Nostradamus test sorter in case, if no other is specified
-    if (sorter == null && IS_NOSTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+    if (sorter == null && IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
       sorter = "com.intellij.nostradamus.NostradamusTestCaseSorter";
     }
 

@@ -91,7 +91,9 @@ object TeamCityClient {
     val url = baseUrl.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}")
     val outputStream = ByteArrayOutputStream()
 
-    HttpClient.download(request = HttpGet(url).withAuth(), outStream = outputStream, retries = 3)
+    if (!HttpClient.download(request = HttpGet(url).withAuth(), outStream = outputStream, retries = 3)) {
+      throw RuntimeException("Couldn't download $url in 3 attempts")
+    }
 
     return outputStream.toString("UTF-8")
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.nostradamus.NostradamusClient
+import com.intellij.nostradamus.NastradamusClient
 import com.intellij.nostradamus.model.ChangeEntity
 import com.intellij.nostradamus.model.SortRequestEntity
 import com.intellij.nostradamus.model.TestCaseEntity
@@ -12,7 +12,7 @@ import org.junit.Ignore
 import org.junit.Test
 import java.net.URI
 
-class NostradamusClientTest {
+class NastradamusClientTest {
   @Test
   @Ignore("Do not use TC. Use mocks / test data")
   fun debugAuthOnTC() {
@@ -38,7 +38,7 @@ class NostradamusClientTest {
   @Test
   @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
   fun sendDataToNostradamus() {
-    val client = NostradamusClient(URI("http://127.0.0.1:8000/sort/").normalize())
+    val client = NastradamusClient(URI("http://127.0.0.1:8000/sort/").normalize())
 
     val sortEntity = SortRequestEntity(
       changes = listOf(ChangeEntity("some data")),
