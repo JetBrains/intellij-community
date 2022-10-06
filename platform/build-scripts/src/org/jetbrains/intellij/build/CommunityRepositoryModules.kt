@@ -212,6 +212,15 @@ object CommunityRepositoryModules {
     plugin("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInEapOnly = true
     },
+    plugin("intellij.fullLine") { spec ->
+      spec.bundlingRestrictions.includeInEapOnly = true
+      spec.withModules(listOf(
+        "intellij.fullLine.core",
+        "intellij.fullLine.python",
+        "intellij.fullLine.java",
+        "intellij.fullLine.kotlin"
+      ))
+    },
     plugin("intellij.lombok") { spec ->
       spec.withModule("intellij.lombok.generated")
     },
