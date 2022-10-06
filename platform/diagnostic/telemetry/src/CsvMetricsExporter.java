@@ -45,7 +45,12 @@ public final class CsvMetricsExporter implements MetricExporter {
   public CsvMetricsExporter(final @NotNull Path writeToPath) throws IOException {
     this.writeToPath = writeToPath.toAbsolutePath();
     if (!Files.exists(this.writeToPath)) {
-      Files.createDirectories(this.writeToPath.getParent());
+      final Path parentDir = this.writeToPath.getParent();
+      if(!Files.isDirectory(parentDir)) {
+        //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
+        // itself (JDK-8130464). Check !isDirectory() above should work around that case.
+        Files.createDirectories(parentDir);
+      }
       Files.write(this.writeToPath, csvHeadersLines(), CREATE, WRITE);
     }
   }
