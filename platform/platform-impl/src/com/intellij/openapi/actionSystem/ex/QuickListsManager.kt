@@ -25,18 +25,22 @@ private var EP_NAME = ExtensionPointName<BundledQuickListsProvider>("com.intelli
 
 @Service
 class QuickListsManager {
-  val schemeManager: SchemeManager<QuickList> = SchemeManagerFactory.getInstance()
-    .create("quicklists", object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
-      override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
-                                name: String,
-                                attributeProvider: Function<in String, String?>,
-                                isBundled: Boolean): QuickList {
-        val item = QuickList()
-        item.readExternal(dataHolder.read())
-        dataHolder.updateDigest(item)
-        return item
-      }
-    }, presentableName = IdeBundle.message("quick.lists.presentable.name"), settingsCategory = SettingsCategory.UI)
+  private val schemeProcessor = object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
+    override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
+                              name: String,
+                              attributeProvider: Function<in String, String?>,
+                              isBundled: Boolean): QuickList {
+      val item = QuickList()
+      item.readExternal(dataHolder.read())
+      dataHolder.updateDigest(item)
+      return item
+    }
+  }
+
+  val schemeManager: SchemeManager<QuickList> = SchemeManagerFactory.getInstance().create("quicklists", schemeProcessor,
+                                                                                          presentableName = IdeBundle.message(
+                                                                                            "quick.lists.presentable.name"),
+                                                                                          settingsCategory = SettingsCategory.UI)
 
   init {
     EP_NAME.processWithPluginDescriptor(BiConsumer { provider, pluginDescriptor ->
