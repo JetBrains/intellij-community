@@ -6,7 +6,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
-import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
@@ -16,7 +15,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.SmartList
@@ -292,8 +290,5 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
     EditorOptionsPanel.reinitAllEditors()
     EditorOptionsPanel.restartDaemons()
-    for (project in ProjectManager.getInstance().openProjects) {
-      ProjectView.getInstance(project).refresh()
-    }
   }
 }
