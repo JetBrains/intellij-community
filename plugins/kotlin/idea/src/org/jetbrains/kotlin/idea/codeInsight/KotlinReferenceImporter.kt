@@ -10,13 +10,14 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
-import org.jetbrains.kotlin.idea.actions.createSingleImportAction
+import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -78,7 +79,8 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             }
         }.firstNotNullOfOrNull { action ->
             val suggestions = filterSuggestions(file, action.collectSuggestions())
-            if (suggestions.size != 1) {
+            val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
+            if (!singlePackage) {
                 null
             } else {
                 val suggestion = suggestions.first()
@@ -90,7 +92,7 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
                 } else {
                     val element = action.element
                     if (element is KtElement) {
-                        createSingleImportAction(file.project, editor, element, suggestions)
+                        createGroupedImportsAction(file.project, editor, element, "", suggestions)
                     } else {
                         null
                     }

@@ -30,6 +30,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/delegationExtFunction/");
         }
 
+        @TestMetadata("delegationExtFunctions")
+        public void testDelegationExtFunctions() throws Exception {
+            runTest("testData/editor/autoImport/delegationExtFunctions/");
+        }
+
         @TestMetadata("extFunctionWithGenerics")
         public void testExtFunctionWithGenerics() throws Exception {
             runTest("testData/editor/autoImport/extFunctionWithGenerics/");
@@ -61,6 +66,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         @TestMetadata("delegationExtFunction")
         public void testDelegationExtFunction() throws Exception {
             runTest("testData/editor/autoImport/delegationExtFunction/");
+        }
+
+        @TestMetadata("delegationExtFunctions")
+        public void testDelegationExtFunctions() throws Exception {
+            runTest("testData/editor/autoImport/delegationExtFunctions/");
         }
 
         @TestMetadata("extFunctionWithGenerics")
