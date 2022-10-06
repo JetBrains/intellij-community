@@ -6,10 +6,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.NonClasspathDirectoriesScope
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFiles
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ucache.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
  * @see KotlinScriptResolveScopeProvider
@@ -35,6 +43,24 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
             return null
         }
 
+        if (scriptsAsEntities) {
+            val scripts = file.findUsedInScripts(project) ?: return null
+            val dependencies = scripts.flatMap { it.listDependencies(LibraryRootTypeId.COMPILED) }.distinct()
+
+            var searchScope = GlobalSearchScope.union(
+                arrayOf(
+                    GlobalSearchScope.fileScope(project, file),
+                    KotlinSourceFilterScope.libraryClasses(NonClasspathDirectoriesScope.compose(dependencies), project)
+                )
+            )
+
+            ScriptConfigurationManager.getInstance(project).getFirstScriptsSdk()?.let {
+                searchScope = searchScope.uniteWith(SdkInfo(project, it).contentScope)
+            }
+
+            return searchScope
+        }
+
         val scope = GlobalSearchScope.union(
             arrayOf(
                 GlobalSearchScope.fileScope(project, file),
@@ -44,4 +70,25 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
 
         return KotlinScriptSearchScope(project, scope)
     }
+}
+
+private fun VirtualFile.findUsedInScripts(project: Project): List<KotlinScriptEntity>? {
+    val index = WorkspaceModel.getInstance(project).entityStorage.current.getVirtualFileUrlIndex()
+    val fileUrlManager = VirtualFileUrlManager.getInstance(project)
+
+    var currentFile = this
+    @Suppress("SENSELESS_COMPARISON")
+    while (currentFile != null) {
+        val entities = index.findEntitiesByUrl(fileUrlManager.fromUrl(currentFile.url))
+        if (entities.none()) {
+            currentFile = currentFile.parent
+            continue
+        }
+
+        return entities
+            .mapNotNull { it.first.safeAs<LibraryEntity>() }
+            .mapNotNull { it.kotlinScript }
+            .toList()
+    }
+    return null
 }

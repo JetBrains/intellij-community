@@ -97,14 +97,6 @@ private fun EntityStorage.listDependenciesOfAllScriptEntities(rootTypeId: Librar
         .flatMap { it.listDependencies(rootTypeId) }
         .toSet()
 
-private fun KotlinScriptEntity.listDependencies(rootTypeId: LibraryRootTypeId): List<VirtualFile> = dependencies.asSequence()
-    .flatMap { it.roots }
-    .filter { it.type == rootTypeId }
-    .mapNotNull { it.url.virtualFile }
-    .filter { it.isValid }
-    .toList()
-
-
 @Suppress("unused") // exists for debug purposes
 internal fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = false): String {
     fun List<LibraryRoot>.print(indent: CharSequence = "          ") = asSequence()
