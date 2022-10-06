@@ -2023,8 +2023,11 @@ public class UsageViewImpl implements UsageViewEx {
           .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       else if (USAGE_TARGETS_KEY.is(dataId)) {
-        return ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .toArray(UsageTarget.EMPTY_ARRAY);
+        var targets = ContainerUtil.mapNotNull(
+          selectedNodes(),
+          o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null
+        );
+        return targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY);
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
