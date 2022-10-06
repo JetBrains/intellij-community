@@ -19,7 +19,6 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -304,11 +303,11 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 getClasspathType(module)
             }
             val jreHome = if (myConfiguration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
-            ReadAction.run<RuntimeException> { JavaParametersUtil.configureModule(module, params, classPathType, jreHome) }
+            runReadAction { JavaParametersUtil.configureModule(module, params, classPathType, jreHome) }
             setupJavaParameters(params)
             params.setShortenCommandLine(myConfiguration.shortenCommandLine, module.project)
             params.mainClass = myConfiguration.runClass
-            ReadAction.run<RuntimeException> { setupModulePath(params, module) }
+            runReadAction { setupModulePath(params, module) }
            return params
         }
 
