@@ -222,7 +222,7 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    private boolean shouldSaveDocuments() {
+    private static boolean shouldSaveDocuments() {
       final Project contextProject = getCurrentContextProject();
       return contextProject != null && canStartAutoMake(contextProject);
     }
@@ -343,7 +343,7 @@ public final class BuildManager implements Disposable {
         }
       }
 
-      private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
+      private static boolean shouldTriggerMake(List<? extends VFileEvent> events) {
         if (PowerSaveMode.isEnabled()) {
           return false;
         }
@@ -747,10 +747,9 @@ public final class BuildManager implements Disposable {
         window = ComponentUtil.getActiveWindow();
       }
 
-      final Component comp = ComponentUtil.findUltimateParent(window);
-      project = null;
-      if (comp instanceof IdeFrame) {
-        project = ((IdeFrame)comp).getProject();
+      Component component = ComponentUtil.findUltimateParent(window);
+      if (component instanceof IdeFrame) {
+        project = ((IdeFrame)component).getProject();
       }
     }
 
@@ -1185,11 +1184,11 @@ public final class BuildManager implements Disposable {
         STDERR_OUTPUT.set(processHandler, errors);
 
         processHandler.startNotify();
-        return Pair.create(future, processHandler);
+        return new Pair<>(future, processHandler);
       }
       catch (Throwable e) {
         handleProcessExecutionFailure(future.getRequestID(), e);
-        throw e instanceof Exception? (Exception)e : new RuntimeException(e);
+        throw e instanceof Exception ? (Exception)e : new RuntimeException(e);
       }
     });
   }
@@ -1515,7 +1514,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
     boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
-    if (SystemInfo.isUnix && lowPriority) {
+    if (SystemInfoRt.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
 
@@ -1558,7 +1557,7 @@ public final class BuildManager implements Disposable {
       processHandler.putUserData(COMPILER_PROCESS_DEBUG_PORT, debugPort);
     }
 
-    if (SystemInfo.isWindows && lowPriority) {
+    if (SystemInfoRt.isWindows && lowPriority) {
       final WinProcess winProcess = new WinProcess(OSProcessUtil.getProcessID(processHandler.getProcess()));
       winProcess.setPriority(Priority.IDLE);
     }
@@ -1917,7 +1916,8 @@ public final class BuildManager implements Disposable {
             }
           }
 
-          private @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event, EntityChange<T> change) {
+          private static @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event,
+                                                                                                         EntityChange<T> change) {
             final T entity = change.getNewEntity();
             return entity != null? Pair.create(entity, event.getStorageAfter()) : Pair.create(change.getOldEntity(), event.getStorageBefore());
           }
