@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.inheritorsSearch.AbstractDirectKotlinInheritors
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2SearchTests() {
-    testGroup("kotlin.search") {
+    testGroup("kotlin.search/kotlin.search.test", testDataPath = "../testData") {
         testClass<AbstractDirectKotlinInheritorsSearcherTest> {
             model("inheritorsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("inheritorsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)

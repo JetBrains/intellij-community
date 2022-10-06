@@ -14,12 +14,12 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("kotlin.search")
+@TestRoot("kotlin.search/kotlin.search.test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class DirectKotlinInheritorsSearcherTestGenerated extends AbstractDirectKotlinInheritorsSearcherTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inheritorsSearch/kotlinClass")
+    @TestMetadata("../testData/inheritorsSearch/kotlinClass")
     public static class KotlinClass extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestKotlinClass, this, testDataFilePath);
@@ -27,17 +27,17 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("testData/inheritorsSearch/kotlinClass/simple.kt");
+            runTest("../testData/inheritorsSearch/kotlinClass/simple.kt");
         }
 
         @TestMetadata("withJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
-            runTest("testData/inheritorsSearch/kotlinClass/withJavaInheritor.kt");
+            runTest("../testData/inheritorsSearch/kotlinClass/withJavaInheritor.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inheritorsSearch/javaClass")
+    @TestMetadata("../testData/inheritorsSearch/javaClass")
     public static class JavaClass extends AbstractDirectKotlinInheritorsSearcherTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestJavaClass, this, testDataFilePath);
@@ -45,7 +45,7 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
 
         @TestMetadata("fromJava.java")
         public void testFromJava() throws Exception {
-            runTest("testData/inheritorsSearch/javaClass/fromJava.java");
+            runTest("../testData/inheritorsSearch/javaClass/fromJava.java");
         }
     }
 }
