@@ -67,7 +67,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Override
-  public Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
+  public @NotNull Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
     return VcsUtil.isFileUnderVcs(psiFile.getProject(), VcsUtil.getFilePath(psiFile.getVirtualFile()));
   }
 
