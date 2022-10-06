@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
@@ -82,7 +82,7 @@ public class ExportClusteringResultActionLink extends ActionLink {
     generator.writeStartArray();
     for (UsageCluster cluster : clusters) {
       indicator.setFraction(counter++ / (double)clusters.size());
-      HashSet<SimilarUsage> usages = new HashSet<>(cluster.getUsages());
+      Set<SimilarUsage> usages = cluster.getUsages();
       for (SimilarUsage usage : usages) {
         if (usage instanceof UsageInfo2UsageAdapter) {
           indicator.checkCanceled();
