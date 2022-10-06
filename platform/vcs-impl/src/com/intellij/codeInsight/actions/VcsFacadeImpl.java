@@ -56,7 +56,7 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public boolean hasChanges(@NotNull VirtualFile file,
-                                       @NotNull Project project) {
+                            @NotNull Project project) {
     final Collection<Change> changes = ChangeListManager.getInstance(project).getChangesIn(file);
     for (Change change : changes) {
       if (change.getType() == Change.Type.NEW || change.getType() == Change.Type.MODIFICATION) {
@@ -74,13 +74,6 @@ public final class VcsFacadeImpl extends VcsFacade {
   @Override
   public @NotNull Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
     return VcsUtil.getVcsIgnoreFileNames(project);
-  }
-
-  @Override
-  @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
-    ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
 
   @Override
@@ -117,7 +110,7 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project,
-                                                                   @NotNull List<? extends PsiDirectory> dirs) {
+                                                        @NotNull List<? extends PsiDirectory> dirs) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> changes = new ArrayList<>();
 
@@ -350,5 +343,4 @@ public final class VcsFacadeImpl extends VcsFacade {
     }).toList();
     return new SimpleChangesBrowser(project, changes);
   }
-
 }

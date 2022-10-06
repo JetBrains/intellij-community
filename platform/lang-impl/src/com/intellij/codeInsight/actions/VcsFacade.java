@@ -17,12 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -47,18 +47,19 @@ public class VcsFacade {
     return false;
   }
 
-  public boolean hasChanges(@NotNull PsiDirectory directory) {
-    return hasChanges(directory.getVirtualFile(), directory.getProject());
-  }
-
   public boolean hasChanges(@NotNull VirtualFile file, @NotNull Project project) {
     return false;
   }
 
+  public boolean hasChanges(@NotNull PsiDirectory directory) {
+    return hasChanges(directory.getVirtualFile(), directory.getProject());
+  }
+
   public boolean hasChanges(VirtualFile @NotNull [] files, @NotNull Project project) {
     for (VirtualFile file : files) {
-      if (hasChanges(file, project))
+      if (hasChanges(file, project)) {
         return true;
+      }
     }
     return false;
   }
@@ -93,16 +94,19 @@ public class VcsFacade {
   }
 
   @NotNull
-  public Set<String> getVcsIgnoreFileNames(@NotNull Project project) { return Collections.emptySet(); }
+  public Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return Collections.emptySet();
+  }
 
   @NotNull
-  public List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs)  {
+  public List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs) {
     return Collections.emptyList();
   }
 
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
-    return ContainerUtil.emptyList();
+    ChangedRangesInfo helper = getChangedRangesInfo(file);
+    return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
 
   public int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
@@ -118,7 +122,8 @@ public class VcsFacade {
     return null;
   }
 
-  public void markFilesDirty(@NotNull Project project, @NotNull List<? extends VirtualFile> virtualFiles) { }
+  public void markFilesDirty(@NotNull Project project, @NotNull List<? extends VirtualFile> virtualFiles) {
+  }
 
   /**
    * Allows to temporally suppress document modification tracking.
