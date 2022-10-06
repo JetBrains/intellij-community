@@ -1558,8 +1558,13 @@ public final class BuildManager implements Disposable {
     }
 
     if (SystemInfoRt.isWindows && lowPriority) {
-      final WinProcess winProcess = new WinProcess(OSProcessUtil.getProcessID(processHandler.getProcess()));
-      winProcess.setPriority(Priority.IDLE);
+      try {
+        WinProcess winProcess = new WinProcess((int)processHandler.getProcess().pid());
+        winProcess.setPriority(Priority.IDLE);
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot set priority", e);
+      }
     }
 
     return processHandler;
