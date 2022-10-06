@@ -453,7 +453,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     for (i in (files.size - 1) downTo 0) {
       val file = files.get(i)
       val fileName = file.fileName.toString()
-      if (fileName.endsWith("-rt.jar") || fileName.contains("-agent") || fileName == "yjp-controller-api-redist.jar") {
+      if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
         files.removeAt(i)
         addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), listOf(file))
       }
