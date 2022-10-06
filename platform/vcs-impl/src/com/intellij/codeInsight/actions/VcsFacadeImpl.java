@@ -82,15 +82,16 @@ public final class VcsFacadeImpl extends VcsFacade {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
 
-    ChangedRangesInfo cachedChangedTextHelper = getCachedChangedLines(project, document);
-    if (cachedChangedTextHelper != null) {
-      return cachedChangedTextHelper;
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    List<? extends Range> trackerRanges = tracker != null ? tracker.getRanges() : null;
+    if (trackerRanges != null) {
+      return getChangedRangesInfo(document, trackerRanges);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       CharSequence testContent = file.getUserData(TEST_REVISION_CONTENT);
       if (testContent != null) {
-        return calculateChangedRangesInfo(document, testContent);
+        return getChangedRangesInfo(document, computeRanges(document, testContent));
       }
     }
 
@@ -104,7 +105,10 @@ public final class VcsFacadeImpl extends VcsFacade {
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
-    return contentFromVcs != null ? calculateChangedRangesInfo(document, contentFromVcs) : null;
+    if (contentFromVcs == null) {
+      return null;
+    }
+    return getChangedRangesInfo(document, computeRanges(document, contentFromVcs));
   }
 
   @Override
@@ -223,23 +227,6 @@ public final class VcsFacadeImpl extends VcsFacade {
       LOG.warn("Can't get content for: " + change.getVirtualFile(), e);
       return null;
     }
-  }
-
-  @Nullable
-  private static ChangedRangesInfo getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
-    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
-      List<? extends Range> ranges = tracker.getRanges();
-      if (ranges != null) {
-        return getChangedRangesInfo(document, ranges);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    return getChangedRangesInfo(document, computeRanges(document, contentFromVcs));
   }
 
   @NotNull
