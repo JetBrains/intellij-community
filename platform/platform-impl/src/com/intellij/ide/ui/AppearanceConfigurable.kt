@@ -45,6 +45,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.Window
@@ -433,7 +434,7 @@ private fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defau
   return fontSizeComboBox(MutableProperty({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
 }
 
-private fun Row.fontSizeComboBox(prop: MutableProperty<String?>): Cell<ComboBox<String>> {
+private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))

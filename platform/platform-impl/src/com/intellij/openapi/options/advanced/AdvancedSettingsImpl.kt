@@ -143,14 +143,12 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
     return findBundle()?.let { BundleBase.message(it, groupKey) }
   }
 
-  @Nls
-  fun description(): String? {
+  fun description(): @Nls String? {
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
   }
 
-  @Nls
-  fun trailingLabel(): String? {
+  fun trailingLabel(): @Nls String? {
     val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
     return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.let { BundleBase.message(it, trailingLabelKey) }
   }
