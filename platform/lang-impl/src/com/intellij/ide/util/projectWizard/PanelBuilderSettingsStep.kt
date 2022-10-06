@@ -5,7 +5,6 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JComponent
-import javax.swing.JTextField
 
 class PanelBuilderSettingsStep(private val wizardContext: WizardContext, val builder: Panel) : SettingsStep {
   override fun getContext(): WizardContext = wizardContext
@@ -32,9 +31,5 @@ class PanelBuilderSettingsStep(private val wizardContext: WizardContext, val bui
 
   override fun addExpertField(label: String, field: JComponent) {
     addSettingsField(label, field)
-  }
-
-  override fun getModuleNameField(): JTextField? {
-    return null
   }
 }

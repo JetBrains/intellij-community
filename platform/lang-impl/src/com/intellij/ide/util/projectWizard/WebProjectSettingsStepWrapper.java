@@ -51,12 +51,6 @@ public class WebProjectSettingsStepWrapper implements SettingsStep {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  @Nullable
-  public JTextField getModuleNameField() {
-    return null;
-  }
-
   public boolean isEmpty() {
     return myFields.isEmpty() && myComponents.isEmpty();
   }
