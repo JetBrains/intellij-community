@@ -613,9 +613,16 @@ pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpecification, ar
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
-pub fn run_launcher_and_get_dump_with_envs(layout_kind: &LayoutSpecification, envs: (&str, &str)) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, &[], envs);
-    assert!(result.exit_status.success(), "Launcher didn't exit successfully");
-    result.dump.expect("Launcher exited successfully, but there is no output")
+pub fn run_launcher_and_get_dump_with_java_env(launcher_location: &LayoutSpecification, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(launcher_location);
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+    let result = run_launcher_with_default_args_and_env(
+        &test,
+        &[],
+        (java_env_var, launcher_jdk.to_str().unwrap())
+    );
+    let dump = result.dump
+        .expect("Launcher exited successfully, but there is no output");
+    dump
 }

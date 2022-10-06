@@ -4,7 +4,7 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
     use std::process::ExitStatus;
     use is_executable::IsExecutable;
     use rstest::*;
@@ -86,12 +86,7 @@ mod tests {
     #[case::main_bin(&LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
     fn jre_is_idea_jdk_test(#[case] launcher_location: &LayoutSpecification) {
-        let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
-        let dump = run_launcher_and_get_dump_with_envs(
-            launcher_location,
-            ("IU_JDK", launcher_jdk.to_str().unwrap())
-        );
+        let dump = run_launcher_and_get_dump_with_java_env(launcher_location, "IU_JDK");
 
         assert!(&dump.environmentVariables.contains_key("IU_JDK"), "IU_JDK is not set");
         assert!(
@@ -223,12 +218,7 @@ mod tests {
     #[case::main_bin(& LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
     #[case::plugins_bin(& LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
     fn jre_is_jdk_home_test(#[case] launcher_location: &LayoutSpecification) {
-        let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
-        let dump = run_launcher_and_get_dump_with_envs(
-            launcher_location,
-            ("JDK_HOME", launcher_jdk.to_str().unwrap())
-        );
+        let dump = run_launcher_and_get_dump_with_java_env(launcher_location, "JDK_HOME");
 
         assert!(
             std::env::var("IU_JDK").is_err(),
@@ -264,13 +254,7 @@ mod tests {
     #[case::main_bin(& LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar)]
     #[case::plugins_bin(& LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar)]
     fn jre_is_java_home_test(#[case] launcher_location: &LayoutSpecification) {
-        // todo: init java before it =D
-        let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
-        let dump = run_launcher_and_get_dump_with_envs(
-            launcher_location,
-            ("JAVA_HOME", launcher_jdk.to_str().unwrap())
-        );
+        let dump = run_launcher_and_get_dump_with_java_env(launcher_location, "JAVA_HOME");
 
         assert!(
             std::env::var("IU_JDK").is_err(),
