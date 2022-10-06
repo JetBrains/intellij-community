@@ -1,7 +1,7 @@
 class X {
   int switchTest1(Object obj) {
     return switch (obj) {
-      case <error descr="Old patterns from JEP 406 are not available since Java 19 preview">(String s)</error> -> 1;
+      case (String s) -> 1;
       case <error descr="Old patterns from JEP 406 are not available since Java 19 preview">Integer i && predicate()</error> -> 2;
       case Integer i -> 3;
       case default -> 4;
@@ -23,7 +23,7 @@ class X {
     if (obj instanceof (<error descr="Old patterns from JEP 406 are not available since Java 19 preview">Integer i && predicate()</error>)) {
       return 1;
     }
-    if (obj instanceof <error descr="Old patterns from JEP 406 are not available since Java 19 preview">(String s)</error>) {
+    if (obj instanceof (String s)) {
       return 3;
     }
     return 2;
