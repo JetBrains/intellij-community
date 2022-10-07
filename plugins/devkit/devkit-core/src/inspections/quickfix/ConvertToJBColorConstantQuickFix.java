@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -28,12 +28,12 @@ public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
 
   @Override
   public @IntentionName @NotNull String getName() {
-    return DevKitBundle.message("inspections.use.jb.color.fix", myConstantName);
+    return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.constant.fix", myConstantName);
   }
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return DevKitBundle.message("inspections.use.jb.color.fix.family.name");
+    return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.constant.family.name");
   }
 
   @Override

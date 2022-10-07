@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -61,7 +61,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
             }
             final ProblemDescriptor descriptor = holder.getManager()
               .createProblemDescriptor(expression,
-                                       DevKitBundle.message("inspections.use.jb.color.change.to.JBColor", StringUtil.toUpperCase(text)),
+                                       DevKitBundle.message("inspections.awt.color.used"),
                                        new ConvertToJBColorConstantQuickFix(StringUtil.toUpperCase(text)),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             holder.registerProblem(descriptor);
@@ -85,7 +85,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
           final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
           if (parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText())) return null;
         }
-        return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.jb.color.replace.with.JBColor"),
+        return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.awt.color.used"),
                                                new ConvertToJBColorQuickFix(),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       }
