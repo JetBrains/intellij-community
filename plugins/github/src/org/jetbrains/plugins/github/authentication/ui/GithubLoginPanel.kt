@@ -103,8 +103,6 @@ internal class GithubLoginPanel(
     tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
-
   fun setError(exception: Throwable?) {
     tokenAcquisitionError = exception?.let { currentUi.handleAcquireError(it) }
   }

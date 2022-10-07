@@ -37,10 +37,6 @@ internal class GHTokenCredentialsUi(
   private val tokenTextField = JBPasswordField()
   private var fixedLogin: String? = null
 
-  fun setToken(token: String) {
-    tokenTextField.text = token
-  }
-
   override fun Panel.centerPanel() {
     row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.token.field")) {

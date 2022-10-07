@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.Disposable
@@ -38,7 +37,6 @@ internal abstract class BaseLoginDialog(
   val server: GithubServerPath get() = loginPanel.getServer()
 
   fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
-  fun setToken(token: String?) = loginPanel.setToken(token)
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
   fun setError(exception: Throwable) {
