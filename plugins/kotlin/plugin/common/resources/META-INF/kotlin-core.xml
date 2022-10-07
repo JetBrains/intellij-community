@@ -197,6 +197,11 @@
             description="Disables auto-completion inside expressions"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.deprioritize.flow.collect.in.completion"
+            description="Sink down Flow.collect method in auto completion list"
+            defaultValue="true"
+            restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
