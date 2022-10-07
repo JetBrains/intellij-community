@@ -35,6 +35,10 @@ class QuickListsManager {
       dataHolder.updateDigest(item)
       return item
     }
+
+    override fun reloaded(schemeManager: SchemeManager<QuickList>, schemes: Collection<QuickList>) {
+      registerActions(ActionManager.getInstance())
+    }
   }
 
   val schemeManager: SchemeManager<QuickList> = SchemeManagerFactory.getInstance().create("quicklists", schemeProcessor,
@@ -68,6 +72,10 @@ class QuickListsManager {
     }
 
   private fun registerActions(actionManager: ActionManager) {
+    for (oldId in actionManager.getActionIdList(QuickList.QUICK_LIST_PREFIX)) {
+      actionManager.unregisterAction(oldId)
+    }
+
     // to prevent exception if 2 or more targets have the same name
     val registeredIds = HashSet<String>()
     for (scheme in schemeManager.allSchemes) {
@@ -81,9 +89,6 @@ class QuickListsManager {
   // used by external plugin
   fun setQuickLists(quickLists: List<QuickList>) {
     val actionManager = ActionManager.getInstance()
-    for (oldId in actionManager.getActionIdList(QuickList.QUICK_LIST_PREFIX)) {
-      actionManager.unregisterAction(oldId)
-    }
     schemeManager.setSchemes(quickLists)
     registerActions(actionManager)
   }
