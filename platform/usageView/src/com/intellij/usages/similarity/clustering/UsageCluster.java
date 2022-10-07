@@ -10,10 +10,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +23,7 @@ public class UsageCluster {
   private final @NotNull Set<@NotNull SimilarUsage> myUsages;
 
   public UsageCluster() {
-    this.myUsages = Collections.synchronizedSet(new LinkedHashSet<>());
+    this.myUsages = new CopyOnWriteArraySet<>();
   }
 
   public UsageCluster(@NotNull Set<@NotNull SimilarUsage> usages) {
@@ -37,17 +35,13 @@ public class UsageCluster {
   }
 
   public @NotNull Set<@NotNull SimilarUsage> getUsages() {
-    synchronized (myUsages) {
-      return new HashSet<>(myUsages);
-    }
+    return myUsages;
   }
 
   public boolean contains(@Nullable UsageInfo usageInfo) {
-    synchronized (myUsages) {
-      for (SimilarUsage usage : myUsages) {
-        if (usage.getUsageInfo().equals(usageInfo)) {
-          return true;
-        }
+    for (SimilarUsage usage : myUsages) {
+      if (usage.getUsageInfo().equals(usageInfo)) {
+        return true;
       }
     }
     return false;
@@ -62,17 +56,13 @@ public class UsageCluster {
   @RequiresReadLock
   @RequiresBackgroundThread
   public @NotNull Set<@NotNull SimilarUsage> getOnlySelectedUsages(@NotNull Set<@NotNull Usage> selectedUsages) {
-    synchronized (myUsages) {
-      return myUsages.stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
-    }
+    return myUsages.stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
   }
 
   @Override
   public String toString() {
-    synchronized (myUsages) {
-      return "{\n" +
-             myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
-             "}\n";
-    }
+    return "{\n" +
+           myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
+           "}\n";
   }
 }
