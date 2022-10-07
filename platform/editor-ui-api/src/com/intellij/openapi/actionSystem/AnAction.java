@@ -101,7 +101,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * set to {@code null}.
    *
    * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *             menu item when the presentation is a menu item.
+   *             menu item when the presentation is a menu item (with mnemonic).
    */
   public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
@@ -124,7 +124,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * Constructs a new action with the specified text, description and icon.
    *
    * @param text        Serves as a tooltip when the presentation is a button and the name of the
-   *                    menu item when the presentation is a menu item
+   *                    menu item when the presentation is a menu item (with mnemonic).
    * @param description Describes current action, this description will appear on
    *                    the status bar when presentation has focus
    * @param icon        Action's icon

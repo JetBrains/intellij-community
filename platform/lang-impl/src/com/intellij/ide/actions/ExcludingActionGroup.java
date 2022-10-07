@@ -34,7 +34,7 @@ public class ExcludingActionGroup extends ActionGroup {
   private final Set<AnAction> myExcludes;
 
   public ExcludingActionGroup(ActionGroup delegate, Set<AnAction> excludes) {
-    super(delegate.getTemplatePresentation().getText(), delegate.isPopup());
+    super(delegate.getTemplatePresentation().getTextWithMnemonic(), delegate.isPopup());
     myDelegate = delegate;
     myExcludes = excludes;
   }

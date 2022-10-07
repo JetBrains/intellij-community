@@ -16,6 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ public class EditFrameSourceAction extends GotoFrameSourceAction{
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getTemplatePresentation().getText());
+
+    AnAction delegate = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE);
+    e.getPresentation().setTextWithMnemonic(delegate.getTemplatePresentation().getTextWithPossibleMnemonic());
   }
 }

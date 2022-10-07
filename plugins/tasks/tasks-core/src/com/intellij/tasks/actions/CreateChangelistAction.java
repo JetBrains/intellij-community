@@ -45,7 +45,7 @@ public class CreateChangelistAction extends BaseTaskAction {
           manager == null ||
           !manager.isVcsEnabled() ||
           !ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-        presentation.setText(getTemplatePresentation().getText());
+        presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
         presentation.setEnabled(false);
       }
       else {
