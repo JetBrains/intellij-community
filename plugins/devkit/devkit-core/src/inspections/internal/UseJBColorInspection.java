@@ -3,11 +3,9 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
@@ -57,26 +55,8 @@ public class UseJBColorInspection extends DevKitInspectionBase {
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (isAwtColorConstantReference(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
-          holder.registerProblem(expression,
-                                 DevKitBundle.message("inspections.awt.color.used"),
-                                 new ConvertToJBColorConstantQuickFix(adjustColorConstantName(expression)));
+          holder.registerProblem(expression, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorConstantQuickFix());
         }
-      }
-
-      @NotNull
-      private static @NonNls String adjustColorConstantName(@NotNull PsiReferenceExpression expression) {
-        @NonNls String text = expression.getText();
-        if (text.contains(".")) {
-          text = text.substring(text.lastIndexOf('.'));
-        }
-        text = StringUtil.trimStart(text, ".");
-        if (text.equalsIgnoreCase("lightGray")) {
-          text = "LIGHT_GRAY";
-        }
-        else if (text.equalsIgnoreCase("darkGray")) {
-          text = "DARK_GRAY";
-        }
-        return StringUtil.toUpperCase(text);
       }
 
       private static boolean isAwtColorConstantReference(@NotNull PsiReferenceExpression expression) {

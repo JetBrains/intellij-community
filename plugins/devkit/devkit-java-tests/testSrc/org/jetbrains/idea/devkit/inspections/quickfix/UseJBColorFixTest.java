@@ -31,14 +31,14 @@ public class UseJBColorFixTest extends UseJBColorFixTestBase {
   }
 
   public void testUseJBColorConstantInConstant() {
-    doTest(getConvertToJBColorConstantFixName("BLUE"));
+    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 
   public void testUseJBColorConstantInMethodParam() {
-    doTest(getConvertToJBColorConstantFixName("GREEN"));
+    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 
   public void testUseJBColorConstantInVariable() {
-    doTest(getConvertToJBColorConstantFixName("LIGHT_GRAY"));
+    doTest(CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME);
   }
 }

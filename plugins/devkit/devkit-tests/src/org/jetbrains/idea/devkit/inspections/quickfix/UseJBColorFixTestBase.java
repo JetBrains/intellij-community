@@ -12,10 +12,7 @@ import org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection;
 public abstract class UseJBColorFixTestBase extends JavaCodeInsightFixtureTestCase {
 
   protected static final String CONVERT_TO_JB_COLOR_FIX_NAME = "Convert to 'JBColor'";
-
-  protected String getConvertToJBColorConstantFixName(String colorFieldName) {
-    return "Convert to 'JBColor.%s'".formatted(colorFieldName);
-  }
+  protected static final String CONVERT_TO_JB_COLOR_CONSTANT_FIX_NAME = "Convert to 'JBColor' constant";
 
   @NotNull
   protected abstract String getFileExtension();
