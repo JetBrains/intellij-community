@@ -15,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener, SettingsSyncCategoriesChangeListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -74,11 +74,19 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    // syncEnabled part is handled inside SettingsSyncEnabler
-    if (!syncEnabled) {
+    if (syncEnabled) {
+      SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+      // actual start of the sync is handled inside SettingsSyncEnabler
+    }
+    else {
+      SettingsSyncEvents.getInstance().removeCategoriesChangeListener(this)
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
+  }
+
+  override fun categoriesStateChanged() {
+    syncSettings()
   }
 
   private fun scheduleSyncingOnAppFocus() {

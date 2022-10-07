@@ -122,7 +122,10 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       row {
         cell(categoriesPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
-          .onApply { categoriesPanel.apply() }
+          .onApply {
+            categoriesPanel.apply()
+            SettingsSyncEvents.getInstance().fireCategoriesChanged()
+          }
           .onReset { categoriesPanel.reset() }
           .onIsModified { categoriesPanel.isModified() }
       }
