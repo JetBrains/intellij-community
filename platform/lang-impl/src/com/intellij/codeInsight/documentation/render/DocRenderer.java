@@ -83,7 +83,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
   DocRenderer(@NotNull DocRenderItem data) {
     myData = data;
-    myLinkActivationHandler = new DocRenderDefaultLinkActivationHandler(this);
+    myLinkActivationHandler = new DocRenderDefaultLinkActivationHandler();
   }
 
   public DocRenderer(@NotNull DocRenderData data, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {

@@ -160,7 +160,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  protected final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
 
   private int myBlockIndent;

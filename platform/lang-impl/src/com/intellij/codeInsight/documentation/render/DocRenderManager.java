@@ -3,8 +3,8 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
@@ -48,7 +48,7 @@ public final class DocRenderManager {
    */
   public static void resetAllEditorsToDefaultState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+    for (Editor editor : ClientEditorManager.getCurrentInstance().editors().toList()) {
       DocRenderItem.resetToDefaultState(editor);
       DocRenderPassFactory.forceRefreshOnNextPass(editor);
     }

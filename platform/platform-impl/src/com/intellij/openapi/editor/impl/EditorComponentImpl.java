@@ -181,6 +181,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
       return EditorCoreUtil.inVirtualSpace(myEditor, location);
     }
+    if (PlatformDataKeys.EDITOR_CLICK_OVER_TEXT.is(dataId)) {
+      Point point = myEditor.myLastMousePressedPoint;
+      if (point != null) {
+        return EditorUtil.isPointOverText(myEditor, point);
+      }
+    }
     return null;
   }
 

@@ -7,6 +7,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
@@ -27,9 +28,9 @@ import com.intellij.platform.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -44,7 +45,8 @@ import java.util.function.BooleanSupplier;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.findInlineDocumentation;
 
 public final class DocRenderItem implements DocRenderData {
-  private static final EventDispatcher<Listener> myDocUpdateDispatcher = EventDispatcher.create(Listener.class);
+  @Topic.AppLevel
+  public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
 
   private final Editor editor;
   private final RangeHighlighter highlighter;
@@ -144,7 +146,7 @@ public final class DocRenderItem implements DocRenderData {
         itemsToUpdateRenderers.get(i).textToRender = itemsToUpdateText.get(i);
       }
       DocRenderUpdater.updateRenderers(itemsToUpdateRenderers, true);
-      myDocUpdateDispatcher.getMulticaster().onItemsUpdate(editor, itemsToUpdateRenderers, true);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).onItemsUpdate(editor, itemsToUpdateRenderers, true);
       items.addAll(newRenderItems);
       return updated;
     });
@@ -160,10 +162,6 @@ public final class DocRenderItem implements DocRenderData {
       }, connection);
       editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
     });
-  }
-
-  public static void addUpdateListener(Listener listener) {
-    myDocUpdateDispatcher.addListener(listener);
   }
 
   private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
@@ -483,7 +481,7 @@ public final class DocRenderItem implements DocRenderData {
     }
   }
 
-  public interface Listener extends EventListener {
+  public interface Listener {
     void onItemsUpdate(@NotNull Editor editor, @NotNull Collection<DocRenderItem> items, boolean recreateContent);
   }
 }

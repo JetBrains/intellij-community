@@ -28,18 +28,14 @@ import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentatio
 import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
 public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActivationHandler {
-  final DocRenderer myRenderer;
-
-  DocRenderDefaultLinkActivationHandler(DocRenderer renderer) {
-    myRenderer = renderer;
-  }
 
   @Override
   public void activateLink(HyperlinkEvent event, @NotNull DocRenderer renderer) {
     Element element = event.getSourceElement();
-    if (!(myRenderer.getData() instanceof DocRenderItem)) return;
-    DocRenderItem item = (DocRenderItem)myRenderer.getData();
     if (element == null) return;
+
+    if (!(renderer.getData() instanceof DocRenderItem)) return;
+    DocRenderItem item = (DocRenderItem)renderer.getData();
 
     Rectangle2D location = null;
     try {
@@ -51,7 +47,7 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
 
     String url = event.getDescription();
     if (isDocumentationV2Enabled()) {
-      activateLinkV2(url, location);
+      activateLinkV2(url, location, renderer);
       return;
     }
 
@@ -63,12 +59,12 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
       navigateToDeclaration(context, url);
     }
     else {
-      showDocumentation(item.getEditor(), context, url, location);
+      showDocumentation(item.getEditor(), context, url, location, renderer);
     }
   }
 
-  private void activateLinkV2(@NotNull String url, @NotNull Rectangle2D location) {
-    DocRenderItem item = (DocRenderItem)myRenderer.getData();
+  private void activateLinkV2(@NotNull String url, @NotNull Rectangle2D location, @NotNull DocRenderer renderer) {
+    DocRenderItem item = (DocRenderItem)renderer.getData();
     Editor editor = item.getEditor();
     Project project = editor.getProject();
     if (project == null) {
@@ -82,7 +78,7 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
     else {
       instance(project).activateInlineLink(
         url, item::getInlineDocumentationTarget,
-        editor, DocRenderLinkActivationHandler.popupPosition(location, myRenderer)
+        editor, DocRenderLinkActivationHandler.popupPosition(location, renderer)
       );
     }
   }
@@ -101,7 +97,8 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
   private void showDocumentation(@NotNull Editor editor,
                                  @NotNull PsiElement context,
                                  @NotNull String linkUrl,
-                                 @NotNull Rectangle2D linkLocationWithinInlay) {
+                                 @NotNull Rectangle2D linkLocationWithinInlay,
+                                 @NotNull DocRenderer renderer) {
     if (isExternalLink(linkUrl)) {
       BrowserUtil.open(linkUrl);
       return;
@@ -109,7 +106,7 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
     Project project = context.getProject();
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     if (QuickDocUtil.getActiveDocComponent(project) == null) {
-      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, DocRenderLinkActivationHandler.popupPosition(linkLocationWithinInlay, myRenderer));
+      editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, DocRenderLinkActivationHandler.popupPosition(linkLocationWithinInlay, renderer));
       documentationManager.showJavaDocInfo(editor, context, context, () -> {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
       }, "", false, true);

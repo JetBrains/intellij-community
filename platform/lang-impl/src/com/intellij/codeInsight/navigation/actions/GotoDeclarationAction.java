@@ -19,6 +19,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -276,7 +277,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor != null && isMouseShortcut &&
         !Boolean.TRUE.equals(event.getUpdateSession().compute(this, "isPointOverText", ActionUpdateThread.EDT, () ->
-          EditorUtil.isPointOverText(editor, new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent()))))) {
+          event.getData(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT)))) {
       event.getPresentation().setEnabled(false);
       return;
     }
