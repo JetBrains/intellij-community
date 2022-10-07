@@ -278,14 +278,14 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());
 
     // first, check that we can create all requested directories
-    if (!ContainerUtil.all(toCreate, dir -> validator.checkInput(dir.first))) return null;
+    if (!ContainerUtil.all(toCreate, dir -> !dir.first.isEmpty() && validator.checkInput(dir.first))) return null;
 
     List<Pair<PsiFileSystemItem, JpsModuleSourceRootType<?>>> toMarkAsRoots = new ArrayList<>(toCreate.size());
 
     // now create directories one by one
     for (Pair<String, JpsModuleSourceRootType<?>> dir : toCreate) {
       // this call creates a directory
-      if (!validator.canClose(dir.first)) continue;
+      if (!validator.canClose(dir.first)) return null;
       PsiFileSystemItem element = validator.getCreatedElement();
       if (element == null) continue;
 
