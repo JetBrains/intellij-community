@@ -5,7 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -14,7 +14,7 @@ interface GradleTestFixtureBuilder {
 
   val projectName: String
 
-  fun createFixture(gradleVersion: GradleVersion): GradleTestFixture
+  fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture
 
   companion object {
     val EMPTY_PROJECT: GradleTestFixtureBuilder = empty()
@@ -25,9 +25,9 @@ interface GradleTestFixtureBuilder {
     fun create(projectName: String, configure: FileTestFixture.Builder.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
         override val projectName: String = projectName
-        override fun createFixture(gradleVersion: GradleVersion): GradleTestFixture {
+        override fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture {
           val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-          return fixtureFactory.createGradleTestFixture(projectName, gradleVersion) {
+          return fixtureFactory.createGradleProjectTestFixture(projectName, gradleVersion) {
             configure(gradleVersion)
           }
         }

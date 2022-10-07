@@ -3,15 +3,15 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.junit.jupiter.api.AfterAll
 
-abstract class GradleBaseTestCase : ExternalSystemTestCase() {
+abstract class GradleProjectBaseTestCase : ExternalSystemTestCase() {
 
-  private var fixture: GradleTestFixture? = null
+  private var fixture: GradleProjectTestFixture? = null
 
-  val gradleFixture: GradleTestFixture
+  val gradleFixture: GradleProjectTestFixture
     get() = requireNotNull(fixture) {
       "Gradle fixture isn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
@@ -27,9 +27,9 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
 
   companion object {
     private val initializedFixtures = LinkedHashSet<FixtureId>()
-    private val fixtures = LinkedHashMap<FixtureId, GradleTestFixture>()
+    private val fixtures = LinkedHashMap<FixtureId, GradleProjectTestFixture>()
 
-    private fun getOrCreateGradleTestFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder): GradleTestFixture {
+    private fun getOrCreateGradleTestFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder): GradleProjectTestFixture {
       val fixtureId = builder.getFixtureId(gradleVersion)
       if (fixtureId !in initializedFixtures) {
         destroyAllGradleFixtures()
@@ -51,7 +51,7 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
       runAll(fixtures.values.reversed(), ::destroyGradleFixture)
     }
 
-    private fun rollbackOrDestroyGradleTestFixture(fixture: GradleTestFixture) {
+    private fun rollbackOrDestroyGradleTestFixture(fixture: GradleProjectTestFixture) {
       fixture.fileFixture.rollbackAll()
       if (fixture.fileFixture.hasErrors()) {
         initializedFixtures.remove(fixture.getFixtureId())
@@ -59,7 +59,7 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
       }
     }
 
-    private fun destroyGradleFixture(fixture: GradleTestFixture) {
+    private fun destroyGradleFixture(fixture: GradleProjectTestFixture) {
       fixtures.remove(fixture.getFixtureId())
       fixture.tearDown()
     }
@@ -69,7 +69,7 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
     private fun GradleTestFixtureBuilder.getFixtureId(gradleVersion: GradleVersion) =
       FixtureId(projectName, gradleVersion)
 
-    private fun GradleTestFixture.getFixtureId() =
+    private fun GradleProjectTestFixture.getFixtureId() =
       FixtureId(projectName, gradleVersion)
   }
 }

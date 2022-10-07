@@ -26,7 +26,7 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
@@ -35,12 +35,12 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
 
-internal class GradleTestFixtureImpl private constructor(
+internal class GradleProjectTestFixtureImpl private constructor(
   override val projectName: String,
   override val gradleVersion: GradleVersion,
   private val sdkFixture: SdkTestFixture,
   override val fileFixture: FileTestFixture
-) : GradleTestFixture {
+) : GradleProjectTestFixture {
 
   private lateinit var _project: Project
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.gradle.util.GradleVersion
 
-interface GradleTestFixture : IdeaTestFixture {
+interface GradleProjectTestFixture : IdeaTestFixture {
 
   val gradleVersion: GradleVersion
 

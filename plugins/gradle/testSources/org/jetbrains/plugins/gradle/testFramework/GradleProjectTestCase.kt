@@ -10,7 +10,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.util.isGradleAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.isGradleOlderThan
 
-abstract class GradleTestCase : GradleBaseTestCase() {
+abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   @get:JvmName("myProject")
   val project: Project get() = gradleFixture.project

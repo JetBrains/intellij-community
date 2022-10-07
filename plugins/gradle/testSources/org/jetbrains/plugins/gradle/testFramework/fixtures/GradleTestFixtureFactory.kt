@@ -18,11 +18,11 @@ interface GradleTestFixtureFactory {
     configure: FileTestFixture.Builder.() -> Unit
   ): FileTestFixture
 
-  fun createGradleTestFixture(
+  fun createGradleProjectTestFixture(
     projectName: String,
     gradleVersion: GradleVersion,
     configure: FileTestFixture.Builder.() -> Unit
-  ): GradleTestFixture
+  ): GradleProjectTestFixture
 
   fun createGradleCodeInsightTestFixture(
     projectName: String,
@@ -31,7 +31,7 @@ interface GradleTestFixtureFactory {
   ): GradleCodeInsightTestFixture
 
   fun createGradleCodeInsightTestFixture(
-    gradleTestFixture: GradleTestFixture
+    gradleProjectTestFixture: GradleProjectTestFixture
   ): GradleCodeInsightTestFixture
 
   companion object {
