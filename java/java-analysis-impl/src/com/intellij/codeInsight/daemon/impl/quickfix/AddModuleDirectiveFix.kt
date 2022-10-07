@@ -27,7 +27,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIn
     val module = (PsiTreeUtil.findSameElementInCopy(startElement, moduleFile) as? PsiJavaModule) ?: return IntentionPreviewInfo.EMPTY
     val beforeText = module.text
     invoke(project, module)
-    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, beforeText, module.text)
+    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, moduleFile.name, beforeText, module.text)
   }
 }
 
