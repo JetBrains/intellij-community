@@ -166,6 +166,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
               JBUI.Borders.empty(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel(UISettings.getShadowInstance());
+    Disposer.register(this, myInfoAndProgressPanel);
+
     addWidget(myInfoAndProgressPanel, Position.CENTER, "__IGNORED__");
     Project project = myFrame.getProject();
     if (project != null) {
