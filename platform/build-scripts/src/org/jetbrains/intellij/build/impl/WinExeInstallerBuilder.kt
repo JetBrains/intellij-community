@@ -40,7 +40,7 @@ private fun generateInstallationConfigFileForSilentMode(customizer: WindowsDistr
   }
 
   Files.createDirectories(targetFilePath.parent)
-  Files.copy(silentConfigTemplate, targetFilePath)
+  Files.copy(silentConfigTemplate, targetFilePath, StandardCopyOption.REPLACE_EXISTING)
 
   val extensionsList = getFileAssociations(customizer)
   var associations = "\n\n; List of associations. To create an association change value to 1.\n"
