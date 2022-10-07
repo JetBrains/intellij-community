@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,7 +39,8 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final ProjectStructureElement element = myConfigurable.getSelectedElement();
+    ProjectStructureElement element =
+      Utils.getOrCreateUpdateSession(e).compute(this, "getSelection", ActionUpdateThread.EDT, () -> myConfigurable.getSelectedElement());
     boolean visible = false;
     if (element instanceof LibraryProjectStructureElement) {
       final LibraryEx library = (LibraryEx)((LibraryProjectStructureElement)element).getLibrary();
@@ -49,7 +51,7 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   @Override
