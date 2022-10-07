@@ -109,13 +109,7 @@ final class FlushQueue {
 
   private static void runNextEvent(@NotNull RunnableInfo info) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
-    final Runnable runnable = info.runnable;
-    if (watcher != null) {
-      final long waitingFinishedNs = System.nanoTime();
-      final long waitedInQueueNs = waitingFinishedNs - info.queuedTimeNs;
-      watcher.logTimeWaitedInQueue(runnable, waitedInQueueNs, info.queueSize);
-      watcher.runnableStarted(runnable, System.currentTimeMillis());
-    }
+    final long waitingFinishedNs = System.nanoTime();
     try {
       doRun(info);
     }
@@ -130,7 +124,12 @@ final class FlushQueue {
     }
     finally {
       if (watcher != null) {
-        watcher.runnableFinished(runnable, System.currentTimeMillis());
+        final Runnable runnable = info.runnable;
+        final long executionFinishedNs = System.nanoTime();
+        final long waitedInQueueNs = waitingFinishedNs - info.queuedTimeNs;
+        final long executionDurationNs = executionFinishedNs - waitingFinishedNs;
+
+        watcher.runnableTaskFinished(runnable, waitedInQueueNs, info.queueSize, executionDurationNs);
       }
     }
   }
