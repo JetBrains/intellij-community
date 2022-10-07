@@ -170,10 +170,10 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
   }
 }
 
-internal data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
+data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
 
 @JvmField
-internal val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentListOf(
+val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentListOf(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
