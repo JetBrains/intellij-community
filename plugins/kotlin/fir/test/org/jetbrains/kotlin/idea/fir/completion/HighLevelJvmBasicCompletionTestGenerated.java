@@ -3226,6 +3226,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/java/ExtensionFromStandardLibrary.kt");
             }
 
+            @TestMetadata("FlowCollectMethodLowerPriority.kt")
+            public void testFlowCollectMethodLowerPriority() throws Exception {
+                runTest("../completion/testData/basic/java/FlowCollectMethodLowerPriority.kt");
+            }
+
             @TestMetadata("InPackage.kt")
             public void testInPackage() throws Exception {
                 runTest("../completion/testData/basic/java/InPackage.kt");
