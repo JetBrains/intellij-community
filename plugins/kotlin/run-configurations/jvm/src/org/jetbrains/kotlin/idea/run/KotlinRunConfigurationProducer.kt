@@ -6,19 +6,22 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import java.util.concurrent.TimeUnit
 
 class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunConfiguration>() {
     override fun setupConfigurationFromContext(
@@ -38,14 +41,23 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         return true
     }
 
-    private fun getEntryPointContainer(location: Location<*>?): KtDeclarationContainer? {
-        val element = location?.psiElement ?: return null
-        if (DumbService.getInstance(location.project).isDumb) return null
-        return KotlinMainFunctionDetector.getInstance().findMainOwner(element)
+    private fun getEntryPointContainer(location: Location<*>): KtDeclarationContainer? {
+        val project = location.project
+        val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+
+        data class EntryPointStamp(val element: PsiElement)
+
+        return ReadAction.nonBlocking<KtDeclarationContainer> { mainFunctionDetector.findMainOwner(location.psiElement) }
+            .inSmartMode(project)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .coalesceBy(EntryPointStamp(location.psiElement))
+            .submit(AppExecutorUtil.getAppExecutorService())
+            .get()
     }
 
     override fun isConfigurationFromContext(configuration: KotlinRunConfiguration, context: ConfigurationContext): Boolean {
-        val entryPointContainer = getEntryPointContainer(context.location) ?: return false
+        val location = context.location ?: return false
+        val entryPointContainer = getEntryPointContainer(location) ?: return false
         val startClassFQName = getMainClassJvmName(entryPointContainer) ?: return false
 
         return configuration.runClass == startClassFQName &&
