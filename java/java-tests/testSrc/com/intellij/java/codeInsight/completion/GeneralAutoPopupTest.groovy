@@ -56,7 +56,7 @@ class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       @Override
       void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
         injectorCalled = true
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
     }
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, [injector] as List<LanguageInjector>, myFixture.testRootDisposable)

@@ -95,7 +95,7 @@ public class MainPassesRunner {
   }
 
   private void runMainPasses(@NotNull List<? extends VirtualFile> files, @NotNull Map<? super Document, List<HighlightInfo>> result, @NotNull ProgressIndicator progress) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     for (int i = 0; i < files.size(); i++) {
       ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
 
@@ -136,7 +136,7 @@ public class MainPassesRunner {
   private void runMainPasses(@NotNull VirtualFile file,
                              @NotNull Map<? super Document, List<HighlightInfo>> result,
                              @NotNull DaemonProgressIndicator daemonIndicator) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {

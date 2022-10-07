@@ -408,8 +408,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     });
     if (command.isResponseExpected()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread(),
-                     "This operation is time consuming and must not be called on EDT");
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
 
       // Note: do not wait for result from UI thread
       try {

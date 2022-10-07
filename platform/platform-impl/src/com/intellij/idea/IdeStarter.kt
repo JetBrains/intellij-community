@@ -65,7 +65,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
   override suspend fun start(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
-    assert(!app.isDispatchThread)
+    app.assertIsNonDispatchThread();
 
     coroutineScope {
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)

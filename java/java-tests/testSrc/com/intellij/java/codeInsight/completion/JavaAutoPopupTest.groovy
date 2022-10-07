@@ -609,7 +609,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-      assert !ApplicationManager.application.dispatchThread
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       result.runRemainingContributors(parameters, true)
       Thread.sleep 500
     }

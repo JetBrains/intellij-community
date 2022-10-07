@@ -131,7 +131,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   protected ActionManagerImpl() {
     Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode() && !app.isHeadlessEnvironment() && !app.isCommandLine()) {
-      LOG.assertTrue(!app.isDispatchThread(), "assert !app.isDispatchThread()");
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     registerActions(PluginManagerCore.getPluginSet().getEnabledModules());

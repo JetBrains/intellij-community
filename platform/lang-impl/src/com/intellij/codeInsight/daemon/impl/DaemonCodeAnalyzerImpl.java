@@ -267,9 +267,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                     @NotNull Document document,
                                                     @NotNull ProgressIndicator progress) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IllegalStateException("Must not run highlighting from under EDT");
-    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       throw new IllegalStateException("Must run highlighting outside read action, external annotators do not support checkCanceled");
     }

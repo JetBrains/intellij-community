@@ -305,7 +305,7 @@ public final class PlatformTestUtil {
     }
     else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
-      assert application.isDispatchThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
   }
 

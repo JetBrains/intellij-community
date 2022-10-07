@@ -227,7 +227,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
     //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");

@@ -417,7 +417,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private void endSearchForUsages() {
-    assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount == 0) {
       if (myProcessPresentation.isShowNotFoundMessage()) {

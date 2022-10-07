@@ -80,7 +80,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1309,7 +1308,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   void drainQueuedUsageNodes() {
-    assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     UIUtil.invokeAndWaitIfNeeded((Runnable)this::fireEvents);
   }
 
@@ -1329,7 +1328,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void waitForUpdateRequestsCompletion() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ((BoundedTaskExecutor)updateRequests).waitAllTasksExecuted(10, TimeUnit.MINUTES);
     }
@@ -1358,7 +1357,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     // invoke in ReadAction to be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
