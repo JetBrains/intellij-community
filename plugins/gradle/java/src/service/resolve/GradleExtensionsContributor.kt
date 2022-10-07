@@ -105,28 +105,6 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
   }
 
   companion object {
-    fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
-      val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
-      val userHomePropertiesFile = getGradleUserHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
-      if (userHomePropertiesFile != null) {
-        yield(userHomePropertiesFile)
-      }
-      val projectRootPropertiesFile = externalRootProjectPath.getGradlePropertiesFile(place.project)
-      if (projectRootPropertiesFile != null) {
-        yield(projectRootPropertiesFile)
-      }
-      val localSettings = GradleLocalSettings.getInstance(place.project)
-      val installationDirectoryPropertiesFile = localSettings.getGradleHome(externalRootProjectPath)?.getGradlePropertiesFile(place.project)
-      if (installationDirectoryPropertiesFile != null) {
-        yield(installationDirectoryPropertiesFile)
-      }
-    }
-
-    private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
-      val file = VfsUtil.findFile(Path.of(this), false)?.findChild(PROPERTIES_FILE_NAME)
-      return file?.let { PsiUtilCore.getPsiFile(project, it) }.asSafely<PropertiesFile>()
-    }
-
     private fun createGroovyProperty(aClass: PsiClass,
                                      property: IProperty,
                                      stringType: PsiClassType): GrLightField {
