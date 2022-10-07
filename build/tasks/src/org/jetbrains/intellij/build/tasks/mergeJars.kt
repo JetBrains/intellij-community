@@ -184,6 +184,7 @@ private fun isNative(name: String): Boolean {
   return name.endsWith(".jnilib") ||
          name.endsWith(".dylib") ||
          name.endsWith(".so") ||
+         name.endsWith(".exe") ||
          name.endsWith(".dll") ||
          name.endsWith(".tbd")
 }
