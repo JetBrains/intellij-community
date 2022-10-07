@@ -47,7 +47,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
-  private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -332,22 +331,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
       }
       else if (shellName.equals(FISH_NAME)) {
-        String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
-        if (StringUtil.isNotEmpty(xdgConfig)) {
-          File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
-          if (fishConfig.exists()) {
-            envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
-          }
-          envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
-        }
-
-        envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());
+        result.add("--init-command");
+        result.add(String.format("source '%s'", escapePathForFish(rcFilePath)));
       }
       setLoginShellEnv(envs, isLogin(command));
     }
 
     result.addAll(command);
     return result;
+  }
+
+  private static @NotNull String escapePathForFish(@NotNull String path) {
+    // Replace \ with \\ and ' with \' (so that we can enclose the escaped path in '...').
+    return path.replace("\\", "\\\\").replace("'", "\\'");
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {
