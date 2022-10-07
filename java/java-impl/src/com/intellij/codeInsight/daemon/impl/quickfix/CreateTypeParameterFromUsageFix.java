@@ -188,7 +188,10 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
 
   private static boolean typeParameterIsNotValidInTypeElementContext(@NotNull PsiTypeElement parent) {
     PsiElement grandParent = parent.getParent();
-    return grandParent instanceof PsiClassObjectAccessExpression || grandParent instanceof PsiDeconstructionPattern || grandParent instanceof PsiPatternVariable;
+    return grandParent instanceof PsiClassObjectAccessExpression ||
+           grandParent instanceof PsiDeconstructionPattern ||
+           grandParent instanceof PsiPatternVariable ||
+           grandParent instanceof PsiInstanceOfExpression;
   }
 
 
