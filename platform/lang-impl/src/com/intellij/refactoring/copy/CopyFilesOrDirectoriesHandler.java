@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
@@ -259,8 +258,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           PsiFile firstFile = added.get(0);
           CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
           if (!(firstFile instanceof PsiBinaryFile)) {
-            EditorHelper.openInEditor(firstFile);
-            ToolWindowManager.getInstance(project).activateEditorComponent();
+            EditorHelper.openInEditor(firstFile, true, true);
           }
         }
       }
