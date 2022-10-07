@@ -28,11 +28,10 @@ import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * Protocol format as follows:
- *
+ * <p>
  * java:suite://className
  * java:test://className/methodName
- *
- * <p/>
+ * <p>
  * "/" can't appear as part of package name and thus can be used as a valid separator between fully qualified class name and method name
  */
 public class JavaTestLocator implements SMTestLocator {
