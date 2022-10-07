@@ -1,15 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.FastThreadLocalThread
+import io.netty.util.concurrent.GenericFutureListener
 import io.netty.util.internal.logging.InternalLoggerFactory
+import kotlinx.coroutines.*
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.net.InetAddress
@@ -21,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
 class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
+                                        val childEventLoopGroup: EventLoopGroup,
                                         val port: Int,
                                         private val channelRegistrar: ChannelRegistrar) : Disposable {
   val isRunning: Boolean
@@ -54,22 +59,60 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       }
     }
 
-    fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: Supplier<ChannelHandler>? = null): BuiltInServer {
-      val eventLoopGroup = multiThreadEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, BuiltInServerThreadFactory())
-      return start(eventLoopGroup, true, firstPort, portsCount, tryAnyPort = tryAnyPort, handler = handler)
+    private class BuiltInServerThreadFactory : ThreadFactory {
+      private val counter = AtomicInteger()
+
+      override fun newThread(r: java.lang.Runnable): Thread {
+        return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
+      }
     }
 
-    fun start(eventLoopGroup: EventLoopGroup,
+    suspend fun start(firstPort: Int,
+                      portsCount: Int,
+                      tryAnyPort: Boolean,
+                      handler: Supplier<ChannelHandler>? = null): BuiltInServer {
+      val provider = selectorProvider ?: SelectorProvider.provider()
+      val factory = BuiltInServerThreadFactory()
+      val eventLoopGroup = NioEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, factory, provider)
+      return start(
+        parentEventLoopGroup = eventLoopGroup,
+        childEventLoopGroup = eventLoopGroup,
+        isEventLoopGroupOwner = true,
+        firstPort = firstPort,
+        portsCount = portsCount,
+        tryAnyPort = tryAnyPort,
+        handler = handler,
+      )
+    }
+
+    suspend fun start(parentEventLoopGroup: EventLoopGroup,
+              childEventLoopGroup: EventLoopGroup,
               isEventLoopGroupOwner: Boolean,
               firstPort: Int,
               portsCount: Int,
               tryAnyPort: Boolean,
               handler: Supplier<ChannelHandler>? = null): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
-      val bootstrap = serverBootstrap(eventLoopGroup)
-      configureChildHandler(bootstrap, channelRegistrar, handler)
-      val port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar, isEventLoopGroupOwner)
-      return BuiltInServer(eventLoopGroup, port, channelRegistrar)
+      val bootstrap = createServerBootstrap(parentEventLoopGroup, childEventLoopGroup)
+      configureChildHandler(bootstrap = bootstrap, channelRegistrar = channelRegistrar, channelHandler = handler)
+      val port = bind(firstPort = firstPort,
+                      portsCount = portsCount,
+                      tryAnyPort = tryAnyPort,
+                      bootstrap = bootstrap,
+                      channelRegistrar = channelRegistrar,
+                      isEventLoopGroupOwner = isEventLoopGroupOwner)
+      return BuiltInServer(eventLoopGroup = parentEventLoopGroup,
+                           childEventLoopGroup = childEventLoopGroup,
+                           port = port,
+                           channelRegistrar = channelRegistrar)
+    }
+
+    private fun createServerBootstrap(parentEventLoopGroup: EventLoopGroup, childEventLoopGroup: EventLoopGroup): ServerBootstrap {
+      val bootstrap = ServerBootstrap()
+        .group(parentEventLoopGroup, childEventLoopGroup)
+        .channel(NioServerSocketChannel::class.java)
+      bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
+      return bootstrap
     }
 
     fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (Supplier<ChannelHandler>)?) {
@@ -81,12 +124,12 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       })
     }
 
-    private fun bind(firstPort: Int,
-                     portsCount: Int,
-                     tryAnyPort: Boolean,
-                     bootstrap: ServerBootstrap,
-                     channelRegistrar: ChannelRegistrar,
-                     isEventLoopGroupOwner: Boolean): Int {
+    private suspend fun bind(firstPort: Int,
+                             portsCount: Int,
+                             tryAnyPort: Boolean,
+                             bootstrap: ServerBootstrap,
+                             channelRegistrar: ChannelRegistrar,
+                             isEventLoopGroupOwner: Boolean): Int {
       val address = InetAddress.getByName("127.0.0.1")
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
@@ -95,7 +138,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
           continue
         }
 
-        val future = bootstrap.bind(address, port).awaitUninterruptibly()
+        val future = bootstrap.bind(address, port).asDeferred().await()
         if (future.isSuccess) {
           channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
           return port
@@ -106,7 +149,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       }
 
       logger<BuiltInServer>().info("Cannot bind to our default range, so, try to bind to any free port")
-      val future = bootstrap.bind(address, 0).awaitUninterruptibly()
+      val future = bootstrap.bind(address, 0).asDeferred().await()
       if (future.isSuccess) {
         channelRegistrar.setServerChannel(future.channel(), isEventLoopGroupOwner)
         return (future.channel().localAddress() as InetSocketAddress).port
@@ -119,18 +162,27 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
     }
   }
 
+  fun createServerBootstrap(): ServerBootstrap = createServerBootstrap(eventLoopGroup, childEventLoopGroup)
+
   override fun dispose() {
     channelRegistrar.close()
     logger<BuiltInServer>().info("web server stopped")
   }
 }
 
-private class BuiltInServerThreadFactory : ThreadFactory {
-  private val counter = AtomicInteger()
-
-  override fun newThread(r: Runnable): Thread {
-    return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
-  }
+private fun ChannelFuture.asDeferred(): CompletableDeferred<ChannelFuture> {
+  val deferred = CompletableDeferred<ChannelFuture>()
+  addListener(object : GenericFutureListener<ChannelFuture> {
+    override fun operationComplete(future: ChannelFuture) {
+      try {
+        removeListener(this)
+      }
+      finally {
+        deferred.complete(future)
+      }
+    }
+  })
+  return deferred
 }
 
 private val selectorProvider: SelectorProvider? by lazy {
@@ -143,17 +195,4 @@ private val selectorProvider: SelectorProvider? by lazy {
   catch (e: Throwable) {
     null
   }
-}
-
-private fun multiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
-//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-//    try {
-//      return KQueueEventLoopGroup(workerCount, threadFactory)
-//    }
-//    catch (e: Throwable) {
-//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
-//    }
-//  }
-  // do not use service loader to get default SelectorProvider
-  return NioEventLoopGroup(workerCount, threadFactory, selectorProvider ?: SelectorProvider.provider())
 }
