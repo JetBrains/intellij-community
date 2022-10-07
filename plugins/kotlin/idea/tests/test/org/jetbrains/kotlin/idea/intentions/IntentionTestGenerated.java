@@ -15193,6 +15193,46 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializer3.kt");
         }
 
+        @TestMetadata("callableInitializerExplicitTypeArguments.kt")
+        public void testCallableInitializerExplicitTypeArguments() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments.kt")
+        public void testCallableInitializerImplicitTypeArguments() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments2.kt")
+        public void testCallableInitializerImplicitTypeArguments2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments2.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments3.kt")
+        public void testCallableInitializerImplicitTypeArguments3() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments3.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments4.kt")
+        public void testCallableInitializerImplicitTypeArguments4() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments4.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializer.kt")
+        public void testConstantExpressionInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/constantExpressionInitializer.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializerVar.kt")
+        public void testConstantExpressionInitializerVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
+        }
+
+        @TestMetadata("explicitTypeIsAlias.kt")
+        public void testExplicitTypeIsAlias() throws Exception {
+            runTest("testData/intentions/removeExplicitType/explicitTypeIsAlias.kt");
+        }
+
         @TestMetadata("extensionFunction.kt")
         public void testExtensionFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/extensionFunction.kt");
@@ -15206,6 +15246,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("funWithBody.kt")
         public void testFunWithBody() throws Exception {
             runTest("testData/intentions/removeExplicitType/funWithBody.kt");
+        }
+
+        @TestMetadata("funWithBody2.kt")
+        public void testFunWithBody2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/funWithBody2.kt");
         }
 
         @TestMetadata("hasAnnotation.kt")
@@ -15226,6 +15271,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("hasAnnotationOnTypeArgument3.kt")
         public void testHasAnnotationOnTypeArgument3() throws Exception {
             runTest("testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument3.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitType.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitType() throws Exception {
+            runTest("testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitType.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitTypeVar.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitTypeVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitTypeVar.kt");
         }
 
         @TestMetadata("lambdaExpressionBody.kt")
@@ -15293,6 +15348,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/notOnSetterParameter.kt");
         }
 
+        @TestMetadata("nullableExplicitType.kt")
+        public void testNullableExplicitType() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitType.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar.kt")
+        public void testNullableExplicitTypeVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitTypeVar.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar2.kt")
+        public void testNullableExplicitTypeVar2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitTypeVar2.kt");
+        }
+
         @TestMetadata("onLoopParameter.kt")
         public void testOnLoopParameter() throws Exception {
             runTest("testData/intentions/removeExplicitType/onLoopParameter.kt");
@@ -15306,6 +15376,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("onOverrideInTrait.kt")
         public void testOnOverrideInTrait() throws Exception {
             runTest("testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        }
+
+        @TestMetadata("onPropertyAccessor.kt")
+        public void testOnPropertyAccessor() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onPropertyAccessor.kt");
         }
 
         @TestMetadata("onSetterParameter.kt")
@@ -15326,6 +15401,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("removeUnresolvedType.kt")
         public void testRemoveUnresolvedType() throws Exception {
             runTest("testData/intentions/removeExplicitType/removeUnresolvedType.kt");
+        }
+
+        @TestMetadata("stringInitializer.kt")
+        public void testStringInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/stringInitializer.kt");
         }
 
         @TestMetadata("suspendFunction.kt")

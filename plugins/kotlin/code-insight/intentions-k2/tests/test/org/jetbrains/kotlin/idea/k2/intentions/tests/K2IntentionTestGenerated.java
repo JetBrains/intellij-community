@@ -1422,6 +1422,254 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitType")
+    public static class RemoveExplicitType extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousFunctionInitializer.kt")
+        public void testAnonymousFunctionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializer.kt");
+        }
+
+        @TestMetadata("anonymousFunctionInitializer2.kt")
+        public void testAnonymousFunctionInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializer2.kt");
+        }
+
+        @TestMetadata("anonymousFunctionInitializer3.kt")
+        public void testAnonymousFunctionInitializer3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializer3.kt");
+        }
+
+        @TestMetadata("callableInitializerExplicitTypeArguments.kt")
+        public void testCallableInitializerExplicitTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments.kt")
+        public void testCallableInitializerImplicitTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments2.kt")
+        public void testCallableInitializerImplicitTypeArguments2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments2.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments3.kt")
+        public void testCallableInitializerImplicitTypeArguments3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments3.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments4.kt")
+        public void testCallableInitializerImplicitTypeArguments4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments4.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializer.kt")
+        public void testConstantExpressionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializer.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializerVar.kt")
+        public void testConstantExpressionInitializerVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
+        }
+
+        @TestMetadata("explicitTypeIsAlias.kt")
+        public void testExplicitTypeIsAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/explicitTypeIsAlias.kt");
+        }
+
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/extensionFunction.kt");
+        }
+
+        @TestMetadata("funNoBody.kt")
+        public void testFunNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/funNoBody.kt");
+        }
+
+        @TestMetadata("funWithBody.kt")
+        public void testFunWithBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/funWithBody.kt");
+        }
+
+        @TestMetadata("funWithBody2.kt")
+        public void testFunWithBody2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/funWithBody2.kt");
+        }
+
+        @TestMetadata("hasAnnotation.kt")
+        public void testHasAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/hasAnnotation.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnTypeArgument.kt")
+        public void testHasAnnotationOnTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnTypeArgument2.kt")
+        public void testHasAnnotationOnTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument2.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnTypeArgument3.kt")
+        public void testHasAnnotationOnTypeArgument3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument3.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitType.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitType.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitTypeVar.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitTypeVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitTypeVar.kt");
+        }
+
+        @TestMetadata("lambdaExpressionBody.kt")
+        public void testLambdaExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaExpressionBody.kt");
+        }
+
+        @TestMetadata("lambdaInitializer.kt")
+        public void testLambdaInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer.kt");
+        }
+
+        @TestMetadata("lambdaInitializer2.kt")
+        public void testLambdaInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer2.kt");
+        }
+
+        @TestMetadata("lambdaInitializer3.kt")
+        public void testLambdaInitializer3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer3.kt");
+        }
+
+        @TestMetadata("lambdaInitializer4.kt")
+        public void testLambdaInitializer4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer4.kt");
+        }
+
+        @TestMetadata("lambdaInitializer5.kt")
+        public void testLambdaInitializer5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializer5.kt");
+        }
+
+        @TestMetadata("lambdaInitializerWithAlias.kt")
+        public void testLambdaInitializerWithAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithAlias.kt");
+        }
+
+        @TestMetadata("lambdaInitializerWithAlias2.kt")
+        public void testLambdaInitializerWithAlias2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/lambdaInitializerWithAlias2.kt");
+        }
+
+        @TestMetadata("needTypeArgument.kt")
+        public void testNeedTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument.kt");
+        }
+
+        @TestMetadata("needTypeArgument2.kt")
+        public void testNeedTypeArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgument2.kt");
+        }
+
+        @TestMetadata("needTypeArgumentInFunctionDefinition.kt")
+        public void testNeedTypeArgumentInFunctionDefinition() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/needTypeArgumentInFunctionDefinition.kt");
+        }
+
+        @TestMetadata("notOnParameterOfFunctionType.kt")
+        public void testNotOnParameterOfFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/notOnParameterOfFunctionType.kt");
+        }
+
+        @TestMetadata("notOnSetterParameter.kt")
+        public void testNotOnSetterParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/notOnSetterParameter.kt");
+        }
+
+        @TestMetadata("nullableExplicitType.kt")
+        public void testNullableExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/nullableExplicitType.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar.kt")
+        public void testNullableExplicitTypeVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/nullableExplicitTypeVar.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar2.kt")
+        public void testNullableExplicitTypeVar2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/nullableExplicitTypeVar2.kt");
+        }
+
+        @TestMetadata("onLoopParameter.kt")
+        public void testOnLoopParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onLoopParameter.kt");
+        }
+
+        @TestMetadata("onOverride.kt")
+        public void testOnOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onOverride.kt");
+        }
+
+        @TestMetadata("onOverrideInTrait.kt")
+        public void testOnOverrideInTrait() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        }
+
+        @TestMetadata("onPropertyAccessor.kt")
+        public void testOnPropertyAccessor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onPropertyAccessor.kt");
+        }
+
+        @TestMetadata("onSetterParameter.kt")
+        public void testOnSetterParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onSetterParameter.kt");
+        }
+
+        @TestMetadata("onType.kt")
+        public void testOnType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/onType.kt");
+        }
+
+        @TestMetadata("propertyTypeFromGetter.kt")
+        public void testPropertyTypeFromGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
+        }
+
+        @TestMetadata("removeUnresolvedType.kt")
+        public void testRemoveUnresolvedType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/removeUnresolvedType.kt");
+        }
+
+        @TestMetadata("stringInitializer.kt")
+        public void testStringInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/stringInitializer.kt");
+        }
+
+        @TestMetadata("suspendFunction.kt")
+        public void testSuspendFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/suspendFunction.kt");
+        }
+
+        @TestMetadata("varWithNull.kt")
+        public void testVarWithNull() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/varWithNull.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

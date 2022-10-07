@@ -9,7 +9,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 
@@ -194,4 +198,49 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
     }
 
     return replacedExpression
+}
+
+/**
+ * Checks if there are any annotations in type or its type arguments.
+ */
+fun KtTypeReference.isAnnotatedDeep(): Boolean {
+    return this.anyDescendantOfType<KtAnnotationEntry>()
+}
+
+/**
+ * A best effort way to get the class id of expression's type without resolve.
+ */
+fun KtConstantExpression.getClassId(): ClassId? {
+    val convertedText: Any? = when (elementType) {
+        KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT -> when {
+            hasIllegalUnderscore(text, elementType) -> return null
+            else -> parseNumericLiteral(text, elementType)
+        }
+
+        KtNodeTypes.BOOLEAN_CONSTANT -> parseBoolean(text)
+        else -> null
+    }
+    return when (elementType) {
+        KtNodeTypes.INTEGER_CONSTANT -> when {
+            convertedText !is Long -> null
+            hasUnsignedLongSuffix(text) -> StandardClassIds.ULong
+            hasLongSuffix(text) -> StandardClassIds.Long
+            hasUnsignedSuffix(text) -> if (convertedText.toULong() > UInt.MAX_VALUE || convertedText.toULong() < UInt.MIN_VALUE) {
+                StandardClassIds.ULong
+            } else {
+                StandardClassIds.UInt
+            }
+
+            else -> if (convertedText > Int.MAX_VALUE || convertedText < Int.MIN_VALUE) {
+                StandardClassIds.Long
+            } else {
+                StandardClassIds.Int
+            }
+        }
+
+        KtNodeTypes.FLOAT_CONSTANT -> if (convertedText is Float) StandardClassIds.Float else StandardClassIds.Double
+        KtNodeTypes.CHARACTER_CONSTANT -> StandardClassIds.Char
+        KtNodeTypes.BOOLEAN_CONSTANT -> StandardClassIds.Boolean
+        else -> null
+    }
 }
