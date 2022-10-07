@@ -70,7 +70,7 @@ object JBUIScale {
 
   @JvmStatic
   fun removeUserScaleChangeListener(listener: PropertyChangeListener) {
-    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(listener)
+    PROPERTY_CHANGE_SUPPORT.removePropertyChangeListener(USER_SCALE_FACTOR_PROPERTY, listener)
   }
 
   private var systemFontData = SynchronizedClearableLazy<Pair<String?, Int>> {
