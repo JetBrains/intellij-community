@@ -113,7 +113,7 @@ internal class BookmarkTypeChooser(
         ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 14, 20)
         else -> JBUI.Borders.empty(12, 11)
       }
-      background = namedColor("Popup.background")
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
       isFocusCycleRoot = true
       focusTraversalPolicy = object: LayoutFocusTraversalPolicy() {
         override fun accept(aComponent: Component?): Boolean {
@@ -209,7 +209,7 @@ private class BookmarkLayoutGrid(
         }
         else -> {
           it.putClientProperty("JButton.textColor", UIManager.getColor("Bookmark.MnemonicAvailable.foreground"))
-          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("Popup.background"))
+          it.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.Popup.BACKGROUND)
           it.putClientProperty("JButton.borderColor", UIManager.getColor("Bookmark.MnemonicAvailable.borderColor"))
         }
       }
