@@ -1,10 +1,10 @@
 package com.intellij.mermaid.lang.formatter
 
+import com.intellij.formatting.SpacingBuilder
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
-import com.intellij.formatting.SpacingBuilder
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 
@@ -150,7 +150,7 @@ internal object MermaidSpacingBuilder {
       .before(MermaidElements.ATTR_NAME).spaces(1)
       // State diagram
       .after(MermaidTokens.StateDiagram.STATE).spaces(1)
-      .after(MermaidElements.STATE_ID).spaces(1)
+      .after(MermaidElements.SPECIAL_STATE).spaces(1)
       .after(MermaidTokens.ARROW).spaces(1)
       .between(MermaidTokens.NOTE_CONTENT, MermaidTokens.NOTE_CONTENT).spaces(1)
       .between(MermaidTokens.LABEL, MermaidTokens.LABEL).spaces(1)

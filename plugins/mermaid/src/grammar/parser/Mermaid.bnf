@@ -273,7 +273,8 @@ private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
 
 dividerStatement ::= DIVIDER
 
-stateId ::= identifier | OPEN_SQUARE STAR CLOSE_SQUARE
+private stateId ::= identifier | specialState
+specialState ::= OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
 
 stateNote ::= noteHeader noteContent { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
@@ -588,10 +589,8 @@ accStatement ::= ACC_TITLE COLON ACC_TITLE_VALUE
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
 complexIdentifier ::= (ID | AMPERSAND)+ {
 	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
-	implements="com.intellij.mermaid.lang.psi.MermaidNamedElement"
 }
 identifier ::= ID {
 	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
-	implements="com.intellij.mermaid.lang.psi.MermaidNamedElement"
 }
 

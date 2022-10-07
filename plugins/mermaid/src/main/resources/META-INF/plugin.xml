@@ -26,14 +26,6 @@
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
 
-    <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidNamedElement"
-                             implementationClass="com.intellij.mermaid.lang.psi.MermaidIdentifierManipulator"/>
-    <lang.findUsagesProvider language="Mermaid"
-                             implementationClass="com.intellij.mermaid.lang.MermaidFindUsagesProvider"/>
-
-    <lang.refactoringSupport language="Mermaid"
-                             implementationClass="com.intellij.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
-
     <typedHandler implementation="com.intellij.mermaid.editor.MermaidTypedHandlerDelegate"/>
 
     <lang.formatter
@@ -46,6 +38,17 @@
 
     <lang.foldingBuilder language="Mermaid"
                          implementationClass="com.intellij.mermaid.lang.folding.MermaidFoldingBuilder"/>
+
+    <psi.declarationProvider
+      implementation="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolDeclarationProvider"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.mermaid.lang.psi.MermaidNamedPsiElement"
+                                 hostLanguage="Mermaid"
+                                 implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolReferenceProvider"
+                                 targetClass="com.intellij.mermaid.lang.psi.symbol.identifier.UnresolvedIdentifierSymbol"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierRenameUsageSearcher"/>
 
   </extensions>
 </idea-plugin>
