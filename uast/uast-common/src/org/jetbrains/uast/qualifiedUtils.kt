@@ -249,6 +249,9 @@ private fun isKotlinSuspendMain(uMainMethod: UMethod): Boolean {
   val method = uMainMethod.javaPsi
   val parameters: Array<PsiParameter> = method.parameterList.parameters
   if (parameters.size > 2) return false
+  
+  // suspend main method has additional parameter kotlin.coroutines.Continuation but it could be seen as java.lang.Object
+  // on the PSI level, so we don't check it directly
   if (parameters.size == 2) {
     val argsType = parameters[0].type as? PsiArrayType ?: return false
     if (!argsType.componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return false
