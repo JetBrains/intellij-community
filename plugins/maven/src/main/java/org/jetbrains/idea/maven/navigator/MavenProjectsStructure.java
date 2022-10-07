@@ -61,6 +61,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
@@ -539,7 +540,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class ProjectsGroupNode extends GroupNode {
-    private final List<ProjectNode> myProjectNodes = new ArrayList<>();
+    private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
       super(parent);
@@ -600,7 +601,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class ProfilesNode extends GroupNode {
-    private List<ProfileNode> myProfileNodes = new ArrayList<>();
+    private List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
@@ -978,7 +979,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class GoalsGroupNode extends GroupNode {
-    protected final List<GoalNode> myGoalNodes = new ArrayList<>();
+    protected final List<GoalNode> myGoalNodes = new CopyOnWriteArrayList<>();
 
     public GoalsGroupNode(MavenSimpleNode parent) {
       super(parent);
@@ -1108,7 +1109,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class PluginsNode extends GroupNode {
-    private final List<PluginNode> myPluginNodes = new ArrayList<>();
+    private final List<PluginNode> myPluginNodes = new CopyOnWriteArrayList<>();
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
@@ -1416,7 +1417,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class RunConfigurationsNode extends GroupNode {
 
-    private final List<RunConfigurationNode> myChildren = new ArrayList<>();
+    private final List<RunConfigurationNode> myChildren = new CopyOnWriteArrayList<>();
 
     public RunConfigurationsNode(ProjectNode parent) {
       super(parent);
