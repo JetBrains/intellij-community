@@ -253,6 +253,7 @@ public abstract class AbstractFileProcessor {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, title, true, myProject);
     }
     else {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       action.run();
     }
   }
