@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
@@ -413,17 +414,11 @@ public final class Utils {
       AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
       if (!presentation.isVisible()) {
-        String operationName = operationName(action, null, place);
-        LOG.error("Invisible menu item for " + operationName);
+        reportInvisibleMenuItem(action, place);
         continue;
       }
       else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
-        String operationName = operationName(action, null, place);
-        String message = "Empty menu item text for " + operationName;
-        if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
-          message += ". The default action text must be specified in plugin.xml or its class constructor";
-        }
-        LOG.error(message);
+        reportEmptyTextMenuItem(action, place);
         continue;
       }
       if (multiChoice && action instanceof Toggleable) {
@@ -487,6 +482,20 @@ public final class Utils {
         }
       }
     }
+  }
+
+  private static void reportInvisibleMenuItem(@NotNull AnAction action, @NotNull String place) {
+    String operationName = operationName(action, null, place);
+    LOG.error("Invisible menu item for " + operationName);
+  }
+
+  private static void reportEmptyTextMenuItem(@NotNull AnAction action, @NotNull String place) {
+    String operationName = operationName(action, null, place);
+    String message = "Empty menu item text for " + operationName;
+    if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
+      message += ". The default action text must be specified in plugin.xml or its class constructor";
+    }
+    LOG.error(PluginException.createByClass(message, null, action.getClass()));
   }
 
   public static @NotNull String operationName(@NotNull Object action, @Nullable String op, @Nullable String place) {
