@@ -29,12 +29,21 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractIntentionTest : AbstractIntentionTestBase() {
+    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10) {
+            super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
+        }
+    }
+}
+
+abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
 
     protected open fun afterFileNameSuffix(ktFilePath: File): String = ".after"
@@ -85,10 +94,12 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 "${intentionFileName()} file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class."
             )
+
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
                 return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
             }
+
             else -> throw AssertionError(
                 "Several ${intentionFileName()} files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
             )
@@ -149,7 +160,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun checkForErrorsAfter(fileText: String) {
         val file = this.file
 
-        if (file is KtFile && isApplicableDirective(fileText) && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
+        if (file is KtFile && isApplicableDirective(fileText) && !InTextDirectivesUtils.isDirectiveDefined(
+                fileText,
+                "// SKIP_ERRORS_AFTER"
+            )
+        ) {
             if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
                 DirectiveBasedActionUtils.checkForUnexpectedWarnings(
                     file,
@@ -179,7 +194,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 override fun run(indicator: ProgressIndicator) {
                     try {
                         result.complete(compute())
-                    } catch(e: Throwable) {
+                    } catch (e: Throwable) {
                         exceptionDuringCompute = e
                     }
                 }
