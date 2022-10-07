@@ -61,6 +61,9 @@ fun UsefulTestCase.enableAstLoadingFilter() {
   Registry.get("ast.loading.filter").setValue(true, testRootDisposable)
 }
 
+fun UsefulTestCase.enableIdempotenceChecksOnEveryCache() {
+  Registry.get("platform.random.idempotence.check.rate").setValue(1, testRootDisposable)
+}
 
 fun <T> noAutoComplete(code: () -> T): T {
   val old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION

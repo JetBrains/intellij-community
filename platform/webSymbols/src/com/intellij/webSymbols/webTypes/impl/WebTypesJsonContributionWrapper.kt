@@ -14,11 +14,11 @@ import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Priority
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase
@@ -162,24 +162,20 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
       get() = base.icon ?: superContributions.asSequence().mapNotNull { it.icon }.firstOrNull()
 
     override val location: WebTypesSymbol.Location?
+      // Should not reach to super contributions, because it can lead to stack overflow
+      // when special containers are trying to merge symbols
       get() = base.contribution.source
-                ?.let {
-                  base.jsonOrigin.resolveSourceLocation(it)
-                }
-              ?: superContributions.asSequence()
-                .filterIsInstance<WebTypesSymbol>()
-                .mapNotNull { it.location }
-                .firstOrNull()
+        ?.let {
+          base.jsonOrigin.resolveSourceLocation(it)
+        }
 
     override val source: PsiElement?
+      // Should not reach to super contributions, because it can lead to stack overflow
+      // when special containers are trying to merge symbols
       get() = base.contribution.source
                 ?.let {
                   base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
                 }
-              ?: superContributions.asSequence()
-                .filterIsInstance<PsiSourcedWebSymbol>()
-                .mapNotNull { it.source }
-                .firstOrNull()
 
     override val attributeValue: WebSymbolHtmlAttributeValue?
       get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
