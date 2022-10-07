@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.ide.BrowserUtil.browse
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
@@ -13,6 +10,8 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.layout.ComponentPredicate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
@@ -23,7 +22,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.net.UnknownHostException
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -55,13 +53,11 @@ internal class GHTokenCredentialsUi(
 
   override fun getValidator(): Validator = { notBlank(tokenTextField, message("login.token.cannot.be.empty")) }
 
-  override fun submitLoginTask(server: GithubServerPath, indicator: ProgressIndicator): CompletableFuture<Pair<String, String>> {
+  override suspend fun login(server: GithubServerPath): Pair<String, String> = withContext(Dispatchers.Main.immediate) {
     val token = tokenTextField.text
-    return service<ProgressManager>().submitIOTask(indicator) {
-      val executor = factory.create(token)
-      val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
-      login to token
-    }
+    val executor = factory.create(token)
+    val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
+    login to token
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
@@ -79,14 +75,17 @@ internal class GHTokenCredentialsUi(
   }
 
   companion object {
-    fun acquireLogin(
+    suspend fun acquireLogin(
       server: GithubServerPath,
       executor: GithubApiRequestExecutor,
-      indicator: ProgressIndicator,
       isAccountUnique: UniqueLoginPredicate,
       fixedLogin: String?
     ): String {
-      val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, server)
+      val (details, scopes) = withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          GHSecurityUtil.loadCurrentUserWithScopes(executor, server)
+        }
+      }
       if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
         throw GithubAuthenticationException("Insufficient scopes granted to token.")
 

@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -11,9 +9,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
@@ -31,6 +28,10 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -44,6 +45,8 @@ import javax.swing.SwingConstants
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
   Disposable {
+
+  private val cs = disposingMainScope()
 
   private val accountManager get() = service<GHAccountManager>()
 
@@ -61,7 +64,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   }
 
   private var errors = emptyList<ValidationInfo>()
-  private var loginIndicator: ProgressIndicator? = null
+  private var loginJob: Job? = null
 
   var isCancelVisible: Boolean
     get() = backLink.isVisible
@@ -134,8 +137,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     }
 
   fun cancelLogin() {
-    loginIndicator?.cancel()
-    loginIndicator = null
+    loginJob?.cancel()
   }
 
   private fun login() {
@@ -145,20 +147,19 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     clearErrors()
     if (!doValidate()) return
 
-    val modalityState = ModalityState.stateForComponent(this)
-    val indicator = EmptyProgressIndicator(modalityState)
-
-    loginIndicator = indicator
-    loginPanel.acquireLoginAndToken(indicator)
-      .completionOnEdt(modalityState) {
-        loginIndicator = null
-        clearErrors()
-      }
-      .errorOnEdt(modalityState) { doValidate() }
-      .successOnEdt(modalityState) { (login, token) ->
+    loginJob = cs.async(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
+      try {
+        val (login, token) = loginPanel.acquireLoginAndToken()
         val acc = account ?: GHAccountManager.createAccount(login, loginPanel.getServer())
         accountManager.updateAccount(acc, token)
+        clearErrors()
       }
+      catch (e: Exception) {
+        if (e is CancellationException) throw e
+        clearErrors()
+        doValidate()
+      }
+    }
   }
 
   private fun doValidate(): Boolean {
