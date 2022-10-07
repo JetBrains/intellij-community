@@ -19,7 +19,10 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.*
+import java.util.function.BiConsumer
+import java.util.function.BiPredicate
+import java.util.function.Consumer
+import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
@@ -118,7 +121,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
-  override fun toString() = "Plugin '$mainModule'"
+  override fun toString() = "Plugin '$mainModule'" + if (bundlingRestrictions != PluginBundlingRestrictions.NONE) ", restrictions: $bundlingRestrictions" else ""
 
   override fun withModule(moduleName: String) {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
@@ -203,7 +206,15 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
        */
       var includeInEapOnly: Boolean = false
 
+      var ephemeral: Boolean = false
+
       internal fun build(): PluginBundlingRestrictions {
+        if (ephemeral) {
+          check(supportedOs == OsFamily.ALL)
+          check(supportedArch == JvmArchitecture.ALL)
+          check(!includeInEapOnly)
+          return PluginBundlingRestrictions.EPHEMERAL
+        }
         return PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
       }
     }

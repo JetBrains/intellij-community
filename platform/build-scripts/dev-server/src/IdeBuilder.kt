@@ -179,10 +179,12 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
   return satisfiesBundlingRequirements(plugin = plugin,
                                        osFamily = OsFamily.currentOs,
                                        arch = JvmArchitecture.currentJvmArch,
+                                       withEphemeral = false,
                                        context = context) ||
          satisfiesBundlingRequirements(plugin = plugin,
                                        osFamily = null,
                                        arch = JvmArchitecture.currentJvmArch,
+                                       withEphemeral = false,
                                        context = context)
 }
 
