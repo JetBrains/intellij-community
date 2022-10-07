@@ -28,6 +28,8 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
       entity = StringEntity(stringJson, ContentType.APPLICATION_JSON)
     }
 
+    println("Fetching sorted test classes from Nastradamus ...")
+
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
       println("Requesting $url with payload $stringJson")
     }
@@ -50,13 +52,21 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
   }
 
   private fun getTeamCityChangeset(): List<String> = runBlocking {
-    TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 10) { change ->
+    println("Fetching changesets patches from TeamCity ...")
+
+    val changesets = TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 10) { change ->
       val modificationId = change.findValue("id").asText()
       TeamCityClient.downloadChangesPatch(modificationId)
     }
+
+    println("Fetching changesets patches completed")
+
+    changesets
   }
 
   fun getRankedClasses(unsortedClasses: List<Class<*>>): Map<Class<*>, Int> {
+    println("Getting sorted test classes from Nastradamus ...")
+
     return try {
       val changesets = getTeamCityChangeset().map { ChangeEntity(it) }
       val cases = unsortedClasses.map { TestCaseEntity(it.name) }
@@ -64,7 +74,9 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
 
       var rank = 1
       val ranked = sortedCases.associate { case -> case.name to rank++ }
-      unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: -1 }
+      val sortedOriginalClasses = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: -1 }
+      println("Fetching sorted test classes from Nastradamus completed")
+      sortedOriginalClasses
     }
     catch (e: Exception) {
       // fallback in case of any failure (just to get aggregator running)

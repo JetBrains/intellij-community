@@ -14,6 +14,7 @@ class NastradamusTestCaseSorter : TestSorter {
       return ToIntFunction { currentClass ->
         val rank = rankedClasses[currentClass]
         requireNotNull(rank) { "Rank for class ${currentClass.name} isn't specified. Probably sorting didn't return anything for class" }
+        require(rank >= 0) { "Rank for class ${currentClass.name} is negative. Probably sorting didn't return anything for class" }
         rank
       }
     }

@@ -2,6 +2,7 @@ package com.intellij.teamcity
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.TestCaseLoader
 import com.intellij.tool.HttpClient
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
@@ -71,7 +72,9 @@ object TeamCityClient {
       withAuth()
     }
 
-    println("Request to TeamCity: $fullUrl")
+    if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+      println("Request to TeamCity: $fullUrl")
+    }
 
     val result = withRetry {
       HttpClient.sendRequest(request = request) {
@@ -94,6 +97,8 @@ object TeamCityClient {
     if (!HttpClient.download(request = HttpGet(url).withAuth(), outStream = outputStream, retries = 3)) {
       throw RuntimeException("Couldn't download $url in 3 attempts")
     }
+
+    println("Downloading of $url finished")
 
     return outputStream.toString("UTF-8")
   }
