@@ -123,7 +123,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @ProgressTitle String progressTitle,
+                                                              @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
 
@@ -141,7 +141,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                                                 @NotNull @ProgressTitle String progressTitle,
+                                                                                 @NotNull @NlsContexts.DialogTitle String progressTitle,
                                                                                  boolean canBeCanceled,
                                                                                  @Nullable Project project) throws E;
 
