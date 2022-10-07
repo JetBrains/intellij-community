@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
 import java.nio.file.Paths
 
 abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -32,6 +33,25 @@ abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsig
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
                 return runReadAction { DirectKotlinClassInheritorsSearch.search(ktClass).toList() }
+            }
+        })
+        val actual = render(result)
+        KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
+    }
+    
+     fun doTestKotlinFunction(testFilePath: String) {
+        myFixture.configureByFile(testFilePath)
+
+        val ktFunction = myFixture.elementAtCaret.parentOfType<KtFunction>(withSelf = true) 
+            ?: error("No declaration found at caret")
+
+        if (testFilePath.contains("withJava")) {
+            myFixture.configureByFile(testFilePath.replace("kt", "java"))
+        }
+
+        val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
+            override fun compute(indicator: ProgressIndicator): List<PsiElement> {
+                return runReadAction { DirectKotlinOverridingMethodSearch.search(ktFunction).toList() }
             }
         })
         val actual = render(result)

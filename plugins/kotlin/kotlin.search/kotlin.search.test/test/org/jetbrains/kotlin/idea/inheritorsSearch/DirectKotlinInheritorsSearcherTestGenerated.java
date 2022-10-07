@@ -48,4 +48,27 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             runTest("../testData/inheritorsSearch/javaClass/fromJava.java");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
+    public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestKotlinFunction, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/simple.kt");
+        }
+
+        @TestMetadata("withJavaInheritor.kt")
+        public void testWithJavaInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritor.kt");
+        }
+
+        @TestMetadata("withJavaInheritorTypeParameters.kt")
+        public void testWithJavaInheritorTypeParameters() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritorTypeParameters.kt");
+        }
+    }
 }

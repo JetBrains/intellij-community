@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters>() {
     init {
         DirectClassInheritorsSearch.EP_NAME.extensionList
-            .filter { !(it::class.java.name.equals("org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher")) }
+            .filterNot { it::class.java.name.equals("org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher") }
             .forEach { registerExecutor(it) }
     }
 }

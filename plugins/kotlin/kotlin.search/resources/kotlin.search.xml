@@ -7,5 +7,10 @@
               implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassInheritorsSearcher"/>
     <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassInheritorsSearch$SearchParameters" 
               implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinClassDelegatedSearcher"/>
+    
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodSearcher"/>
+    <searcher forClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodSearch$SearchParameters" 
+              implementationClass="org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodDelegatedSearcher"/>
   </extensions>
 </idea-plugin>
