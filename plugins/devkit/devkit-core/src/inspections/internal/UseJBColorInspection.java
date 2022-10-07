@@ -44,7 +44,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
         return jbColorClass != null && facade.getResolveHelper().isAccessible(jbColorClass, checkedPlace, jbColorClass);
       }
 
-      private static boolean isUsedAsJBColorConstructorParameter(@NotNull PsiNewExpression expression) {
+      private static boolean isUsedAsJBColorConstructorParameter(@NotNull PsiExpression expression) {
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
           final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
@@ -56,7 +56,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
-        if (isAwtColorConstantReference(expression)) {
+        if (isAwtColorConstantReference(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
           holder.registerProblem(expression,
                                  DevKitBundle.message("inspections.awt.color.used"),
                                  new ConvertToJBColorConstantQuickFix(adjustColorConstantName(expression)));
