@@ -188,7 +188,10 @@ class MarkdownHeader: MarkdownHeaderImpl {
 
     private fun calculateUniqueNumber(header: MarkdownHeader, rawAnchorText: String): Int {
       val file = header.containingFile
-      val headers = SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>()
+      val headers = CachedValuesManager.getCachedValue(file) {
+        CachedValueProvider.Result.create(SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>(),
+                                          PsiModificationTracker.MODIFICATION_COUNT)
+      }
       val sameHeaders = headers.filter { obtainRawAnchorText(it) == rawAnchorText }
       return sameHeaders.takeWhile { it != header }.count()
     }
