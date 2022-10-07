@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorConstantQuickFix;
@@ -29,68 +25,70 @@ public class UseJBColorInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
-        if (descriptor != null) {
-          holder.registerProblem(descriptor);
-        }
         super.visitNewExpression(expression);
+        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
+          holder.registerProblem(expression, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorQuickFix());
+        }
+      }
+
+      private static boolean isAwtColorConstructor(@NotNull PsiNewExpression expression) {
+        final PsiType type = expression.getType();
+        final PsiExpressionList arguments = expression.getArgumentList();
+        return type != null && arguments != null && type.equalsToText("java.awt.Color");
+      }
+
+      private static boolean isJBColorClassAccessible(@NotNull PsiElement checkedPlace) {
+        final Project project = checkedPlace.getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        final PsiClass jbColorClass = facade.findClass(JBColor.class.getName(), GlobalSearchScope.allScope(project));
+        return jbColorClass != null && facade.getResolveHelper().isAccessible(jbColorClass, checkedPlace, jbColorClass);
+      }
+
+      private static boolean isUsedAsJBColorConstructorParameter(@NotNull PsiNewExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
+          final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
+          return parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText());
+        }
+        return false;
       }
 
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          //do not resolve method names
-          return;
+        if (isAwtColorConstantReference(expression)) {
+          holder.registerProblem(expression,
+                                 DevKitBundle.message("inspections.awt.color.used"),
+                                 new ConvertToJBColorConstantQuickFix(adjustColorConstantName(expression)));
         }
+      }
+
+      @NotNull
+      private static @NonNls String adjustColorConstantName(@NotNull PsiReferenceExpression expression) {
+        @NonNls String text = expression.getText();
+        if (text.contains(".")) {
+          text = text.substring(text.lastIndexOf('.'));
+        }
+        text = StringUtil.trimStart(text, ".");
+        if (text.equalsIgnoreCase("lightGray")) {
+          text = "LIGHT_GRAY";
+        }
+        else if (text.equalsIgnoreCase("darkGray")) {
+          text = "DARK_GRAY";
+        }
+        return StringUtil.toUpperCase(text);
+      }
+
+      private static boolean isAwtColorConstantReference(@NotNull PsiReferenceExpression expression) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiMethodCallExpression) return false; // avoid resolving method names
         final PsiElement colorField = expression.resolve();
         if (colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass colorClass = ((PsiField)colorField).getContainingClass();
-          if (colorClass != null && Color.class.getName().equals(colorClass.getQualifiedName())) {
-            @NonNls String text = expression.getText();
-            if (text.contains(".")) {
-              text = text.substring(text.lastIndexOf('.'));
-            }
-            text = StringUtil.trimStart(text, ".");
-            if (text.equalsIgnoreCase("lightGray")) {
-              text = "LIGHT_GRAY";
-            }
-            else if (text.equalsIgnoreCase("darkGray")) {
-              text = "DARK_GRAY";
-            }
-            final ProblemDescriptor descriptor = holder.getManager()
-              .createProblemDescriptor(expression,
-                                       DevKitBundle.message("inspections.awt.color.used"),
-                                       new ConvertToJBColorConstantQuickFix(StringUtil.toUpperCase(text)),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-            holder.registerProblem(descriptor);
-          }
+          return colorClass != null && Color.class.getName().equals(colorClass.getQualifiedName());
         }
+        return false;
       }
     };
   }
-
-  @Nullable
-  private static ProblemDescriptor checkNewExpression(PsiNewExpression expression, InspectionManager manager, boolean isOnTheFly) {
-    final Project project = manager.getProject();
-    final PsiType type = expression.getType();
-    final PsiExpressionList arguments = expression.getArgumentList();
-    if (type != null && arguments != null && type.equalsToText("java.awt.Color")) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass jbColorClass = facade.findClass(JBColor.class.getName(), GlobalSearchScope.allScope(project));
-      if (jbColorClass != null && facade.getResolveHelper().isAccessible(jbColorClass, expression, jbColorClass)) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
-          final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
-          if (parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText())) return null;
-        }
-        return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.awt.color.used"),
-                                               new ConvertToJBColorQuickFix(),
-                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      }
-    }
-    return null;
-  }
-
 }
