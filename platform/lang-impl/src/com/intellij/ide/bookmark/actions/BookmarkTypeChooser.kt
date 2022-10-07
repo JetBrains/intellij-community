@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.RenderingHints.KEY_ANTIALIASING
 import java.awt.RenderingHints.VALUE_ANTIALIAS_ON
+import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
@@ -91,9 +92,7 @@ internal class BookmarkTypeChooser(
               text = description ?: ""
               emptyText.text = message("mnemonic.chooser.description")
               isOpaque = false
-              addKeyListener(object : KeyListener {
-                override fun keyTyped(e: KeyEvent?) = Unit
-                override fun keyReleased(e: KeyEvent?) = Unit
+              addKeyListener(object : KeyAdapter() {
                 override fun keyPressed(e: KeyEvent?) {
                   if (e != null && e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) {
                     save()
