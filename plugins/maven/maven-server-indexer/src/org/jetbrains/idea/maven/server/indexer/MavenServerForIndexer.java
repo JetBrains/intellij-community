@@ -26,7 +26,6 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
   public MavenServerIndexer createIndexer(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      ;
       MavenIdeaIndexerImpl result = new MavenIdeaIndexerImpl(getPlexusContainer());
       UnicastRemoteObject.exportObject(result, 0);
       return result;
