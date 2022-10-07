@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -215,8 +216,11 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   class ToggleSettingsAction(@NlsActions.ActionText val text: String, val prop: KMutableProperty0<Boolean>, val settings: Settings) : AnAction() {
 
     override fun update(e: AnActionEvent) {
-      val presentation = e.presentation
-      presentation.text = text
+      e.presentation.text = text
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -236,6 +240,11 @@ class InsertAnnotationAction(
 ) : AnAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.text = JavaBundle.message("settings.inlay.java.insert.annotation")
+  }
+
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
