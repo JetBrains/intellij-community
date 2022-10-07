@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
@@ -99,12 +100,17 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
   private fun loginToGithub(forceNew: Boolean, authType: AuthorizationType): Boolean {
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return authManager.requestNewAccountForDefaultServer(project, authType)?.also {
+      return authManager.requestNewAccountForServer(
+        GithubServerPath.DEFAULT_SERVER,
+        null,
+        project,
+        authType = authType
+      )?.account?.also {
         vm.accountSelectionState.value = it
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(project, account, authType) != null
+      return authManager.requestReLogin(account, authType, project) != null
     }
     return false
   }
@@ -118,7 +124,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       } != null
     }
     else if (vm.missingCredentialsState.value) {
-      return authManager.requestReLogin(project, account, AuthorizationType.TOKEN) != null
+      return authManager.requestReLogin(account, AuthorizationType.TOKEN, project) != null
     }
     return false
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
@@ -31,7 +32,7 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -44,11 +45,14 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
   Disposable {
 
-  private val authenticationManager get() = GithubAuthenticationManager.getInstance()
+  private val accountManager get() = service<GHAccountManager>()
 
   private val errorPanel = JPanel(VerticalLayout(10))
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
-    if (account == null) authenticationManager.isAccountUnique(name, server) else true
+    if (account == null) accountManager.accountsState.value.none {
+      it.name == name && it.server.equals(server, true)
+    }
+    else true
   }
   private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(message("button.login.mnemonic"))
@@ -152,12 +156,8 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
       }
       .errorOnEdt(modalityState) { doValidate() }
       .successOnEdt(modalityState) { (login, token) ->
-        if (account != null) {
-          authenticationManager.updateAccountToken(account, token)
-        }
-        else {
-          authenticationManager.registerAccount(login, loginPanel.getServer(), token)
-        }
+        val acc = account ?: GHAccountManager.createAccount(login, loginPanel.getServer())
+        accountManager.updateAccount(acc, token)
       }
   }
 

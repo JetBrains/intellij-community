@@ -48,7 +48,7 @@ private suspend fun getAuthDataOrCancel(project: Project, url: String, login: St
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
       0 -> authManager.requestNewAccountForServer(DEFAULT_SERVER, login, project)
-      1 -> authManager.requestReLogin(project, accountsWithTokens.keys.first(), AuthorizationType.UNDEFINED)
+      1 -> authManager.requestReLogin(accountsWithTokens.keys.first(), project = project)
       else -> GHSelectAccountHttpAuthDataProvider(project, accountsWithTokens).getAuthData(null)
     }
   } ?: throw ProcessCanceledException()

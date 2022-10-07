@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import git4idea.DialogManager
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager.Companion.createAccount
 import org.jetbrains.plugins.github.authentication.ui.BaseLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GHOAuthLoginDialog
@@ -27,7 +29,6 @@ internal class GHLoginRequest(
   val isLoginEditable: Boolean = true,
   val isCheckLoginUnique: Boolean = false,
 
-  val token: String? = null,
   val authType: AuthorizationType = AuthorizationType.UNDEFINED
 )
 
@@ -53,13 +54,17 @@ internal fun GHLoginRequest.loginWithOAuthOrToken(project: Project?, parentCompo
   }
 
 private val GHLoginRequest.isLoginUniqueChecker: UniqueLoginPredicate
-  get() = { login, server -> !isCheckLoginUnique || GithubAuthenticationManager.getInstance().isAccountUnique(login, server) }
+  get() = { login, server ->
+    !isCheckLoginUnique ||
+    service<GHAccountManager>().accountsState.value.none {
+      it.name == login && it.server.equals(server, true)
+    }
+  }
 
 private fun GHLoginRequest.configure(dialog: BaseLoginDialog) {
   error?.let { dialog.setError(it) }
   server?.let { dialog.setServer(it.toString(), isServerEditable) }
   login?.let { dialog.setLogin(it, isLoginEditable) }
-  token?.let { dialog.setToken(it) }
 }
 
 private fun BaseLoginDialog.getAuthData(): GHAccountAuthData? {
