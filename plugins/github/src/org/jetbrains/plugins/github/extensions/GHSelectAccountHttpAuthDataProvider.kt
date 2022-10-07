@@ -8,7 +8,7 @@ import git4idea.DialogManager
 import git4idea.i18n.GitBundle
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import org.jetbrains.plugins.github.authentication.GHAccountAuthData
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -23,11 +23,12 @@ internal class GHSelectAccountHttpAuthDataProvider(
   @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
-    val authManager = GithubAuthenticationManager.getInstance()
     val token = potentialAccounts[account]
-                ?: authManager.requestNewToken(account, project, parentComponent)
+                ?: GHAccountsUtil.requestNewToken(account, project, parentComponent)
                 ?: return null
-    if (setDefault) authManager.setDefaultAccount(project, account)
+    if (setDefault) {
+      GHAccountsUtil.setDefaultAccount(project, account)
+    }
 
     return GHAccountAuthData(account, GIT_AUTH_PASSWORD_SUBSTITUTE, token)
   }

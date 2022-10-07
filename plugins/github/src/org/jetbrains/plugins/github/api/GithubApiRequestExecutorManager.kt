@@ -22,7 +22,7 @@ class GithubApiRequestExecutorManager {
   @Deprecated("One-time use executor should not be persisted")
   @RequiresBackgroundThread
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
-    val token = GHCompatibilityUtil.getOrRequestToken(service(), account, project) ?: return null
+    val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return null
     return Factory.getInstance().create(token)
   }
 }

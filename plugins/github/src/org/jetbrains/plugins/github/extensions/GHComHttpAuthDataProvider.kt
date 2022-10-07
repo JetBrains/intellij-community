@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.extensions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
@@ -14,8 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
-import org.jetbrains.plugins.github.authentication.AuthorizationType
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
 private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
   override fun isSilent(): Boolean = false
@@ -40,15 +41,15 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
 }
 
 private suspend fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
-  val authManager = GithubAuthenticationManager.getInstance()
-  val accountsWithTokens = authManager.getAccounts()
+  val accountManager = service<GHAccountManager>()
+  val accountsWithTokens = accountManager.accountsState.value
     .filter { match(it.server.toURI(), url) }
-    .associateWith { authManager.getTokenForAccount(it) }
+    .associateWith { accountManager.findCredentials(it) }
 
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
-      0 -> authManager.requestNewAccountForServer(DEFAULT_SERVER, login, project)
-      1 -> authManager.requestReLogin(accountsWithTokens.keys.first(), project = project)
+      0 -> GHAccountsUtil.requestNewAccountForServer(DEFAULT_SERVER, login, project)
+      1 -> GHAccountsUtil.requestReLogin(accountsWithTokens.keys.first(), project = project)
       else -> GHSelectAccountHttpAuthDataProvider(project, accountsWithTokens).getAuthData(null)
     }
   } ?: throw ProcessCanceledException()

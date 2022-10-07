@@ -53,7 +53,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
@@ -120,7 +121,6 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         }
       }
 
-      val authManager = service<GithubAuthenticationManager>()
       val progressManager = service<ProgressManager>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
@@ -139,7 +139,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
             try {
               return progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
                 val token = runBlocking {
-                  authManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+                  service<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
                 }
                 val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
 
@@ -152,15 +152,13 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
               }, GithubBundle.message("share.process.loading.account.info", account), true, project)
             }
             catch (mte: GithubMissingTokenException) {
-              authManager.requestNewToken(account, project, comp) ?: throw mte
+              GHAccountsUtil.requestNewToken(account, project, comp) ?: throw mte
             }
           }
         }
       }
 
       val shareDialog = GithubShareDialog(project,
-                                          authManager.getAccounts(),
-                                          authManager.getDefaultAccount(project),
                                           gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
                                           accountInformationLoader)
       DialogManager.show(shareDialog)
@@ -178,11 +176,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         private lateinit var url: String
 
         override fun run(indicator: ProgressIndicator) {
-          val token = runBlocking {
-            authManager.getTokenForAccount(account)
-          } ?: invokeAndWaitIfNeeded(indicator.modalityState) {
-            authManager.requestNewToken(account, project)
-          } ?: return
+          val token = GHCompatibilityUtil.getOrRequestToken(account, project) ?: return
 
           val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
 

@@ -24,8 +24,6 @@ import java.util.regex.Pattern
 
 
 class GithubShareDialog(private val project: Project,
-                        accounts: Set<GithubAccount>,
-                        defaultAccount: GithubAccount?,
                         existingRemotes: Set<String>,
                         private val accountInformationSupplier: (GithubAccount, Component) -> Pair<Boolean, Set<String>>)
   : DialogWrapper(project) {
@@ -46,7 +44,12 @@ class GithubShareDialog(private val project: Project,
     .apply { records = existingRemotes }
   private var accountInformationLoadingError: ValidationInfo? = null
 
-  private val accountsModel = CollectionComboBoxModel(accounts.toMutableList(), defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GHAccountsUtil.accounts
+
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GHAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   init {
     title = message("share.on.github")

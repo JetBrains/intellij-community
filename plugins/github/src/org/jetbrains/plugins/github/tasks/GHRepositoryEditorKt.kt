@@ -3,18 +3,14 @@ package org.jetbrains.plugins.github.tasks
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 
 private object GHRepositoryEditorKt {
   fun askToken(project: Project, host: String): String? {
     val server = tryParse(host) ?: return null
-
-    return GithubAuthenticationManager.getInstance().login(
-      project, null,
-      GHLoginRequest(server = server)
-    )?.token
+    return GHAccountsUtil.login(project, null, GHLoginRequest(server = server))?.token
   }
 
   private fun tryParse(host: String): GithubServerPath? {

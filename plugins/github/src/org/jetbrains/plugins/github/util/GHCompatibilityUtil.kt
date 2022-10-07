@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -11,7 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 
 /**
@@ -19,17 +21,18 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
  */
 object GHCompatibilityUtil {
   @JvmStatic
-  fun requestNewAccountForServer(authManager: GithubAuthenticationManager, serverPath: GithubServerPath, project: Project): GithubAccount? =
-    authManager.requestNewAccountForServer(serverPath, login = null, project = project)?.account
+  fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project): GithubAccount? =
+    GHAccountsUtil.requestNewAccountForServer(serverPath, login = null, project = project)?.account
 
   @RequiresBackgroundThread
   @JvmStatic
-  fun getOrRequestToken(authManager: GithubAuthenticationManager, account: GithubAccount, project: Project): String? {
+  fun getOrRequestToken(account: GithubAccount, project: Project): String? {
+    val accountManager = service<GHAccountManager>()
     val modality = ProgressManager.getInstance().currentProgressModality ?: ModalityState.any()
     return runBlocking {
-      authManager.getTokenForAccount(account)
+      accountManager.findCredentials(account)
       ?: withContext(Dispatchers.EDT + modality.asContextElement()) {
-        authManager.requestNewToken(account, project)
+        GHAccountsUtil.requestNewToken(account, project)
       }
     }
   }

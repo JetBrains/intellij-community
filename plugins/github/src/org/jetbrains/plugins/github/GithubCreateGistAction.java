@@ -29,7 +29,6 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
@@ -107,12 +106,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        @Nullable final Editor editor,
                                        @Nullable final VirtualFile file,
                                        final VirtualFile @Nullable [] files) {
-    GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
     GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
     GithubCreateGistDialog dialog = new GithubCreateGistDialog(project,
-                                                               authManager.getAccounts(),
-                                                               authManager.getDefaultAccount(project),
                                                                getFileName(editor, files),
                                                                settings.isPrivateGist(),
                                                                settings.isOpenInBrowserGist(),
@@ -130,7 +126,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     new Task.Backgroundable(project, GithubBundle.message("create.gist.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        String token = GHCompatibilityUtil.getOrRequestToken(authManager, account, project);
+        String token = GHCompatibilityUtil.getOrRequestToken(account, project);
         if (token == null) return;
         GithubApiRequestExecutor requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token);
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,10 +35,13 @@ import git4idea.update.GitUpdateResult;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GHRepositoryPath;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
@@ -110,12 +114,13 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GithubAuthenticationManager authManager = GithubAuthenticationManager.getInstance();
+    GHAccountManager accountManager = ApplicationManager.getApplication().getService(GHAccountManager.class);
     GithubServerPath serverPath = originMapping.getRepository().getServerPath();
     GithubAccount githubAccount;
-    List<GithubAccount> accounts = ContainerUtil.filter(authManager.getAccounts(), account -> serverPath.equals(account.getServer()));
+    List<GithubAccount> accounts = ContainerUtil.filter(accountManager.getAccountsState().getValue(),
+                                                        account -> serverPath.equals(account.getServer()));
     if (accounts.size() == 0) {
-      githubAccount = GHCompatibilityUtil.requestNewAccountForServer(authManager, serverPath, project);
+      githubAccount = GHCompatibilityUtil.requestNewAccountForServer(serverPath, project);
     }
     else if (accounts.size() == 1) {
       githubAccount = accounts.get(0);
@@ -183,7 +188,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      String token = GHCompatibilityUtil.getOrRequestToken(GithubAuthenticationManager.getInstance(), myAccount, myProject);
+      String token = GHCompatibilityUtil.getOrRequestToken(myAccount, myProject);
       if (token == null) return;
       GithubApiRequestExecutor executor = GithubApiRequestExecutor.Factory.getInstance().create(token);
 

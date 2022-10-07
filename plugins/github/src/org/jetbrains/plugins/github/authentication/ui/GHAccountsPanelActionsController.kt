@@ -3,23 +3,18 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.auth.ui.AccountsPanelActionsController
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import javax.swing.JComponent
 
 internal class GHAccountsPanelActionsController(private val project: Project, private val model: GHAccountsListModel)
   : AccountsPanelActionsController<GithubAccount> {
-
-  private val actionManager = ActionManager.getInstance()
 
   override val isAddActionWithPopup: Boolean = true
 
@@ -42,10 +37,8 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
   }
 
   override fun editAccount(parentComponent: JComponent, account: GithubAccount) {
-    val authData = GithubAuthenticationManager.getInstance().login(
-      project, parentComponent,
-      GHLoginRequest(server = account.server, login = account.name)
-    )
+    val authData = GHAccountsUtil.login(project, parentComponent,
+                                        GHLoginRequest(server = account.server, login = account.name))
     if (authData == null) return
 
     account.name = authData.login
