@@ -180,10 +180,8 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    if (isWorkspaceImport()) {
-      myEventsTestHelper.assertRootsChanged(0);
-      myEventsTestHelper.assertWorkspaceModelChanges(0);
-    }
+    myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
+    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
   }
 
   @Test

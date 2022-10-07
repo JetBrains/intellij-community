@@ -32,8 +32,6 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assume.assumeTrue;
-
 public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testUpdatingExternallyCreatedFolders() {
@@ -200,7 +198,6 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testDoNotCommitIfFoldersWasNotChanged() {
-    assumeTrue(isWorkspaceImport());
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -214,13 +211,11 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
     updateTargetFolders();
-    assertEquals(0, count[0]);
+    assertEquals(isWorkspaceImport() ? 0 : 1, count[0]);
   }
 
-  @Test 
+  @Test
   public void testCommitOnlyOnceForAllModules() {
-    assumeTrue(isWorkspaceImport());
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -247,8 +242,8 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     eventsTestHelper.setUp(myProject);
     try {
       updateTargetFolders();
-      eventsTestHelper.assertRootsChanged(0);
-      eventsTestHelper.assertWorkspaceModelChanges(0);
+      eventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
+      eventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
 
       // let's add some generated folders, what should be picked up on updateTargetFolders
       new File(myProjectRoot.getPath(), "target/generated-sources/foo/z").mkdirs();
