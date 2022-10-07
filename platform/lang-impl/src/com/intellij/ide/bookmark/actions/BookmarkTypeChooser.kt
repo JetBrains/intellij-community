@@ -57,7 +57,7 @@ internal class BookmarkTypeChooser(
   assigned: Set<BookmarkType>,
   private var description: String?,
   private val onChosen: (BookmarkType, String) -> Unit
-): JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)) {
+) {
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
     assigned,
@@ -67,13 +67,14 @@ internal class BookmarkTypeChooser(
   private lateinit var descriptionField: JBTextField
 
   val firstButton = bookmarkLayoutGrid.buttons().first()
+  val content: JPanel
 
   init {
-    add(panel {
+    content = panel {
       customizeSpacingConfiguration(MySpacingConfiguration) {
         row {
           val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
-          comment(message("mnemonic.chooser.comment"), lineLength).apply {
+          comment(message("mnemonic.chooser.comment"), lineLength).applyToComponent {
             if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(2, 4, 0, 4)
           }
         }.bottomGap(BottomGap.MEDIUM)
@@ -113,17 +114,14 @@ internal class BookmarkTypeChooser(
         ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 14, 20)
         else -> JBUI.Borders.empty(12, 11)
       }
-      isOpaque = false
+      background = namedColor("Popup.background")
       isFocusCycleRoot = true
       focusTraversalPolicy = object: LayoutFocusTraversalPolicy() {
         override fun accept(aComponent: Component?): Boolean {
           return super.accept(aComponent) && (aComponent !is JButton || aComponent == firstButton)
         }
       }
-    })
-
-    border = JBUI.Borders.empty()
-    background = namedColor("Popup.background")
+    }
   }
 
   private fun createLegend(color: Color, @Nls text: String) = JLabel(text).apply {

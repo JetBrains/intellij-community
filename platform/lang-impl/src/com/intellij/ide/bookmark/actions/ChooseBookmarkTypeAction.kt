@@ -50,7 +50,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
       null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.firstButton)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()
