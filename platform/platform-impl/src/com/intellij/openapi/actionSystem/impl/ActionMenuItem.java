@@ -75,7 +75,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
           myToggled = !myToggled;
           myScreenMenuItemPeer.setState(myToggled);
         }
-        ApplicationManager.getApplication().invokeLater(() -> performAction(0));
+        SwingUtilities.invokeLater(() -> performAction(0));
       });
     }
     else {
@@ -283,16 +283,17 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     if (id != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
     }
-
-    focusManager.runOnOwnContext(myContext, () -> {
-      AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      AnActionEvent event = new AnActionEvent(
-        currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
-        myContext, myPlace, action.getTemplatePresentation().clone(),
-        ActionManager.getInstance(), modifiers, true, false);
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-      }
-    });
+    if (action.isEnabledInModalContext() || !Boolean.TRUE.equals(myContext.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
+      focusManager.runOnOwnContext(myContext, () -> {
+        AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
+        AnActionEvent event = new AnActionEvent(
+          currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
+          myContext, myPlace, action.getTemplatePresentation().clone(),
+          ActionManager.getInstance(), modifiers, true, false);
+        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+        }
+      });
+    }
   }
 }
