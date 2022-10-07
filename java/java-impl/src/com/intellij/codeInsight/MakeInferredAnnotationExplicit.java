@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -61,7 +62,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         String presentation = StreamEx.of(annotations)
           .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
           .joining(" ");
-        setText(JavaBundle.message("intention.text.insert.0.annotation", presentation));
+        setText(CommonQuickFixBundle.message("fix.insert.x", presentation));
         return true;
       }
     }
