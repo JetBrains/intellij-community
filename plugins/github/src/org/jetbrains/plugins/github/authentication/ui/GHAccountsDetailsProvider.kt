@@ -56,7 +56,7 @@ internal class GHAccountsDetailsProvider(
     : Result<GithubAuthenticatedUser> {
 
     val (details, scopes) = try {
-      GHSecurityUtil.loadCurrentUserWithScopes(executor, ProgressManager.getInstance().progressIndicator, account.server)
+      GHSecurityUtil.loadCurrentUserWithScopes(executor, account.server)
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)

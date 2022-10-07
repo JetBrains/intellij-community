@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -9,14 +8,13 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.ui.util.Validator
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal abstract class GHCredentialsUi {
   abstract fun getPreferredFocusableComponent(): JComponent?
   abstract fun getValidator(): Validator
-  abstract fun submitLoginTask(server: GithubServerPath, indicator: ProgressIndicator): CompletableFuture<Pair<String, String>>
+  abstract suspend fun login(server: GithubServerPath): Pair<String, String>
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
 

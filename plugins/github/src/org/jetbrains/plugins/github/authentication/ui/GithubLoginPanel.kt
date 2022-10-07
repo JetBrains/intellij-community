@@ -1,20 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Panel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -83,14 +84,24 @@ internal class GithubLoginPanel(
     currentUi.setBusy(busy)
   }
 
-  fun acquireLoginAndToken(progressIndicator: ProgressIndicator): CompletableFuture<Pair<String, String>> {
-    setBusy(true)
-    tokenAcquisitionError = null
-
-    return currentUi.submitLoginTask(getServer(), progressIndicator)
-      .completionOnEdt(progressIndicator.modalityState) { setBusy(false) }
-      .errorOnEdt(progressIndicator.modalityState) { setError(it) }
-  }
+  suspend fun acquireLoginAndToken(): Pair<String, String> =
+    withContext(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
+      try {
+        setBusy(true)
+        tokenAcquisitionError = null
+        currentUi.login(getServer())
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        setError(e)
+        throw e
+      }
+      finally {
+        setBusy(false)
+      }
+    }
 
   fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
 
