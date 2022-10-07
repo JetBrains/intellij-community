@@ -174,7 +174,7 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
           parent instanceof PsiReferenceList ||
           parent instanceof PsiNewExpression ||
           parent instanceof PsiAnnotation ||
-          (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiClassObjectAccessExpression) ||
+          (parent instanceof PsiTypeElement && typeParameterIsNotValidInTypeElementContext((PsiTypeElement)parent)) ||
           element instanceof PsiReferenceExpression) {
         return null;
       }
@@ -184,6 +184,11 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (name == null) return null;
       return new Context(candidates, name);
     }
+  }
+
+  private static boolean typeParameterIsNotValidInTypeElementContext(@NotNull PsiTypeElement parent) {
+    PsiElement grandParent = parent.getParent();
+    return grandParent instanceof PsiClassObjectAccessExpression || grandParent instanceof PsiDeconstructionPattern || grandParent instanceof PsiPatternVariable;
   }
 
 
