@@ -433,7 +433,7 @@ public class TestCaseLoader {
 
     // use Nostradamus test sorter in case, if no other is specified
     if (sorter == null && IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
-      sorter = "com.intellij.nostradamus.NastradamusTestCaseSorter";
+      sorter = "com.intellij.nastradamus.NastradamusTestCaseSorter";
     }
 
     if (sorter != null) {
