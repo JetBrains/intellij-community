@@ -236,7 +236,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
-  private @Nullable String itemToText(int index, E value) {
+  protected @Nullable String itemToText(int index, E value) {
     ListCellRenderer<? super E> renderer = getCellRenderer();
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
     if (c != null) {
