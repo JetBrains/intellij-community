@@ -111,12 +111,14 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
       }
 
     private val JAVA_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-completion-java") {
+      .create("GradleVersionCatalogs-completion-java") { gradleVersion ->
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-completion-java")
           enableFeaturePreview("VERSION_CATALOGS")
         }
-        withBuildFile("plugins { id 'java' }")
+        withBuildFile(gradleVersion) {
+          withJavaPlugin()
+        }
         withFile("gradle/libs.versions.toml", /* language=TOML */ """
       [versions]
       groovy = "3.0.5"

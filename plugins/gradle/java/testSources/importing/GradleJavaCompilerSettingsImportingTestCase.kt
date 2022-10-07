@@ -2,17 +2,18 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
+
   fun createGradleSettingsFile(vararg moduleNames: String) {
-    createSettingsFile(
-      groovy {
-        assign("rootProject.name", "project")
-        call("include", *moduleNames)
+    createSettingsFile(buildSettings {
+      setProjectName("project")
+      for (moduleName in moduleNames) {
+        include(moduleName)
       }
-    )
+    })
   }
 
   fun createJavaGradleSubProject(
