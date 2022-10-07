@@ -438,10 +438,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val rootElement = JDomSerializationUtil.createComponentElement(MODULE_ROOT_MANAGER_COMPONENT_NAME)
       if (contentEntities.isNotEmpty()) {
         contentEntities.forEach {
-          it.sourceRoots.filter { sourceRootEntity -> sourceRootEntity.entitySource == it.entitySource }.forEach { sourceRootEntity ->
+          it.sourceRoots.filter { sourceRootEntity -> acceptsSource(sourceRootEntity.entitySource) }.forEach { sourceRootEntity ->
             sourceRootEntities.remove(sourceRootEntity)
           }
-          it.excludedUrls.filter { exclude -> exclude.entitySource == it.entitySource }.forEach { exclude ->
+          it.excludedUrls.filter { exclude -> acceptsSource(exclude.entitySource) }.forEach { exclude ->
             excludeRoots.remove(exclude)
           }
         }
@@ -536,7 +536,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     rootManagerElement.attributes.sortWith(knownAttributesComparator)
     //todo ensure that custom data is written in proper order
 
-    val contentEntities = module.contentRoots.filter { it.entitySource == module.entitySource }.sortedBy { it.url.url }
+    val contentEntities = module.contentRoots.filter { acceptsSource(it.entitySource) }.sortedBy { it.url.url }
 
     saveContentEntities(contentEntities, rootManagerElement)
 
@@ -555,10 +555,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val contentRootTag = Element(CONTENT_TAG)
       contentRootTag.setAttribute(URL_ATTRIBUTE, contentEntry.url.url)
 
-      saveSourceRootEntities(contentEntry.sourceRoots.filter { it.entitySource == contentEntry.entitySource }, contentRootTag,
+      saveSourceRootEntities(contentEntry.sourceRoots.filter { acceptsSource(it.entitySource) }, contentRootTag,
                              contentEntry.getSourceRootsComparator())
 
-      saveExcludeUrls(contentRootTag, contentEntry.excludedUrls.filter { it.entitySource == contentEntry.entitySource })
+      saveExcludeUrls(contentRootTag, contentEntry.excludedUrls.filter { acceptsSource(it.entitySource) })
       contentEntry.excludedPatterns.forEach {
         contentRootTag.addContent(Element(EXCLUDE_PATTERN_TAG).setAttribute(EXCLUDE_PATTERN_ATTRIBUTE, it))
       }
