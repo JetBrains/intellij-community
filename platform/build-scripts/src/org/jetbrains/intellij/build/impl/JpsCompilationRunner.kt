@@ -36,6 +36,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import java.beans.Introspector
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -144,19 +145,40 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              resolveProjectDependencies = false)
   }
 
-  @Deprecated("use {@link #buildArtifacts(java.util.Set, boolean)} instead")
+  @Deprecated("", ReplaceWith("buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)"))
   fun buildArtifacts(artifactNames: Set<String>) {
     buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)
   }
 
   fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
     val artifacts = getArtifactsWithIncluded(artifactNames)
+    val missing = artifactNames.filter { name ->
+      artifacts.none { it.name == name }
+    }
+    require(missing.isEmpty()) {
+      "Artifacts won't be built: " + missing.joinToString()
+    }
+    artifacts.forEach {
+      if (context.compilationData.builtArtifacts.contains(it.name) &&
+          it.outputFilePath?.let(Path::of)?.let(Files::exists) != true) {
+        context.messages.warning("${it.name} is expected to be already built at ${it.outputFilePath} but it's missing")
+        context.compilationData.builtArtifacts.remove(it.name)
+      }
+    }
     val modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
     runBuild(moduleSet = modules,
              allModules = false,
              artifactNames = artifacts.map { it.name },
              includeTests = false,
              resolveProjectDependencies = false)
+    artifacts.forEach {
+      if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == true) {
+        context.messages.info("${it.name} was successfully built at ${it.outputFilePath}")
+      }
+      else {
+        context.messages.error("${it.name} is expected to be built at ${it.outputFilePath}")
+      }
+    }
   }
 
   fun getModulesIncludedInArtifacts(artifactNames: Collection<String>): Collection<String> =
@@ -234,13 +256,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     if (resolveProjectDependencies && !compilationData.projectDependenciesResolved) {
       scopes.add(TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving")
                    .setForceBuild(false).setAllTargets(true).build())
-      compilationData.projectDependenciesResolved = true
     }
     val artifactsToBuild = artifactNames - compilationData.builtArtifacts
     if (!artifactsToBuild.isEmpty()) {
       val builder = TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.typeId).setForceBuild(forceBuild)
       scopes.add(builder.addAllTargetId(artifactsToBuild).build())
-      compilationData.builtArtifacts.addAll(artifactsToBuild)
     }
     val compilationStart = System.nanoTime()
     val messageHandler = messageHandler!!
@@ -268,6 +288,12 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       context.messages.reportStatisticValue("Compilation time, ms",
                                             TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString())
       compilationData.statisticsReported = true
+    }
+    if (!artifactsToBuild.isEmpty()) {
+      compilationData.builtArtifacts.addAll(artifactsToBuild)
+    }
+    if (resolveProjectDependencies) {
+      compilationData.projectDependenciesResolved = true
     }
   }
 }
