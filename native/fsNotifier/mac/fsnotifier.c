@@ -119,9 +119,9 @@ static char *read_stdin() {
     if (result == NULL || feof(stdin)) {
         return NULL;
     }
-    size_t pos = strlen(input_buf) - 1;
-    if (input_buf[pos] == '\n') {
-        input_buf[pos] = '\0';
+    size_t length = strlen(input_buf);
+    if (length > 0 && input_buf[length - 1] == '\n') {
+        input_buf[length - 1] = '\0';
     }
     return input_buf;
 }
