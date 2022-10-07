@@ -12,7 +12,7 @@ import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
@@ -35,7 +35,7 @@ import java.util.concurrent.ThreadLocalRandom
  */
 abstract class GithubTest : GitPlatformTest() {
 
-  private lateinit var authenticationManager: GithubAuthenticationManager
+  private lateinit var accountManager: GHAccountManager
 
   private lateinit var organisation: String
   protected lateinit var mainAccount: AccountData
@@ -55,7 +55,7 @@ abstract class GithubTest : GitPlatformTest() {
     assertNotNull(token1)
     assertNotNull(token2)
 
-    authenticationManager = service()
+    accountManager = service()
 
     organisation = System.getenv("idea_test_github_org") ?: System.getenv("idea.test.github.org")
     assertNotNull(organisation)
@@ -66,7 +66,7 @@ abstract class GithubTest : GitPlatformTest() {
 
   private fun createAccountData(host: GithubServerPath, token: String): AccountData {
     val account = GHAccountManager.createAccount("token", host)
-    authenticationManager.accountManager.updateAccount(account, token)
+    accountManager.updateAccount(account, token)
     val executor = service<GithubApiRequestExecutor.Factory>().create(token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
@@ -79,7 +79,7 @@ abstract class GithubTest : GitPlatformTest() {
       ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) },
       ThrowableRunnable { deleteRepos(mainAccount, mainRepos) },
       ThrowableRunnable { setCurrentAccount(null) },
-      ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() },
+      ThrowableRunnable { if (::accountManager.isInitialized) accountManager.updateAccounts(emptyMap()) },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
@@ -89,7 +89,7 @@ abstract class GithubTest : GitPlatformTest() {
   }
 
   protected open fun setCurrentAccount(accountData: AccountData?) {
-    authenticationManager.setDefaultAccount(myProject, accountData?.account)
+    GHAccountsUtil.setDefaultAccount(myProject, accountData?.account)
   }
 
   protected fun createUserRepo(account: AccountData, autoInit: Boolean = false): GithubRepo {

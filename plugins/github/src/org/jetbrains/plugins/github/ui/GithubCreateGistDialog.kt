@@ -16,8 +16,6 @@ import javax.swing.JComponent
 
 class GithubCreateGistDialog(
   private val project: Project,
-  accounts: Set<GithubAccount>,
-  defaultAccount: GithubAccount?,
   @NlsSafe fileName: String?,
   secret: Boolean,
   openInBrowser: Boolean,
@@ -30,7 +28,12 @@ class GithubCreateGistDialog(
   private val browserCheckBox = JBCheckBox(message("create.gist.dialog.open.browser"), openInBrowser)
   private val copyLinkCheckBox = JBCheckBox(message("create.gist.dialog.copy.url"), copyLink)
 
-  private val accountsModel = CollectionComboBoxModel(accounts.toMutableList(), defaultAccount ?: accounts.firstOrNull())
+  private val accounts = GHAccountsUtil.accounts
+
+  private val accountsModel = CollectionComboBoxModel(
+    accounts.toMutableList(),
+    GHAccountsUtil.getDefaultAccount(project) ?: accounts.firstOrNull()
+  )
 
   val fileName: String? get() = fileNameField?.text
   val description: String get() = descriptionField.text

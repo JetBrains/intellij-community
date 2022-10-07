@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -14,7 +15,7 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -26,7 +27,7 @@ private val GithubAccount.isGHEAccount: Boolean get() = !isGHAccount
 class GHECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName(): String = GithubUtil.ENTERPRISE_SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GithubAccount> = GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHEAccount }
+  override fun getAccounts(): Collection<GithubAccount> = GHAccountsUtil.accounts.filter { it.isGHEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
     GHECloneDialogExtensionComponent(project, modalityState)
@@ -35,7 +36,7 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
 private class GHECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
   modalityState,
-  GithubAuthenticationManager.getInstance()
+  accountManager = service()
 ) {
 
   override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHEAccount
