@@ -96,7 +96,7 @@
                         implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
-  <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
 
   <extensionPoints>
