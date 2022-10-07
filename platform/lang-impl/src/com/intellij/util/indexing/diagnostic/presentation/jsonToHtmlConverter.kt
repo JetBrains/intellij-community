@@ -186,7 +186,7 @@ fun createAggregateHtml(
                   else {
                     printUnified(eventsToUnify)
                     eventsToUnify.clear()
-                    print(event)
+                    printEvent(event)
                   }
                 }
                 printUnified(eventsToUnify)
@@ -199,7 +199,7 @@ fun createAggregateHtml(
   }
 }
 
-private fun THEAD.print(event: ChangedFilesPushedEvent) {
+private fun TBODY.printEvent(event: ChangedFilesPushedEvent) {
   tr {
     td(event.startTime.presentableLocalDateTime())
     td(event.reason)
@@ -213,7 +213,7 @@ private fun TBODY.printUnified(eventsToUnify: List<ChangedFilesPushedEvent>) {
   if (eventsToUnify.isEmpty()) return
   val event = eventsToUnify[0]
   if (eventsToUnify.size == 1) {
-    print(event)
+    printEvent(event)
     return
   }
   tr {
