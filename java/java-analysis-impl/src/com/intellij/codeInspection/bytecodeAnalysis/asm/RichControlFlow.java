@@ -4,6 +4,7 @@ package com.intellij.codeInspection.bytecodeAnalysis.asm;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 /**
@@ -63,7 +64,7 @@ public final class RichControlFlow {
 
       while (top > 0) {
         int x = queue[--top];
-        IntArrayList incoming = nonCycleIncoming[x];
+        IntList incoming = nonCycleIncoming[x];
         for (int i = 0; i < incoming.size(); i++) {
           int y1 = collapsedTo[incoming.getInt(i)];
           if (!dfsTree.isDescendant(y1, w)) {

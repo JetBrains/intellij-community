@@ -9,6 +9,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -231,11 +232,11 @@ public final class HtmlMarkdownUtils {
   }
 
   private static @NotNull String replaceProhibitedTags(@NotNull String line, @NotNull List<TextRange> skipRanges) {
-    IntArrayList list = collectProhibitedTagOffsets(line, skipRanges);
+    IntList list = collectProhibitedTagOffsets(line, skipRanges);
     return list.isEmpty() ? line : escapeTagsStart(line, list);
   }
 
-  private static @NotNull String escapeTagsStart(@NotNull String line, @NotNull IntArrayList orderedOffsetList) {
+  private static @NotNull String escapeTagsStart(@NotNull String line, @NotNull IntList orderedOffsetList) {
     StringBuilder builder = new StringBuilder(line);
     for (int i = orderedOffsetList.size() - 1; i >= 0; i--) {
       var el = orderedOffsetList.getInt(i);
@@ -244,9 +245,9 @@ public final class HtmlMarkdownUtils {
     return builder.toString();
   }
 
-  private static @NotNull IntArrayList collectProhibitedTagOffsets(@NotNull String line, @NotNull List<TextRange> skipRanges) {
+  private static @NotNull IntList collectProhibitedTagOffsets(@NotNull String line, @NotNull List<? extends TextRange> skipRanges) {
     Matcher matcher = TAG_START_OR_CLOSE_PATTERN.matcher(line);
-    IntArrayList list = new IntArrayList();
+    IntList list = new IntArrayList();
 
     l:
     while (matcher.find()) {

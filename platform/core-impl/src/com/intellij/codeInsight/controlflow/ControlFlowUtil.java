@@ -7,6 +7,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.graph.Graph;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -59,7 +60,7 @@ public final class ControlFlowUtil {
     boolean[] visited = new boolean[length];
     Arrays.fill(visited, false);
 
-    @SuppressWarnings("SSBasedInspection") final IntArrayList stack = new IntArrayList(length);
+    final IntStack stack = new IntArrayList(length);
     stack.push(start);
 
     while (!stack.isEmpty()) {
@@ -93,8 +94,7 @@ public final class ControlFlowUtil {
                              final Instruction @NotNull [] instructions,
                              final @NotNull Function<? super Instruction, Operation> closure,
                              boolean prev) {
-    @SuppressWarnings("SSBasedInspection")
-    final IntArrayList stack = new IntArrayList(instructions.length);
+    final IntStack stack = new IntArrayList(instructions.length);
     final boolean[] visited = new boolean[instructions.length];
 
     stack.push(startInstruction);
