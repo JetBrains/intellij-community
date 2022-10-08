@@ -103,10 +103,17 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
               && myFilterMethods == element instanceof PsiMethod
-              && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == myFilterStatics) {
+              && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) == myFilterStatics
+              && isAccessible(element)) {
             myResult.put(((PsiNamedElement)element).getName(), element);
           }
           return true;
+        }
+
+        private boolean isAccessible(PsiElement element) {
+          if (!(element instanceof PsiCompiledElement) || !(element instanceof PsiMember)) return true;
+          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+          return resolveHelper.isAccessible((PsiMember)element, myRefExpr, null);
         }
 
         public PsiElement[] getVariants () {
