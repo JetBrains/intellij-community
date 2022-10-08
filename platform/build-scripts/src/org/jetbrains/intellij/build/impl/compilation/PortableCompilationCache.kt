@@ -68,7 +68,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
   private val uploader by lazy {
     val syncFolder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS sync folder", context)
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit", context)
-    context.messages.buildStatus(commitHash)
     PortableCompilationCacheUploader(context, remoteCache.uploadUrl, remoteGitUrl, commitHash, syncFolder, jpsCaches.skipUpload, forceRebuild)
   }
 
