@@ -38,6 +38,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/DetectPropertiesMultipleFiles/");
     }
 
+    @TestMetadata("FieldToPrimaryConstructorProperty")
+    public void testFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/FieldToPrimaryConstructorProperty/");
+    }
+
     @TestMetadata("FieldToProperty")
     public void testFieldToProperty() throws Exception {
         runTest("testData/multiFile/FieldToProperty/");

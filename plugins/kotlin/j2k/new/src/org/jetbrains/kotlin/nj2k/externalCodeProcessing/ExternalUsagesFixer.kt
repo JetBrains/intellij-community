@@ -9,10 +9,8 @@ import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions = mutableListOf<JKExternalConversion>()
@@ -65,9 +63,9 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
                 element?.addAnnotationIfThereAreNoJvmOnes(JVM_STATIC_FQ_NAME)
         }
 
-        if (element is KtProperty) {
+        if (element.isSimpleProperty()) {
             val accessorKind = if (javaElement.name.startsWith("set")) SETTER else GETTER
-            if (element.hasJvmFieldAnnotation()) {
+            if (element?.hasJvmFieldAnnotation() == true) {
                 javaUsages.forEach { usage ->
                     conversions += AccessorToPropertyJavaExternalConversion(member.name, accessorKind, usage)
                 }
@@ -82,11 +80,13 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     private fun KtDeclaration?.isConstProperty(): Boolean =
         this is KtProperty && hasModifier(KtTokens.CONST_KEYWORD)
 
-    private fun KtDeclaration?.isSimpleProperty(): Boolean =
-        this is KtProperty &&
+    private fun KtDeclaration?.isSimpleProperty(): Boolean {
+        if (this is KtParameter && hasValOrVar() && getStrictParentOfType<KtPrimaryConstructor>() != null) return true
+        return (this is KtProperty &&
                 getter == null
                 && setter == null
-                && !hasModifier(KtTokens.CONST_KEYWORD)
+                && !hasModifier(KtTokens.CONST_KEYWORD))
+    }
 
     private fun KtDeclaration.addAnnotationIfThereAreNoJvmOnes(fqName: FqName) {
         // we don't want to resolve here and as we are working with fqNames, just by-text comparing is OK
@@ -100,7 +100,7 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
     }
 
     internal data class JKMemberInfoWithUsages(
-        val member: JKMemberData<*>,
+        val member: JKMemberData,
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>
     )
