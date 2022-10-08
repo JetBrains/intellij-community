@@ -1257,9 +1257,9 @@
       </group>
 
       <action id="ShowEditorHighlighterTokens" internal="true" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"/>
-      <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction" text="Export Keymap to CSV..."/>
-      <action id="CompareKeymaps" internal="true" class="com.intellij.internal.CompareKeymapsAction" text="Compare Keymaps..."/>
-      <action id="BrowseWeb" internal="true" class="com.intellij.internal.BrowseWebAction" text="Browse Web..."/>
+      <action id="KeymapToCsv" internal="true" class="com.intellij.internal.KeymapToCsvAction"/>
+      <action id="CompareKeymaps" internal="true" class="com.intellij.internal.CompareKeymapsAction"/>
+      <action id="BrowseWeb" internal="true" class="com.intellij.internal.BrowseWebAction"/>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
