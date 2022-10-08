@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("unused", "MemberVisibilityCanBePrivate", "SameParameterValue")
-abstract class AutoImportTestCase : ExternalSystemTestCase() {
+abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
 
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()

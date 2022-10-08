@@ -19,7 +19,7 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class AutoImportTest : AutoImportTestCase() {
+class AutoReloadTest : AutoReloadTestCase() {
   @Test
   fun `test simple modification tracking`() {
     test { settingsFile ->
