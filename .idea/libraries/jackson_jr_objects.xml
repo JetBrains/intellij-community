@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jackson-jr-objects" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.13.3" />
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.14.0-rc1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.13.3/jackson-jr-objects-2.13.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.14.0-rc1/jackson-jr-objects-2.14.0-rc1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.13.3/jackson-jr-objects-2.13.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.14.0-rc1/jackson-jr-objects-2.14.0-rc1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
