@@ -76,6 +76,8 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public void initTabContent(@NotNull Content content) {
+    if (myProjectLog.isDisposing()) return;
+
     myContent = content;
     // Display name is always used for presentation, tab name is used as an id.
     // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
