@@ -165,7 +165,7 @@ class AutoImportTest : AutoImportTestCase() {
       scheduleProjectReload()
       assertState(refresh = 2, notified = false, event = "project refresh")
 
-      var newSettingsFile = createVirtualFile(SETTINGS_FILE)
+      var newSettingsFile = createFile(SETTINGS_FILE)
       assertState(refresh = 2, notified = true, event = "create registered settings")
       newSettingsFile.modify(EXTERNAL)
       assertState(refresh = 2, notified = true, event = "modify registered settings")
@@ -174,7 +174,7 @@ class AutoImportTest : AutoImportTestCase() {
 
       newSettingsFile.delete()
       assertState(refresh = 3, notified = true, event = "delete registered settings")
-      newSettingsFile = createVirtualFile(SETTINGS_FILE)
+      newSettingsFile = createFile(SETTINGS_FILE)
       assertState(refresh = 3, notified = true, event = "create registered settings immediately after deleting")
       newSettingsFile.modify(EXTERNAL)
       assertState(refresh = 3, notified = false, event = "modify registered settings immediately after deleting")
@@ -207,7 +207,7 @@ class AutoImportTest : AutoImportTestCase() {
       scheduleProjectReload()
       assertState(refresh = 1, notified = false, event = "project is reloaded")
 
-      val configFile = createVirtualFile("config.groovy")
+      val configFile = createFile("config.groovy")
       assertState(refresh = 1, notified = false, event = "create unregistered settings")
       configFile.replaceContent("println('hello')")
       assertState(refresh = 1, notified = false, event = "modify unregistered settings")
@@ -245,8 +245,8 @@ class AutoImportTest : AutoImportTestCase() {
 
     initialize()
 
-    val scriptFile1 = createVirtualFile("script1.groovy")
-    val scriptFile2 = createVirtualFile("script2.groovy")
+    val scriptFile1 = createFile("script1.groovy")
+    val scriptFile2 = createFile("script2.groovy")
 
     projectAware1.registerSettingsFile(scriptFile1.path)
     projectAware2.registerSettingsFile(scriptFile2.path)
@@ -384,7 +384,7 @@ class AutoImportTest : AutoImportTestCase() {
   @Test
   fun `test tracker store and restore`() {
     val projectAware = mockProjectAware()
-    val settingsFile = findOrCreateVirtualFile(SETTINGS_FILE)
+    val settingsFile = findOrCreateFile(SETTINGS_FILE)
     projectAware.registerSettingsFile(settingsFile.path)
 
     var state = testProjectTrackerState(projectAware) {
@@ -529,7 +529,7 @@ class AutoImportTest : AutoImportTestCase() {
 
   fun `test files generation during refresh`() {
     test {
-      val settingsFile = createVirtualFile(SETTINGS_FILE)
+      val settingsFile = createFile(SETTINGS_FILE)
       assertState(refresh = 0, notified = false, event = "some file is created")
       onceDuringRefresh {
         registerSettingsFile(settingsFile)
@@ -549,7 +549,7 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 3, notified = false, event = "settings file is externally created during reload")
 
       onceDuringRefresh {
-        findFile(SETTINGS_FILE).modify(INTERNAL)
+        getFile(SETTINGS_FILE).modify(INTERNAL)
       }
       forceRefreshProject()
       assertState(refresh = 4, notified = true, event = "settings file is internally modified during reload")
@@ -558,7 +558,7 @@ class AutoImportTest : AutoImportTestCase() {
 
   fun `test disabling of auto-import`() {
     val projectAware = mockProjectAware()
-    val settingsFile = findOrCreateVirtualFile(SETTINGS_FILE)
+    val settingsFile = findOrCreateFile(SETTINGS_FILE)
     projectAware.registerSettingsFile(settingsFile.path)
 
     var state = testProjectTrackerState(projectAware) {
@@ -842,8 +842,8 @@ class AutoImportTest : AutoImportTestCase() {
       val settings2File = createSettingsVirtualFile("settings2.groovy")
       assertState(refresh = 0, settingsAccess = 2, notified = true, event = "settings files creation")
 
-      val configFile1 = createVirtualFile("file1.config")
-      val configFile2 = createVirtualFile("file2.config")
+      val configFile1 = createFile("file1.config")
+      val configFile2 = createFile("file2.config")
       assertState(refresh = 0, settingsAccess = 4, notified = true, event = "non settings files creation")
 
       scheduleProjectReload()
@@ -984,7 +984,7 @@ class AutoImportTest : AutoImportTestCase() {
       forceRefreshProject()
       assertState(refresh = 2, notified = false, event = "create file and modify it during reload")
 
-      findOrCreateVirtualFile("settings2.cfg")
+      findOrCreateFile("settings2.cfg")
         .appendLine("{ type: Java }")
       assertState(refresh = 2, notified = true, event = "internal modification")
     }
@@ -1020,8 +1020,8 @@ class AutoImportTest : AutoImportTestCase() {
     initialize()
     setAutoReloadType(ALL)
 
-    val settingsFile1 = createVirtualFile("script1.groovy").path
-    val settingsFile2 = createVirtualFile("script2.groovy").path
+    val settingsFile1 = createFile("script1.groovy").path
+    val settingsFile2 = createFile("script2.groovy").path
 
     val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)

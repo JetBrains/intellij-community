@@ -39,7 +39,6 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-
 @Suppress("unused", "MemberVisibilityCanBePrivate", "SameParameterValue")
 abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
@@ -47,33 +46,38 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
 
   protected lateinit var testDisposable: Disposable
-  private val notificationAware get() =  AutoImportProjectNotificationAware.getInstance(myProject)
+  private val notificationAware get() = AutoImportProjectNotificationAware.getInstance(myProject)
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject)
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 
   protected val projectRoot get() = myProjectRoot!!
 
-  protected fun createVirtualFile(relativePath: String) = runWriteAction {
-    projectRoot.createFile(relativePath)
-  }
+  private fun <R> runWriteAction(update: () -> R): R =
+    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
-  protected fun findOrCreateVirtualFile(relativePath: String) = runWriteAction {
-    projectRoot.findOrCreateFile(relativePath)
-  }
+  protected fun pathsOf(vararg files: VirtualFile): Set<String> =
+    files.mapTo(LinkedHashSet()) { it.path }
 
-  protected fun findOrCreateDirectory(relativePath: String) = runWriteAction {
-    projectRoot.findOrCreateDirectory(relativePath)
-  }
+  private fun getAbsolutePath(relativePath: String) =
+    "$projectPath/$relativePath"
 
-  protected fun findFile(relativePath: String) = runWriteAction {
-    requireNotNull(projectRoot.findFile(relativePath)) {
-      "File not found in VFS: $projectPath/$relativePath}."
-    }
-  }
+  private fun getAbsoluteNioPath(relativePath: String) =
+    projectRoot.getAbsoluteNioPath(relativePath)
 
-  protected fun createIoFileUnsafe(relativePath: String): File {
-    return createIoFileUnsafe(getAbsoluteNioPath(relativePath))
-  }
+  protected fun createFile(relativePath: String) =
+    runWriteAction { projectRoot.createFile(relativePath) }
+
+  protected fun findOrCreateFile(relativePath: String) =
+    runWriteAction { projectRoot.findOrCreateFile(relativePath) }
+
+  protected fun findOrCreateDirectory(relativePath: String) =
+    runWriteAction { projectRoot.findOrCreateDirectory(relativePath) }
+
+  protected fun getFile(relativePath: String) =
+    runWriteAction { projectRoot.getFile(relativePath) }
+
+  protected fun createIoFileUnsafe(relativePath: String) =
+    createIoFileUnsafe(getAbsoluteNioPath(relativePath))
 
   private fun createIoFileUnsafe(path: Path): File {
     val file = path.toFile()
@@ -89,19 +93,8 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     val path = getAbsoluteNioPath(relativePath)
     path.refreshInLfs() // ensure that file is removed from VFS
     createIoFileUnsafe(path)
-    return findFile(relativePath)
+    return getFile(relativePath)
   }
-
-  protected fun pathsOf(vararg files: VirtualFile): Set<String> {
-    return files.mapTo(LinkedHashSet()) { it.path }
-  }
-
-  private fun getAbsolutePath(relativePath: String) = "$projectPath/$relativePath"
-
-  private fun getAbsoluteNioPath(relativePath: String) = projectRoot.getAbsoluteNioPath(relativePath)
-
-  private fun <R> runWriteAction(update: () -> R): R =
-    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
   private fun VirtualFile.updateIoFile(action: File.() -> Unit) {
     val file = toNioPath().toFile()
@@ -358,7 +351,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
           return autoImportAwareCondition == null || autoImportAwareCondition.get()
         }
       }
-      val file = findOrCreateVirtualFile(SETTINGS_FILE)
+      val file = findOrCreateFile(SETTINGS_FILE)
       val projectAware = ProjectAwareWrapper(ProjectAware(myProject, projectId, autoImportAware), it)
       register(projectAware, parentDisposable = it)
       DummyExternalSystemTestBench(projectAware).test(file)
@@ -471,14 +464,14 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
       registerSettingsFile(relativePath)
-      return createVirtualFile(relativePath)
+      return createFile(relativePath)
     }
 
     fun withLinkedProject(name: String, relativePath: String, test: SimpleTestBench.(VirtualFile) -> Unit) {
       val projectId = ExternalSystemProjectId(projectAware.projectId.systemId, "$projectPath/$name")
       val projectAware = mockProjectAware(projectId)
       Disposer.newDisposable().use {
-        val file = findOrCreateVirtualFile("$name/$relativePath")
+        val file = findOrCreateFile("$name/$relativePath")
         projectAware.registerSettingsFile(file.path)
         register(projectAware, parentDisposable = it)
         SimpleTestBench(projectAware).test(file)
