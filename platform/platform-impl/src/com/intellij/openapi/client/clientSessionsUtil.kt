@@ -29,3 +29,7 @@ fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action:
     }
   }
 }
+
+val currentSession: ClientAppSession get() = ClientSessionsManager.getAppSession()!!
+
+val Project.currentSession: ClientProjectSession get() = ClientSessionsManager.getProjectSession(this)!!
