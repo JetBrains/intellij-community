@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
@@ -180,12 +181,27 @@ private fun createMenuButton(action: AnAction): ActionButton {
 private fun getMainMenuGroup(): ActionGroup {
   val mainMenuGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU)
   mainMenuGroup as ActionGroup
-  // Mark top level main menu action groups as popups to avoid expanding into top-level actions (IDEA-294669)
-  for (topLevelGroup in mainMenuGroup.getChildren(null)) {
-    topLevelGroup.templatePresentation.isPopupGroup = true
+  return DefaultActionGroup(
+    mainMenuGroup.getChildren(null).mapNotNull { child ->
+      if (child is ActionGroup) {
+        // Wrap action groups to force them to be popup groups,
+        // otherwise they end up as separate items in the burger menu (IDEA-294669).
+        ActionGroupPopupWrapper(child)
+      } else {
+        LOG.error("A top-level child of the main menu is not an action group: $child")
+        null
+      }
+    }
+  )
+}
+
+private class ActionGroupPopupWrapper(action: ActionGroup) : ActionGroupWrapper(action) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = true
   }
-  return mainMenuGroup
 }
 
 const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
+private val LOG = Logger.getInstance(MainMenuButton::class.java)
