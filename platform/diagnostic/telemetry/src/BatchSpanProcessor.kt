@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.LongAdder
 import java.util.function.BiFunction
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -69,7 +70,7 @@ class BatchSpanProcessor(
 
   @Volatile
   private var continueWork = true
-  private val batch: ArrayList<SpanData>
+  private val processingJob: Job
 
   init {
     val meter = meterProvider.meterBuilder("io.opentelemetry.sdk.trace").build()
@@ -96,9 +97,8 @@ class BatchSpanProcessor(
       SPAN_PROCESSOR_TYPE_VALUE,
       SPAN_PROCESSOR_DROPPED_LABEL,
       false)
-    batch = ArrayList(maxExportBatchSize)
 
-    mainScope.launch(Dispatchers.IO) {
+    processingJob = mainScope.launch(Dispatchers.IO) {
       processQueue()
     }
   }
@@ -121,21 +121,35 @@ class BatchSpanProcessor(
       return CompletableResultCode.ofSuccess()
     }
 
-    val result = CompletableResultCode()
-    val flushResult = forceFlush()
-    flushResult.whenComplete {
-      continueWork = false
-      for (spanExporter in spanExporters) {
-        try {
-          spanExporter.shutdown()
+    continueWork = false
+    runBlocking(NonCancellable) {
+      try {
+        withTimeout(1.minutes) {
+          processingJob.join()
+
+          val batch = ArrayList<SpanData>(maxExportBatchSize)
+          while (true) {
+            val span = queue.tryReceive().getOrNull() ?: break
+            queueSize.decrement()
+            batch.add(span.toSpanData())
+          }
+          exportCurrentBatch(batch)
         }
-        catch (e: Throwable) {
-          Logger.getInstance(BatchSpanProcessor::class.java.name).error("Failed to shutdown", e)
-          result.fail()
+      }
+      finally {
+        withContext(NonCancellable) {
+          for (spanExporter in spanExporters) {
+            try {
+              spanExporter.shutdown()
+            }
+            catch (e: Throwable) {
+              Logger.getInstance(BatchSpanProcessor::class.java.name).error("Failed to shutdown", e)
+            }
+          }
         }
       }
     }
-    return result
+    return CompletableResultCode.ofSuccess()
   }
 
   override fun forceFlush(): CompletableResultCode {
@@ -171,11 +185,12 @@ class BatchSpanProcessor(
 
   private suspend fun processQueue() {
     updateNextExportTime()
+    val batch = ArrayList<SpanData>(maxExportBatchSize)
     while (continueWork) {
       val flushRequestJob = flushRequested.get()
       if (flushRequestJob != null) {
         try {
-          flush()
+          flush(batch)
         }
         finally {
           flushRequested.compareAndSet(flushRequestJob, null)
@@ -192,7 +207,7 @@ class BatchSpanProcessor(
       }
 
       if (batch.size >= maxExportBatchSize || System.nanoTime().toDuration(DurationUnit.NANOSECONDS) >= nextExportTime) {
-        exportCurrentBatch()
+        exportCurrentBatch(batch)
         updateNextExportTime()
       }
 
@@ -209,7 +224,7 @@ class BatchSpanProcessor(
     }
   }
 
-  private suspend fun flush() {
+  private suspend fun flush(batch: MutableList<SpanData>) {
     var spansToFlush = queueSize.sum()
     while (spansToFlush > 0) {
       val span = queue.tryReceive().getOrNull() ?: break
@@ -217,30 +232,28 @@ class BatchSpanProcessor(
       batch.add(span.toSpanData())
       spansToFlush--
       if (batch.size >= maxExportBatchSize) {
-        exportCurrentBatch()
+        exportCurrentBatch(batch)
       }
     }
 
-    exportCurrentBatch()
+    exportCurrentBatch(batch)
   }
 
   private fun updateNextExportTime() {
     nextExportTime = scheduleDelay + System.nanoTime().toDuration(DurationUnit.NANOSECONDS)
   }
 
-  private suspend fun exportCurrentBatch() {
+  private suspend fun exportCurrentBatch(batch: MutableList<SpanData>) {
     if (batch.isEmpty()) {
       return
     }
 
     try {
-      coroutineScope {
-        for (spanExporter in spanExporters) {
-          withTimeout(exporterTimeout) {
-            spanExporter.export(batch)
-          }
-          processedSpanCounter.add(batch.size.toLong(), exportedAttrs)
+      for (spanExporter in spanExporters) {
+        withTimeout(exporterTimeout) {
+          spanExporter.export(batch)
         }
+        processedSpanCounter.add(batch.size.toLong(), exportedAttrs)
       }
     }
     catch (e: CancellationException) {
