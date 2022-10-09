@@ -17,12 +17,14 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHLoginDialog
-import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
+import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
 import javax.swing.JButton
@@ -49,51 +51,45 @@ object GHAccountsUtil {
     getDefaultAccount(project) ?: accounts.singleOrNull()
 
   fun createAddAccountLink(project: Project, accountSelectionModel: CollectionComboBoxModel<GithubAccount>): JButton {
-    val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean = { name, server ->
-      accountSelectionModel.items.none { it.name == name && it.server.equals(server, true) }
+    val model = object : GHLoginModel {
+      override fun isAccountUnique(server: GithubServerPath, login: String): Boolean =
+        accountSelectionModel.items.none { it.name == login && it.server.equals(server, true) }
+
+      override suspend fun saveLogin(server: GithubServerPath, login: String, token: String) {
+        val account = GHAccountManager.createAccount(login, server)
+        accountManager.updateAccount(account, token)
+        withContext(Dispatchers.Main.immediate) {
+          accountSelectionModel.add(account)
+          accountSelectionModel.selectedItem = account
+        }
+      }
     }
 
     return DropDownLink(GithubBundle.message("accounts.add.dropdown.link")) {
-      val group = createAddAccountActionGroup(project, it, isAccountUnique) { server, login, token ->
-        val account = GHAccountManager.createAccount(login, server)
-        accountManager.updateAccount(account, token)
-        accountSelectionModel.add(account)
-        accountSelectionModel.selectedItem = account
-      }
-
+      val group = createAddAccountActionGroup(model, project, it)
       JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(it),
                                 JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
     }
   }
 
-  fun createAddAccountActionGroup(project: Project,
-                                  parentComponent: JComponent,
-                                  uniquePredicate: UniqueLoginPredicate,
-                                  registerAccount: (server: GithubServerPath, login: String, token: String) -> Unit)
-    : ActionGroup {
-
+  internal fun createAddAccountActionGroup(model: GHLoginModel, project: Project, parentComponent: JComponent): ActionGroup {
     val group = DefaultActionGroup()
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-        val dialog = GHLoginDialog.OAuth(project, parentComponent, uniquePredicate)
-        dialog.setServer(GithubServerPath.DEFAULT_HOST, false)
-
-        if (dialog.showAndGet()) {
-          registerAccount(dialog.server, dialog.login, dialog.token)
+        GHLoginDialog.OAuth(model, project, parentComponent).apply {
+          setServer(GithubServerPath.DEFAULT_HOST, false)
+          showAndGet()
         }
       })
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-        val dialog = GHLoginDialog.Token(project, parentComponent, uniquePredicate).apply {
+        GHLoginDialog.Token(model, project, parentComponent).apply {
           title = GithubBundle.message("dialog.title.add.github.account")
           setLoginButtonText(GithubBundle.message("accounts.add.button"))
-        }
-        dialog.setServer(GithubServerPath.DEFAULT_HOST, false)
-
-        if (dialog.showAndGet()) {
-          registerAccount(dialog.server, dialog.login, dialog.token)
+          setServer(GithubServerPath.DEFAULT_HOST, false)
+          showAndGet()
         }
       }
     )
@@ -102,14 +98,11 @@ object GHAccountsUtil {
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-        val dialog = GHLoginDialog.Token(project, parentComponent, uniquePredicate).apply {
+        GHLoginDialog.Token(model, project, parentComponent).apply {
           title = GithubBundle.message("dialog.title.add.github.account")
           setServer("", true)
           setLoginButtonText(GithubBundle.message("accounts.add.button"))
-        }
-
-        if (dialog.showAndGet()) {
-          registerAccount(dialog.server, dialog.login, dialog.token)
+          showAndGet()
         }
       }
     )
@@ -123,14 +116,18 @@ object GHAccountsUtil {
     account: GithubAccount,
     project: Project?,
     parentComponent: Component? = null
-  ): String? =
+  ): String? {
+    val model = AccountManagerLoginModel(account)
     login(
-      project, parentComponent,
+      model,
       GHLoginRequest(
         text = GithubBundle.message("account.token.missing.for", account),
         server = account.server, login = account.name
-      )
-    )?.updateAccount(account)
+      ),
+      project, parentComponent,
+    )
+    return model.authData?.token
+  }
 
   @RequiresEdt
   @JvmOverloads
@@ -140,15 +137,13 @@ object GHAccountsUtil {
     project: Project?,
     parentComponent: Component? = null,
     authType: AuthorizationType = AuthorizationType.UNDEFINED
-  ): GHAccountAuthData? =
+  ): GHAccountAuthData? {
+    val model = AccountManagerLoginModel(account)
     login(
-      project, parentComponent,
-      GHLoginRequest(
-        server = account.server, login = account.name, authType = authType
-      )
-    )?.apply {
-      updateAccount(account)
-    }
+      model, GHLoginRequest(server = account.server, login = account.name, authType = authType),
+      project, parentComponent)
+    return model.authData
+  }
 
   @RequiresEdt
   @JvmOverloads
@@ -159,24 +154,25 @@ object GHAccountsUtil {
     project: Project?,
     parentComponent: Component? = null,
     authType: AuthorizationType = AuthorizationType.UNDEFINED
-  ): GHAccountAuthData? =
+  ): GHAccountAuthData? {
+    val model = AccountManagerLoginModel()
     login(
-      project, parentComponent,
-      GHLoginRequest(server = server, login = login, isLoginEditable = login != null, isCheckLoginUnique = true, authType = authType)
-    )?.apply {
-      registerAccount()
-    }
+      model, GHLoginRequest(server = server, login = login, isLoginEditable = login != null, authType = authType),
+      project, parentComponent
+    )
+    return model.authData
+  }
 
   @RequiresEdt
   @JvmStatic
-  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
+  internal fun login(model: GHLoginModel, request: GHLoginRequest, project: Project?, parentComponent: Component?) {
     if (request.server != GithubServerPath.DEFAULT_SERVER) {
-      return request.loginWithToken(project, parentComponent)
+      request.loginWithToken(model, project, parentComponent)
     }
-    else return when (request.authType) {
-      AuthorizationType.OAUTH -> request.loginWithOAuth(project, parentComponent)
-      AuthorizationType.TOKEN -> request.loginWithToken(project, parentComponent)
-      AuthorizationType.UNDEFINED -> request.loginWithOAuthOrToken(project, parentComponent)
+    else when (request.authType) {
+      AuthorizationType.OAUTH -> request.loginWithOAuth(model, project, parentComponent)
+      AuthorizationType.TOKEN -> request.loginWithToken(model, project, parentComponent)
+      AuthorizationType.UNDEFINED -> request.loginWithOAuthOrToken(model, project, parentComponent)
     }
   }
 }
@@ -186,21 +182,8 @@ class GHAccountAuthData(val account: GithubAccount, login: String, token: String
   val token: String get() = password!!
 }
 
-internal fun GHAccountAuthData.registerAccount(): GithubAccount {
-  val account = GHAccountManager.createAccount(login, server)
-  accountManager.updateAccount(account, token)
-  return account
-}
-
-internal fun GHAccountAuthData.updateAccount(account: GithubAccount): String {
-  account.name = login
-  accountManager.updateAccount(account, token)
-  return token
-}
-
 internal class GHLoginRequest(
-  @NlsContexts.DialogMessage
-  val text: String? = null,
+  val text: @NlsContexts.DialogMessage String? = null,
   val error: Throwable? = null,
 
   val server: GithubServerPath? = null,
@@ -208,39 +191,9 @@ internal class GHLoginRequest(
 
   val login: String? = null,
   val isLoginEditable: Boolean = true,
-  val isCheckLoginUnique: Boolean = false,
 
   val authType: AuthorizationType = AuthorizationType.UNDEFINED
 )
-
-private fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHLoginDialog.Token(project, parentComponent, isLoginUniqueChecker)
-  configure(dialog)
-
-  return dialog.getAuthData()
-}
-
-private fun GHLoginRequest.loginWithOAuth(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHLoginDialog.OAuth(project, parentComponent, isLoginUniqueChecker)
-  configure(dialog)
-
-  return dialog.getAuthData()
-}
-
-private fun GHLoginRequest.loginWithOAuthOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? =
-  when (promptOAuthLogin(this, project, parentComponent)) {
-    Messages.YES -> loginWithOAuth(project, parentComponent)
-    Messages.NO -> loginWithToken(project, parentComponent)
-    else -> null
-  }
-
-private val GHLoginRequest.isLoginUniqueChecker: UniqueLoginPredicate
-  get() = { login, server ->
-    !isCheckLoginUnique ||
-    GHAccountsUtil.accounts.none {
-      it.name == login && it.server.equals(server, true)
-    }
-  }
 
 private fun GHLoginRequest.configure(dialog: GHLoginDialog) {
   error?.let { dialog.setError(it) }
@@ -248,9 +201,23 @@ private fun GHLoginRequest.configure(dialog: GHLoginDialog) {
   login?.let { dialog.setLogin(it, isLoginEditable) }
 }
 
-private fun GHLoginDialog.getAuthData(): GHAccountAuthData? {
-  DialogManager.show(this)
-  return if (isOK) GHAccountAuthData(GHAccountManager.createAccount(login, server), login, token) else null
+private fun GHLoginRequest.loginWithToken(model: GHLoginModel, project: Project?, parentComponent: Component?) {
+  val dialog = GHLoginDialog.Token(model, project, parentComponent)
+  configure(dialog)
+  DialogManager.show(dialog)
+}
+
+private fun GHLoginRequest.loginWithOAuth(model: GHLoginModel, project: Project?, parentComponent: Component?) {
+  val dialog = GHLoginDialog.OAuth(model, project, parentComponent)
+  configure(dialog)
+  DialogManager.show(dialog)
+}
+
+private fun GHLoginRequest.loginWithOAuthOrToken(model: GHLoginModel, project: Project?, parentComponent: Component?) {
+  when (promptOAuthLogin(this, project, parentComponent)) {
+    Messages.YES -> loginWithOAuth(model, project, parentComponent)
+    Messages.NO -> loginWithToken(model, project, parentComponent)
+  }
 }
 
 private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentComponent: Component?): Int {
@@ -264,5 +231,25 @@ private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentC
   }
   else {
     return builder.show(project)
+  }
+}
+
+private class AccountManagerLoginModel(private val account: GithubAccount? = null) : GHLoginModel {
+  private val accountManager: GHAccountManager = service()
+
+  var authData: GHAccountAuthData? = null
+
+  override fun isAccountUnique(server: GithubServerPath, login: String): Boolean =
+    accountManager.accountsState.value.filter {
+      it != account
+    }.none {
+      it.name == login && it.server.equals(server, true)
+    }
+
+  override suspend fun saveLogin(server: GithubServerPath, login: String, token: String) {
+    val acc = account ?: GHAccountManager.createAccount(login, server)
+    acc.name = login
+    accountManager.updateAccount(acc, token)
+    authData = GHAccountAuthData(acc, login, token)
   }
 }

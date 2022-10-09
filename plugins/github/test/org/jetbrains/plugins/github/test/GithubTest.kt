@@ -10,6 +10,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -66,7 +67,7 @@ abstract class GithubTest : GitPlatformTest() {
 
   private fun createAccountData(host: GithubServerPath, token: String): AccountData {
     val account = GHAccountManager.createAccount("token", host)
-    accountManager.updateAccount(account, token)
+    runBlocking { accountManager.updateAccount(account, token) }
     val executor = service<GithubApiRequestExecutor.Factory>().create(token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
@@ -79,7 +80,7 @@ abstract class GithubTest : GitPlatformTest() {
       ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) },
       ThrowableRunnable { deleteRepos(mainAccount, mainRepos) },
       ThrowableRunnable { setCurrentAccount(null) },
-      ThrowableRunnable { if (::accountManager.isInitialized) accountManager.updateAccounts(emptyMap()) },
+      ThrowableRunnable { if (::accountManager.isInitialized) runBlocking { accountManager.updateAccounts(emptyMap()) } },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }

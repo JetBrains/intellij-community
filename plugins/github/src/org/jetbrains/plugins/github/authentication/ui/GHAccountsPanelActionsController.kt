@@ -6,6 +6,8 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
@@ -19,14 +21,8 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
   override val isAddActionWithPopup: Boolean = true
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
-    val isAccountUnique: (login: String, server: GithubServerPath) -> Boolean = { name, server ->
-      model.accounts.none { it.name == name && it.server.equals(server, true) }
-    }
-
-    val group = GHAccountsUtil.createAddAccountActionGroup(project, parentComponent, isAccountUnique) { server, login, token ->
-      val account = GHAccountManager.createAccount(login, server)
-      model.add(account, token)
-    }
+    val loginModel = AccountsListModelLoginModel(model)
+    val group = GHAccountsUtil.createAddAccountActionGroup(loginModel, project, parentComponent)
 
 
     val actualPoint = point ?: RelativePoint.getCenterOf(parentComponent)
@@ -37,11 +33,32 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
   }
 
   override fun editAccount(parentComponent: JComponent, account: GithubAccount) {
-    val authData = GHAccountsUtil.login(project, parentComponent,
-                                        GHLoginRequest(server = account.server, login = account.name))
-    if (authData == null) return
+    val loginModel = AccountsListModelLoginModel(model, account)
+    GHAccountsUtil.login(loginModel,
+                         GHLoginRequest(server = account.server, isServerEditable = false),
+                         project, parentComponent)
+  }
 
-    account.name = authData.login
-    model.update(authData.account, authData.token)
+  private class AccountsListModelLoginModel(private val model: GHAccountsListModel,
+                                            private val account: GithubAccount? = null)
+    : GHLoginModel {
+
+    override fun isAccountUnique(server: GithubServerPath, login: String): Boolean =
+      model.accounts.none {
+        it.name == login && it.server.equals(server, true)
+      }
+
+    override suspend fun saveLogin(server: GithubServerPath, login: String, token: String) {
+      withContext(Dispatchers.Main) {
+        if (account == null) {
+          val account = GHAccountManager.createAccount(login, server)
+          model.add(account, token)
+        }
+        else {
+          account.name = login
+          model.update(account, token)
+        }
+      }
+    }
   }
 }

@@ -25,21 +25,17 @@ internal fun JComponent.setPaddingCompensated(): JComponent =
   apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
 internal sealed class GHLoginDialog(
+  private val model: GHLoginModel,
   project: Project?,
-  parent: Component?,
-  isAccountUnique: UniqueLoginPredicate
+  parent: Component?
 ) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
   private val cs = DisposingMainScope(disposable)
 
-  protected val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance(), isAccountUnique)
+  protected val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { login, server ->
+    model.isAccountUnique(server, login)
+  }
 
-  private var _login = ""
-  private var _token = ""
-
-  val login: String get() = _login
-  val token: String get() = _token
-  val server: GithubServerPath get() = loginPanel.getServer()
 
   fun setLogin(login: String?, editable: Boolean) = loginPanel.setLogin(login, editable)
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
@@ -57,9 +53,7 @@ internal sealed class GHLoginDialog(
     cs.launch(Dispatchers.Main.immediate + ModalityState.stateForComponent(rootPane).asContextElement()) {
       try {
         val (login, token) = loginPanel.acquireLoginAndToken()
-        _login = login
-        _token = token
-
+        model.saveLogin(loginPanel.getServer(), login, token)
         close(OK_EXIT_CODE, true)
       }
       catch (e: Exception) {
@@ -73,8 +67,8 @@ internal sealed class GHLoginDialog(
   }
 
 
-  class Token(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
-    GHLoginDialog(project, parent, isAccountUnique) {
+  class Token(model: GHLoginModel, project: Project?, parent: Component?) :
+    GHLoginDialog(model, project, parent) {
 
     init {
       title = GithubBundle.message("login.to.github")
@@ -89,8 +83,8 @@ internal sealed class GHLoginDialog(
     override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
   }
 
-  class OAuth(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
-    GHLoginDialog(project, parent, isAccountUnique) {
+  class OAuth(model: GHLoginModel, project: Project?, parent: Component?) :
+    GHLoginDialog(model, project, parent) {
 
     init {
       title = GithubBundle.message("login.to.github")
@@ -110,4 +104,9 @@ internal sealed class GHLoginDialog(
         .withPreferredWidth(200)
         .setPaddingCompensated()
   }
+}
+
+internal interface GHLoginModel {
+  fun isAccountUnique(server: GithubServerPath, login: String): Boolean
+  suspend fun saveLogin(server: GithubServerPath, login: String, token: String)
 }
