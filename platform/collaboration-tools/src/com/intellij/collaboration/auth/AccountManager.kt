@@ -20,20 +20,20 @@ interface AccountManager<A : Account, Cred> {
   /**
    * Add/update account and it's credentials
    */
-  fun updateAccount(account: A, credentials: Cred)
+  suspend fun updateAccount(account: A, credentials: Cred)
 
   /**
    * Add/update/remove multiple accounts and their credentials.
    * Credentials are not updated if null value is passed
    * Should only be used by a bulk update from settings
    */
-  fun updateAccounts(accountsWithCredentials: Map<A, Cred?>)
+  suspend fun updateAccounts(accountsWithCredentials: Map<A, Cred?>)
 
   /**
    * Remove an account and clear stored credentials
    * Does nothing if account is not present
    */
-  fun removeAccount(account: A)
+  suspend fun removeAccount(account: A)
 
   /**
    * Retrieve credentials for account

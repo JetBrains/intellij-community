@@ -55,10 +55,12 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
       get() = accountManager.accountsState.value
 
     fun login(account: GitLabAccount, token: String) {
-      accountManager.updateAccount(account, token)
-      accountSelectionState.value = account
-      if (submit) {
-        submitSelection()
+      scope.launch {
+        accountManager.updateAccount(account, token)
+        accountSelectionState.value = account
+        if (submit) {
+          submitSelection()
+        }
       }
     }
   }

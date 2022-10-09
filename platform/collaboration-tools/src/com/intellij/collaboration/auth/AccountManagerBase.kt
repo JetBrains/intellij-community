@@ -32,8 +32,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   private val accountsEventsFlow = MutableSharedFlow<Event<A, Cred>>()
   private val mutex = Mutex()
 
-  override fun updateAccounts(accountsWithCredentials: Map<A, Cred?>) {
-    runBlocking {
+  override suspend fun updateAccounts(accountsWithCredentials: Map<A, Cred?>) {
+    withContext(Dispatchers.Default) {
       mutex.withLock {
         withContext(NonCancellable) {
           val currentSet = persistentAccounts.accounts
@@ -60,8 +60,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
     }
   }
 
-  override fun updateAccount(account: A, credentials: Cred) {
-    runBlocking {
+  override suspend fun updateAccount(account: A, credentials: Cred) {
+    withContext(Dispatchers.Default) {
       mutex.withLock {
         withContext(NonCancellable) {
           val currentSet = persistentAccounts.accounts
@@ -84,8 +84,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
     }
   }
 
-  override fun removeAccount(account: A) {
-    runBlocking {
+  override suspend fun removeAccount(account: A) {
+    withContext(Dispatchers.Default) {
       mutex.withLock {
         withContext(NonCancellable) {
           val currentSet = persistentAccounts.accounts
@@ -103,11 +103,13 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   }
 
   private suspend fun saveCredentialsSafe(account: A, credentials: Cred?) {
-    try {
-      persistentCredentials.persistCredentials(account, credentials)
-    }
-    catch (e: Exception) {
-      logger.warn(e)
+    withContext(Dispatchers.IO) {
+      try {
+        persistentCredentials.persistCredentials(account, credentials)
+      }
+      catch (e: Exception) {
+        logger.warn(e)
+      }
     }
   }
 
@@ -140,7 +142,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
         }
       }
     }
-  }
+  }.flowOn(Dispatchers.Default)
 
   override fun dispose() = Unit
 
