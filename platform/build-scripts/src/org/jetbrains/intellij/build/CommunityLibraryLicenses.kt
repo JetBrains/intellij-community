@@ -414,9 +414,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Java Compatibility", license = "GPL 2.0 + Classpath",
                    url = "https://github.com/JetBrains/intellij-deps-java-compatibility",
                    licenseUrl = "https://raw.githubusercontent.com/JetBrains/intellij-deps-java-compatibility/master/LICENSE"),
-    LibraryLicense(name = "Java Native Runtime Constants", libraryName = "github.jnr.constants",
-                   url = "https://github.com/jnr/jnr-constants")
-      .apache("https://github.com/jnr/jnr-constants/blob/master/LICENSE"),
+
     LibraryLicense(name = "Java Poet", libraryName = "javapoet",
                    url = "https://github.com/square/javapoet")
       .apache("https://github.com/square/javapoet/blob/master/LICENSE.txt"),
@@ -491,10 +489,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JNA", libraryName = "jna", license = "LGPL 2.1",
                    url = "https://github.com/java-native-access/jna",
                    licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php"),
-    LibraryLicense(name = "JNR-FFI", libraryName = "github.jnr.ffi", url = "https://github.com/jnr/jnr-ffi")
-      .apache("https://github.com/jnr/jnr-ffi/blob/master/LICENSE"),
-    LibraryLicense(name = "jnr-unixsocket", libraryName = "github.jnr.unixsocket", url = "https://github.com/jnr/jnr-unixsocket")
-      .apache("https://github.com/jnr/jnr-unixsocket"),
     LibraryLicense(name = "Joni", libraryName = "joni", url = "https://github.com/jruby/joni")
       .mit("https://github.com/jruby/joni/blob/master/LICENSE"),
     LibraryLicense(name = "jps-javac-extension", libraryName = "jps-javac-extension",

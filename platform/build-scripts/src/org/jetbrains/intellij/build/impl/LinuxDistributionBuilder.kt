@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
@@ -50,7 +49,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
         generateBuildTxt(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
-        val extraJarNames = addDbusJava(context, targetPath.resolve("lib"))
         Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
         //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
@@ -59,8 +57,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
         }
         generateVMOptions(distBinDir)
-        generateUnixScripts(extraJarNames = extraJarNames,
-                            distBinDir = distBinDir,
+        generateUnixScripts(distBinDir = distBinDir,
                             os = OsFamily.LINUX,
                             arch = arch,
                             context = context)
@@ -337,12 +334,11 @@ private fun makeFileExecutable(file: Path) {
 
 internal const val REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
 
-internal fun generateUnixScripts(extraJarNames: List<String>,
-                                 distBinDir: Path,
+internal fun generateUnixScripts(distBinDir: Path,
                                  os: OsFamily,
                                  arch: JvmArchitecture,
                                  context: BuildContext) {
-  val classPathJars = context.bootClassPathJarNames.addAll(extraJarNames)
+  val classPathJars = context.bootClassPathJarNames
   var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars[0]}\""
   for (i in 1 until classPathJars.size) {
     classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
