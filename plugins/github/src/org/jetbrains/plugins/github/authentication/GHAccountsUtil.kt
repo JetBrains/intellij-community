@@ -153,8 +153,8 @@ object GHAccountsUtil {
   @RequiresEdt
   @JvmOverloads
   @JvmStatic
-  fun requestNewAccountForServer(
-    server: GithubServerPath,
+  fun requestNewAccount(
+    server: GithubServerPath? = null,
     login: String? = null,
     project: Project?,
     parentComponent: Component? = null,
@@ -170,7 +170,10 @@ object GHAccountsUtil {
   @RequiresEdt
   @JvmStatic
   internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
-    return when (request.authType) {
+    if (request.server != GithubServerPath.DEFAULT_SERVER) {
+      return request.loginWithToken(project, parentComponent)
+    }
+    else return when (request.authType) {
       AuthorizationType.OAUTH -> request.loginWithOAuth(project, parentComponent)
       AuthorizationType.TOKEN -> request.loginWithToken(project, parentComponent)
       AuthorizationType.UNDEFINED -> request.loginWithOAuthOrToken(project, parentComponent)

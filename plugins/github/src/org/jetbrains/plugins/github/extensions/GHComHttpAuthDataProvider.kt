@@ -48,7 +48,7 @@ private suspend fun getAuthDataOrCancel(project: Project, url: String, login: St
 
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
-      0 -> GHAccountsUtil.requestNewAccountForServer(DEFAULT_SERVER, login, project)
+      0 -> GHAccountsUtil.requestNewAccount(DEFAULT_SERVER, login, project)
       1 -> GHAccountsUtil.requestReLogin(accountsWithTokens.keys.first(), project = project)
       else -> GHSelectAccountHttpAuthDataProvider(project, accountsWithTokens).getAuthData(null)
     }

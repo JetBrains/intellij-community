@@ -101,10 +101,10 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
   private fun loginToGithub(forceNew: Boolean, authType: AuthorizationType): Boolean {
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return GHAccountsUtil.requestNewAccountForServer(GithubServerPath.DEFAULT_SERVER,
-                                                       null,
-                                                       project,
-                                                       authType = authType
+      return GHAccountsUtil.requestNewAccount(GithubServerPath.DEFAULT_SERVER,
+                                              null,
+                                              project,
+                                              authType = authType
       )?.account?.also {
         vm.accountSelectionState.value = it
       } != null
@@ -119,7 +119,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
     val server = repo.repository.serverPath
     val account = vm.accountSelectionState.value
     if (account == null || forceNew) {
-      return GHAccountsUtil.requestNewAccountForServer(server, login = null, project = project)?.also {
+      return GHAccountsUtil.requestNewAccount(server, login = null, project = project)?.also {
         vm.accountSelectionState.value = it.account
       } != null
     }

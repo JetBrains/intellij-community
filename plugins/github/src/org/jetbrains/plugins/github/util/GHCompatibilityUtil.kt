@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 object GHCompatibilityUtil {
   @JvmStatic
   fun requestNewAccountForServer(serverPath: GithubServerPath, project: Project): GithubAccount? =
-    GHAccountsUtil.requestNewAccountForServer(serverPath, login = null, project = project)?.account
+    GHAccountsUtil.requestNewAccount(serverPath, login = null, project = project)?.account
 
   @RequiresBackgroundThread
   @JvmStatic
