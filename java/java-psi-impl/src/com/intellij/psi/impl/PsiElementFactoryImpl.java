@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -114,13 +114,18 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
+  public @NotNull PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
+    return createClassInner("record", name);
+  }
+
+  @Override
   public @NotNull PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("@interface", name);
   }
 
   private PsiClass createClassInner(String type, String name) {
     PsiUtil.checkIsIdentifier(myManager, name);
-    PsiJavaFile aFile = createDummyJavaFile("public " + type +  " " +  name +  " { }");
+    PsiJavaFile aFile = createDummyJavaFile("public " + type +  " " +  name + ("record".equals(type) ? "()" : "") + " { }");
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
       throw new IncorrectOperationException("Incorrect " + type + " name \"" + name + "\".");
