@@ -11,11 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.runProcess
-import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -111,8 +109,11 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
 
-    val nsisZip = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, URI(
-      "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/NSIS-${context.dependenciesProperties.property("nsisBuild")}.zip"))
+    val nsisZip = downloadFileToCacheLocation(
+      url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/" +
+            "NSIS-${context.dependenciesProperties.property("nsisBuild")}.zip",
+      communityRoot = context.paths.communityHomeDirRoot,
+    )
     Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
     spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope2 {
       val timeout = 2.hours
