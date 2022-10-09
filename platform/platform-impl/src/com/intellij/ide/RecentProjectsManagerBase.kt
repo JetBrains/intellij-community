@@ -502,11 +502,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
           info.frameTitle?.let {
             ideFrame.title = it
           }
-          val frameHelper = ProjectFrameHelper(ideFrame, null)
-          val frameManager = MyProjectUiFrameManager(ideFrame, frameHelper)
+          val frameHelper = ProjectFrameHelper(frame = ideFrame, selfie = null)
+          val frameManager = MyProjectUiFrameManager(frame = ideFrame, frameHelper = frameHelper)
 
           frameHelper.init()
 
+          ideFrame.isVisible = true
           if (frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
             fullScreenPromise = frameHelper.toggleFullScreen(true)
           }
@@ -515,7 +516,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
             forceOpenInNewFrame = true
             showWelcomeScreen = false
             projectWorkspaceId = info.projectWorkspaceId
-            implOptions = OpenProjectImplOptions(frameManager = frameManager)
+            implOptions = OpenProjectImplOptions(frameManager = frameManager, isVisibleManaged = true)
           })
           if (isActive) {
             activeTask = task

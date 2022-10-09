@@ -163,10 +163,11 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
 
       val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
-      val editorSplitters = fileEditorManager.init()
-
       // not as a part of a project modal dialog
-      project.coroutineScope.buildUi(editorSplitters, fileEditorManager, frameHelper, project)
+      project.coroutineScope.buildUi(editorSplitters = fileEditorManager.init(),
+                                     fileEditorManager = fileEditorManager,
+                                     frameHelper = frameHelper,
+                                     project = project)
     }
   }
 
@@ -192,7 +193,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         rootPane.initOrCreateToolbar(project)
       }
 
-      frameHelper.frameOrNull?.isVisible = true
+      if (!options.isVisibleManaged) {
+        frameHelper.frameOrNull?.isVisible = true
+      }
     }
     return reopeningEditorJob
   }
@@ -391,7 +394,11 @@ internal val OpenProjectTask.frameInfo: FrameInfo?
 internal val OpenProjectTask.frameManager: ProjectUiFrameManager?
   get() = (implOptions as OpenProjectImplOptions?)?.frameManager
 
+private val OpenProjectTask.isVisibleManaged: Boolean
+  get() = (implOptions as OpenProjectImplOptions?)?.isVisibleManaged ?: false
+
 internal data class OpenProjectImplOptions(
   @JvmField val frameInfo: FrameInfo? = null,
   @JvmField val frameManager: ProjectUiFrameManager? = null,
+  @JvmField val isVisibleManaged: Boolean = false,
 )
