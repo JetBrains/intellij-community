@@ -21,9 +21,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
-import org.jetbrains.plugins.github.authentication.ui.BaseLoginDialog
-import org.jetbrains.plugins.github.authentication.ui.GHOAuthLoginDialog
-import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
@@ -78,7 +76,7 @@ object GHAccountsUtil {
     val group = DefaultActionGroup()
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-        val dialog = GHOAuthLoginDialog(project, parentComponent, uniquePredicate)
+        val dialog = GHLoginDialog.OAuth(project, parentComponent, uniquePredicate)
         dialog.setServer(GithubServerPath.DEFAULT_HOST, false)
 
         if (dialog.showAndGet()) {
@@ -88,7 +86,7 @@ object GHAccountsUtil {
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-        val dialog = GHTokenLoginDialog(project, parentComponent, uniquePredicate).apply {
+        val dialog = GHLoginDialog.Token(project, parentComponent, uniquePredicate).apply {
           title = GithubBundle.message("dialog.title.add.github.account")
           setLoginButtonText(GithubBundle.message("accounts.add.button"))
         }
@@ -104,7 +102,7 @@ object GHAccountsUtil {
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-        val dialog = GHTokenLoginDialog(project, parentComponent, uniquePredicate).apply {
+        val dialog = GHLoginDialog.Token(project, parentComponent, uniquePredicate).apply {
           title = GithubBundle.message("dialog.title.add.github.account")
           setServer("", true)
           setLoginButtonText(GithubBundle.message("accounts.add.button"))
@@ -213,14 +211,14 @@ internal class GHLoginRequest(
 )
 
 private fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHTokenLoginDialog(project, parentComponent, isLoginUniqueChecker)
+  val dialog = GHLoginDialog.Token(project, parentComponent, isLoginUniqueChecker)
   configure(dialog)
 
   return dialog.getAuthData()
 }
 
 private fun GHLoginRequest.loginWithOAuth(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHOAuthLoginDialog(project, parentComponent, isLoginUniqueChecker)
+  val dialog = GHLoginDialog.OAuth(project, parentComponent, isLoginUniqueChecker)
   configure(dialog)
 
   return dialog.getAuthData()
@@ -241,13 +239,13 @@ private val GHLoginRequest.isLoginUniqueChecker: UniqueLoginPredicate
     }
   }
 
-private fun GHLoginRequest.configure(dialog: BaseLoginDialog) {
+private fun GHLoginRequest.configure(dialog: GHLoginDialog) {
   error?.let { dialog.setError(it) }
   server?.let { dialog.setServer(it.toString(), isServerEditable) }
   login?.let { dialog.setLogin(it, isLoginEditable) }
 }
 
-private fun BaseLoginDialog.getAuthData(): GHAccountAuthData? {
+private fun GHLoginDialog.getAuthData(): GHAccountAuthData? {
   DialogManager.show(this)
   return if (isOK) GHAccountAuthData(GHAccountManager.createAccount(login, server), login, token) else null
 }

@@ -8,27 +8,31 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.ui.JBUI
+import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
+import javax.swing.Action
 import javax.swing.JComponent
 
 internal fun JComponent.setPaddingCompensated(): JComponent =
   apply { putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false) }
 
-internal abstract class BaseLoginDialog(
+internal sealed class GHLoginDialog(
   project: Project?,
   parent: Component?,
-  executorFactory: GithubApiRequestExecutor.Factory,
   isAccountUnique: UniqueLoginPredicate
 ) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
   private val cs = DisposingMainScope(disposable)
 
-  protected val loginPanel = GithubLoginPanel(executorFactory, isAccountUnique)
+  protected val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance(), isAccountUnique)
 
   private var _login = ""
   private var _token = ""
@@ -66,5 +70,44 @@ internal abstract class BaseLoginDialog(
         setError(e)
       }
     }
+  }
+
+
+  class Token(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
+    GHLoginDialog(project, parent, isAccountUnique) {
+
+    init {
+      title = GithubBundle.message("login.to.github")
+      setLoginButtonText(GitBundle.message("login.dialog.button.login"))
+      loginPanel.setTokenUi()
+
+      init()
+    }
+
+    internal fun setLoginButtonText(@NlsContexts.Button text: String) = setOKButtonText(text)
+
+    override fun createCenterPanel(): JComponent = loginPanel.setPaddingCompensated()
+  }
+
+  class OAuth(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :
+    GHLoginDialog(project, parent, isAccountUnique) {
+
+    init {
+      title = GithubBundle.message("login.to.github")
+      loginPanel.setOAuthUi()
+      init()
+    }
+
+    override fun createActions(): Array<Action> = arrayOf(cancelAction)
+
+    override fun show() {
+      doOKAction()
+      super.show()
+    }
+
+    override fun createCenterPanel(): JComponent =
+      JBUI.Panels.simplePanel(loginPanel)
+        .withPreferredWidth(200)
+        .setPaddingCompensated()
   }
 }
