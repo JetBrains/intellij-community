@@ -1044,28 +1044,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myResizeListener = resizeListener;
     }
 
-    if (myCaption != null && myMovable) {
-      final WindowMoveListener moveListener = new WindowMoveListener(myCaption) {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (e.isConsumed()) return;
-          if (UIUtil.isCloseClick(e) && myCaption.isWithinPanel(e)) {
-            cancel();
-          }
-          else {
-            super.mousePressed(e);
-          }
-        }
-      };
-      myCaption.addMouseListener(moveListener);
-      myCaption.addMouseMotionListener(moveListener);
-      final MyContentPanel saved = myContent;
-      Disposer.register(this, () -> {
-        ListenerUtil.removeMouseListener(saved, moveListener);
-        ListenerUtil.removeMouseMotionListener(saved, moveListener);
-      });
-      myMoveListener = moveListener;
-    }
+    setIsMovable(myMovable);
 
     notifyListeners();
 
@@ -1669,6 +1648,51 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   @ApiStatus.Internal
   public boolean isCancelOnClickOutside() {
     return myCancelOnClickOutside;
+  }
+
+  @ApiStatus.Internal
+  public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
+    myCancelOnClickOutside = cancelOnClickOutside;
+  }
+
+  @ApiStatus.Internal
+  public void setIsMovable(boolean movable) {
+    myMovable = movable;
+
+    if (!myMovable && myMoveListener != null) {
+      final MyContentPanel saved = myContent;
+      ListenerUtil.removeMouseListener(saved, myMoveListener);
+      ListenerUtil.removeMouseMotionListener(saved, myMoveListener);
+      myMoveListener = null;
+    }
+
+    if (myCaption != null && myMovable) {
+      final WindowMoveListener moveListener = new WindowMoveListener(myCaption) {
+        @Override
+        public void mousePressed(final MouseEvent e) {
+          if (e.isConsumed()) return;
+          if (UIUtil.isCloseClick(e) && myCaption.isWithinPanel(e)) {
+            cancel();
+          }
+          else {
+            super.mousePressed(e);
+          }
+        }
+      };
+      myCaption.addMouseListener(moveListener);
+      myCaption.addMouseMotionListener(moveListener);
+      final MyContentPanel saved = myContent;
+      Disposer.register(this, () -> {
+        ListenerUtil.removeMouseListener(saved, moveListener);
+        ListenerUtil.removeMouseMotionListener(saved, moveListener);
+      });
+      myMoveListener = moveListener;
+    }
+  }
+
+  @ApiStatus.Internal
+  public void setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
   }
 
   boolean isCancelOnWindowDeactivation() {
