@@ -417,7 +417,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
       LayeredIcon newIcon = new LayeredIcon(2);
       newIcon.setIcon(icon, 0);
-      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, 10, 6);
+      int hShift = ExperimentalUI.isNewUI() ? 5 : 10;
+      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
       myIcon = JBUIScale.scaleIcon(newIcon);
     }
     else {
