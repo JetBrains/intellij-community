@@ -21,61 +21,47 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
 
   private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
-  private val interactiveCourseContent: JPanel
 
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
   init {
-    layout = BoxLayout(this, BoxLayout.LINE_AXIS)
+    layout = BorderLayout()
     isOpaque = false
-    alignmentX = LEFT_ALIGNMENT
+    alignmentY = TOP_ALIGNMENT
 
-    interactiveCourseContent = createInteractiveCourseContent()
-    this.add(interactiveCourseContent)
+    this.add(createHeaderPanel(), BorderLayout.NORTH)
+
+    interactiveCourseDescription.apply {
+      border = JBUI.Borders.empty(5, 0, 14, 0)
+    }
+    this.add(interactiveCourseDescription, BorderLayout.CENTER)
+    this.add(this.createSouthPanel(), BorderLayout.SOUTH)
   }
 
   override fun getMaximumSize(): Dimension {
     return Dimension(this.preferredSize.width, calculateInnerComponentHeight())
   }
 
-  private fun createInteractiveCourseContent(): JPanel {
-    val panel = JPanel()
-    panel.layout = BoxLayout(panel, BoxLayout.PAGE_AXIS)
-    panel.isOpaque = false
-    panel.alignmentY = TOP_ALIGNMENT
-
-    panel.add(rigid(12, 10))
-
-    val learnIdeFeaturesHeader = DynamicFontLabel(data.getName(), data.getIcon())
-
-    learnIdeFeaturesHeader.apply { val labelFont = StartupUiUtil.getLabelFont()
+  private fun createHeaderPanel(): JComponent {
+    val learnIdeFeaturesHeader = DynamicFontLabel(data.getName(), data.getIcon()).apply {
+      val labelFont = StartupUiUtil.getLabelFont()
       font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
-    learnIdeFeaturesHeader.alignmentX = LEFT_ALIGNMENT
 
-    if (nameLine != null) {
+    return if (nameLine != null) {
       nameLine.isOpaque = false
       nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
       nameLine.alignmentX = LEFT_ALIGNMENT
 
       nameLine.add(learnIdeFeaturesHeader)
-      nameLine.add(rigid(10, 0))
+      nameLine.add(rigid())
       nameLine.add(newContentMarker)
 
-      panel.add(nameLine)
-    } else {
-      panel.add(learnIdeFeaturesHeader)
+      nameLine
     }
-
-    panel.add(rigid(1, 4))
-    panel.add(interactiveCourseDescription)
-    panel.add(rigid(4, 9))
-
-    panel.add(this.createSouthPanel())
-
-    panel.add(rigid(18, 21))
-
-    return panel
+    else {
+      learnIdeFeaturesHeader
+    }
   }
 
   protected open fun createSouthPanel() = createButtonPanel(data.getAction())
@@ -84,7 +70,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
     startLearningButton.action = action
     startLearningButton.margin = Insets(0, 0, 0, 0)
     startLearningButton.isOpaque = false
-    startLearningButton.alignmentX = LEFT_ALIGNMENT
+    startLearningButton.isContentAreaFilled = false
 
     return buttonPixelHunting(startLearningButton)
   }
@@ -110,9 +96,9 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
   }
 
 
-  private fun rigid(_width: Int, _height: Int): Component {
+  private fun rigid(): Component {
     return Box.createRigidArea(
-      Dimension(JBUI.scale(_width), JBUI.scale(_height))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
+      Dimension(JBUI.scale(10), JBUI.scale(0))).apply { (this as JComponent).alignmentX = LEFT_ALIGNMENT }
   }
 
   class DynamicFontLabel(@Nls text: String, icon: Icon? = null): JBLabel(text, icon, SwingConstants.LEFT) {

@@ -107,7 +107,9 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
         else {
           InteractiveCoursePanel(interactiveCourse)
         }
+
         interactiveCoursesPanel.add(interactiveCoursePanel)
+        interactiveCoursesPanel.add((rigid(12, 6)))
         if (actionButton == null) actionButton = interactiveCoursePanel.startLearningButton
       }
       contentPanel.add(interactiveCoursesHeader, BorderLayout.NORTH)

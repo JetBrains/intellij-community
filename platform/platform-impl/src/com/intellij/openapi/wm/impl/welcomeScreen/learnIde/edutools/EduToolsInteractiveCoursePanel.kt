@@ -38,7 +38,9 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
 
   override fun createSouthPanel(): JPanel {
     cardLayout = CardLayout()
-    cardLayoutPanel = JPanel(cardLayout)
+    cardLayoutPanel = JPanel(cardLayout).apply {
+      isOpaque = false
+    }
 
     cardLayoutPanel.add(createButtonPanel(InstallEduToolsAction()), BUTTON_ID)
     cardLayoutPanel.add(ProgressBarPanel(CancelPluginActionListener()), PROGRESS_ID)
@@ -149,6 +151,7 @@ private class ProgressBarPanel(listener: MouseAdapter) : JPanel() {
 
   init {
     isOpaque = false
+    layout = BorderLayout()
     add(progressBar, BorderLayout.CENTER)
 
     val buttonWrapper = Wrapper().apply {
@@ -161,7 +164,7 @@ private class ProgressBarPanel(listener: MouseAdapter) : JPanel() {
 
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
-    size.width = 40
+    size.width = 175
     return size
   }
 }
