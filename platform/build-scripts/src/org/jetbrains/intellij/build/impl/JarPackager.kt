@@ -493,7 +493,10 @@ class JarPackager private constructor(private val context: BuildContext) {
   }
 
   private fun addLibrary(library: JpsLibrary, targetFile: Path, files: List<Path>) {
-    filesToSourceWithMapping(getJarDescriptorSources(targetFile), files, library, targetFile)
+    filesToSourceWithMapping(to = getJarDescriptorSources(targetFile),
+                             files = files,
+                             library = library,
+                             targetFile = targetFile)
   }
 
   private fun getJarDescriptorSources(targetFile: Path): MutableList<Source> {
@@ -603,13 +606,9 @@ private fun getLibraryFiles(library: JpsLibrary,
 
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
-    val alreadyCopiedFor = copiedFiles.get(it)
-    if (alreadyCopiedFor == null) {
-      false
-    }
-    else {
-      alreadyCopiedFor.targetFile == targetFile && alreadyCopiedFor.library.name.startsWith("ktor-")
-    }
+    val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
+    alreadyCopiedFor.targetFile == targetFile &&
+    (alreadyCopiedFor.library.name.startsWith("ktor-") || (isModuleLevel && alreadyCopiedFor.library.name == libName))
   }
 
   for (file in files) {
