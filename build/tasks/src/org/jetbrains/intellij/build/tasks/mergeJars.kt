@@ -244,6 +244,7 @@ private fun checkName(name: String,
          (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
          !name.startsWith("META-INF/license/") &&
+         !name.startsWith("META-INF/LICENSE-") &&
          !name.startsWith("native-image/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
