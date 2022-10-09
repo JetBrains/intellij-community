@@ -210,6 +210,8 @@ private fun getIgnoredNames(): Set<String> {
   set.add("META-INF/sisu/javax.inject.Named")
   // duplicates in recommenders-jayes-io-2.5.5 and recommenders-jayes-2.5.5.jar
   set.add("OSGI-INF/l10n/bundle.properties")
+  // groovy
+  set.add("META-INF/groovy-release-info.properties")
 
   set.add("native-image")
   set.add("native")
