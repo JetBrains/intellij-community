@@ -34,9 +34,7 @@ class GithubAuthenticationManager internal constructor() {
   @JvmOverloads
   fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
     if (accountManager.accountsState.value.isNotEmpty()) return true
-    return GHAccountsUtil.login(project, parentComponent,
-                                GHLoginRequest(isCheckLoginUnique = true)
-    )?.registerAccount() != null
+    return GHAccountsUtil.requestNewAccount(project = project, parentComponent = parentComponent) != null
   }
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? = GHAccountsUtil.getSingleOrDefaultAccount(project)
