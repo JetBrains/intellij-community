@@ -44,7 +44,9 @@ internal class GHAccountsPanelActionsController(private val project: Project, pr
     : GHLoginModel {
 
     override fun isAccountUnique(server: GithubServerPath, login: String): Boolean =
-      model.accounts.none {
+      model.accounts.filter {
+        it != account
+      }.none {
         it.name == login && it.server.equals(server, true)
       }
 
