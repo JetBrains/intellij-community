@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.async.DisposingMainScope
-import git4idea.remote.hosting.HostedGitRepositoryConnectionValidator
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -15,7 +15,10 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
 import com.intellij.util.childScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
@@ -27,34 +30,41 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import javax.swing.JPanel
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
+  companion object {
+    const val ID = "Pull Requests"
+  }
+
   override fun init(toolWindow: ToolWindow) {
-    val repositoriesManager = toolWindow.project.service<GHHostedRepositoriesManager>()
-    DisposingMainScope(toolWindow.disposable).launch {
-      repositoriesManager.knownRepositoriesState.collect {
-        toolWindow.isAvailable = it.isNotEmpty()
+    val task = toolWindow.project.coroutineScope.launch(start = CoroutineStart.LAZY) {
+      val repositoriesManager = toolWindow.project.service<GHHostedRepositoriesManager>()
+      withContext(Dispatchers.EDT) {
+        repositoriesManager.knownRepositoriesState.collect {
+          toolWindow.isAvailable = it.isNotEmpty()
+        }
       }
     }
+    Disposer.register(toolWindow.disposable, task::cancel)
+    task.start()
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     configureToolWindow(toolWindow)
-    with(toolWindow.contentManager) {
-      val content = factory.createContent(JPanel(null), null, false).apply {
-        isCloseable = false
-        setDisposer(Disposer.newDisposable("reviews tab disposable"))
-      }
-      configureContent(project, content)
-      addContent(content)
+    val contentManager = toolWindow.contentManager
+    val content = contentManager.factory.createContent(JPanel(null), null, false).apply {
+      isCloseable = false
+      setDisposer(Disposer.newDisposable("reviews tab disposable"))
     }
+    configureContent(project, content)
+    contentManager.addContent(content)
   }
 
   private fun configureToolWindow(toolWindow: ToolWindow) {
-    with(toolWindow) {
-      setTitleActions(listOf(EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), component),
-                             GHPRSelectPullRequestForFileAction()))
-      setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
-    }
+    toolWindow.setTitleActions(listOf(
+      EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
+      GHPRSelectPullRequestForFileAction(),
+    ))
+    toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
   }
 
   private fun configureContent(project: Project, content: Content) {
@@ -69,8 +79,4 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = false
-
-  companion object {
-    const val ID = "Pull Requests"
-  }
 }
