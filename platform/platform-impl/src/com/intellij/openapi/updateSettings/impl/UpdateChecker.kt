@@ -441,6 +441,7 @@ object UpdateChecker {
                                                                                            buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
+          .onSuccess { it.externalPluginIdForScreenShots = lastUpdate.externalPluginId }
           .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
       }
     }

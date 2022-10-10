@@ -117,6 +117,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private ListPluginComponent myShowComponent;
 
+  private boolean myUpdateOnly;
+
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     this(pluginModel, searchListener, marketplace, false);
   }
@@ -355,12 +357,19 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void setOnlyUpdateMode() {
-    myNameAndButtons.removeButtons();
-    Container parent = myEnabledForProject.getParent();
-    if (parent != null) {
-      parent.remove(myEnabledForProject);
+    myUpdateOnly = true;
+
+    if (myMultiTabs) {
+      myNameAndButtons.moveButtonToBase(myVersion);
     }
-    myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
+    else {
+      myNameAndButtons.removeButtons();
+      Container parent = myEnabledForProject.getParent();
+      if (parent != null) {
+        parent.remove(myEnabledForProject);
+      }
+      myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
+    }
     myEmptyPanel.setBorder(null);
   }
 
@@ -753,18 +762,48 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
             IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node);
             if (metadata != null && metadata.getScreenshots() != null) {
-              pluginNode.setExternalPluginId(node.getExternalPluginId());
               pluginNode.setScreenShots(metadata.getScreenshots());
+              pluginNode.setExternalPluginIdForScreenShots(node.getExternalPluginId());
             }
 
             PageContainer<PluginReviewComment> reviewComments = new PageContainer<>(20, 0);
-            List<PluginReviewComment> items = MarketplaceRequests.getInstance().loadPluginReviews(node, reviewComments.getNextPage());
+            List<PluginReviewComment> items = marketplace.loadPluginReviews(node, reviewComments.getNextPage());
             if (items != null) {
               reviewComments.addItems(items);
             }
             pluginNode.setReviewComments(reviewComments);
 
             component.setPluginDescriptor(pluginNode);
+
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if (myShowComponent == component) {
+                stopLoading();
+                showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
+                PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
+              }
+            }, ModalityState.stateForComponent(component));
+          });
+        }
+        else if (myUpdateOnly && (node.getScreenShots() == null || node.getReviewComments() == null)) {
+          syncLoading = false;
+          startLoading();
+          ProcessIOExecutorService.INSTANCE.execute(() -> {
+            MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
+
+            if (node.getScreenShots() == null && node.getExternalPluginIdForScreenShots() != null) {
+              IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node, node.getExternalPluginIdForScreenShots());
+              if (metadata != null && metadata.getScreenshots() != null) {
+                node.setScreenShots(metadata.getScreenshots());
+              }
+            }
+            if (node.getReviewComments() == null) {
+              PageContainer<PluginReviewComment> reviewComments = new PageContainer<>(20, 0);
+              List<PluginReviewComment> items = marketplace.loadPluginReviews(node, reviewComments.getNextPage());
+              if (items != null) {
+                reviewComments.addItems(items);
+              }
+              node.setReviewComments(reviewComments);
+            }
 
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
@@ -956,14 +995,16 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateReviews(@NotNull PluginNode pluginNode) {
-    PageContainer<PluginReviewComment> comments = Objects.requireNonNull(pluginNode.getReviewComments());
+    PageContainer<PluginReviewComment> comments = pluginNode.getReviewComments();
 
     myReviewPanel.clear();
-    myReviewPanel.addComments(comments.getItems());
+    if (comments != null) {
+      myReviewPanel.addComments(comments.getItems());
+    }
 
     myReviewNextPageButton.setIcon(null);
     myReviewNextPageButton.setEnabled(true);
-    myReviewNextPageButton.setVisible(comments.isNextPage());
+    myReviewNextPageButton.setVisible(comments != null && comments.isNextPage());
   }
 
   private static void updateUrlComponent(@Nullable LinkPanel panel, @NotNull String messageKey, @Nullable String url) {

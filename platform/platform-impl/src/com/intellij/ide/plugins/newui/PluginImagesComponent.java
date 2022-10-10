@@ -132,7 +132,7 @@ public class PluginImagesComponent extends JPanel {
   }
 
   private void loadImages(@NotNull IdeaPluginDescriptor descriptor, @NotNull Object state) {
-    if (!(descriptor instanceof PluginNode node)) {
+    if (!(descriptor instanceof PluginNode node) || node.getExternalPluginIdForScreenShots() == null) {
       handleImages(state, null);
       return;
     }
@@ -145,7 +145,7 @@ public class PluginImagesComponent extends JPanel {
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       List<BufferedImage> images = new ArrayList<>();
-      File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + node.getExternalPluginId());
+      File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + node.getExternalPluginIdForScreenShots());
 
       for (String screenShot : screenShots) {
         try {

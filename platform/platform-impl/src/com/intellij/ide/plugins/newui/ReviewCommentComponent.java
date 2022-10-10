@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -90,7 +91,7 @@ public class ReviewCommentComponent extends JPanel {
     DefaultActionGroup group = new DefaultActionGroup();
     group.setPopup(true);
 
-    group.add(new AnAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
+    group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         String url = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
@@ -132,7 +133,7 @@ public class ReviewCommentComponent extends JPanel {
     else if (state == EventHandler.SelectionType.HOVER) {
       setBackground(new JBColor(Gray.xF8, JBUI.CurrentTheme.Table.Hover.background(true)));
     }
-    myMoreButton.setVisible(state == EventHandler.SelectionType.HOVER || myShowPopup);
+    //myMoreButton.setVisible(state == EventHandler.SelectionType.HOVER || myShowPopup); // TODO: rollback after adding a few more actions
     myState = state;
   }
 }

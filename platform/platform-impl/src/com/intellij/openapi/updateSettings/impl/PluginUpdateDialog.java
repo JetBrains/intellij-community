@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -99,8 +100,9 @@ final class PluginUpdateDialog extends DialogWrapper {
       public void finishUpdate() { }
     });
 
+    boolean multiTabs = Registry.is("plugins.show.multi.tabs", false);
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true, multiTabs);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
