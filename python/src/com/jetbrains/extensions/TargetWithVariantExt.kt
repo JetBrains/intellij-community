@@ -1,10 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.extensions
 
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyNames
@@ -35,6 +32,8 @@ fun TargetWithVariant.asVirtualFile(): VirtualFile? = target?.let { targetAsVirt
  */
 fun TargetWithVariant.isWellFormed(): Boolean = when (targetType) {
   PyRunTargetVariant.PYTHON -> target?.let { it.split(".").all { PyNames.isIdentifier(it) } } ?: true
-  PyRunTargetVariant.PATH -> !VfsUtil.isBadName(target)
+  PyRunTargetVariant.PATH -> !isBadPath(target)
   else -> true
 }
+
+private fun isBadPath(name: String?): Boolean = name.isNullOrEmpty() || "/" == name || "\\" == name
