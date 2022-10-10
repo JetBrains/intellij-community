@@ -49,9 +49,9 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
     Disposer.register(this, commitMessage)
 
     commitMessage.setChangesSupplier { state.stagedChanges }
-    progressPanel.setup(this, commitMessage.editorField)
+    progressPanel.setup(this, commitMessage.editorField, empty(6))
 
-    bottomPanel.add(progressPanel.apply { border = empty(6) })
+    bottomPanel.add(progressPanel.component)
     bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
     bottomPanel.add(commitActionsPanel)
   }

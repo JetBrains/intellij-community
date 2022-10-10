@@ -57,7 +57,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   init {
     Disposer.register(this, commitMessage)
 
-    bottomPanel.add(progressPanel.apply { border = empty(6) })
+    bottomPanel.add(progressPanel.component)
     bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
     bottomPanel.add(commitActionsPanel)
 
@@ -227,7 +227,7 @@ private class ChangesViewCommitProgressPanel(
   private var oldInclusion: Set<Any> = emptySet()
 
   init {
-    setup(commitWorkflowUi, commitMessage)
+    setup(commitWorkflowUi, commitMessage, empty(6))
   }
 
   override fun inclusionChanged() {

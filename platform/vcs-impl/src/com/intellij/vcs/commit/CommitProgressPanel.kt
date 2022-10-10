@@ -47,6 +47,7 @@ import java.awt.Dimension
 import java.awt.Font
 import javax.swing.BoxLayout
 import javax.swing.JComponent
+import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
@@ -65,13 +66,15 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
   isVisible = true
 }
 
-open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
+open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+  val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
     .also { Disposer.register(this) { it.cancel() } }
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
   private var progress: CommitChecksProgressIndicator? by progressFlow::value
+
+  private val panel = NonOpaquePanel(VerticalLayout(4))
 
   private val failuresPanel = FailuresPanel()
   private val label = JBLabel().apply { isVisible = false }
@@ -87,9 +90,12 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
   }
 
-  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) {
-    add(label)
-    add(failuresPanel)
+  val component: JComponent get() = panel
+
+  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent, border: Border) {
+    panel.add(label)
+    panel.add(failuresPanel)
+    panel.border = border
 
     Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
@@ -142,23 +148,23 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   private fun progressStarted(indicator: InlineCommitChecksProgressIndicator) {
     logger<CommitProgressPanel>().assertTrue(progress == indicator)
 
-    add(indicator.component)
+    panel.add(indicator.component)
     addToStatusBar(indicator.statusBarDelegate)
 
     failuresPanel.clearFailures()
-    revalidate()
+    panel.revalidate()
   }
 
   private fun progressStopped(indicator: InlineCommitChecksProgressIndicator) {
     logger<CommitProgressPanel>().assertTrue(progress == indicator)
     progress = null
 
-    remove(indicator.component)
+    panel.remove(indicator.component)
     removeFromStatusBar(indicator.statusBarDelegate)
     Disposer.dispose(indicator)
 
     failuresPanel.endProgress()
-    revalidate()
+    panel.revalidate()
   }
 
   private fun addToStatusBar(progress: ProgressIndicatorEx) {
