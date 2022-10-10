@@ -4,13 +4,15 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorConstantQuickFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorQuickFix;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
 
@@ -18,57 +20,103 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class UseJBColorInspection extends DevKitInspectionBase {
+
+  private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
+  private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();
+
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS =
+    new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
+
   @Override
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
+
       @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        super.visitNewExpression(expression);
-        if (isAwtColorConstructor(expression) && isJBColorClassAccessible(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
-          holder.registerProblem(expression, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorQuickFix());
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+          if (isAwtColorConstructor(expression) &&
+              isJBColorClassAccessible(expression) &&
+              !isUsedAsJBColorConstructorParameter(expression)) {
+            PsiElement sourcePsi = expression.getSourcePsi();
+            if (sourcePsi != null) {
+              holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorQuickFix());
+            }
+          }
         }
+        return super.visitCallExpression(expression);
       }
 
-      private static boolean isAwtColorConstructor(@NotNull PsiNewExpression expression) {
-        final PsiType type = expression.getType();
-        final PsiExpressionList arguments = expression.getArgumentList();
-        return type != null && arguments != null && type.equalsToText("java.awt.Color");
+      private static boolean isAwtColorConstructor(@NotNull UCallExpression constructorCall) {
+        return isColorTypeConstructor(constructorCall, AWT_COLOR_CLASS_NAME);
       }
 
-      private static boolean isJBColorClassAccessible(@NotNull PsiElement checkedPlace) {
-        final Project project = checkedPlace.getProject();
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        final PsiClass jbColorClass = facade.findClass(JBColor.class.getName(), GlobalSearchScope.allScope(project));
-        return jbColorClass != null && facade.getResolveHelper().isAccessible(jbColorClass, checkedPlace, jbColorClass);
-      }
-
-      private static boolean isUsedAsJBColorConstructorParameter(@NotNull PsiExpression expression) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
-          final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
-          return parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText());
+      private static boolean isColorTypeConstructor(@NotNull UCallExpression constructorCall, @NotNull String colorClassName) {
+        PsiMethod constructor = constructorCall.resolve();
+        if (constructor != null) {
+          PsiClass constructorClass = constructor.getContainingClass();
+          if (constructorClass != null) {
+            return colorClassName.equals(constructorClass.getQualifiedName());
+          }
         }
         return false;
       }
 
+      private static boolean isJBColorClassAccessible(@NotNull UElement uElement) {
+        PsiElement checkedPlace = uElement.getSourcePsi();
+        if (checkedPlace == null) return false;
+        Project project = checkedPlace.getProject();
+        PsiClass jbColorClass = JavaPsiFacade.getInstance(project).findClass(JB_COLOR_CLASS_NAME, checkedPlace.getResolveScope());
+        return jbColorClass != null;
+      }
+
+      private static boolean isUsedAsJBColorConstructorParameter(@NotNull UExpression expression) {
+        UCallExpression containingCall = UastContextKt.getUastParentOfType(expression.getSourcePsi(), UCallExpression.class, true);
+        return containingCall != null &&
+               containingCall.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
+               isJBColorConstructor(containingCall);
+      }
+
+      private static boolean isJBColorConstructor(@NotNull UCallExpression constructorCall) {
+        return isColorTypeConstructor(constructorCall, JB_COLOR_CLASS_NAME);
+      }
+
       @Override
-      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (isAwtColorConstantReference(expression) && !isUsedAsJBColorConstructorParameter(expression)) {
-          holder.registerProblem(expression, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorConstantQuickFix());
+      public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
+        if (!(node.getUastParent() instanceof UImportStatement)) {
+          inspectExpression(node);
+        }
+        return super.visitQualifiedReferenceExpression(node);
+      }
+
+      @Override
+      public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
+        inspectExpression(node);
+        return super.visitSimpleNameReferenceExpression(node);
+      }
+
+      private void inspectExpression(@NotNull UReferenceExpression expression) {
+        if (isAwtColorConstantReference(expression) &&
+            isJBColorClassAccessible(expression) &&
+            !isUsedAsJBColorConstructorParameter(expression)) {
+          PsiElement sourcePsi = expression.getSourcePsi();
+          if (sourcePsi != null) {
+            holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorConstantQuickFix());
+          }
         }
       }
 
-      private static boolean isAwtColorConstantReference(@NotNull PsiReferenceExpression expression) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiMethodCallExpression) return false; // avoid resolving method names
-        final PsiElement colorField = expression.resolve();
+      private static boolean isAwtColorConstantReference(@NotNull UReferenceExpression expression) {
+        // avoid double warning for qualified and simple reference in Kotlin:
+        if (expression.getUastParent() instanceof UQualifiedReferenceExpression) return false;
+        PsiElement colorField = expression.resolve();
         if (colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiClass colorClass = ((PsiField)colorField).getContainingClass();
-          return colorClass != null && Color.class.getName().equals(colorClass.getQualifiedName());
+          PsiClass colorClass = ((PsiField)colorField).getContainingClass();
+          return colorClass != null && AWT_COLOR_CLASS_NAME.equals(colorClass.getQualifiedName());
         }
         return false;
       }
-    };
+    }, HINTS);
   }
 }

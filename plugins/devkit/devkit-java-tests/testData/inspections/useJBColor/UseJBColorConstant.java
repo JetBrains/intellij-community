@@ -2,7 +2,7 @@ import java.awt.Color;
 import com.intellij.ui.JBColor;
 import static java.awt.Color.GREEN;
 
-class UseJBColorConstructor {
+class UseJBColorConstant {
 
   private static final Color COLOR_CONSTANT = <warning descr="'java.awt.Color' used instead of 'JBColor'">Color.BLUE</warning>;
   private static final Color COLOR_CONSTANT_STATIC_IMPORT = <warning descr="'java.awt.Color' used instead of 'JBColor'">GREEN</warning>;
