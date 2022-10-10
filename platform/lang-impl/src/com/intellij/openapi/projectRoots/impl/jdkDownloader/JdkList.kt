@@ -37,9 +37,9 @@ import kotlin.concurrent.write
 
 /** describes vendor + product part of the UI **/
 data class JdkProduct(
-  val vendor: String,
-  val product: String?,
-  val flavour: String?
+  val vendor: @NlsSafe String,
+  val product: @NlsSafe String?,
+  val flavour: @NlsSafe String?
 ) {
   val packagePresentationText: String
     get() = buildString {
