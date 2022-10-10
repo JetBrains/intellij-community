@@ -321,6 +321,9 @@ class QuickFixRegistrar : QuickFixContributor {
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFix)
 
+        UNINITIALIZED_PARAMETER.registerFactory(ReorderParametersFix)
+        UNINITIALIZED_PARAMETER_WARNING.registerFactory(ReorderParametersFix)
+
         INACCESSIBLE_OUTER_CLASS_EXPRESSION.registerFactory(AddModifierFixFE10.createFactory(INNER_KEYWORD, KtClass::class.java))
 
         FINAL_SUPERTYPE.registerFactory(AddModifierFixFE10.MakeClassOpenFactory)

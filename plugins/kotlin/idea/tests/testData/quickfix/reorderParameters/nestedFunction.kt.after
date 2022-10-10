@@ -1,0 +1,7 @@
+// "Reorder parameters" "true"
+fun foo(b: Int) {
+    fun bar(
+        b: Int = 2,
+        a: Int = b
+    ) = Unit
+}
