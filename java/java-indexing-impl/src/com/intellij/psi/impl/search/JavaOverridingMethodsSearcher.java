@@ -44,7 +44,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
     if (cached == null) {
-      cached = compute(method, project);
+      cached = compute(method, parameters, project);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
       if (ReadAction.compute(method::isPhysical)) {
         HighlightingCaches.getInstance(project).OVERRIDING_METHODS.put(method, cached);
@@ -108,7 +108,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   @NotNull
-  private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
+  private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, OverridingMethodsSearch.SearchParameters parameters, @NotNull Project project) {
     final PsiClass containingClass = ReadAction.compute(method::getContainingClass);
     assert containingClass != null;
     Collection<PsiMethod> result = new HashSet<>();
@@ -124,11 +124,27 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     // use wider scope to handle public method defined in package-private class which is subclassed by public class in the same package which is subclassed by public class from another package with redefined method
     SearchScope allScope = GlobalSearchScope.allScope(project);
-    boolean success = ClassInheritorsSearch.search(containingClass, allScope, true).allowParallelProcessing().forEach(inheritorsProcessor);
+    boolean success = ClassInheritorsSearch.search(new ClassInheritanceSearchFromJavaOverridingMethodsParameters(containingClass, allScope, parameters))
+      .allowParallelProcessing().forEach(inheritorsProcessor);
     assert success;
     return result;
   }
 
+  public static class ClassInheritanceSearchFromJavaOverridingMethodsParameters extends ClassInheritorsSearch.SearchParameters {
+    private final OverridingMethodsSearch.SearchParameters myOriginalParameters;
+
+    public ClassInheritanceSearchFromJavaOverridingMethodsParameters(@NotNull PsiClass aClass,
+                                                                     @NotNull SearchScope scope,
+                                                                     OverridingMethodsSearch.SearchParameters parameters) {
+      super(aClass, scope, true, true, true);
+      myOriginalParameters = parameters;
+    }
+
+    public OverridingMethodsSearch.SearchParameters getOriginalParameters() {
+      return myOriginalParameters;
+    }
+  }
+  
   @Nullable
   public static PsiMethod findOverridingMethod(@NotNull PsiClass inheritor,
                                                @NotNull PsiMethod method,
