@@ -337,7 +337,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
     catch (e: Throwable) {
       LOG.warn(Throwable(e))
-      reportCommitCheckFailure(commitInfo.asStaticInfo(), CommitProblem.createError(e))
+      reportCommitCheckFailure(CommitProblem.createError(e))
       return NonModalCommitChecksFailure.ERROR
     }
   }
@@ -349,8 +349,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
     if (problems.isEmpty()) return null
 
-    val staticInfo = commitInfo.asStaticInfo()
-    problems.forEach { reportCommitCheckFailure(staticInfo, it) }
+    problems.forEach { reportCommitCheckFailure(it) }
     return NonModalCommitChecksFailure.EARLY_FAILED
   }
 
@@ -365,7 +364,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       for (commitCheck in commitChecks) {
         val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
-        reportCommitCheckFailure(commitInfo.asStaticInfo(), problem)
+        reportCommitCheckFailure(problem)
         return@underChangelist NonModalCommitChecksFailure.MODIFICATIONS_FAILED
       }
 
@@ -381,7 +380,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val solution = problem.showModalSolution(project, commitInfo)
       if (solution == CheckinHandler.ReturnResult.COMMIT) continue
 
-      reportCommitCheckFailure(commitInfo.asStaticInfo(), problem)
+      reportCommitCheckFailure(problem)
       return NonModalCommitChecksFailure.ABORTED
     }
     return null
@@ -395,8 +394,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
     if (problems.isEmpty()) return null
 
-    val staticInfo = commitInfo.asStaticInfo()
-    problems.forEach { reportCommitCheckFailure(staticInfo, it) }
+    problems.forEach { reportCommitCheckFailure(it) }
     return NonModalCommitChecksFailure.ERROR
   }
 
@@ -408,24 +406,24 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
           val problems = commitChecks.mapNotNull { AbstractCommitWorkflow.runCommitCheck(project, it, commitInfo) }
           if (problems.isEmpty()) return@withContext
 
-          reportPostCommitChecksFailure(commitInfo, problems)
+          reportPostCommitChecksFailure(problems)
         }
       }
     }
   }
 
-  private fun reportCommitCheckFailure(commitInfo: CommitInfo, problem: CommitProblem) {
+  private fun reportCommitCheckFailure(problem: CommitProblem) {
     val checkFailure = when (problem) {
       is UnknownCommitProblem -> CommitCheckFailure.Unknown
       is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsAction) {
-        problem.showDetails(project, commitInfo)
+        problem.showDetails(project)
       }
       else -> CommitCheckFailure.WithDescription(problem.text)
     }
     ui.commitProgressUi.addCommitCheckFailure(checkFailure)
   }
 
-  private fun reportPostCommitChecksFailure(commitInfo: CommitInfo, problems: List<CommitProblem>) {
+  private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
     val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
       .createNotification(message("post.commit.checks.failed.notification.title"),
                           problems.joinToString("<br>") { it.text },
@@ -434,7 +432,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
       notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
-        problem.showDetails(project, commitInfo)
+        problem.showDetails(project)
       })
     }
 

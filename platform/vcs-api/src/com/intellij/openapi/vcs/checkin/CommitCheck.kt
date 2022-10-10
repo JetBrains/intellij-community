@@ -108,7 +108,7 @@ interface CommitProblem {
         .show(project)
       when (commit) {
         Messages.YES -> { // review
-          this.showDetails(project, commitInfo)
+          this.showDetails(project)
           return CheckinHandler.ReturnResult.CLOSE_WINDOW
         }
         Messages.NO -> return CheckinHandler.ReturnResult.COMMIT // commit anyway
@@ -151,7 +151,7 @@ interface CommitProblemWithDetails : CommitProblem {
    * Modal dialog will be closed after this call if it is shown.
    */
   @RequiresEdt
-  fun showDetails(project: Project, commitInfo: CommitInfo)
+  fun showDetails(project: Project)
 }
 
 class TextCommitProblem(override val text: String) : CommitProblem

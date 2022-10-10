@@ -109,7 +109,7 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
       return str
     }
 
-  override fun showDetails(project: Project, commitInfo: CommitInfo) {
+  override fun showDetails(project: Project) {
     showFailedTests(project, this)
   }
 
