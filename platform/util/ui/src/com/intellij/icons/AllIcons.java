@@ -559,6 +559,7 @@ public class AllIcons {
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon Bookmark = load("gutter/bookmark.svg", 186471320, 2);
     /** 12x12 */ public static final @NotNull Icon Colors = load("gutter/colors.svg", 185017205, 2);
+    /** 12x12 */ public static final @NotNull Icon DataSchema = load("gutter/dataSchema.svg", 1980538725, 0);
     /** 12x12 */ public static final @NotNull Icon ExtAnnotation = load("gutter/extAnnotation.svg", -921380497, 2);
     /** 12x12 */ public static final @NotNull Icon ImplementedMethod = load("gutter/implementedMethod.svg", 2039465810, 7);
     /** 12x12 */ public static final @NotNull Icon ImplementingFunctionalInterface = load("gutter/implementingFunctionalInterface.svg", -1373621313, 2);
