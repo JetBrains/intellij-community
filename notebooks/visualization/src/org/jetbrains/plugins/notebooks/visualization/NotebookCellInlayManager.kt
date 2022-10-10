@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
+import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
@@ -62,6 +63,14 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       updateQueue.cancelAllUpdates()
       updateConsequentInlays(0..editor.document.lineCount)
     }
+  }
+
+  fun update(pointers: Collection<NotebookIntervalPointer>) {
+    updateQueue.queue(UpdateInlaysTask(this, pointers = pointers))
+  }
+
+  fun update(pointer: NotebookIntervalPointer) {
+    updateQueue.queue(UpdateInlaysTask(this, pointers = SmartList(pointer)))
   }
 
   fun update(interval: NotebookCellLines.Interval) {
@@ -398,10 +407,16 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
   }
 }
 
-private class UpdateInlaysTask(private val manager: NotebookCellInlayManager, lines: IntRange) : Update(Any()) {
-  private val linesList = SmartList<IntRange>(lines)
+private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
+                               lines: IntRange? = null,
+                               pointers: Collection<NotebookIntervalPointer>? = null) : Update(Any()) {
+  private val linesList = lines?.let{ SmartList<IntRange>(lines) } ?: SmartList()
+  private val pointersSet = pointers?.let{ SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
+    val pointersLines = pointersSet.mapNotNull { it.get()?.lines }.sortedBy { it.first }
+    linesList.mergeAndJoinIntersections(pointersLines)
+
     for (lines in linesList) {
       manager.updateImmediately(lines)
     }
@@ -410,6 +425,7 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager, li
   override fun canEat(update: Update): Boolean {
     update as UpdateInlaysTask
     linesList.mergeAndJoinIntersections(update.linesList)
+    pointersSet.addAll(update.pointersSet)
     return true
   }
 }
