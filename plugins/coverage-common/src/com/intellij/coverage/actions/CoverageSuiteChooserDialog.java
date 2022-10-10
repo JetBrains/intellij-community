@@ -90,7 +90,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     group.add(new AddExternalSuiteAction());
     group.add(new DeleteSuiteAction());
     group.add(new SwitchEngineAction());
-    return ActionManager.getInstance().createActionToolbar("CoverageSuiteChooser", group, true).getComponent();
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageSuiteChooser", group, true);
+    toolbar.setTargetComponent(mySuitesTree);
+    return toolbar.getComponent();
   }
 
   @Override
