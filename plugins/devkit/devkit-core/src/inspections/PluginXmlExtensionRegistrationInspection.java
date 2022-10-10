@@ -62,8 +62,8 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
     }
 
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
-      GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
-      GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
+      GenericAttributeValue<?> serviceInterface = getAttribute(extension, "serviceInterface");
+      GenericAttributeValue<?> serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
         if (hasMissingAttribute(extension, "testServiceImplementation")) {
@@ -117,7 +117,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
       // IntentionActionBean, since 223 only
       DomFixedChildDescription languageTagDescription = extension.getGenericInfo().getFixedChildDescription("language");
       if (languageTagDescription != null) {
-        GenericDomValue languageTag = getTag(extension, "language");
+        GenericDomValue<?> languageTag = getTag(extension, "language");
         if (languageTag != null && !DomUtil.hasXml(languageTag)) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",

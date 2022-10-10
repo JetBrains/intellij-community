@@ -25,13 +25,13 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
   }
 
   protected static boolean hasMissingAttribute(DomElement element, @NonNls String attributeName) {
-    final GenericAttributeValue attribute = getAttribute(element, attributeName);
+    final GenericAttributeValue<?> attribute = getAttribute(element, attributeName);
     return attribute != null && !DomUtil.hasXml(attribute);
   }
 
   @Nullable
-  protected static GenericAttributeValue getAttribute(DomElement domElement, @NonNls String attributeName) {
-    final DomAttributeChildDescription attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
+  protected static GenericAttributeValue<?> getAttribute(DomElement domElement, @NonNls String attributeName) {
+    final DomAttributeChildDescription<?> attributeDescription = domElement.getGenericInfo().getAttributeChildDescription(attributeName);
     if (attributeDescription == null) {
       return null;
     }
@@ -40,7 +40,7 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
   }
 
   @Nullable
-  protected static GenericDomValue getTag(DomElement domElement, @NonNls String tagName) {
+  protected static GenericDomValue<?> getTag(DomElement domElement, @NonNls String tagName) {
     final DomFixedChildDescription fixedChildDescription = domElement.getGenericInfo().getFixedChildDescription(tagName);
     if (fixedChildDescription == null) {
       return null;

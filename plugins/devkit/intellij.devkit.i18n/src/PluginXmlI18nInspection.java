@@ -90,7 +90,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (isInternal(extension, "isInternal")) {
         return;
       }
-      GenericAttributeValue implementationClass = getAttribute(extension, "implementationClass");
+      GenericAttributeValue<?> implementationClass = getAttribute(extension, "implementationClass");
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
@@ -113,8 +113,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       checkNonLocalizableAttribute(holder, extension, "name", null);
     } else if (NotificationGroupEP.class.getName().equals(beanClass.getQualifiedName())){
       if (hasMissingAttribute(extension, "key")) {
-        holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
-                             new NotificationGroupI18NQuickFix());
+        GenericAttributeValue<?> value = getAttribute(extension, "hideFromSettings");
+        if (value == null || !Boolean.parseBoolean(value.getStringValue())) {
+          holder.createProblem(extension, DevKitI18nBundle.message("inspections.plugin.xml.i18n.name"),
+                               new NotificationGroupI18NQuickFix());
+        }
       }
     }
   }
@@ -134,7 +137,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
-                                                     GenericDomValue valueElement,
+                                                     GenericDomValue<?> valueElement,
                                                      @NonNls String valueElementName,
                                                      @Nullable LocalQuickFix fix) {
     if (valueElement != null && valueElement.getStringValue() != null) {
@@ -186,7 +189,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static boolean isInternal(@NotNull DomElement action, String internalAttributeName) {
-    final GenericAttributeValue internalAttribute = getAttribute(action, internalAttributeName);
+    final GenericAttributeValue<?> internalAttribute = getAttribute(action, internalAttributeName);
     if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
   }
@@ -292,7 +295,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       XmlTag xmlTag = (XmlTag)psiElement;
 
 
-      choosePropertiesFileAndExtract(project, Collections.singletonList((XmlTag)psiElement), selection -> {
+      choosePropertiesFileAndExtract(project, Collections.singletonList(xmlTag), selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {
           WriteCommandAction.runWriteCommandAction(
