@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
@@ -16,6 +17,9 @@ import javax.swing.plaf.LabelUI
 open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : JPanel() {
 
   val startLearningButton = JButton()
+
+  // needed to align panel with button border without selection
+  protected val leftMargin = 3
 
   private val newContentMarker = data.newContentMarker()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
@@ -29,10 +33,12 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
     isOpaque = false
     alignmentY = TOP_ALIGNMENT
 
-    this.add(createHeaderPanel(), BorderLayout.NORTH)
+    val headerPanel = createHeaderPanel()
+    headerPanel.border = JBUI.Borders.emptyLeft(leftMargin)
+    this.add(headerPanel, BorderLayout.NORTH)
 
     interactiveCourseDescription.apply {
-      border = JBUI.Borders.empty(5, 0, 14, 0)
+      border = JBUI.Borders.empty(5, leftMargin, 14, 0)
     }
     this.add(interactiveCourseDescription, BorderLayout.CENTER)
     this.add(this.createSouthPanel(), BorderLayout.SOUTH)
@@ -72,29 +78,11 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData) : J
     startLearningButton.isOpaque = false
     startLearningButton.isContentAreaFilled = false
 
-    return buttonPixelHunting(startLearningButton)
-  }
-
-  private fun buttonPixelHunting(button: JButton): JPanel {
-
-    val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
-                                            button.preferredSize.height - button.insets.top - button.insets.bottom)
-
-    val buttonPlace = JPanel().apply {
-      layout = null
-      maximumSize = buttonSizeWithoutInsets
-      preferredSize = buttonSizeWithoutInsets
-      minimumSize = buttonSizeWithoutInsets
+    return BorderLayoutPanel().apply {
       isOpaque = false
-      alignmentX = LEFT_ALIGNMENT
+      addToLeft(startLearningButton)
     }
-
-    buttonPlace.add(button)
-    button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
-
-    return buttonPlace
   }
-
 
   private fun rigid(): Component {
     return Box.createRigidArea(
