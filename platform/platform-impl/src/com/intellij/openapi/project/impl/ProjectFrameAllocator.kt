@@ -106,6 +106,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val showIndicatorJob = showModalIndicatorForProjectLoading(
           windowDeferred = deferredWindow,
           title = getProgressTitle(),
+          isVisibleManaged = options.isVisibleManaged,
         )
         try {
           task(saveTemplateDeferred)
@@ -235,6 +236,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 private fun CoroutineScope.showModalIndicatorForProjectLoading(
   windowDeferred: Deferred<Window>,
   title: @NlsContexts.ProgressTitle String,
+  isVisibleManaged: Boolean,
 ): Job {
   return launch(Dispatchers.IO) {
     delay(300L)
@@ -270,7 +272,9 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
       }.invokeOnCompletion {
         dialog.close(DialogWrapper.OK_EXIT_CODE)
       }
-      window.isVisible = true
+      if (!isVisibleManaged) {
+        window.isVisible = true
+      }
       // will spin an inner event loop
       dialog.show()
     }
