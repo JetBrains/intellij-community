@@ -67,6 +67,8 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    MavenLog.LOG.info("Importing Maven project using Legacy API");
+
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
     boolean hasChanges;
 

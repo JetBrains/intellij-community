@@ -58,6 +58,8 @@ internal class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    MavenLog.LOG.info("Importing Maven project using Workspace API")
+
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
 
     val (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
