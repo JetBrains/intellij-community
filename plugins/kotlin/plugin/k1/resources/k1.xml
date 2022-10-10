@@ -1,32 +1,32 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/extensions/compiler.xml"/> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
+  <xi:include href="/META-INF/extensions/compiler.xml" /> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
 
-  <xi:include href="/kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/light-classes-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/completion-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/refactorings-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/inspections-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/caches-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="highlighting-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="light-classes-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="completion-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refactorings-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="inspections-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="caches-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="compiler-reference-index.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/jvm-debugger-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jvm-debugger-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">

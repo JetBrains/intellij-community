@@ -1,25 +1,25 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-
   <dependencies>
     <plugin id="com.intellij.modules.platform"/>
     <plugin id="com.intellij.modules.idea"/>
     <plugin id="com.intellij.modules.java"/>
   </dependencies>
 
-  <xi:include href="/navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="codeInsigts.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="extensions/compiler.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>

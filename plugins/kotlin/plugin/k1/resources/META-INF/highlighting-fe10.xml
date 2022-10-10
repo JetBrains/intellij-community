@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" >
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.highlighterExtension"
