@@ -4,6 +4,7 @@ package com.intellij;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
+import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -286,6 +287,18 @@ public class TestAll implements Test {
       }
       catch (IOException e) {
         e.printStackTrace();
+      }
+    }
+
+    if (TestCaseLoader.IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+      try {
+        var nastradamusClient = new NastradamusClient();
+        var testRunRequest = nastradamusClient.collectTestRunResults();
+        nastradamusClient.sendTestRunResults(testRunRequest);
+      }
+      catch (Exception e) {
+        System.err.println("Unexpected error happened during sending test results to Nastradamus");
+        System.err.println(e);
       }
     }
   }

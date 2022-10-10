@@ -2,9 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.nastradamus.NastradamusClient
-import com.intellij.nastradamus.model.ChangeEntity
-import com.intellij.nastradamus.model.SortRequestEntity
-import com.intellij.nastradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.mapConcurrently
 import kotlinx.coroutines.runBlocking
@@ -36,9 +34,17 @@ class NastradamusClientTest {
   }
 
   @Test
+  @Ignore("Do not use TC. Use mocks / test data")
+  fun collectingTestResultsFromTC() {
+    val tests = TeamCityClient.getTestRunInfo("219794017")
+
+    println(tests)
+  }
+
+  @Test
   @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
-  fun sendDataToNostradamus() {
-    val client = NastradamusClient(URI("http://127.0.0.1:8000/sort/").normalize())
+  fun sendSortingDataToNostradamus() {
+    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize())
 
     val sortEntity = SortRequestEntity(
       changes = listOf(ChangeEntity("some data")),
@@ -47,5 +53,20 @@ class NastradamusClientTest {
 
     val sortedCases = client.sendSortingRequest(sortEntity)
     println(sortedCases)
+  }
+
+  @Test
+  @Ignore("Do not use dedicated instance. Use mocks / spin up a new server")
+  fun sendTestRunResultToNostradamus() {
+    val client = NastradamusClient(URI("http://127.0.0.1:8000/").normalize())
+
+    val testRunResult = TestResultRequestEntity(
+      testRunResults = listOf(
+        TestResultEntity(name = "org.jetbrains.xx", status = TestStatus.FAILED),
+        TestResultEntity(name = "com.intellij.bxjs", status = TestStatus.SUCCESS),
+      )
+    )
+
+    client.sendTestRunResults(testRunResult)
   }
 }

@@ -3,15 +3,14 @@ package com.intellij.nastradamus
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
-import com.intellij.nastradamus.model.ChangeEntity
-import com.intellij.nastradamus.model.SortRequestEntity
-import com.intellij.nastradamus.model.TestCaseEntity
+import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.HttpClient
 import com.intellij.tool.mapConcurrently
 import com.intellij.tool.withRetry
 import kotlinx.coroutines.runBlocking
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import java.net.URI
@@ -19,10 +18,13 @@ import java.net.URI
 class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastradamus.url")).normalize()) {
 
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
-    val url = baseUrl.resolve("/sort/").normalize()
+    val uri = URIBuilder(baseUrl.resolve("/sort/").normalize())
+      .addParameter("build_id", TeamCityClient.buildId)
+      .build()
+
     val stringJson = jacksonObjectMapper().writeValueAsString(sortRequestEntity)
 
-    val httpPost = HttpPost(url).apply {
+    val httpPost = HttpPost(uri).apply {
       addHeader("Content-Type", "application/json")
       addHeader("Accept", "application/json")
       entity = StringEntity(stringJson, ContentType.APPLICATION_JSON)
@@ -31,7 +33,7 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
     println("Fetching sorted test classes from Nastradamus ...")
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-      println("Requesting $url with payload $stringJson")
+      println("Requesting $uri with payload $stringJson")
     }
 
     val jsonTree = withRetry {
@@ -40,14 +42,62 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
       }
     }
 
-    requireNotNull(jsonTree) { "Received data from $url must not be null" }
+    requireNotNull(jsonTree) { "Received data from $uri must not be null" }
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
-      println("Received data from $url: $jsonTree")
+      println("Received data from $uri: $jsonTree")
     }
 
     return jsonTree.fields().asSequence().single { it.key == "sorted_tests" }.value.map {
       TestCaseEntity(it.findValue("name").asText())
+    }
+  }
+
+  fun collectTestRunResults(): TestResultRequestEntity {
+    val tests = TeamCityClient.getTestRunInfo()
+
+    val testResultEntities = tests.map {
+      TestResultEntity(
+        name = it.findValue("name").asText(),
+        status = TestStatus.fromString(it.findValue("status").asText())
+      )
+    }
+
+    return TestResultRequestEntity(testRunResults = testResultEntities)
+  }
+
+  fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity) {
+    val uri = URIBuilder(baseUrl.resolve("/result/").normalize())
+      .addParameter("build_id", TeamCityClient.buildId)
+      .build()
+
+    val stringJson = jacksonObjectMapper().writeValueAsString(testResultRequestEntity)
+
+    val httpPost = HttpPost(uri).apply {
+      addHeader("Content-Type", "application/json")
+      addHeader("Accept", "application/json")
+      entity = StringEntity(stringJson, ContentType.APPLICATION_JSON)
+    }
+
+    println("Sending test run results to Nastradamus ...")
+
+    if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+      println("Requesting $uri with payload $stringJson")
+    }
+
+    withRetry {
+      HttpClient.sendRequest(httpPost) {
+        if (it.statusLine.statusCode != 200) {
+          if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+            System.err.apply {
+              println(it)
+              println(it.entity.content.reader().readText())
+            }
+          }
+
+          throw RuntimeException("Couldn't store test run results on Nastradamus")
+        }
+      }
     }
   }
 

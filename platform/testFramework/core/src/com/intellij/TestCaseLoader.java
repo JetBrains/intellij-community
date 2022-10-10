@@ -65,7 +65,7 @@ public class TestCaseLoader {
   /**
    * Intelligent test distribution to shorten time of tests run (ultimately - predict what tests to run on a changeset)
    */
-  private static final boolean IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
+  public static final boolean IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED = Boolean.getBoolean(NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG);
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.

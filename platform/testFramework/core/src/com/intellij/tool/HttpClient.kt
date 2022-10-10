@@ -22,7 +22,8 @@ object HttpClient {
       .build().use { client ->
         client.execute(request).use { response ->
           if (response.statusLine.statusCode != 200) {
-            println("Response on ${request.uri} finished with status code ${response.statusLine.statusCode}. ${response.statusLine}")
+            System.err.println(
+              "Response from ${request.uri} finished with status code ${response.statusLine.statusCode}. ${response.statusLine}")
           }
           return processor(response)
         }

@@ -58,8 +58,8 @@ object TeamCityClient {
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
 
-  private val userName: String by lazy { System.getProperty("pin.builds.user.name") }
-  private val password: String by lazy { System.getProperty("pin.builds.user.password") }
+  private val userName: String by lazy { System.getProperty("system.pin.builds.user.name") }
+  private val password: String by lazy { System.getProperty("system.pin.builds.user.password") }
 
   private fun <T : HttpRequest> T.withAuth(): T = this.apply {
     addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(userName, password), this, null))
@@ -116,5 +116,35 @@ object TeamCityClient {
   }
 
   fun getChanges() = getChanges(buildId)
+
+  fun getTestRunInfo(buildId: String): List<JsonNode> {
+    val countOfTestsOnPage = 200
+    var startPosition = 0
+    val accumulatedTests: MutableList<JsonNode> = mutableListOf()
+
+    var currentTests: List<JsonNode>
+
+    println("Getting test run info from TC ...")
+
+    do {
+      val fullUrl = restUrl.resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition")
+
+      currentTests = get(fullUrl).fields().asSequence()
+        .filter { it.key == "testOccurrence" }
+        .flatMap { it.value }
+        .toList()
+
+      accumulatedTests.addAll(currentTests)
+
+      startPosition += countOfTestsOnPage
+    }
+    while (currentTests.isNotEmpty())
+
+    println("Test run info acquired. Count of tests ${accumulatedTests.size}")
+
+    return accumulatedTests
+  }
+
+  fun getTestRunInfo() = getTestRunInfo(buildId)
 }
 
