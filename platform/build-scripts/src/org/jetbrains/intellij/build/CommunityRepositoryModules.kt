@@ -29,9 +29,19 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
       spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
       spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
       spec.withResource("lib/libwebp/win", "lib/libwebp/win")
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.ephemeral = true
     },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
