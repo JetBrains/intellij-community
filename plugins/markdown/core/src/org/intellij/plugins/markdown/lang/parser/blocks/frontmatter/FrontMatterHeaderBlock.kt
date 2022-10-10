@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.parser.frontmatter
+package org.intellij.plugins.markdown.lang.parser.blocks.frontmatter
 
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.parser.LookaheadText

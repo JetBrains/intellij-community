@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.parser.frontmatter
+package org.intellij.plugins.markdown.lang.parser.blocks.frontmatter
 
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.MarkdownElementType

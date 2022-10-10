@@ -5,8 +5,8 @@ import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
-import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterLanguages
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterLanguages
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFrontMatterHeaderContent
 import org.jetbrains.yaml.YAMLLanguage

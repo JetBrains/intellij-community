@@ -20,7 +20,8 @@ import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager
 import org.intellij.markdown.parser.sequentialparsers.impl.*
-import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
+import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider
+import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI

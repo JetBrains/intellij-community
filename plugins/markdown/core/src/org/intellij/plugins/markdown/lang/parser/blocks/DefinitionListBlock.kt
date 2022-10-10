@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.lang.parser
+package org.intellij.plugins.markdown.lang.parser.blocks
 
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
