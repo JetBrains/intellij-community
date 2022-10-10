@@ -4,7 +4,7 @@ package com.intellij.projectView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -35,7 +35,7 @@ import java.util.List;
 public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
   public void testStandardProviders() {
     PsiFile element = JavaDirectoryService.getInstance().getClasses(getPackageDirectory())[0].getContainingFile();
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders();
     pane.select(element, element.getContainingFile().getVirtualFile(), true);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
@@ -80,7 +80,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
   public void testUpdateProjectView() {
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     final JTree tree = pane.getTree();
     PlatformTestUtil.assertTreeEqual(tree, """
       -Project
@@ -162,7 +162,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject), new FormMergerTreeStructureProvider(myProject));
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     final JTree tree = pane.getTree();
     PlatformTestUtil.assertTreeEqual(tree, """
       -Project
@@ -276,7 +276,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject));
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     final JTree tree = pane.getTree();
     AbstractTreeBuilder builder = pane.getTreeBuilder();
     if (builder != null) builder.setPassthroughMode(false);
@@ -364,7 +364,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     getProjectTreeStructure().setProviders(createWrapProvider(rootWrapper));
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
 
     final JTree tree = pane.getTree();
 
@@ -442,7 +442,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     myStructure.setShowLibraryContents(false);
 
     PsiDirectory directory = getPackageDirectory("com/company");
-    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    AbstractProjectViewPane pane = myStructure.createPane();
     JTree tree = pane.getTree();
 
     assertTreeEqual(tree, " +PsiDirectory: hideEmptyMiddlePackages\n");

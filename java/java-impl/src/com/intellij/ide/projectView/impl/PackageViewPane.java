@@ -9,17 +9,13 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,12 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -48,11 +39,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
-public class PackageViewPane extends AbstractProjectViewPSIPane {
+public class PackageViewPane extends AsyncProjectViewPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
@@ -155,12 +148,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
-    return new PackageViewTreeUpdater(treeBuilder);
-  }
-
-  @NotNull
-  @Override
   public SelectInTarget createSelectInTarget() {
     return new PackagesPaneSelectInTarget(myProject);
   }
@@ -205,83 +192,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     return myProject;
   }
 
-  private final class PackageViewTreeUpdater extends AbstractTreeUpdater {
-    private PackageViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
-      super(treeBuilder);
-    }
-
-    @Override
-    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
-      // should convert PsiDirectories into PackageElements
-      if (element instanceof PsiDirectory) {
-        PsiDirectory dir = (PsiDirectory)element;
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
-        if (ProjectView.getInstance(getProject()).isShowModules(getId())) {
-          Module[] modules = getModulesFor(dir);
-          boolean rv = false;
-          for (Module module : modules) {
-            rv |= addPackageElementToUpdate(aPackage, module);
-          }
-          return rv;
-        }
-        else {
-          return addPackageElementToUpdate(aPackage, null);
-        }
-      }
-
-      return super.addSubtreeToUpdateByElement(element);
-    }
-
-    private boolean addPackageElementToUpdate(final PsiPackage aPackage, Module module) {
-      final ProjectTreeStructure packageTreeStructure = (ProjectTreeStructure)getTreeStructure();
-      PsiPackage packageToUpdateFrom = aPackage;
-      if (!packageTreeStructure.isFlattenPackages() && packageTreeStructure.isHideEmptyMiddlePackages()) {
-        // optimization: this check makes sense only if flattenPackages == false && HideEmptyMiddle == true
-        while (packageToUpdateFrom != null && packageToUpdateFrom.isValid() && PackageUtil.isPackageEmpty(packageToUpdateFrom, module, true, false)) {
-          packageToUpdateFrom = packageToUpdateFrom.getParentPackage();
-        }
-      }
-      boolean addedOk;
-      while (!(addedOk = super.addSubtreeToUpdateByElement(getTreeElementToUpdateFrom(packageToUpdateFrom, module)))) {
-        if (packageToUpdateFrom == null) {
-          break;
-        }
-        packageToUpdateFrom = packageToUpdateFrom.getParentPackage();
-      }
-      return addedOk;
-    }
-
-    @NotNull
-    private Object getTreeElementToUpdateFrom(PsiPackage packageToUpdateFrom, Module module) {
-      if (packageToUpdateFrom == null || !packageToUpdateFrom.isValid() || packageToUpdateFrom.getQualifiedName().isEmpty()) {
-        return module == null ? getTreeStructure().getRootElement() : module;
-      }
-      else {
-        return new PackageElement(module, packageToUpdateFrom, false);
-      }
-    }
-
-    private Module[] getModulesFor(PsiDirectory dir) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-      final VirtualFile vFile = dir.getVirtualFile();
-      final Set<Module> modules = new HashSet<>();
-      final Module module = fileIndex.getModuleForFile(vFile);
-      if (module != null) {
-        modules.add(module);
-      }
-      if (fileIndex.isInLibrary(vFile)) {
-        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.isEmpty()) {
-          return Module.EMPTY_ARRAY;
-        }
-        for (OrderEntry entry : orderEntries) {
-          modules.add(entry.getOwnerModule());
-        }
-      }
-      return modules.toArray(Module.EMPTY_ARRAY);
-    }
-  }
-
   private final class MyDeletePSIElementProvider implements DeleteProvider {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -317,11 +227,6 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
         a.finish();
       }
     }
-  }
-
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
-    return null;
   }
 
   @Override

@@ -2,10 +2,11 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.PsiCopyPasteManager;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -26,7 +27,6 @@ import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -42,22 +42,16 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.StringTokenizer;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
-/**
- * @deprecated use {@link AsyncProjectViewPane} instead.
- */
-@Deprecated(forRemoval = true)
-public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
+public abstract class AsyncProjectViewPane extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
   private JComponent myComponent;
 
-  protected AbstractProjectViewPSIPane(@NotNull Project project) {
+  protected AsyncProjectViewPane(@NotNull Project project) {
     super(project);
   }
 
@@ -98,16 +92,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       });
     }
     myTreeStructure = createStructure();
-
-    BaseProjectTreeBuilder treeBuilder = createBuilder(treeModel);
-    if (treeBuilder != null) {
-      installComparator(treeBuilder);
-      setTreeBuilder(treeBuilder);
-    }
-    else {
-      myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
-      myAsyncSupport.setModelTo(myTree);
-    }
+    myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+    myAsyncSupport.setModelTo(myTree);
 
     initTree();
 
@@ -199,26 +185,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
-    AbstractTreeBuilder builder = getTreeBuilder();
-    if (restoreExpandedPaths && builder != null) {
-      List<Object> pathsToExpand = new ArrayList<>();
-      List<Object> selectionPaths = new ArrayList<>();
-      TreeBuilderUtil.storePaths(builder, (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      afterUpdate = () -> {
-        if (myTree != null && !builder.isDisposed()) {
-          myTree.clearSelection();
-          TreeBuilderUtil.restorePaths(builder, pathsToExpand, selectionPaths, true);
-        }
-        cb.setDone();
-      };
-    }
-    else {
-      afterUpdate = cb.createSetDoneRunnable();
-    }
-    if (builder != null) {
-      builder.addSubtreeToUpdate(builder.getRootNode(), afterUpdate);
-    }
-    else if (myAsyncSupport != null) {
+    afterUpdate = cb.createSetDoneRunnable();
+    if (myAsyncSupport != null) {
       myAsyncSupport.updateAll(afterUpdate);
     }
     else {
@@ -235,15 +203,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      AbstractTreeBuilder builder = getTreeBuilder();
-      if (builder instanceof BaseProjectTreeBuilder) {
-        beforeSelect().doWhenDone(() -> UIUtil.invokeLaterIfNeeded(() -> {
-          if (!builder.isDisposed()) {
-            ((BaseProjectTreeBuilder)builder).selectAsync(element, file, requestFocus);
-          }
-        }));
-      }
-      else if (myAsyncSupport != null) {
+      if (myAsyncSupport != null) {
         return myAsyncSupport.select(myTree, element, file);
       }
     }
@@ -260,16 +220,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return builder.getInitialized();
   }
 
-  @Deprecated(forRemoval = true)
-  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel treeModel) {
-    return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
-      @Override
-      protected AbstractTreeUpdater createUpdater() {
-        return createTreeUpdater(this);
-      }
-    };
-  }
-
   @NotNull
   protected abstract ProjectAbstractTreeStructureBase createStructure();
 
@@ -281,9 +231,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   protected JComponent createPromoter() {
     return null;
   }
-
-  @NotNull
-  protected abstract AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder);
 
   /**
    * @param object   an object that represents a node in the project tree

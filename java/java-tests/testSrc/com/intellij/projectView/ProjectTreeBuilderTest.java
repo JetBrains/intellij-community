@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -52,7 +52,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     PsiField innerClass1Field = innerClass14.getFields()[0];
     PsiField innerClass2Field = innerClass24.getFields()[0];
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
 
     myStructure.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 

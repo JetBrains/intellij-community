@@ -89,7 +89,7 @@ import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PR
  * Allows to add additional panes to the Project view.
  * For example, Packages view or Scope view.
  *
- * @see AbstractProjectViewPSIPane
+ * @see AsyncProjectViewPane
  * @see ProjectViewPane
  */
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
