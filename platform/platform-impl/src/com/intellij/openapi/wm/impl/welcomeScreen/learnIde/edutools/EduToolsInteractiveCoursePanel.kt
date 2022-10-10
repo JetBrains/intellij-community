@@ -11,9 +11,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.StandardProgressIndicatorBase
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
@@ -34,7 +34,10 @@ private const val PROGRESS_ID = "Progress"
 class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveCoursePanel(data) {
   private lateinit var cardLayoutPanel: JPanel
   private lateinit var cardLayout: CardLayout
-  private var progressIndicator: ProgressIndicator = EmptyProgressIndicator()
+  private lateinit var progressBarPanel: ProgressBarPanel
+  private var progressIndicator: ProgressIndicator = StandardProgressIndicatorBase().apply {
+    isIndeterminate = false
+  }
 
   override fun createSouthPanel(): JPanel {
     cardLayout = CardLayout()
@@ -43,7 +46,9 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
     }
 
     cardLayoutPanel.add(createButtonPanel(InstallEduToolsAction()), BUTTON_ID)
-    cardLayoutPanel.add(ProgressBarPanel(CancelPluginActionListener()), PROGRESS_ID)
+
+    progressBarPanel = ProgressBarPanel(CancelPluginActionListener())
+    cardLayoutPanel.add(progressBarPanel, PROGRESS_ID)
 
     return cardLayoutPanel
   }
@@ -78,7 +83,7 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
       }
 
       showProgress()
-      progressIndicator = EmptyProgressIndicator()
+      progressIndicator = StandardProgressIndicatorBase()
       ApplicationManager.getApplication().executeOnPooledThread {
         InstallEduToolsTask().run(progressIndicator)
       }
@@ -96,6 +101,7 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
 
     override fun run(indicator: ProgressIndicator) {
       try {
+        progressBarPanel.updateProgressBar(0.0)
         val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(EDU_TOOLS_PLUGIN_ID))
         val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                      emptyList(), true))
@@ -103,6 +109,7 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
           !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
         }
         indicator.checkCanceled()
+        progressBarPanel.updateProgressBar(0.2)
 
         val downloader = PluginDownloader.createDownloader(descriptors.first())
         val nodes = mutableListOf<PluginNode>()
@@ -113,6 +120,7 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
         PluginEnabler.HEADLESS.enable(listOf(plugin))
         indicator.checkCanceled()
 
+        progressBarPanel.updateProgressBar(0.4)
         if (nodes.isNotEmpty()) {
           downloadPlugins(nodes, indicator)
         }
@@ -127,8 +135,10 @@ class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveC
       indicator.checkCanceled()
       operation.setAllowInstallWithoutRestart(true)
       operation.run()
+      progressBarPanel.updateProgressBar(0.7)
       if (operation.isSuccess) {
         ApplicationManager.getApplication().invokeAndWait {
+          progressBarPanel.updateProgressBar(0.8)
           for ((file, pluginDescriptor) in operation.pendingDynamicPluginInstalls) {
             indicator.checkCanceled()
             PluginInstaller.installAndLoadDynamicPlugin(file, pluginDescriptor)
@@ -144,9 +154,9 @@ private class ProgressBarPanel(listener: MouseAdapter) : JPanel() {
     border = JBUI.Borders.empty(0, 8, 0, 14)
   }
 
-  val progressBar = JProgressBar().apply {
+  private val progressBar = JProgressBar().apply {
     isOpaque = false
-    isIndeterminate = true
+    isIndeterminate = false
   }
 
   init {
@@ -160,6 +170,10 @@ private class ProgressBarPanel(listener: MouseAdapter) : JPanel() {
       setContent(projectCancelButton)
     }
     add(buttonWrapper, BorderLayout.EAST)
+  }
+
+  fun updateProgressBar(fraction: Double) {
+    progressBar.value = (fraction * 100).toInt()
   }
 
   override fun getPreferredSize(): Dimension {
