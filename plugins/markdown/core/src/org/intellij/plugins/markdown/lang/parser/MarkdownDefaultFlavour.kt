@@ -32,19 +32,7 @@ class MarkdownDefaultFlavour(
   override val markerProcessorFactory: MarkerProcessorFactory
     get() = MarkdownDefaultMarkerProcessor.Factory
 
-  override val sequentialParserManager: SequentialParserManager
-    get() = object: SequentialParserManager() {
-      override fun getParserSequence(): List<SequentialParser> {
-        return listOf(
-          AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
-          BacktickParser(),
-          ImageParser(),
-          InlineLinkParser(),
-          ReferenceLinkParser(),
-          EmphasisLikeParser(EmphStrongDelimiterParser(), StrikeThroughDelimiterParser())
-        )
-      }
-    }
+  override val sequentialParserManager: SequentialParserManager = DefaultSequentialParserManager()
 
   override fun createInlinesLexer(): MarkdownLexer {
     return delegate.createInlinesLexer()
@@ -71,6 +59,19 @@ class MarkdownDefaultFlavour(
     providers[MarkdownElementTypes.ATX_6] = HeaderGeneratingProvider("h6")
     providers[MarkdownElementTypes.SETEXT_1] = HeaderGeneratingProvider("h1")
     providers[MarkdownElementTypes.SETEXT_2] = HeaderGeneratingProvider("h2")
+  }
+
+  class DefaultSequentialParserManager: SequentialParserManager() {
+    override fun getParserSequence(): List<SequentialParser> {
+      return listOf(
+        AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
+        BacktickParser(),
+        ImageParser(),
+        InlineLinkParser(),
+        ReferenceLinkParser(),
+        EmphasisLikeParser(EmphStrongDelimiterParser(), StrikeThroughDelimiterParser())
+      )
+    }
   }
 
   private class ExcludedElementProvider: GeneratingProvider {
