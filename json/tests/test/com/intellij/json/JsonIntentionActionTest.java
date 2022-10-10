@@ -20,4 +20,8 @@ public class JsonIntentionActionTest extends JsonTestCase {
   public void testSortPropertiesShouldReformat() {
     doTest("json.intention.sort.properties");
   }
+
+  public void testSortRecursively() {
+    doTest("json.intention.sort.properties");
+  }
 }
