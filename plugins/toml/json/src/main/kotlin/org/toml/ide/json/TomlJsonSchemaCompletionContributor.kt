@@ -145,7 +145,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
                     }
                     variants.add(LookupElementBuilder.create(variant))
                 }
-            } else if (isSurelyValue) {
+            } else if (isSurelyValue && !isInsideStringLiteral) {
                 variants.addAll(suggestValuesByType(schema.guessType()))
             }
         }
@@ -153,11 +153,7 @@ class TomlJsonSchemaCompletionContributor : CompletionContributor() {
         private fun suggestValuesByType(type: JsonSchemaType?): List<LookupElement> = when (type) {
             JsonSchemaType._object -> listOf(buildPairLookupElement("{}"))
             JsonSchemaType._array -> listOf(buildPairLookupElement("[]"))
-            JsonSchemaType._string -> if (isInsideStringLiteral) {
-                emptyList()
-            } else {
-                listOf(buildPairLookupElement("\"\""))
-            }
+            JsonSchemaType._string -> listOf(buildPairLookupElement("\"\""))
             JsonSchemaType._boolean -> listOf("true", "false").map { LookupElementBuilder.create(it) }
             else -> emptyList()
         }

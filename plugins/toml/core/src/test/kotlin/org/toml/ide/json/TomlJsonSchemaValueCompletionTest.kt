@@ -11,9 +11,17 @@ class TomlJsonSchemaValueCompletionTest : TomlJsonSchemaCompletionTestBase() {
         name = <caret>
     """)
 
-    fun `test string literal inside literal variants`() = checkNotContainsCompletion(setOf("\"\""), """
+    fun `test string literal inside literal variants 1`() = checkNotContainsCompletion(setOf("\"\"", "{}", "[]"), """
         [package]
         name = "<caret>"
+    """)
+
+    fun `test string literal inside literal variants 2`() = checkNotContainsCompletion(setOf("\"\"", "{}", "[]"), """
+        bar = '<caret>'
+    """)
+
+    fun `test string literal inside literal variants 3`() = checkNotContainsCompletion(setOf("\"\"", "{}", "[]"), """
+        baz = "<caret>"
     """)
 
     fun `test boolean value variants`() = checkContainsCompletion(setOf("true", "false"), """
