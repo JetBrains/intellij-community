@@ -300,7 +300,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   private static JavaReplaceChoice findChoice(@NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap,
                                               @NotNull JavaReplaceChoice replaceChoice) {
     return ContainerUtil.find(occurrencesMap.entrySet(), entry -> {
-      return entry.getKey().formatDescription(0) == replaceChoice.formatDescription(0);
+      return entry.getKey().formatDescription(0).equals(replaceChoice.formatDescription(0));
     }).getKey();
   }
 
