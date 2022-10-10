@@ -12028,6 +12028,59 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/reorderParameters")
+    public static class ReorderParameters extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callParameterAsFunctionInDefaultValue.kt")
+        public void testCallParameterAsFunctionInDefaultValue() throws Exception {
+            runTest("testData/quickfix/reorderParameters/callParameterAsFunctionInDefaultValue.kt");
+        }
+
+        @TestMetadata("cycle.kt")
+        public void testCycle() throws Exception {
+            runTest("testData/quickfix/reorderParameters/cycle.kt");
+        }
+
+        @TestMetadata("graph.kt")
+        public void testGraph() throws Exception {
+            runTest("testData/quickfix/reorderParameters/graph.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("testData/quickfix/reorderParameters/lambda.kt");
+        }
+
+        @TestMetadata("nestedFunction.kt")
+        public void testNestedFunction() throws Exception {
+            runTest("testData/quickfix/reorderParameters/nestedFunction.kt");
+        }
+
+        @TestMetadata("nestedFunction2.kt")
+        public void testNestedFunction2() throws Exception {
+            runTest("testData/quickfix/reorderParameters/nestedFunction2.kt");
+        }
+
+        @TestMetadata("noDefaultValue.kt")
+        public void testNoDefaultValue() throws Exception {
+            runTest("testData/quickfix/reorderParameters/noDefaultValue.kt");
+        }
+
+        @TestMetadata("receiver.kt")
+        public void testReceiver() throws Exception {
+            runTest("testData/quickfix/reorderParameters/receiver.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/quickfix/reorderParameters/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/replaceInfixOrOperatorCall")
     public static class ReplaceInfixOrOperatorCall extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
