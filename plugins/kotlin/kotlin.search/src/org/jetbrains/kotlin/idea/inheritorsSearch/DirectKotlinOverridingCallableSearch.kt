@@ -13,60 +13,59 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingMethodSearch.SearchParameters
+import org.jetbrains.kotlin.idea.inheritorsSearch.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class DirectKotlinOverridingMethodSearch {
+object DirectKotlinOverridingCallableSearch {
 
     data class SearchParameters(
-        val ktFunction: KtCallableDeclaration,
+        val ktCallableDeclaration: KtCallableDeclaration,
         val searchScope: SearchScope
     ) : com.intellij.model.search.SearchParameters<PsiElement> {
         override fun getProject(): Project {
-            return ktFunction.project
+            return ktCallableDeclaration.project
         }
 
         override fun areValid(): Boolean {
-            return ktFunction.isValid
+            return ktCallableDeclaration.isValid
         }
     }
 
-    companion object {
-        fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
-            return search(SearchParameters(ktFunction, ktFunction.useScope))
-        }
-
-        fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
-            return search(SearchParameters(ktFunction, searchScope))
-        }
-
-        fun search(parameters: SearchParameters): Query<PsiElement> {
-            return SearchService.getInstance().searchParameters(parameters)
-        }
+    fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
+        return search(ktFunction, ktFunction.useScope)
     }
+
+    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
+        return search(SearchParameters(ktFunction, searchScope))
+    }
+
+    fun search(parameters: SearchParameters): Query<PsiElement> {
+        return SearchService.getInstance().searchParameters(parameters)
+    }
+
 }
 
 class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiElement> {
     @RequiresReadLock
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement>? {
-        val klass = parameters.ktFunction.containingClassOrObject
+        val klass = parameters.ktCallableDeclaration.containingClassOrObject
         if (klass !is KtClass) return null
         
         return DirectKotlinClassInheritorsSearch.search(klass, parameters.searchScope)
             .flatMapping { ktClassOrObject ->
-                if (ktClassOrObject !is KtClassOrObject) return@flatMapping EmptyQuery.getEmptyQuery()
-                return@flatMapping object : AbstractQuery<PsiElement>() {
+                if (ktClassOrObject !is KtClassOrObject) EmptyQuery.getEmptyQuery()
+                else object : AbstractQuery<PsiElement>() {
                     override fun processResults(consumer: Processor<in PsiElement>): Boolean {
-                        val superFunction = analyze(parameters.ktFunction) {
-                            parameters.ktFunction.getSymbol()
+                        val superFunction = analyze(parameters.ktCallableDeclaration) {
+                            parameters.ktCallableDeclaration.getSymbol()
                         }
                         analyze(ktClassOrObject) {
                             (ktClassOrObject.getSymbol() as KtClassOrObjectSymbol).getDeclaredMemberScope()
-                                .getCallableSymbols { it == parameters.ktFunction.nameAsName }
+                                .getCallableSymbols { it == parameters.ktCallableDeclaration.nameAsName }
                                 .forEach { overridingSymbol ->
                                     val function = overridingSymbol.psi
                                     if (function != null && 
@@ -98,7 +97,7 @@ private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiMethod, OverridingM
 internal class DirectKotlinOverridingMethodDelegatedSearcher : Searcher<SearchParameters, PsiElement> {
     @RequiresReadLock
     override fun collectSearchRequest(parameters: SearchParameters): Query<out PsiElement> {
-        val baseFunction = parameters.ktFunction
+        val baseFunction = parameters.ktCallableDeclaration
         val methods = baseFunction.toLightMethods()
 
         val queries = methods.map { it ->

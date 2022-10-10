@@ -51,7 +51,7 @@ abstract class AbstractDirectKotlinInheritorsSearcherTest : KotlinLightCodeInsig
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return runReadAction { DirectKotlinOverridingMethodSearch.search(ktFunction).toList() }
+                return runReadAction { DirectKotlinOverridingCallableSearch.search(ktFunction).toList() }
             }
         })
         val actual = render(result)
