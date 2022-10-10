@@ -289,15 +289,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
-      val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
       @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-      if (metaHandlers.isNotEmpty() || modificationChecks.isNotEmpty()) {
-        workflow.runModificationCommitChecks {
-          AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
-          runCommitChecks(commitInfo, modificationChecks)
-        }?.let { return it }
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
+      runModificationCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], metaHandlers)?.let { return it }
 
       runCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
@@ -310,6 +303,20 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     catch (e: Throwable) {
       LOG.warn(Throwable(e))
       return CommitProblem.createError(e)
+    }
+  }
+
+  private suspend fun runModificationCommitChecks(commitInfo: DynamicCommitInfo,
+                                                  commitChecks: List<CommitCheck>?,
+                                                  @Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>): CommitProblem? {
+    if (metaHandlers.isEmpty() && commitChecks.isNullOrEmpty()) return null
+
+    return workflow.runModificationCommitChecks underChangelist@{
+      AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
+
+      val problem = runCommitChecks(commitInfo, commitChecks)
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return@underChangelist problem
     }
   }
 
