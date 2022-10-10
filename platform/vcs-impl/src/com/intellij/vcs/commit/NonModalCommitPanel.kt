@@ -27,9 +27,9 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
-import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
@@ -56,7 +56,8 @@ abstract class NonModalCommitPanel(
   private val dataProviders = mutableListOf<DataProvider>()
   private var needUpdateCommitOptionsUi = false
 
-  protected val centerPanel = simplePanel()
+  protected val centerPanel = JBUI.Panels.simplePanel()
+  protected val bottomPanel: JPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
@@ -66,6 +67,23 @@ abstract class NonModalCommitPanel(
 
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
+  }
+
+  init {
+    commitActionsPanel.apply {
+      border = getButtonPanelBorder()
+      background = getButtonPanelBackground()
+
+      setTargetComponent(this@NonModalCommitPanel)
+    }
+    centerPanel
+      .addToCenter(commitMessage)
+      .addToBottom(bottomPanel)
+
+    bottomPanel.background = getButtonPanelBackground()
+
+    addToCenter(centerPanel)
+    withPreferredHeight(85)
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -98,24 +116,6 @@ abstract class NonModalCommitPanel(
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
     needUpdateCommitOptionsUi = true
     commitActionsPanel.border = getButtonPanelBorder()
-  }
-
-  protected fun buildLayout(bottomPanelBuilder: JPanel.() -> Unit) {
-    commitActionsPanel.apply {
-      border = getButtonPanelBorder()
-      background = getButtonPanelBackground()
-
-      setTargetComponent(this@NonModalCommitPanel)
-    }
-    centerPanel
-      .addToCenter(commitMessage)
-      .addToBottom(JBPanel<JBPanel<*>>(VerticalLayout(0)).apply {
-        background = getButtonPanelBackground()
-        bottomPanelBuilder()
-      })
-
-    addToCenter(centerPanel)
-    withPreferredHeight(85)
   }
 
   private fun getButtonPanelBorder(): Border {

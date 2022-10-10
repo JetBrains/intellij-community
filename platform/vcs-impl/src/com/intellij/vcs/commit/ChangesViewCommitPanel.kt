@@ -57,11 +57,10 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   init {
     Disposer.register(this, commitMessage)
 
-    buildLayout {
-      add(progressPanel.apply { border = empty(6) })
-      add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-      add(commitActionsPanel)
-    }
+    bottomPanel.add(progressPanel.apply { border = empty(6) })
+    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
+    bottomPanel.add(commitActionsPanel)
+
     addToolbar(isToolbarHorizontal)
 
     for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
