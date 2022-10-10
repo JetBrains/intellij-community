@@ -20,7 +20,7 @@ import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.plugins.markdown.lang.parser.frontmatter.FrontMatterHeaderMarkerProvider
 import kotlin.math.min
 
-class GFMCommentAwareMarkerProcessor(
+class MarkdownDefaultMarkerProcessor(
   productionHolder: ProductionHolder,
   constraintsBase: MarkdownConstraints
 ): CommonMarkMarkerProcessor(productionHolder, constraintsBase) {
@@ -81,7 +81,7 @@ class GFMCommentAwareMarkerProcessor(
 
   object Factory: MarkerProcessorFactory {
     override fun createMarkerProcessor(productionHolder: ProductionHolder): MarkerProcessor<*> {
-      return GFMCommentAwareMarkerProcessor(productionHolder, GFMConstraints.BASE)
+      return MarkdownDefaultMarkerProcessor(productionHolder, GFMConstraints.BASE)
     }
   }
 }

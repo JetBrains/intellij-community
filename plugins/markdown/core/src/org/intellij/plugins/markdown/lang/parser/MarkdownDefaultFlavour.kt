@@ -26,11 +26,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
 @ApiStatus.Internal
-class GFMCommentAwareFlavourDescriptor(
+class MarkdownDefaultFlavour(
   private val delegate: GFMFlavourDescriptor = GFMFlavourDescriptor()
 ): CommonMarkFlavourDescriptor() {
   override val markerProcessorFactory: MarkerProcessorFactory
-    get() = GFMCommentAwareMarkerProcessor.Factory
+    get() = MarkdownDefaultMarkerProcessor.Factory
 
   override val sequentialParserManager: SequentialParserManager
     get() = object: SequentialParserManager() {

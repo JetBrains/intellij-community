@@ -45,7 +45,7 @@ class MarkdownParserManager: Disposable {
     val FLAVOUR_DESCRIPTION = Key.create<MarkdownFlavourDescriptor>("Markdown.Flavour")
 
     @JvmField
-    val FLAVOUR = GFMCommentAwareFlavourDescriptor()
+    val FLAVOUR: MarkdownFlavourDescriptor = MarkdownDefaultFlavour()
 
     @JvmStatic
     fun getInstance(): MarkdownParserManager {
