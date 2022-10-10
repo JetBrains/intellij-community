@@ -170,7 +170,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int attributes = ourPersistence.getFileAttributes(id);
       boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
 
-      child = createChild(id, nameId, delegate, attributes, isEmptyDirectory);
+      child = createChild(id, nameId, attributes, isEmptyDirectory);
 
       addChild(child);
     }
@@ -242,20 +242,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @ApiStatus.Internal
   public @NotNull VirtualFileSystemEntry createChild(@NotNull String name,
                                                      int id,
-                                                     @NotNull NewVirtualFileSystem delegate,
                                                      @PersistentFS.Attributes int attributes,
                                                      boolean isEmptyDirectory) {
     int nameId = FileNameCache.storeName(name);
     synchronized (myData) {
-      return createChild(id, nameId, delegate, attributes, isEmptyDirectory);
+      return createChild(id, nameId, attributes, isEmptyDirectory);
     }
   }
 
-  private @NotNull VirtualFileSystemEntry createChild(int id,
-                                                      int nameId,
-                                                      @NotNull NewVirtualFileSystem delegate,
-                                                      @PersistentFS.Attributes int attributes,
-                                                      boolean isEmptyDirectory) {
+  private VirtualFileSystemEntry createChild(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
     VfsData vfsData = getVfsData();
@@ -285,7 +280,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     segment.setFlags(id, relevantFlagsMask, newFlags);
     child.updateLinkStatus(this);
 
-    if (delegate.markNewFilesAsDirty()) {
+    if (getFileSystem().markNewFilesAsDirty()) {
       child.markDirty();
     }
     if (isDirectory && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
@@ -407,7 +402,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private VirtualFile @NotNull [] loadAllChildren() {
-    NewVirtualFileSystem delegate = getFileSystem();
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
       boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
@@ -457,7 +451,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           if (file == null) {
             int attributes = ourPersistence.getFileAttributes(id);
             boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
-            file = createChild(id, child.getNameId(), delegate, attributes, isEmptyDirectory);
+            file = createChild(id, child.getNameId(), attributes, isEmptyDirectory);
           }
           files[i] = file;
         }
@@ -580,7 +574,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         synchronized (myData) {
           int[] oldIds = myData.myChildrenIds;
           if (ArrayUtil.indexOf(oldIds, info.getId()) < 0) {
-            VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
+            VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), attributes, isEmptyDirectory);
             addChild(file);
             fileCreated.consume(file, info);
           }
@@ -621,7 +615,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           int attributes = nextInfo.getFileAttributeFlags();
           boolean isEmptyDirectory = nextInfo.getChildren() != null && nextInfo.getChildren().length == 0;
           myData.removeAdoptedName(nextInfo.getName());
-          VirtualFileSystemEntry file = createChild(nextInfo.getId(), nextInfo.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
+          VirtualFileSystemEntry file = createChild(nextInfo.getId(), nextInfo.getNameId(), attributes, isEmptyDirectory);
           fileCreated.consume(file, nextInfo);
         }
         mergedIds.add(nextInfo.getId());
