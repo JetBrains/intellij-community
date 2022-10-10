@@ -88,7 +88,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
 
   private final Project myProject;
-  private final ChangesViewI myChangesViewManager;
+  private final ChangesViewEx myChangesViewManager;
   private final ChangelistConflictTracker myConflictTracker;
 
   private final Scheduler myScheduler = new Scheduler(); // update thread
@@ -116,6 +116,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
   @NotNull private final Set<String> myListsToBeDeleted = new HashSet<>();
   private boolean myEmptyListDeletionScheduled;
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myModalNotificationsBlocked;
 
   private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
@@ -126,7 +128,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   public ChangeListManagerImpl(@NotNull Project project) {
     myProject = project;
-    myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
+    myChangesViewManager = myProject.isDefault() ? new DummyChangesView() : ChangesViewManager.getInstanceEx(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
@@ -439,12 +441,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
         myUpdateException = null;
         myAdditionalInfo = null;
-
-        myDelayedNotificator.changedFileStatusChanged(true);
-        myDelayedNotificator.unchangedFileStatusChanged(true);
-        myDelayedNotificator.changeListUpdateDone();
-        ((ChangesViewEx)myChangesViewManager).refreshImmediately();
       }
+
+      myDelayedNotificator.changedFileStatusChanged(true);
+      myDelayedNotificator.unchangedFileStatusChanged(true);
+      myDelayedNotificator.changeListUpdateDone();
+      myChangesViewManager.resetViewImmediatelyAndRefreshLater();
     }
     catch (Exception | AssertionError ex) {
       LOG.error(ex);
@@ -1237,6 +1239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myListeners.removeListener(listener);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void registerCommitExecutor(@NotNull CommitExecutor executor) {
     myRegisteredCommitExecutors.add(executor);
@@ -1301,6 +1304,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   // used in TeamCity
+  @SuppressWarnings("removal")
   @Override
   public void reopenFiles(@NotNull List<? extends FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject);
@@ -1320,14 +1324,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
   }
 
+  @SuppressWarnings("removal")
   @Override
   public void setFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
+  @SuppressWarnings("removal")
   @Override
   public IgnoredFileBean @NotNull [] getFilesToIgnore() {
     return EMPTY_ARRAY;

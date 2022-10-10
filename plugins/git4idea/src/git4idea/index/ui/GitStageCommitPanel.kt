@@ -18,6 +18,7 @@ import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.createChange
+import org.jetbrains.concurrency.resolvedPromise
 import kotlin.properties.Delegates.observable
 
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
@@ -77,7 +78,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   }
 
   override fun activate(): Boolean = true
-  override fun refreshData() = Unit
+  override fun refreshData() = resolvedPromise<Unit>()
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
   override fun getIncludedChanges(): List<Change> = state.stagedChanges

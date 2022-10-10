@@ -15,23 +15,29 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
+
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 /**
  * @author irengrig
  */
 class DummyChangesView implements ChangesViewEx {
-  DummyChangesView(Project project) {
+  DummyChangesView() {
   }
 
   @Override
   public void scheduleRefresh() {
+  }
+
+  @Override
+  public void resetViewImmediatelyAndRefreshLater() {
   }
 
   @Override
@@ -56,6 +62,11 @@ class DummyChangesView implements ChangesViewEx {
 
   @Override
   public void refreshImmediately() {
+  }
+
+  @Override
+  public Promise<?> promiseRefresh() {
+    return resolvedPromise();
   }
 
   @Override
