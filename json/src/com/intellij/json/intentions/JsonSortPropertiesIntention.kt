@@ -17,7 +17,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 
 class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriorityAction, LightEditCompatible, DumbAware {
@@ -46,7 +45,7 @@ class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriority
   }
 
   private fun reformat(project: Project, editor: Editor, obj: JsonObject) {
-    val pointer = SmartPointerManager.createPointer<PsiElement?>(obj)
+    val pointer = SmartPointerManager.createPointer<JsonObject>(obj)
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     val element = pointer.element ?: return
     val codeStyleManager = CodeStyleManager.getInstance(project)
@@ -97,17 +96,19 @@ class JsonSortPropertiesIntention : PsiElementBaseIntentionAction(), LowPriority
 
     fun sort() {
       objects.forEach {
-        cycleSortProperties(it)
+        if (!isSorted(it)) {
+          cycleSortProperties(it)
+        }
       }
     }
   }
 
   companion object {
-    private fun isSorted(parent: JsonObject): Boolean {
-      val list = parent.propertyList
-      if (list.size <= 1) return true
-      val names = ContainerUtil.map(list) { p: JsonProperty -> p.name }
-      return ContainerUtil.equalsIdentity(ContainerUtil.sorted(names), names)
+    private fun isSorted(obj: JsonObject): Boolean {
+      return obj.propertyList.asSequence()
+        .map { it.name }
+        .zipWithNext()
+        .all { (l, r) -> l <= r }
     }
 
     // cycle-sort performs the minimal amount of modifications, and we want to patch the tree as little as possible
