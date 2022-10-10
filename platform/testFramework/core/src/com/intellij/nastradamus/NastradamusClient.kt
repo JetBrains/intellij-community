@@ -19,7 +19,7 @@ import java.net.URI
 class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastradamus.url")).normalize()) {
 
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
-    val url = baseUrl.resolve("/sort")
+    val url = baseUrl.resolve("/sort/").normalize()
     val stringJson = jacksonObjectMapper().writeValueAsString(sortRequestEntity)
 
     val httpPost = HttpPost(url).apply {
