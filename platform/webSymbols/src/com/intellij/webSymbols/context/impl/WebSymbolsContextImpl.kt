@@ -9,6 +9,9 @@ internal class WebSymbolsContextImpl(private val map: Map<ContextKind, ContextNa
   override fun get(kind: ContextKind): ContextName? =
     map[kind]
 
+  override fun toString(): String =
+    map.toString()
+
   companion object {
     val empty = object: WebSymbolsContext {
       override fun get(kind: ContextKind): ContextName? = null

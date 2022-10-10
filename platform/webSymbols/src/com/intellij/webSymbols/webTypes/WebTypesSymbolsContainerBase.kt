@@ -19,18 +19,19 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
-import com.intellij.webSymbols.registry.impl.SearchMap
 import com.intellij.webSymbols.registry.*
+import com.intellij.webSymbols.registry.impl.SearchMap
 import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionWrapper.Companion.wrap
 import com.intellij.webSymbols.webTypes.impl.wrap
 import com.intellij.webSymbols.webTypes.json.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 import javax.swing.Icon
 
-abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsContextRulesProvider, WebSymbolNameConversionRules {
+@Internal
+abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsContextRulesProvider {
 
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
@@ -45,27 +46,15 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
 
   private val contextRulesCache = createContextRulesCache()
 
-  private val canonicalNamesProvidersCache = createNameProvidersCache(
-    { it.canonicalNames?.additionalProperties },
-    { mergeConverters(listOf(it)) })
-  private val matchNamesProvidersCache = createNameProvidersCache(
-    { it.matchNames?.additionalProperties },
-    { mergeConverters(it) })
-  private val nameVariantsProvidersCache = createNameProvidersCache(
-    { it.nameVariants?.additionalProperties },
-    { mergeConverters(it) })
+  private val nameConversionRulesCache = createNameConversionRulesCache()
 
   @JvmField
   protected var modCount: Long = 0
 
   abstract override fun createPointer(): Pointer<out WebTypesSymbolsContainerBase>
 
-  override val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
-    get() = canonicalNamesProvidersCache.value
-  override val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
-    get() = matchNamesProvidersCache.value
-  override val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
-    get() = nameVariantsProvidersCache.value
+  fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider =
+    WebTypesSymbolNameConversionRulesProvider(framework, this)
 
   override fun getModificationCount(): Long =
     modCount
@@ -163,9 +152,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
     namesProviderCache.clear()
     registryCache.clear()
     contextRulesCache.drop()
-    canonicalNamesProvidersCache.drop()
-    matchNamesProvidersCache.drop()
-    nameVariantsProvidersCache.drop()
+    nameConversionRulesCache.drop()
   }
 
   private fun getMaps(params: WebSymbolsRegistryQueryParams): Sequence<ContributionSearchMap> =
@@ -242,23 +229,23 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
                             val disablementRules: DisablementRules?)
 
       val rulesPerKind = contextsConfigs.values.asSequence()
-        .flatMap {it.additionalProperties.entries}
-        .filter { (name,config) -> name != null && config.kind != null }
+        .flatMap { it.additionalProperties.entries }
+        .filter { (name, config) -> name != null && config.kind != null }
         .map { (name, config) -> RulesEntry(config.kind, name, config.enableWhen?.wrap(), config.disableWhen?.wrap()) }
         .plus(
           frameworkConfigs
             .filter { (webTypes, _) -> webTypes.framework != null }
-            .map {(webTypes, config) ->
+            .map { (webTypes, config) ->
               RulesEntry(KIND_FRAMEWORK, webTypes.framework, config.enableWhen?.wrap(), config.disableWhen?.wrap())
-          }
+            }
         )
         .groupBy { it.kind }
 
       val result = MultiMap.create<ContextKind, WebSymbolsContextKindRules>()
       rulesPerKind.forEach { (kind, rules) ->
         val rulesPerName = rules.groupBy { it.name }
-        val enablementRules = rulesPerName.mapValues { (_,entries) -> entries.mapNotNull { it.enablementRules } }
-        val disablementRules = rulesPerName.mapValues { (_,entries) -> entries.mapNotNull { it.disablementRules } }
+        val enablementRules = rulesPerName.mapValues { (_, entries) -> entries.mapNotNull { it.enablementRules } }
+        val disablementRules = rulesPerName.mapValues { (_, entries) -> entries.mapNotNull { it.disablementRules } }
         result.putValue(kind, WebSymbolsContextKindRules.create(enablementRules, disablementRules))
       }
       result
@@ -290,16 +277,20 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
       result.mapValues { (_, map) -> map.mapValues { (_, innerMap) -> innerMap.toList() } }
     }
 
-  private fun <T, K> createNameProvidersCache(accessor: (config: FrameworkConfig) -> Map<String, T>?, mapper: (T) -> K):
-    ClearableLazyValue<Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, K>> =
+  private fun createNameConversionRulesCache(): ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>> =
     ClearableLazyValue.create {
-      frameworkConfigs.asSequence()
-        .flatMap { config ->
-          val framework = config.key.framework ?: return@flatMap emptySequence()
-          val map = accessor(config.value) ?: return@flatMap emptySequence()
-          mapNameConverters(map, mapper, framework)
+      frameworkConfigs
+        .asSequence()
+        .mapNotNull { (webTypes, config) ->
+          val framework = webTypes.framework ?: return@mapNotNull null
+          val builder = WebSymbolNameConversionRules.builder()
+
+          buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
+          buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
+          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addNameVariantsRule)
+
+          Pair(framework, builder.build())
         }
-        .distinctBy { it.first }
         .toMap()
     }
 
@@ -362,7 +353,7 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
 
   }
 
-  class WebTypesJsonOriginImpl(
+  protected class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
     override val typeSupport: WebTypesSymbolTypeSupport,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
@@ -408,22 +399,26 @@ abstract class WebTypesSymbolsContainerBase : WebSymbolsContainer, WebSymbolsCon
 
   }
 
+  private class WebTypesSymbolNameConversionRulesProvider(private val framework: FrameworkId,
+                                                          private val container: WebTypesSymbolsContainerBase) : WebSymbolNameConversionRulesProvider {
+    override fun getNameConversionRules(): WebSymbolNameConversionRules =
+      container.nameConversionRulesCache.value[framework] ?: WebSymbolNameConversionRules.empty()
+
+    override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> {
+      val framework = framework
+      val containerPtr = container.createPointer()
+      return Pointer {
+        containerPtr.dereference()?.let { WebTypesSymbolNameConversionRulesProvider(framework, container) }
+      }
+    }
+
+    override fun getModificationCount(): Long =
+      container.modificationCount
+  }
+
   companion object {
     private val EOL_PATTERN: Regex = Regex("\n|\r\n")
 
-  }
-
-  @Suppress("DEPRECATION")
-  interface WebTypesJsonOrigin : WebSymbolOrigin {
-    @JvmDefault
-    override val typeSupport: WebTypesSymbolTypeSupport?
-      get() = null
-
-    fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement?
-    fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location?
-    fun renderDescription(description: String): String?
-    fun loadIcon(path: String): Icon?
-    fun matchContext(context: WebSymbolsContext): Boolean
   }
 
 }

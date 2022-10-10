@@ -6,15 +6,18 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.util.text.SemVer
 import com.intellij.webSymbols.webTypes.json.WebTypes
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.util.*
 
 private val objectMapper = ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   .setTypeFactory(TypeFactory.defaultInstance().withClassLoader(WebTypes::class.java.classLoader))
 
+@ApiStatus.Internal
 fun InputStream.readWebTypes(): WebTypes =
   objectMapper.readValue(this, WebTypes::class.java)
 
+@ApiStatus.Internal
 class WebTypesVersionsRegistry<T> {
 
   val packages: Set<String> get() = myVersions.keys

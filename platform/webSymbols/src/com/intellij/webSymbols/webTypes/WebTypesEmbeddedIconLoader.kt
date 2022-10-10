@@ -5,8 +5,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class WebTypesEmbeddedIconLoader(private val pluginDescriptor: PluginDescriptor) {
 
   fun loadIcon(path: String): Icon =

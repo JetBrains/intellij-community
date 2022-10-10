@@ -22,7 +22,7 @@ import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.as
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase
-import com.intellij.webSymbols.webTypes.WebTypesSymbolsContainerBase.WebTypesJsonOrigin
+import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 import javax.swing.Icon
 
@@ -131,7 +131,7 @@ internal abstract class WebTypesJsonContributionWrapper private constructor(prot
     override val kind: SymbolKind
       get() = base.kind
 
-    override val origin: WebSymbolOrigin
+    override val origin: WebTypesJsonOrigin
       get() = base.jsonOrigin
 
     override val namespace: SymbolNamespace

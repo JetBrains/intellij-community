@@ -11,7 +11,11 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
+import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 
+/*
+ * DEPRECATION -> @JvmDefault
+ **/
 @Suppress("DEPRECATION")
 interface WebSymbolsRegistryExtension {
 
@@ -20,8 +24,12 @@ interface WebSymbolsRegistryExtension {
     emptyList()
 
   @JvmDefault
-  fun getContextRules(dir: PsiDirectory): Pair<MultiMap<ContextKind, WebSymbolsContextKindRules>, ModificationTracker> =
-    Pair(MultiMap.empty(), ModificationTracker.NEVER_CHANGED)
+  fun getContextRulesProviders(dir: PsiDirectory): List<WebSymbolsContextRulesProvider> =
+    emptyList()
+
+  @JvmDefault
+  fun getNameConversionRulesProviders(project: Project, element: PsiElement?, context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
+    emptyList()
 
   @JvmDefault
   fun beforeRegistryCreation(project: Project, element: PsiElement?) {

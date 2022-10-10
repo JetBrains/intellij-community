@@ -2,59 +2,45 @@
 package com.intellij.webSymbols.registry.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.registry.WebSymbolNamesProvider.Target.*
 import com.intellij.webSymbols.framework.WebSymbolsFramework
 import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
+import com.intellij.webSymbols.registry.WebSymbolNameConverter
 import com.intellij.webSymbols.registry.WebSymbolNamesProvider
+import com.intellij.webSymbols.registry.WebSymbolNamesProvider.Target.*
 import java.util.*
-import java.util.function.Function
 
 internal class WebSymbolNamesProviderImpl(
   private val framework: FrameworkId?,
   private val configuration: List<WebSymbolNameConversionRules>,
+  private val modificationTracker: ModificationTracker,
 ) : WebSymbolNamesProvider {
 
-  private val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-    Function<String, List<String>>>
+  private val canonicalNamesProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-    Function<String, List<String>>>
+  private val matchNamesProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-    Function<String, List<String>>>
+  private val nameVariantsProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
   private val webSymbolsFramework get() = framework?.let { WebSymbolsFramework.get(it) }
 
   init {
-    val canonicalNamesProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-      Function<String, List<String>>>()
-    val matchNamesProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-      Function<String, List<String>>>()
-    val nameVariantsProviders = mutableMapOf<Triple<FrameworkId?, SymbolNamespace, SymbolKind>,
-      Function<String, List<String>>>()
+    val canonicalNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
+    val matchNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
+    val nameVariantsProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
     configuration.forEach { config ->
-      config.canonicalNamesProviders.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
-      config.matchNamesProviders.forEach { matchNamesProviders.putIfAbsent(it.key, it.value) }
-      config.nameVariantsProviders.forEach { nameVariantsProviders.putIfAbsent(it.key, it.value) }
+      config.canonicalNames.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
+      config.matchNames.forEach { matchNamesProviders.putIfAbsent(it.key, it.value) }
+      config.nameVariants.forEach { nameVariantsProviders.putIfAbsent(it.key, it.value) }
     }
     this.canonicalNamesProviders = canonicalNamesProviders
     this.matchNamesProviders = matchNamesProviders
     this.nameVariantsProviders = nameVariantsProviders
   }
 
-  override fun createPointer(): Pointer<WebSymbolNamesProvider> {
-    val configuration = this.configuration.map { it.createPointer() }
-    val framework = this.framework
-    return Pointer {
-      @Suppress("UNCHECKED_CAST")
-      val newConfiguration = configuration.map { it.dereference() }
-                               .takeIf { it.all { config -> config != null } }
-                               as? List<WebSymbolNameConversionRules>
-                             ?: return@Pointer null
-      WebSymbolNamesProviderImpl(framework, newConfiguration)
-    }
-  }
+  override fun createPointer(): Pointer<WebSymbolNamesProvider> =
+    Pointer.hardPointer(this)
 
   override fun hashCode(): Int =
     Objects.hash(framework, configuration)
@@ -65,10 +51,10 @@ internal class WebSymbolNamesProviderImpl(
     && other.configuration == configuration
 
   override fun getModificationCount(): Long =
-    configuration.sumOf { it.modificationCount }
+    modificationTracker.modificationCount
 
   override fun withRules(rules: List<WebSymbolNameConversionRules>): WebSymbolNamesProvider =
-    WebSymbolNamesProviderImpl(framework, rules + configuration)
+    WebSymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
 
   override fun getNames(namespace: SymbolNamespace,
                         kind: SymbolKind,
@@ -77,23 +63,22 @@ internal class WebSymbolNamesProviderImpl(
     webSymbolsFramework?.getNames(namespace, kind, name, target)?.takeIf { it.isNotEmpty() }
     ?: when (target) {
       CODE_COMPLETION_VARIANTS -> {
-        nameVariantsProviders[Triple(framework, namespace, kind)]?.apply(name)
+        nameVariantsProviders[WebSymbolQualifiedKind(namespace, kind)]?.getNames(name)
         ?: listOf(name)
       }
       NAMES_MAP_STORAGE -> {
-        canonicalNamesProviders[Triple(framework, namespace, kind)]?.apply(name)
+        canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)]?.getNames(name)
       }
       NAMES_QUERY -> {
-        (matchNamesProviders[Triple(framework, namespace, kind)]
-         ?: canonicalNamesProviders[Triple(framework, namespace, kind)])
-          ?.apply(name)
+        (matchNamesProviders[WebSymbolQualifiedKind(namespace, kind)]
+         ?: canonicalNamesProviders[WebSymbolQualifiedKind(namespace, kind)])
+          ?.getNames(name)
       }
     }
     ?: listOf(
-      if (namespace == WebSymbol.NAMESPACE_JS)
-        name
-      else
-        name.lowercase(Locale.US))
+      if (namespace == WebSymbol.NAMESPACE_CSS || namespace == WebSymbol.NAMESPACE_HTML)
+        name.lowercase(Locale.US)
+      else name)
 
   override fun adjustRename(namespace: SymbolNamespace,
                             kind: SymbolKind,

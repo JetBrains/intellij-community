@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.registry.impl
 
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -14,11 +15,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.context.impl.buildWebSymbolsContext
 import com.intellij.webSymbols.registry.*
+import com.intellij.webSymbols.utils.createModificationTracker
 import com.intellij.webSymbols.utils.findOriginalFile
 
 class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRegistryManager, Disposable {
@@ -35,16 +36,16 @@ class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRe
 
     val context = location?.let { buildWebSymbolsContext(it) } ?: WebSymbolsContext.empty()
 
-    val result = mutableListOf<WebSymbolsContainer>()
-    getCustomContainers(location).forEach(result::add)
+    val containers = mutableListOf<WebSymbolsContainer>()
+    getCustomContainers(location).forEach(containers::add)
     val internalMode = ApplicationManager.getApplication().isInternal
-    val originalContextElement = location?.originalElement
-    result.addAll(WebSymbolsRegistryExtension.EP_NAME.extensionList.flatMap { provider ->
-      provider.getContainers(project, originalContextElement, context, allowResolve)
+    val originalLocation = location?.originalElement
+    containers.addAll(WebSymbolsRegistryExtension.EP_NAME.extensionList.flatMap { provider ->
+      provider.getContainers(project, originalLocation, context, allowResolve)
         .also {
           //check provider
           if (internalMode && Math.random() < 0.2) {
-            val newContext = provider.getContainers(project, originalContextElement, context, allowResolve)
+            val newContext = provider.getContainers(project, originalLocation, context, allowResolve)
             if (newContext != it) {
               logger<WebSymbolsRegistryManager>().error(
                 "Provider $provider should provide additional context, which is the same (by equals()), when called with the same arguments: $it != $newContext")
@@ -57,9 +58,8 @@ class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRe
         }
     })
 
-    return WebSymbolsRegistryImpl(result,
-                                  // TODO add separate API for WebSymbolNameConversionRules
-                                  WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], result.filterIsInstance<WebSymbolNameConversionRules>()),
+    return WebSymbolsRegistryImpl(containers,
+                                  createNamesProvider(project, originalLocation, context),
                                   WebSymbolsScopeProvider.getScope(location, context),
                                   context,
                                   allowResolve)
@@ -89,20 +89,27 @@ class WebSymbolsRegistryManagerImpl(private val project: Project) : WebSymbolsRe
         result.putAllValues(it)
       }
 
-    val trackers = mutableListOf<ModificationTracker>()
-    for ((configs, tracker) in WebSymbolsRegistryExtension.EP_NAME.extensionList.map { it.getContextRules(dir) }) {
-      result.putAllValues(configs)
-      if (tracker != ModificationTracker.NEVER_CHANGED) {
-        trackers.add(tracker)
-      }
+    val providers = mutableListOf<Pointer<out WebSymbolsContextRulesProvider>>()
+    for (provider in WebSymbolsRegistryExtension.EP_NAME.extensionList.flatMap {
+      it.beforeRegistryCreation(dir.project, dir)
+      it.getContextRulesProviders(dir)
+    }) {
+      result.putAllValues(provider.getContextRules())
+      providers.add(provider.createPointer())
     }
-    return Pair(result, ModificationTracker {
-      var modCount = 0L
-      for (tracker in trackers) {
-        modCount += tracker.modificationCount.also { if (it < 0) return@ModificationTracker -1 }
-      }
-      modCount
-    })
+    return Pair(result, createModificationTracker(providers))
+  }
+
+  private fun createNamesProvider(project: Project, location: PsiElement?, context: WebSymbolsContext): WebSymbolNamesProvider {
+    val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
+    val providers = mutableListOf<Pointer<out WebSymbolNameConversionRulesProvider>>()
+    WebSymbolsRegistryExtension.EP_NAME.extensionList.flatMap { provider ->
+      provider.getNameConversionRulesProviders(project, location, context)
+    }.forEach { provider ->
+      nameConversionRules.add(provider.getNameConversionRules())
+      providers.add(provider.createPointer())
+    }
+    return WebSymbolNamesProviderImpl(context.framework, nameConversionRules, createModificationTracker(providers))
   }
 
   private fun getCustomContainers(context: PsiElement?): List<WebSymbolsContainer> {

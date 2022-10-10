@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.json
 
-import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
@@ -21,14 +20,15 @@ import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
-import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
+import com.intellij.webSymbols.registry.WebSymbolNameConverter
+import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
 import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.parsePath
-import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
+import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import com.intellij.webSymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
 import java.util.function.Function
@@ -168,7 +168,7 @@ internal fun Reference.resolve(name: String?,
       reference + if (name != null) "/$name" else "",
       virtualSymbols, abstractSymbols, context = context)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(registry.framework)
+      val nameConversionRules = reference.createNameConversionRules()
       val matches = registry.withNameConversionRules(nameConversionRules).runNameMatchQuery(
         (reference.path ?: return emptyList()) + if (name != null) "/$name" else "",
         reference.includeVirtual ?: virtualSymbols,
@@ -191,7 +191,7 @@ internal fun Reference.codeCompletion(name: String,
   return when (val reference = this.value) {
     is String -> registry.runCodeCompletionQuery("$reference/$name", position, virtualSymbols, context)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(registry.framework)
+      val nameConversionRules = reference.createNameConversionRules()
       val codeCompletions = registry.withNameConversionRules(nameConversionRules).runCodeCompletionQuery(
         (reference.path ?: return emptyList()) + "/$name", position,
         reference.includeVirtual ?: virtualSymbols,
@@ -351,63 +351,35 @@ private fun Any.toGenericHtmlPropertyValue(): GenericHtmlContributions =
     list.add(GenericHtmlContributionOrProperty().also { it.value = this })
   }
 
-private fun ReferenceWithProps.createNameConversionRules(framework: FrameworkId?): List<WebSymbolNameConversionRules> {
+private fun ReferenceWithProps.createNameConversionRules(): List<WebSymbolNameConversionRules> {
   val rules = nameConversion ?: return emptyList()
   val lastPath = parsePath(path).lastOrNull()
   if (lastPath?.namespace == null)
     return emptyList()
 
-  @Suppress("UNCHECKED_CAST")
-  fun createConvertersMap(value: Any?): Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>> =
+  val builder = WebSymbolNameConversionRules.builder()
+
+  fun buildConvertersMap(value: Any?, addToBuilder: (WebSymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
     when (value) {
-      is NameConverter -> mapOf(Pair(Triple(framework, lastPath.namespace, lastPath.kind), listOf(value)))
-      is List<*> -> mapOf(Pair(Triple(framework, lastPath.namespace, lastPath.kind), value as List<NameConverter>))
-      is NameConversionRulesSingle -> mapNameConverters(value.additionalProperties, { listOf(it) }, framework).toMap()
-      is NameConversionRulesMultiple -> mapNameConverters(value.additionalProperties, { it }, framework).toMap()
+      is NameConverter -> mergeConverters(listOf(value))?.let {
+        addToBuilder(WebSymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+      }
+      is List<*> -> mergeConverters(value.filterIsInstance<NameConverter>())?.let {
+        addToBuilder(WebSymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+      }
+      is NameConversionRulesSingle -> buildNameConverters(value.additionalProperties, { mergeConverters(listOf(it)) }, addToBuilder)
+      is NameConversionRulesMultiple -> buildNameConverters(value.additionalProperties, { mergeConverters(it) }, addToBuilder)
       else -> throw IllegalArgumentException(value?.toString())
     }
-
-  val canonicalNames = createConvertersMap(rules.canonicalNames?.value)
-  val matchNames = createConvertersMap(rules.matchNames?.value)
-  val nameVariants = createConvertersMap(rules.nameVariants?.value)
-  if (canonicalNames.isEmpty() && matchNames.isEmpty() && nameVariants.isEmpty()) {
-    return emptyList()
   }
 
-  return listOf(ReferenceNameConversionRules(canonicalNames, matchNames, nameVariants))
-}
-
-private class ReferenceNameConversionRules(private val canonicalNames: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>,
-                                           private val matchNames: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>,
-                                           private val nameVariants: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>) : WebSymbolNameConversionRules {
-  override val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
-    buildMap(canonicalNames)
-
-  override val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
-    buildMap(matchNames)
-
-  override val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
-    buildMap(nameVariants)
-
-  private fun buildMap(converters: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, List<NameConverter>>): Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>> =
-    converters.takeIf { it.isNotEmpty() }
-      ?.mapValues { mergeConverters(it.value) }
-    ?: emptyMap()
-
-  override fun createPointer(): Pointer<out WebSymbolNameConversionRules> =
-    Pointer.hardPointer(this)
-
-  override fun getModificationCount(): Long = 0
-
-  override fun hashCode(): Int =
-    Objects.hash(canonicalNames, matchNames, nameVariants)
-
-  override fun equals(other: Any?): Boolean =
-    other === this || other is ReferenceNameConversionRules
-    && other.canonicalNames == canonicalNames
-    && other.matchNames == matchNames
-    && other.nameVariants == nameVariants
-
+  buildConvertersMap(rules.canonicalNames?.value, builder::addCanonicalNamesRule)
+  buildConvertersMap(rules.matchNames?.value, builder::addMatchNamesRule)
+  buildConvertersMap(rules.nameVariants?.value, builder::addNameVariantsRule)
+  if (builder.isEmpty())
+    return emptyList()
+  else
+    return listOf(builder.build())
 }
 
 private fun NameConverter.toFunction(): Function<String, String> =
@@ -421,27 +393,27 @@ private fun NameConverter.toFunction(): Function<String, String> =
     NameConverter.SNAKE_CASE -> Function { NameCaseUtils.toSnakeCase(it) }
   }
 
-internal fun mergeConverters(converters: List<NameConverter>): Function<String, List<String>> {
+internal fun mergeConverters(converters: List<NameConverter>): WebSymbolNameConverter? {
+  if (converters.isEmpty()) return null
   val all = converters.map { it.toFunction() }
-  return Function { name ->
+  return WebSymbolNameConverter { name ->
     all.map { it.apply(name) }
   }
 }
 
-internal fun <K, T> mapNameConverters(map: Map<String, T>,
-                                      mapper: (T) -> K,
-                                      framework: String?): Sequence<Pair<Triple<FrameworkId?, SymbolNamespace, String>, K>> =
-  map.entries
-    .asSequence()
-    .mapNotNull { (key, value) ->
-      val path = key.splitToSequence('/')
-                   .filter { it.isNotEmpty() }
-                   .toList().takeIf { it.size == 2 } ?: return@mapNotNull null
-      val namespace = path[0].asSymbolNamespace() ?: return@mapNotNull null
-      val symbolKind = path[1]
-      val converter = mapper(value) ?: return@mapNotNull null
-      Pair(Triple(framework, namespace, symbolKind), converter)
-    }
+internal fun <T> buildNameConverters(map: Map<String, T>?,
+                                     mapper: (T) -> (WebSymbolNameConverter?),
+                                     addToBuilder: (WebSymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
+  for ((key, value) in map?.entries ?: return) {
+    val path = key.splitToSequence('/')
+                 .filter { it.isNotEmpty() }
+                 .toList().takeIf { it.size == 2 } ?: continue
+    val namespace = path[0].asSymbolNamespace() ?: continue
+    val symbolKind = path[1]
+    val converter = mapper(value) ?: continue
+    addToBuilder(WebSymbolQualifiedKind(namespace, symbolKind), converter)
+  }
+}
 
 internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.TypeReference> =
   mapNotNull {
@@ -455,7 +427,7 @@ internal fun List<Type>.mapToTypeReferences(): List<WebTypesSymbolTypeSupport.Ty
   }
 
 internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
-  when(this) {
+  when (this) {
     is ContextKindName -> context[kind] == name
     is ContextAllOf -> allOf.all { it.evaluate(context) }
     is ContextAnyOf -> anyOf.any { it.evaluate(context) }

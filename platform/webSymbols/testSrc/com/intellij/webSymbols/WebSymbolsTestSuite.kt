@@ -11,5 +11,4 @@ import org.junit.runners.Suite
   WebSymbolsRegistryCompletionQueryTest::class,
   WebSymbolsRegistryNameQueryTest::class,
 )
-class WebSymbolsTestSuite {
-}
+class WebSymbolsTestSuite

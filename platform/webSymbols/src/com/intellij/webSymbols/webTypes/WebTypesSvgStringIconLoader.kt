@@ -3,9 +3,11 @@ package com.intellij.webSymbols.webTypes
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.util.io.DigestUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import javax.swing.Icon
 
+@ApiStatus.Internal
 object WebTypesSvgStringIconLoader {
 
   fun loadIcon(svg: String): Icon? =

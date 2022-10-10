@@ -33,7 +33,7 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
     fun getPackagesEnabledByDefault(project: Project): Map<String, SemVer?> =
       getInstance(project).packagesEnabledByDefault
 
-    fun getDefaultWebTypesContainer(project: Project): WebSymbolsContainer =
+    fun getDefaultWebTypesContainer(project: Project): WebTypesSymbolsContainerBase =
       getInstance(project).myDefaultWebTypesContainer
 
     private val LOG = Logger.getInstance(WebTypesEmbeddedDefinitionsLoader::class.java)
@@ -47,7 +47,7 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
 
   private val webTypesEnabledPackages: Set<String> = state.value.registry.packages
   private val packagesEnabledByDefault: Map<String, SemVer> = state.value.packagesEnabledByDefault
-  private val myDefaultWebTypesContainer: WebSymbolsContainer = state.value.myDefaultWebTypesContainer
+  private val myDefaultWebTypesContainer: WebTypesSymbolsContainerBase = state.value.myDefaultWebTypesContainer
 
   private fun getWebTypes(packageName: String, packageVersion: SemVer?): Pair<PluginDescriptor, WebTypes>? =
     state.value.registry.get(packageName, packageVersion)

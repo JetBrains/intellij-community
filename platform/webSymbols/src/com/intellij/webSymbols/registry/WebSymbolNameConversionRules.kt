@@ -1,19 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.registry
 
-import com.intellij.model.Pointer
-import com.intellij.openapi.util.ModificationTracker
-import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
-import java.util.function.Function
+import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.registry.impl.WebSymbolNameConversionRulesImpl
 
-interface WebSymbolNameConversionRules : ModificationTracker {
+interface WebSymbolNameConversionRules {
 
-  val canonicalNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
-  val matchNamesProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
-  val nameVariantsProviders: Map<Triple<FrameworkId?, SymbolNamespace, SymbolKind>, Function<String, List<String>>>
+  val canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  val matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  val nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
 
-  fun createPointer(): Pointer<out WebSymbolNameConversionRules>
+  companion object {
+
+    @JvmStatic
+    fun create(canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+               matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+               nameVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter> = emptyMap()) =
+      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, nameVariants)
+
+    @JvmStatic
+    fun empty() =
+      WebSymbolNameConversionRulesImpl.empty
+
+    @JvmStatic
+    fun builder() =
+      WebSymbolNameConversionRulesBuilder()
+
+  }
 
 }
