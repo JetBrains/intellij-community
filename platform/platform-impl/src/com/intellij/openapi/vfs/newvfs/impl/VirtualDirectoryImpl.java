@@ -388,9 +388,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void loadPersistedChildren() {
     String[] names = ourPersistence.listPersisted(this);
-    NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
+    NewVirtualFileSystem fs = getFileSystem();
     for (String name : names) {
-      findChild(name, false, false, delegate);
+      findChild(name, false, false, fs);
     }
   }
 
