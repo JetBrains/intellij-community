@@ -28,17 +28,13 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
     scope.cancel()
   }
 
-  fun scheduleCacheAndTreeUpdate(
-    before: Runnable,
-    after: Runnable,
-    vararg constraints: ReadConstraint,
-  ): CompletableFuture<*> {
+  fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
     return scope.launch(Dispatchers.EDT) {
-      before.run()
+      treeBuilder.onUpdateStarted()
       constrainedReadAction(*constraints) {
         treeBuilder.collectFiles()
       }
-      after.run()
+      treeBuilder.onUpdateFinished()
     }.asCompletableFuture()
   }
 

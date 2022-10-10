@@ -34,11 +34,13 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -338,9 +340,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
     myFutures.clear();
 
-    CompletableFuture<?> future = myCoroutineHelper
-      .scheduleCacheAndTreeUpdate(withLoadingPanel(JBLoadingPanel::startLoading),
-                                  withLoadingPanel(JBLoadingPanel::stopLoading));
+    CompletableFuture<?> future = myCoroutineHelper.scheduleCacheAndTreeUpdate();
     myFutures.add(future);
     return future;
   }
@@ -357,19 +357,18 @@ public abstract class TodoTreeBuilder implements Disposable {
     });
   }
 
-  protected void clearCache() {
+  protected final void clearCache() {
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
   }
 
-  private @NotNull Runnable withLoadingPanel(@NotNull Consumer<? super JBLoadingPanel> consumer) {
-    return () -> {
-      JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
-      if (loadingPanel != null) {
-        consumer.accept(loadingPanel);
-      }
-    };
+  @RequiresEdt
+  private void withLoadingPanel(@NotNull Consumer<? super JBLoadingPanel> consumer) {
+    JBLoadingPanel loadingPanel = UIUtil.getParentOfType(JBLoadingPanel.class, myTree);
+    if (loadingPanel != null) {
+      consumer.accept(loadingPanel);
+    }
   }
 
   protected final void validateCache() {
@@ -455,6 +454,18 @@ public abstract class TodoTreeBuilder implements Disposable {
     return myUpdatable ?
            Promises.asPromise(myCoroutineHelper.scheduleUpdateTree()) :
            Promises.resolvedPromise();
+  }
+
+  @VisibleForTesting
+  @RequiresEdt
+  protected void onUpdateStarted() {
+    withLoadingPanel(JBLoadingPanel::startLoading);
+  }
+
+  @VisibleForTesting
+  @RequiresEdt
+  protected void onUpdateFinished() {
+    withLoadingPanel(JBLoadingPanel::stopLoading);
   }
 
   public void select(Object obj) {

@@ -32,9 +32,12 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
   public void testToDo1() {
     AtomicInteger rebuildCacheCount = new AtomicInteger(0);
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), this.myProject) {
+
       @Override
-      protected void clearCache() {
-        super.clearCache();
+      protected void onUpdateStarted() { }
+
+      @Override
+      protected void onUpdateFinished() {
         rebuildCacheCount.incrementAndGet();
       }
     };

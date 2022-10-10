@@ -16,7 +16,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -238,15 +237,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
       for (TodoPanel panel : myPanels) {
         panel.getTreeBuilder()
           .getCoroutineHelper()
-          .scheduleCacheAndTreeUpdate(EmptyRunnable.getInstance(),
-                                      this::notifyUpdateFinished,
-                                      ReadConstraint.Companion.inSmartMode(myProject));
+          .scheduleCacheAndTreeUpdate(ReadConstraint.Companion.inSmartMode(myProject));
       }
     }
-  }
-
-  protected void notifyUpdateFinished() {
-    //do nothing
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, @NlsContexts.TabTitle final String title, final TodoPanelSettings settings) {
