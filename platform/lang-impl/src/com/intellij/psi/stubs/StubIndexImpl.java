@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ThrowableRunnable;
@@ -168,6 +169,15 @@ public final class StubIndexImpl extends StubIndexEx {
       return index.getModificationStamp();
     }
     return -1;
+  }
+
+  /**
+   * @implNote obtaining modification stamps might be expensive due to execution of StubIndex update on each invocation
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
+    return () -> getIndexModificationStamp(indexId, project);
   }
 
   public void flush() throws StorageException {
