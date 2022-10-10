@@ -191,13 +191,15 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom));
     Module module = importProjectFrom(pom.toString(), null, provider);
+    Project project = module.getProject();
+    waitForMavenImporting(project, LocalFileSystem.getInstance().findFileByNioFile(pom));
+    ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false);
 
-    waitForMavenImporting(module.getProject(), LocalFileSystem.getInstance().findFileByNioFile(pom));
-    ExternalProjectsManagerImpl.getInstance(module.getProject()).setStoreExternally(false);
-
-
+    Module[] modules = ModuleManager.getInstance(project).getModules();
     File imlFile = dir.resolve(projectName + ".iml").toFile();
-    assertPathsEqual(module.getModuleFilePath(), imlFile.getAbsolutePath());
+    assertThat(modules).hasOnlyOneElementSatisfying(m ->
+                                                      assertPathsEqual(m.getModuleFilePath(), imlFile.getAbsolutePath())
+    );
   }
 
   private void waitForMavenImporting(@NotNull Project project, @NotNull VirtualFile file) {
