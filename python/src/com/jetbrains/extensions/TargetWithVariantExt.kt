@@ -15,11 +15,11 @@ import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
 /**
  * @see targetAsPsiElement
  */
-fun TargetWithVariant.asPsiElement(configuration: AbstractPythonRunConfiguration<*>,
-                                   workingDirectory: VirtualFile?
-                                   = LocalFileSystem.getInstance().findFileByPath(configuration.getWorkingDirectorySafe())): PsiElement? =
+fun TargetWithVariant.asPsiElement(
+  configuration: AbstractPythonRunConfiguration<*>,
+  workingDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(configuration.workingDirectorySafe)
+): PsiElement? =
   target?.let { targetAsPsiElement(targetType, it, configuration, workingDirectory) }
-
 
 /**
  * @see targetAsVirtualFile
@@ -27,11 +27,10 @@ fun TargetWithVariant.asPsiElement(configuration: AbstractPythonRunConfiguration
 fun TargetWithVariant.asVirtualFile(): VirtualFile? = target?.let { targetAsVirtualFile(targetType, it) }
 
 /**
- * Sanity check for "target" value. Does not resolve target, only check its syntax
- * CUSTOM type is not checked.
+ * Sanity check for "target" value. Does not resolve target, only check its syntax CUSTOM type is not checked.
  */
 fun TargetWithVariant.isWellFormed(): Boolean = when (targetType) {
-  PyRunTargetVariant.PYTHON -> target?.let { it.split(".").all { PyNames.isIdentifier(it) } } ?: true
+  PyRunTargetVariant.PYTHON -> target?.let { it.split(".").all { id -> PyNames.isIdentifier(id) } } ?: true
   PyRunTargetVariant.PATH -> !isBadPath(target)
   else -> true
 }
