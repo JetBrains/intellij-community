@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -59,7 +59,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       return compareKey != 0 ? compareKey : compareCaseInsensitively(o1.getGroupName(), o2.getGroupName());
     }
 
-    private int compareCaseInsensitively(String s1, String s2) {
+    private static int compareCaseInsensitively(String s1, String s2) {
       int result = s1.compareToIgnoreCase(s2);
       return result != 0 ? result : s1.compareTo(s2);
     }
@@ -426,11 +426,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   void removeRows() {
-    TreeNode toSelect = null;
-
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return;
 
+    TreeNode toSelect = null;
     for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
@@ -472,7 +471,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           TemplateImpl template = (TemplateImpl)value;
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
           LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
-          Color fgColor = defaultTemplate != null && templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
+          Color fgColor = defaultTemplate == null || templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
           getTextRenderer().append(template.getKey(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor));
           String description = template.getDescription();
           if (StringUtil.isNotEmpty(description)) {
@@ -668,7 +667,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
         final TemplateGroup templateGroup = getSingleSelectedGroup();
         boolean enabled = templateGroup != null;
         e.getPresentation().setEnabledAndVisible(enabled);
-        super.update(e);
       }
 
       @Override
