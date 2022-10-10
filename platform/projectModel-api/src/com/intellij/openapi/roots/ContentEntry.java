@@ -166,6 +166,9 @@ public interface ContentEntry extends Synthetic {
   @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
                                                                @NotNull JpsModuleSourceRootType<P> type,
                                                                @NotNull ProjectModelExternalSource externalSource);
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               boolean useSourceOfContentRoot);
 
   /**
    * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from

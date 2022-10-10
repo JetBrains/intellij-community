@@ -90,6 +90,10 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
                                                 type: JpsModuleSourceRootType<P>,
                                                 externalSource: ProjectModelExternalSource): SourceFolder = throwReadonly()
 
+  override fun <P : JpsElement?> addSourceFolder(url: String,
+                                                 type: JpsModuleSourceRootType<P>,
+                                                 useSourceOfContentRoot: Boolean): SourceFolder = throwReadonly()
+
   override fun removeSourceFolder(sourceFolder: SourceFolder) = throwReadonly()
   override fun clearSourceFolders() = throwReadonly()
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = throwReadonly()
