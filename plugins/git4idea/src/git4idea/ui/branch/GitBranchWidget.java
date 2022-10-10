@@ -12,12 +12,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitBranchesUsageCollector;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -59,9 +59,8 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   }
 
   @Override
-  @RequiresEdt
-  protected @Nullable GitRepository guessCurrentRepository(@NotNull Project project) {
-    return GitBranchUtil.guessWidgetRepository(project);
+  protected @Nullable GitRepository guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
+    return GitBranchUtil.guessWidgetRepository(project, selectedFile);
   }
 
   @Override

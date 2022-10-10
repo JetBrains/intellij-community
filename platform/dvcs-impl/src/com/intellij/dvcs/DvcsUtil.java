@@ -270,12 +270,12 @@ public final class DvcsUtil {
    * @param recentRootPath The last path that was shown in the widget
    */
   @Nullable
-  @RequiresEdt
+  @CalledInAny
   public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
                                                                @NotNull AbstractRepositoryManager<T> manager,
-                                                               @Nullable @NonNls @SystemIndependent String recentRootPath) {
-    VirtualFile file = getSelectedFile(project); // last active FileEditor
-    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @Nullable VirtualFile selectedFile) {
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, selectedFile));
     if (repository != null) return repository;
 
     repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
