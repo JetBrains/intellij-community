@@ -85,7 +85,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final Project myProject;
   protected final AbstractVcs myVcs;
   protected final ChangeListManager myChangeListManager;
-  private final VcsShowConfirmationOption myAddOption;
+  protected final VcsShowConfirmationOption myAddOption;
   protected final VcsShowConfirmationOption myRemoveOption;
   protected final StateProcessor myProcessor = new StateProcessor();
   private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;

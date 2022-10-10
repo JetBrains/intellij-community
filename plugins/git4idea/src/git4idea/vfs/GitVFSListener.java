@@ -191,10 +191,16 @@ public final class GitVFSListener extends VcsVFSListener {
       selectedToAdd = selectFilePathsToAdd(toAdd);
       selectedToRemove = selectFilePathsToDelete(toRemove);
     }
+    else if (Value.DO_NOTHING_SILENTLY.equals(myRemoveOption.getValue()) &&
+             Value.DO_NOTHING_SILENTLY.equals(myAddOption.getValue())) {
+      selectedToAdd = Collections.emptyList();
+      selectedToRemove = Collections.emptyList();
+    }
     else {
       selectedToAdd = toAdd;
       selectedToRemove = toRemove;
     }
+    if (toAdd.isEmpty() && toRemove.isEmpty() && toForceMove.isEmpty()) return;
 
     LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     GitVcs.runInBackground(new Task.Backgroundable(myProject, message("progress.title.moving.files")) {
