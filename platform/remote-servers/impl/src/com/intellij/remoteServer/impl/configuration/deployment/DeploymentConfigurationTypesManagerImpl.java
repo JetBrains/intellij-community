@@ -2,7 +2,10 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -14,7 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Experimental
-public final class DeploymentConfigurationTypesManagerImpl extends DeploymentConfigurationTypesManager {
+public final class DeploymentConfigurationTypesManagerImpl extends DeploymentConfigurationTypesManager
+  implements Disposable {
 
   private static final @NotNull Logger LOG = Logger.getInstance(DeploymentConfigurationTypesManagerImpl.class);
 
@@ -24,7 +28,22 @@ public final class DeploymentConfigurationTypesManagerImpl extends DeploymentCon
 
   private final ConcurrentMap<ServerType<?>, DeployToServerConfigurationType<?>> myConfigurationTypes = new ConcurrentHashMap<>();
 
-  private DeploymentConfigurationTypesManagerImpl() { }
+  private DeploymentConfigurationTypesManagerImpl() {
+    ServerType.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+
+      @Override
+      public void extensionAdded(@NotNull ServerType<?> serverType,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        registerConfigurationType(serverType);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull ServerType<?> serverType,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        unregisterConfigurationType(serverType);
+      }
+    }, true, this);
+  }
 
   @Override
   public <C extends ServerConfiguration> @NotNull DeployToServerConfigurationType<C> getConfigurationType(@NotNull ServerType<C> serverType) {
@@ -35,8 +54,7 @@ public final class DeploymentConfigurationTypesManagerImpl extends DeploymentCon
     return result;
   }
 
-  @Override
-  public void registerConfigurationType(@NotNull ServerType<?> serverType) {
+  private void registerConfigurationType(@NotNull ServerType<?> serverType) {
     DeployToServerConfigurationType<?> configurationType = new DeployToServerConfigurationType<>(serverType);
 
     try {
@@ -49,8 +67,7 @@ public final class DeploymentConfigurationTypesManagerImpl extends DeploymentCon
     myConfigurationTypes.put(serverType, configurationType);
   }
 
-  @Override
-  public void unregisterConfigurationType(@NotNull ServerType<?> serverType) {
+  private void unregisterConfigurationType(@NotNull ServerType<?> serverType) {
     DeployToServerConfigurationType<?> configurationType = myConfigurationTypes.remove(serverType);
     LOG.assertTrue(configurationType != null,
                    "Run configuration has not been registered for server: " + serverType.getId());
