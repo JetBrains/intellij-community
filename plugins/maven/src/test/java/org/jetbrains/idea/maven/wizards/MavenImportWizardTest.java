@@ -4,11 +4,14 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.maven.testFramework.MavenTestCase;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -23,13 +26,16 @@ import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProjectWizard> {
@@ -170,6 +176,40 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
       assertEquals(1, paths.size());
       assertEquals(pom2, paths.get(0));
     }
+  }
+
+
+  public void testShouldStoreImlFileInSameDirAsPomXml() throws IOException {
+    Path dir = getTempDir().newPath("", true);
+    String projectName = dir.toFile().getName();
+    Path pom = dir.resolve("pom.xml");
+    PathKt.write(pom, MavenTestCase.createPomXml(
+      "<groupId>test</groupId>" +
+      "<artifactId>" + projectName + "</artifactId>" +
+      "<version>1</version>"));
+    MavenProjectImportProvider provider = new MavenProjectImportProvider();
+    MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
+    builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom));
+    Module module = importProjectFrom(pom.toString(), null, provider);
+
+    waitForMavenImporting(module.getProject(), LocalFileSystem.getInstance().findFileByNioFile(pom));
+    ExternalProjectsManagerImpl.getInstance(module.getProject()).setStoreExternally(false);
+
+
+    File imlFile = dir.resolve(projectName + ".iml").toFile();
+    assertPathsEqual(module.getModuleFilePath(), imlFile.getAbsolutePath());
+  }
+
+  private void waitForMavenImporting(@NotNull Project project, @NotNull VirtualFile file) {
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    manager.waitForImportCompletion();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      manager.scheduleImportInTests(Collections.singletonList(file));
+      manager.importProjects();
+    });
+
+    Promise<?> promise = manager.waitForImportCompletion();
+    PlatformTestUtil.waitForPromise(promise);
   }
 
   private @NotNull Path createPom() throws IOException {
