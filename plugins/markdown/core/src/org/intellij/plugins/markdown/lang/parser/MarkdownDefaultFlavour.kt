@@ -5,7 +5,7 @@ import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.flavours.gfm.StrikeThroughDelimiterParser
@@ -23,13 +23,11 @@ import org.intellij.markdown.parser.sequentialparsers.impl.*
 import org.intellij.plugins.markdown.lang.parser.blocks.DefinitionListMarkerProvider
 import org.intellij.plugins.markdown.lang.parser.blocks.frontmatter.FrontMatterHeaderMarkerProvider
 import org.intellij.plugins.markdown.ui.preview.html.HeaderGeneratingProvider
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
-@ApiStatus.Internal
-class MarkdownDefaultFlavour(
-  private val delegate: GFMFlavourDescriptor = GFMFlavourDescriptor()
-): CommonMarkFlavourDescriptor() {
+open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
+  private val delegate = GFMFlavourDescriptor()
+
   override val markerProcessorFactory: MarkerProcessorFactory
     get() = MarkdownDefaultMarkerProcessor.Factory
 
@@ -46,7 +44,7 @@ class MarkdownDefaultFlavour(
     return result
   }
 
-  private fun addCustomProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
+  protected fun addCustomProviders(providers: MutableMap<IElementType, GeneratingProvider>) {
     providers[DefinitionListMarkerProvider.DEFINITION_LIST] = SimpleInlineTagProvider("dl")
     providers[DefinitionListMarkerProvider.DEFINITION] = SimpleInlineTagProvider("dd")
     providers[DefinitionListMarkerProvider.TERM] = SimpleInlineTagProvider("dt")
@@ -62,7 +60,7 @@ class MarkdownDefaultFlavour(
     providers[MarkdownElementTypes.SETEXT_2] = HeaderGeneratingProvider("h2")
   }
 
-  class DefaultSequentialParserManager: SequentialParserManager() {
+  protected class DefaultSequentialParserManager: SequentialParserManager() {
     override fun getParserSequence(): List<SequentialParser> {
       return listOf(
         AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
