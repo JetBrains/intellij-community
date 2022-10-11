@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -104,7 +107,7 @@ public final class VcsFacadeImpl extends VcsFacade {
       return new ChangedRangesInfo(ContainerUtil.newArrayList(fileRange), null);
     }
 
-    String contentFromVcs = getRevisionedContentFrom(change);
+    String contentFromVcs = getRevisionedContentFrom(change.getBeforeRevision());
     if (contentFromVcs == null) {
       return null;
     }
@@ -160,6 +163,31 @@ public final class VcsFacadeImpl extends VcsFacade {
     return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
+  @NotNull
+  public <T extends PsiElement> List<T> getPostCommitChangedElements(@NotNull Project project,
+                                                                     @NotNull Change change,
+                                                                     @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {
+    if (change.getType() == Change.Type.DELETED) return emptyList();
+
+    VirtualFile file = ChangesUtil.getFilePath(change).getVirtualFile();
+    if (file == null) return emptyList();
+
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return emptyList();
+
+    List<T> apply = elementExtractor.fun(file);
+    List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
+    if (ContainerUtil.isEmpty(elements)) return emptyList();
+
+    if (change.getType() == Change.Type.NEW) return elements;
+
+    List<? extends Range> ranges = getChangedRangesForPostCommit(document, change);
+    if (ranges == null) return elements; // assume the whole file is changed
+
+    BitSet changedLines = createChangedLinesBitSet(ranges);
+    return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
+  }
+
   @Nullable
   private static List<? extends Range> getChangedRangesFromLineStatusTracker(@NotNull Project project,
                                                                              @NotNull Document document,
@@ -182,10 +210,36 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Nullable
   private static List<Range> getChangedRangesFromBeforeRevision(@NotNull Document document, @NotNull Change change) {
-    String contentFromVcs = getRevisionedContentFrom(change);
+    String contentFromVcs = getRevisionedContentFrom(change.getBeforeRevision());
     if (contentFromVcs == null) return null;
 
     return computeRanges(document, contentFromVcs);
+  }
+
+  @Nullable
+  private static List<Range> getChangedRangesForPostCommit(@NotNull Document document,
+                                                           @NotNull Change change) {
+    String conventBefore = getRevisionedContentFrom(change.getBeforeRevision());
+    if (conventBefore == null) return null;
+
+    String contentAfter = getRevisionedContentFrom(change.getAfterRevision());
+    if (contentAfter == null) return null;
+
+    CharSequence beforeText = fixLineSeparators(conventBefore);
+    CharSequence afterText = fixLineSeparators(contentAfter);
+    CharSequence localText = document.getImmutableCharSequence();
+
+    LineOffsets beforeLineOffsets = LineOffsetsUtil.create(beforeText);
+    LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterText);
+    LineOffsets localLineOffsets = LineOffsetsUtil.create(document);
+
+    FairDiffIterable committedLines = RangesBuilder.compareLines(beforeText, afterText, beforeLineOffsets, afterLineOffsets);
+    FairDiffIterable localLines = RangesBuilder.compareLines(afterText, localText, afterLineOffsets, localLineOffsets);
+
+    ChangedRangesShifter builder = new ChangedRangesShifter();
+    List<com.intellij.diff.util.Range> ranges = builder.execute(committedLines, localLines);
+
+    return ContainerUtil.map(ranges, it -> new Range(it.start2, it.end2, it.start1, it.end1, null));
   }
 
   @NotNull
@@ -214,17 +268,16 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Nullable
-  private static String getRevisionedContentFrom(@NotNull Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    if (revision == null) {
+  private static String getRevisionedContentFrom(@Nullable ContentRevision contentRevision) {
+    if (contentRevision == null) {
       return null;
     }
 
     try {
-      return revision.getContent();
+      return contentRevision.getContent();
     }
     catch (VcsException e) {
-      LOG.warn("Can't get content for: " + change.getVirtualFile(), e);
+      LOG.warn("Can't get content for: " + contentRevision, e);
       return null;
     }
   }
@@ -233,7 +286,12 @@ public final class VcsFacadeImpl extends VcsFacade {
   private static List<Range> computeRanges(@NotNull Document document,
                                            @NotNull CharSequence contentFromVcs) {
     return RangesBuilder.createRanges(document.getImmutableCharSequence(),
-                                      StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
+                                      fixLineSeparators(contentFromVcs));
+  }
+
+  @NotNull
+  private static CharSequence fixLineSeparators(@NotNull CharSequence contentFromVcs) {
+    return StringUtilRt.convertLineSeparators(contentFromVcs, "\n");
   }
 
   @Override

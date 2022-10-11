@@ -57,6 +57,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
@@ -104,7 +105,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
 
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
@@ -112,6 +113,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.analyzing.code"))
 
+    val isPostCommit = commitInfo.commitContext.isPostCommitCheck
     val changesByFile = mutableMapOf<VirtualFile, Change>()
     for (change in commitInfo.committedChanges) {
       val changeFile = change.afterRevision?.file?.virtualFile ?: continue
@@ -133,7 +135,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
       val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
       runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
-        codeSmells = findCodeSmells(changesByFile)
+        codeSmells = findCodeSmells(changesByFile, isPostCommit)
       }
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
@@ -151,7 +153,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
    * Puts a closure in PsiFile user data that extracts PsiElement elements that are being committed.
    * The closure accepts a class instance and returns a set of PsiElement elements that are changed or added.
    */
-  private fun withCommittedElementsContext(changedFiles: Map<VirtualFile, Change>): AccessToken {
+  private fun withCommittedElementsContext(changedFiles: Map<VirtualFile, Change>, isPostCommit: Boolean): AccessToken {
     val analyzeOnlyChangedProperties = Registry.`is`("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", false)
     if (!analyzeOnlyChangedProperties) return AccessToken.EMPTY_ACCESS_TOKEN
 
@@ -159,7 +161,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     for ((file, change) in changedFiles) {
       val psiFile = runReadAction { PsiManager.getInstance(project).findFile(file) } ?: continue
       psiFile.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
-                          ConcurrentFactoryMap.createMap { clazz -> getBeingCommittedPsiElements(change, clazz) })
+                          ConcurrentFactoryMap.createMap { clazz -> getBeingCommittedPsiElements(change, clazz, isPostCommit) })
       psiFiles += psiFile
     }
     return object : AccessToken() {
@@ -174,18 +176,23 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   /**
    * Returns a set of PsiElements that are being committed
    */
-  private fun getBeingCommittedPsiElements(change: Change, clazz: Class<out PsiElement>): Set<PsiElement> {
+  private fun getBeingCommittedPsiElements(change: Change, clazz: Class<out PsiElement>, isPostCommit: Boolean): Set<PsiElement> {
     val elementExtractor = { virtualFile: VirtualFile ->
       val psiFile = runReadAction {
         PsiManager.getInstance(project).findFile(virtualFile)
       }
       PsiTreeUtil.findChildrenOfType(psiFile, clazz).toList()
     }
-    return VcsFacadeImpl.getVcsInstance().getLocalChangedElements(project, change, elementExtractor).toSet()
+    if (isPostCommit) {
+      return VcsFacadeImpl.getVcsInstance().getPostCommitChangedElements(project, change, elementExtractor).toSet()
+    }
+    else {
+      return VcsFacadeImpl.getVcsInstance().getLocalChangedElements(project, change, elementExtractor).toSet()
+    }
   }
 
-  private fun findCodeSmells(changedFiles: Map<VirtualFile, Change>): List<CodeSmellInfo> {
-    withCommittedElementsContext(changedFiles).use {
+  private fun findCodeSmells(changedFiles: Map<VirtualFile, Change>, isPostCommit: Boolean): List<CodeSmellInfo> {
+    withCommittedElementsContext(changedFiles, isPostCommit).use {
       val indicator = ProgressManager.getGlobalProgressIndicator()
       val newAnalysisThreshold = Registry.intValue("vcs.code.analysis.before.checkin.show.only.new.threshold", 0)
       val files = changedFiles.keys.toList()

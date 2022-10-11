@@ -417,6 +417,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     val changeConverters = commitInfo.affectedVcses.mapNotNull { it.checkinEnvironment?.postCommitChangeConverter }
     if (changeConverters.isEmpty()) LOG.warn("Post-commit change converters not found for ${commitInfo.affectedVcses}")
 
+    val commitContext = commitInfo.commitContext
+    commitContext.isPostCommitCheck = true
+
     var staticChanges = commitInfo.committedChanges
     for (changeConverter in changeConverters) {
       staticChanges = changeConverter.convertChangesAfterCommit(staticChanges, commitContext)
