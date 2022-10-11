@@ -5,7 +5,10 @@ fun bar(f: Foo) {
 }
 
 // not applicable to non-data classes
-class Foo2(val a: String, val b: Int, val c: String)
+class Foo2(val a: String, val b: Int, val c: String) {
+    operator fun component1() = a
+    operator fun component2() = c
+}
 
 fun bar2(f: Foo2) {
     val (a, c) = f
