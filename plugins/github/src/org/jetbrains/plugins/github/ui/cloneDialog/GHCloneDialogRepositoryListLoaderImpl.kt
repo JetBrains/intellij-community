@@ -100,9 +100,14 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
 
   companion object {
     private fun preservingSelection(listModel: GHCloneDialogRepositoryListModel, selectionModel: ListSelectionModel, action: () -> Unit) {
-      val selection = selectionModel.anchorSelectionIndex.let {
-        if (it < 0 || listModel.size == 0) null
-        else listModel.getItemAt(it)
+      val selection = if (selectionModel.isSelectionEmpty) {
+        null
+      }
+      else {
+        selectionModel.leadSelectionIndex.let {
+          if (it < 0 || listModel.size == 0) null
+          else listModel.getItemAt(it)
+        }
       }
       action()
       if (selection != null) {
