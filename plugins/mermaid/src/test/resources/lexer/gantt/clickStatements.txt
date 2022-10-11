@@ -1,4 +1,4 @@
-GANTT ('gantt')
+Gantt.GANTT ('gantt')
 EOL ('\n')
 WHITE_SPACE ('  ')
 TASK_NAME ('Visit')

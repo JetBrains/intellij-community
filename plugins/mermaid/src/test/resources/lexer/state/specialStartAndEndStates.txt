@@ -1,4 +1,4 @@
-STATE_DIAGRAM ('stateDiagram-v2')
+StateDiagram.STATE_DIAGRAM ('stateDiagram-v2')
 EOL ('\n')
 WHITE_SPACE ('  ')
 OPEN_SQUARE ('[')

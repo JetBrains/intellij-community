@@ -1,4 +1,4 @@
-CLASS_DIAGRAM ('classDiagram')
+ClassDiagram.CLASS_DIAGRAM ('classDiagram')
 EOL ('\n')
 WHITE_SPACE ('  ')
 DIRECTION ('direction')

@@ -1,7 +1,7 @@
 FILE
   PsiComment(LINE_COMMENT)('%% this is a comment')
   PsiElement(EOL)('\n')
-  PsiElement(STATE_DIAGRAM)('stateDiagram')
+  PsiElement(StateDiagram.STATE_DIAGRAM)('stateDiagram')
   MermaidStateDocumentImpl(STATE_DOCUMENT)
     PsiElement(EOL)('\n')
     PsiWhiteSpace('  ')
@@ -22,7 +22,7 @@ FILE
     PsiWhiteSpace('  ')
     MermaidStateDiagramStatementImpl(STATE_DIAGRAM_STATEMENT)
       MermaidStateDeclarationImpl(STATE_DECLARATION)
-        PsiElement(STATE)('state')
+        PsiElement(StateDiagram.STATE)('state')
         PsiWhiteSpace(' ')
         MermaidIdentifierImpl(IDENTIFIER)
           PsiElement(ID)('B')

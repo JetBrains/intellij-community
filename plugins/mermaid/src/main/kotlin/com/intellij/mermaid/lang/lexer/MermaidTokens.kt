@@ -292,31 +292,31 @@ object MermaidTokens {
     val SEP = MermaidToken("Flowchart.SEP")
 
     @JvmField
-    val AMPERSAND = MermaidToken("AMPERSAND")
+    val AMPERSAND = MermaidToken("Flowchart.AMPERSAND")
 
     @JvmField
-    val SUBGRAPH = MermaidToken("SUBGRAPH")
+    val SUBGRAPH = MermaidToken("Flowchart.SUBGRAPH")
 
     @JvmField
-    val LINK_STYLE = MermaidToken("LINK_STYLE")
+    val LINK_STYLE = MermaidToken("Flowchart.LINK_STYLE")
 
     @JvmField
-    val STYLE = MermaidToken("STYLE")
+    val STYLE = MermaidToken("Flowchart.STYLE")
 
     @JvmField
-    val STYLE_TARGET = MermaidToken("STYLE_TARGET")
+    val STYLE_TARGET = MermaidToken("Flowchart.STYLE_TARGET")
 
     @JvmField
-    val STYLE_OPT = MermaidToken("STYLE_OPT")
+    val STYLE_OPT = MermaidToken("Flowchart.STYLE_OPT")
 
     @JvmField
-    val STYLE_VAL = MermaidToken("STYLE_VAL")
+    val STYLE_VAL = MermaidToken("Flowchart.STYLE_VAL")
 
     @JvmField
-    val CLASS_DEF = MermaidToken("CLASS_DEF")
+    val CLASS_DEF = MermaidToken("Flowchart.CLASS_DEF")
 
     @JvmField
-    val DEFAULT = MermaidToken("DEFAULT")
+    val DEFAULT = MermaidToken("Flowchart.DEFAULT")
   }
 
   object Sequence {
@@ -407,367 +407,367 @@ object MermaidTokens {
 
   object ClassDiagram {
     @JvmField
-    val CLASS_DIAGRAM = MermaidToken("CLASS_DIAGRAM")
+    val CLASS_DIAGRAM = MermaidToken("ClassDiagram.CLASS_DIAGRAM")
 
     @JvmField
-    val GENERIC_TYPE = MermaidToken("GENERIC_TYPE")
+    val GENERIC_TYPE = MermaidToken("ClassDiagram.GENERIC_TYPE")
 
     @JvmField
-    val EXTENSION_START = MermaidToken("EXTENSION_START")
+    val EXTENSION_START = MermaidToken("ClassDiagram.EXTENSION_START")
 
     @JvmField
-    val EXTENSION_END = MermaidToken("EXTENSION_END")
+    val EXTENSION_END = MermaidToken("ClassDiagram.EXTENSION_END")
 
     @JvmField
-    val DEPENDENCY_START = MermaidToken("DEPENDENCY_START")
+    val DEPENDENCY_START = MermaidToken("ClassDiagram.DEPENDENCY_START")
 
     @JvmField
-    val DEPENDENCY_END = MermaidToken("DEPENDENCY_END")
+    val DEPENDENCY_END = MermaidToken("ClassDiagram.DEPENDENCY_END")
 
     @JvmField
-    val COMPOSITION = MermaidToken("COMPOSITION")
+    val COMPOSITION = MermaidToken("ClassDiagram.COMPOSITION")
 
     @JvmField
-    val AGGREGATION = MermaidToken("AGGREGATION")
+    val AGGREGATION = MermaidToken("ClassDiagram.AGGREGATION")
 
     @JvmField
-    val LOLLIPOP = MermaidToken("LOLLIPOP")
+    val LOLLIPOP = MermaidToken("ClassDiagram.LOLLIPOP")
 
     @JvmField
-    val LINE = MermaidToken("LINE")
+    val LINE = MermaidToken("ClassDiagram.LINE")
 
     @JvmField
-    val DOTTED_LINE = MermaidToken("DOTTED_LINE")
+    val DOTTED_LINE = MermaidToken("ClassDiagram.DOTTED_LINE")
   }
 
   object StateDiagram {
     @JvmField
-    val STATE_DIAGRAM = MermaidToken("STATE_DIAGRAM")
+    val STATE_DIAGRAM = MermaidToken("StateDiagram.STATE_DIAGRAM")
 
     @JvmField
-    val STATE = MermaidToken("STATE")
+    val STATE = MermaidToken("StateDiagram.STATE")
 
     @JvmField
-    val DIVIDER = MermaidToken("DIVIDER")
+    val DIVIDER = MermaidToken("StateDiagram.DIVIDER")
   }
 
   object EntityRelationship {
     @JvmField
-    val ENTITY_RELATIONSHIP = MermaidToken("ENTITY_RELATIONSHIP")
+    val ENTITY_RELATIONSHIP = MermaidToken("EntityRelationship.ENTITY_RELATIONSHIP")
 
     @JvmField
-    val ZERO_OR_ONE_LEFT = MermaidToken("ZERO_OR_ONE_LEFT")
+    val ZERO_OR_ONE_LEFT = MermaidToken("EntityRelationship.ZERO_OR_ONE_LEFT")
 
     @JvmField
-    val ONE_OR_MORE_LEFT = MermaidToken("ONE_OR_MORE_LEFT")
+    val ONE_OR_MORE_LEFT = MermaidToken("EntityRelationship.ONE_OR_MORE_LEFT")
 
     @JvmField
-    val ONLY_ONE = MermaidToken("ONLY_ONE")
+    val ONLY_ONE = MermaidToken("EntityRelationship.ONLY_ONE")
 
     @JvmField
-    val ZERO_OR_MORE_LEFT = MermaidToken("ZERO_OR_MORE_LEFT")
+    val ZERO_OR_MORE_LEFT = MermaidToken("EntityRelationship.ZERO_OR_MORE_LEFT")
 
     @JvmField
-    val ZERO_OR_ONE_RIGHT = MermaidToken("ZERO_OR_ONE_RIGHT")
+    val ZERO_OR_ONE_RIGHT = MermaidToken("EntityRelationship.ZERO_OR_ONE_RIGHT")
 
     @JvmField
-    val ONE_OR_MORE_RIGHT = MermaidToken("ONE_OR_MORE_RIGHT")
+    val ONE_OR_MORE_RIGHT = MermaidToken("EntityRelationship.ONE_OR_MORE_RIGHT")
 
     @JvmField
-    val ZERO_OR_MORE_RIGHT = MermaidToken("ZERO_OR_MORE_RIGHT")
+    val ZERO_OR_MORE_RIGHT = MermaidToken("EntityRelationship.ZERO_OR_MORE_RIGHT")
 
     @JvmField
-    val IDENTIFYING = MermaidToken("IDENTIFYING")
+    val IDENTIFYING = MermaidToken("EntityRelationship.IDENTIFYING")
 
     @JvmField
-    val NON_IDENTIFYING = MermaidToken("NON_IDENTIFYING")
+    val NON_IDENTIFYING = MermaidToken("EntityRelationship.NON_IDENTIFYING")
 
     @JvmField
-    val ATTR_KEY = MermaidToken("ATTR_KEY")
+    val ATTR_KEY = MermaidToken("EntityRelationship.ATTR_KEY")
 
   }
 
   object Gantt {
     @JvmField
-    val GANTT = MermaidToken("GANTT")
+    val GANTT = MermaidToken("Gantt.GANTT")
 
     @JvmField
-    val DATE_FORMAT = MermaidToken("DATE_FORMAT")
+    val DATE_FORMAT = MermaidToken("Gantt.DATE_FORMAT")
 
     @JvmField
-    val EXCLUDES = MermaidToken("EXCLUDES")
+    val EXCLUDES = MermaidToken("Gantt.EXCLUDES")
 
     @JvmField
-    val INCLUDES = MermaidToken("INCLUDES")
+    val INCLUDES = MermaidToken("Gantt.INCLUDES")
 
     @JvmField
-    val AXIS_FORMAT = MermaidToken("AXIS_FORMAT")
+    val AXIS_FORMAT = MermaidToken("Gantt.AXIS_FORMAT")
 
     @JvmField
-    val TODAY_MARKER = MermaidToken("TODAY_MARKER")
+    val TODAY_MARKER = MermaidToken("Gantt.TODAY_MARKER")
   }
 
   object Requirement {
     @JvmField
-    val REQUIREMENT_DIAGRAM = MermaidToken("REQUIREMENT_DIAGRAM")
+    val REQUIREMENT_DIAGRAM = MermaidToken("Requirement.REQUIREMENT_DIAGRAM")
 
     @JvmField
-    val REQUIREMENT = MermaidToken("REQUIREMENT")
+    val REQUIREMENT = MermaidToken("Requirement.REQUIREMENT")
 
     @JvmField
-    val FUNCTIONAL_REQUIREMENT = MermaidToken("FUNCTIONAL_REQUIREMENT")
+    val FUNCTIONAL_REQUIREMENT = MermaidToken("Requirement.FUNCTIONAL_REQUIREMENT")
 
     @JvmField
-    val INTERFACE_REQUIREMENT = MermaidToken("INTERFACE_REQUIREMENT")
+    val INTERFACE_REQUIREMENT = MermaidToken("Requirement.INTERFACE_REQUIREMENT")
 
     @JvmField
-    val PERFORMANCE_REQUIREMENT = MermaidToken("PERFORMANCE_REQUIREMENT")
+    val PERFORMANCE_REQUIREMENT = MermaidToken("Requirement.PERFORMANCE_REQUIREMENT")
 
     @JvmField
-    val PHYSICAL_REQUIREMENT = MermaidToken("PHYSICAL_REQUIREMENT")
+    val PHYSICAL_REQUIREMENT = MermaidToken("Requirement.PHYSICAL_REQUIREMENT")
 
     @JvmField
-    val DESIGN_CONSTRAINT = MermaidToken("DESIGN_CONSTRAINT")
+    val DESIGN_CONSTRAINT = MermaidToken("Requirement.DESIGN_CONSTRAINT")
 
     @JvmField
-    val ELEMENT = MermaidToken("ELEMENT")
+    val ELEMENT = MermaidToken("Requirement.ELEMENT")
 
     @JvmField
-    val LOW = MermaidToken("LOW")
+    val LOW = MermaidToken("Requirement.LOW")
 
     @JvmField
-    val MEDIUM = MermaidToken("MEDIUM")
+    val MEDIUM = MermaidToken("Requirement.MEDIUM")
 
     @JvmField
-    val HIGH = MermaidToken("HIGH")
+    val HIGH = MermaidToken("Requirement.HIGH")
 
     @JvmField
-    val ANALYSIS = MermaidToken("ANALYSIS")
+    val ANALYSIS = MermaidToken("Requirement.ANALYSIS")
 
     @JvmField
-    val INSPECTION = MermaidToken("INSPECTION")
+    val INSPECTION = MermaidToken("Requirement.INSPECTION")
 
     @JvmField
-    val TEST = MermaidToken("TEST")
+    val TEST = MermaidToken("Requirement.TEST")
 
     @JvmField
-    val DEMONSTRATION = MermaidToken("DEMONSTRATION")
+    val DEMONSTRATION = MermaidToken("Requirement.DEMONSTRATION")
 
     @JvmField
-    val TEXT = MermaidToken("TEXT")
+    val TEXT = MermaidToken("Requirement.TEXT")
 
     @JvmField
-    val RISK = MermaidToken("RISK")
+    val RISK = MermaidToken("Requirement.RISK")
 
     @JvmField
-    val VERIFY_METHOD = MermaidToken("VERIFY_METHOD")
+    val VERIFY_METHOD = MermaidToken("Requirement.VERIFY_METHOD")
 
     @JvmField
-    val DOCREF = MermaidToken("DOCREF")
+    val DOCREF = MermaidToken("Requirement.DOCREF")
 
     @JvmField
-    val CONTAINS = MermaidToken("CONTAINS")
+    val CONTAINS = MermaidToken("Requirement.CONTAINS")
 
     @JvmField
-    val COPIES = MermaidToken("COPIES")
+    val COPIES = MermaidToken("Requirement.COPIES")
 
     @JvmField
-    val DERIVES = MermaidToken("DERIVES")
+    val DERIVES = MermaidToken("Requirement.DERIVES")
 
     @JvmField
-    val SATISFIES = MermaidToken("SATISFIES")
+    val SATISFIES = MermaidToken("Requirement.SATISFIES")
 
     @JvmField
-    val VERIFIES = MermaidToken("VERIFIES")
+    val VERIFIES = MermaidToken("Requirement.VERIFIES")
 
     @JvmField
-    val REFINES = MermaidToken("REFINES")
+    val REFINES = MermaidToken("Requirement.REFINES")
 
     @JvmField
-    val TRACES = MermaidToken("TRACES")
+    val TRACES = MermaidToken("Requirement.TRACES")
 
     @JvmField
-    val ARROW_LEFT = MermaidToken("ARROW_LEFT")
+    val ARROW_LEFT = MermaidToken("Requirement.ARROW_LEFT")
 
     @JvmField
-    val ARROW_RIGHT = MermaidToken("ARROW_RIGHT")
+    val ARROW_RIGHT = MermaidToken("Requirement.ARROW_RIGHT")
 
     @JvmField
-    val REQ_LINE = MermaidToken("REQ_LINE")
+    val REQ_LINE = MermaidToken("Requirement.REQ_LINE")
   }
 
   object GitGraph {
     @JvmField
-    val GIT_GRAPH = MermaidToken("GIT_GRAPH")
+    val GIT_GRAPH = MermaidToken("GitGraph.GIT_GRAPH")
 
     @JvmField
-    val COMMIT = MermaidToken("COMMIT")
+    val COMMIT = MermaidToken("GitGraph.COMMIT")
 
     @JvmField
-    val BRANCH = MermaidToken("BRANCH")
+    val BRANCH = MermaidToken("GitGraph.BRANCH")
 
     @JvmField
-    val CHECKOUT = MermaidToken("CHECKOUT")
+    val CHECKOUT = MermaidToken("GitGraph.CHECKOUT")
 
     @JvmField
-    val MERGE = MermaidToken("MERGE")
+    val MERGE = MermaidToken("GitGraph.MERGE")
 
     @JvmField
-    val TAG = MermaidToken("TAG")
+    val TAG = MermaidToken("GitGraph.TAG")
 
     @JvmField
-    val MSG = MermaidToken("MSG")
+    val MSG = MermaidToken("GitGraph.MSG")
 
     @JvmField
-    val CHERRY_PICK = MermaidToken("CHERRY_PICK")
+    val CHERRY_PICK = MermaidToken("GitGraph.CHERRY_PICK")
 
     @JvmField
-    val ORDER = MermaidToken("ORDER")
+    val ORDER = MermaidToken("GitGraph.ORDER")
 
     @JvmField
-    val NORMAL = MermaidToken("NORMAL")
+    val NORMAL = MermaidToken("GitGraph.NORMAL")
 
     @JvmField
-    val REVERSE = MermaidToken("REVERSE")
+    val REVERSE = MermaidToken("GitGraph.REVERSE")
 
     @JvmField
-    val HIGHLIGHT = MermaidToken("HIGHLIGHT")
+    val HIGHLIGHT = MermaidToken("GitGraph.HIGHLIGHT")
   }
 
   object C4 {
     @JvmField
-    val C4_CONTEXT = MermaidToken("C4_CONTEXT")
+    val C4_CONTEXT = MermaidToken("C4.C4_CONTEXT")
 
     @JvmField
-    val C4_CONTAINER = MermaidToken("C4_CONTAINER")
+    val C4_CONTAINER = MermaidToken("C4.C4_CONTAINER")
 
     @JvmField
-    val C4_COMPONENT = MermaidToken("C4_COMPONENT")
+    val C4_COMPONENT = MermaidToken("C4.C4_COMPONENT")
 
     @JvmField
-    val C4_DYNAMIC = MermaidToken("C4_DYNAMIC")
+    val C4_DYNAMIC = MermaidToken("C4.C4_DYNAMIC")
 
     @JvmField
-    val C4_DEPLOYMENT = MermaidToken("C4_DEPLOYMENT")
+    val C4_DEPLOYMENT = MermaidToken("C4.C4_DEPLOYMENT")
 
     @JvmField
-    val PERSON_EXT = MermaidToken("PERSON_EXT")
+    val PERSON_EXT = MermaidToken("C4.PERSON_EXT")
 
     @JvmField
-    val PERSON = MermaidToken("PERSON")
+    val PERSON = MermaidToken("C4.PERSON")
 
     @JvmField
-    val SYSTEM_EXT_QUEUE = MermaidToken("SYSTEM_EXT_QUEUE")
+    val SYSTEM_EXT_QUEUE = MermaidToken("C4.SYSTEM_EXT_QUEUE")
 
     @JvmField
-    val SYSTEM_EXT_DB = MermaidToken("SYSTEM_EXT_DB")
+    val SYSTEM_EXT_DB = MermaidToken("C4.SYSTEM_EXT_DB")
 
     @JvmField
-    val SYSTEM_EXT = MermaidToken("SYSTEM_EXT")
+    val SYSTEM_EXT = MermaidToken("C4.SYSTEM_EXT")
 
     @JvmField
-    val SYSTEM_QUEUE = MermaidToken("SYSTEM_QUEUE")
+    val SYSTEM_QUEUE = MermaidToken("C4.SYSTEM_QUEUE")
 
     @JvmField
-    val SYSTEM_DB = MermaidToken("SYSTEM_DB")
+    val SYSTEM_DB = MermaidToken("C4.SYSTEM_DB")
 
     @JvmField
-    val SYSTEM = MermaidToken("SYSTEM")
+    val SYSTEM = MermaidToken("C4.SYSTEM")
 
     @JvmField
-    val BOUNDARY = MermaidToken("BOUNDARY")
+    val BOUNDARY = MermaidToken("C4.BOUNDARY")
 
     @JvmField
-    val ENTERPRISE_BOUNDARY = MermaidToken("ENTERPRISE_BOUNDARY")
+    val ENTERPRISE_BOUNDARY = MermaidToken("C4.ENTERPRISE_BOUNDARY")
 
     @JvmField
-    val SYSTEM_BOUNDARY = MermaidToken("SYSTEM_BOUNDARY")
+    val SYSTEM_BOUNDARY = MermaidToken("C4.SYSTEM_BOUNDARY")
 
     @JvmField
-    val CONTAINER_EXT_QUEUE = MermaidToken("CONTAINER_EXT_QUEUE")
+    val CONTAINER_EXT_QUEUE = MermaidToken("C4.CONTAINER_EXT_QUEUE")
 
     @JvmField
-    val CONTAINER_EXT_DB = MermaidToken("CONTAINER_EXT_DB")
+    val CONTAINER_EXT_DB = MermaidToken("C4.CONTAINER_EXT_DB")
 
     @JvmField
-    val CONTAINER_EXT = MermaidToken("CONTAINER_EXT")
+    val CONTAINER_EXT = MermaidToken("C4.CONTAINER_EXT")
 
     @JvmField
-    val CONTAINER_QUEUE = MermaidToken("CONTAINER_QUEUE")
+    val CONTAINER_QUEUE = MermaidToken("C4.CONTAINER_QUEUE")
 
     @JvmField
-    val CONTAINER_DB = MermaidToken("CONTAINER_DB")
+    val CONTAINER_DB = MermaidToken("C4.CONTAINER_DB")
 
     @JvmField
-    val CONTAINER = MermaidToken("CONTAINER")
+    val CONTAINER = MermaidToken("C4.CONTAINER")
 
     @JvmField
-    val CONTAINER_BOUNDARY = MermaidToken("CONTAINER_BOUNDARY")
+    val CONTAINER_BOUNDARY = MermaidToken("C4.CONTAINER_BOUNDARY")
 
     @JvmField
-    val COMPONENT_EXT_QUEUE = MermaidToken("COMPONENT_EXT_QUEUE")
+    val COMPONENT_EXT_QUEUE = MermaidToken("C4.COMPONENT_EXT_QUEUE")
 
     @JvmField
-    val COMPONENT_EXT_DB = MermaidToken("COMPONENT_EXT_DB")
+    val COMPONENT_EXT_DB = MermaidToken("C4.COMPONENT_EXT_DB")
 
     @JvmField
-    val COMPONENT_EXT = MermaidToken("COMPONENT_EXT")
+    val COMPONENT_EXT = MermaidToken("C4.COMPONENT_EXT")
 
     @JvmField
-    val COMPONENT_QUEUE = MermaidToken("COMPONENT_QUEUE")
+    val COMPONENT_QUEUE = MermaidToken("C4.COMPONENT_QUEUE")
 
     @JvmField
-    val COMPONENT_DB = MermaidToken("COMPONENT_DB")
+    val COMPONENT_DB = MermaidToken("C4.COMPONENT_DB")
 
     @JvmField
-    val COMPONENT = MermaidToken("COMPONENT")
+    val COMPONENT = MermaidToken("C4.COMPONENT")
 
     @JvmField
-    val NODE = MermaidToken("NODE")
+    val NODE = MermaidToken("C4.NODE")
 
     @JvmField
-    val NODE_L = MermaidToken("NODE_L")
+    val NODE_L = MermaidToken("C4.NODE_L")
 
     @JvmField
-    val NODE_R = MermaidToken("NODE_R")
+    val NODE_R = MermaidToken("C4.NODE_R")
 
     @JvmField
-    val REL = MermaidToken("REL")
+    val REL = MermaidToken("C4.REL")
 
     @JvmField
-    val BIREL = MermaidToken("BIREL")
+    val BIREL = MermaidToken("C4.BIREL")
 
     @JvmField
-    val REL_U = MermaidToken("REL_U")
+    val REL_U = MermaidToken("C4.REL_U")
 
     @JvmField
-    val REL_D = MermaidToken("REL_D")
+    val REL_D = MermaidToken("C4.REL_D")
 
     @JvmField
-    val REL_L = MermaidToken("REL_L")
+    val REL_L = MermaidToken("C4.REL_L")
 
     @JvmField
-    val REL_R = MermaidToken("REL_R")
+    val REL_R = MermaidToken("C4.REL_R")
 
     @JvmField
-    val REL_B = MermaidToken("REL_B")
+    val REL_B = MermaidToken("C4.REL_B")
 
     @JvmField
-    val REL_INDEX = MermaidToken("REL_INDEX")
+    val REL_INDEX = MermaidToken("C4.REL_INDEX")
 
     @JvmField
-    val UPDATE_EL_STYLE = MermaidToken("UPDATE_EL_STYLE")
+    val UPDATE_EL_STYLE = MermaidToken("C4.UPDATE_EL_STYLE")
 
     @JvmField
-    val UPDATE_REL_STYLE = MermaidToken("UPDATE_REL_STYLE")
+    val UPDATE_REL_STYLE = MermaidToken("C4.UPDATE_REL_STYLE")
 
     @JvmField
-    val UPDATE_LAYOUT_CONFIG = MermaidToken("UPDATE_LAYOUT_CONFIG")
+    val UPDATE_LAYOUT_CONFIG = MermaidToken("C4.UPDATE_LAYOUT_CONFIG")
 
     @JvmField
-    val C4_ATTRIBUTE = MermaidToken("C4_ATTRIBUTE")
+    val C4_ATTRIBUTE = MermaidToken("C4.C4_ATTRIBUTE")
 
     @JvmField
-    val EQUALITY = MermaidToken("EQUALITY")
+    val EQUALITY = MermaidToken("C4.EQUALITY")
   }
 }
