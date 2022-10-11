@@ -16,8 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
-  private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
-
   ProjectFileBasedIndexStartupActivity() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
@@ -29,16 +27,6 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isInternal()) {
-      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void exitDumbMode() {
-          LOG.info("Has changed files: " + FileBasedIndexProjectHandler.mightHaveManyChangedFilesInProject(project) +
-                   "; project=" + project);
-        }
-      });
-    }
-
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
     if (propertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
