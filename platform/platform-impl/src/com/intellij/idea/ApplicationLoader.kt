@@ -340,7 +340,7 @@ private fun addActivateAndWindowsCliListeners() {
     if (args.isEmpty()) {
       return@BiFunction 0
     }
-    val result = runBlocking { handleExternalCommand(args.asList(), currentDirectory) }
+    val result = runBlocking(Dispatchers.EDT) { handleExternalCommand(args.asList(), currentDirectory) }
     CliResult.unmap(result.future, AppExitCodes.ACTIVATE_ERROR).exitCode
   }
 

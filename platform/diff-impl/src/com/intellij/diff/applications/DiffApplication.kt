@@ -1,139 +1,113 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.applications;
+package com.intellij.diff.applications
 
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManagerEx;
-import com.intellij.diff.DiffRequestFactory;
-import com.intellij.diff.actions.BlankDiffWindowUtil;
-import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.chains.SimpleDiffRequestChain;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.ide.CliResult;
-import com.intellij.idea.SplashManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.DiffDialogHints
+import com.intellij.diff.DiffManagerEx
+import com.intellij.diff.DiffRequestFactory
+import com.intellij.diff.actions.BlankDiffWindowUtil.createBlankDiffRequestChain
+import com.intellij.diff.actions.BlankDiffWindowUtil.setupBlankContext
+import com.intellij.diff.applications.DiffApplicationBase.findFilesOrThrow
+import com.intellij.diff.applications.DiffApplicationBase.guessProject
+import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.ide.CliResult
+import com.intellij.idea.SplashManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ApplicationStarterBase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.WindowWrapper
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 
-import java.awt.*;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override val commandName: String
+    get() = "diff"
 
-final class DiffApplication extends DiffApplicationBase {
-  DiffApplication() {
-    super(0, 2, 3);
-  }
+  override val usageMessage: String
+    get() {
+      val scriptName = ApplicationNamesInfo.getInstance().scriptName
+      return DiffBundle.message("diff.application.usage.parameters.and.description", scriptName)
+    }
 
-  @Override
-  public String getCommandName() {
-    return "diff";
-  }
-
-  @NotNull
-  @Override
-  public String getUsageMessage() {
-    final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    return DiffBundle.message("diff.application.usage.parameters.and.description", scriptName);
-  }
-
-  @Override
-  public int getRequiredModality() {
-    return NOT_IN_EDT;
-  }
-
-  @NotNull
-  @Override
-  public CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
-    List<String> filePaths = args.subList(1, args.size());
-    List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
-    Project project = guessProject(files);
-
-    CompletableFuture<CliResult> future = new CompletableFuture<>();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      DiffRequestChain chain;
+  override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
+    val filePaths = args.subList(1, args.size)
+    val files = findFilesOrThrow(filePaths, currentDirectory)
+    val project = guessProject(files)
+    return withContext(Dispatchers.EDT) {
+      val chain: DiffRequestChain
       if (files.isEmpty()) {
-        chain = BlankDiffWindowUtil.createBlankDiffRequestChain(project);
-        BlankDiffWindowUtil.setupBlankContext(chain);
+        chain = createBlankDiffRequestChain(project)
+        setupBlankContext(chain)
       }
       else {
-        chain = SimpleDiffRequestChain.fromProducer(new MyDiffRequestProducer(project, files));
-        chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+        chain = SimpleDiffRequestChain.fromProducer(MyDiffRequestProducer(project, files))
+        chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL)
       }
-
-      WindowWrapper.Mode mode = project != null ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
-      DiffDialogHints dialogHints = new DiffDialogHints(mode, null, wrapper -> {
-        Window window = wrapper.getWindow();
-        SplashManager.hideBeforeShow(window);
-
-        UIUtil.runWhenWindowClosed(window, () -> {
-          try {
-            for (VirtualFile file : files) {
-              saveIfNeeded(file);
+      val mode = if (project != null) WindowWrapper.Mode.FRAME else WindowWrapper.Mode.MODAL
+      val task = CompletableDeferred<Unit>()
+      val dialogHints = DiffDialogHints(mode, null) { wrapper ->
+        val window = wrapper.window
+        SplashManager.hideBeforeShow(window)
+        window.addWindowListener(object : WindowAdapter() {
+          override fun windowClosed(e: WindowEvent) {
+            try {
+              e.window.removeWindowListener(this)
+              for (file in files) {
+                saveIfNeeded(file)
+              }
+            }
+            finally {
+              task.complete(Unit)
             }
           }
-          finally {
-            future.complete(CliResult.OK);
-          }
-        });
-      });
+        })
+      }
+      DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints)
+      task.await()
+      return@withContext CliResult.OK
+    }
+  }
+}
 
-      DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
-    });
-    return future;
+private class MyDiffRequestProducer(private val project: Project?, private val files: List<VirtualFile?>) : DiffRequestProducer {
+  override fun getName(): String {
+    return if (files.size == 3) {
+      val base = files[2] ?: return DiffBundle.message("diff.files.dialog.title")
+      DiffRequestFactory.getInstance().getTitle(base)
+    }
+    else {
+      DiffRequestFactory.getInstance().getTitle(files[0], files[1])
+    }
   }
 
-  private static final class MyDiffRequestProducer implements DiffRequestProducer {
-    private final Project myProject;
-    private final List<VirtualFile> myFiles;
+  override fun getContentType(): FileType? {
+    val file = ContainerUtil.find(files, Conditions.notNull())
+    return file?.fileType
+  }
 
-    private MyDiffRequestProducer(@Nullable Project project, @NotNull List<VirtualFile> files) {
-      myProject = project;
-      myFiles = files;
+  override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
+    return if (files.size == 3) {
+      val nonNullFiles = DiffApplicationBase.replaceNullsWithEmptyFile(files)
+      DiffRequestFactory.getInstance().createFromFiles(project, nonNullFiles[0], nonNullFiles[2], nonNullFiles[1])
     }
-
-    @Override
-    public @NotNull String getName() {
-      if (myFiles.size() == 3) {
-        VirtualFile base = myFiles.get(2);
-        if (base == null) return DiffBundle.message("diff.files.dialog.title");
-        return DiffRequestFactory.getInstance().getTitle(base);
-      }
-      else {
-        return DiffRequestFactory.getInstance().getTitle(myFiles.get(0), myFiles.get(1));
-      }
-    }
-
-    @Override
-    public @Nullable FileType getContentType() {
-      VirtualFile file = ContainerUtil.find(myFiles, Conditions.notNull());
-      return file != null ? file.getFileType() : null;
-    }
-
-    @Override
-    public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestProducerException, ProcessCanceledException {
-      if (myFiles.size() == 3) {
-        List<VirtualFile> nonNullFiles = replaceNullsWithEmptyFile(myFiles);
-        return DiffRequestFactory.getInstance().createFromFiles(myProject, nonNullFiles.get(0), nonNullFiles.get(2), nonNullFiles.get(1));
-      }
-      else {
-        return DiffRequestFactory.getInstance().createFromFiles(myProject, myFiles.get(0), myFiles.get(1));
-      }
+    else {
+      DiffRequestFactory.getInstance().createFromFiles(project, files[0], files[1])
     }
   }
 }

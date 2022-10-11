@@ -12,6 +12,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ApplicationStarterBase;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-final class MergeApplication extends DiffApplicationBase {
+final class MergeApplication extends ApplicationStarterBase {
   MergeApplication() {
     super(3, 4);
   }
@@ -41,32 +42,25 @@ final class MergeApplication extends DiffApplicationBase {
     return "merge";
   }
 
-  @NotNull
   @Override
-  public String getUsageMessage() {
+  public @NotNull String getUsageMessage() {
     final String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
     return DiffBundle.message("merge.application.usage.parameters.and.description", scriptName);
   }
 
   @Override
-  public int getRequiredModality() {
-    return NOT_IN_EDT;
-  }
-
-  @NotNull
-  @Override
-  public CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
+  public @NotNull CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = args.subList(1, 4);
-    List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
-    Project project = guessProject(files);
+    List<VirtualFile> files = DiffApplicationBase.findFilesOrThrow(filePaths, currentDirectory);
+    Project project = DiffApplicationBase.guessProject(files);
 
     List<VirtualFile> contents = Arrays.asList(files.get(0), files.get(2), files.get(1)); // left, base, right
 
     VirtualFile outputFile;
     if (args.size() == 5) {
       String outputFilePath = args.get(4);
-      outputFile = findOrCreateFile(outputFilePath, currentDirectory);
-      refreshAndEnsureFilesValid(Collections.singletonList(outputFile));
+      outputFile = DiffApplicationBase.findOrCreateFile(outputFilePath, currentDirectory);
+      DiffApplicationBase.refreshAndEnsureFilesValid(Collections.singletonList(outputFile));
     }
     else {
       outputFile = files.get(2); // base
@@ -117,7 +111,7 @@ final class MergeApplication extends DiffApplicationBase {
     public @NotNull MergeRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       try {
-        List<VirtualFile> contents = replaceNullsWithEmptyFile(myContents);
+        List<VirtualFile> contents = DiffApplicationBase.replaceNullsWithEmptyFile(myContents);
         return DiffRequestFactory.getInstance().createMergeRequestFromFiles(myProject, myOutputFile, contents, result -> {
           try {
             saveIfNeeded(myOutputFile);
