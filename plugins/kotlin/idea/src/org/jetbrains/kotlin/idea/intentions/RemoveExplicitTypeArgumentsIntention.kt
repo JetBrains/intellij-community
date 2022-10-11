@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
+import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.analysis.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -56,6 +57,16 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
     }
 }
 
+/**
+ * Related tests:
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.RemoveExplicitTypeArguments]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated.DeprecatedSymbolUsage.Imports.testAddImportForOperator]
+ * [org.jetbrains.kotlin.idea.quickfix.QuickFixTestGenerated.DeprecatedSymbolUsage.TypeArguments.WholeProject.testClassConstructor]
+ * [org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated]
+ * [org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated.ExtractFunction]
+ * [org.jetbrains.kotlin.nj2k.*]
+ */
 class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentIntention<KtTypeArgumentList>(
     KtTypeArgumentList::class.java,
     KotlinBundle.lazyMessage("remove.explicit.type.arguments")
@@ -103,14 +114,19 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 }
             }
 
-            return args.size == newArgs.size && args.values.zip(newArgs.values).all { (argType, newArgType) ->
-                equalTypes(argType, newArgType)
-            }
+            return args.size == newArgs.size &&
+                    args.values.zip(newArgs.values).all { (argType, newArgType) -> equalTypes(argType, newArgType) } &&
+                    (newBindingContext.diagnostics.asSequence() - bindingContext.diagnostics).none {
+                        it.factory == INFERRED_INTO_DECLARED_UPPER_BOUNDS || it.factory == UNRESOLVED_REFERENCE ||
+                                it.factory == BUILDER_INFERENCE_STUB_RECEIVER ||
+                                // just for sure because its builder inference related
+                                it.factory == COULD_BE_INFERRED_ONLY_WITH_UNRESTRICTED_BUILDER_INFERENCE
+                    }
         }
 
         private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
             for (element in expression.parentsWithSelf) {
-                if (element !is KtExpression) continue
+                if (element !is KtExpression || element is KtEnumEntry) continue
 
                 if (element.getQualifiedExpressionForSelector() != null) continue
                 if (element is KtFunctionLiteral) continue
