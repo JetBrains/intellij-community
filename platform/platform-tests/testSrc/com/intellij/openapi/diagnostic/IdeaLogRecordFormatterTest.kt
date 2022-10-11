@@ -16,6 +16,14 @@ class IdeaLogRecordFormatterTest {
   }
 
   @Test
+  fun testKeepThirdPartyLoggerName() {
+    val logRecord = LogRecord(Level.INFO, "Foo")
+    logRecord.loggerName = "#com.github.yole.MyClass"
+    val formatted = IdeaLogRecordFormatter().format(logRecord)
+    Assert.assertTrue("#com.github.yole.MyClass" in formatted)
+  }
+
+  @Test
   fun testThrowable() {
     val throwable = Throwable()
     val logRecord = LogRecord(Level.INFO, "Foo")
