@@ -59,7 +59,6 @@ interface InlayHintsProvider<T : Any> {
    * Placeholders are shown on editor opening and stay until [getCollectorFor] collector hints are calculated.
    */
   @ApiStatus.Experimental
-  @JvmDefault
   fun getPlaceholdersCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector? = null
 
   /**
@@ -78,7 +77,6 @@ interface InlayHintsProvider<T : Any> {
    */
   val name: String
 
-  @JvmDefault
   val group: InlayGroup get() = InlayGroup.OTHER_GROUP
 
   /**
@@ -86,7 +84,6 @@ interface InlayHintsProvider<T : Any> {
    */
   val key: SettingsKey<T>
 
-  @JvmDefault
   val description: String?
     @Nls
     get() {
@@ -108,22 +105,18 @@ interface InlayHintsProvider<T : Any> {
    */
   fun isLanguageSupported(language: Language): Boolean = true
 
-  @JvmDefault
   fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
     return factory.createFileFromText("dummy", fileType, document.text)
   }
 
   @Nls
-  @JvmDefault
   fun getProperty(key: String): String? = null
 
-  @JvmDefault
   fun preparePreview(editor: Editor, file: PsiFile, settings: T) {
   }
 
   @Nls
-  @JvmDefault
   fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     return getProperty("inlay." + this.key.id + "." + case.id)
   }
@@ -146,17 +139,14 @@ interface ImmediateConfigurable {
   /**
    * Loads state from its configurable.
    */
-  @JvmDefault
   fun reset() {}
 
   /**
    * Text, that will be used in settings for checkbox to enable/disable hints.
    */
-  @JvmDefault
   val mainCheckboxText: String
     get() = "Show hints"
 
-  @JvmDefault
   val cases : List<Case>
     get() = emptyList()
 

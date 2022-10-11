@@ -26,7 +26,6 @@ interface SearchTarget {
    *
    * @return maximal search scope where this usage handler might yield any results, or `null` to search everywhere
    */
-  @JvmDefault
   val maximalSearchScope: SearchScope?
     get() = null
 
@@ -54,7 +53,6 @@ interface SearchTarget {
    *
    * @return collection of strings to search for text occurrences
    */
-  @JvmDefault
   val textSearchRequests: Collection<SearchRequest>
     get() = emptyList()
 

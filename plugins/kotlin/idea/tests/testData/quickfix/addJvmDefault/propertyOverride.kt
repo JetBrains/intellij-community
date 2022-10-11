@@ -3,7 +3,6 @@
 // COMPILER_ARGUMENTS: -Xjvm-default=enable
 // WITH_STDLIB
 interface Foo {
-    @JvmDefault
     val foo: String
         get() = ""
 }

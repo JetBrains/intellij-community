@@ -1,7 +1,6 @@
 package test
 
 interface KotlinInterface {
-    @JvmDefault
     fun bar() {
 
     }

@@ -29,7 +29,6 @@ interface WebSymbolsRegistry : ModificationTracker {
 
   fun createPointer(): Pointer<WebSymbolsRegistry>
 
-  @JvmDefault
   fun runNameMatchQuery(path: String,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
@@ -44,7 +43,6 @@ interface WebSymbolsRegistry : ModificationTracker {
                         strictScope: Boolean = false,
                         context: List<WebSymbolsContainer> = emptyList()): List<WebSymbol>
 
-  @JvmDefault
   fun runCodeCompletionQuery(path: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,

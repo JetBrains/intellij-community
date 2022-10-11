@@ -9,11 +9,9 @@ interface WebSymbolReference : PsiSymbolReference {
 
   override fun resolveReference(): Collection<WebSymbol>
 
-  @JvmDefault
   override fun resolvesTo(target: Symbol): Boolean =
     resolveReference().any { it.isEquivalentTo(target) }
 
-  @JvmDefault
   fun getProblems(): Collection<WebSymbolReferenceProblem> =
     emptyList()
 

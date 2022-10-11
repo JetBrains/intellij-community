@@ -12,7 +12,6 @@ import javax.swing.Icon
 @Suppress("DEPRECATION")
 @Internal
 interface WebTypesJsonOrigin : WebSymbolOrigin {
-  @JvmDefault
   override val typeSupport: WebTypesSymbolTypeSupport?
     get() = null
 

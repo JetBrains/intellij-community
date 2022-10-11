@@ -9,23 +9,18 @@ import javax.swing.Icon
  * DEPRECATION -> @JvmDefault
  **/
 interface WebSymbolOrigin {
-  @JvmDefault
   val framework: FrameworkId?
     get() = null
 
-  @JvmDefault
   val library: String?
     get() = null
 
-  @JvmDefault
   val version: String?
     get() = null
 
-  @JvmDefault
   val defaultIcon: Icon?
     get() = null
 
-  @JvmDefault
   val typeSupport: WebSymbolTypeSupport?
     get() = null
 

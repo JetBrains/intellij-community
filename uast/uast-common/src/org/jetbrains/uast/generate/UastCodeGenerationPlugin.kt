@@ -113,7 +113,6 @@ interface UastElementFactory {
    * Create binary expression, and possibly remove unnecessary parenthesis, so it could become [UPolyadicExpression], e.g
    * [createFlatBinaryExpression] (1 + 2, 2, +) could produce 1 + 2 + 2, which is polyadic expression
    */
-  @JvmDefault
   fun createFlatBinaryExpression(leftOperand: UExpression,
                                  rightOperand: UExpression,
                                  operator: UastBinaryOperator,
