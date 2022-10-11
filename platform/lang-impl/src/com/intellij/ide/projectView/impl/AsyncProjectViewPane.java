@@ -210,16 +210,6 @@ public abstract class AsyncProjectViewPane extends AbstractProjectViewPane {
     return ActionCallback.DONE;
   }
 
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public ActionCallback beforeSelect() {
-    // actually, getInitialized().doWhenDone() should be called by builder internally
-    // this will be done in 2017
-    AbstractTreeBuilder builder = getTreeBuilder();
-    if (builder == null) return ActionCallback.DONE;
-    return builder.getInitialized();
-  }
-
   @NotNull
   protected abstract ProjectAbstractTreeStructureBase createStructure();
 
