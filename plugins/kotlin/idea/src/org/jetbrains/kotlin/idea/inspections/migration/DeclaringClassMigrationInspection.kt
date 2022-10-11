@@ -14,7 +14,7 @@ class DeclaringClassMigrationInspection :
     AbstractDiagnosticBasedMigrationInspection<PsiElement>(PsiElement::class.java), MigrationFix {
 
     override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactory0<PsiElement> =
-        ErrorsJvm.ENUM_DECLARING_CLASS_DEPRECATED.warningFactory
+        with(ErrorsJvm.ENUM_DECLARING_CLASS_DEPRECATED) { languageVersionSettings.chooseFactory() }
 
     override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
         return migrationInfo.isLanguageVersionUpdate(

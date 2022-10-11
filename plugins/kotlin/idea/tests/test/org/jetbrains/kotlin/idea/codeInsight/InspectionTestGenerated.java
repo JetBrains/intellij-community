@@ -143,6 +143,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
+        @TestMetadata("declaringClassMigration1_7/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("declaringClassMigration1_9/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_9_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_9/inspectionData/inspections.test");
+        }
+
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
