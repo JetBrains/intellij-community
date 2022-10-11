@@ -51,9 +51,6 @@ class PydevConsoleRunnerUtilTest {
     override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume =
       throw UnsupportedOperationException()
 
-    @Deprecated("Use targetPortBindings")
-    override fun bindTargetPort(targetPort: Int): TargetValue<Int> = throw UnsupportedOperationException()
-
     @Deprecated("Use localPortBindings")
     override fun bindLocalPort(localPort: Int): TargetValue<HostPort> = throw UnsupportedOperationException()
 

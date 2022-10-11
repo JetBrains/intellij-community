@@ -112,20 +112,6 @@ interface TargetEnvironmentRequest {
   }
 
   /**
-   * Creates the requirement to open a port on the target environment.
-   *
-   * Returned value may be used in [TargetedCommandLineBuilder]
-   * where it will be replaced to the passed port.
-   *
-   * As soon as target will be prepared, the value will also contain the port on local machine
-   * that corresponds to the targetPort on target machine.
-   */
-  @Deprecated("Use targetPortBindings")
-  fun bindTargetPort(targetPort: Int): TargetValue<Int> {
-    throw UnsupportedOperationException()
-  }
-
-  /**
    * Creates the requirement to make a service listening on the provided port
    * on the local machine available for the process in the target environment.
    * <p>

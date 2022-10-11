@@ -51,10 +51,6 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingR
     throw UnsupportedOperationException("createDownloadRoot is not implemented")
   }
 
-  override fun bindTargetPort(targetPort: Int): TargetValue<Int> {
-    return TargetValue.fixed(targetPort)
-  }
-
   override fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
     return TargetValue.fixed(HostPort("localhost", localPort))
   }
