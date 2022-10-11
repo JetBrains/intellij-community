@@ -217,11 +217,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, toAddNames);
         for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
           String newName = entry.getKey();
-          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, entry.getValue(), null);
-          if (childData != null) {
-            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
-            toAddChildren.add(newChild);
-          }
+          FileAttributes attrs = entry.getValue();
+          String target = attrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newName)) : null;
+          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, attrs, target);
+          ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
+          toAddChildren.add(newChild);
         }
       }
       else {
