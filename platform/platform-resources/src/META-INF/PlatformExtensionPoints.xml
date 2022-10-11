@@ -325,6 +325,10 @@
     <extensionPoint name="diff.tools.combined.diffBlockFactory" interface="com.intellij.diff.tools.combined.CombinedDiffBlockFactory" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
+    <extensionPoint name="execution.syntheticConfigurationTypeProvider"
+                    interface="com.intellij.execution.SyntheticConfigurationTypeProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="executionActionSuppressor"
                     interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>

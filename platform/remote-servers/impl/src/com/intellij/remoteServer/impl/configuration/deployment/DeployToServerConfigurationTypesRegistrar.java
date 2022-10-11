@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
+import com.intellij.execution.SyntheticConfigurationTypeProvider;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,5 +92,13 @@ public final class DeployToServerConfigurationTypesRegistrar implements Disposab
 
   private static @NotNull ExtensionPointImpl<@NotNull ConfigurationType> getConfigurationTypeEP() {
     return (ExtensionPointImpl<@NotNull ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
+  }
+
+  static final class Provider implements SyntheticConfigurationTypeProvider {
+
+    @Override
+    public void initializeConfigurationTypes() {
+      getInstance();
+    }
   }
 }

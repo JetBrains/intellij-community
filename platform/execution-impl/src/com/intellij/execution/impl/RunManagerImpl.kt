@@ -776,6 +776,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
     }, this)
+
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
+      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+
+        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+          extension.initializeConfigurationTypes()
+        }
+      }, true, this)
   }
 
   override fun noStateLoaded() {
