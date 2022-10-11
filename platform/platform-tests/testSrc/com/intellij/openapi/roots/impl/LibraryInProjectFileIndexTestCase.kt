@@ -25,6 +25,8 @@ import com.intellij.util.io.generateInVirtualTempDir
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -217,16 +219,30 @@ abstract class LibraryInProjectFileIndexTestCase {
     fileIndex.assertScope(jar2InRecSubDir, IN_LIBRARY)
   }
 
-  @Test
-  fun `nested library roots`() {
+  @ParameterizedTest(name = "same library = {0}")
+  @ValueSource(booleans = [false, true])
+  fun `nested library roots`(sameLibrary: Boolean) {
     val innerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/inner/inner.txt")
     val outerFile = projectModel.baseProjectDir.newVirtualDirectory("outer/outer.txt")
-    val outerLibrary = createLibrary("outer") { it.addRoot(outerFile.parent, OrderRootType.CLASSES) }
-    val innerLibrary = createLibrary("inner") { it.addRoot(innerFile.parent, OrderRootType.SOURCES) }
-    ModuleRootModificationUtil.addDependency(module, innerLibrary)
-    ModuleRootModificationUtil.addDependency(module, outerLibrary)
+    val outerClassesRoot = outerFile.parent
+    val innerSourceRoot = innerFile.parent
+    if (sameLibrary) {
+      val library = createLibrary("lib") {
+        it.addRoot(outerClassesRoot, OrderRootType.CLASSES)
+        it.addRoot(innerSourceRoot, OrderRootType.SOURCES)
+      }
+      ModuleRootModificationUtil.addDependency(module, library)
+    }
+    else {
+      val outerLibrary = createLibrary("outer") { it.addRoot(outerClassesRoot, OrderRootType.CLASSES) }
+      val innerLibrary = createLibrary("inner") { it.addRoot(innerSourceRoot, OrderRootType.SOURCES) }
+      ModuleRootModificationUtil.addDependency(module, innerLibrary)
+      ModuleRootModificationUtil.addDependency(module, outerLibrary)
+    }
     fileIndex.assertScope(innerFile, IN_LIBRARY_SOURCE_AND_CLASSES)
     fileIndex.assertScope(outerFile, IN_LIBRARY)
+    assertEquals(innerSourceRoot, fileIndex.getSourceRootForFile(innerFile))
+    assertEquals(outerClassesRoot, fileIndex.getClassRootForFile(innerFile))
   }
 
   private fun VirtualFile.findJarRootByRelativePath(path: String): VirtualFile {
