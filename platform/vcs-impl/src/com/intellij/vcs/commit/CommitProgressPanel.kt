@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
@@ -117,7 +116,10 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     progressFlow
       .debounce(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
       .onEach { indicator ->
-        if (indicator?.isRunning == true && failuresPanel.isEmpty()) indicator.component.isVisible = true
+        if (indicator?.isRunning == true && failuresPanel.isEmpty()) {
+          indicator.component.isVisible = true
+          revalidatePanel()
+        }
       }
       .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
@@ -159,7 +161,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     addToStatusBar(indicator.statusBarDelegate)
 
     failuresPanel.clearFailures()
-    panel.revalidate()
+    revalidatePanel()
   }
 
   private fun progressStopped(indicator: InlineCommitChecksProgressIndicator) {
@@ -171,7 +173,14 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     Disposer.dispose(indicator)
 
     failuresPanel.endProgress()
-    panel.revalidate()
+    revalidatePanel()
+  }
+
+  private fun revalidatePanel() {
+    component.parent?.let {
+      it.revalidate()
+      it.repaint()
+    }
   }
 
   private fun addToStatusBar(progress: ProgressIndicatorEx) {
@@ -188,9 +197,13 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
   override fun addCommitCheckFailure(failure: CommitCheckFailure) {
     progress?.component?.isVisible = false
     failuresPanel.addFailure(failure)
+    revalidatePanel()
   }
 
-  override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
+  override fun clearCommitCheckFailures() {
+    failuresPanel.clearFailures()
+    revalidatePanel()
+  }
 
   override fun getCommitCheckFailures(): List<CommitCheckFailure> {
     return failuresPanel.getFailures()
@@ -207,6 +220,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
       isDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
       else -> label.isVisible = false
     }
+    revalidatePanel()
   }
 
   protected open fun clearError() {
