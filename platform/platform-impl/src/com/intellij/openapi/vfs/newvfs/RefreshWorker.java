@@ -224,7 +224,7 @@ final class RefreshWorker {
     List<String> persistedNames = snapshot.second;
 
     t = System.nanoTime();
-    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir) : null;
+    Map<String, FileAttributes> childrenWithAttributes = fs instanceof BatchingFileSystem ? ((BatchingFileSystem)fs).listWithAttributes(dir, null) : null;
     String[] listDir = childrenWithAttributes != null ? ArrayUtil.toStringArray(childrenWithAttributes.keySet()) : fs.list(dir);
     myIoTime.addAndGet(System.nanoTime() - t);
     String[] upToDateNames = VfsUtil.filterNames(listDir);
