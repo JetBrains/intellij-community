@@ -16,4 +16,8 @@ interface MermaidPsiElement : NavigatablePsiElement
 
 @Suppress("UnstableApiUsage")
 open class MermaidNamedPsiElement(node: ASTNode) : ASTWrapperPsiElement(node), MermaidPsiElement,
-  PsiExternalReferenceHost
+  PsiExternalReferenceHost {
+  override fun getName(): String {
+    return text.trim()
+  }
+}

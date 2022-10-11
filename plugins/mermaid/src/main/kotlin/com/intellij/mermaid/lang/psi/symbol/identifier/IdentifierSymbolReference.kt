@@ -38,7 +38,7 @@ class IdentifierSymbolReference(
   override fun getCompletionVariants(): Collection<LookupElement> {
     val file = element.containingFile
     val labels = file.collectNamedElements().asSequence()
-    return labels.map { LookupElementBuilder.create(it) }.toList()
+    return labels.map { LookupElementBuilder.create(it.name) }.toList()
   }
 
   companion object {
