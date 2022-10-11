@@ -180,24 +180,22 @@ final class RefreshWorker {
         }
 
         var dir = (VirtualDirectoryImpl)file;
-        boolean fullSync = dir.allChildrenLoaded(), succeeded;
+        var fullSync = dir.allChildrenLoaded();
+        var mark = events.size();
 
-        do {
+        while (true) {
           (fullSync ? myFullScans : myPartialScans).incrementAndGet();
-          var mark = events.size();
           try {
-            succeeded = fullSync ? fullDirRefresh(events, fs, dir) : partialDirRefresh(events, fs, dir);
+            var success = fullSync ? fullDirRefresh(events, fs, dir) : partialDirRefresh(events, fs, dir);
+            if (success) break;
+            events.subList(mark, events.size()).clear();
+            if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           }
           catch (InvalidVirtualFileAccessException e) {
             events.subList(mark, events.size()).clear();
             continue nextDir;
           }
-          if (!succeeded) {
-            events.subList(mark, events.size()).clear();
-            if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
-          }
         }
-        while (!succeeded);
         myProcessed.incrementAndGet();
 
         if (myIsRecursive) {
@@ -664,7 +662,6 @@ final class RefreshWorker {
     return false;
   }
 
-  // true if the event was scheduled
   private static boolean checkAndScheduleFileNameChange(List<VFileEvent> events,
                                                         @Nullable ObjectOpenCustomHashSet<String> actualNames,
                                                         VirtualFile child) {

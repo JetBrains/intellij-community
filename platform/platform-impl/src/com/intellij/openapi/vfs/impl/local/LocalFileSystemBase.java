@@ -50,9 +50,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
-  private final FileAttributes FAKE_ROOT_ATTRIBUTES =
-    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false,
-                       isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+  private static final FileAttributes UNC_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.INSENSITIVE);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
@@ -748,10 +747,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    if (SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")) {
-      return FAKE_ROOT_ATTRIBUTES;  // UNC roots
-    }
-    return myAttrGetter.accessDiskWithCheckCanceled(file);
+    return SystemInfo.isWindows && file.getParent() == null && file.getPath().startsWith("//")
+           ? UNC_ROOT_ATTRIBUTES
+           : myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
   private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(LocalFileSystemBase::getAttributesWithCustomTimestamp);
