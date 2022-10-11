@@ -188,6 +188,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/hasPlatformType/inspectionData/inspections.test");
         }
 
+        @TestMetadata("inlineClassDeprecatedMigration/inspectionData/inspections.test")
+        public void testInlineClassDeprecatedMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/inlineClassDeprecatedMigration/inspectionData/inspections.test");
+        }
+
         @TestMetadata("javaCollectionsStaticMethodOnImmutableList/inspectionData/inspections.test")
         public void testJavaCollectionsStaticMethodOnImmutableList_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/javaCollectionsStaticMethodOnImmutableList/inspectionData/inspections.test");
