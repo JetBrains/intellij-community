@@ -6,15 +6,18 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.USimpleNameReferenceExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,12 +31,31 @@ public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final String jbColorConstant = String.format("%s.%s", JBColor.class.getName(), buildColorConstantName(element));
-    final PsiExpression expression = factory.createExpressionFromText(jbColorConstant, element.getContext());
-    final PsiElement newElement = element.replace(expression);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+    PsiElement element = descriptor.getPsiElement();
+    UReferenceExpression awtColorConstantReference = getReferenceExpression(element);
+    if (awtColorConstantReference == null) return;
+    UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+    if (generationPlugin == null) return;
+    UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+    String jbColorConstant = JBColor.class.getName() + '.' + buildColorConstantName(element);
+    UQualifiedReferenceExpression jbColorConstantReference = pluginElementFactory.createQualifiedReference(jbColorConstant, element);
+    if (jbColorConstantReference != null) {
+      UQualifiedReferenceExpression replaced =
+        generationPlugin.replace(awtColorConstantReference, jbColorConstantReference, UQualifiedReferenceExpression.class);
+      if (replaced != null) {
+        // it should be shortened automatically, but is not in tests, see: IDEA-303537
+        generationPlugin.shortenReference(replaced);
+      }
+    }
+  }
+
+  @Nullable
+  private static UReferenceExpression getReferenceExpression(PsiElement element) {
+    UReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
+    if (expression == null) {
+      expression = UastContextKt.toUElement(element, USimpleNameReferenceExpression.class);
+    }
+    return expression;
   }
 
   @NotNull
