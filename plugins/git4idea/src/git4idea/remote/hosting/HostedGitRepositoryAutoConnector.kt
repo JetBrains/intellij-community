@@ -22,9 +22,9 @@ class HostedGitRepositoryAutoConnector<M : HostedGitRepositoryMapping, A : Serve
 ) {
 
   private val singleRepoAndAccountState: StateFlow<Pair<M, A>?> =
-    combineState(scope, repositoryManager.knownRepositoriesState, accountManager.accountsState) { repos, accountsMap ->
+    combineState(scope, repositoryManager.knownRepositoriesState, accountManager.accountsState) { repos, accounts ->
       repos.singleOrNull()?.let { repo ->
-        accountsMap.keys.singleOrNull { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }?.let {
+        accounts.singleOrNull { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }?.let {
           repo to it
         }
       }

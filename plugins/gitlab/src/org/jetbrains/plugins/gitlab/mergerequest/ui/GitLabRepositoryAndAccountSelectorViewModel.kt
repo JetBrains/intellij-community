@@ -52,7 +52,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
                                 private val submit: Boolean) {
 
     val accounts: Set<GitLabAccount>
-      get() = accountManager.accountsState.value.keys
+      get() = accountManager.accountsState.value
 
     fun login(account: GitLabAccount, token: String) {
       accountManager.updateAccount(account, token)

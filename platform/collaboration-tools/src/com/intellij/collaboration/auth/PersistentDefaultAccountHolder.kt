@@ -36,7 +36,7 @@ abstract class PersistentDefaultAccountHolder<A : Account>(protected val project
 
   override fun loadState(state: AccountState) {
     account = state.defaultAccountId?.let { id ->
-      accountManager.accountsState.value.keys.find { it.id == id }.also {
+      accountManager.accountsState.value.find { it.id == id }.also {
         if (it == null) notifyDefaultAccountMissing()
       }
     }

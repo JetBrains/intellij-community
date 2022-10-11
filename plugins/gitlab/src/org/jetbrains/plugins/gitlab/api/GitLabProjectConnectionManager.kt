@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.gitlab.api
 
 import git4idea.remote.hosting.HostedGitRepositoryConnectionManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -16,47 +14,56 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 interface GitLabProjectConnectionManager : HostedGitRepositoryConnectionManager<GitLabProjectMapping, GitLabAccount, GitLabProjectConnection>
 
 internal class GitLabProjectConnectionManagerImpl(scope: CoroutineScope,
-                                                  repositoriesManager: GitLabProjectsManager,
-                                                  accountManager: GitLabAccountManager)
+                                                  private val repositoriesManager: GitLabProjectsManager,
+                                                  private val accountManager: GitLabAccountManager)
   : GitLabProjectConnectionManager {
 
   private val connectionRequestsFlow = MutableSharedFlow<Pair<GitLabProjectMapping, GitLabAccount>?>()
 
-  override val state = MutableStateFlow<GitLabProjectConnection?>(null)
+  override val state by lazy {
+    connectionRequestsFlow
+      .handleConnectionRequest()
+      .stateIn(scope, SharingStarted.Eagerly, null)
+  }
 
-  init {
-    scope.launch {
-      combine(connectionRequestsFlow,
-              repositoriesManager.knownRepositoriesState,
-              accountManager.accountsState) { request, repositories, accountsMap ->
-        val (repo, account) = request ?: return@combine null
-        if (!repositories.contains(repo)) return@combine null
-        val token = accountsMap[account] ?: return@combine null
-        ConnectionData(repo, account, token)
-      }.collect {
-        state.update { conn ->
-          updateConnection(conn, it)
+  private fun Flow<Pair<GitLabProjectMapping, GitLabAccount>?>.handleConnectionRequest(): Flow<GitLabProjectConnection?> =
+    channelFlow {
+      var connection: GitLabProjectConnection? = null
+      distinctUntilChanged().collectLatest { request ->
+        try {
+          val (repo, account) = request ?: throw CancellationException()
+          combine(repositoriesManager.knownRepositoriesState, accountManager.accountsState) { repositories, accounts ->
+            if (!repositories.contains(repo)) {
+              throw CancellationException()
+            }
+            if (!accounts.contains(account)) {
+              throw CancellationException()
+            }
+          }.collectLatest {
+            coroutineScope {
+              accountManager.getCredentialsFlow(account).collectLatest { token ->
+                if (token == null) {
+                  throw CancellationException()
+                }
+                else {
+                  val currentConnection = connection
+                  if (currentConnection != null && currentConnection.repo == repo && currentConnection.account == account) {
+                    currentConnection.token = token
+                  }
+                  else {
+                    connection = GitLabProjectConnection(repo, account, token)
+                  }
+                  send(connection)
+                }
+              }
+            }
+          }
+        }
+        catch (ce: Exception) {
+          connection = null
         }
       }
     }
-  }
-
-  private fun updateConnection(currentConnection: GitLabProjectConnection?,
-                               connectionData: ConnectionData?): GitLabProjectConnection? {
-    if (currentConnection != null) {
-      if (connectionData == null || currentConnection.repo != connectionData.repo || currentConnection.account != connectionData.account) {
-        return null
-      }
-      currentConnection.token = connectionData.token
-      return currentConnection
-    }
-    else {
-      if (connectionData != null) {
-        return GitLabProjectConnection(connectionData.repo, connectionData.account, connectionData.token)
-      }
-      return null
-    }
-  }
 
   override suspend fun tryConnect(repo: GitLabProjectMapping, account: GitLabAccount) {
     connectionRequestsFlow.emit(repo to account)
@@ -65,10 +72,4 @@ internal class GitLabProjectConnectionManagerImpl(scope: CoroutineScope,
   override suspend fun disconnect() {
     connectionRequestsFlow.emit(null)
   }
-
-  private data class ConnectionData(
-    val repo: GitLabProjectMapping,
-    val account: GitLabAccount,
-    val token: String
-  )
 }

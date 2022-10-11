@@ -28,8 +28,8 @@ class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManag
 
     val gitRemotesState = project.service<GitRepositoryManager>().trackRemotesState(scope)
 
-    val knownServersState = service<GHAccountManager>().accountsState.mapState(scope) { accountsMap ->
-      mutableSetOf(GithubServerPath.DEFAULT_SERVER) + accountsMap.keys.map { it.server }
+    val knownServersState = service<GHAccountManager>().accountsState.mapState(scope) { accounts ->
+      mutableSetOf(GithubServerPath.DEFAULT_SERVER) + accounts.map { it.server }
     }
 
     val discoveredServersState = gitRemotesState.discoverServers(scope, knownServersState) {

@@ -34,7 +34,7 @@ internal class GHAccountsDetailsProvider(
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager)
     : this(scope, { getExecutor(accountManager, it) }) {
-    cancelOnRemoval(scope, accountManager.accountsState)
+    cancelOnRemoval(scope, accountManager)
   }
 
   override suspend fun loadDetails(account: GithubAccount): Result<GithubUserDetailed> {

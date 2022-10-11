@@ -42,6 +42,9 @@ import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
@@ -364,28 +367,29 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun createAccountsModel(): ListModel<GithubAccount> {
-    val accountsState = authenticationManager.accountManager.accountsState
-    val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
+    val model = CollectionListModel<GithubAccount>()
     cs.launch(Dispatchers.Main.immediate) {
-      val prev = accountsState.value.filterKeys(::isAccountHandled)
-      accountsState.collect {
-        val new = it.filterKeys(::isAccountHandled)
-
-        new.forEach { (acc, token) ->
-          if (!prev.containsKey(acc)) {
-            model.add(acc)
+      authenticationManager.accountManager.accountsState
+        .map { it.filter(::isAccountHandled).toSet() }
+        .collectLatest { accounts ->
+          val currentAccounts = model.items
+          accounts.forEach {
+            if (!currentAccounts.contains(it)) {
+              model.add(it)
+              async {
+                authenticationManager.accountManager.getCredentialsFlow(it, false).collect { _ ->
+                  model.contentsChanged(it)
+                }
+              }
+            }
           }
-          else if (prev[acc] != token) {
-            model.contentsChanged(acc)
+
+          currentAccounts.forEach {
+            if (!accounts.contains(it)) {
+              model.remove(it)
+            }
           }
         }
-
-        prev.forEach { (acc, _) ->
-          if (!new.containsKey(acc)) {
-            model.remove(acc)
-          }
-        }
-      }
     }
     return model
   }

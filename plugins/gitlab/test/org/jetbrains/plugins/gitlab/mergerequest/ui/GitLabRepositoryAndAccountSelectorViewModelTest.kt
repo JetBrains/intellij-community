@@ -61,7 +61,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(mapOf(account to "token"))
+    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, connectionManager, projectManager, accountManager)
