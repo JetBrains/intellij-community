@@ -28,7 +28,7 @@ final class DeploymentConfigurationManagerImpl extends DeploymentConfigurationMa
 
   @Override
   public @NotNull List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
-    DeployToServerConfigurationType<?> configurationType = DeploymentConfigurationTypesManagerImpl.getImplementationInstance()
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
       .getConfigurationType(serverType);
     return RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType);
   }
@@ -37,7 +37,7 @@ final class DeploymentConfigurationManagerImpl extends DeploymentConfigurationMa
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                         @Nullable RemoteServer<?> remoteServer,
                                         @Nullable DeploymentSourceType<?> sourceType) {
-    DeployToServerConfigurationType<?> configurationType = DeploymentConfigurationTypesManagerImpl.getImplementationInstance()
+    DeployToServerConfigurationType<?> configurationType = DeployToServerConfigurationTypesRegistrar.getInstance()
       .getConfigurationType(serverType);
     RunManager runManager = RunManager.getInstance(myProject);
     ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);
