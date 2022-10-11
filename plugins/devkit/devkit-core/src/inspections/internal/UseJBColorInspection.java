@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -41,7 +43,10 @@ public class UseJBColorInspection extends DevKitInspectionBase {
               !isUsedAsJBColorConstructorParameter(expression)) {
             PsiElement sourcePsi = expression.getSourcePsi();
             if (sourcePsi != null) {
-              holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), new ConvertToJBColorQuickFix());
+              LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
+                                      new LocalQuickFix[]{new ConvertToJBColorQuickFix()} :
+                                      LocalQuickFix.EMPTY_ARRAY;
+              holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.awt.color.used"), fixes);
             }
           }
         }
