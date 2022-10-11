@@ -7,6 +7,7 @@ import com.intellij.grazie.utils.Text
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
+import com.intellij.psi.util.CachedValuesManager
 
 internal class CommentProblemFilter : ProblemFilter() {
   private val tokenizer
@@ -51,6 +52,10 @@ internal class CommentProblemFilter : ProblemFilter() {
   }
 
   // the _todo_ word spoils the grammar of what follows
-  private fun isTodoComment(file: PsiFile, text: TextContent) =
-    PsiTodoSearchHelper.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
+  private fun isTodoComment(file: PsiFile, text: TextContent): Boolean {
+    val todos = CachedValuesManager.getProjectPsiDependentCache(file) {
+      PsiTodoSearchHelper.getInstance(it.project).findTodoItems(it)
+    }
+    return todos.any { text.intersectsRange(it.textRange) }
+  }
 }
