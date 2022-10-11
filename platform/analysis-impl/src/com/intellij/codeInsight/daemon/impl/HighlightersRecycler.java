@@ -39,9 +39,4 @@ final class HighlightersRecycler {
   Collection<? extends RangeHighlighter> forAllInGarbageBin() {
     return incinerator.values();
   }
-
-  @Override
-  public String toString() {
-    return "HighlightersRecycler: "+incinerator;
-  }
 }

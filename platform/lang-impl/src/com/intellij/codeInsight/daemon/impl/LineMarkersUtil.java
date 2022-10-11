@@ -32,12 +32,13 @@ public final class LineMarkersUtil {
   static boolean processLineMarkers(@NotNull Project project,
                                     @NotNull Document document,
                                     @NotNull Segment bounds,
+                                    int group, // -1 for all
                                     @NotNull Processor<? super LineMarkerInfo<?>> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return markupModel.processRangeHighlightersOverlappingWith(bounds.getStartOffset(), bounds.getEndOffset(),
          highlighter -> {
            LineMarkerInfo<?> info = getLineMarkerInfo(highlighter);
-           return info == null || processor.process(info);
+           return info == null || group != -1 && info.updatePass != group || processor.process(info);
          }
     );
   }
@@ -51,14 +52,15 @@ public final class LineMarkersUtil {
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    processLineMarkers(project, document, bounds, info -> {
+    processLineMarkers(project, document, bounds, group, info -> {
       toReuse.recycleHighlighter(info.highlighter);
       return true;
     });
 
     if (LOG.isDebugEnabled()) {
       List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(group: " + group+ ", bounds: " + bounds+ ", markers: "+markers+"); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
+      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+markers+", group: " + group+
+                "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
     for (LineMarkerInfo<?> info : markers) {
