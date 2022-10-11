@@ -111,18 +111,6 @@ interface TargetEnvironmentRequest {
     throw UnsupportedOperationException()
   }
 
-  /**
-   * Creates the requirement to make a service listening on the provided port
-   * on the local machine available for the process in the target environment.
-   * <p>
-   * The returned value contains the host and the port, which the target
-   * process should connect to, to access the local service.
-   */
-  @Deprecated("Use localPortBindings")
-  fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
-    throw UnsupportedOperationException()
-  }
-
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {
     val platform: Platform

@@ -3,7 +3,6 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.Platform
 import com.intellij.execution.target.*
-import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.progress.ProgressIndicator
 import org.assertj.core.api.SoftAssertions
@@ -50,9 +49,6 @@ class PydevConsoleRunnerUtilTest {
     @Deprecated("Use downloadVolumes")
     override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume =
       throw UnsupportedOperationException()
-
-    @Deprecated("Use localPortBindings")
-    override fun bindLocalPort(localPort: Int): TargetValue<HostPort> = throw UnsupportedOperationException()
 
     override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment = DummyTargetEnvironment(this)
 

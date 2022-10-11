@@ -85,11 +85,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
     return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, id, path));
   }
 
-  @Override
-  public @NotNull TargetValue<HostPort> bindLocalPort(int localPort) {
-    return TargetValue.fixed(new HostPort("localhost", localPort));
-  }
-
   @NotNull
   @Override
   public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {
