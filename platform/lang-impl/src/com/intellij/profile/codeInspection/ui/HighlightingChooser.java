@@ -125,7 +125,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   protected @NotNull ListPopup createActionPopup(@NotNull DataContext context,
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
-    final var group = createPopupActionGroup(component);
+    final var group = createPopupActionGroup(component, context);
     myPopup = new HighlightPopup(
       myPopupTitle,
       group,

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -51,7 +52,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
 
   @NotNull
   @Override
-  public DefaultActionGroup createPopupActionGroup(final JComponent component) {
+  public DefaultActionGroup createPopupActionGroup(@NotNull JComponent component, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final List<NamedScope> predefinedScopes = new ArrayList<>();
