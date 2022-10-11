@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
 import com.intellij.application.options.CodeCompletionConfigurable
@@ -85,7 +85,7 @@ object RankingSupport {
   }
 
   private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean, providerId: String) {
-    if (shouldSort && isEnabledByDefault && providerId == "Kotlin") {
+    if (shouldSort && isEnabledByDefault && providerId == "PHP") {
       val properties = PropertiesComponent.getInstance()
       if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
         properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
