@@ -82,7 +82,6 @@ fun buildQuery(
   if (options.isUsages) {
     queries += SearchService.getInstance().searchParameters(DefaultUsageSearchParameters(project, target, options.searchScope))
   }
-  queries += target.usageHandler.buildSearchQuery(options)
   if (textSearch == true) {
     target.textSearchRequests.mapTo(queries) { searchRequest ->
       buildTextUsageQuery(project, searchRequest, options.searchScope, textSearchContexts).mapping(::PlainTextUsage)

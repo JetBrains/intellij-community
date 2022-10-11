@@ -3,8 +3,6 @@ package com.intellij.find.usages.api;
 
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.EmptyQuery;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,11 +21,5 @@ final class EmptyUsageHandler implements UsageHandler {
   @Override
   public String getSearchString(@NotNull UsageOptions options) {
     return FindBundle.message("usages.search.title.default", myTargetName);
-  }
-
-  @NotNull
-  @Override
-  public Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options) {
-    return EmptyQuery.getEmptyQuery();
   }
 }
