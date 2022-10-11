@@ -65,6 +65,10 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
   }
 
+  fun updateAll() {
+    updateQueue.queue(UpdateInlaysTask(this, updateAll = true))
+  }
+
   fun update(pointers: Collection<NotebookIntervalPointer>) {
     updateQueue.queue(UpdateInlaysTask(this, pointers = pointers))
   }
@@ -409,11 +413,17 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
                                lines: IntRange? = null,
-                               pointers: Collection<NotebookIntervalPointer>? = null) : Update(Any()) {
+                               pointers: Collection<NotebookIntervalPointer>? = null,
+                               private var updateAll: Boolean = false) : Update(Any()) {
   private val linesList = lines?.let{ SmartList<IntRange>(lines) } ?: SmartList()
   private val pointersSet = pointers?.let{ SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
+    if (updateAll) {
+      manager.updateAllImmediately()
+      return
+    }
+
     val pointersLines = pointersSet.mapNotNull { it.get()?.lines }.sortedBy { it.first }
     linesList.mergeAndJoinIntersections(pointersLines)
 
@@ -424,6 +434,10 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
 
   override fun canEat(update: Update): Boolean {
     update as UpdateInlaysTask
+
+    updateAll = updateAll || update.updateAll
+    if (updateAll) return true
+
     linesList.mergeAndJoinIntersections(update.linesList)
     pointersSet.addAll(update.pointersSet)
     return true
