@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -76,7 +77,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
-    return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
+    JBList<T> jbList = new JBList<>(new CollectionListModel<>(list));
+    PopupUtil.applyNewUIBackground(jbList);
+    return new PopupChooserBuilder<>(jbList);
   }
 
   @Override
