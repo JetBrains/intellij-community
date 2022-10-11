@@ -77,15 +77,6 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     updateQueue.queue(UpdateInlaysTask(this, pointers = SmartList(pointer)))
   }
 
-  fun update(interval: NotebookCellLines.Interval) {
-    update(interval.lines)
-  }
-
-  fun update(lines: IntRange) {
-    // TODO Hypothetically, there can be a race between cell addition/deletion and updating of old cells.
-    updateQueue.queue(UpdateInlaysTask(this, lines))
-  }
-
   private fun addViewportChangeListener() {
     editor.scrollPane.viewport.addChangeListener {
       viewportQueue.queue(object : Update("Viewport change") {
@@ -412,10 +403,8 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 }
 
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
-                               lines: IntRange? = null,
                                pointers: Collection<NotebookIntervalPointer>? = null,
                                private var updateAll: Boolean = false) : Update(Any()) {
-  private val linesList = lines?.let{ SmartList<IntRange>(lines) } ?: SmartList()
   private val pointersSet = pointers?.let{ SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
@@ -424,8 +413,9 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
       return
     }
 
-    val pointersLines = pointersSet.mapNotNull { it.get()?.lines }.sortedBy { it.first }
-    linesList.mergeAndJoinIntersections(pointersLines)
+    val linesList = pointersSet.mapNotNullTo(mutableListOf()){ it.get()?.lines }
+    linesList.sortBy { it.first }
+    linesList.mergeAndJoinIntersections(listOf())
 
     for (lines in linesList) {
       manager.updateImmediately(lines)
@@ -438,7 +428,6 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
     updateAll = updateAll || update.updateAll
     if (updateAll) return true
 
-    linesList.mergeAndJoinIntersections(update.linesList)
     pointersSet.addAll(update.pointersSet)
     return true
   }
