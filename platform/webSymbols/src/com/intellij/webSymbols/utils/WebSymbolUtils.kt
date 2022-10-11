@@ -17,8 +17,8 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.registry.WebSymbolMatch
 import com.intellij.webSymbols.registry.WebSymbolNamesProvider
 import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
@@ -194,7 +194,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
 fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWithinElement: Int): Navigatable {
   val vf = element.containingFile.virtualFile
            ?: return EmptyNavigatable.INSTANCE
-  val targetPresentation = this.targetPresentation
+  val targetPresentation = this.presentation()
   val descriptor = OpenFileDescriptor(
     element.project, vf, element.textRange.startOffset + offsetWithinElement)
 

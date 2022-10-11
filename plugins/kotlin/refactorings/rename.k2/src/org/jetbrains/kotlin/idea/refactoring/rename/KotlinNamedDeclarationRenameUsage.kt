@@ -24,8 +24,9 @@ internal class KotlinNamedDeclarationRenameUsage private constructor(
     override val targetName: String
         get() = element.name ?: reportMissingName()
 
-    override val presentation: TargetPresentation
-        get() = TargetPresentation.builder(targetName).presentation()
+    override fun presentation(): TargetPresentation {
+        return TargetPresentation.builder(targetName).presentation()
+    }
 
     override val file: PsiFile
         get() = element.containingFile

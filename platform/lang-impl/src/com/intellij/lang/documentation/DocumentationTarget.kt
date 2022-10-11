@@ -35,10 +35,9 @@ interface DocumentationTarget {
    * Returned presentation is used to render the tab name and icon in the tool window,
    * and to render location info under the documentation in the popup.
    */
-  val presentation: TargetPresentation
-    @RequiresReadLock
-    @RequiresBackgroundThread
-    get
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun presentation(): TargetPresentation
 
   @Suppress("DEPRECATION") // deprecated JvmDefault
   @JvmDefault

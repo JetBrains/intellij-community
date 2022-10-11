@@ -50,14 +50,13 @@ abstract class GradleProjectSymbol(
 
   override val usageHandler: UsageHandler get() = UsageHandler.createEmptyUsageHandler(projectName)
 
-  override val presentation: TargetPresentation
-    get() {
-      val presentation = symbolPresentation
-      return TargetPresentation
-        .builder(presentation.longDescription)
-        .icon(presentation.icon)
-        .presentation()
-    }
+  override fun presentation(): TargetPresentation {
+    val presentation = symbolPresentation
+    return TargetPresentation
+      .builder(presentation.longDescription)
+      .icon(presentation.icon)
+      .presentation()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -41,7 +41,7 @@ class SearchTarget2UsageTarget(
   }
 
   private fun getItemPresentation(target: SearchTarget): ItemPresentation {
-    val presentation = target.presentation
+    val presentation = target.presentation()
     return object : ItemPresentation {
       override fun getIcon(unused: Boolean): Icon? = presentation.icon
       override fun getPresentableText(): String = presentation.presentableText

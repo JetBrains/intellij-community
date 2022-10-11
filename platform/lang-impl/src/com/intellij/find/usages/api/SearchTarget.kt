@@ -6,6 +6,8 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.navigation.TargetPresentation
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Represents the search implementation (the usage handler and the text search strings)
@@ -34,7 +36,9 @@ interface SearchTarget {
    * or in the Usage View (only [icon][TargetPresentation.icon]
    * and [presentable text][TargetPresentation.presentableText] are used)
    */
-  val presentation: TargetPresentation
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun presentation(): TargetPresentation
 
   /**
    * @see UsageHandler.createEmptyUsageHandler

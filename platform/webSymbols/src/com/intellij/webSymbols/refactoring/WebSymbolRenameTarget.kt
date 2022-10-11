@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.refactoring
 
 import com.intellij.model.Pointer
@@ -17,7 +18,7 @@ open class WebSymbolRenameTarget(val symbol: WebSymbol) : RenameTarget {
   override val targetName: String
     get() = symbol.matchedName
 
-  override val presentation: TargetPresentation
-    get() = symbol.presentation
-
+  override fun presentation(): TargetPresentation {
+    return symbol.presentation
+  }
 }

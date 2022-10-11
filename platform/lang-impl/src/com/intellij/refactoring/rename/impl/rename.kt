@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
@@ -52,7 +52,7 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
     targetName = targetName,
     renameOptions = renameOptions(project, target)
   )
-  val dialog = RenameDialog(project, target.presentation.presentableText, initOptions)
+  val dialog = RenameDialog(project, target.presentation().presentableText, initOptions)
   if (!dialog.showAndGet()) {
     // cancelled
     return

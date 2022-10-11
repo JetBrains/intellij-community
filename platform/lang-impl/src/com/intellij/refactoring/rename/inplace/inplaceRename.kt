@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -94,7 +94,7 @@ internal fun inplaceRename(project: Project, editor: Editor, target: RenameTarge
   var textOptions: TextOptions = getTextOptions(target)
   val data = prepareTemplate(hostDocument, hostFile, originUsage, psiUsages, textOptionsRef = { textOptions })
              ?: return false
-  val commandName: String = RefactoringBundle.message("rename.command.name.0.in.place.template", target.presentation.presentableText)
+  val commandName: String = RefactoringBundle.message("rename.command.name.0.in.place.template", target.presentation().presentableText)
   val startMarkAction: StartMarkAction = try {
     InplaceRefactoring.startMarkAction(project, hostEditor, commandName)
   }

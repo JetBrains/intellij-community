@@ -17,11 +17,12 @@ class WebSymbolSearchTargetImpl(override val symbol: WebSymbol) : WebSymbolSearc
     }
   }
 
-  override val presentation: TargetPresentation
-    get() = symbol.presentation
+  override fun presentation(): TargetPresentation {
+    return symbol.presentation
+  }
 
   override val usageHandler: UsageHandler
-    get() = UsageHandler.createEmptyUsageHandler(presentation.presentableText)
+    get() = UsageHandler.createEmptyUsageHandler(presentation().presentableText)
 
   override fun equals(other: Any?): Boolean =
     other === this ||
