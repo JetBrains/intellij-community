@@ -412,7 +412,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public void cleanUpCache() {
+    public synchronized void cleanUpCache() {
       super.cleanUpCache();
       myTotalErrorLevel = null;
     }
@@ -426,7 +426,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       updateUpTo(this);
     }
 
-    public ErrorLevel getTotalErrorLevel() {
+    public synchronized ErrorLevel getTotalErrorLevel() {
       if (myTotalErrorLevel == null) {
         myTotalErrorLevel = calcTotalErrorLevel();
       }
