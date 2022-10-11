@@ -38,9 +38,9 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       val migration = MIGRATION_EP.extensionList.firstOrNull()
       if (migration != null) {
         val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
-        LOG.info("Found migration from an old storage: ${migration.javaClass.name}, migration possible: $migrationPossible")
         SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
         if (migrationPossible) {
+          LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}, migration possible: $migrationPossible")
           SettingsSyncSettings.getInstance().syncEnabled = true
           executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
         }
