@@ -1182,6 +1182,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/fieldWithEndOfLineCommentAndNoInitializer.java");
         }
 
+        @TestMetadata("fieldWithLineBreakCommentAndInitializer.java")
+        public void testFieldWithLineBreakCommentAndInitializer() throws Exception {
+            runTest("testData/newJ2k/comments/fieldWithLineBreakCommentAndInitializer.java");
+        }
+
         @TestMetadata("fieldsInitializedFromParams.java")
         public void testFieldsInitializedFromParams() throws Exception {
             runTest("testData/newJ2k/comments/fieldsInitializedFromParams.java");
