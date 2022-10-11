@@ -27,11 +27,8 @@ internal class YAMLlInspectionSuppressor : InspectionSuppressor {
   }
 
 
-  override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> {
-    if (element == null) return SuppressQuickFix.EMPTY_ARRAY
-    return arrayOf(YAMLSuppressKeyQuickFix(toolId, element),
-                   YAMLSuppressFileQuickFix(toolId, element))
-  }
+  override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> =
+    arrayOf(YAMLSuppressKeyQuickFix(toolId), YAMLSuppressFileQuickFix(toolId))
 }
 
 private val SUPPRESS_IN_LINE_COMMENT_PATTERN: Pattern = Pattern.compile("#" + SuppressionUtil.COMMON_SUPPRESS_REGEXP)
@@ -90,11 +87,15 @@ private fun createNewCommentByPattern(pattern: Pattern, existingComment: PsiComm
 }
 
 
-private class YAMLSuppressKeyQuickFix(ID: String, psiElement: PsiElement) :
-  AbstractBatchSuppressByNoInspectionCommentFix(ID, false) {
-  override fun getContainer(context: PsiElement?): PsiElement? = context?.parentOfType<YAMLKeyValue>(true)
+private class YAMLSuppressKeyQuickFix(ID: String) : AbstractBatchSuppressByNoInspectionCommentFix(ID, false) {
 
-  private val keyName: String? = getContainer(psiElement)?.asSafely<YAMLKeyValue>()?.keyText
+  private var keyName: String? = null
+  override fun getContainer(context: PsiElement?): PsiElement? {
+    val parentOfType = context?.parentOfType<YAMLKeyValue>(true)
+    // getContainer is called in `isAvailable` and then we use it to update the `getText`
+    keyName = parentOfType.asSafely<YAMLKeyValue>()?.keyText
+    return parentOfType
+  }
 
   override fun createSuppression(project: Project, element: PsiElement, container: PsiElement) {
     val existingComment = findNoinspectionCommentForKeyValue(container as YAMLKeyValue, null)
@@ -111,15 +112,18 @@ private class YAMLSuppressKeyQuickFix(ID: String, psiElement: PsiElement) :
       before.parent.addBefore(comment, before)
     }
   }
-  
+
   override fun getText(): String = YAMLBundle.message("suppress.inspection.key", myID, keyName)
 }
 
-private class YAMLSuppressFileQuickFix(ID: String, psiElement: PsiElement) :
+private class YAMLSuppressFileQuickFix(ID: String) :
   AbstractBatchSuppressByNoInspectionCommentFix(ID, false) {
-  override fun getContainer(context: PsiElement?): PsiElement? = context?.containingFile
 
-  private val keyName: String? = getContainer(psiElement)?.asSafely<PsiFile>()?.name
+  private var keyName: String? = null
+  override fun getContainer(context: PsiElement?): PsiElement? = context?.containingFile?.also {
+    // getContainer is called in `isAvailable` and then we use it to update the `getText`
+    keyName = it.asSafely<PsiFile>()?.name
+  }
 
   override fun createSuppression(project: Project, element: PsiElement, container: PsiElement) {
     val generator = YAMLElementGenerator.getInstance(project)
