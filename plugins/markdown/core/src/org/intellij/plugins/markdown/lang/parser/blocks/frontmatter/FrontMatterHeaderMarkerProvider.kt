@@ -8,9 +8,7 @@ import org.intellij.markdown.parser.ProductionHolder
 import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(
     position: LookaheadText.Position,

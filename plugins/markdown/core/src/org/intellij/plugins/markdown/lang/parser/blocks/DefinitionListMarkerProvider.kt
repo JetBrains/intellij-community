@@ -9,7 +9,7 @@ import org.intellij.markdown.parser.constraints.MarkdownConstraints
 import org.intellij.markdown.parser.markerblocks.MarkerBlock
 import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
 
-internal class DefinitionListMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInfo> {
+class DefinitionListMarkerProvider: MarkerBlockProvider<MarkerProcessor.StateInfo> {
   override fun createMarkerBlocks(
     position: LookaheadText.Position,
     productionHolder: ProductionHolder,
