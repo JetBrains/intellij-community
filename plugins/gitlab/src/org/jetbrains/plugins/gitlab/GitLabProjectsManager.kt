@@ -28,8 +28,8 @@ internal class GitLabProjectsManagerImpl(project: Project) : GitLabProjectsManag
 
     val gitRemotesState = project.service<GitRepositoryManager>().trackRemotesState(scope)
 
-    val serversState = service<GitLabAccountManager>().accountsState.mapState(scope) { accountsMap ->
-      mutableSetOf(GitLabServerPath.DEFAULT_SERVER) + accountsMap.keys.map { it.server }
+    val serversState = service<GitLabAccountManager>().accountsState.mapState(scope) { accounts ->
+      mutableSetOf(GitLabServerPath.DEFAULT_SERVER) + accounts.map { it.server }
     }
 
     knownRepositoriesState = gitRemotesState.mapToServers(scope, serversState) { server, remote ->

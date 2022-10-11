@@ -1,12 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.collaboration.async.collectWithPrevious
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -28,10 +33,10 @@ class GithubAuthenticationManager internal constructor() {
   internal val accountManager: GHAccountManager get() = service()
 
   @CalledInAny
-  fun hasAccounts() = accountManager.accounts.isNotEmpty()
+  fun hasAccounts() = accountManager.accountsState.value.isNotEmpty()
 
   @CalledInAny
-  fun getAccounts(): Set<GithubAccount> = accountManager.accounts
+  fun getAccounts(): Set<GithubAccount> = accountManager.accountsState.value
 
   @CalledInAny
   internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.findCredentials(account)
@@ -83,7 +88,7 @@ class GithubAuthenticationManager internal constructor() {
   }
 
   internal fun isAccountUnique(name: String, server: GithubServerPath) =
-    accountManager.accounts.none { it.name == name && it.server.equals(server, true) }
+    accountManager.accountsState.value.none { it.name == name && it.server.equals(server, true) }
 
   @RequiresEdt
   @JvmOverloads
@@ -140,11 +145,24 @@ class GithubAuthenticationManager internal constructor() {
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? =
     project.service<GithubProjectDefaultAccountHolder>().account
-    ?: accountManager.accounts.singleOrNull()
+    ?: accountManager.accountsState.value.singleOrNull()
 
   @Deprecated("replaced with stateFlow", ReplaceWith("accountManager.accountsState"))
   @RequiresEdt
-  fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) = accountManager.addListener(disposable, listener)
+  fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) {
+    disposable.disposingMainScope().launch {
+      accountManager.accountsState.collectWithPrevious(setOf()) { prev, current ->
+        listener.onAccountListChanged(prev, current)
+        current.forEach { acc ->
+          async {
+            accountManager.getCredentialsFlow(acc, false).collectLatest {
+              listener.onAccountCredentialsChanged(acc)
+            }
+          }
+        }
+      }
+    }
+  }
 
   companion object {
     @JvmStatic

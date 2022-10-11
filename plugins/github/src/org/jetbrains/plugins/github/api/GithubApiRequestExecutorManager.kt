@@ -6,6 +6,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.*
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
@@ -29,10 +31,15 @@ class GithubApiRequestExecutorManager : Disposable {
 
   init {
     disposingMainScope().launch {
-      service<GHAccountManager>().accountsState.collect {
-        it.forEach { (account, token) ->
-          if (token == null) tokenSuppliers.remove(account)
-          else tokenSuppliers[account]?.token = token
+      val accountManager = service<GHAccountManager>()
+      accountManager.accountsState.collectLatest { accounts ->
+        tokenSuppliers.keys.retainAll(accounts)
+        accounts.forEach { acc ->
+          async {
+            accountManager.getCredentialsFlow(acc, false).collectLatest {
+              if (it == null) tokenSuppliers.remove(acc)
+            }
+          }
         }
       }
     }

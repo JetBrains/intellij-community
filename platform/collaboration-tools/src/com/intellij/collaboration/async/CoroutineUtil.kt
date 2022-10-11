@@ -94,3 +94,12 @@ suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Uni
     }
   }
 }
+
+@ApiStatus.Experimental
+suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {
+  var prev = initial
+  collect {
+    collector(prev, it)
+    prev = it
+  }
+}

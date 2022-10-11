@@ -41,14 +41,6 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
               accountManager: AccountManager<A, Cred>,
               accountsModel: AccountsListModel<A, Cred>) : this(accountManager, null, accountsModel, scope)
 
-  init {
-    scope.launch {
-      accountManager.accountsState.collect {
-        if (!isModified()) reset()
-      }
-    }
-  }
-
   fun accountsPanelCell(row: Row,
                         detailsProvider: LoadingAccountsDetailsProvider<A, *>,
                         actionsController: AccountsPanelActionsController<A>): Cell<JComponent> {
@@ -73,12 +65,12 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
     else false
 
     return accountsModel.newCredentials.isNotEmpty()
-           || accountsModel.accounts != accountManager.accounts
+           || accountsModel.accounts != accountManager.accountsState.value
            || defaultModified
   }
 
   private fun reset() {
-    accountsModel.accounts = accountManager.accounts
+    accountsModel.accounts = accountManager.accountsState.value
     if (defaultAccountHolder != null && accountsModel is AccountsListModel.WithDefault) {
       accountsModel.defaultAccount = defaultAccountHolder.account
     }

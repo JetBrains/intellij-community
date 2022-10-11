@@ -13,11 +13,11 @@ internal class GithubAccountsStatisticsCollector : ApplicationUsagesCollector() 
 
   override fun getMetrics(): Set<MetricEvent> {
     val accountManager = service<GHAccountManager>()
-    val hasAccountsWithNonDefaultHost = accountManager.accounts.any {
+    val hasAccountsWithNonDefaultHost = accountManager.accountsState.value.any {
       !StringUtil.equalsIgnoreCase(it.server.host, GithubServerPath.DEFAULT_HOST)
     }
 
-    return setOf(ACCOUNTS.metric(accountManager.accounts.size, hasAccountsWithNonDefaultHost))
+    return setOf(ACCOUNTS.metric(accountManager.accountsState.value.size, hasAccountsWithNonDefaultHost))
   }
 
   override fun getGroup(): EventLogGroup {

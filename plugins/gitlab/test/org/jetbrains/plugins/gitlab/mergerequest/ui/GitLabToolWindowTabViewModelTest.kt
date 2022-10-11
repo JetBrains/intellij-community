@@ -37,7 +37,7 @@ internal class GitLabToolWindowTabViewModelTest {
 
   @Test
   fun `check nested vm`() = runTest {
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(emptyMap())
+    whenever(accountManager.accountsState) doReturn MutableStateFlow(emptySet())
     whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(emptySet())
 
     val scope = childScope(Dispatchers.Main)

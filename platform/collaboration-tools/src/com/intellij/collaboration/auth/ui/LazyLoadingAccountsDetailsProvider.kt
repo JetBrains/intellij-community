@@ -3,18 +3,16 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
+import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.collaboration.ui.items
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Image
 import java.util.concurrent.ConcurrentHashMap
@@ -56,7 +54,7 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
     }
   }
 
-  internal fun clearDetails(account: A) {
+  fun clearDetails(account: A) {
     requestsMap.remove(account)?.cancel()
     resultsMap.remove(account)
     //TODO: granular invalidation
@@ -64,7 +62,7 @@ abstract class LazyLoadingAccountsDetailsProvider<A : Account, D : AccountDetail
     loadingCompletionFlow.tryEmit(account)
   }
 
-  internal fun clearOutdatedDetails(currentList: Set<A>) {
+  fun clearOutdatedDetails(currentList: Set<A>) {
     for (account in requestsMap.keys - currentList) {
       clearDetails(account)
     }
@@ -128,12 +126,19 @@ fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(listM
   })
 }
 
-fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(scope: CoroutineScope, state: StateFlow<Map<A, String?>>) {
+fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(scope: CoroutineScope, accountManager: AccountManager<A, *>) {
   scope.launch {
-    state.collect {
-      clearOutdatedDetails(it.keys)
-      it.forEach { (account, token) ->
-        if (token == null) clearDetails(account)
+    accountManager.accountsState.collectLatest {
+      clearOutdatedDetails(it)
+      //TODO: subscribe only when requested
+      coroutineScope {
+        for (account in it) {
+          launch {
+            accountManager.getCredentialsFlow(account, false).collect {
+              clearDetails(account)
+            }
+          }
+        }
       }
     }
   }

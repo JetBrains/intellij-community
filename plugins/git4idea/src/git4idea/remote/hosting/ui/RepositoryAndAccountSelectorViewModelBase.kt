@@ -8,8 +8,8 @@ import com.intellij.collaboration.util.URIUtil
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 
 abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepositoryMapping, A : ServerAccount>(
   scope: CoroutineScope,
@@ -21,24 +21,32 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
 
   final override val repoSelectionState = MutableStateFlow<M?>(null)
 
-  final override val accountsState = combineState(scope, accountManager.accountsState, repoSelectionState) { accountsMap, repo ->
+  final override val accountsState = combineState(scope, accountManager.accountsState, repoSelectionState) { accounts, repo ->
     if (repo == null) {
       emptyList()
     }
     else {
-      accountsMap.keys.filter { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }
+      accounts.filter { URIUtil.equalWithoutSchema(it.server.toURI(), repo.repository.serverPath.toURI()) }
     }
   }
 
   final override val accountSelectionState = MutableStateFlow<A?>(null)
 
   final override val missingCredentialsState: StateFlow<Boolean> =
-    combineState(scope, accountManager.accountsState, accountSelectionState) { accountsMap, account ->
-      account != null && accountsMap[account] == null
-    }
+    channelFlow {
+      accountSelectionState.collectLatest {
+        if(it == null) {
+          send(false)
+        } else {
+          accountManager.getCredentialsFlow(it, true).collect { creds ->
+            send(creds == null)
+          }
+        }
+      }
+    }.stateIn(scope, SharingStarted.Eagerly, false)
 
   final override val submitAvailableState: StateFlow<Boolean> =
-    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState) { repo, acc, credsMissing ->
+    combine(repoSelectionState, accountSelectionState, missingCredentialsState) { repo, acc, credsMissing ->
       repo != null && acc != null && !credsMissing
-    }
+    }.stateIn(scope, SharingStarted.Eagerly, false)
 }

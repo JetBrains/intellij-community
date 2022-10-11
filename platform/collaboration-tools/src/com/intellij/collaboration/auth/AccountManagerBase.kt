@@ -1,158 +1,153 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.credentialStore.*
-import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.openapi.diagnostic.Logger
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Base class for account management application service
  * Accounts are stored in [accountsRepository]
- * Credentials are serialized and stored in [passwordSafe]
- *
- * @see [AccountsListener]
+ * Credentials are stored in [credentialsRepository]
  */
-abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: String)
-  : AccountManager<A, Cred>, Disposable {
+abstract class AccountManagerBase<A : Account, Cred : Any>(
+  private val logger: Logger
+) : AccountManager<A, Cred>, Disposable {
 
-  protected open val passwordSafe
-    get() = PasswordSafe.instance
-
-  private val persistentAccounts
-    get() = accountsRepository()
-
+  private val persistentAccounts get() = accountsRepository()
   protected abstract fun accountsRepository(): AccountsRepository<A>
 
-  private val listeners = CopyOnWriteArrayList<AccountsListener<A>>()
+  private val persistentCredentials get() = credentialsRepository()
+  protected abstract fun credentialsRepository(): CredentialsRepository<A, Cred>
 
-  private val messageBusConnection by lazy { messageBusConnection() }
-
-  @VisibleForTesting
-  protected open fun messageBusConnection() = ApplicationManager.getApplication().messageBus.connect(this)
-
-  final override val accounts: Set<A>
-    get() = persistentAccounts.accounts
-
-  private val _accountsState = MutableStateFlow(accounts.associateWith { findCredentials(it) })
-  override val accountsState: StateFlow<Map<A, Cred?>> = _accountsState.asStateFlow()
-
-  init {
-    messageBusConnection.subscribe(PasswordSafeSettings.TOPIC, object : PasswordSafeSettingsListener {
-      override fun credentialStoreCleared() = notifyAllCredentialsChanged()
-    })
+  private val _accountsState = MutableSharedFlow<Set<A>>()
+  override val accountsState: StateFlow<Set<A>> by lazy {
+    _accountsState.stateIn(disposingScope(), SharingStarted.Eagerly, persistentAccounts.accounts)
   }
 
+  private val accountsEventsFlow = MutableSharedFlow<Event<A, Cred>>()
+  private val mutex = Mutex()
+
   override fun updateAccounts(accountsWithCredentials: Map<A, Cred?>) {
-    val currentSet = persistentAccounts.accounts
-    val removed = currentSet - accountsWithCredentials.keys
-    for (account in removed) {
-      passwordSafe.set(account.credentialAttributes(), null)
-    }
-    for ((account, credentials) in accountsWithCredentials) {
-      if (credentials != null) {
-        passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
-        if (currentSet.contains(account)) notifyCredentialsChanged(account)
+    runBlocking {
+      mutex.withLock {
+        withContext(NonCancellable) {
+          val currentSet = persistentAccounts.accounts
+          val removed = currentSet - accountsWithCredentials.keys
+          for (account in removed) {
+            saveCredentialsSafe(account, null)
+          }
+
+          for ((account, credentials) in accountsWithCredentials) {
+            if (credentials != null) {
+              saveCredentialsSafe(account, credentials)
+            }
+          }
+          val added = accountsWithCredentials.keys - currentSet
+          if (added.isNotEmpty() || removed.isNotEmpty()) {
+            persistentAccounts.accounts = accountsWithCredentials.keys
+            _accountsState.emit(accountsWithCredentials.keys)
+            logger.debug("Account list changed to: ${persistentAccounts.accounts}")
+          }
+          accountsEventsFlow.emit(Event.AccountsRemoved(removed))
+          accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(accountsWithCredentials))
+        }
       }
-    }
-    val added = accountsWithCredentials.keys - currentSet
-    if (added.isNotEmpty() || removed.isNotEmpty()) {
-      persistentAccounts.accounts = accountsWithCredentials.keys
-      notifyAccountsChanged(currentSet, accountsWithCredentials.keys)
-      LOG.debug("Account list changed to: ${persistentAccounts.accounts}")
     }
   }
 
   override fun updateAccount(account: A, credentials: Cred) {
-    val currentSet = persistentAccounts.accounts
-    val newAccount = !currentSet.contains(account)
-    if (!newAccount) {
-      // remove and add an account to update auxiliary fields
-      persistentAccounts.accounts = (currentSet - account) + account
-    }
-    else {
-      persistentAccounts.accounts = currentSet + account
-      LOG.debug("Added new account: $account")
-    }
-    passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
-    LOG.debug((if (credentials == null) "Cleared" else "Updated") + " credentials for account: $account")
-    if (!newAccount) {
-      notifyCredentialsChanged(account)
-    }
-    else {
-      notifyAccountsChanged(currentSet, persistentAccounts.accounts)
+    runBlocking {
+      mutex.withLock {
+        withContext(NonCancellable) {
+          val currentSet = persistentAccounts.accounts
+          val newAccount = account !in currentSet
+          val newSet = if (!newAccount) {
+            // remove and add an account to update auxiliary fields
+            (currentSet - account) + account
+          }
+          else {
+            logger.debug("Added new account: $account")
+            currentSet + account
+          }
+          persistentAccounts.accounts = newSet
+          saveCredentialsSafe(account, credentials)
+          _accountsState.emit(newSet)
+          accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(mapOf(account to credentials)))
+          logger.debug("Updated credentials for account: $account")
+        }
+      }
     }
   }
 
   override fun removeAccount(account: A) {
-    val currentSet = persistentAccounts.accounts
-    val newSet = currentSet - account
-    if (newSet.size != currentSet.size) {
-      persistentAccounts.accounts = newSet
-      passwordSafe.set(account.credentialAttributes(), null)
-      LOG.debug("Removed account: $account")
-      notifyAccountsChanged(currentSet, newSet)
+    runBlocking {
+      mutex.withLock {
+        withContext(NonCancellable) {
+          val currentSet = persistentAccounts.accounts
+          val newSet = currentSet - account
+          if (newSet.size != currentSet.size) {
+            persistentAccounts.accounts = newSet
+            saveCredentialsSafe(account, null)
+            _accountsState.emit(newSet)
+            accountsEventsFlow.emit(Event.AccountsRemoved(setOf(account)))
+            logger.debug("Removed account: $account")
+          }
+        }
+      }
     }
   }
 
-  private fun notifyAccountsChanged(old: Set<A>, new: Set<A>) {
-    listeners.forEach { it.onAccountListChanged(old, new) }
-    _accountsState.value = new.associateWith { findCredentials(it) }
-  }
-
-  private fun notifyCredentialsChanged(account: A) {
-    listeners.forEach { it.onAccountCredentialsChanged(account) }
-    _accountsState.update {
-      val copy = it.toMutableMap()
-      copy[account] = findCredentials(account)
-      copy
+  private suspend fun saveCredentialsSafe(account: A, credentials: Cred?) {
+    try {
+      persistentCredentials.persistCredentials(account, credentials)
+    }
+    catch (e: Exception) {
+      logger.warn(e)
     }
   }
 
-  private fun notifyAllCredentialsChanged() {
-    val newMap = mutableMapOf<A, Cred?>()
-    accounts.forEach { acc ->
-      newMap[acc] = findCredentials(acc)
-      listeners.forEach { it.onAccountCredentialsChanged(acc) }
+  override fun findCredentials(account: A): Cred? = runBlocking {
+    persistentCredentials.retrieveCredentials(account)
+  }
+
+  override fun getCredentialsFlow(account: A, withCurrent: Boolean): Flow<Cred?> = channelFlow {
+    mutex.withLock {
+      // subscribe to map updates first
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        accountsEventsFlow.collect {
+          when (it) {
+            is Event.AccountsAddedOrUpdated -> {
+              send(it.map[account])
+            }
+            is Event.AccountsRemoved -> {
+              if (account in it.accounts) {
+                cancel()
+              }
+            }
+          }
+        }
+      }
+      if (withCurrent) {
+        try {
+          send(persistentCredentials.retrieveCredentials(account))
+        }
+        catch (e: Exception) {
+          logger.warn("Failed to retrieve credentials", e)
+          send(null)
+        }
+      }
     }
-    _accountsState.value = newMap
   }
 
-  override fun findCredentials(account: A): Cred? =
-    passwordSafe.get(account.credentialAttributes())?.getPasswordAsString()?.let(::deserializeCredentials)
+  override fun dispose() = Unit
 
-  private fun A.credentialAttributes() = CredentialAttributes(generateServiceName(serviceName, id))
-
-  private fun A.credentials(credentials: Cred?): Credentials? = credentials?.let { Credentials(id, serializeCredentials(it)) }
-
-  protected abstract fun serializeCredentials(credentials: Cred): String
-  protected abstract fun deserializeCredentials(credentials: String): Cred
-
-  @Deprecated("replaced with stateFlow", ReplaceWith("accountsState"))
-  override fun addListener(disposable: Disposable, listener: AccountsListener<A>) {
-    listeners.add(listener)
-    Disposer.register(disposable) {
-      listeners.remove(listener)
-    }
-  }
-
-  @VisibleForTesting
-  fun addListener(listener: AccountsListener<A>) {
-    listeners.add(listener)
-  }
-
-  override fun dispose() {}
-
-  companion object {
-    private val LOG
-      get() = thisLogger()
+  private sealed interface Event<A, Cred> {
+    class AccountsRemoved<A, Cred>(val accounts: Set<A>) : Event<A, Cred>
+    class AccountsAddedOrUpdated<A, Cred>(val map: Map<A, Cred?>) : Event<A, Cred>
   }
 }
