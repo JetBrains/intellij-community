@@ -15,6 +15,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
 
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
@@ -206,8 +210,8 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     sourceElement.set(psiElement);
 
     if (sourceValueIndex != null) {
-      String oldParameters = configuration.getProgramParameters() != null ? configuration.getProgramParameters() : "";
-      final String newProgramParameters = oldParameters + " valueSource " + sourceValueIndex;
+      String oldParameters = configuration.getProgramParameters() != null ? configuration.getProgramParameters() + " " : "";
+      final String newProgramParameters = oldParameters + "valueSource " + sourceValueIndex;
       configuration.setProgramParameters(newProgramParameters);
     }
     return true;
@@ -239,9 +243,16 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     if (annotationValues instanceof JvmAnnotationArrayValue) {
       JvmAnnotationArrayValue values = (JvmAnnotationArrayValue)annotationValues;
       List<JvmAnnotationAttributeValue> valuesAttr = values.getValues();
-      JvmAnnotationAttributeValue first = ContainerUtil.getFirstItem(valuesAttr);
-      if (first != null) {
-        return valuesAttr.indexOf(first);
+      String text = token.getText();
+      JvmAnnotationAttributeValue value = ContainerUtil.find(valuesAttr, v -> {
+        if (v instanceof JvmAnnotationConstantValue) {
+          Object constantValue = ((JvmAnnotationConstantValue)v).getConstantValue();
+          return constantValue != null && text.equals("\"" + constantValue + "\"");
+        }
+        return false;
+      });
+      if (value != null) {
+        return valuesAttr.indexOf(value);
       }
     }
     return null;

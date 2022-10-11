@@ -238,7 +238,14 @@ public class JUnit5TestRunnerUtil {
         }
       }
     }
-    if (index != null) return DiscoverySelectors.selectIteration(methodSelector, index);
+    if (index != null) {
+      try {
+        return DiscoverySelectors.selectIteration(methodSelector, index);
+      }
+      catch (NoSuchMethodError e) {
+        return null;
+      }
+    }
     return null;
   }
   private static NestedClassSelector getNestedSelector(String line,
