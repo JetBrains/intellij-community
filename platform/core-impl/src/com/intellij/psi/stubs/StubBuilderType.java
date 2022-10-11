@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -79,7 +80,9 @@ public class StubBuilderType {
         }
       }
 
-      String baseVersion = myElementType.getClass().getName() + ":" + elementTypeStubVersion;
+      String baseVersion = myElementType.getClass().getName() +
+                           ":" + elementTypeStubVersion +
+                           ":" + myElementType; // toString() -> debugName
       return myProperties.isEmpty() ? baseVersion : (baseVersion + ":" + StringUtil.join(myProperties, ","));
     } else {
       assert myBinaryFileStubBuilder != null;
@@ -93,7 +96,7 @@ public class StubBuilderType {
   }
 
   /**
-   * @implNote this method is very costly. One should consider implementing caching of results
+   * @implNote this method is very expensive. One should consider implementing caching of results
    */
   @Nullable
   public static Class<? extends IStubFileElementType> getStubFileElementTypeFromVersion(@NotNull String version) {
@@ -103,8 +106,22 @@ public class StubBuilderType {
     IElementType[] matches = IElementType.enumerate(p -> {
       return p.getClass().getName().equals(className);
     });
+    if (matches.length > 1) {
+      int stubVersionDelimPos = version.indexOf(':', delimPos + 1);
+      if (stubVersionDelimPos == -1) {
+        LOG.error("Impossible to distinguish FileElementTypes. Version info is incomplete: " + version);
+        return null;
+      }
+      String debugName = version.substring(stubVersionDelimPos + 1);
+      matches = (IElementType[])Arrays.stream(matches).filter(p -> {
+        return p.getDebugName().equals(debugName);
+      }).toArray();
+    }
+    if (matches.length > 1) {
+      LOG.error("Impossible to distinguish FileElementTypes. Version: " + version);
+      return null;
+    }
     if (matches.length == 0) return null;
-    assert matches.length == 1;
     return (Class<? extends IStubFileElementType>)matches[0].getClass();
   }
 

@@ -10,10 +10,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,15 +28,12 @@ import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -47,15 +41,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
-  public enum FileElementTypeChangeTrackingSource {
+  public enum PerFileElementTypeStubChangeTrackingSource {
     Disabled,
     ChangedFilesCollector,
     VfsEventMerger
   }
-  public static final FileElementTypeChangeTrackingSource FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE;
+  public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
   static {
-    int sourceId = SystemProperties.getIntProperty("stub.index.file.element.type.change.tracking.source", 1);
-    FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE = FileElementTypeChangeTrackingSource.values()[sourceId];
+    int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
+    PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
   }
 
 
@@ -69,7 +63,7 @@ public final class StubIndexImpl extends StubIndexEx {
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
-  private final @NotNull FileElementTypeModificationTracker myFileElementTypeModificationTracker;
+  private final @NotNull PerFileElementTypeStubModificationTracker myPerFileElementTypeStubModificationTracker;
 
   public StubIndexImpl() {
     StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -78,7 +72,7 @@ public final class StubIndexImpl extends StubIndexEx {
         ID.unloadId(extension.getKey());
       }
     }, null);
-    myFileElementTypeModificationTracker = new FileElementTypeModificationTracker();
+    myPerFileElementTypeStubModificationTracker = new PerFileElementTypeStubModificationTracker();
   }
 
   private AsyncState getAsyncState() {
@@ -253,6 +247,7 @@ public final class StubIndexImpl extends StubIndexEx {
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
       }
+      myPerFileElementTypeStubModificationTracker.dispose();
     } finally {
       clearState();
     }
@@ -409,90 +404,23 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
+  /**
+   * @param fileElementTypeClass {@link IFileElementType} class to track changes for
+   * @return {@link ModificationTracker} that changes stamp on every file update with corresponding {@link IFileElementType}
+   * @implNote doesn't track changes of files with binary content
+   */
   @Override
-  public @NotNull ModificationTracker getFileElementTypeModTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
     return () -> {
-      if (FILE_ELEMENT_TYPE_CHANGE_TRACKING_SOURCE == StubIndexImpl.FileElementTypeChangeTrackingSource.ChangedFilesCollector) {
+      if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
       }
-      return myFileElementTypeModificationTracker.myModCounts.getOrDefault(fileElementTypeClass, 0L);
+      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementTypeClass);
     };
   }
 
   @Override
   public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
-    myFileElementTypeModificationTracker.processFileElementTypeUpdate(file);
-  }
-
-  private static class FileElementTypeModificationTracker {
-    private final ConcurrentMap<String, Ref<Class<? extends IFileElementType>>> // ref is to store nulls
-      myFileElementTypesCache = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Class<? extends IFileElementType>, Long> myModCounts = new ConcurrentHashMap<>();
-    private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
-      return (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
-    });
-
-    private void incModCount(@NotNull Class<? extends IFileElementType> fileElementType) {
-      myModCounts.compute(fileElementType, (__, value) -> {
-        if (value == null) return 1L;
-        return value + 1;
-      });
-    }
-
-    public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
-      int fileId = FileBasedIndex.getFileId(file);
-      FileContent indexedFile = makeIndexedFile(file);
-
-      var current = determineCurrentFileElementType(indexedFile);
-      if (current != null) {
-        incModCount(current);
-      }
-
-      var before = determinePreviousFileElementTypePrecisely(fileId, myStubUpdatingIndexStorage.get());
-      if (before != null && before != current) {
-        incModCount(before);
-      }
-    }
-
-    @NotNull
-    private static FileContent makeIndexedFile(VirtualFile file) {
-      return FileContentImpl.createByContent(file, () -> {
-        try {
-          return file.contentsToByteArray();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }, getProject());
-    }
-
-    @Nullable
-    private static Project getProject() {
-      var projects = ProjectManager.getInstance().getOpenProjects();
-      for (var p : projects) {
-        if (!p.isDisposed()) {
-          return p;
-        }
-      }
-      return null;
-    }
-
-    @Nullable
-    private static Class<? extends IFileElementType> determineCurrentFileElementType(IndexedFile indexedFile) {
-      var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
-      if (stubBuilderType == null) return null;
-      var currentElementType = stubBuilderType.getStubFileElementType();
-      return currentElementType == null ? null : currentElementType.getClass();
-    }
-
-    @Nullable
-    private Class<? extends IFileElementType> determinePreviousFileElementTypePrecisely(int fileId, StubUpdatingIndexStorage index) {
-      String storedVersion = index.getStoredSubIndexerVersion(fileId);
-      if (storedVersion == null) return null;
-      return myFileElementTypesCache.compute(storedVersion, (__, value) -> {
-        if (value != null) return value;
-        return Ref.create(StubBuilderType.getStubFileElementTypeFromVersion(storedVersion));
-      }).get();
-    }
+    myPerFileElementTypeStubModificationTracker.processFileElementTypeUpdate(file);
   }
 }

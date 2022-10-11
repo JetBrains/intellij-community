@@ -211,22 +211,22 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     return null;
   }
 
-  protected @Nullable Integer getStoredFileSubIndexerId(int fileId) {
-    if (mySubIndexerRetriever == null) return null;
+  protected int getStoredFileSubIndexerId(int fileId) {
+    if (mySubIndexerRetriever == null) throw new IllegalStateException("not a composite indexer");
     try {
       return mySubIndexerRetriever.getStoredFileIndexerId(fileId);
     }
     catch (IOException e) {
       LOG.error(e);
-      return null;
+      return -4;
     }
   }
 
   public <SubIndexerVersion> @Nullable SubIndexerVersion getStoredSubIndexerVersion(int fileId) {
-    Integer indexerId = getStoredFileSubIndexerId(fileId);
-    if (indexerId == null) return null;
+    int indexerId = getStoredFileSubIndexerId(fileId);
+    if (indexerId < 0) return null;
     try {
-      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId.intValue());
+      return (SubIndexerVersion)mySubIndexerRetriever.getVersionByIndexerId(indexerId);
     }
     catch (IOException e) {
       LOG.error(e);

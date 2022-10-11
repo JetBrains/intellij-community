@@ -43,7 +43,7 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     var lastModCount = 0L
     fun checkModCountIncreasedAtLeast(minInc: Int) {
       val modCount = (StubIndex.getInstance() as StubIndexEx)
-        .getFileElementTypeModTracker(JavaFileElementType::class.java).modificationCount
+        .getPerFileElementTypeModificationTracker(JavaFileElementType::class.java).modificationCount
       assert(lastModCount + minInc <= modCount)
       lastModCount = modCount
     }

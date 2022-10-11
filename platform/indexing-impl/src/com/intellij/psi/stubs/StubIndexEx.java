@@ -549,7 +549,7 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public @NotNull ModificationTracker getFileElementTypeModTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
+  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
 
   @ApiStatus.Internal
   @ApiStatus.Experimental

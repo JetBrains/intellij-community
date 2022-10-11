@@ -83,12 +83,13 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     }
   }
 
-  public @Nullable Integer getStoredFileIndexerId(int fileId) throws IOException {
+  /**
+   * @return stored file indexer id. value < 0 means that no id is available for specified file
+   */
+  public int getStoredFileIndexerId(int fileId) throws IOException {
     try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
-      if (stream == null) return null;
-      int currentIndexedVersion = DataInputOutputUtil.readINT(stream);
-      if (currentIndexedVersion < 0) return null;
-      return currentIndexedVersion;
+      if (stream == null) return UNINDEXED_STATE;
+      return DataInputOutputUtil.readINT(stream);
     }
   }
 
