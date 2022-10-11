@@ -38,7 +38,6 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.usages.api.SearchTarget;
-import com.intellij.find.usages.api.UsageHandler;
 import com.intellij.find.usages.api.UsageOptions;
 import com.intellij.find.usages.impl.AllSearchOptions;
 import com.intellij.ide.IdeEventQueue;
@@ -162,7 +161,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.find.usages.api.UsageHandler.UsageAction.FIND_USAGES;
 import static com.intellij.find.usages.impl.ImplKt.buildUsageViewQuery;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.testFramework.RunAll.runAll;
@@ -1045,14 +1043,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull SearchTarget target) {
     Project project = getProject();
 
-    //noinspection unchecked
-    UsageHandler<Object> handler = (UsageHandler<Object>)target.getUsageHandler();
     SearchScope searchScope = coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
-    AllSearchOptions<Object> allOptions =
-      new AllSearchOptions<>(UsageOptions.createOptions(searchScope), true, handler.getCustomOptions(FIND_USAGES));
-
-    List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget<>(project, target, allOptions));
-    Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, handler, allOptions).findAll();
+    AllSearchOptions allOptions = new AllSearchOptions(UsageOptions.createOptions(searchScope), true);
+    List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget(project, target, allOptions));
+    Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, allOptions).findAll();
 
     return getUsageViewTreeTextRepresentation(usageTargets, usages);
   }

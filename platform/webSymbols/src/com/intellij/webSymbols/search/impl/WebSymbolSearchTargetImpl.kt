@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.search.impl
 
 import com.intellij.find.usages.api.SearchTarget
@@ -19,7 +20,7 @@ class WebSymbolSearchTargetImpl(override val symbol: WebSymbol) : WebSymbolSearc
   override val presentation: TargetPresentation
     get() = symbol.presentation
 
-  override val usageHandler: UsageHandler<*>
+  override val usageHandler: UsageHandler
     get() = UsageHandler.createEmptyUsageHandler(presentation.presentableText)
 
   override fun equals(other: Any?): Boolean =

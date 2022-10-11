@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.api;
 
 import com.intellij.find.FindBundle;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-final class EmptyUsageHandler implements UsageHandler.NonConfigurable {
+final class EmptyUsageHandler implements UsageHandler {
 
   private final @NlsSafe @NotNull String myTargetName;
 
