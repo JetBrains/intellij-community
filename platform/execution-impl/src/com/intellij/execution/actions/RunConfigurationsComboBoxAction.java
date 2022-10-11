@@ -116,11 +116,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
       String name = Executor.shortenNameIfNeeded(settings.getName());
-      if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
-        name += " | " + target.getDisplayName();
-      } else {
-        if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
-          name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
+      if (!ExperimentalUI.isNewUI()) { // there's a separate combo-box for execution targets in new UI
+        if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
+          name += " | " + target.getDisplayName();
+        }
+        else {
+          if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
+            name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
+          }
         }
       }
       presentation.setText(name, false);
@@ -225,7 +228,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
 
     if (!ExperimentalUI.isNewUI()) {
-      // no need for targets list in `All configuration` in new UI, since there is a separate combobox for them
+      // no need for targets list in `All configurations` in new UI, since there is a separate combobox for them
       addTargetGroup(project, allActionsGroup);
     }
 
