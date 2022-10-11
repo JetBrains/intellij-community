@@ -42,6 +42,13 @@ class MermaidTypedHandlerDelegate : TypedHandlerDelegate() {
         writeText(editor, offset, "~")
       }
     }
+    if (c == '|' && offset - 2 >= 0) {
+      val element: PsiElement = prevNonWhiteSpaceToken(file, offset - 2) ?: return Result.CONTINUE
+
+      if (element.elementType == MermaidTokens.ARROW) {
+        writeText(editor, offset, "|")
+      }
+    }
 
     return Result.CONTINUE
   }
