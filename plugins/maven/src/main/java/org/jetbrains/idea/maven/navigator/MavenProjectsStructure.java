@@ -1229,7 +1229,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public abstract class BaseDependenciesNode extends GroupNode {
     protected final MavenProject myMavenProject;
-    private List<DependencyNode> myChildren = new ArrayList<>();
+    private List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
 
     protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);
