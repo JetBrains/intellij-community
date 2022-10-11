@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
@@ -206,18 +207,21 @@ public final class ActionUtil {
     String operationName = group.getClass().getSimpleName() + "#update (" + group.getClass().getName() + ")";
     if (warnPopup) {
       event.getPresentation().setPopupGroup(!wasPopup); // keep the old logic for a while
-      LOG.error("Calling `setPopup()` in " + operationName + ". " +
-               "Please use `event.getPresentation().setPopupGroup()` instead.");
+      String message = "Calling `setPopup()` in " + operationName + ". " +
+                       "Please use `event.getPresentation().setPopupGroup()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
     if (warnHide) {
       event.getPresentation().setHideGroupIfEmpty(!wasHideIfEmpty); // keep the old logic for a while
-      LOG.error("Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
-               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+      String message = "Changing `hideIfNoVisibleChildren()` result in " + operationName + ". " +
+                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
     if (warnHide) {
       event.getPresentation().setDisableGroupIfEmpty(!wasDisableIfEmpty); // keep the old logic for a while
-      LOG.error("Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
-               "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.");
+      String message = "Changing `disableIfNoVisibleChildren()` result in " + operationName + ". " +
+                       "Please use `event.getPresentation().setHideGroupIfEmpty()` instead.";
+      LOG.error(PluginException.createByClass(message, null, group.getClass()));
     }
   }
 
