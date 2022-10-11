@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -593,7 +594,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
+      .addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
@@ -608,7 +609,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;
         }
-      }).addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
+      }).addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TemplateSettings.getInstance().reset();
@@ -680,8 +681,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     };
     rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
+    class MoveGroup extends DefaultActionGroup implements DumbAware {
 
-    final DefaultActionGroup move = new DefaultActionGroup(CodeInsightBundle.message("action.text.move"), true) {
+      MoveGroup() {
+        super(CodeInsightBundle.message("action.text.move"), true);
+      }
+
       @Override
       public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
@@ -720,7 +725,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
       }
-    };
+    }
+    final DefaultActionGroup move = new MoveGroup();
 
     final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.change.context")) {
 
@@ -728,7 +734,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         boolean enabled = !getSelectedTemplates().isEmpty();
         e.getPresentation().setEnabled(enabled);
-        super.update(e);
       }
 
       @Override
