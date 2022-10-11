@@ -15,13 +15,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +98,8 @@ public abstract class TextExtractor {
    */
   public static @NotNull List<TextContent> findTextsAt(@NotNull PsiElement psi, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     TextRange psiRange = psi.getTextRange();
-    JBIterable<PsiElement> hierarchy = SyntaxTraverser.psiApi().parents(psi);
-    for (PsiElement each : hierarchy) {
+    PsiFile file = null;
+    for (PsiElement each = psi; each != null; each = each.getParent()) {
       CachedValue<Cache> cache = each.getUserData(COMMON_PARENT_CACHE);
       if (cache != null) {
         List<TextContent> cached = ContainerUtil.filter(cache.getValue().getCached(allowedDomains), c ->
@@ -110,11 +108,15 @@ public abstract class TextExtractor {
           return cached;
         }
       }
+      if (each instanceof PsiFile) {
+        file = (PsiFile)each;
+        break;
+      }
     }
 
-    Language fileLanguage = psi.getContainingFile().getLanguage();
+    Language fileLanguage = (file != null ? file : psi.getContainingFile()).getLanguage();
 
-    for (PsiElement each : hierarchy) {
+    for (PsiElement each = psi; each != null; each = each.getParent()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
       List<TextContent> contents = obtainContents(allowedDomains, fileLanguage, each);
