@@ -73,6 +73,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/allOpenSimple/inspectionData/inspections.test");
         }
 
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration_1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test");
+        }
+
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");

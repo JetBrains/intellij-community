@@ -26,5 +26,5 @@ class AmbiguousExpressionInWhenBranchMigrationInspection :
     override fun descriptionMessage(): String = KotlinBundle.message("inspection.ambiguous.expression.when.branch.migration.display.name")
 
     override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<PsiElement, *> =
-        Errors.CONFUSING_BRANCH_CONDITION.warningFactory
+        with(Errors.CONFUSING_BRANCH_CONDITION) { languageVersionSettings.chooseFactory() }
 }
