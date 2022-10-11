@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlTag;
@@ -33,14 +32,11 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,7 +72,6 @@ public final class MavenProjectsManagerWatcher {
 
   public synchronized void start() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
-    busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.MODULES, new MavenRenameModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
@@ -221,53 +216,6 @@ public final class MavenProjectsManagerWatcher {
 
       if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
         scheduleUpdate(newFiles, deletedFiles, new MavenImportSpec(false, false, true));
-      }
-    }
-  }
-
-  private class MavenIgnoredModulesWatcher implements ModuleListener {
-    @Override
-    public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-
-      //  (most likely) removed by the importer, so we should not mark the project as ignored
-      if (MavenProjectImporter.isImportingInProgress()) {
-        return;
-      }
-
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      MavenProject mavenProject = projectsManager.findProject(module);
-      if (mavenProject != null && !projectsManager.isIgnored(mavenProject)) {
-        VirtualFile file = mavenProject.getFile();
-
-        if (projectsManager.isManagedFile(file) && projectsManager.getModules(mavenProject).isEmpty()) {
-          MavenLog.LOG.info("remove managed maven project  + " + mavenProject + "because there is no module for it");
-          projectsManager.removeManagedFiles(Collections.singletonList(file));
-        }
-        else {
-          if (projectsManager.getRootProjects().contains(mavenProject)) {
-            MavenLog.LOG.info("Requested to ignore " + mavenProject + ", will not do it because it is a root project");
-            return;
-          }
-          MavenLog.LOG.info("Ignoring " + mavenProject);
-          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), true);
-        }
-      }
-    }
-
-    @Override
-    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
-      if (Registry.is("maven.modules.do.not.ignore.on.delete")) {
-        return;
-      }
-
-      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      for (Module module : modules) {
-        MavenProject mavenProject = projectsManager.findProject(module);
-        if (mavenProject != null) {
-          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-        }
       }
     }
   }
