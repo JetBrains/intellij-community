@@ -407,7 +407,8 @@ public abstract class SingleRowLayoutStrategy {
       if (!ExperimentalUI.isNewUI()) {
         return baseRect;
       }
-      Rectangle leftmostButtonRect = myTabs.myMoreToolbar.getComponent().isVisible() ? data.moreRect : data.entryPointRect;
+      Rectangle leftmostButtonRect = myTabs.myMoreToolbar.getComponent().isVisible() && data.moreRect != null
+                                     ? data.moreRect : data.entryPointRect;
       Rectangle intersection = baseRect.intersection(leftmostButtonRect);
       if (intersection.height > length * 0.4) {
         return new Rectangle(baseRect.x, baseRect.y, leftmostButtonRect.x - baseRect.x, baseRect.height);
