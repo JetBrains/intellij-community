@@ -22,7 +22,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
   private val project: Project,
   private val target: SearchTarget,
   private val usageHandler: UsageHandler<O>,
-  private val allOptions: AllSearchOptions<O>
+  private val allOptions: AllSearchOptions<O>,
 ) : ShowUsagesActionHandler {
 
   override fun isValid(): Boolean = true

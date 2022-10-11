@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
 import com.intellij.find.usages.api.*
@@ -56,10 +56,12 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
 }
 
 @ApiStatus.Internal
-fun <O> buildUsageViewQuery(project: Project,
-                            target: SearchTarget,
-                            handler: UsageHandler<O>,
-                            allOptions: AllSearchOptions<O>): Query<out UVUsage> {
+fun <O> buildUsageViewQuery(
+  project: Project,
+  target: SearchTarget,
+  handler: UsageHandler<O>,
+  allOptions: AllSearchOptions<O>,
+): Query<out UVUsage> {
   return buildQuery(project, target, handler, allOptions).transforming {
     if (it is PsiUsage && !it.declaration) {
       listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
@@ -75,7 +77,7 @@ fun <O> buildQuery(
   project: Project,
   target: SearchTarget,
   handler: UsageHandler<O>,
-  allOptions: AllSearchOptions<O>
+  allOptions: AllSearchOptions<O>,
 ): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
   val (options, textSearch, customOptions) = allOptions
