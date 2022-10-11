@@ -321,7 +321,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       runLateCommitChecks(commitInfo, lateChecks)?.let { return it }
 
       if (postCommitChecks.isNotEmpty() &&
-          Registry.`is`("vcs.non.modal.post.commit.checks")) {
+          Registry.`is`("vcs.non.modal.post.commit.checks") &&
+          commitInfo.executor?.requiresSyncCommitChecks() != true) {
         pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
       }
       else {
