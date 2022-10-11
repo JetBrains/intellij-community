@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -629,7 +628,7 @@ private class LineTracker(private val handlers: List<Handler>,
     afterBulkRangeChange(isDirty)
   }
 
-  fun rangesChanged(side: Side, iterable: DiffIterable) {
+  fun rangesChanged(side: Side, iterable: FairDiffIterable) {
     val newBlocks = BulkRangeChangeHandler(handlers, blocks, side).run(iterable)
 
     blocks = newBlocks
@@ -833,7 +832,7 @@ private class BulkRangeChangeHandler(private val handlers: List<Handler>,
   private var dirtyBlockShift: Int = 0
   private var dirtyChangeShift: Int = 0
 
-  fun run(iterable: DiffIterable): List<Block> {
+  fun run(iterable: FairDiffIterable): List<Block> {
     val it1 = PeekableIteratorWrapper(blocks.iterator())
     val it2 = PeekableIteratorWrapper(iterable.changes())
 
