@@ -45,6 +45,22 @@ abstract class UastInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
   }
 
   /**
+   * Checks whether preview matches [preview] specified by the quickfix [hint] at the cursor position marked with <caret> in [code].
+   */
+  protected fun JavaCodeInsightTestFixture.testPreview(
+    lang: ULanguage,
+    code: String,
+    preview: String,
+    hint: String,
+    fileName: String = generateFileName()
+  ) {
+    configureByText("$fileName${lang.ext}", code)
+    val action = getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
+    val actualPreview = getIntentionPreviewText(action)
+    assertEquals(preview, actualPreview)
+  }
+
+  /**
    * Runs all quickfixes in [hints] on [before] at the cursor position marked with <caret> and compares it with [after].
    */
   protected fun JavaCodeInsightTestFixture.testQuickFix(
