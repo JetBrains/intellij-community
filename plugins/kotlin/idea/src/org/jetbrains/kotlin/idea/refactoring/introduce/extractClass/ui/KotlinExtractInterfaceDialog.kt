@@ -8,10 +8,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.classMembers.MemberInfoModel
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
-import org.jetbrains.kotlin.idea.refactoring.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.lightElementForMemberInfo

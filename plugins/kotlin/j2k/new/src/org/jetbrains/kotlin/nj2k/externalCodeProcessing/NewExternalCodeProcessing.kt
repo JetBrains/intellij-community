@@ -43,7 +43,7 @@ class NewExternalCodeProcessing(
 
     private fun List<KtFile>.bindJavaDeclarationsToConvertedKotlinOnes() {
         forEach { file ->
-            file.forEachDescendantOfType<KtDeclaration> { declaration ->
+            file.forEachDescendantOfType<KtNamedDeclaration> { declaration ->
                 val member = getMember(declaration.fqNameWithoutCompanions) ?: return@forEachDescendantOfType
                 when {
                     member is JKFieldData ->

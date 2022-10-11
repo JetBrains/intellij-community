@@ -8,11 +8,11 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 interface JKMemberData {
-    var kotlinElementPointer: SmartPsiElementPointer<KtDeclaration>?
+    var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>?
     var isStatic: Boolean
     val fqName: FqName?
     var name: String
@@ -36,12 +36,11 @@ interface JKMemberDataCameFromJava<J : PsiMember> : JKMemberData {
         get() = javaElement.kotlinFqName
 }
 
-
 interface JKFieldData : JKMemberData
 
 data class JKFakeFieldData(
     override var isStatic: Boolean,
-    override var kotlinElementPointer: SmartPsiElementPointer<KtDeclaration>? = null,
+    override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
     override val fqName: FqName?,
     override var name: String
 ) : JKFieldData {
@@ -54,7 +53,7 @@ data class JKFakeFieldData(
 data class JKFieldDataFromJava(
     override val javaElement: PsiField,
     override var isStatic: Boolean = false,
-    override var kotlinElementPointer: SmartPsiElementPointer<KtDeclaration>? = null,
+    override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
     override var name: String = javaElement.name
 ) : JKMemberDataCameFromJava<PsiField>, JKFieldData {
     override val searchInKotlinFiles: Boolean
@@ -67,7 +66,7 @@ data class JKFieldDataFromJava(
 data class JKMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
-    override var kotlinElementPointer: SmartPsiElementPointer<KtDeclaration>? = null,
+    override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
     var usedAsAccessorOfProperty: JKFieldData? = null
 ) : JKMemberDataCameFromJava<PsiMethod> {
     override var name: String = javaElement.name
