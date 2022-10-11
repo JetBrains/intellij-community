@@ -1,0 +1,9 @@
+flowchart TB
+  c1 --> a2
+  subgraph a2
+    b1 --> b2
+  end
+  subgraph a<caret>2
+    d1 --> d2
+  end
+  c2 --> a2
