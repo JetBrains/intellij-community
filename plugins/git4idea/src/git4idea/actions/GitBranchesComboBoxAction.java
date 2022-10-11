@@ -56,11 +56,6 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
   }
 
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
-  }
-
-  @Override
   protected @NotNull ListPopup createActionPopup(@NotNull DataContext context,
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {

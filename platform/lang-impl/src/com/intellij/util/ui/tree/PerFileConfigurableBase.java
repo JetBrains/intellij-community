@@ -879,11 +879,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
     }
-    @NotNull
-    @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      throw new UnsupportedOperationException();
-    }
 
     @Override
     protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {

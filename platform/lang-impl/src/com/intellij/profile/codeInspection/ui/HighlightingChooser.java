@@ -90,7 +90,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   }
 
   @Override
-  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 

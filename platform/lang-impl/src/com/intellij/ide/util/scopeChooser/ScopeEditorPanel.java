@@ -651,7 +651,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     @Override
     @NotNull
-    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {

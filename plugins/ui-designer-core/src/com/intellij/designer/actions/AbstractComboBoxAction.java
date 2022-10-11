@@ -88,7 +88,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
 
   @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     for (final T item : myItems) {

@@ -204,7 +204,7 @@ public final class TextDiffViewerUtil {
 
     @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       return getActions();
     }
 

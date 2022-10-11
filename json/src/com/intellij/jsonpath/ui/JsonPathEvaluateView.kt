@@ -170,7 +170,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     val outputComboBox = object : ComboBoxAction() {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-      override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+      override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val outputItems = DefaultActionGroup()
         outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
         outputItems.add(OutputOptionAction(true, JsonBundle.message("jsonpath.evaluate.output.paths")))

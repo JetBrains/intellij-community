@@ -775,7 +775,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     @NotNull
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected final DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {

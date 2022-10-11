@@ -16,8 +16,8 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
-import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessAction
+import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -163,7 +163,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
       isSmallVariant = false
     }
 
-    override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+    override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
 
       val actions = DefaultActionGroup()
 

@@ -29,11 +29,11 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.*
-import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
@@ -378,7 +378,7 @@ open class AttachToProcessDialog(
       }
     }
 
-    override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+    override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
 
       val actions = DefaultActionGroup()
 
