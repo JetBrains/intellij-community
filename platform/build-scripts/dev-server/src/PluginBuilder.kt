@@ -114,30 +114,29 @@ internal class PluginBuilder(private val outDir: Path,
 
   internal suspend fun buildPlugin(plugin: PluginBuildDescriptor): Boolean {
     val mainModule = plugin.layout.mainModule
+
+    val reason = withContext(Dispatchers.IO) {
+      // check cache
+      val reason = checkCache(plugin, outDir)
+      if (reason == null) {
+        return@withContext null
+      }
+
+      if (mainModule != "intellij.platform.builtInHelp") {
+        checkOutputOfPluginModules(mainPluginModule = mainModule,
+                                   jarToModules = plugin.layout.jarToModules,
+                                   moduleExcludes = plugin.layout.moduleExcludes,
+                                   context = context)
+      }
+      reason
+    } ?: return true
+
     val moduleOutputPatcher = ModuleOutputPatcher()
     return spanBuilder("build plugin")
       .setAttribute("mainModule", mainModule)
       .setAttribute("dir", plugin.layout.directoryName)
-      .useWithScope2 { span ->
-        val isCached = withContext(Dispatchers.IO) {
-          // check cache
-          if (checkCache(plugin, outDir, span)) {
-            return@withContext true
-          }
-
-          if (mainModule != "intellij.platform.builtInHelp") {
-            checkOutputOfPluginModules(mainPluginModule = mainModule,
-                                       jarToModules = plugin.layout.jarToModules,
-                                       moduleExcludes = plugin.layout.moduleExcludes,
-                                       context = context)
-          }
-          false
-        }
-
-        if (isCached) {
-          return@useWithScope2 true
-        }
-
+      .setAttribute("reason", reason)
+      .useWithScope2 {
         layoutDistribution(layout = plugin.layout,
                            targetDirectory = plugin.dir,
                            moduleOutputPatcher = moduleOutputPatcher,
@@ -151,32 +150,36 @@ internal class PluginBuilder(private val outDir: Path,
       }
   }
 
-  private fun checkCache(plugin: PluginBuildDescriptor, projectOutDir: Path, span: Span): Boolean {
+  private fun checkCache(plugin: PluginBuildDescriptor, projectOutDir: Path): String? {
     val dirName = plugin.layout.directoryName
     val jarFilename = "$dirName.jar"
     val cacheJarFile = pluginCacheRootDir.resolve(jarFilename)
     val asJarExists = Files.exists(cacheJarFile)
     val cacheDir = if (asJarExists) null else pluginCacheRootDir.resolve(dirName).takeIf { Files.exists(it) }
-    if ((asJarExists || cacheDir != null) && isCacheUpToDate(plugin, projectOutDir, span)) {
-      if (asJarExists) {
-        Files.move(cacheJarFile, pluginRootDir.resolve(jarFilename))
+    if (asJarExists || cacheDir != null) {
+      val reason = isCacheUpToDate(plugin, projectOutDir)
+      if (reason == null) {
+        if (asJarExists) {
+          Files.move(cacheJarFile, pluginRootDir.resolve(jarFilename))
+        }
+        else {
+          Files.move(cacheDir!!, plugin.dir)
+        }
+        return null
       }
       else {
-        Files.move(cacheDir!!, plugin.dir)
+        return reason
       }
-      span.setAttribute("reused", true)
-      return true
     }
-    return false
+    return "initial build"
   }
 }
 
-private fun isCacheUpToDate(plugin: PluginBuildDescriptor, projectOutDir: Path, span: Span): Boolean {
+private fun isCacheUpToDate(plugin: PluginBuildDescriptor, projectOutDir: Path): String? {
   for (moduleName in plugin.moduleNames) {
     if (Files.notExists(projectOutDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))) {
-      span.addEvent("previously built is not reused because at least $moduleName is changed")
-      return false
+      return "at least $moduleName is changed"
     }
   }
-  return true
+  return null
 }

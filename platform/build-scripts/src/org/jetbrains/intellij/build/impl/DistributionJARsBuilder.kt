@@ -28,7 +28,10 @@ import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataP
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tasks.*
+import org.jetbrains.intellij.build.tasks.ZipSource
+import org.jetbrains.intellij.build.tasks.buildJar
+import org.jetbrains.intellij.build.tasks.generateClasspath
+import org.jetbrains.intellij.build.tasks.injectAppInfo
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -939,9 +942,10 @@ suspend fun layoutDistribution(layout: BaseLayout,
   val entries = withContext(Dispatchers.IO) {
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
-      spanBuilder("pack").useWithScope2 {
+      val outputDir = targetDirectory.resolve("lib")
+      spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope2 {
         JarPackager.pack(jarToModules = jarToModule,
-                         outputDir = targetDirectory.resolve("lib"),
+                         outputDir = outputDir,
                          layout = layout,
                          moduleOutputPatcher = moduleOutputPatcher,
                          dryRun = !copyFiles,
