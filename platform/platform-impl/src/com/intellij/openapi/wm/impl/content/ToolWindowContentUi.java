@@ -144,7 +144,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
               for (Content subContent : subContents) {
                 ContentManager m = subContent.getManager();
                 if (m != null) m.removeContent(subContent, false);
-                supplier.getTabs().addTab(((SingleContentLayout.FakeContent)subContent).getInfo());
+                ((SingleContentLayout.FakeContent)subContent).getInfo().setHidden(false);
               }
             }
           }

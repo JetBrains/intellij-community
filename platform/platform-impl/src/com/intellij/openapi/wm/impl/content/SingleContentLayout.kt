@@ -365,7 +365,7 @@ internal class SingleContentLayout(
     private fun checkAndUpdate() {
       val currentContent = getSingleContentOrNull()
       val currentSupplier = currentContent?.getSupplier()
-      val src = currentSupplier?.getTabs()?.tabs ?: return
+      val src = currentSupplier?.getTabs()?.tabs?.filter { !it.isHidden } ?: return
       val dst = labels.map(::retrieveInfo)
       if (!ContainerUtil.equalsIdentity(src, dst)) {
         updateTabs()
@@ -376,16 +376,16 @@ internal class SingleContentLayout(
     }
 
     fun updateTabs() {
-      labels.removeAll {
-        retrieveInfo(it).changeSupport.removePropertyChangeListener(this)
-        remove(it)
-        true
+      labels.removeAll { remove(it); true }
+      jbTabs.tabs.forEach { info ->
+        info.changeSupport.removePropertyChangeListener(this)
+        info.changeSupport.addPropertyChangeListener(this)
       }
 
       val supplier = getSingleContentOrNull()?.getSupplier() ?: return
-      if (jbTabs.tabs.size > 1 || twcui.dropOverIndex != -1) {
-        labels.addAll(jbTabs.tabs.map { info ->
-          info.changeSupport.addPropertyChangeListener(this)
+      val visibleTabs = jbTabs.tabs.filter { !it.isHidden }
+      if (visibleTabs.size > 1 || twcui.dropOverIndex != -1) {
+        labels.addAll(visibleTabs.map { info ->
           val content = FakeContent(supplier, info)
           supplier.addSubContent(info, content)
           MyContentTabLabel(content, this@SingleContentLayout).apply {
@@ -402,8 +402,8 @@ internal class SingleContentLayout(
     }
 
     override fun dispose() {
-      labels.forEach {
-        retrieveInfo(it).changeSupport.removePropertyChangeListener(this)
+      jbTabs.tabs.forEach {
+        it.changeSupport.removePropertyChangeListener(this)
       }
       jbTabs.component.removeContainerListener(containerListener)
     }
@@ -464,9 +464,14 @@ internal class SingleContentLayout(
     }
 
     override fun propertyChange(evt: PropertyChangeEvent) {
-      val source = evt.source as? TabInfo ?: error("Bad event source")
-      val label = labels.find { it.content.info == source } ?: error("Cannot find label for $source")
-      copyValues(source, label)
+      if (TabInfo.HIDDEN == evt.propertyName) {
+        checkAndUpdate()
+      }
+      else {
+        val source = evt.source as? TabInfo ?: error("Bad event source")
+        val label = labels.find { it.content.info == source }
+        if (label != null) copyValues(source, label)
+      }
     }
 
     private inner class MyContentTabLabel(content: FakeContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {

@@ -141,12 +141,14 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
 
     if (content is SingleContentLayout.FakeContent && curDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
+      val tabInfo = content.info
       if (currentDropIndex != -1) {
-        tabs.addTab(content.info, currentDropIndex)
+        tabs.removeTab(tabInfo)
+        tabInfo.isHidden = false
+        tabs.addTab(tabInfo, currentDropIndex)
       }
       else if (currentDropSide == -1 || currentDropSide == SwingConstants.CENTER) {
-        val index = if (sourceDecorator == curDecorator) myInitialIndex else tabs.tabCount
-        tabs.addTab(content.info, index)
+        tabInfo.isHidden = false
       }
       else {
         curDecorator.splitWithContent(content, currentDropSide, -1)
@@ -186,8 +188,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     if (super.cancelDragging()) {
       val content = myDraggingTab!!.content
       if (content is SingleContentLayout.FakeContent && sourceDecorator!!.isSingleContentLayout()) {
-        val tabs = content.supplier.getTabs()
-        tabs.addTab(content.info, myInitialIndex.coerceAtMost(tabs.tabCount))
+        content.info.isHidden = false
       }
       else {
         val contentManager = sourceDecorator!!.contentManager
@@ -245,7 +246,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       val tabInfo = content.info
       val index = tabs.getIndexOf(tabInfo)
       SwingUtilities.invokeLater {
-        tabs.removeTab(tabInfo)
+        tabInfo.isHidden = true
         sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
       }
     }
