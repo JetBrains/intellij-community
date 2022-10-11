@@ -1007,6 +1007,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     scopeChooserCombo.getComboBox().putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
     if (ExperimentalUI.isNewUI()) {
       scopeChooserCombo.getComboBox().putClientProperty("JComboBox.noPaintBorder", Boolean.TRUE);
+      scopeChooserCombo.setOpaque(false);
+      scopeChooserCombo.getComboBox().setOpaque(false);
     }
     scopeChooserCombo
       .initialize(project, false, false, initialScope.getDisplayName(), null)
@@ -1025,8 +1027,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         });
       });
     scopeChooserCombo.setButtonVisible(false);
-    scopeChooserCombo.setOpaque(false);
-    scopeChooserCombo.getComboBox().setOpaque(false);
     return scopeChooserCombo;
   }
 
