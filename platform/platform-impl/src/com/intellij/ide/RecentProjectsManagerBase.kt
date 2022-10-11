@@ -82,7 +82,7 @@ private val LOG = logger<RecentProjectsManager>()
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
-    const val MAX_PROJECTS_IN_MAIN_MENU = 6
+    const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
 
     @JvmStatic
     fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
@@ -375,7 +375,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       val manager = getInstanceEx()
       val path = manager.getProjectPath(project) ?: return
       if (!app.isHeadlessEnvironment) {
-        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false, false)
+        manager.updateProjectInfo(project = project,
+                                  windowManager = WindowManager.getInstance() as WindowManagerImpl,
+                                  writeLastProjectInfo = false,
+                                  appClosing = false)
       }
       manager.nameCache.put(path, project.name)
     }
@@ -384,6 +387,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
         // appClosing updates project info (even more - on project closed full screen state maybe not correct)
         return
+      }
+
+      val manager = getInstanceEx()
+      synchronized(manager.stateLock) {
+        manager.state.additionalInfo.get(manager.getProjectPath(project))?.opened = false
       }
       updateSystemDockMenu()
     }
@@ -613,7 +621,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
   }
 
-  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean, appClosing: Boolean) {
+  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writeLastProjectInfo: Boolean, appClosing: Boolean) {
     val frameHelper = windowManager.getFrameHelper(project)
     if (frameHelper == null) {
       LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
@@ -650,11 +658,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
 
     LOG.runAndLogException {
-      if (writLastProjectInfo) {
+      if (writeLastProjectInfo) {
         writeInfoFile(frameInfo, frame)
       }
 
-      if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
+      if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state", false)) {
         takeASelfie(frameHelper, workspaceId)
       }
     }
@@ -790,7 +798,10 @@ int32 "extendedState"
         val manager = getInstanceEx()
         val windowManager = WindowManager.getInstance() as WindowManagerImpl
         for ((index, project) in openProjects.withIndex()) {
-          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0, true)
+          manager.updateProjectInfo(project = project,
+                                    windowManager = windowManager,
+                                    writeLastProjectInfo = index == 0,
+                                    appClosing = true)
         }
       }
     }
