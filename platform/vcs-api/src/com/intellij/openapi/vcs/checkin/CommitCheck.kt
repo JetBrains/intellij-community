@@ -72,7 +72,9 @@ interface CommitCheck : PossiblyDumbAware {
     /**
      * Checks to be performed after all modifications are finished.
      */
-    LATE
+    LATE,
+
+    POST_COMMIT
   }
 }
 

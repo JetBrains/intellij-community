@@ -16,11 +16,13 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.*
@@ -61,6 +63,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
                                                                        NotificationType.ERROR)
+
+  private var pendingPostCommitChecks: PendingPostCommitChecks? = null
 
   protected fun setupCommitHandlersTracking() {
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
@@ -272,6 +276,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
 
     workflow.asyncSession(coroutineScope, sessionInfo) {
+      pendingPostCommitChecks = null
+
       val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
       commitContext.isOnlyRunCommitChecks = false
 
@@ -301,6 +307,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val earlyChecks = commitChecks[CommitCheck.ExecutionOrder.EARLY].orEmpty()
       val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
       val lateChecks = commitChecks[CommitCheck.ExecutionOrder.LATE].orEmpty()
+      val postCommitChecks = commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT].orEmpty()
       @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
 
       if (!skipEarlyCommitChecks) {
@@ -312,6 +319,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       }
 
       runLateCommitChecks(commitInfo, lateChecks)?.let { return it }
+
+      if (postCommitChecks.isNotEmpty() &&
+          Registry.`is`("vcs.non.modal.post.commit.checks")) {
+        pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
+      }
+      else {
+        runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
+      }
 
       return null // checks passed
     }
@@ -371,6 +386,33 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return null
   }
 
+  private suspend fun runSyncPostCommitChecks(commitInfo: DynamicCommitInfo,
+                                              commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
+    val problems = mutableListOf<CommitProblem>()
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+    }
+    if (problems.isEmpty()) return null
+
+    val staticInfo = commitInfo.asStaticInfo()
+    problems.forEach { reportCommitCheckFailure(staticInfo, it) }
+    return NonModalCommitChecksFailure.ERROR
+  }
+
+  private fun runPostCommitChecks(commitInfo: CommitInfo, commitChecks: List<CommitCheck>) {
+    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.EDT)
+    scope.launch {
+      withBackgroundProgressIndicator(project, message("post.commit.checks.progress.text")) {
+        withContext(Dispatchers.EDT) {
+          val problems = commitChecks.mapNotNull { AbstractCommitWorkflow.runCommitCheck(project, it, commitInfo) }
+          if (problems.isEmpty()) return@withContext
+
+          reportPostCommitChecksFailure(commitInfo, problems)
+        }
+      }
+    }
+  }
+
   private fun reportCommitCheckFailure(commitInfo: CommitInfo, problem: CommitProblem) {
     val checkFailure = when (problem) {
       is UnknownCommitProblem -> CommitCheckFailure.Unknown
@@ -380,6 +422,22 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       else -> CommitCheckFailure.WithDescription(problem.text)
     }
     ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+  }
+
+  private fun reportPostCommitChecksFailure(commitInfo: CommitInfo, problems: List<CommitProblem>) {
+    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(message("post.commit.checks.failed.notification.title"),
+                          problems.joinToString("<br>") { it.text },
+                          NotificationType.ERROR)
+      .setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
+
+    for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
+      notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
+        problem.showDetails(project, commitInfo)
+      })
+    }
+
+    notification.notify(project)
   }
 
   private fun handleCommitProblem(failure: NonModalCommitChecksFailure?, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
@@ -480,7 +538,24 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
+
+  protected inner class PostCommitChecksRunner : CommitterResultHandler {
+    override fun onSuccess() {
+      pendingPostCommitChecks?.let { runPostCommitChecks(it.commitInfo, it.commitChecks) }
+      pendingPostCommitChecks = null
+    }
+
+    override fun onCancel() {
+      pendingPostCommitChecks = null
+    }
+
+    override fun onFailure() {
+      pendingPostCommitChecks = null
+    }
+  }
 }
+
+private class PendingPostCommitChecks(val commitInfo: CommitInfo, val commitChecks: List<CommitCheck>)
 
 private enum class NonModalCommitChecksFailure { EARLY_FAILED, MODIFICATIONS_FAILED, ABORTED, ERROR }
 

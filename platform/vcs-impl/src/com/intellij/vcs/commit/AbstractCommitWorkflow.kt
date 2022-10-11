@@ -238,6 +238,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       FileDocumentManager.getInstance().saveAllDocuments()
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT])?.let { return it }
 
       return CommitChecksResult.Passed
     }
