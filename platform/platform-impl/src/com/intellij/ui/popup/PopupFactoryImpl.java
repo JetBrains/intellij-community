@@ -210,7 +210,25 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable String actionPlace,
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
-      this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+      this(null, title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+           disposeCallback, maxRowCount, preselectActionCondition, actionPlace, presentationFactory, autoSelection);
+    }
+
+    public ActionGroupPopup(@Nullable WizardPopup parentPopup,
+                            @PopupTitle @Nullable String title,
+                            @NotNull ActionGroup actionGroup,
+                            @NotNull DataContext dataContext,
+                            boolean showNumbers,
+                            boolean useAlphaAsNumbers,
+                            boolean showDisabledActions,
+                            boolean honorActionMnemonics,
+                            Runnable disposeCallback,
+                            int maxRowCount,
+                            Condition<? super AnAction> preselectActionCondition,
+                            @Nullable String actionPlace,
+                            @Nullable PresentationFactory presentationFactory,
+                            boolean autoSelection) {
+      this(parentPopup, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
                             preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, maxRowCount);
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
     }

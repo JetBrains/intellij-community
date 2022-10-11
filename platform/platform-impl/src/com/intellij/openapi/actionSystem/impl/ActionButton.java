@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
@@ -195,18 +197,25 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @Nullable private static WizardPopup getPopupContainer(Component c) {
+    JBPopup popup = PopupUtil.getPopupContainerFor(c);
+    return (popup instanceof WizardPopup) ? (WizardPopup)popup : null;
+  }
+
   protected void showActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     createAndShowActionGroupPopup(actionGroup, event);
   }
 
   protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
+    WizardPopup parent = getPopupContainer(this);
     PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      null, actionGroup, event.getDataContext(), false,
+      parent, null, actionGroup, event.getDataContext(), false,
       false, true, false,
       null, -1, null,
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
       createPresentationFactory(), false);
     popup.setShowSubmenuOnHover(true);
+    popup.setAlignByParentBounds(false);
     PopupImplUtil.setPopupToggleButton(popup, this);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;
