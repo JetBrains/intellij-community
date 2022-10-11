@@ -13,7 +13,11 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public final class PyRemoteSdkFlavor extends CPythonSdkFlavor {
+/**
+ * @deprecated in favour of targets API
+ */
+@Deprecated
+public final class PyRemoteSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private PyRemoteSdkFlavor() {
   }
 
@@ -23,6 +27,11 @@ public final class PyRemoteSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isPlatformIndependent() {
     return true;
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @NotNull

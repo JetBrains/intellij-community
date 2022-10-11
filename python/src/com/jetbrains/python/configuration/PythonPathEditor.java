@@ -219,7 +219,7 @@ public class PythonPathEditor extends SdkPathEditor {
     private @NotNull SdkAdditionalData collectSdkAdditionalData(@NotNull SdkModificator sdkModificator) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
       if (data == null) {
-        data = new PythonSdkAdditionalData(null);
+        data = new PythonSdkAdditionalData();
       }
       data.setAddedPathsFromVirtualFiles(myAdded);
       data.setExcludedPathsFromVirtualFiles(myExcluded);

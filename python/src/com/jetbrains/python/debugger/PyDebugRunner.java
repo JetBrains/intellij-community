@@ -488,7 +488,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
 
-        final PythonSdkFlavor flavor = pyState.getSdkFlavor();
+        final PythonSdkFlavor<?> flavor = pyState.getSdkFlavor();
         if (flavor != null) {
           assert exeParams != null;
           for (String option : flavor.getExtraDebugOptions()) {

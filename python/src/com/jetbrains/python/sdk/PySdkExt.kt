@@ -17,12 +17,14 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -43,14 +45,16 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
+import com.jetbrains.python.FullPathOnTarget
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
 import java.io.File
@@ -105,7 +109,7 @@ fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context: User
 }
 
 fun resetSystemWideSdksDetectors() {
-  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor::dropCaches)
+  PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
@@ -200,7 +204,7 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
 fun PyDetectedSdk.setupTargetAware(existingSdks: List<Sdk>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
   val homeDir = homeDirectory ?: return null
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, homeDir, PythonSdkType.getInstance(), null, null)
-  sdk.sdkAdditionalData = PyTargetAwareAdditionalData(flavor = null)
+  sdk.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
     .also {
       it.targetEnvironmentConfiguration = targetEnvironmentConfiguration
     }
@@ -323,14 +327,7 @@ private val Sdk.associatedPathFromAdditionalData: String?
 private val Sdk.sitePackagesDirectory: VirtualFile?
   get() = PythonSdkUtil.getSitePackagesDirectory(this)
 
-val Sdk.sdkFlavor: PythonSdkFlavor?
-  get() {
-    val remoteSdkData = remoteSdkAdditionalData
-    if (remoteSdkData != null) {
-      return remoteSdkData.flavor
-    }
-    return PythonSdkFlavor.getFlavor(this)
-  }
+val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
 
 val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
   get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
@@ -361,13 +358,26 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
   return path.contains(name, true)
 }
 
+/**
+ * Each [Sdk] has [PythonSdkAdditionalData]. Use this method to get it.
+ * Although each SDK should already have one, some old may lack of it.
+ *
+ * This method creates new in this case, but only if SDK flavor doesn't require special additional data.
+ */
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) return existingData
-  val newData = PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(homePath))
+  val flavor = PythonSdkFlavor.getFlavor(homePath)
+  val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
+  ApplicationManager.getApplication().let {
+    it.invokeLater {
+      it.runWriteAction {
+        modificator.commitChanges()
+      }
+    }
+  }
   return newData
 }
 
@@ -417,3 +427,29 @@ val Sdk.remoteSourcesLocalPath: Path
               is PyRemoteSdkAdditionalData -> homePath!!
               else -> error("Only legacy and remote SDK and target-based SDKs are supported")
             }.hashCode().toString())
+
+
+/**
+ * Configures [targetCommandLineBuilder] (sets binary path and other stuff) so it could run python on this target
+ */
+fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
+  getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
+}
+
+val Sdk.sdkSeemsValid: Boolean get() = getOrCreateAdditionalData().flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
+
+private val SDK_PYTHON_PATH = Key<FullPathOnTarget>("SDK_PYTHON_PATH")
+/**
+ * @return path to python binary on target
+ */
+suspend fun Sdk.getPythonBinaryPath(project: Project): Result<FullPathOnTarget> {
+  val cachedPath = getUserData(SDK_PYTHON_PATH)
+  if (cachedPath != null) return Result.success(cachedPath)
+  val executionResult = PyTargetsIntrospectionFacade(this, project)
+    .getCommandOutput(EmptyProgressIndicator(), "import sys; print(sys.executable)").map { it.trim() }
+  val path = executionResult.getOrNull()
+  if (path != null) {
+    putUserData(SDK_PYTHON_PATH, path)
+  }
+  return executionResult
+}

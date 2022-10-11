@@ -12,6 +12,8 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
@@ -61,7 +63,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
                                     existingSdks: Collection<Sdk>,
                                     sdkName: String? = null): Sdk {
       // TODO [targets] Should flavor be more flexible?
-      val data = PyTargetAwareAdditionalData(virtualEnvSdkFlavor).also {
+      val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor)).also {
         it.interpreterPath = interpreterPath
         it.targetEnvironmentConfiguration = environmentConfiguration
       }

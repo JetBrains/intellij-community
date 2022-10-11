@@ -331,7 +331,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
@@ -772,15 +772,20 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
       pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, sdkHome, pathMapper,
                                                             shouldAddContentRoots, shouldAddSourceRoots, isDebug));
-      initPythonPath(pythonScript, passParentEnvs, pathList, sdkHome, targetEnvironmentRequest);
+      initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
     }
   }
 
+  /**
+   * Doesn't support target
+   * @deprecated
+   */
+  @Deprecated
   public static void initPythonPath(@NotNull GeneralCommandLine commandLine,
                                     boolean passParentEnvs,
                                     @NotNull List<String> pathList,
                                     final String interpreterPath) {
-    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
+    final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(interpreterPath);
     if (flavor != null) {
       flavor.initPythonPath(commandLine, passParentEnvs, pathList);
     }
@@ -792,14 +797,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void initPythonPath(@NotNull PythonExecution pythonScript,
                                     boolean passParentEnvs,
                                     @NotNull List<Function<TargetEnvironment, String>> pathList,
-                                    @Nullable String interpreterPath,
                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
-    if (flavor != null) {
-      // TODO [Targets API] Take into account Python interpreter flavor when initializing Python path (see PythonSdkFlavor.initPythonPath())
-      //  e.g. IRONPYTHONPATH and JYTHONPATH env variables should be used for IronPython and Jython correspondingly
-      LOG.warn("Python interpreter flavor is not taken into account while initializing Python path");
-    }
     TargetedPythonPaths.initPythonPath(pythonScript.getEnvs(), passParentEnvs, pathList, targetEnvironmentRequest);
   }
 

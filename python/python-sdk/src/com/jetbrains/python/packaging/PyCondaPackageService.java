@@ -31,7 +31,11 @@ import org.jetbrains.annotations.SystemDependent;
 import java.io.File;
 import java.util.*;
 
-@State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
+/**
+ * @deprecated This class doesn't support targets, can't work with remote systems and shouldn't be used
+ */
+@Deprecated
+@State(name = "PyCondaPackageService", storages = @Storage(value = "conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
 

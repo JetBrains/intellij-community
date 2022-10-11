@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 
-public final class IronPythonSdkFlavor extends PythonSdkFlavor {
+public final class IronPythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   public static final Pattern VERSION_RE = Pattern.compile("\\w+ ([0-9\\.]+).*");
 
   private IronPythonSdkFlavor() {
@@ -31,6 +31,11 @@ public final class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public @NotNull String envPathParam() {
     return "IRONPYTHONPATH";
+  }
+
+  @Override
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
   }
 
   @NotNull

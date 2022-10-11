@@ -141,7 +141,7 @@ public final class PyInterpreterInspection extends PyInspection {
           }
         }
 
-        if (PythonSdkUtil.isInvalid(sdk)) {
+        if (! PySdkExtKt.getSdkSeemsValid(sdk)) {
           final @InspectionMessage String message;
           if (pyCharm) {
             message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");

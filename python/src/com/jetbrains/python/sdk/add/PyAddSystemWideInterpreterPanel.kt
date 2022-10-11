@@ -84,7 +84,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     else {
       config?.pythonInterpreterPath?.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          sdkComboBox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
+          sdkComboBox.addSdkItem(createDetectedSdk(introspectedPythonPath, targetEnvironmentConfiguration))
         }
       }
     }

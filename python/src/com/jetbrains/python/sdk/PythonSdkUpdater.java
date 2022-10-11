@@ -13,10 +13,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -228,7 +230,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
             }
           });
         }
-        else if (!PythonSdkUtil.isInvalid(sdk)) {
+        else if (PySdkExtKt.getSdkSeemsValid(sdk)) {
           LOG.error(exception);
         }
       }
@@ -405,7 +407,12 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     throws InvalidSdkException {
     updateLocalSdkVersion(sdk);
     if (!PythonSdkUtil.isRemote(sdk)) {
-      updateSdkPaths(sdk, evaluateSysPath(sdk), project);
+      try {
+        updateSdkPaths(sdk, evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject()), project);
+      }
+      catch (ExecutionException e) {
+        throw new InvalidSdkException("Can't evalturate sdk version", e);
+      }
     }
   }
 
@@ -621,18 +628,15 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   }
 
   /**
-   * Evaluates sys.path by running the Python interpreter from a local SDK.
+   * Evaluates sys.path by running the Python interpreter from  SDK.
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
-  private static List<String> evaluateSysPath(@NotNull Sdk sdk) throws InvalidSdkException {
-    if (PythonSdkUtil.isRemote(sdk)) {
-      throw new IllegalArgumentException("Cannot evaluate sys.path for remote Python interpreter " + sdk);
-    }
+  private static List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
-    final List<String> sysPath = PythonSdkType.getSysPath(sdk);
+    final List<String> sysPath = new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
     return sysPath;
   }

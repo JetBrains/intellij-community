@@ -1,24 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda;
 
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.readableFs.PathInfo;
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.add.target.PathValidatorKt;
 import com.jetbrains.python.sdk.add.target.ValidationRequest;
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +21,13 @@ import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
+/**
+ * Conda doesn't use {@link Sdk#getHomePath()}, see {@link PyCondaFlavorData}
+ */
+public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData> {
   private CondaEnvSdkFlavor() {
   }
 
@@ -40,30 +36,46 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   }
 
   @Override
+  public boolean supportsVirtualEnvActivation() {
+    // Conda has its own machinery to set env vars, so it doesn't need explicit activation.
+    // Even worse: settings ``PATH`` read from base environment activation script executes python
+    // from base environment (instead of selected one), hence breaks everything
+    return false;
+  }
+
+  @Override
   public boolean isPlatformIndependent() {
     return true;
+  }
+
+  @Override
+  public boolean supportsEmptyData() {
+    return false;
+  }
+
+  @Override
+  public @NotNull Class<PyCondaFlavorData> getFlavorDataClass() {
+    return PyCondaFlavorData.class;
   }
 
   @NotNull
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
-    final List<String> results = new ArrayList<>();
-    final Sdk sdk = ReadAction.compute(() -> PythonSdkUtil.findPythonSdk(module));
-    try {
-      final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
-      for (String environment : environments) {
-        results.addAll(
-          ReadAction.compute(() -> VirtualEnvSdkFlavor.findInRootDirectory(StandardFileSystems.local().findFileByPath(environment)))
-        );
-      }
-      if (!PyCondaSdkCustomizer.Companion.getInstance().getDetectBaseEnvironment()) {
-        results.removeIf(path -> PythonSdkUtil.isBaseConda(path));
-      }
-    }
-    catch (ExecutionException e) {
-      return Collections.emptyList();
-    }
-    return results;
+    // There is no such thing as "conda homepath" since conda doesn't store python path
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean sdkSeemsValid(@NotNull Sdk sdk,
+                               @NotNull PyCondaFlavorData flavorData,
+                               @Nullable TargetEnvironmentConfiguration targetConfig) {
+    var condaPath = flavorData.getEnv().getFullCondaPathOnTarget();
+    return isFileExecutable(condaPath, targetConfig);
+  }
+
+  @Override
+  public @NotNull String getUniqueId() {
+    return "Conda";
   }
 
   @Override
@@ -96,6 +108,10 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     return PythonIcons.Python.Anaconda;
   }
 
+  /**
+   * @deprecated use {@link #validateCondaPath(String, TargetConfigurationReadableFs)}
+   */
+  @Deprecated
   public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
     return validateCondaPath(condaExecutable, PathInfo.Companion.getLocalPathInfoProvider());
   }

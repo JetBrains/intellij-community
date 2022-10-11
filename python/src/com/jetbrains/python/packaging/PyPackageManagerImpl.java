@@ -32,8 +32,10 @@ import java.util.*;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
 /**
+ * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  * @author vlan
  */
+@Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv.pyz";
 

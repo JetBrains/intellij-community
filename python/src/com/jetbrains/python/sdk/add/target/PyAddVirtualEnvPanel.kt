@@ -35,6 +35,9 @@ import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData
+import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
@@ -159,7 +162,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     else {
       config.pythonInterpreterPath.let { introspectedPythonPath ->
         if (introspectedPythonPath.isNotBlank()) {
-          baseInterpreterCombobox.addSdkItem(createDetectedSdk(introspectedPythonPath, isLocal = false))
+          baseInterpreterCombobox.addSdkItem(createDetectedSdk(introspectedPythonPath, targetEnvironmentConfiguration))
         }
       }
     }
@@ -201,7 +204,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       installSdkIfNeeded(baseSelectedSdk, module, existingSdks, context) ?: return null
     }
     else {
-      val sdkAdditionalData = PyTargetAwareAdditionalData(virtualEnvSdkFlavor)
+      val sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor))
       sdkAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
       val homePath = baseSelectedSdk.homePath ?: return null
       // suggesting the proper name for the base SDK fixes the problem with clashing caching key of Python package manager

@@ -23,36 +23,14 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
+@Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
 fun runCondaOnTarget(targetEnvironmentRequest: TargetEnvironmentRequest, condaExecutable: String, arguments: List<String>): ProcessOutput {
   return runOnTarget(targetEnvironmentRequest, condaExecutable, arguments, readCondaEnv(condaExecutable))
 }
 
-@Throws(ExecutionException::class)
-fun runCondaOnTarget(sdk: Sdk?, arguments: List<String>): ProcessOutput {
-  val condaExecutable = findCondaExecutable(sdk)
-  // TODO [targets] Adapt reading environment using Targets API
-  val environment = if (sdk != null) {
-    PySdkUtil.activateVirtualEnv(sdk)
-  }
-  else {
-    readCondaEnv(condaExecutable)
-  }
-  return runOnTarget(sdk, condaExecutable, arguments, environment)
-}
 
-/**
- * We assume that we do not need the helpers here thus we do not need to get [HelpersAwareTargetEnvironmentRequest].
- *
- * @param executable the path on the target
- */
-// TODO [targets] Check that `env` is required and the callers do not pass something strange here
-private fun runOnTarget(sdk: Sdk?, executable: String, arguments: List<String>, env: Map<String, String>?): ProcessOutput {
-  val helpersAwareTargetRequest = PythonCommandLineState.getPythonTargetInterpreter(ProjectManager.getInstance().defaultProject, sdk)
-  val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
-  return runOnTarget(targetEnvironmentRequest, executable, arguments, env)
-}
-
+@Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 private fun runOnTarget(targetEnvironmentRequest: TargetEnvironmentRequest,
                         executable: String,
                         arguments: List<String>,
@@ -78,21 +56,9 @@ private fun runOnTarget(targetEnvironmentRequest: TargetEnvironmentRequest,
   }
 }
 
+@Deprecated("Do not run conda directly, use  configureBuilderToRunPythonOnTarget")
 private fun readCondaEnv(condaExecutable: String): Map<String, String>? {
   return PyCondaPackageService.getCondaBasePython(condaExecutable)?.let { PySdkUtil.activateVirtualEnv(it) }
-}
-
-/**
- * In case of target-based SDK the path to Conda executable is store in the additional data.
- */
-@Throws(ExecutionException::class)
-private fun findCondaExecutable(sdk: Sdk?): String {
-  if (sdk?.sdkAdditionalData is PyTargetAwareAdditionalData) {
-    // TODO [targets] The value must be obtained from SDK additional data
-    return "/root/anaconda3"
-  }
-  return PyCondaPackageService.getCondaExecutable(sdk?.homePath) ?: throw ExecutionException(
-    PySdkBundle.message("python.sdk.flavor.cannot.find.conda"))
 }
 
 @Throws(PyExecutionException::class)
@@ -104,5 +70,3 @@ private fun ProcessOutput.checkExitCode(executable: String, arguments: List<Stri
     throw PyExecutionException(message, executable, arguments, this)
   }
 }
-
-private data class CondaEnvironmentsList(@SerializedName("envs") var envs: List<String>)

@@ -56,7 +56,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     val interpreterList = PyConfigurableInterpreterList.getInstance(project)
     val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project), module) {
-      PythonSdkUtil.isInvalid(it) ||
+      !it.sdkSeemsValid ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
       !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
