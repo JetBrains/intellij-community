@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
-import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.tree.DefaultMutableTreeNode
 
 @ApiStatus.Internal
 private class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposable {
@@ -28,14 +28,10 @@ private class TodoPanelCoroutineHelper(private val panel: TodoPanel) : Disposabl
     scope.launch(Dispatchers.EDT) {
       if (!panel.usagePreviewPanel.isVisible) return@launch
 
-      val lastNode = panel.tree.selectionPath
-        ?.lastPathComponent as? DefaultMutableTreeNode
-
-      val userElement = (lastNode?.userObject as? NodeDescriptor<*>)?.element
-
-      val usageInfos = if (userElement != null) {
-        withContext(Dispatchers.IO) {
-          val pointer = panel.treeBuilder.getFirstPointerForElement(userElement)
+      val lastUserObject = TreeUtil.getLastUserObject(panel.tree.selectionPath)
+      val usageInfos = if (lastUserObject != null) {
+        readAction {
+          val pointer = panel.treeBuilder.getFirstPointerForElement(lastUserObject)
 
           if (pointer != null) {
             val value = pointer.value!!
