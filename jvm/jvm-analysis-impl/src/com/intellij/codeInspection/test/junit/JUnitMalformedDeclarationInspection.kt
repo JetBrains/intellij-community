@@ -98,12 +98,21 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkMalformedNestedClass(aClass: UClass) {
     val javaClass = aClass.javaPsi
     val containingClass = javaClass.containingClass
-    if (containingClass != null && aClass.isStatic && javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.nested.class.descriptor")
-      val fixes = createModifierQuickfixes(aClass, modifierRequest(JvmModifier.STATIC, shouldBePresent = false)) ?: return
-      holder.registerUProblem(aClass, message, *fixes)
-    }
+    if (containingClass == null || !javaClass.hasAnnotation(ORG_JUNIT_JUPITER_API_NESTED)) return
+    val problems = mutableListOf<JvmModifier>()
+    if (aClass.isStatic) problems.add(JvmModifier.STATIC)
+    if (aClass.visibility == UastVisibility.PRIVATE) problems.add(JvmModifier.PRIVATE)
+    if (problems.isEmpty()) return
+    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.nested.class.descriptor",
+      problems.size,
+      problems.first().nonMessage(),
+      problems.last().nonMessage()
+    )
+    val fix = ClassSignatureQuickFix(aClass.javaPsi.name ?: return, false, aClass.visibility == UastVisibility.PRIVATE)
+    holder.registerUProblem(aClass, message, fix)
   }
+
+  fun JvmModifier.nonMessage() = "non-${toString().lowercase()}"
 
   private val dataPoint = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT, ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS),
@@ -969,7 +978,33 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  class FieldSignatureQuickfix(
+  private class ClassSignatureQuickFix(
+    private val name: @NlsSafe String,
+    private val makeStatic: Boolean,
+    private val makePublic: Boolean,
+  ) : LocalQuickFix {
+    override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature")
+
+    override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.fix.class.signature.descriptor", name)
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val containingFile = descriptor.psiElement.containingFile ?: return
+      val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.asSafely<UClass>()?.javaPsi ?: return
+      val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
+      declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
+        createModifierActions(jvmMethod, modifierRequest(JvmModifier.STATIC, makeStatic)).forEach {
+          it.invoke(project, null, containingFile)
+        }
+      }
+      declPtr.element?.asSafely<JvmModifiersOwner>()?.let { jvmMethod ->
+        createModifierActions(jvmMethod, modifierRequest(JvmModifier.PUBLIC, makePublic)).forEach {
+          it.invoke(project, null, containingFile)
+        }
+      }
+    }
+  }
+
+  private class FieldSignatureQuickfix(
     private val name: @NlsSafe String,
     private val makeStatic: Boolean,
     private val newVisibility: JvmModifier? = null
@@ -997,7 +1032,7 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  class MethodSignatureQuickfix(
+  private class MethodSignatureQuickfix(
     private val name: @NlsSafe String,
     private val makeStatic: Boolean,
     private val shouldBeVoidType: Boolean? = null,

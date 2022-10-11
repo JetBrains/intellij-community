@@ -37,10 +37,42 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
     myFixture.testHighlighting(ULanguage.JAVA, """
       class A {
         @org.junit.jupiter.api.Nested
-        static class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
+        static class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
+        
+        @org.junit.jupiter.api.Nested
+        private class <warning descr="Class 'C' annotated with '@Nested' should be non-private">C</warning> { }
+        
+        @org.junit.jupiter.api.Nested
+        private static class <warning descr="Class 'D' annotated with '@Nested' should be non-static and non-private">D</warning> { }
       }
     """.trimIndent())
   }
+  fun `test malformed nested class quickfix`() {
+    myFixture.testAllQuickfixes(ULanguage.JAVA, """
+      class A {
+        @org.junit.jupiter.api.Nested
+        static class B { }
+        
+        @org.junit.jupiter.api.Nested
+        private class C { }
+        
+        @org.junit.jupiter.api.Nested
+        private static class D { }
+      }
+    """.trimIndent(), """
+      class A {
+        @org.junit.jupiter.api.Nested
+        class B { }
+        
+        @org.junit.jupiter.api.Nested
+        public class C { }
+        
+        @org.junit.jupiter.api.Nested
+        public class D { }
+      }
+    """.trimIndent(), "Fix class signature")
+  }
+
 
   /* Malformed parameterized */
   fun `test malformed parameterized no highlighting`() {

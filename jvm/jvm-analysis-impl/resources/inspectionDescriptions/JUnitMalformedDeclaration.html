@@ -4,7 +4,7 @@ Reports JUnit test member declarations that are malformed and are likely not rec
 The following problems are reported by this inspection:
 <ul>
   <li>Fields annotated by <code>@RegisterExtension</code> that have the wrong type or are not declared as static when it is required</li>
-  <li>Static inner classes annotated with <code>@Nested</code></li>
+  <li>Static or private inner classes annotated with <code>@Nested</code></li>
   <li>Parameterized tests that are defined without a source</li>
   <li>Parameterized tests with a <code>@MethodSource</code> that has an unknown, non-static or no-arg target</li>
   <li>Mismatched types between parameterized test method parameter and the specified <code>@ValueSource</code> or <code>@EnumSource</code> values</li>

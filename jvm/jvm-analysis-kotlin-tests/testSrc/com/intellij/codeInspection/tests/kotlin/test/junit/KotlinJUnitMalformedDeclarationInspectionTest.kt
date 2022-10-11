@@ -52,7 +52,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Only non-static nested classes can serve as '@Nested' test classes">B</warning> { }
+        class <warning descr="Class 'B' annotated with '@Nested' should be non-static">B</warning> { }
       }
     """.trimIndent())
   }
