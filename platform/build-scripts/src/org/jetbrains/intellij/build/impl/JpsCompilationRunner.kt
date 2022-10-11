@@ -155,8 +155,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val missing = artifactNames.filter { name ->
       artifacts.none { it.name == name }
     }
-    require(missing.isEmpty()) {
-      "Artifacts won't be built: " + missing.joinToString()
+    if (missing.isNotEmpty()) {
+      context.messages.error("Artifacts aren't configured in the project: " + missing.joinToString())
     }
     artifacts.forEach {
       if (context.compilationData.builtArtifacts.contains(it.name) &&
