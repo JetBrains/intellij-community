@@ -72,6 +72,20 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "Fix class signature")
   }
+  fun `test malformed nested class preview`() {
+    myFixture.testPreview(ULanguage.JAVA, """
+      class A {
+        @org.junit.jupiter.api.Nested
+        static class <caret>B { }
+      }
+    """.trimIndent(), """
+      class A {
+        @org.junit.jupiter.api.Nested
+        class B { }
+      }
+    """.trimIndent(), "Fix 'B' class signature")
+  }
+
 
 
   /* Malformed parameterized */
