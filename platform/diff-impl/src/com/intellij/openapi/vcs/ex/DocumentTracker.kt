@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -1139,10 +1140,8 @@ private class BlocksRefresher(val handlers: List<Handler>,
 }
 
 private fun getRangeDelta(range: Range, side: Side): Int {
-  val otherSide = side.other()
-  val deleted = range.end(side) - range.start(side)
-  val inserted = range.end(otherSide) - range.start(otherSide)
-  return inserted - deleted
+  val delta = DiffIterableUtil.getRangeDelta(range)
+  return if (side.isLeft) delta else -delta
 }
 
 private fun Block.shift(side: Side, delta: Int) = Block(
