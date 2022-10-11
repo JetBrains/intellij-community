@@ -8,7 +8,9 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ui.LibraryDescriptionPanel
 import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.wizard.CommitStepException
 import com.intellij.ide.wizard.withVisualPadding
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
@@ -68,6 +70,19 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
 
   override fun getComponent(): JComponent {
     return topLevelPanel
+  }
+
+  override fun _commit(finishChosen: Boolean) {
+    super._commit(finishChosen)
+
+    try {
+      if (finishChosen) {
+        updateDataModel()
+        moduleBuilder.validateConfigurationInternal()
+      }
+    } catch (e: ConfigurationException) {
+      throw CommitStepException(e.message)
+    }
   }
 
   @NlsSafe
