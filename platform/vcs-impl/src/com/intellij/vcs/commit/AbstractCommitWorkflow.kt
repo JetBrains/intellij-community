@@ -222,6 +222,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val handlers = commitHandlers
       val commitChecks = handlers
         .map { it.asCommitCheck(commitInfo) }
+        .filter { it.isEnabled() }
         .groupBy { it.getExecutionOrder() }
 
       if (!checkDumbMode(commitInfo, commitChecks.values.flatten())) {
@@ -352,10 +353,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
 
     suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
-      if (!commitCheck.isEnabled()) {
-        LOG.debug("Commit check disabled $commitCheck")
-        return null
-      }
       if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
         LOG.debug("Skipped commit check in dumb mode $commitCheck")
         return null
