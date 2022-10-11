@@ -354,8 +354,7 @@ object CommandLineProcessor {
       if (!file.isAbsolute) {
         file = if (currentDirectory == null) file.toAbsolutePath() else Path.of(currentDirectory).resolve(file)
       }
-      file.normalize()
-      return file
+      return file.normalize()
     }
     catch (e: InvalidPathException) {
       LOG.warn(e)
