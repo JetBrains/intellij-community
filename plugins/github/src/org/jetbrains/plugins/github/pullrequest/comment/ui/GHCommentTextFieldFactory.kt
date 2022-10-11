@@ -11,7 +11,7 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.ListFocusTraversalPolicy
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -22,9 +22,12 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import java.awt.Component
+import java.awt.Container
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
 
 class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
 
@@ -79,7 +82,10 @@ class GHCommentTextFieldFactory(private val model: CommentTextFieldModel) {
                            .fillX())
       isFocusCycleRoot = true
       isFocusTraversalPolicyProvider = true
-      focusTraversalPolicy = ListFocusTraversalPolicy(listOf(commentComponent, authorLabel))
+      focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+        override fun getDefaultComponent(aContainer: Container?): Component =
+          IdeFocusTraversalPolicy.getPreferredFocusedComponent(commentComponent) ?: super.getDefaultComponent(aContainer)
+      }
 
       add(authorLabel, CC().alignY("top").gapRight("${JBUI.scale(6)}"))
       add(component, CC().grow().pushX())
