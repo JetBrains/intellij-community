@@ -5,7 +5,6 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.collectResults
@@ -34,14 +33,11 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
    */
   @Throws(ExecutionException::class)
   fun getCommandPresentation(target: TargetEnvironment): String {
-    val exePath = resolvePromise(exePath.targetValue, "exe path")
+    val exePath = exePath.targetValue.resolve("exe path")
                   ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.exe.path.not.set"))
-    val parameters: MutableList<String?> = ArrayList()
-    for (parameter in this.parameters) {
-      parameters.add(resolvePromise(parameter.targetValue, "parameter"))
-    }
-    return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters, target.targetPlatform.platform),
-                           " ")
+    val parameters = parameters.map { it.targetValue.resolve("parameter") }
+    val targetPlatform = target.targetPlatform.platform
+    return CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters, targetPlatform).joinToString(separator = " ")
   }
 
   @Throws(ExecutionException::class)
@@ -70,28 +66,24 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
 
   @get:Throws(ExecutionException::class)
   val workingDirectory: String?
-    get() = resolvePromise(_workingDirectory.targetValue, "working directory")
+    get() = _workingDirectory.targetValue.resolve("working directory")
 
   @get:Throws(ExecutionException::class)
   val inputFilePath: String?
-    get() = resolvePromise(_inputFilePath.targetValue, "input file path")
+    get() = _inputFilePath.targetValue.resolve("input file path")
 
   @get:Throws(ExecutionException::class)
   val environmentVariables: Map<String, String>
-    get() {
-      val result: MutableMap<String, String> = LinkedHashMap()
-      for ((key, value) in environment) {
-        result[key] = resolvePromise(value.targetValue, "environment variable $key")
-                      ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolved.env.value.is.null", key))
-      }
-      return result
+    get() = environment.mapValues { (name, value) ->
+      value.targetValue.resolve("environment variable $name")
+      ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolved.env.value.is.null", name))
     }
 
   companion object {
     @Throws(ExecutionException::class)
-    private fun resolvePromise(promise: Promise<String>, debugName: String): String? =
+    private fun Promise<String>.resolve(debugName: String): String? =
       try {
-        promise.blockingGet(0)
+        blockingGet(0)
       }
       catch (e: java.util.concurrent.ExecutionException) {
         throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolver.failed.for", debugName), e)
