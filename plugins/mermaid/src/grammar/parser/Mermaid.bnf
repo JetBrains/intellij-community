@@ -207,14 +207,18 @@ classDiagramStatement ::= directionStatement
   | classDiagramClickStatement
 	| accStatement
 
-classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
+classDiagramIdentifier ::= CLASS_ID {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
 
-memberStatement ::= identifier COLON attrOrMethod
+classStatement ::= CLASS classDiagramIdentifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
 
-relationStatement ::= identifier relation identifier [COLON complexLabel]
+memberStatement ::= classDiagramIdentifier COLON attrOrMethod
+
+relationStatement ::= classDiagramIdentifier relation classDiagramIdentifier [COLON complexLabel]
 complexLabel ::= LABEL+
 
-annotationStatement ::= annotation identifier
+annotationStatement ::= annotation classDiagramIdentifier
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 classMembersDocument ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
@@ -227,9 +231,9 @@ private visibilityAtEnd ::= STAR | DOLLAR
 
 attribute ::= (attrTypeWithGeneric | attrType) attrName [visibilityAtEnd] | attrName [COLON (attrTypeWithGeneric | attrType)]
 method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
-attrType ::= ID
+attrType ::= ATTRIBUTE_WORD
 attrTypeWithGeneric ::= attrType TILDA GENERIC_TYPE TILDA
-attrName ::= ID
+attrName ::= ATTRIBUTE_WORD
 
 
 relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]

@@ -99,6 +99,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %xstate class_name
 %xstate class_in_relation
 %xstate description
+%xstate class_style_id
+%xstate class_member
 
 
 %xstate state_diagram
@@ -528,25 +530,28 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "link" { yypushstate(click); return LINK; }
   "callback" { yypushstate(click); return CALLBACK; }
   "{" { yybegin(struct); return OPEN_CURLY; }
-  ":::" { return STYLE_SEPARATOR; }
+  ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
+}
+<class_style_id> {
+  [\w_]+ { yypopstate(); return ID; }
 }
 <class_diagram, class_name> {
 	"class" { yypushstate(class_name); return CLASS; }
   "direction" { yypushstate(direction_value); return DIRECTION; }
-  [\w_]+ { yypushstate(class_name); return ID; }
+  [\w_]+ { yypushstate(class_name); return ClassDiagram.CLASS_ID; }
 }
 <struct> {
   "}" { yybegin(class_diagram); return CLOSE_CURLY; }
 }
-<struct, class_name> {
-  [\w]+ { return ID; }
+<struct, class_name, class_member> {
+  [\w]+ { return ATTRIBUTE_WORD; }
 }
-<class_diagram, struct, class_name> {
+<class_diagram, struct, class_name, class_member> {
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "<<" { yypushstate(annotation); return ANNOTATION_START; }
 
-  ":" { return COLON; }
+  ":" { yypushstate(class_member); return COLON; }
   "+" { return PLUS; }
   "-" { return MINUS; }
   "#" { return POUND; }
@@ -555,6 +560,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "(" { return OPEN_ROUND; }
   ")" { return CLOSE_ROUND; }
   "," { return COMMA; }
+}
+<class_member> {
+  [^\S\r\n]+ { return WHITE_SPACE; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 <generic> {
 	"~" { yypopstate(); return TILDA; }
@@ -586,7 +595,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\*] { return ClassDiagram.COMPOSITION; }
   "o" { return ClassDiagram.AGGREGATION; }
   "()" { return ClassDiagram.LOLLIPOP; }
-  [\w_]+ { return ID; }
+  [\w_]+ { return ClassDiagram.CLASS_ID; }
 
   [\n\r] { yybegin(class_diagram); return EOL; }
   [^\S\r\n]+ { return WHITE_SPACE; }
@@ -659,7 +668,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <entity_attributes> {
 	"FK" | "PK" { return EntityRelationship.ATTR_KEY; }
-	[a-zA-Z][\w\-\[\]]* { return ID; }
+	[a-zA-Z][\w\-\[\]]* { return ATTRIBUTE_WORD; }
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "}" { yybegin(entity_relationship); return CLOSE_CURLY; }

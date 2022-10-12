@@ -1,8 +1,8 @@
 package com.intellij.mermaid.lang.highlighting
 
+import com.intellij.lexer.Lexer
 import com.intellij.mermaid.lang.lexer.MermaidLexer
 import com.intellij.mermaid.lang.lexer.MermaidTokens
-import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
@@ -85,7 +85,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
 
   private fun getClassDiagramHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
     return when (tokenType) {
-      MermaidTokens.ClassDiagram.CLASS_DIAGRAM -> arrayOf(MermaidTextAttributes.keyword)
+      MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
+      MermaidTokens.ClassDiagram.CLASS_ID -> arrayOf(MermaidTextAttributes.keyword)
 
       MermaidTokens.ClassDiagram.EXTENSION_START,
       MermaidTokens.ClassDiagram.EXTENSION_END,
@@ -303,7 +304,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.IGNORED -> arrayOf(MermaidTextAttributes.comment)
 
-        MermaidTokens.ID -> arrayOf(MermaidTextAttributes.identifier)
+        MermaidTokens.ID,
+        MermaidTokens.ATTRIBUTE_WORD -> arrayOf(MermaidTextAttributes.identifier)
 
         MermaidTokens.PLUS,
         MermaidTokens.MINUS,

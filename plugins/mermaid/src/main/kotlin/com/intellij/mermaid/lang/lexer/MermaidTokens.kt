@@ -205,6 +205,9 @@ object MermaidTokens {
   @JvmField
   val ID_KEYWORD = MermaidToken("ID_KEYWORD")
 
+  @JvmField
+  val ATTRIBUTE_WORD = MermaidToken("ATTRIBUTE_WORD")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
@@ -408,6 +411,9 @@ object MermaidTokens {
   object ClassDiagram {
     @JvmField
     val CLASS_DIAGRAM = MermaidToken("ClassDiagram.CLASS_DIAGRAM")
+
+    @JvmField
+    val CLASS_ID = MermaidToken("ClassDiagram.CLASS_ID")
 
     @JvmField
     val GENERIC_TYPE = MermaidToken("ClassDiagram.GENERIC_TYPE")
