@@ -12,8 +12,8 @@ import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -40,10 +40,11 @@ class KotlinPsiElementMemberChooserObject(
     override fun getElement(): KtElement = psiElement as KtElement
 
     companion object {
-        private val RENDERING_OPTIONS = KtDeclarationRendererOptions(
-            modifiers = emptySet(),
-            typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES
-        )
+        private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            modifiersRenderer = modifiersRenderer.with {
+                modifierFilter = KtRendererModifierFilter.NONE
+            }
+        }
 
         @JvmStatic
         fun getKotlinMemberChooserObject(declaration: KtDeclaration): KotlinPsiElementMemberChooserObject {
@@ -82,7 +83,7 @@ class KotlinPsiElementMemberChooserObject(
             }
 
             if (symbol is KtDeclarationSymbol) {
-                return symbol.render(RENDERING_OPTIONS)
+                return symbol.render(renderer)
             }
 
             return ""

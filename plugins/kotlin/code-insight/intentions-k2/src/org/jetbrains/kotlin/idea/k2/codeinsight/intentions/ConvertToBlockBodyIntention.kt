@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertToBlockBodyIntention :
     KotlinApplicableIntentionWithContext<KtDeclarationWithBody, ConvertToBlockBodyIntention.Context>(KtDeclarationWithBody::class) {
@@ -81,12 +82,12 @@ private fun KtAnalysisSession.createContextForDeclaration(
     reformat: Boolean
 ): ConvertToBlockBodyIntention.Context? {
     val body = declaration.bodyExpression ?: return null
-    val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf()
+    val returnType = declaration.getReturnKtType().approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
     val bodyType = body.getKtType() ?: return null
     return ConvertToBlockBodyIntention.Context(
         returnType.isUnit,
         returnType.isNothing,
-        returnType.render(),
+        returnType.render(position = Variance.OUT_VARIANCE),
         returnType.expandedClassSymbol?.classIdIfNonLocal,
         bodyType.isUnit,
         bodyType.isNothing,

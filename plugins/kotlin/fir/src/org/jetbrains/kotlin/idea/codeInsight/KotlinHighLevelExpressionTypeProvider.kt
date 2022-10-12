@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.types.Variance
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     override fun KtExpression.shouldShowStatementType(): Boolean {
@@ -22,7 +23,7 @@ class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
             element.getKtType() ?: return KotlinBundle.message("type.provider.unknown.type")
         }
         @NlsSafe
-        val rendered = ktType.render()
+        val rendered = ktType.render(position = Variance.INVARIANT)
         StringUtil.escapeXmlEntities(rendered)
     }
 

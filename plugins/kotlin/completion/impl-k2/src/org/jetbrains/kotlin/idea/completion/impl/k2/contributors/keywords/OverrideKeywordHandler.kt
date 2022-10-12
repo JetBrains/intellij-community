@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModalityModifierProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -31,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 
 internal class OverrideKeywordHandler(
     private val basicContext: FirBasicCompletionContext
@@ -163,9 +167,11 @@ internal class OverrideKeywordHandler(
 
     companion object {
         private val renderingOptionsForLookupElementRendering =
-            KtGenerateMembersHandler.renderOption.copy(
-                renderUnitReturnType = false,
-                renderDeclarationHeader = true
-            )
+            KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+                modifiersRenderer = modifiersRenderer.with {
+                    modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD) and
+                            KtRendererModifierFilter.without(KtTokens.MODALITY_MODIFIERS)
+                }
+            }
     }
 }

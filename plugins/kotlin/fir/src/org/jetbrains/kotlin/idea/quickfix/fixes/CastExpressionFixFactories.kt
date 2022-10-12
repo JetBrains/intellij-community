@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.types.Variance
 
 object CastExpressionFixFactories {
     class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
@@ -77,7 +78,7 @@ object CastExpressionFixFactories {
         psi: PsiElement,
     ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
         // `null` related issue should not be handled by a cast fix.
-        if (isDueToNullability || expectedType is KtClassErrorType) return emptyList()
+        if (isDueToNullability || expectedType is KtErrorType) return emptyList()
 
         // Do not offer to cast to an incompatible type.
         if (!actualType.hasCommonSubTypeWith(expectedType)) {
@@ -85,8 +86,8 @@ object CastExpressionFixFactories {
         }
         return listOf(
             psi withInput Input(
-                expectedType.render(KtTypeRendererOptions.SHORT_NAMES),
-                expectedType.render(KtTypeRendererOptions.DEFAULT)
+                expectedType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
+                expectedType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE)
             )
         )
     }

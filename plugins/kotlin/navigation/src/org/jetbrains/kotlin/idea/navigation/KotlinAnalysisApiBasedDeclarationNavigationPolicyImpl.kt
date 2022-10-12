@@ -6,8 +6,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import kotlin.math.PI
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.project.structure.*
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.types.Variance
 
 internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
@@ -215,11 +216,11 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
             buildString {
                 val symbol = declaration.getSymbol() as KtCallableSymbol
                 symbol.receiverType?.let { receiver ->
-                    append(receiver.render(typeRenderingOptions))
+                    append(receiver.render(renderer, position = Variance.INVARIANT))
                     append('.')
                 }
                 if (symbol is KtFunctionLikeSymbol) {
-                    symbol.valueParameters.joinTo(this) { it.returnType.render(typeRenderingOptions) }
+                    symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
                 }
             }
         }
@@ -250,6 +251,6 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     companion object {
-        private val typeRenderingOptions = KtTypeRendererOptions.DEFAULT
+        private val renderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES
     }
 }

@@ -231,7 +231,7 @@ internal open class FirCallableCompletionContributor(
                 extensionChecker,
                 context,
                 // Only offer the hint if the type is denotable.
-                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable() == null }
+                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
             )
         }
 

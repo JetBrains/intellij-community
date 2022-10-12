@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
     fun KtAnalysisSession.getTailText(symbol: KtCallableSymbol, substitutor: KtSubstitutor): String = buildString {
@@ -32,7 +33,7 @@ internal object TailTextProvider {
             }
 
         symbol.receiverType?.let { receiverType ->
-            val renderedType = receiverType.render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+            val renderedType = receiverType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
             append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
         }
     }
