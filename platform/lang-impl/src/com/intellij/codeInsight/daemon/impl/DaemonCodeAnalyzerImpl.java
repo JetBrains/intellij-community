@@ -818,7 +818,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<LineMarkerInfo<?>> result = new ArrayList<>();
-    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()),
+    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
                                        new CommonProcessors.CollectProcessor<>(result));
     return result;
   }
