@@ -2,8 +2,10 @@ package org.jetbrains.completion.full.line.settings.ui.panels
 
 import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.layout.*
-import org.jetbrains.annotations.Nls
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
+import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.selected
 import org.jetbrains.completion.full.line.language.KeepKind
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message

@@ -3,7 +3,8 @@ package org.jetbrains.completion.full.line.settings.ui
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.layout.panel
 import org.jetbrains.completion.full.line.providers.CloudFullLineCompletionProvider
 import org.jetbrains.completion.full.line.settings.FullLineNotifications
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message

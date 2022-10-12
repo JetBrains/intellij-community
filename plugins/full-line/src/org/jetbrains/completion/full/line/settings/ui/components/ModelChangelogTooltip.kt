@@ -4,7 +4,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.ui.components.labels.LinkLabel
-import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 
 class ModelChangelogTooltip(action: () -> Unit) : LinkLabel<Any>("", null) {

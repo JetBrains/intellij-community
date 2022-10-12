@@ -1,7 +1,6 @@
 package org.jetbrains.completion.full.line.settings.ui.components
 
 import com.intellij.openapi.ui.ex.MultiLineLabel
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.AsyncProcessIcon
