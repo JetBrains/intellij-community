@@ -107,7 +107,6 @@ internal abstract class AttachToProcessView(
     centerPanel.removeAll()
     centerPanel.add(component, "push, growx, growy")
     centerPanel.addPreferredFocusedComponent(component)
-    component.minimumSize = DEFAULT_DIMENSION
     centerPanel.revalidate()
     centerPanel.repaint()
     state.selectedDebuggerItem.set(null)

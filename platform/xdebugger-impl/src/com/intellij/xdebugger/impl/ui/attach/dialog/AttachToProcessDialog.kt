@@ -92,7 +92,7 @@ open class AttachToProcessDialog(
 
 
   private val viewPanel = JPanel(MigLayout("ins 0, fill, gap 0, novisualpadding")).apply {
-    preferredSize = AttachToProcessView.DEFAULT_DIMENSION
+    minimumSize = AttachToProcessView.DEFAULT_DIMENSION
     border = JBUI.Borders.customLine(JBColor.border(), 1, 1, 1, 1)
   }
 
