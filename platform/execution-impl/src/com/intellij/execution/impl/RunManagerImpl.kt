@@ -52,6 +52,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -740,7 +741,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  protected open fun addExtensionPointListeners() {
+  @VisibleForTesting
+  protected open fun onFirstLoadingStarted() {
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
+      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+
+        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+          extension.initializeConfigurationTypes()
+        }
+      }, true, this)
+  }
+
+  @VisibleForTesting
+  protected open fun onFirstLoadingFinished() {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -776,24 +789,20 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
     }, this)
-
-    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
-      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
-
-        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
-          extension.initializeConfigurationTypes()
-        }
-      }, true, this)
   }
 
   override fun noStateLoaded() {
     val first = isFirstLoadState.getAndSet(false)
+    if (first) {
+      onFirstLoadingStarted()
+    }
+
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
     eventPublisher.stateLoaded(this, first)
 
     if (first) {
-      addExtensionPointListeners()
+      onFirstLoadingFinished()
     }
   }
 
@@ -803,6 +812,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
       oldSelectedConfigurationId = null
+      onFirstLoadingStarted()
     }
     else {
       oldSelectedConfigurationId = selectedConfigurationId
@@ -875,7 +885,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     eventPublisher.stateLoaded(this, isFirstLoadState)
 
     if (isFirstLoadState) {
-      addExtensionPointListeners()
+      onFirstLoadingFinished()
     }
   }
 
