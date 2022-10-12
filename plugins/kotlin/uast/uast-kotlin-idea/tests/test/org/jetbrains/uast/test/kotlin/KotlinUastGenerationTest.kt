@@ -12,6 +12,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -339,12 +340,10 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test method call generation with receiver`() {
-        val receiver = psiFactory.createExpression(""""10"""").toUElementOfType<UExpression>()
-            ?: kfail("cannot create receiver")
-        val arg1 = psiFactory.createExpression("1").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg1")
-        val arg2 = psiFactory.createExpression("2").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg2")
+        val receiver = myFixture.configureByKotlinExpression("receiver.kt", "\"10\"")
+        val arg1 = myFixture.configureByKotlinExpression("arg1.kt", "1")
+        val arg2 = myFixture.configureByKotlinExpression("arg2.kt", "2")
+
         val methodCall = uastElementFactory.createCallExpression(
             receiver,
             "substring",
@@ -367,10 +366,9 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test method call generation without receiver`() {
-        val arg1 = psiFactory.createExpression("1").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg1")
-        val arg2 = psiFactory.createExpression("2").toUElementOfType<UExpression>()
-            ?: kfail("cannot create arg2")
+        val arg1 = myFixture.configureByKotlinExpression("arg1.kt", "1")
+        val arg2 = myFixture.configureByKotlinExpression("arg2.kt", "2")
+
         val methodCall = uastElementFactory.createCallExpression(
             null,
             "substring",
@@ -431,14 +429,12 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun dummyContextFile(): KtFile = myFixture.configureByText("file.kt", "fun foo() {}") as KtFile
 
     fun `test method call generation with generics restoring 1 parameter with 1 existing`() {
-        val a = psiFactory.createExpression("A").toUElementOfType<UExpression>()
-            ?: kfail("cannot create a receiver")
-        val param = psiFactory.createExpression("\"a\"").toUElementOfType<UExpression>()
-            ?: kfail("cannot create a parameter")
+        val receiver = myFixture.configureByKotlinExpression("receiver.kt", "A")
+        val arg = myFixture.configureByKotlinExpression("arg.kt", "\"a\"")
         val methodCall = uastElementFactory.createCallExpression(
-            a,
+            receiver,
             "kek",
-            listOf(param),
+            listOf(arg),
             createTypeFromText(
                 "java.util.Map<java.lang.String, java.lang.Integer>",
                 null
@@ -564,7 +560,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val callExpression = uastElementFactory.createCallExpression(
             reference,
             "method",
-            listOf(uastElementFactory.createIntLiteral(1, null)),
+            listOf(createIntLiteral(1, file)),
             createTypeFromText(
                 "java.util.List<java.lang.Integer>",
                 null
@@ -684,7 +680,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             createIfExpression(
                 createBinaryExpression(
                     createSimpleReference("it", uLambdaExpression.sourcePsi),
-                    createIntLiteral(3, uLambdaExpression.sourcePsi),
+                    createIntLiteral(3, uLambdaExpression.sourcePsi!!),
                     UastBinaryOperator.GREATER,
                     uLambdaExpression.sourcePsi
                 )!!,
@@ -777,7 +773,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                 createIfExpression(
                     createBinaryExpression(
                         createSimpleReference("it", uLambdaExpression.sourcePsi),
-                        createIntLiteral(3, uLambdaExpression.sourcePsi),
+                        createIntLiteral(3, uLambdaExpression.sourcePsi!!),
                         UastBinaryOperator.GREATER,
                         uLambdaExpression.sourcePsi
                     )!!,
@@ -1045,6 +1041,19 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         return JavaPsiFacade.getElementFactory(myFixture.project).createTypeFromText(s, newClass)
     }
 
+    private fun JavaCodeInsightTestFixture.configureByKotlinExpression(fileName: String, text: String): UExpression {
+        val file = configureByText(fileName, "private val x = $text") as KtFile
+        val property = file.declarations.singleOrNull() as? KtProperty ?: error("Property 'x' is not found in $file")
+        val initializer = property.initializer ?: error("Property initializer not found in $file")
+        return initializer.toUElementOfType() ?: error("Initializer '$initializer' is not convertable to UAST")
+    }
+
+    private fun createIntLiteral(value: Int, context: PsiElement): ULiteralExpression {
+        val file = psiFactory.createAnalyzableFile("dummy.kt", "private val x = $value", context)
+        val property = file.declarations.singleOrNull() as? KtProperty ?: error("Property 'x' not found in $file")
+        val initializer = property.initializer ?: error("Property initializer not found in $file")
+        return initializer.toUElementOfType() ?: error("Initializer '$initializer' is not an integer literal")
+    }
 }
 
 // it is a copy of org.jetbrains.uast.UastUtils.asRecursiveLogString with `appendLine` instead of `appendln` to avoid windows related issues
