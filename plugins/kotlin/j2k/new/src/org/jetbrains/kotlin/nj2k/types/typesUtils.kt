@@ -5,19 +5,25 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.util.getParameterDescriptor
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
@@ -36,6 +42,9 @@ val PsiType.isKotlinFunctionalType: Boolean
         val fqName = safeAs<PsiClassType>()?.resolve()?.kotlinFqName ?: return false
         return functionalTypeRegex.matches(fqName.asString())
     }
+
+fun PsiParameter.typeFqName(): FqName? = this.getParameterDescriptor()?.type?.fqName
+fun KtParameter.typeFqName(): FqName? = this.descriptor?.type?.fqName
 
 private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\d+]""".toRegex()
 

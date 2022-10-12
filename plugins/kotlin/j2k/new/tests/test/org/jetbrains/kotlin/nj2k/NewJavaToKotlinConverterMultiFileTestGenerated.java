@@ -83,6 +83,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/ProtectedVisibility/");
     }
 
+    @TestMetadata("StaticAnnotation")
+    public void testStaticAnnotation() throws Exception {
+        runTest("testData/multiFile/StaticAnnotation/");
+    }
+
     @TestMetadata("ToCompanionObject")
     public void testToCompanionObject() throws Exception {
         runTest("testData/multiFile/ToCompanionObject/");

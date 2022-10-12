@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
@@ -18,36 +16,61 @@ import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
+import org.jetbrains.kotlin.nj2k.types.typeFqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-
 
 class NewExternalCodeProcessing(
     private val referenceSearcher: ReferenceSearcher,
     private val inConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
-    private val members = mutableMapOf<FqName, JKMemberData>()
-
-    fun addMember(data: JKMemberData) {
-        members[data.fqName ?: return] = data
+    private sealed class MemberKey {
+        data class MethodKey(val fqName: FqName, val parameters: List<FqName>) : MemberKey()
+        data class FieldKey(val fqName: FqName) : MemberKey()
     }
 
-    fun getMember(element: JKDeclaration) =
-        element.psi<PsiMember>()?.kotlinFqName?.let(members::get)
-
-    fun getMember(fqName: FqName) =
-        members[fqName]
+    private val members = mutableMapOf<MemberKey, JKMemberData>()
 
     fun isExternalProcessingNeeded(): Boolean =
         members.values.any { it.searchingNeeded }
 
+    fun addMember(data: JKMemberData) {
+        val key = data.buildKey() ?: return
+        members[key] = data
+    }
+
+    fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
+    fun getMember(element: KtDeclaration): JKMemberData? = members[element.buildKey()]
+
+    private fun JKMemberData.buildKey(): MemberKey? {
+        val fqName = this.fqName ?: return null
+        return when (this) {
+            is JKMethodData -> MemberKey.MethodKey(fqName, this.javaElement.parameterList.parameters.mapNotNull { it.typeFqName() })
+            else -> MemberKey.FieldKey(fqName)
+        }
+    }
+
+    private fun PsiMember.buildKey(): MemberKey? {
+        val fqName = this.kotlinFqName ?: return null
+        return when (this) {
+            is PsiMethod -> MemberKey.MethodKey(fqName, this.parameterList.parameters.mapNotNull { it.typeFqName() })
+            else -> MemberKey.FieldKey(fqName)
+        }
+    }
+
+    private fun KtDeclaration.buildKey() = when (this) {
+        is KtNamedFunction -> MemberKey.MethodKey(this.fqNameWithoutCompanions, this.valueParameters.mapNotNull { it.typeFqName() })
+        else -> MemberKey.FieldKey(this.fqNameWithoutCompanions)
+    }
+
     private fun List<KtFile>.bindJavaDeclarationsToConvertedKotlinOnes() {
         forEach { file ->
             file.forEachDescendantOfType<KtNamedDeclaration> { declaration ->
-                val member = getMember(declaration.fqNameWithoutCompanions) ?: return@forEachDescendantOfType
+                val member = getMember(declaration) ?: return@forEachDescendantOfType
                 when {
                     member is JKFieldData ->
                         member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
+
                     member is JKMethodData && declaration is KtNamedFunction ->
                         member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
                 }
