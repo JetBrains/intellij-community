@@ -81,7 +81,7 @@ final class ShRunFileAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  private static @NotNull Pair<String, String> parseInterpreterAndOptions(@NotNull String shebang) {
+  static @NotNull Pair<String, String> parseInterpreterAndOptions(@NotNull String shebang) {
     String[] splitShebang = shebang.split(" ");
     if (splitShebang.length > 1) {
       String shebangParam = splitShebang[splitShebang.length - 1];

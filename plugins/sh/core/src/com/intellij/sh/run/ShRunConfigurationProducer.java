@@ -4,14 +4,18 @@ package com.intellij.sh.run;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.sh.run.ShRunFileAction.parseInterpreterAndOptions;
 
 final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRunConfiguration> {
   @NotNull
@@ -33,7 +37,14 @@ final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRu
 
     String defaultShell = ShConfigurationType.getDefaultShell();
     if (defaultShell != null) {
-      configuration.setInterpreterPath(defaultShell);
+      String shebang = ShShebangParserUtil.getShebangExecutable((ShFile)psiFile);
+      if (shebang != null) {
+        Pair<String, String> result = parseInterpreterAndOptions(shebang);
+        configuration.setInterpreterPath(result.first);
+        configuration.setInterpreterOptions(result.second);
+      } else {
+        configuration.setInterpreterPath(defaultShell);
+      }
     }
     configuration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
     configuration.setName(virtualFile.getPresentableName());
