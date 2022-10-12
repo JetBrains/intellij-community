@@ -150,7 +150,9 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                              @NotNull PsiElement endElement) {
     final PsiModifierList modifierList = ((PsiModifierListOwner)startElement).getModifierList();
     if (modifierList == null) return false;
-    if (modifierList.getContainingFile().getVirtualFile() == null) return false;
+    PsiFile containingFile = modifierList.getContainingFile();
+    if (containingFile == null) return false;
+    if (containingFile.getVirtualFile() == null) return false;
     PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
     boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
                           modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
