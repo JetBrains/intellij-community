@@ -57,13 +57,10 @@ public class UseGrayInspection extends DevKitUastInspectionBase {
     List<UExpression> constructorParams = constructorCall.getValueArguments();
     if (constructorParams.size() != 3) return false;
     PsiMethod constructor = constructorCall.resolve();
-    if (constructor != null) {
-      PsiClass constructorClass = constructor.getContainingClass();
-      if (constructorClass != null) {
-        return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
-      }
-    }
-    return false;
+    if (constructor == null) return false;
+    PsiClass constructorClass = constructor.getContainingClass();
+    if (constructorClass == null) return false;
+    return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
   }
 
   @Nullable
