@@ -1,0 +1,99 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.core.fileIndex.impl
+
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.model.ModelBranch
+import com.intellij.notebook.editor.BackedVirtualFile
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
+import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.core.fileIndex.*
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+
+class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx {
+  companion object {
+    private val EP_NAME = ExtensionPointName<WorkspaceFileIndexContributor<*>>("com.intellij.workspaceModel.fileIndexContributor")
+    private val BRANCH_INDEX_DATA_KEY = Key.create<Pair<Long, WorkspaceFileIndexData>>("BRANCH_WORKSPACE_FILE_INDEX")
+  }
+
+  @Volatile
+  private var indexData: WorkspaceFileIndexData? = null 
+
+  override fun findFileSet(file: VirtualFile,                                                                        
+                           honorExclusion: Boolean,
+                           includeContentSets: Boolean,
+                           includeExternalSets: Boolean,
+                           includeExternalSourceSets: Boolean): WorkspaceFileSet? {
+    val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, null)
+    return info as? WorkspaceFileSetImpl
+  }
+
+  override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,
+                                                                    honorExclusion: Boolean,
+                                                                    includeContentSets: Boolean,
+                                                                    includeExternalSets: Boolean,
+                                                                    includeExternalSourceSets: Boolean,
+                                                                    customDataClass: Class<out D>?): WorkspaceFileSetWithCustomData<D>? {
+    val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, customDataClass)
+    @Suppress("UNCHECKED_CAST")
+    return info as? WorkspaceFileSetWithCustomData<D>
+  }
+
+  override fun getFileInfo(file: VirtualFile,
+                           honorExclusion: Boolean,
+                           includeContentSets: Boolean,
+                           includeExternalSets: Boolean,
+                           includeExternalSourceSets: Boolean,
+                           customDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileInternalInfo {
+    val unwrappedFile = BackedVirtualFile.getOriginFileIfBacked((file as? VirtualFileWindow)?.delegate ?: file)
+    return getOrCreateIndexData(unwrappedFile).getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, customDataClass)
+  }
+
+  private fun getOrCreateIndexData(file: VirtualFile): WorkspaceFileIndexData {
+    val branch = ModelBranch.getFileBranch(file)
+    if (branch != null) {
+      return obtainBranchIndexData(branch)
+    }
+    var data = indexData
+    if (data == null) {
+      data = WorkspaceFileIndexData(contributors, project, RootFileSupplier.INSTANCE)
+      indexData = data
+    }
+    return data
+  }
+
+  private val contributors: List<WorkspaceFileIndexContributor<*>>
+    get() = EP_NAME.extensionList + CustomEntityProjectModelInfoProvider.EP.extensionList.map { CustomEntityProjectModelInfoProviderBridge(it) }
+
+  private fun obtainBranchIndexData(branch: ModelBranch): WorkspaceFileIndexData {
+    var pair = branch.getUserData(BRANCH_INDEX_DATA_KEY)
+    val modCount = branch.branchedVfsStructureModificationCount
+    if (pair == null || pair.first != modCount) {
+      pair = Pair.create(modCount, WorkspaceFileIndexData(contributors, branch.project, RootFileSupplier.forBranch(branch)))
+      branch.putUserData(BRANCH_INDEX_DATA_KEY, pair)
+    }
+    return pair.second
+  }
+
+  override fun resetCustomContributors() {
+    indexData?.resetCustomContributors()
+  }
+
+  override fun markDirty(entities: Collection<WorkspaceEntity>, filesToInvalidate: Collection<VirtualFile>) {
+    indexData?.markDirty(entities, filesToInvalidate)
+  }
+
+  override fun updateDirtyEntities() {
+    indexData?.updateDirtyEntities()
+  }
+
+  fun onEntitiesChanged(event: VersionedStorageChange) {
+    indexData?.onEntitiesChanged(event)
+  }
+}
+

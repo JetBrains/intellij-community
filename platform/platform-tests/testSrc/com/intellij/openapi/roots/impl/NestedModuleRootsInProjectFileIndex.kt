@@ -4,11 +4,13 @@ package com.intellij.openapi.roots.impl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -68,7 +70,8 @@ class NestedModuleRootsInProjectFileIndex {
     fileIndex.assertInModule(innerFile, outerModule, outerDir, EXCLUDED)
 
     PsiTestUtil.addContentRoot(innerModule, innerFile.parent)
-    fileIndex.assertInModule(innerFile, innerModule, innerFile.parent)
+    val scope = if (WorkspaceFileIndexEx.IS_ENABLED) EXCLUDED else IN_CONTENT
+    fileIndex.assertInModule(innerFile, innerModule, innerFile.parent, scope)
 
     PsiTestUtil.removeContentEntry(innerModule, innerFile.parent)
     fileIndex.assertInModule(innerFile, outerModule, outerDir, EXCLUDED)

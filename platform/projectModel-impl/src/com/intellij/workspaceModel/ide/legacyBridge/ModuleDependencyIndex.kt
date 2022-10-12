@@ -127,4 +127,12 @@ interface ModuleDependencyListener : EventListener {
   @JvmDefault
   fun referencedSdkRemoved(sdk: Sdk) {
   }
+
+  @JvmDefault
+  fun firstDependencyOnSdkAdded() {
+  }
+
+  @JvmDefault
+  fun lastDependencyOnSdkRemoved() {
+  }
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -189,8 +190,14 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
     registerLibrary(myLibraryRoot, file -> "dir".contentEquals(file.getNameSequence()));
 
-    assertNotExcluded(txt2);
-    assertNotInLibrarySources(txt2, myModule);
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      assertExcluded(txt2, myModule);
+      assertNotInLibrarySources(txt2, null);
+    }
+    else {
+      assertNotExcluded(txt2);
+      assertNotInLibrarySources(txt2, myModule);
+    }
 
     assertNotExcluded(txt1);
     assertInLibrarySources(txt1, myModule);
@@ -227,10 +234,19 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
     registerLibrary(myLibraryRoot, file -> file.equals(myLibraryRoot));
 
-    assertInProject(txt);
-    assertNotInLibrarySources(txt, myModule);
-    assertInProject(java);
-    assertNotInLibrarySources(java, myModule);
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      assertExcluded(txt, myModule);
+      assertNotInLibrarySources(txt, null);
+      assertExcluded(java, myModule);
+      assertNotInLibrarySources(java, null);
+    }
+    else {
+      assertInProject(txt);
+      assertNotInLibrarySources(txt, myModule);
+      assertInProject(java);
+      assertNotInLibrarySources(java, myModule);
+    }
+    
     assertIndexableContent(Arrays.asList(txt, java), null);
   }
 

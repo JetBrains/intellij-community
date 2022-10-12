@@ -17,6 +17,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -375,8 +376,14 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myResDir, myModule, true, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(myResDir))), ModuleSourceOrderEntry.class);
 
-    checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
-    checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      assertExcluded(myExcludedLibSrcDir, myModule);
+      assertExcluded(myExcludedLibClsDir, myModule);
+    }
+    else {
+      checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
+      checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
+    }
 
     checkPackage("lib.src.exc", true, myExcludedLibSrcDir);
     checkPackage("lib.cls.exc", true, myExcludedLibClsDir);

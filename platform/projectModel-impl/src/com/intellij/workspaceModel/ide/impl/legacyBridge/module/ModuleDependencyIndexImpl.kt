@@ -112,7 +112,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
       when {
-        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId is LibraryTableId.GlobalLibraryTableId -> {
+        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
@@ -243,6 +243,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     override fun jdkAdded(jdk: Sdk) {
       if (hasDependencyOn(jdk)) {
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+        }
         eventDispatcher.multicaster.referencedSdkAdded(jdk)
         if (watchedSdks.add(jdk.rootProvider)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
@@ -280,13 +283,21 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (hasDependencyOn(jdk)) {
         eventDispatcher.multicaster.referencedSdkRemoved(jdk)
       }
+      if (watchedSdks.isEmpty()) {
+        eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
+      }
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       val sdk = findSdk(sdkDependency)
-      if (sdk != null && watchedSdks.add(sdk.rootProvider)) {
-        eventDispatcher.multicaster.addedDependencyOn(sdk)
-        sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+      if (sdk != null) {
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
+        }
+        if (watchedSdks.add(sdk.rootProvider)) {
+          eventDispatcher.multicaster.addedDependencyOn(sdk)
+          sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+        }
       }
       sdkDependencies.putValue(sdkDependency, moduleEntity.persistentId)
     }
@@ -297,6 +308,9 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (sdk != null && !hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
+        if (watchedSdks.isEmpty()) {
+          eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
+        }
       }
     }
 
