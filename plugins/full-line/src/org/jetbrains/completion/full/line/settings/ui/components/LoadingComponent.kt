@@ -1,9 +1,12 @@
 package org.jetbrains.completion.full.line.settings.ui.components
 
 import com.intellij.openapi.ui.ex.MultiLineLabel
+import com.intellij.openapi.util.NlsContext
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.AsyncProcessIcon
 import org.jetbrains.completion.full.line.decoratedMessage
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
 import java.net.SocketTimeoutException
@@ -21,7 +24,7 @@ class LoadingComponent {
     changeState(State.PROCESSED)
   }
 
-  private fun changeState(state: State, msg: String? = null) {
+  private fun changeState(state: State, @NlsContexts.StatusText msg: String? = null) {
     when (state) {
       State.PROCESSED -> setProcessed(msg)
       State.LOADING -> setLoading(msg)
@@ -30,24 +33,24 @@ class LoadingComponent {
     }
   }
 
-  private fun setLoading(msg: String?) {
+  private fun setLoading(@NlsContexts.StatusText msg: String?) {
     loadingIcon.resume()
     loadingIcon.isVisible = true
     statusText.isVisible = false
     statusText.text = msg
   }
 
-  private fun setSuccess(msg: String?) {
+  private fun setSuccess(@NlsContexts.StatusText msg: String?) {
     statusText.text = msg
     statusText.foreground = green
   }
 
-  private fun setError(msg: String?) {
+  private fun setError(@NlsContexts.StatusText msg: String?) {
     statusText.text = msg
     statusText.foreground = red
   }
 
-  private fun setProcessed(msg: String?) {
+  private fun setProcessed(@NlsContexts.StatusText msg: String?) {
     if (msg != null) {
       statusText.text = msg
     }
@@ -58,7 +61,7 @@ class LoadingComponent {
   }
 
 
-  fun withAsyncProgress(promise: Promise<Pair<State, String>>, errorHandler: (Throwable) -> String? = { null }) {
+  fun withAsyncProgress(promise: Promise<Pair<State, @NlsContexts.StatusText String>>, errorHandler: (Throwable) -> String? = { null }) {
     changeState(State.LOADING)
     runAsync {
       promise.blockingGet(60000)
@@ -74,7 +77,7 @@ class LoadingComponent {
       }
 
       val res = when (it) {
-        is SocketTimeoutException, is TimeoutException -> "Connection timeout"
+        is SocketTimeoutException, is TimeoutException -> message("full.line.error.timeout")
         is ExecutionException -> it.decoratedMessage()
         else -> it.localizedMessage
       }

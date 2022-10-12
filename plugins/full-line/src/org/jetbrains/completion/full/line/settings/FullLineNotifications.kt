@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
 
@@ -81,9 +82,9 @@ object FullLineNotifications {
       language: Language,
       type: NotificationType,
       notified: MutableSet<String>,
-      title: String,
-      text: String,
-      button: String,
+      @NlsContexts.NotificationTitle title: String,
+      @NlsContexts.NotificationContent text: String,
+      @NlsContexts.NotificationContent button: String,
       action: SetupLocalModelsTask.Action
     ) {
       if (notified.contains(language.id)) return
@@ -98,14 +99,14 @@ object FullLineNotifications {
     }
   }
 
-  private fun Project.showBalloon(title: String, content: String, type: NotificationType, vararg actions: AnAction): Notification {
+  private fun Project.showBalloon(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent content: String, type: NotificationType, vararg actions: AnAction): Notification {
     return group.createNotification(title, content, type, null).also {
       if (actions.isNotEmpty()) it.actions.addAll(actions)
       it.notify(this)
     }
   }
 
-  private fun action(label: String, run: (AnActionEvent?, Notification) -> Unit): NotificationAction {
+  private fun action(@NlsContexts.NotificationContent label: String, run: (AnActionEvent?, Notification) -> Unit): NotificationAction {
     return object : NotificationAction(label) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         run(e, notification)

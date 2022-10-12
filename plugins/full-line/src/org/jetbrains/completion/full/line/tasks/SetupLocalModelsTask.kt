@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.completion.full.line.currentOpenProject
 import org.jetbrains.completion.full.line.services.managers.ConfigurableModelsManager
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import java.util.concurrent.atomic.AtomicBoolean
 
-@Suppress("LeakableMapKey")
 class SetupLocalModelsTask(project: Project, private val languagesToDo: List<ToDoParams>) : Task.Backgroundable(
   project,
-  "Downloading full line models.",
+  message("full.line.progress.downloading.models.title"),
 ) {
   val log = thisLogger()
 
@@ -56,7 +56,7 @@ class SetupLocalModelsTask(project: Project, private val languagesToDo: List<ToD
 
   override fun onSuccess() = manager.apply()
   override fun onCancel() = manager.reset()
-  override fun onError(error: Exception) = manager.reset()
+  override fun onThrowable(error: Throwable) = manager.reset()
   override fun onFinished() = isRunning.set(false)
   override fun whereToRunCallbacks() = EdtReplacementThread.WT
   override fun shouldStartInBackground() = true

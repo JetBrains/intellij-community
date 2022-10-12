@@ -226,18 +226,15 @@
   </extensionPoints>
 
   <actions>
-    <group id="FullLineGroup" text="Full Line Code Completion" popup="true">
+    <group id="FullLineGroup" popup="true">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="CodeCompletionGroup"/>
       <action id="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-              text="Show Extended Settings"
-              description="Show extended full line settings for each configuration">
+              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction">
       </action>
       <action id="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-              text="Verify Cloud"
-              description="Verify cloud completion for extended usage">
+              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction">
       </action>
     </group>
   </actions>
+  <resource-bundle>messages.MLServerCompletionBundle</resource-bundle>
 </idea-plugin>

@@ -5,9 +5,10 @@ import com.intellij.diagnostic.logging.LogConsoleBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 
 class DiagnosticsLogConsole(private val project: Project) :
-  LogConsoleBase(project, null, "Diagnostics", true, DefaultLogFilterModel(project)) {
+  LogConsoleBase(project, null, message("full.line.diagnostics.tab.title"), true, DefaultLogFilterModel(project)) {
   override fun isActive(): Boolean {
     return ToolWindowManager.getInstance(project).getToolWindow(FULL_LINE_TOOL_WINDOW_ID)?.isVisible ?: false
   }

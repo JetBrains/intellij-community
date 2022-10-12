@@ -4,10 +4,12 @@ import com.intellij.lang.Language
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import org.jetbrains.completion.full.line.models.ModelType
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 import org.jetbrains.completion.full.line.settings.ui.LANGUAGE_CHECKBOX_NAME
 import java.awt.CardLayout
@@ -16,7 +18,6 @@ import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JTextField
 import kotlin.reflect.KMutableProperty0
-
 
 // For some reason method intTextField() in com/intellij/ui/layout/Cell.kt
 // throws java.lang.LinkageError: loader constraint violation: when resolving method,
@@ -29,9 +30,9 @@ fun Cell.intTextFieldFixed(binding: PropertyBinding<Int>, columns: Int? = null, 
   ).withValidationOnInput {
     val value = it.text.toIntOrNull()
     if (value == null)
-      error("Please enter a number")
+      error(message("full.line.int.text.field.error.valid.number"))
     else if (range != null && value !in range)
-      error("Please enter a number from ${range.first} to ${range.last}")
+      error(message("full.line.int.text.field.error.range.number", range.first, range.last))
     else null
   }
 }
@@ -47,9 +48,9 @@ fun Cell.doubleTextField(binding: PropertyBinding<Double>, columns: Int? = null,
   ).withValidationOnInput {
     val value = it.text.toDoubleOrNull()
     if (value == null)
-      error("Please enter a valid double number (ex. 3.14)")
+      error(message("full.line.double.text.field.error.valid.number"))
     else if (range != null && (value < range.first || value > range.last))
-      error("Please enter a number from ${range.first} to ${range.last}")
+      error(message("full.line.double.text.field.error.valid.number", range.first, range.last))
     else null
   }
 }
@@ -84,7 +85,8 @@ fun languageComboBox(langPanel: DialogPanel): ComboBox<String> {
 fun modelTypeComboBox(langPanel: DialogPanel): ComboBox<ModelType> {
   return ComboBox<ModelType>().apply {
     renderer = listCellRenderer { value, _, _ ->
-      text = value.name
+      @NlsSafe val valueName = value.name
+      text = valueName
       icon = value.icon
     }
     addItemListener {

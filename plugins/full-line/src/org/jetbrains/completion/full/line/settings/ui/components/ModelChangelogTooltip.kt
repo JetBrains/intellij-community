@@ -1,13 +1,15 @@
 package org.jetbrains.completion.full.line.settings.ui.components
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.ui.components.labels.LinkLabel
-
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 
 class ModelChangelogTooltip(action: () -> Unit) : LinkLabel<Any>("", null) {
   private val tooltip: HelpTooltip = HelpTooltip()
-    .setLink("Download", action)
+    .setLink(message("full.line.label.download"), action)
     .setNeverHideOnTimeout(true)
     .setLocation(HelpTooltip.Alignment.BOTTOM)
 
@@ -25,11 +27,11 @@ class ModelChangelogTooltip(action: () -> Unit) : LinkLabel<Any>("", null) {
     super.removeNotify()
   }
 
-  fun attachChangelog(changelog: String, version: String, size: Long) {
+  fun attachChangelog(@NlsContexts.Tooltip changelog: String, version: String, size: Long) {
     tooltip.setDescription(changelog)
-      .setTitle("Changelog for $version")
+      .setTitle(message("full.line.tooltip.download.title", version))
       .installOn(this)
-    text = "New version available (${StringUtilRt.formatFileSize(size)})"
+    text = message("full.line.tooltip.download.title", StringUtilRt.formatFileSize(size))
     isVisible = true
   }
 }
