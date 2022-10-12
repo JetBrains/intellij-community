@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
@@ -391,8 +392,32 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
-        val ktNamedFunction = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtNamedFunction ?: return emptyList()
-        return listOfNotNull(ChangeMethodParameters.create(ktNamedFunction, request))
+        return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
+            is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
+            is KtConstructor<*> -> kotlinOrigin.containingClass()?.let {
+                createChangeConstructorParametersAction(kotlinOrigin, it, request)
+            } ?: emptyList()
+            is KtClass -> createChangeConstructorParametersAction(kotlinOrigin, kotlinOrigin, request)
+            else -> emptyList()
+        }
+    }
+
+    private fun createChangeConstructorParametersAction(kotlinOrigin: PsiElement,
+                                                        targetKtClass: KtClass,
+                                                        request: ChangeParametersRequest): List<IntentionAction> {
+        return listOfNotNull(run {
+            val lightMethod = kotlinOrigin.toLightMethods().firstOrNull() ?: return@run null
+            val project = kotlinOrigin.project
+            val fakeParametersExpressions = fakeParametersExpressions(request.expectedParameters, project) ?: return@run null
+            QuickFixFactory.getInstance().createChangeMethodSignatureFromUsageFix(
+              lightMethod,
+              fakeParametersExpressions,
+              PsiSubstitutor.EMPTY,
+              targetKtClass,
+              false,
+              2
+            ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
+        })
     }
 
     override fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> {
