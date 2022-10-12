@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -66,9 +65,8 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Object ourLock = new Object();
   private static final Set<Sdk> ourUnderRefresh = new HashSet<>();
   private static final Map<Sdk, PyUpdateSdkRequestData> ourToBeRefreshed = new HashMap<>();
+  private static final String NOTIFICATION_GROUP_ID = "Python SDK Updater";
   private static volatile boolean ourEnabledInTests = false;
-
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Python SDK Updater");
 
   @ApiStatus.Internal
   @TestOnly
@@ -216,7 +214,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         return;
       }
       if (exception instanceof UnsupportedPythonSdkTypeException) {
-        NOTIFICATION_GROUP
+        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
