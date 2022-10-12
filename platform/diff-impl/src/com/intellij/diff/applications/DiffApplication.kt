@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AppIcon
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +65,7 @@ internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsC
       val dialogHints = DiffDialogHints(mode, null) { wrapper ->
         val window = wrapper.window
         SplashManager.hideBeforeShow(window)
+        AppIcon.getInstance().requestFocus(window)
         window.addWindowListener(object : WindowAdapter() {
           override fun windowClosed(e: WindowEvent) {
             try {
