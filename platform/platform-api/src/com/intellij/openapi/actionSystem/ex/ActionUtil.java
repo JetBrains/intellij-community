@@ -290,7 +290,7 @@ public final class ActionUtil {
   /**
    * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
     performActionDumbAwareWithCallbacks(action, e);
