@@ -3,8 +3,10 @@ package com.jetbrains.env.conda
 
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.*
@@ -12,6 +14,7 @@ import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.getPythonBinaryPath
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.jdom.Element
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +36,26 @@ internal class PyCondaSdkTest {
   @Rule
   @JvmField
   internal val chain = RuleChain.outerRule(projectRule).around(condaRule).around(yamlRule)
+
+
+  @Test
+  fun testConvertToConda() = runTest {
+    System.setProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
+
+    val env = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first()
+    val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
+    val pythonPath = condaSdk.homePath
+
+    val legacyPythonSdk = ProjectJdkImpl("my conda", PythonSdkType.getInstance()).apply {
+      homePath = pythonPath
+    }
+    val element = Element("root")
+    legacyPythonSdk.writeExternal(element)
+    legacyPythonSdk.readExternal(element)
+    val fixedAdditionalData = legacyPythonSdk.getOrCreateAdditionalData()
+    Assert.assertEquals("Wrong flavor", CondaEnvSdkFlavor.getInstance(), fixedAdditionalData.flavor)
+    Assert.assertEquals("Wrong env", env, (fixedAdditionalData.flavorAndData.data as PyCondaFlavorData).env)
+  }
 
   @Test
   fun createSdkByFile() = runTest {
