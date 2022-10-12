@@ -12,6 +12,7 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.THIS
@@ -70,7 +71,22 @@ open class KotlinStackFrame(
             remapThisObjectForOuterThis(evaluationContext, children, existingVariables)
         }
 
+        addLocalsFromContinuation(evaluationContext, children)
+
         children.add(evaluationContext, thisVariables, otherVariables)
+    }
+
+    private fun addLocalsFromContinuation(evaluationContext: EvaluationContextImpl, children: XValueChildrenList) {
+        val thisObject = descriptor.thisObject ?: return
+        val type = thisObject.type() as ReferenceType
+        if (type.isSubtype(CONTINUATION_TYPE)) {
+            val nodeManager = (descriptor.debugProcess as DebugProcessImpl).xdebugProcess?.nodeManager ?: return
+            type.fields().filter { it.name().startsWith('$') }.forEach {
+                val fieldDescriptor = nodeManager.getFieldDescriptor(null, thisObject, it)
+                val value = JavaValue.create(null, fieldDescriptor, evaluationContext, nodeManager, false)
+                children.add(it.name().drop(1), value)
+            }
+        }
     }
 
     private fun XValueChildrenList.add(
