@@ -67,6 +67,7 @@ internal class TestCoroutineProgressAction : AnAction() {
             runBlockingModal(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
+              TaskCancellation.nonCancellable(),
             ) {
               doStuff()
             }
