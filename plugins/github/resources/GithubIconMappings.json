@@ -1,0 +1,13 @@
+{
+  "org": {
+    "jetbrains": {
+      "plugins": {
+        "github": {
+          "expui": {
+            "pullRequests.svg": "org/jetbrains/plugins/github/pullRequestsToolWindow.svg"
+          }
+        }
+      }
+    }
+  }
+}

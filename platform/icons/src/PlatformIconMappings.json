@@ -572,7 +572,6 @@
       ],
       "profiler.svg": "toolwindows/toolWindowProfiler.svg",
       "project.svg": "toolwindows/toolWindowProject.svg",
-      "pullRequests.svg": "org/jetbrains/plugins/github/pullRequestsToolWindow.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
