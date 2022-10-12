@@ -72,6 +72,7 @@ internal class AttachToProcessTree(
 
     TreeUtil.expandAll(this.tree)
     resetDefaultFocusTraversalKeys()
+    setRowHeight(AttachDialogState.DEFAULT_ROW_HEIGHT)
     installSelectionOnFocus()
     application.invokeLater({ focusFirst() }, ModalityState.any())
   }

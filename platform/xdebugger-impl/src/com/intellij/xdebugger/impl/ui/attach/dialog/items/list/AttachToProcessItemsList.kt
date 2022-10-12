@@ -80,10 +80,10 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
   }
 
   private fun updateRowsHeight(from: Int = 0, to: Int = rowCount - 1) {
-    setRowHeight(JBUI.scale(20))
+    setRowHeight(AttachDialogState.DEFAULT_ROW_HEIGHT)
     for (row in from until to + 1) {
       if (model.getValueAt<AttachToProcessElement>(row) is AttachToProcessListGroupBase) {
-        setRowHeight(row, JBUI.scale(28))
+        setRowHeight(row, AttachDialogState.GROUP_ROW_HEIGHT)
       }
     }
   }
