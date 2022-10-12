@@ -10939,6 +10939,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionSealedClass.kt");
             }
 
+            @TestMetadata("addFunctionToReadOnlySupertype.kt")
+            public void testAddFunctionToReadOnlySupertype() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/addFunctionToReadOnlySupertype.kt");
+            }
+
             @TestMetadata("addFunctionTrait.kt")
             public void testAddFunctionTrait() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/addFunctionTrait.kt");
