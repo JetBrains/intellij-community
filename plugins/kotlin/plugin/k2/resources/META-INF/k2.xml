@@ -7,14 +7,14 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.idea</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.modules.java-capable</depends>
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="formatter.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="formatter.xml" xpointer ="xpointer(/idea-plugin/*)"/>
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
