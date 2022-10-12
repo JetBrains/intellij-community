@@ -71,6 +71,18 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+  <template name="itm" value="for (java.util.Map.Entry&lt;$KEY_TYPE$, $VALUE_TYPE$&gt; $ENTRY$: $MAP$.entrySet()) {&#10;  $KEY_TYPE$ $KEY$ = $ENTRY$.getKey();&#10;  $VALUE_TYPE$ $VALUE$ = $ENTRY$.getValue();&#10;  $END$&#10;}"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itm" toReformat="true" toShortenFQNames="true">
+    <variable name="MAP" expression="variableOfType(&quot;java.util.Map&quot;)" defaultValue="&quot;map&quot;" alwaysStopAt="true" />
+    <variable name="KEY_TYPE" expression="typeParameterOf(MAP,&quot;0&quot;)" defaultValue="" alwaysStopAt="false" />
+    <variable name="VALUE_TYPE" expression="typeParameterOf(MAP,&quot;1&quot;)" defaultValue="" alwaysStopAt="false" />
+    <variable name="ENTRY" expression="suggestVariableName()" defaultValue="&quot;entry&quot;" alwaysStopAt="true" />
+    <variable name="KEY" expression="suggestVariableName()" defaultValue="&quot;key&quot;" alwaysStopAt="true" />
+    <variable name="VALUE" expression="suggestVariableName()" defaultValue="&quot;value&quot;" alwaysStopAt="true" />
+    <context>
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
   <template name="ittok" value="for (java.util.StringTokenizer $TOKENIZER$ = new java.util.StringTokenizer($STRING$); $TOKENIZER$.hasMoreTokens(); ) {&#10;    String $VAR$ = $TOKENIZER_COPY$.nextToken();&#10;    $END$&#10;}&#10;"
             resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ittok" toReformat="true" toShortenFQNames="true">
     <variable name="TOKENIZER" expression="suggestVariableName()" defaultValue="&quot;tokenizer&quot;" alwaysStopAt="true" />
