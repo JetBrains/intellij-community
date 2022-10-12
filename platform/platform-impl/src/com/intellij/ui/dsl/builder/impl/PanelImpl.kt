@@ -362,6 +362,11 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
+  override fun align(align: Align): PanelImpl {
+    super.align(align)
+    return this
+  }
+
   override fun resizableColumn(): PanelImpl {
     super.resizableColumn()
     return this

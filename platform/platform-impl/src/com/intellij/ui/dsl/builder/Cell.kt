@@ -31,6 +31,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
+  override fun align(align: Align): Cell<T>
+
   override fun resizableColumn(): Cell<T>
 
   override fun gap(rightGap: RightGap): Cell<T>

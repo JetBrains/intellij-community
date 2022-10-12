@@ -47,24 +47,27 @@ interface CellBase<out T : CellBase<T>> {
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
   /**
-   * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default.
-   * Use [HorizontalAlign.FILL] to stretch the content on whole cell width. In case the cell should occupy all
-   * available width in parent mark the column as [resizableColumn]
-   *
-   * @see [resizableColumn]
-   * @see [Constraints.horizontalAlign]
+   * Will be deprecated soon. Use [align] instead
    */
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
   /**
-   * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
-   * Use [VerticalAlign.FILL] to stretch the content on whole cell height. In case the cell should occupy all
-   * available height in parent mark the row as [Row.resizableRow]
-   *
-   * @see [Row.resizableRow]
-   * @see [Constraints.verticalAlign]
+   * Will be deprecated soon. Use [align] instead
    */
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
+
+  /**
+   * Updates horizontal and/or vertical alignment of the component inside the cell. To stretch the content on whole cell
+   * use [AlignX.FILL]/[AlignY.FILL]/[AlignBoth.FILL]. For setting both horizontal and vertical alignment use overloaded plus operator
+   * like `align(AlignX.LEFT + AlignY.TOP)`. Default alignment is [AlignX.LEFT] + [AlignY.CENTER].
+   *
+   * In case the cell should occupy all available width or height in parent mark the column as [resizableColumn]
+   * or the row as [Row.resizableRow] (or both if needed).
+   *
+   * @see [resizableColumn]
+   * @see [Constraints.horizontalAlign]
+   */
+  fun align(align: Align): CellBase<T>
 
   /**
    * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.

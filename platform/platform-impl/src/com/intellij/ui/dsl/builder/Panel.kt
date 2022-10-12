@@ -34,6 +34,8 @@ interface Panel : CellBase<Panel> {
 
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
 
+  override fun align(align: Align): Panel
+
   override fun resizableColumn(): Panel
 
   override fun gap(rightGap: RightGap): Panel
