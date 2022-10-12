@@ -49,6 +49,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"
+                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
     <!-- fir-specific -->
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.fir.AndroidPluginIncompatibilityCheckerStartupActivity"/>
 
