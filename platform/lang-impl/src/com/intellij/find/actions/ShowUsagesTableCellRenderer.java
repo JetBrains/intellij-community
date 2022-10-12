@@ -79,7 +79,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     UsageNode usageNode = (UsageNode)value;
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
-    Color fileBgColor = getBackgroundColor(false, usage);
+    Color fileBgColor = getBackgroundColor(usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
     Color selectionFg = NamedColorUtil.getListSelectionForeground(true);
     Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
@@ -314,19 +314,9 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     return attributes;
   }
 
-  private Color getBackgroundColor(boolean isSelected, Usage usage) {
-    Color fileBgColor = null;
-    if (isSelected) {
-      fileBgColor = UIUtil.getListSelectionBackground(true);
-    }
-    else {
-      VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
-      if (virtualFile != null) {
-        Color color = VfsPresentationUtil.getFileBackgroundColor(myProject, virtualFile);
-        if (color != null) fileBgColor = color;
-      }
-    }
-    return fileBgColor;
+  private Color getBackgroundColor(Usage usage) {
+    VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+    return virtualFile == null ? null : VfsPresentationUtil.getFileBackgroundColor(myProject, virtualFile);
   }
 
   private static void appendGroupText(
@@ -350,6 +340,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }
 
+  /**
+   * @param rowBackground background of unselected row
+   * @param rowSelectionBackground background of selection if the row is selected or null otherwise
+   */
   private static void applyBackground(SelectablePanel panel, int column, Color rowBackground, Color rowSelectionBackground) {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
@@ -380,7 +374,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
     else {
       panel.setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
-      panel.setBackground(rowSelectionBackground);
+      panel.setBackground(rowSelectionBackground == null ? rowBackground : rowSelectionBackground);
     }
   }
 
