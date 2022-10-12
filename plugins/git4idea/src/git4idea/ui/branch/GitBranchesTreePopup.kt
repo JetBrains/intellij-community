@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.ui.*
-import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -550,13 +549,13 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
+        .addToLeft(JBUI.Panels.simplePanel(mainIconComponent).addToRight(mainTextComponent).andTransparent())
         .addToCenter(secondaryLabel)
         .andTransparent()
 
       private val mainPanel = JBUI.Panels.simplePanel()
         .addToCenter(textPanel)
-        .addToRight(FlowLayoutWrapper(incomingOutgoingLabel).also { it.add(arrowLabel) })
+        .addToRight(JBUI.Panels.simplePanel(incomingOutgoingLabel).addToRight(arrowLabel).andTransparent())
         .andTransparent()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
