@@ -88,6 +88,15 @@ interface UastCodeGenerationPlugin {
    * @return the selector part of the qualified reference after importing
    */
   fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression?
+
+  /**
+   * Initialize the given field with the given parameter inside method's body of the given parameter.
+   * If the parameter is from Kotlin primary constructor and the field and the parameter have the same names,
+   * field declaration is moved to the primary constructor.
+   * If the parameter is from Kotlin primary constructor and the field and the parameter have different names,
+   * Kotlin property is initialized with the parameter.
+   */
+  fun initializeField(uField: UField, uParameter: UParameter)
 }
 
 /**

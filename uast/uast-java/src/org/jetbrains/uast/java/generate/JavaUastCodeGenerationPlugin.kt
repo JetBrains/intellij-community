@@ -115,6 +115,16 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     AddOnDemandStaticImportAction.invoke(source.project, source.containingFile, null, qualifierIdentifier)
     return ptr.element?.parent.toUElementOfType()
   }
+
+  override fun initializeField(uField: UField, uParameter: UParameter) {
+    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return
+    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return
+    val body = psiMethod.body ?: return
+
+    val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
+    val prefix = if (uField.name == uParameter.name) "this." else ""
+    body.add(elementFactory.createStatementFromText("$prefix${uField.name} = ${uParameter.name};", psiMethod))
+  }
 }
 
 private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {
