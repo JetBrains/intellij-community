@@ -33,4 +33,8 @@ public class ConvertToGrayQuickFixTest extends ConvertToGrayQuickFixTestBase {
   public void testUseGrayConstantFixInJBColorParam() {
     doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(25));
   }
+
+  public void testUseGrayConstantFixWhenNumberConstantsReferenced() {
+    doTest(CONVERT_TO_GRAY_FIX_NAME_PATTERN.formatted(125));
+  }
 }

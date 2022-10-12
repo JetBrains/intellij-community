@@ -3,78 +3,85 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UseGrayInspection extends DevKitInspectionBase {
+public class UseGrayInspection extends DevKitUastInspectionBase {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String GRAY_CLASS_NAME = Gray.class.getName();
 
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
+
   @Override
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  @NotNull
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        if (isAwtRgbColorConstructor(expression)) {
-          Integer grayValue = getGrayValue(getConstructorParams(expression));
-          if (grayValue != null && grayClassAccessible(expression)) {
-            holder.registerProblem(expression,
-                                   DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
-                                   new ConvertToGrayQuickFix(grayValue));
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+          if (isAwtRgbColorConstructor(expression)) {
+            Integer grayValue = getGrayValue(expression);
+            if (grayValue != null) {
+              PsiElement sourcePsi = expression.getSourcePsi();
+              if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
+                holder.registerProblem(sourcePsi,
+                                       DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
+                                       new ConvertToGrayQuickFix(grayValue));
+              }
+            }
           }
         }
+        return super.visitCallExpression(expression);
       }
-    };
+    }, HINTS);
   }
 
-  private static boolean isAwtRgbColorConstructor(PsiNewExpression expression) {
-    PsiExpression[] constructorParams = getConstructorParams(expression);
-    if (constructorParams == null) return false;
-    PsiType type = expression.getType();
-    if (type == null) return false;
-    return constructorParams.length == 3 && AWT_COLOR_CLASS_NAME.equals(type.getCanonicalText());
-  }
-
-  @NotNull
-  private static PsiExpression @Nullable [] getConstructorParams(@NotNull PsiNewExpression expression) {
-    PsiExpressionList arguments = expression.getArgumentList();
-    if (arguments == null) return null;
-    return arguments.getExpressions();
+  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression constructorCall) {
+    List<UExpression> constructorParams = constructorCall.getValueArguments();
+    if (constructorParams.size() != 3) return false;
+    PsiMethod constructor = constructorCall.resolve();
+    if (constructor != null) {
+      PsiClass constructorClass = constructor.getContainingClass();
+      if (constructorClass != null) {
+        return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
+      }
+    }
+    return false;
   }
 
   @Nullable
-  private static Integer getGrayValue(@NotNull PsiExpression @Nullable [] constructorParams) {
-    if (constructorParams == null) return null;
-    PsiExpression redParam = constructorParams[0];
+  private static Integer getGrayValue(@NotNull UCallExpression constructorCall) {
+    List<UExpression> constructorParams = constructorCall.getValueArguments();
+    UExpression redParam = constructorParams.get(0);
     Integer red = evaluateColorValue(redParam);
     if (red == null) return null;
-    PsiExpression greenParam = constructorParams[1];
-    PsiExpression blueParam = constructorParams[2];
+    UExpression greenParam = constructorParams.get(1);
+    UExpression blueParam = constructorParams.get(2);
     return 0 <= red && red < 256 && red.equals(evaluateColorValue(greenParam)) && red.equals(evaluateColorValue(blueParam)) ? red : null;
   }
 
   @Nullable
-  private static Integer evaluateColorValue(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiLiteralExpression) {
-      Object evaluatedColorValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-      if (evaluatedColorValue != null) {
-        try {
-          return Integer.parseInt(evaluatedColorValue.toString());
-        }
-        catch (Exception e) {
-          // ignore
-        }
-      }
+  private static Integer evaluateColorValue(@NotNull UExpression expression) {
+    Object evaluatedExpression = expression.evaluate();
+    if (evaluatedExpression instanceof Integer value) {
+      return value;
     }
     return null;
   }

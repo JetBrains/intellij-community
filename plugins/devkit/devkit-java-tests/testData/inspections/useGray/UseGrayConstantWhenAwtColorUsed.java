@@ -7,10 +7,13 @@ class UseGrayConstantWhenAwtColorUsed {
   private static final Color GRAY_CONSTANT = <warning descr="'java.awt.Color' used for gray">new Color(125, 125, 125)</warning>;
   private static final Color NOT_GRAY_CONSTANT = new Color(12, 13, 14);
 
+  private static final int GRAY_VALUE = 125;
+
   void any() {
     Color myGray1 = <warning descr="'java.awt.Color' used for gray">new Color(25, 25, 25)</warning>;
+    Color myGray2 = <warning descr="'java.awt.Color' used for gray">new Color(GRAY_VALUE, 125, GRAY_VALUE)</warning>;
     takeColor(<warning descr="'java.awt.Color' used for gray">new Color(125, 125, 125)</warning>);
-    Color myGray2 = new JBColor(<warning descr="'java.awt.Color' used for gray">new Color(25, 25, 25)</warning>, <warning descr="'java.awt.Color' used for gray">new Color(125, 125, 125)</warning>);
+    Color myGray3 = new JBColor(<warning descr="'java.awt.Color' used for gray">new Color(25, 25, 25)</warning>, <warning descr="'java.awt.Color' used for gray">new Color(125, 125, 125)</warning>);
     takeColor(new JBColor(<warning descr="'java.awt.Color' used for gray">new Color(25, 25, 25)</warning>, <warning descr="'java.awt.Color' used for gray">new Color(125, 125, 125)</warning>));
 
     // correct cases:
