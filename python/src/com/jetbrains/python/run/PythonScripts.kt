@@ -47,7 +47,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   commandLineBuilder.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name())
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
-  charset.let { commandLineBuilder.setCharset(it) }
+  commandLineBuilder.charset = charset
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {

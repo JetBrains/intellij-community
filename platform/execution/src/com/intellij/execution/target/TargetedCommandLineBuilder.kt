@@ -13,20 +13,16 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
   var exePath: TargetValue<String> = TargetValue.empty()
   private var workingDirectory = TargetValue.empty<String>()
   private var inputFilePath = TargetValue.empty<String>()
-  private var charset = CharsetToolkit.getDefaultSystemCharset()
+  var charset: Charset = CharsetToolkit.getDefaultSystemCharset()
   private val parameters: MutableList<TargetValue<String>> = ArrayList()
   private val environment: MutableMap<String, TargetValue<String>> = HashMap()
   private val _filesToDeleteOnTermination: MutableSet<File> = HashSet()
-  private var redirectErrorStream = false
+  var redirectErrorStream: Boolean = false
   var ptyOptions: PtyOptions? = null
 
   fun build(): TargetedCommandLine {
     return TargetedCommandLine(exePath, workingDirectory, inputFilePath, charset, parameters.toList(), environment.toMap(),
                                redirectErrorStream, ptyOptions)
-  }
-
-  fun setCharset(charset: Charset) {
-    this.charset = charset
   }
 
   fun setExePath(exePath: String) {
@@ -110,10 +106,6 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     get() = _filesToDeleteOnTermination
 
   fun setRedirectErrorStreamFromRegistry() {
-    setRedirectErrorStream(Registry.`is`("run.processes.with.redirectedErrorStream", false))
-  }
-
-  fun setRedirectErrorStream(redirectErrorStream: Boolean) {
-    this.redirectErrorStream = redirectErrorStream
+    redirectErrorStream = Registry.`is`("run.processes.with.redirectedErrorStream", false)
   }
 }
