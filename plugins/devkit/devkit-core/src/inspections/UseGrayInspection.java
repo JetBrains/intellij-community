@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -45,13 +45,13 @@ public class UseGrayInspection extends DevKitInspectionBase {
       if (arguments != null) {
         final PsiExpression[] expressions = arguments.getExpressions();
         if (expressions.length == 3 && "java.awt.Color".equals(type.getCanonicalText())) {
-          if (! facade.getResolveHelper().isAccessible(grayClass, expression, grayClass)) return null;
+          if (!facade.getResolveHelper().isAccessible(grayClass, expression, grayClass)) return null;
           final PsiExpression r = expressions[0];
           final PsiExpression g = expressions[1];
           final PsiExpression b = expressions[2];
-          if (r instanceof PsiLiteralExpression
-            && g instanceof PsiLiteralExpression
-            && b instanceof PsiLiteralExpression) {
+          if (r instanceof PsiLiteralExpression &&
+              g instanceof PsiLiteralExpression &&
+              b instanceof PsiLiteralExpression) {
             final Object red = JavaConstantExpressionEvaluator.computeConstantExpression(r, false);
             final Object green = JavaConstantExpressionEvaluator.computeConstantExpression(g, false);
             final Object blue = JavaConstantExpressionEvaluator.computeConstantExpression(b, false);
@@ -61,12 +61,17 @@ public class UseGrayInspection extends DevKitInspectionBase {
                 int gg = Integer.parseInt(green.toString());
                 int bb = Integer.parseInt(blue.toString());
                 if (rr == gg && gg == bb && 0 <= rr && rr < 256) {
-                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.convert", rr), new ConvertToGrayQuickFix(rr), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
+                                                         new ConvertToGrayQuickFix(rr), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                         isOnTheFly);
                 }
-              } catch (Exception ignore){}
+              }
+              catch (Exception ignore) {
+              }
             }
           }
-        } else if (expressions.length == 1 && "com.intellij.ui.Gray".equals(type.getCanonicalText())) {
+        }
+        else if (expressions.length == 1 && "com.intellij.ui.Gray".equals(type.getCanonicalText())) {
           final PsiExpression e = expressions[0];
           if (e instanceof PsiLiteralExpression) {
             final Object literal = JavaConstantExpressionEvaluator.computeConstantExpression(e, false);
@@ -74,9 +79,13 @@ public class UseGrayInspection extends DevKitInspectionBase {
               try {
                 int num = Integer.parseInt(literal.toString());
                 if (0 <= num && num < 256) {
-                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.convert", num), new ConvertToGrayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.constructor.used.name"),
+                                                         new ConvertToGrayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                         isOnTheFly);
                 }
-              } catch (Exception ignore){}
+              }
+              catch (Exception ignore) {
+              }
             }
           }
         }
