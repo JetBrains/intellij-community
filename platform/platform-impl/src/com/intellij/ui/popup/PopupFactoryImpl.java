@@ -271,7 +271,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                           @Nullable PresentationFactory presentationFactory,
                                                           boolean autoSelection) {
       final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       List<ActionItem> items = ActionPopupStep.createActionItems(
           actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
@@ -322,7 +321,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static @NotNull Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext parentDataContext,
                                                                             @Nullable Component component) {
-    if(component == null) return () -> parentDataContext;
+    if (component == null) return () -> parentDataContext;
     DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
     if (Utils.isAsyncDataContext(dataContext)) return () -> dataContext;
     return () -> DataManager.getInstance().getDataContext(component);
