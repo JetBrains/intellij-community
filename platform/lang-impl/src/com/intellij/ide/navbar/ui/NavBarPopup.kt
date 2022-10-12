@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.ui.PopupEvent.*
 import com.intellij.ide.navbar.vm.NavBarVmItem
+import com.intellij.ide.navbar.vm.PopupResult
+import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.wm.IdeFocusManager
@@ -23,41 +24,34 @@ import javax.swing.*
 import kotlin.coroutines.resume
 
 
-internal sealed class PopupEvent {
-  object PopupEventLeft : PopupEvent()
-  object PopupEventRight : PopupEvent()
-  object PopupEventCancel : PopupEvent()
-  class PopupEventSelect(val item: NavBarVmItem) : PopupEvent()
-}
-
 private fun registerListActions(list: JList<NavBarVmItem>,
                                 popup: LightweightHint,
-                                continuation: CancellableContinuation<PopupEvent>) {
+                                continuation: CancellableContinuation<PopupResult>) {
 
   list.actionMap.put(ListActions.Left.ID, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupEventLeft)
+      continuation.resume(PopupResultLeft)
       popup.hide(true)
     }
   })
 
   list.actionMap.put(ListActions.Right.ID, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupEventRight)
+      continuation.resume(PopupResultRight)
       popup.hide(true)
     }
   })
 
   list.registerKeyboardAction(object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupEventSelect(list.selectedValue))
+      continuation.resume(PopupResultSelect(list.selectedValue))
       popup.hide(true)
     }
   }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
 
   list.addMouseListener(object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent) {
-      continuation.resume(PopupEventSelect(list.selectedValue))
+      continuation.resume(PopupResultSelect(list.selectedValue))
       popup.hide(true)
     }
   })
@@ -67,7 +61,7 @@ private fun registerListActions(list: JList<NavBarVmItem>,
 internal class NavigationBarPopup(
   items: List<NavBarVmItem>,
   selectedChild: NavBarVmItem?,
-  private val continuation: CancellableContinuation<PopupEvent>
+  private val continuation: CancellableContinuation<PopupResult>
 ) : LightweightHint(createPopupContents(items, selectedChild)) {
 
   init {
@@ -78,7 +72,7 @@ internal class NavigationBarPopup(
 
   override fun onPopupCancel() {
     if (continuation.isActive) {
-      continuation.resume(PopupEventCancel)
+      continuation.resume(PopupResultCancel)
     }
   }
 

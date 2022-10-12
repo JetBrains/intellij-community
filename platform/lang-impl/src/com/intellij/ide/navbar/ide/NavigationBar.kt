@@ -14,9 +14,9 @@ import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
-import com.intellij.ide.navbar.ui.PopupEvent
-import com.intellij.ide.navbar.ui.PopupEvent.*
 import com.intellij.ide.navbar.vm.NavBarVmItem
+import com.intellij.ide.navbar.vm.PopupResult
+import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -161,7 +161,7 @@ internal class NavigationBar(
     return myComponent
   }
 
-  private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<NavBarVmItem>): PopupEvent =
+  private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<NavBarVmItem>): PopupResult =
     suspendCancellableCoroutine {
       SwingUtilities.invokeLater {
         myComponent.scrollTo(selectedItemIndex)
@@ -249,17 +249,17 @@ internal class NavigationBar(
       val popupResult = childrenPopupPrompt(selectedIndex, children)
 
       when (popupResult) {
-        PopupEventCancel -> {
+        PopupResultCancel -> {
           FloatingModeHelper.hideHint(true)
           return
         }
-        PopupEventLeft -> {
+        PopupResultLeft -> {
           if (selectedIndex > 0) {
             selectedIndex--
             children = myItems.value[selectedIndex].fetch(childrenSelector) ?: return
           }
         }
-        PopupEventRight -> {
+        PopupResultRight -> {
           if (selectedIndex < myItems.value.size - 1) {
             selectedIndex++
           }
@@ -271,7 +271,7 @@ internal class NavigationBar(
             children = localChildren
           }
         }
-        is PopupEventSelect -> {
+        is PopupResultSelect -> {
           val selectedChild = popupResult.item
           val expandResult = autoExpand(selectedChild) ?: return
           when (expandResult) {
