@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -31,7 +32,7 @@ internal class PortableCompilationCacheUploader(
   remoteCacheUrl: String,
   private val remoteGitUrl: String,
   private val commitHash: String,
-  private val syncFolder: String,
+  syncFolder: String,
   private val uploadCompilationOutputsOnly: Boolean,
   private val forcedUpload: Boolean,
 ) {
@@ -41,6 +42,13 @@ internal class PortableCompilationCacheUploader(
   private val uploader = Uploader(remoteCacheUrl)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
+
+  private val syncFolder = Path.of(syncFolder)
+
+  init {
+    FileUtil.delete(this.syncFolder)
+    Files.createDirectories(this.syncFolder)
+  }
 
   fun upload(messages: BuildMessages) {
     if (!Files.exists(sourcesStateProcessor.sourceStateFile)) {
@@ -77,16 +85,15 @@ internal class PortableCompilationCacheUploader(
     val cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
+      moveFile(zipFile, syncFolder.resolve(cachePath))
     }
-    moveFile(zipFile, Path.of(syncFolder, cachePath))
   }
 
   private fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    val sourceStateFileCopy = Path.of(syncFolder, metadataPath)
-    moveFile(sourceStateFile, sourceStateFileCopy)
+    moveFile(sourceStateFile, syncFolder.resolve(metadataPath))
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -103,11 +110,11 @@ internal class PortableCompilationCacheUploader(
 
         val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
         zipWithCompression(zipFile, mapOf(outputFolder to ""))
-        if (!uploader.isExist(sourcePath)) {
+        if (forcedUpload || !uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
+          moveFile(zipFile, syncFolder.resolve(sourcePath))
         }
-        moveFile(zipFile, Path.of(syncFolder, sourcePath))
       }
     }
   }
@@ -143,7 +150,7 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun writeCommitHistory(commitHistory: CommitsHistory): Path {
-    val commitHistoryFile = Path.of(syncFolder, CommitsHistory.JSON_FILE)
+    val commitHistoryFile = syncFolder.resolve(CommitsHistory.JSON_FILE)
     Files.createDirectories(commitHistoryFile.parent)
     val json = commitHistory.toJson()
     Files.writeString(commitHistoryFile, json)
