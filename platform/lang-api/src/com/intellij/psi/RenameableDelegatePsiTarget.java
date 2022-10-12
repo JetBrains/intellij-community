@@ -19,9 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class RenameableDelegatePsiTarget extends DelegatePsiTarget implements PomRenameableTarget<RenameableDelegatePsiTarget>{
   public RenameableDelegatePsiTarget(@NotNull PsiNamedElement element) {
     super(element);

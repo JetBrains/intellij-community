@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * <li> It's preferable to avoid the exception entirely by adding {@link DumbService#isDumb()} checks where necessary.
  * </ul>
  *
- * @author peter
  * @see DumbService
  * @see DumbAware
  */

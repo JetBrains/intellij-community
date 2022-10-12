@@ -15,7 +15,6 @@ import java.security.ProtectionDomain;
  * Also clears Groovy's call site cache
  *
  * @author Andy Clement
- * @author peter
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class ResetAgent {

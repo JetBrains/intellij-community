@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class GreclipseIdeaCompiler implements BackendCompiler {
   private final Project myProject;
 

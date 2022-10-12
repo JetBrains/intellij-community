@@ -20,9 +20,6 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class ProximityWeigher extends Weigher<PsiElement, ProximityLocation> {
 
   @Override

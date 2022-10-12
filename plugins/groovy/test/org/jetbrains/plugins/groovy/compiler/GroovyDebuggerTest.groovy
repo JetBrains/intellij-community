@@ -22,9 +22,6 @@ import java.util.concurrent.TimeUnit
 import static com.intellij.openapi.application.ActionsKt.runReadAction
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
   private static final Logger LOG = Logger.getInstance(GroovyDebuggerTest.class)

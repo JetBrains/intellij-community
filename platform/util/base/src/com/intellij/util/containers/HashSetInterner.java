@@ -12,7 +12,6 @@ import java.util.Set;
  * and on hard references, so even the ones that are not used anymore will be still present in the memory.
  *
  * @see WeakInterner
- * @author peter
  */
 public class HashSetInterner<T> extends Interner<T> {
   private final ObjectOpenHashSet<T> mySet;

@@ -6,7 +6,6 @@ import com.intellij.psi.Weigher;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
  * @see CompletionContributor
  * @see PrioritizedLookupElement
  */

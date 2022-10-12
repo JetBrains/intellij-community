@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class DefaultDomTargetIconProvider extends PomIconProvider implements DumbAware {
   @Override
   public Icon getIcon(@NotNull PomTarget target, int flags) {

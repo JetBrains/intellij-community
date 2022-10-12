@@ -48,9 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider, PsiMemberReference {
   private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;

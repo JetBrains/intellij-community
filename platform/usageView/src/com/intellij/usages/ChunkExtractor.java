@@ -40,9 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class ChunkExtractor {
 
   private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);

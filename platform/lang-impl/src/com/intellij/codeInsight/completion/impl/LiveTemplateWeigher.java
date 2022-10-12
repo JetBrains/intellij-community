@@ -8,9 +8,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author peter
-*/
 public class LiveTemplateWeigher extends LookupElementWeigher {
   public LiveTemplateWeigher() {
     super("templates", Registry.is("ide.completion.show.live.templates.on.top"), false);

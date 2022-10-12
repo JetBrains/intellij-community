@@ -31,9 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class LegacyCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LegacyCompletionContributor.class);
 

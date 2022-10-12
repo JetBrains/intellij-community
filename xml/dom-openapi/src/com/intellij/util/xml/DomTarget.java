@@ -14,9 +14,6 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, PomRenameableTarget {
   private final DomElement myDomElement;
   private final TextRange myRange;

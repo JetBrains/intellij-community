@@ -26,9 +26,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author peter
- */
 class GroovyMembersGetter extends MembersGetter {
   private final PsiClassType myExpectedType;
 

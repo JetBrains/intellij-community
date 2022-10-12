@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author peter
- */
 public interface DomEventListener extends EventListener {
 
   void eventOccured(@NotNull DomEvent event);

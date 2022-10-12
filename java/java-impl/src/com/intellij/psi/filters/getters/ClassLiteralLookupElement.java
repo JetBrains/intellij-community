@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
   @NonNls private static final String DOT_CLASS = ".class";
   @Nullable private final SmartPsiElementPointer<PsiClass> myClass;

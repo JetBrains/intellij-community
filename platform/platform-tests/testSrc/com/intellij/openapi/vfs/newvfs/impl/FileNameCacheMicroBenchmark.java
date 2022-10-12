@@ -19,9 +19,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-/**
- * @author peter
- */
 public class FileNameCacheMicroBenchmark {
   public static void main(String[] args) throws Exception {
     SwingUtilities.invokeAndWait(() -> {

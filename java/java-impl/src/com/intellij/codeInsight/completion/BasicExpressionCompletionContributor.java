@@ -22,9 +22,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class BasicExpressionCompletionContributor {
 
   private static void addKeyword(final Consumer<? super LookupElement> result, final PsiElement element, final String s) {

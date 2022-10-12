@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
 
   public static final Key<Boolean> CONTINUE_RUN_COMPLETION = Key.create("CONTINUE_RUN_COMPLETION");

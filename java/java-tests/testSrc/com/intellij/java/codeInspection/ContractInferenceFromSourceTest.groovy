@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author peter
- */
 @CompileStatic
 class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 

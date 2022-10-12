@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Use {@code com.intellij.dom.fileMetaData} extension point to register.
  *
- * @author peter
  * @see MergingFileDescription
  */
 public class DomFileDescription<T> {

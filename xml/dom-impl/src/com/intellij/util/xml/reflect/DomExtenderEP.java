@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author peter
  * @see DomExtender
  */
 public final class DomExtenderEP implements PluginAware {

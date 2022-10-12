@@ -24,7 +24,6 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
 /**
- * @author peter
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,

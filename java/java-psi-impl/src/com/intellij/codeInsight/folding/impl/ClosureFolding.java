@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 final class ClosureFolding {
   @NotNull private final PsiAnonymousClass myAnonymousClass;
   @NotNull private final PsiNewExpression myNewExpression;

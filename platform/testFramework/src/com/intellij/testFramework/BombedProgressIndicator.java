@@ -32,8 +32,6 @@ import java.util.function.Predicate;
 /**
  * A progress indicator that starts throwing {@link ProcessCanceledException} after n {@link #checkCanceled()} attempts, where
  * n is specified in the constructor.
- *
- * @author peter
  */
 public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
   private final Predicate<? super StackTraceElement[]> myStackCondition;

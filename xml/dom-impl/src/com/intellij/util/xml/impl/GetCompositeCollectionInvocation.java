@@ -7,9 +7,6 @@ import com.intellij.util.xml.DomElement;
 
 import java.util.*;
 
-/**
- * @author peter
-*/
 final class GetCompositeCollectionInvocation implements Invocation {
   private final Set<? extends CollectionChildDescriptionImpl> myQnames;
 

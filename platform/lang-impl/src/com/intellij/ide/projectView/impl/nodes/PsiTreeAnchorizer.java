@@ -25,9 +25,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
   @NotNull
   @Override

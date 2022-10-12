@@ -12,9 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
-/**
- * @author peter
- */
 public final class PathPattern {
   private final List<ElementPattern> myPath = new SmartList<>();
 

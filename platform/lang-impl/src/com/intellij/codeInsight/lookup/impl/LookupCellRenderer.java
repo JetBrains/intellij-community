@@ -52,7 +52,6 @@ import java.util.Set;
 import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
 
 /**
- * @author peter
  * @author Konstantin Bulenkov
  */
 public final class LookupCellRenderer implements ListCellRenderer<LookupElement> {

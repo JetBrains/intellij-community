@@ -26,9 +26,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ReplaceWithConstantValueFix implements LocalQuickFix {
   private final String myPresentableName;
   private final String myReplacementText;

@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class RootDomParentStrategy implements DomParentStrategy {
   private final DomFileElementImpl myFileElement;
 

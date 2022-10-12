@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public abstract class ElementPresentationManager {
   private static final ConcurrentMap<Class<?>, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(key -> ReflectionUtil
       .getClassPublicMethods(key)

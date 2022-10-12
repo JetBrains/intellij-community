@@ -4,9 +4,6 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class AnyModalityState extends ModalityState {
   public static final AnyModalityState ANY = new AnyModalityState();
 

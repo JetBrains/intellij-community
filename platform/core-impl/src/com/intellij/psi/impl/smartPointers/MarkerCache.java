@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author peter
- */
 class MarkerCache {
   static final Comparator<SelfElementInfo> INFO_COMPARATOR = (info1, info2) -> {
     int o1 = info1.getPsiStartOffset();

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 final class CompletionAssertions {
 
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {

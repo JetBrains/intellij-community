@@ -7,7 +7,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
  * @see PlatformPatterns#elementType()
  */
 public class IElementTypePattern extends ObjectPattern<IElementType, IElementTypePattern> {

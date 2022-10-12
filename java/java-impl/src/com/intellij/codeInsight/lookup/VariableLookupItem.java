@@ -32,9 +32,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Objects;
 
-/**
-* @author peter
-*/
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   private static final String EQ = " = ";
   @Nullable private final MemberLookupHelper myHelper;

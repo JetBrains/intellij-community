@@ -58,9 +58,6 @@ import java.util.List;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
-/**
- * @author peter
- */
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
   protected final @PopupTitle String myPopupTitle;

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * various {@link ASTNode} methods. If not implemented, AST nodes of type CompositeElement are created.
  *
  * @see ILeafElementType
- * @author peter
  */
 public interface ICompositeElementType {
 

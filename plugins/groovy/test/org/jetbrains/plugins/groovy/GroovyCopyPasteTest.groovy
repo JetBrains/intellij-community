@@ -4,9 +4,6 @@ package org.jetbrains.plugins.groovy
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-/**
- * @author peter
- */
 class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
   private int myAddImportsOld
 

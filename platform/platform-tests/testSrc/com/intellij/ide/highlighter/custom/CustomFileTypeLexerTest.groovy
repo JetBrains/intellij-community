@@ -28,9 +28,6 @@ import groovy.transform.CompileStatic
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
-/**
- * @author peter
- */
 @CompileStatic
 class CustomFileTypeLexerTest extends TestCase {
 

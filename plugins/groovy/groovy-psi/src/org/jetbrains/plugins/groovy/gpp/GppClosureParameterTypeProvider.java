@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
   protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {

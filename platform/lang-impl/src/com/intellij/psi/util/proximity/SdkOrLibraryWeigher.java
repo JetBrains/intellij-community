@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
-*/
 public class SdkOrLibraryWeigher extends ProximityWeigher {
 
   @Override

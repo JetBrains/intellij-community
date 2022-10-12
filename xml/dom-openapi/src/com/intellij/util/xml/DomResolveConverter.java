@@ -24,8 +24,6 @@ import java.util.Map;
 /**
  * Converter which resolves {@link DomElement}s by name in a defined scope. The scope is taken
  * from corresponding {@link DomFileDescription#getResolveScope(GenericDomValue)}.
- *
- * @author peter
  */
 public final class DomResolveConverter<T extends DomElement> extends ResolvingConverter<T>{
   private static final Map<Class<? extends DomElement>, DomResolveConverter> ourCache =

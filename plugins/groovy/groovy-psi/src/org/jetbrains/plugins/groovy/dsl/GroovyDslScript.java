@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyDslScript {
   private static final Logger LOG = Logger.getInstance(GroovyDslScript.class);
   private final Project project;

@@ -26,9 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @author peter
- */
 public class PackagePrefixIndex {
   private static final Object LOCK = new Object();
   private MultiMap<String, Module> myMap;

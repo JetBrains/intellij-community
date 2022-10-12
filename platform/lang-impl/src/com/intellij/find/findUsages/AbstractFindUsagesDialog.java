@@ -26,9 +26,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author peter
- */
 public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private final Project myProject;
   protected final FindUsagesOptions myFindUsagesOptions;
