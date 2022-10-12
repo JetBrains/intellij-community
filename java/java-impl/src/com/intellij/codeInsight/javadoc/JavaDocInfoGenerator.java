@@ -689,7 +689,16 @@ public class JavaDocInfoGenerator {
     @NlsSafe String ownerLink = null;
     String ownerIcon = null;
 
-    if (element instanceof PsiClass) {
+    if (element instanceof PsiPackage pkg) {
+      return HtmlChunk.div()
+        .setClass("bottom")
+        .children(
+          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Package"),
+          HtmlChunk.nbsp(),
+          HtmlChunk.tag("code").addText(pkg.getQualifiedName())
+        );
+    }
+    else if (element instanceof PsiClass) {
       PsiFile file = element.getContainingFile();
       if (file instanceof PsiJavaFile javaFile) {
         String packageName = javaFile.getPackageName();
@@ -1041,6 +1050,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiPackage psiPackage, boolean generatePrologue) {
+    boolean hasInfo = false;
     for (PsiDirectory directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(myProject))) {
       PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
@@ -1049,6 +1059,7 @@ public class JavaDocInfoGenerator {
           ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
             generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
+            hasInfo = true;
             break;
           }
         }
@@ -1056,9 +1067,43 @@ public class JavaDocInfoGenerator {
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
         generatePackageHtmlJavaDoc(buffer, packageHtmlFile, generatePrologue);
+        hasInfo = true;
         break;
       }
     }
+    if (!hasInfo) {
+      generateDefaultPackageDoc(buffer, psiPackage, generatePrologue);
+    }
+  }
+
+  private void generateDefaultPackageDoc(StringBuilder buffer, PsiPackage aPackage, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
+    HtmlBuilder hb = new HtmlBuilder();
+    hb.append(HtmlChunk.tag("h3").addText(JavaBundle.message("package.classes")));
+    Comparator<PsiClass> comparator = Comparator.comparing(PsiClass::getName, Comparator.nullsLast(Comparator.naturalOrder()));
+    Arrays.stream(aPackage.getClasses()).sorted(comparator).forEach(psiClass -> {
+      String link = generateLink(psiClass, psiClass.getName(), false, false);
+      if (link != null) {
+        hb.append(HtmlChunk.tag("div")
+                    .children(
+                      HtmlChunk.tag("icon").attr("src", getIcon(psiClass)),
+                      HtmlChunk.nbsp(),
+                      HtmlChunk.raw(link)
+                    ));
+      }
+    });
+    buffer.append(hb);
+    buffer.append(DocumentationMarkup.SECTIONS_END);
+  }
+
+  @NotNull
+  private static String getIcon(@NotNull PsiClass psiClass) {
+    return psiClass.isEnum() ? "AllIcons.Nodes.Enum" :
+           psiClass.isRecord() ? "AllIcons.Nodes.Record" :
+           psiClass.isAnnotationType() ? "AllIcons.Nodes.Annotationtype" :
+           psiClass.isInterface() ? "AllIcons.Nodes.Interface" :
+           psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ? "AllIcons.Nodes.AbstractClass" :
+           "AllIcons.Nodes.Class";
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiDocComment comment, boolean generatePrologue) {
@@ -2456,7 +2501,10 @@ public class JavaDocInfoGenerator {
     appendMaybeUnresolvedLink(buffer, target, label, target.getProject(), false);
   }
 
-  private static @Nullable String generateLink(@NotNull PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
+  private static @Nullable @NlsSafe String generateLink(@NotNull PsiElement element,
+                                                        String label,
+                                                        boolean plainLink,
+                                                        boolean isRenderedDoc) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
       StringBuilder linkBuilder = new StringBuilder();
