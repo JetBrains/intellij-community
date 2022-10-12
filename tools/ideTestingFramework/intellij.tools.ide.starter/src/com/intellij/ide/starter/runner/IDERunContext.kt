@@ -103,6 +103,7 @@ data class IDERunContext(
     .setFatalErrorNotificationEnabled()
     .setFlagIntegrationTests()
     .takeScreenshotsPeriodically(testContext.paths.logsDir)
+    .takeScreenshotOnFailure(testContext.paths.logsDir)
     .withJvmCrashLogDirectory(jvmCrashLogDirectory)
     .withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
     .let { if (Const.isClassFileVerificationEnabled) it.withClassFileVerification() else it }
