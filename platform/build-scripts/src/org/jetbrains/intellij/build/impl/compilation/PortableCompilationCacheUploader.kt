@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path

@@ -277,5 +277,3 @@ internal class CompilationOutput(
 ) {
   val remotePath = "$type/$name/$hash"
 }
-
-internal class BuildTargetState(@JvmField val hash: String, @JvmField val relativePath: String)

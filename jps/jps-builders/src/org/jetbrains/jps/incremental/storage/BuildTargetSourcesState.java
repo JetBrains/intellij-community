@@ -13,11 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileContextImpl;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -32,10 +32,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -184,7 +188,7 @@ public class BuildTargetSourcesState implements BuildListener {
         if (!rootFile.exists()) return null;
 
         List<byte[]> targetRootHashes = new ArrayList<>();
-        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             return FileVisitResult.CONTINUE;
@@ -223,7 +227,7 @@ public class BuildTargetSourcesState implements BuildListener {
         if (!rootFile.exists() || rootFile.getAbsolutePath().startsWith(myOutputFolderPath)) return null;
 
         List<byte[]> targetRootHashes = new ArrayList<>();
-        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(rootFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             return myBuildRootIndex.isDirectoryAccepted(dir.toFile(), rootDescriptor)
@@ -281,7 +285,7 @@ public class BuildTargetSourcesState implements BuildListener {
   @NotNull
   private Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     if (!myTargetStateStorage.exists()) return new HashMap<>();
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage))) {
+    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(myTargetStateStorage, StandardCharsets.UTF_8))) {
       Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, myTokenType);
       if (result != null) return result;
     }
@@ -315,15 +319,5 @@ public class BuildTargetSourcesState implements BuildListener {
       result[i] += secondHash[i];
     }
     return result;
-  }
-
-  private static final class BuildTargetState {
-    private final String hash;
-    private final String relativePath;
-
-    private BuildTargetState(String hash, String relativePath) {
-      this.hash = hash;
-      this.relativePath = relativePath;
-    }
   }
 }
