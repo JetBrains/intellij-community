@@ -8,26 +8,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager;
+import com.intellij.toolWindow.ToolWindowDefaultLayoutManagerKt;
 import org.jetbrains.annotations.NotNull;
 
-public final class StoreDefaultLayoutAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
-
-    ToolWindowDefaultLayoutManager.getInstance().setLayout(ToolWindowManagerEx.getInstanceEx(project).getLayout());
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    event.getPresentation().setEnabled(event.getProject() != null);
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+public final class StoreDefaultLayoutAction extends StoreNamedLayoutAction {
+  public StoreDefaultLayoutAction() {
+    super(ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME);
   }
 }
