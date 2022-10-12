@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -22,24 +23,25 @@ import java.nio.file.Path
  * Ensures conda SDK could be created
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class PyCondaSdkTest {
-  @JvmField
-  @Rule
-  val condaRule: LocalCondaRule = LocalCondaRule()
+internal class PyCondaSdkTest {
+  private val condaRule: LocalCondaRule = LocalCondaRule()
 
-  @JvmField
-  @Rule
-  val projectRule: ProjectRule = ProjectRule()
+  private val yamlRule: CondaYamlFileRule = CondaYamlFileRule(condaRule)
 
+  private val projectRule = ProjectRule()
+
+  @Rule
+  @JvmField
+  internal val chain = RuleChain.outerRule(projectRule).around(condaRule).around(yamlRule)
 
   @Test
   fun createSdkByFile() = runTest {
-    val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlFile)
+    val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, coroutineContext, emptyList(),
                                                                    projectRule.project).getOrThrow()
     val env = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env
     val namedEnv = env.envIdentity as PyCondaEnvIdentity.NamedEnv
-    Assert.assertEquals("Wrong env name", yamlEnvName, namedEnv.envName)
+    Assert.assertEquals("Wrong env name", yamlRule.envName, namedEnv.envName)
     ensureHomePathCorrect(sdk)
   }
 

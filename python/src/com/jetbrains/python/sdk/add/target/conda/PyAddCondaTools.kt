@@ -70,7 +70,11 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(newCondaEnvInfo: NewCon
 suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): FullPathOnTarget? {
   val request = configuration?.createEnvironmentRequest(null) ?: LocalTargetEnvironmentRequest()
   val possiblePaths: Array<FullPathOnTarget> = when (request.targetPlatform.platform) {
-    Platform.UNIX -> arrayOf("~/anaconda3/bin/conda", "~/miniconda3/bin/conda", "/usr/local/bin/conda")
+    Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
+                             "~/miniconda3/bin/conda",
+                             "/usr/local/bin/conda",
+                             "/opt/miniconda3/condabin/conda",
+                             "/opt/anaconda3/condabin/conda")
     Platform.WINDOWS -> arrayOf("%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
                                 "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
                                 "%USERPROFILE%\\Anaconda3\\condabin\\conda.bat",

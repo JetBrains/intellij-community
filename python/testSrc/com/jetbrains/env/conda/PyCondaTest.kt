@@ -16,29 +16,32 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PyCondaTest {
+internal class PyCondaTest {
 
-  @JvmField
+  private val languageLevel = LanguageLevel.PYTHON310
+
+  private val condaRule: LocalCondaRule = LocalCondaRule()
+
+  private val yamlRule: CondaYamlFileRule = CondaYamlFileRule(condaRule, languageLevel)
+
   @Rule
-  val projectRule: ProjectRule = ProjectRule()
-
   @JvmField
-  @Rule
-  val condaRule: LocalCondaRule = LocalCondaRule()
-
+  internal val chain = RuleChain.outerRule(ProjectRule()).around(condaRule).around(yamlRule)
 
   @Test
   fun testCondaCreateByYaml() = runTest {
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlFile)).getOrThrow().getResultStdoutStr().get().getOrThrow()
+                         NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(
+                           yamlRule.yamlFilePath)).getOrThrow().getResultStdoutStr().get().getOrThrow()
     val condaEnv = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
-      .first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlEnvName }
+      .first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
-    Assert.assertEquals("Wrong python version installed", LanguageLevel.PYTHON310,
+    Assert.assertEquals("Wrong python version installed", languageLevel,
                         LanguageLevel.fromPythonVersion(pythonVersion))
   }
 
