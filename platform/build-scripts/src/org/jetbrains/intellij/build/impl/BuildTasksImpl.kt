@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.ZipUtil
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -46,6 +47,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.FileOutputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,6 +57,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import java.util.zip.ZipOutputStream
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -608,6 +611,10 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
 
     spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
       val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
+
+      if (context.productProperties.buildDocAuthoringAssets)
+        buildInspectopediaArtifacts(distributionJARsBuilder, context)
+
       if (context.shouldBuildDistributions()) {
         val entries = distributionJARsBuilder.buildJARs(context)
         if (context.productProperties.buildSourcesArchive) {
@@ -765,9 +772,9 @@ private fun checkProductLayout(context: BuildContext) {
                      "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used (" +
                      layout.pluginModulesToPublish + ")")
   }
-  check (!layout.prepareCustomPluginRepositoryForPublishedPlugins ||
-         !layout.pluginModulesToPublish.isEmpty() ||
-         layout.buildAllCompatiblePlugins) {
+  check(!layout.prepareCustomPluginRepositoryForPublishedPlugins ||
+        !layout.pluginModulesToPublish.isEmpty() ||
+        layout.buildAllCompatiblePlugins) {
     "productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
     " but no pluginModulesToPublish are specified"
   }
@@ -1196,4 +1203,24 @@ fun getModulesToCompile(buildContext: BuildContext): Set<String> {
   result.add("intellij.platform.images.build")
   result.removeAll(productLayout.excludedModuleNames)
   return result
+}
+
+// Captures information about all available inspections in a JSON format as part of Inspectopedia project. This is later used by Qodana and other tools.
+private suspend fun buildInspectopediaArtifacts(builder: DistributionJARsBuilder,
+                                                context: BuildContext) {
+
+  val ideClasspath = builder.createIdeClassPath(context)
+  val tempDir = context.paths.tempDir.resolve("inspectopedia-generator")
+  val inspectionsPath = tempDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}")
+
+  runApplicationStarter(context = context,
+                        tempDir = tempDir,
+                        ideClasspath = ideClasspath,
+                        arguments = listOf("inspectopedia-generator", inspectionsPath.toAbsolutePath().toString()))
+
+  val targetFile = context.paths.artifactDir.resolve("inspections-${context.applicationInfo.productCode.lowercase()}.zip").toFile()
+
+  ZipOutputStream(FileOutputStream(targetFile)).use { zip ->
+    ZipUtil.addDirToZipRecursively(zip, targetFile, inspectionsPath.toFile(), "", null, null)
+  }
 }
