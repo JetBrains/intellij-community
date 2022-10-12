@@ -12,8 +12,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.util.PsiIconUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -93,7 +92,7 @@ internal class KotlinFirStructureElementPresentation(
             analyze(ktElement) {
                 val symbol = pointer.restoreSymbol()
                 if (symbol is KtDeclarationSymbol) {
-                    return symbol.render(KtDeclarationRendererOptions(modifiers = emptySet(), renderDeclarationHeader = false, renderUnitReturnType = true, typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES))
+                    return symbol.render(KtDeclarationRendererForSource.WITH_SHORT_NAMES)
                 }
             }
         }

@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
+import org.jetbrains.kotlin.types.Variance
 
 internal class FirCompletionContributorOptions(
     val priority: Int = 0
@@ -116,7 +117,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         priority?.let { lookup.priority = it }
         lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)
         applyWeighers(context, lookup, symbol, substitutor)
-        sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render()))
+        sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
     }
 
     private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderer
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(
@@ -42,7 +43,7 @@ internal class FunctionLookupElementFactory {
         )
 
         val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTypeText(substitutor.substitute(symbol.returnType).render(TYPE_RENDERING_OPTIONS))
+            .withTypeText(substitutor.substitute(symbol.returnType).render(renderer, position = Variance.INVARIANT))
             .withTailText(getTailText(symbol, substitutor))
             .let { withSymbolInfo(symbol, it) }
 

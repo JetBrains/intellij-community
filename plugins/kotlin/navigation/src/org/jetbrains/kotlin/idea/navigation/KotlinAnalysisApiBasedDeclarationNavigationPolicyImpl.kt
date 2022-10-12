@@ -214,8 +214,8 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         analyze(declaration) {
             buildString {
                 val symbol = declaration.getSymbol() as KtCallableSymbol
-                symbol.receiverType?.let { receiverType ->
-                    append(receiverType.render(renderer, position = Variance.INVARIANT))
+                symbol.receiverType?.let { receiver ->
+                    append(receiver.render(renderer, position = Variance.INVARIANT))
                     append('.')
                 }
                 if (symbol is KtFunctionLikeSymbol) {

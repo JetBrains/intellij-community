@@ -14,7 +14,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.bfs
 
 object CallableReturnTypeUpdaterApplicator {
@@ -122,7 +123,7 @@ object CallableReturnTypeUpdaterApplicator {
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
             // multiple super types.
             .bfs { it.getDirectSuperTypes(shouldApproximate = true).iterator() }
-            .map { it.approximateToSuperPublicDenotableOrSelf() }
+            .map { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) }
             .distinct()
             .let { types ->
                 when {
@@ -140,7 +141,7 @@ object CallableReturnTypeUpdaterApplicator {
                 selectForUnitTest(declaration, allTypes)?.let { return it }
             }
 
-            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf().let {
+            val approximatedDefaultType = declarationType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true).let {
                 if (cannotBeNull) it.withNullability(KtTypeNullability.NON_NULLABLE)
                 else it
             }
@@ -195,8 +196,8 @@ object CallableReturnTypeUpdaterApplicator {
 
             private fun KtAnalysisSession.createTypeByKtType(ktType: KtType): Type = Type(
                 isUnit = ktType.isUnit,
-                longTypeRepresentation = ktType.render(KtTypeRendererOptions.DEFAULT),
-                shortTypeRepresentation = ktType.render(KtTypeRendererOptions.SHORT_NAMES),
+                longTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
+                shortTypeRepresentation = ktType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             )
 
             val UNIT = Type(isUnit = true, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")

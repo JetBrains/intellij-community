@@ -10,9 +10,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.components.RendererModifier
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -20,6 +23,7 @@ import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -28,6 +32,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -38,7 +43,7 @@ data class KtClassMemberInfo(
     val memberIcon: Icon?,
     val containingSymbolText: String?,
     val containingSymbolIcon: Icon?
-    ) {
+) {
     val isProperty: Boolean get() = symbol is KtPropertySymbol
 }
 
@@ -89,19 +94,28 @@ fun KtAnalysisSession.generateMember(
         else -> bodyType
     }
 
-    val renderOptions = when (mode) {
-        MemberGenerateMode.OVERRIDE -> RenderOptions.overrideRenderOptions
-        MemberGenerateMode.ACTUAL -> RenderOptions.actualRenderOptions
-        MemberGenerateMode.EXPECT -> RenderOptions.expectRenderOptions
+    val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+        modifiersRenderer = modifiersRenderer.with {
+            modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD)
+
+            modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
+
+            otherModifiersProvider = otherModifiersProvider and object : KtRendererOtherModifiersProvider {
+                context(KtAnalysisSession)
+                override fun getOtherModifiers(symbol: KtDeclarationSymbol): List<KtModifierKeywordToken> = listOf(KtTokens.OVERRIDE_KEYWORD)
+            }.onlyIf { s -> mode == MemberGenerateMode.OVERRIDE && s == symbol }
+        }
+
     }
+
     if (preferConstructorParameter && symbol is KtPropertySymbol) {
-        return generateConstructorParameter(project, symbol, renderOptions, mode == MemberGenerateMode.OVERRIDE)
+        return generateConstructorParameter(project, symbol, renderer)
     }
 
 
     val newMember: KtCallableDeclaration = when (symbol) {
-        is KtFunctionSymbol -> generateFunction(project, symbol, renderOptions, bodyType, mode == MemberGenerateMode.OVERRIDE)
-        is KtPropertySymbol -> generateProperty(project, symbol, renderOptions, bodyType, mode == MemberGenerateMode.OVERRIDE)
+        is KtFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
+        is KtPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
 
@@ -110,6 +124,7 @@ fun KtAnalysisSession.generateMember(
         MemberGenerateMode.EXPECT -> if (targetClass == null) {
             newMember.addModifier(KtTokens.EXPECT_KEYWORD)
         }
+
         MemberGenerateMode.OVERRIDE -> {
             // TODO: add `actual` keyword to the generated member if the target class has `actual` and the generated member corresponds to
             //  an `expect` member.
@@ -120,10 +135,12 @@ fun KtAnalysisSession.generateMember(
         val kDoc = when (val originalOverriddenPsi = symbol.originalOverriddenSymbol?.psi) {
             is KtDeclaration ->
                 findDocComment(originalOverriddenPsi)
+
             is PsiDocCommentOwner -> {
                 val kDocText = originalOverriddenPsi.docComment?.let { IdeaDocCommentConverter.convertDocComment(it) }
                 if (kDocText.isNullOrEmpty()) null else KDocElementFactory(project).createKDocFromText(kDocText)
             }
+
             else -> null
         }
         if (kDoc != null) {
@@ -137,18 +154,16 @@ fun KtAnalysisSession.generateMember(
 private fun KtAnalysisSession.generateConstructorParameter(
     project: Project,
     symbol: KtCallableSymbol,
-    renderOptions: KtDeclarationRendererOptions,
-    isOverride: Boolean,
+    renderer: KtDeclarationRenderer,
 ): KtCallableDeclaration {
-    return KtPsiFactory(project).createParameter(symbol.render(renderOptions.copy(forceRenderingOverrideModifier = isOverride)))
+    return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
 private fun KtAnalysisSession.generateFunction(
     project: Project,
     symbol: KtFunctionSymbol,
-    renderOptions: KtDeclarationRendererOptions,
+    renderer: KtDeclarationRenderer,
     bodyType: BodyType,
-    isOverride: Boolean,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
     val returnsUnit = returnType.isUnit
@@ -160,7 +175,7 @@ private fun KtAnalysisSession.generateFunction(
     } else ""
 
     val factory = KtPsiFactory(project)
-    val functionText = symbol.render(renderOptions.copy(forceRenderingOverrideModifier = isOverride)) + body
+    val functionText = symbol.render(renderer) + body
 
     return factory.createFunction(functionText)
 }
@@ -168,9 +183,8 @@ private fun KtAnalysisSession.generateFunction(
 private fun KtAnalysisSession.generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
-    renderOptions: KtDeclarationRendererOptions,
+    renderer: KtDeclarationRenderer,
     bodyType: BodyType,
-    isOverride: Boolean,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
     val returnsNotUnit = !returnType.isUnit
@@ -186,7 +200,7 @@ private fun KtAnalysisSession.generateProperty(
                 }
             }
         } else ""
-    return KtPsiFactory(project).createProperty(symbol.render(renderOptions.copy(forceRenderingOverrideModifier = isOverride)) + body)
+    return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
 private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
@@ -207,10 +221,11 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 project,
                 templateKind,
                 symbol.name.asString(),
-                symbol.returnType.render(),
+                symbol.returnType.render(position = Variance.OUT_VARIANCE),
                 null
             )
         }
+
         else -> return buildString {
             if (bodyType is BodyType.Delegate) {
                 append(bodyType.receiverName)
@@ -237,26 +252,23 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
 }
 
 private object RenderOptions {
-    // TODO: Currently rendering has the following problems:
-//  - flexible types are not rendered correctly, specifically there are problems with the following
-//    - flexible null type is rendered with `!`, which is not valid Kotlin code
-//    - Array<(out) ...> (example idea/testData/codeInsight/overrideImplement/javaParameters/foo/Impl.kt.fir.after)
-//    - incorrect type parameter (example idea/testData/codeInsight/overrideImplement/jdk8/overrideCollectionStream.kt.fir.after)
-//  - some type annotations should be filtered, for example
-//    - javax.annotation.Nonnull
-//    - androidx.annotation.RecentlyNonNull
-//    - org.jetbrains.annotations.NotNull
-    val overrideRenderOptions = KtDeclarationRendererOptions(
-        modifiers = setOf(RendererModifier.OVERRIDE, RendererModifier.ANNOTATIONS),
-        approximateTypes = true,
-        renderDefaultParameterValue = false,
-    )
+    val overrideRenderOptions = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+        modifiersRenderer = modifiersRenderer.with {
+            modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+        }
+    }
 
-    val actualRenderOptions = overrideRenderOptions.copy(
-        modifiers = setOf(RendererModifier.VISIBILITY, RendererModifier.MODALITY, RendererModifier.OVERRIDE, RendererModifier.INNER)
-
-    )
-    val expectRenderOptions = actualRenderOptions.copy(
-        modifiers = actualRenderOptions.modifiers + RendererModifier.ACTUAL
-    )
+    val actualRenderOptions = overrideRenderOptions.with {
+        modifiersRenderer = modifiersRenderer.with {
+            modifierFilter = modifierFilter or
+                    KtRendererModifierFilter.onlyWith(KtTokens.INNER_KEYWORD) or
+                    KtRendererModifierFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
+                    KtRendererModifierFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
+        }
+    }
+    val expectRenderOptions = actualRenderOptions.with {
+        modifiersRenderer = modifiersRenderer.with {
+            modifierFilter = modifierFilter or KtRendererModifierFilter.onlyWith(KtTokens.ACTUAL_KEYWORD)
+        }
+    }
 }
