@@ -2,7 +2,6 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -33,7 +32,6 @@ import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
@@ -67,11 +65,7 @@ class GitBranchesTreePopupStep(private val project: Project,
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
            && repositories.diverged()
-           && userWantsSyncControl()
-  }
-
-  private fun userWantsSyncControl(): Boolean {
-    return GitVcsSettings.getInstance(project).syncSetting != DvcsSyncSettings.Value.DONT_SYNC
+           && GitBranchActionsUtil.userWantsSyncControl(project)
   }
 
   fun getPreferredSelection(): TreePath? {
