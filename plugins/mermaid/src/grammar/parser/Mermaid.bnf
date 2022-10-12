@@ -115,7 +115,7 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
 nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
 complexLinkText ::= LINK_TEXT+
 
-subgraphStatement ::= subgraphHeader EOL subgraphDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+subgraphStatement ::= subgraphHeader separator subgraphDocument? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 subgraphHeader ::= SUBGRAPH subgraphName
 subgraphName ::= complexIdentifier
 subgraphDocument ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
@@ -591,7 +591,7 @@ accStatement ::= ACC_TITLE COLON ACC_TITLE_VALUE
   | ACC_DESCR OPEN_CURLY ACC_DESCR_MULTILINE_VALUE CLOSE_CURLY
 
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
-complexIdentifier ::= (ID | AMPERSAND)+ {
+complexIdentifier ::= ID+ {
 	mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 identifier ::= ID {
