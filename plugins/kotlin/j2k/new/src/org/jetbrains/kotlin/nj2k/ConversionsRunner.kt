@@ -39,7 +39,6 @@ object ConversionsRunner {
         InsertDefaultPrimaryConstructorConversion(context),
         ClassMemberConversion(context),
         JavaStandardMethodsConversion(context),
-        MainFunctionConversion(context),
         AssertStatementConversion(context),
         SwitchToWhenConversion(context),
         YieldStatementConversion(context),
