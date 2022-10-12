@@ -330,10 +330,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "class" { yybegin(flowchart_class); return CLASS; }
 
-	"&" { return Flowchart.AMPERSAND; }
+	"&"/\s { return Flowchart.AMPERSAND; }
 
-	[^\s\n\r;:%&\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
-	[^\s\n\r;:%&\[({><\^\|\-\=\.]+ { return ID; }
+	[^\s\n\r;:%\[({><\^\|\-\=\.]+/[xo<]?\-\-|[xo<]?\=\=|[xo<]?\-\. { return ID; }
+	[^\s\n\r;:%\[({><\^\|\-\=\.]+ { return ID; }
 	[\-\=\.] { return ID; }
 	:|:: { return ID; }
 
