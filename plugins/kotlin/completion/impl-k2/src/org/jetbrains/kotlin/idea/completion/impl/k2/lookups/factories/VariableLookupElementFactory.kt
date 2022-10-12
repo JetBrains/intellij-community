@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambd
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.types.Variance
 
 internal class VariableLookupElementFactory {
     fun KtAnalysisSession.createLookup(
@@ -61,11 +61,11 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    substitutor.substitute(it).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(it).render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
                 }
 
                 val typeText =
-                    substitutor.substitute(functionalType.returnType).render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
+                    substitutor.substitute(functionalType.returnType).render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
 
                 LookupElementBuilder.create(lookupObject, symbol.name.asString())
                     .withTailText(tailText, true)
@@ -80,7 +80,7 @@ internal class VariableLookupElementFactory {
                 val lookupObject = VariableLookupObject(symbol.name, options, rendered)
                 markIfSyntheticJavaProperty(
                     LookupElementBuilder.create(lookupObject, symbol.name.asString())
-                        .withTypeText(symbolType.render(KtTypeRendererOptions.SHORT_NAMES))
+                        .withTypeText(symbolType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT))
                         .withTailText(getTailText(symbol, substitutor), true), symbol
                 )
                     .withInsertHandler(VariableInsertionHandler)

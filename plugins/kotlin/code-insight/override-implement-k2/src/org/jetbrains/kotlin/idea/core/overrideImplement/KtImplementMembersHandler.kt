@@ -46,7 +46,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                 val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
                 KtClassMemberInfo(
                     symbol = unimplementedMemberSymbol,
-                    memberText = unimplementedMemberSymbol.render(renderOption),
+                    memberText = unimplementedMemberSymbol.render(renderer),
                     memberIcon = getIcon(unimplementedMemberSymbol),
                     containingSymbolText = containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString()
                         ?: containingSymbol?.name?.asString(),

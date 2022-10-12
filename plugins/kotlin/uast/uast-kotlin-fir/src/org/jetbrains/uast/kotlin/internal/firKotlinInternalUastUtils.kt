@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -211,7 +211,7 @@ internal fun KtAnalysisSession.toPsiType(
     boxed: Boolean = false,
     ktTypeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
 ): PsiType {
-    if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
+    if (ktType is KtNonErrorClassType && ktType.ownTypeArguments.isEmpty()) {
         fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
             StandardClassIds.Int -> PsiType.INT.orBoxed()
@@ -255,13 +255,13 @@ internal fun KtAnalysisSession.receiverType(
             else
                 ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
     }
-    if (ktType == null || ktType is KtClassErrorType) return null
+    if (ktType == null || ktType is KtErrorType) return null
     return toPsiType(ktType, source, context, context.typeOwnerKind, boxed = true)
 }
 
 internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
     if (ktType == null) return null
-    if (ktType is KtClassErrorType) return null
+    if (ktType is KtErrorType) return null
     return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
 }
 
