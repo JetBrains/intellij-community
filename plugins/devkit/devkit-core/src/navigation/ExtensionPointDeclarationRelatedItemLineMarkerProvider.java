@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Navigate from {@code ExtensionPointName} field to declaration in {@code plugin.xml}.
+ * Navigate from EP field to declaration in {@code plugin.xml}.
  */
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
@@ -61,7 +63,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     if (expressionList == null) return null;
 
     final PsiExpression[] expressions = expressionList.getExpressions();
-    if (expressions.length != 1) return null;
+    if (expressions.length == 0) return null;
 
     final PsiExpression epNameExpression = expressions[0];
     final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
@@ -94,6 +96,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
 
     final String qualifiedClassName = fieldClass.getQualifiedName();
     return ExtensionPointName.class.getName().equals(qualifiedClassName) ||
-           ProjectExtensionPointName.class.getName().equals(qualifiedClassName);
+           ProjectExtensionPointName.class.getName().equals(qualifiedClassName) ||
+           InheritanceUtil.isInheritor(fieldClass, false, KeyedExtensionCollector.class.getName());
   }
 }

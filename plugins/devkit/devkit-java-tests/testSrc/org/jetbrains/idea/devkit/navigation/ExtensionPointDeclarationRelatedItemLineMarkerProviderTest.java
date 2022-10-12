@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,10 +25,9 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", extensionsJar);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("extensions", PathUtil.getJarPathForClass(ExtensionPointName.class));
+    moduleBuilder.addLibrary("platform-api", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(LanguageExtension.class));
   }
 
   public void testMyStringEP() {
@@ -40,6 +40,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
 
   public void testMyStringEPConstructor() {
     assertStringEP("MyStringEPConstructor.java");
+  }
+
+  public void testMyStringEPLanguageExtension() {
+    assertStringEP("MyStringEPLanguageExtension.java");
   }
 
   public void testMyStringProjectEP() {
