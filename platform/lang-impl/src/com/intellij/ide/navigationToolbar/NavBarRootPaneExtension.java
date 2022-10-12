@@ -114,7 +114,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private void toggleNavPanel(UISettings settings) {
     boolean show = ExperimentalUI.isNewUI() ?
                    settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP :
-                   settings.getShowNavigationBar() && !settings.getPresentationMode();
+                   NavBarIdeUtil.isNavbarShown(settings);
     if (show) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myWrapperPanel.add(getNavBarPanel(), BorderLayout.CENTER);
@@ -233,7 +233,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       myScrollPane.setViewportBorder(null);
 
       if (ExperimentalUI.isNewUI()) {
-        boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
+        boolean visible = NavBarIdeUtil.isNavbarShown(settings);
         myScrollPane.setVisible(visible);
         if (myNavigationBar instanceof NavBarPanel) {
           ((NavBarPanel)myNavigationBar).updateState(visible);
@@ -309,7 +309,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (myNavigationBar instanceof NavBarPanel) {
       ((NavBarPanel)myNavigationBar).updateState(settings.getShowNavigationBar());
     }
-    boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
+    boolean visible = NavBarIdeUtil.isNavbarShown(settings);
     if (ExperimentalUI.isNewUI()) {
       myScrollPane.setVisible(visible);
     }
@@ -361,8 +361,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
     // Evanescent me: fix run panel show condition in ExpUI if necessary.
-    if (!ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
-        !uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode()) {
+    if (!ExperimentalUI.isNewUI() && !uiSettings.getShowMainToolbar() && NavBarIdeUtil.isNavbarShown(uiSettings)) {
       ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
       return !toolbarSettings.isVisible() || !toolbarSettings.isAvailable();
     }

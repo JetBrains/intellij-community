@@ -17,8 +17,6 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 
-internal fun isNavbarShown() = with(UISettings.getInstance()) { showNavigationBar && !presentationMode }
-
 @Service(PROJECT)
 internal class NavBarService(val myProject: Project) : Disposable {
 
@@ -27,7 +25,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
   private val staticPanel = JPanel(BorderLayout())
   private var staticNavigationBar: NavigationBar? = null
 
-  private val staticBarShown = MutableStateFlow(isNavbarShown())
+  private val staticBarShown = MutableStateFlow(UISettings.getInstance().isNavbarShown())
 
   override fun dispose() {
     cs.coroutineContext.cancel()
@@ -42,7 +40,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
   }
 
   fun uiSettingsChanged(uiSettings: UISettings) {
-    staticBarShown.tryEmit(uiSettings.showNavigationBar && !uiSettings.presentationMode)
+    staticBarShown.tryEmit(uiSettings.isNavbarShown())
   }
 
   fun getStaticNavbarPanel() = staticPanel

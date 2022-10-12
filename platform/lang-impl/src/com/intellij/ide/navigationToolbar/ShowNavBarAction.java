@@ -40,7 +40,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
   private static void showNavBar(@NotNull AnActionEvent e, @NotNull Project project) {
     final DataContext context = e.getDataContext();
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()
+    if (NavBarIdeUtil.isNavbarShown(uiSettings)
       && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){SelectInNavBarTarget.selectInNavBar(true);
     }
     else {

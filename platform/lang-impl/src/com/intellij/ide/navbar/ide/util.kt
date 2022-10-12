@@ -3,9 +3,14 @@
 
 package com.intellij.ide.navbar.ide
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 
 internal val isNavbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
+
+internal fun UISettings.isNavbarShown(): Boolean {
+  return showNavigationBar && !presentationMode
+}
