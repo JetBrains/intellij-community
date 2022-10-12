@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
 public final class DeferredIconImpl<T> extends JBScalableIcon implements DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
@@ -56,6 +57,8 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
+  private AtomicLong myModificationCount = new AtomicLong(0);
+
   private static final ExecutorService ourIconCalculatingExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("IconCalculating Pool", 1);
 
@@ -75,6 +78,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     myLastCalcTime = icon.myLastCalcTime;
     myLastTimeSpent = icon.myLastTimeSpent;
     myEvalListener = icon.myEvalListener;
+    myModificationCount = icon.myModificationCount;
   }
 
   DeferredIconImpl(Icon baseIcon,
@@ -96,6 +100,11 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
     this(baseIcon, param, needReadAction, false, t -> evaluator.fun(t), null);
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount.get();
   }
 
   @NotNull
@@ -211,6 +220,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
       }
       final Icon result = evaluated[0];
       myScaledDelegateIcon = result;
+      myModificationCount.incrementAndGet();
       checkDelegationDepth();
 
       boolean shouldRevalidate = Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
