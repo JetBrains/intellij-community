@@ -290,7 +290,7 @@ public class PluginImagesComponent extends JPanel {
       public void beforeShown(@NotNull LightweightWindowEvent event) {
         Window window = SwingUtilities.getWindowAncestor(event.asPopup().getContent());
         window.setBackground(Gray.TRANSPARENT);
-        window.setOpacity(0);
+        window.setOpacity(0.95f);
       }
 
       @Override
@@ -341,7 +341,7 @@ public class PluginImagesComponent extends JPanel {
       Graphics2D g2d = (Graphics2D)g.create();
 
       try {
-        g2d.setBackground(Gray.get(128, 128));
+        g2d.setBackground(Gray.get(158, 158));
         g2d.clearRect(0, 0, getWidth(), getHeight());
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
 
