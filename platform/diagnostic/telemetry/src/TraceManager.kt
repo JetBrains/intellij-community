@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 object TraceManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
   private var verboseSdk: OpenTelemetry = OpenTelemetry.noop()
