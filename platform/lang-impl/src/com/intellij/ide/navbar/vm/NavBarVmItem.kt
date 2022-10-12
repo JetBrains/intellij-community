@@ -8,7 +8,7 @@ import com.intellij.model.Pointer
 internal class NavBarVmItem(
   val pointer: Pointer<out NavBarItem>,
   val presentation: NavBarItemPresentation,
-  itemClass: Class<NavBarItem>
+  itemClass: Class<NavBarItem>,
 ) {
 
   // Synthetic string field for fast equality heuristics
@@ -24,6 +24,7 @@ internal class NavBarVmItem(
     return texts == other.texts
   }
 
-  override fun hashCode() = texts.hashCode()
-
+  override fun hashCode(): Int {
+    return texts.hashCode()
+  }
 }
