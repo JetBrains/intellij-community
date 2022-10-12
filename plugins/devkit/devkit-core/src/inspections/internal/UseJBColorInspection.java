@@ -59,13 +59,10 @@ public class UseJBColorInspection extends DevKitInspectionBase {
 
       private static boolean isColorTypeConstructor(@NotNull UCallExpression constructorCall, @NotNull String colorClassName) {
         PsiMethod constructor = constructorCall.resolve();
-        if (constructor != null) {
-          PsiClass constructorClass = constructor.getContainingClass();
-          if (constructorClass != null) {
-            return colorClassName.equals(constructorClass.getQualifiedName());
-          }
-        }
-        return false;
+        if (constructor == null) return false;
+        PsiClass constructorClass = constructor.getContainingClass();
+        if (constructorClass == null) return false;
+        return colorClassName.equals(constructorClass.getQualifiedName());
       }
 
       private static boolean isJBColorClassAccessible(@NotNull UElement uElement) {
