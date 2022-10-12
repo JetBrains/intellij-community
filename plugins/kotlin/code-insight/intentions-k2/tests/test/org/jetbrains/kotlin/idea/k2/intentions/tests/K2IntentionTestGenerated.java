@@ -328,6 +328,84 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addOpenModifier")
+    public static class AddOpenModifier extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/abstractClass.kt");
+        }
+
+        @TestMetadata("abstractFunction.kt")
+        public void testAbstractFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/abstractFunction.kt");
+        }
+
+        @TestMetadata("alreadyOpen.kt")
+        public void testAlreadyOpen() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/alreadyOpen.kt");
+        }
+
+        @TestMetadata("destructuringDeclaration.kt")
+        public void testDestructuringDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/destructuringDeclaration.kt");
+        }
+
+        @TestMetadata("enumClass.kt")
+        public void testEnumClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/enumClass.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/function.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/interface.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/localFunction.kt");
+        }
+
+        @TestMetadata("localProperty.kt")
+        public void testLocalProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/localProperty.kt");
+        }
+
+        @TestMetadata("notOpen.kt")
+        public void testNotOpen() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/notOpen.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/parameter.kt");
+        }
+
+        @TestMetadata("private.kt")
+        public void testPrivate() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/private.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/property.kt");
+        }
+
+        @TestMetadata("sealedClass.kt")
+        public void testSealedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addOpenModifier/sealedClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addPropertyAccessors")
     public abstract static class AddPropertyAccessors extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
