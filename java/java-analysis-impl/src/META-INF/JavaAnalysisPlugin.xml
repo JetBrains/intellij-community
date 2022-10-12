@@ -236,7 +236,7 @@
                       implementationClass="com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection"
                       key="inspection.java.9.redundant.requires.statement.display.name" bundle="messages.JavaAnalysisBundle"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.JavaAnalysisBundle" key="unused.import.display.name"
-                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
