@@ -37,7 +37,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
     val maybeAvailableLocally: Boolean by lazy {
       val files = dir.toFile().list()
-      context.messages.info("$dir.absolutePath: $files")
+      context.messages.info("$dir: ${files.joinToString()}")
       Files.isDirectory(dir) && files != null && files.isNotEmpty()
     }
   }
