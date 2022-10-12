@@ -14,9 +14,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -36,7 +36,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
@@ -56,6 +55,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -590,5 +590,25 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean allowWslSdkForLocalProject() {
     return true;
+  }
+
+  /**
+   * @return if SDK is mock (used by tests only)
+   */
+  @SuppressWarnings("TestOnlyProblems")
+  public static boolean isMock(@NotNull Sdk sdk) {
+    return sdk instanceof MockSdk ||
+           (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
+           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null);
+  }
+
+  /**
+   * Returns mocked path (stored in sdk with {@link #MOCK_SYS_PATH_KEY} in test)
+   */
+  @NotNull
+  public static List<String> getMockPath(@NotNull Sdk sdk) {
+    var workDir = Paths.get(Objects.requireNonNull(sdk.getHomePath())).getParent().toString();
+    var mockPaths = sdk.getUserData(MOCK_SYS_PATH_KEY);
+    return mockPaths != null ? Collections.unmodifiableList(mockPaths) : Collections.singletonList(workDir);
   }
 }

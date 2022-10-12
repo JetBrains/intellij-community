@@ -411,7 +411,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         updateSdkPaths(sdk, evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject()), project);
       }
       catch (ExecutionException e) {
-        throw new InvalidSdkException("Can't evalturate sdk version", e);
+        throw new InvalidSdkException("Can't evaluate sdk version", e);
       }
     }
   }
@@ -636,6 +636,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
+    if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
+      // Mock sdk in tests can't be executed
+      return PythonSdkType.getMockPath(sdk);
+    }
     final List<String> sysPath = new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator());
     LOG.info("Updating sys.path took " + (System.currentTimeMillis() - startTime) + " ms");
     return sysPath;
