@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 public final class DeferredIconImpl<T> extends JBScalableIcon implements DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
@@ -192,6 +194,11 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
         });
         if (!result) {
           myIsScheduled = false;
+          EdtScheduledExecutorService.getInstance().schedule(() -> {
+            if (needScheduleEvaluation()) {
+              scheduleEvaluation(c, x, y);
+            }
+          }, MIN_AUTO_UPDATE_MILLIS, TimeUnit.MILLISECONDS);
           return;
         }
       }
