@@ -65,7 +65,7 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     addParameterAt(index, TargetValue.fixed(parameter))
   }
 
-  fun addParameterAt(index: Int, parameter: TargetValue<String>) {
+  private fun addParameterAt(index: Int, parameter: TargetValue<String>) {
     parameters.add(index, parameter)
   }
 
