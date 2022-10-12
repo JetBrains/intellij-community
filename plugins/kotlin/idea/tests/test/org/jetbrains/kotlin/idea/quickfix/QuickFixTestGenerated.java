@@ -11970,6 +11970,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/removeSingleLambdaParameter/propertyWithImplicitType.kt");
         }
 
+        @TestMetadata("receiver.kt")
+        public void testReceiver() throws Exception {
+            runTest("testData/quickfix/removeSingleLambdaParameter/receiver.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/quickfix/removeSingleLambdaParameter/simple.kt");
