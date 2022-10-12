@@ -74,10 +74,7 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
   }
 
   fun addParametersAt(index: Int, parameters: List<TargetValue<String>>) {
-    var i = 0
-    for (parameter in parameters) {
-      addParameterAt(index + i++, parameter)
-    }
+    this.parameters.addAll(index, parameters)
   }
 
   fun addEnvironmentVariable(name: String, value: TargetValue<String>?) {
