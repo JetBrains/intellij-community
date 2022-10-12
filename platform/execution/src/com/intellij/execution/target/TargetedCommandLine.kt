@@ -1,140 +1,103 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.target;
+package com.intellij.execution.target
 
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
-
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
+import com.intellij.execution.CommandLineUtil
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.collectResults
+import java.nio.charset.Charset
+import java.util.concurrent.TimeoutException
 
 /**
- * Command line that can be executed on any {@link TargetEnvironment}.
- * <p>
+ * Command line that can be executed on any [TargetEnvironment].
+ *
+ *
  * Exe-path, working-directory and other properties are initialized in a lazy way,
  * that allows to create a command line before creating a target where it should be run.
  *
  * @see TargetedCommandLineBuilder
  */
-public final class TargetedCommandLine {
-  @NotNull private final TargetValue<String> myExePath;
-  @NotNull private final TargetValue<String> myWorkingDirectory;
-  @NotNull private final TargetValue<String> myInputFilePath;
-  @NotNull private final Charset myCharset;
-  private final @NotNull List<? extends TargetValue<String>> myParameters;
-  @NotNull private final Map<String, TargetValue<String>> myEnvironment;
-  private final boolean myRedirectErrorStream;
-  private final @Nullable PtyOptions myPtyOptions;
-
-  TargetedCommandLine(@NotNull TargetValue<String> exePath,
-                      @NotNull TargetValue<String> workingDirectory,
-                      @NotNull TargetValue<String> inputFilePath,
-                      @NotNull Charset charset,
-                      @NotNull List<? extends TargetValue<String>> parameters,
-                      @NotNull Map<String, TargetValue<String>> environment,
-                      boolean redirectErrorStream,
-                      @Nullable PtyOptions ptyOptions) {
-    myExePath = exePath;
-    myWorkingDirectory = workingDirectory;
-    myInputFilePath = inputFilePath;
-    myCharset = charset;
-    myParameters = parameters;
-    myEnvironment = environment;
-    myRedirectErrorStream = redirectErrorStream;
-    myPtyOptions = ptyOptions;
-  }
-
+class TargetedCommandLine internal constructor(private val exePath: TargetValue<String>,
+                                               private val _workingDirectory: TargetValue<String>,
+                                               private val _inputFilePath: TargetValue<String>,
+                                               val charset: Charset,
+                                               private val parameters: List<TargetValue<String>>,
+                                               private val environment: Map<String, TargetValue<String>>,
+                                               val isRedirectErrorStream: Boolean,
+                                               val ptyOptions: PtyOptions?) {
   /**
-   * {@link GeneralCommandLine#getPreparedCommandLine()}
+   * [com.intellij.execution.configurations.GeneralCommandLine.getPreparedCommandLine]
    */
-  public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
-    String exePath = resolvePromise(myExePath.getTargetValue(), "exe path");
-    if (exePath == null) {
-      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.exe.path.not.set"));
+  @Throws(ExecutionException::class)
+  fun getCommandPresentation(target: TargetEnvironment): String {
+    val exePath = resolvePromise(exePath.targetValue, "exe path")
+                  ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.exe.path.not.set"))
+    val parameters: MutableList<String?> = ArrayList()
+    for (parameter in this.parameters) {
+      parameters.add(resolvePromise(parameter.targetValue, "parameter"))
     }
-    List<String> parameters = new ArrayList<>();
-    for (TargetValue<String> parameter : myParameters) {
-      parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
-    }
-    return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters,
-                                                         target.getTargetPlatform().getPlatform()), " ");
+    return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters, target.targetPlatform.platform),
+                           " ")
   }
 
-  public List<String> collectCommandsSynchronously() throws ExecutionException {
+  @Throws(ExecutionException::class)
+  fun collectCommandsSynchronously(): List<String> =
     try {
-      return collectCommands().blockingGet(0);
+      collectCommands().blockingGet(0)!!
     }
-    catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e);
+    catch (e: java.util.concurrent.ExecutionException) {
+      throw ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e)
     }
+    catch (e: TimeoutException) {
+      throw ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e)
+    }
+
+  fun collectCommands(): Promise<List<String>> {
+    val promises: MutableList<Promise<String>> = ArrayList(parameters.size + 1)
+    promises.add(exePath.targetValue.then { command: String? ->
+      checkNotNull(command) { "Resolved value for exe path is null" }
+      command
+    })
+    for (parameter in parameters) {
+      promises.add(parameter.targetValue)
+    }
+    return promises.collectResults()
   }
 
-  public @NotNull Promise<@NotNull List<@NotNull String>> collectCommands() {
-    List<Promise<String>> promises = new ArrayList<>(myParameters.size() + 1);
-    promises.add(myExePath.getTargetValue().then(command -> {
-      if (command == null) {
-        throw new IllegalStateException("Resolved value for exe path is null");
+  @get:Throws(ExecutionException::class)
+  val workingDirectory: String?
+    get() = resolvePromise(_workingDirectory.targetValue, "working directory")
+
+  @get:Throws(ExecutionException::class)
+  val inputFilePath: String?
+    get() = resolvePromise(_inputFilePath.targetValue, "input file path")
+
+  @get:Throws(ExecutionException::class)
+  val environmentVariables: Map<String, String>
+    get() {
+      val result: MutableMap<String, String> = LinkedHashMap()
+      for ((key, value) in environment) {
+        result[key] = resolvePromise(value.targetValue, "environment variable $key")
+                      ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolved.env.value.is.null", key))
       }
-      return command;
-    }));
-    for (TargetValue<String> parameter : myParameters) {
-      promises.add(parameter.getTargetValue());
+      return result
     }
-    return Promises.collectResults(promises);
-  }
 
-  @Nullable
-  public String getWorkingDirectory() throws ExecutionException {
-    return resolvePromise(myWorkingDirectory.getTargetValue(), "working directory");
-  }
-
-  @Nullable
-  public String getInputFilePath() throws ExecutionException {
-    return resolvePromise(myInputFilePath.getTargetValue(), "input file path");
-  }
-
-  @NotNull
-  public Map<String, String> getEnvironmentVariables() throws ExecutionException {
-    Map<String, String> result = new LinkedHashMap<>();
-    for (Map.Entry<String, TargetValue<String>> e : myEnvironment.entrySet()) {
-      result.put(e.getKey(), resolvePromise(e.getValue().getTargetValue(), "environment variable " + e.getKey()));
-    }
-    return result;
-  }
-
-  @NotNull
-  public Charset getCharset() {
-    return myCharset;
-  }
-
-  public boolean isRedirectErrorStream() {
-    return myRedirectErrorStream;
-  }
-
-  public @Nullable PtyOptions getPtyOptions() {
-    return myPtyOptions;
-  }
-
-  @Nullable
-  private static String resolvePromise(@NotNull Promise<String> promise, @NotNull String debugName)
-    throws ExecutionException {
-    try {
-      return promise.blockingGet(0);
-    }
-    catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.resolver.failed.for", debugName), e);
-    }
+  companion object {
+    @Throws(ExecutionException::class)
+    private fun resolvePromise(promise: Promise<String>, debugName: String): String? =
+      try {
+        promise.blockingGet(0)
+      }
+      catch (e: java.util.concurrent.ExecutionException) {
+        throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolver.failed.for", debugName), e)
+      }
+      catch (e: TimeoutException) {
+        throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolver.failed.for", debugName), e)
+      }
   }
 }
