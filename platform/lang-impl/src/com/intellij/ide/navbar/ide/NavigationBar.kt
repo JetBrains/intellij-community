@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
 import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
@@ -13,12 +12,11 @@ import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.NavigationBarPopup
+import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.PopupEvent
 import com.intellij.ide.navbar.ui.PopupEvent.*
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
-import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -53,29 +51,6 @@ internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
 
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
-
-internal class UiNavBarItem(
-  val pointer: Pointer<out NavBarItem>,
-  val presentation: NavBarItemPresentation,
-  itemClass: Class<NavBarItem>
-) {
-
-  // Synthetic string field for fast equality heuristics
-  // Used to match element's direct child in the navbar with the same child in its popup
-  private val texts = itemClass.canonicalName + "$" +
-                      presentation.text.replace("$", "$$") + "$" +
-                      presentation.popupText?.replace("$", "$$")
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-    other as UiNavBarItem
-    return texts == other.texts
-  }
-
-  override fun hashCode() = texts.hashCode()
-
-}
 
 internal enum class ItemSelectType { OPEN_POPUP, NAVIGATE }
 internal class ItemClickEvent(val type: ItemSelectType, val index: Int, val item: UiNavBarItem)
