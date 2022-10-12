@@ -18,9 +18,9 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -252,9 +252,10 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     if (isDone()) {
       return myScaledDelegateIcon;
     }
-    try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
-      return evaluate();
+    if (EDT.isCurrentThreadEdt()) {
+      return myScaledDelegateIcon;
     }
+    return evaluate();
   }
 
   public boolean isNeedReadAction() {
