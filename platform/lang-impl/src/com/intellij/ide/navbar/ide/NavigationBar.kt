@@ -53,11 +53,11 @@ internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
 internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
 internal enum class ItemSelectType { OPEN_POPUP, NAVIGATE }
-internal class ItemClickEvent(val type: ItemSelectType, val index: Int, val item: UiNavBarItem)
+internal class ItemClickEvent(val type: ItemSelectType, val index: Int, val item: NavBarVmItem)
 
 private sealed class ExpandResult {
-  class NavigateTo(val target: UiNavBarItem) : ExpandResult()
-  class NextPopup(val expanded: List<UiNavBarItem>, val children: List<UiNavBarItem>) : ExpandResult()
+  class NavigateTo(val target: NavBarVmItem) : ExpandResult()
+  class NextPopup(val expanded: List<NavBarVmItem>, val children: List<NavBarVmItem>) : ExpandResult()
 }
 
 
@@ -74,7 +74,7 @@ internal class NavigationBar(
   private lateinit var myComponent: NewNavBarPanel
 
   private val myActivityEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_OLDEST)
-  private val myItems: MutableStateFlow<List<UiNavBarItem>>
+  private val myItems: MutableStateFlow<List<NavBarVmItem>>
 
   init {
     val initialContext = dataContext ?: runBlocking { getFocusedData() }
@@ -86,7 +86,7 @@ internal class NavigationBar(
       items.ifEmpty {
         readAction {
           val projectItem = ProjectNavBarItem(myProject)
-          val uiProjectItem = UiNavBarItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
+          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
           listOf(uiProjectItem)
         }
       }
@@ -167,7 +167,7 @@ internal class NavigationBar(
     return myComponent
   }
 
-  private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<UiNavBarItem>): PopupEvent =
+  private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<NavBarVmItem>): PopupEvent =
     suspendCancellableCoroutine {
       SwingUtilities.invokeLater {
         myComponent.scrollTo(selectedItemIndex)
@@ -189,8 +189,8 @@ internal class NavigationBar(
     }
   }
 
-  private suspend fun autoExpand(child: UiNavBarItem): ExpandResult? {
-    var expanded = emptyList<UiNavBarItem>()
+  private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
+    var expanded = emptyList<NavBarVmItem>()
     var currentItem = child
     var (children, navigateOnClick) = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
 
@@ -305,7 +305,7 @@ internal class NavigationBar(
 }
 
 
-private suspend fun navigateTo(project: Project, item: UiNavBarItem) {
+private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
   val navigationRequest = withContext(Dispatchers.Default) {
     readAction {
       item.pointer.dereference()?.navigationRequest()
@@ -320,7 +320,7 @@ private suspend fun navigateTo(project: Project, item: UiNavBarItem) {
 }
 
 
-private suspend fun <T> UiNavBarItem.fetch(selector: NavBarItem.() -> T): T? {
+private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
   return withContext(Dispatchers.Default) {
     readAction {
       pointer.dereference()?.selector()
@@ -328,17 +328,17 @@ private suspend fun <T> UiNavBarItem.fetch(selector: NavBarItem.() -> T): T? {
   }
 }
 
-private suspend fun <T1, T2> UiNavBarItem.fetch(
+private suspend fun <T1, T2> NavBarVmItem.fetch(
   selector1: NavBarItem.() -> T1,
   selector2: NavBarItem.() -> T2
 ): Pair<T1, T2>? = fetch { Pair(selector1(), selector2()) }
 
 
-private val childrenSelector: NavBarItem.() -> List<UiNavBarItem> = {
+private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
   iterateAllChildren()
     .sortedWith(siblingsComparator)
     .map {
-      UiNavBarItem(it.createPointer(), it.presentation(), it.javaClass)
+      NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
     }
 }
 
@@ -374,15 +374,15 @@ private suspend fun getFocusedData(): DataContext = suspendCancellableCoroutine 
   }, ModalityState.any())
 }
 
-private fun buildModel(ctx: DataContext): List<UiNavBarItem> {
-  val result = arrayListOf<UiNavBarItem>()
+private fun buildModel(ctx: DataContext): List<NavBarVmItem> {
+  val result = arrayListOf<NavBarVmItem>()
   var element = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
   while (element != null) {
     val p = element.presentation()
-    result.add(UiNavBarItem(element.createPointer(), p, element.javaClass))
+    result.add(NavBarVmItem(element.createPointer(), p, element.javaClass))
     element = element.findParent()
   }
-  return (result as List<UiNavBarItem>).asReversed()
+  return (result as List<NavBarVmItem>).asReversed()
 }
 
 private fun NavBarItem.findParent(): NavBarItem? =

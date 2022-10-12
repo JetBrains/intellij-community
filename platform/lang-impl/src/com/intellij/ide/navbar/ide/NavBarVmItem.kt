@@ -5,7 +5,7 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.model.Pointer
 
-internal class UiNavBarItem(
+internal class NavBarVmItem(
   val pointer: Pointer<out NavBarItem>,
   val presentation: NavBarItemPresentation,
   itemClass: Class<NavBarItem>
@@ -20,7 +20,7 @@ internal class UiNavBarItem(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
-    other as UiNavBarItem
+    other as NavBarVmItem
     return texts == other.texts
   }
 

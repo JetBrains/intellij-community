@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.ide.UiNavBarItem
+import com.intellij.ide.navbar.ide.NavBarVmItem
 import com.intellij.ide.navbar.ui.PopupEvent.*
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -27,10 +27,10 @@ internal sealed class PopupEvent {
   object PopupEventLeft : PopupEvent()
   object PopupEventRight : PopupEvent()
   object PopupEventCancel : PopupEvent()
-  class PopupEventSelect(val item: UiNavBarItem) : PopupEvent()
+  class PopupEventSelect(val item: NavBarVmItem) : PopupEvent()
 }
 
-private fun registerListActions(list: JList<UiNavBarItem>,
+private fun registerListActions(list: JList<NavBarVmItem>,
                                 popup: LightweightHint,
                                 continuation: CancellableContinuation<PopupEvent>) {
 
@@ -65,15 +65,15 @@ private fun registerListActions(list: JList<UiNavBarItem>,
 }
 
 internal class NavigationBarPopup(
-  items: List<UiNavBarItem>,
-  selectedChild: UiNavBarItem?,
+  items: List<NavBarVmItem>,
+  selectedChild: NavBarVmItem?,
   private val continuation: CancellableContinuation<PopupEvent>
 ) : LightweightHint(createPopupContents(items, selectedChild)) {
 
   init {
     setFocusRequestor(component)
     setForceShowAsPopup(true)
-    registerListActions((component as ListWithFilter<UiNavBarItem>).list, this, continuation)
+    registerListActions((component as ListWithFilter<NavBarVmItem>).list, this, continuation)
   }
 
   override fun onPopupCancel() {
@@ -83,8 +83,8 @@ internal class NavigationBarPopup(
   }
 
   companion object {
-    private fun createPopupContents(items: List<UiNavBarItem>, selectedChild: UiNavBarItem?): JComponent {
-      val list = JBList<UiNavBarItem>()
+    private fun createPopupContents(items: List<NavBarVmItem>, selectedChild: NavBarVmItem?): JComponent {
+      val list = JBList<NavBarVmItem>()
       list.model = CollectionListModel(items)
       list.border = JBUI.Borders.empty(5)
       HintUpdateSupply.installSimpleHintUpdateSupply(list)

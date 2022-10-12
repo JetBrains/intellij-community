@@ -4,7 +4,7 @@ package com.intellij.ide.navbar.ui
 import com.intellij.ide.navbar.ide.ItemClickEvent
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
 import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
-import com.intellij.ide.navbar.ide.UiNavBarItem
+import com.intellij.ide.navbar.ide.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
@@ -29,7 +29,7 @@ import javax.swing.SwingUtilities
 
 internal class NewNavBarPanel(
   private val itemClickEvents: MutableSharedFlow<ItemClickEvent>,
-  private val myItems: StateFlow<List<UiNavBarItem>>,
+  private val myItems: StateFlow<List<NavBarVmItem>>,
   cs: CoroutineScope
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
@@ -48,7 +48,7 @@ internal class NewNavBarPanel(
 
   }
 
-  private fun rebuild(items: List<UiNavBarItem>) {
+  private fun rebuild(items: List<NavBarVmItem>) {
     EDT.assertIsEdt()
     removeAll()
     myItemComponents.clear()
