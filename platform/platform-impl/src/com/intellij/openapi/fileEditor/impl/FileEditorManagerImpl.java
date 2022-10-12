@@ -480,7 +480,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (ExperimentalUI.isNewUI()) return;
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
-      each.updateFileBackgroundColor(file);
+      each.updateFileBackgroundColorAsync(file);
     }
   }
 
