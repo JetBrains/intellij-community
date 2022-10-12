@@ -3,12 +3,12 @@ package org.jetbrains.completion.full.line.settings.ui.components
 import com.intellij.lang.Language
 import com.intellij.ui.components.JBPasswordField
 import org.jetbrains.completion.full.line.providers.CloudFullLineCompletionProvider
-import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState
 import javax.swing.JButton
 
 fun pingButton(language: Language, loadingIcon: LoadingComponent, authTokenTextField: JBPasswordField?): JButton {
-  return JButton(MLServerCompletionBundle.message("fl.server.completion.connection")).apply {
+  return JButton(message("fl.server.completion.connection")).apply {
     addActionListener {
       val t1 = System.currentTimeMillis()
       val token = authTokenTextField?.let { String(it.password) } ?: MlServerCompletionAuthState.getInstance().state.authToken

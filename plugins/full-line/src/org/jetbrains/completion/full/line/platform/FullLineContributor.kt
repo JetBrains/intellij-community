@@ -13,7 +13,7 @@ import org.jetbrains.completion.full.line.language.FullLineLanguageSupporter
 import org.jetbrains.completion.full.line.platform.weigher.FullLineWeigher
 import org.jetbrains.completion.full.line.providers.FullLineCompletionProvider
 import org.jetbrains.completion.full.line.services.TabSelectedItemStorage
-import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle
+import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 
 class FullLineContributor : CompletionContributor(), DumbAware {
@@ -55,7 +55,7 @@ class FullLineContributor : CompletionContributor(), DumbAware {
     val head = firstTokenStorage.prefixFromPreviousSession().removeSuffix(prefix)
 
     val fullLineResultSet = result.withPrefixMatcher(PlainPrefixMatcher(head + prefix)).apply {
-      addLookupAdvertisement(MLServerCompletionBundle.message("full.line.lookup.advertisement.tab"))
+      addLookupAdvertisement(message("full.line.lookup.advertisement.tab"))
       restartCompletionWhenNothingMatches()
     }
 
