@@ -8212,6 +8212,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToConcatenatedString/hasEmbeddedLowerPrecedence.kt");
         }
 
+        @TestMetadata("hasEmptyTemplateEntry.kt")
+        public void testHasEmptyTemplateEntry() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/hasEmptyTemplateEntry.kt");
+        }
+
+        @TestMetadata("hasParenthesesInTemplateEntry.kt")
+        public void testHasParenthesesInTemplateEntry() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/hasParenthesesInTemplateEntry.kt");
+        }
+
         @TestMetadata("hasPlusSign.kt")
         public void testHasPlusSign() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/hasPlusSign.kt");
@@ -8307,6 +8317,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToConcatenatedString/singleVar.kt");
         }
 
+        @TestMetadata("startsWithAnnotatedExpression.kt")
+        public void testStartsWithAnnotatedExpression() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/startsWithAnnotatedExpression.kt");
+        }
+
         @TestMetadata("startsWithEmbeddedConcatenation.kt")
         public void testStartsWithEmbeddedConcatenation() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/startsWithEmbeddedConcatenation.kt");
@@ -8315,6 +8330,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("startsWithInt.kt")
         public void testStartsWithInt() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/startsWithInt.kt");
+        }
+
+        @TestMetadata("startsWithPostfixExpression.kt")
+        public void testStartsWithPostfixExpression() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/startsWithPostfixExpression.kt");
         }
 
         @TestMetadata("startsWithStringExpression.kt")
