@@ -230,7 +230,9 @@ private visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
 private visibilityAtEnd ::= STAR | DOLLAR
 
 attribute ::= (attrTypeWithGeneric | attrType) attrName [visibilityAtEnd] | attrName [COLON (attrTypeWithGeneric | attrType)]
-method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
+private attributes ::= attribute [COMMA attributes]
+arguments ::= attributes
+method ::= attrName OPEN_ROUND [arguments] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
 attrType ::= ATTRIBUTE_WORD
 attrTypeWithGeneric ::= attrType TILDA GENERIC_TYPE TILDA
 attrName ::= ATTRIBUTE_WORD
