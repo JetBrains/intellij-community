@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
@@ -92,6 +93,9 @@ interface SingleContentSupplier {
   companion object {
     @JvmField
     val KEY = DataKey.create<SingleContentSupplier>("SingleContentSupplier")
+
+    @JvmField
+    val DRAGGED_OUT_KEY: Key<Boolean> = Key.create("DraggedOutKey")
 
     @JvmStatic
     fun removeSubContentsOfContent(content: Content, rightNow: Boolean) {

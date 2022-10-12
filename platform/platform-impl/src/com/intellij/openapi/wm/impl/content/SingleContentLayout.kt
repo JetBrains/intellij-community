@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
@@ -464,11 +465,13 @@ internal class SingleContentLayout(
     }
 
     override fun propertyChange(evt: PropertyChangeEvent) {
+      val source = evt.source as? TabInfo ?: error("Bad event source")
       if (TabInfo.HIDDEN == evt.propertyName) {
+        val isHidden = evt.newValue as Boolean
+        ClientProperty.put(source.component, SingleContentSupplier.DRAGGED_OUT_KEY, if (isHidden) true else null)
         checkAndUpdate()
       }
       else {
-        val source = evt.source as? TabInfo ?: error("Bad event source")
         val label = labels.find { it.content.info == source }
         if (label != null) copyValues(source, label)
       }
