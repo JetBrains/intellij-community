@@ -24,10 +24,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDirectory
@@ -47,11 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 
-
-internal val navbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
-
-
-internal val LOG: Logger = Logger.getInstance("#com.intellij.ide.navbar.ide")
 
 internal enum class ItemSelectType { OPEN_POPUP, NAVIGATE }
 internal class ItemClickEvent(val type: ItemSelectType, val index: Int, val item: NavBarVmItem)

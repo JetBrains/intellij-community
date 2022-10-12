@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.ide.navbar.ide.NavBarService;
-import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -253,7 +253,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private JComponent getNavBarPanel() {
     if (myNavBarPanel != null) return myNavBarPanel;
 
-    if (NavigationBarKt.getNavbarV2Enabled()) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
       myNavigationBar = myProject.getService(NavBarService.class).getStaticNavbarPanel();
     }
     else {
@@ -298,7 +298,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   @Override
   public void uiSettingsChanged(@NotNull UISettings settings) {
 
-    if (NavigationBarKt.getNavbarV2Enabled()) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
       myProject.getService(NavBarService.class).uiSettingsChanged(settings);
     }
 
