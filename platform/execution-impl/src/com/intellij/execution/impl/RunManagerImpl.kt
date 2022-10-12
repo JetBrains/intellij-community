@@ -792,16 +792,16 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun noStateLoaded() {
-    val first = isFirstLoadState.getAndSet(false)
-    if (first) {
+    val isFirstLoadState = isFirstLoadState.getAndSet(false)
+    if (isFirstLoadState) {
       onFirstLoadingStarted()
     }
 
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded(this, first)
+    eventPublisher.stateLoaded(this, isFirstLoadState)
 
-    if (first) {
+    if (isFirstLoadState) {
       onFirstLoadingFinished()
     }
   }
