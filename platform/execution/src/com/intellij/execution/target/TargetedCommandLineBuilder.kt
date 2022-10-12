@@ -1,164 +1,122 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.target;
+package com.intellij.execution.target
 
-import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.util.containers.ContainerUtil
+import java.io.File
+import java.nio.charset.Charset
 
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.*;
+class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDataHolderBase() {
+  var exePath: TargetValue<String> = TargetValue.empty()
+  private var workingDirectory = TargetValue.empty<String>()
+  private var inputFilePath = TargetValue.empty<String>()
+  private var charset = CharsetToolkit.getDefaultSystemCharset()
+  private val parameters: MutableList<TargetValue<String>> = ArrayList()
+  private val environment: MutableMap<String, TargetValue<String>> = HashMap()
+  private val _filesToDeleteOnTermination: MutableSet<File> = HashSet()
+  private var redirectErrorStream = false
+  var ptyOptions: PtyOptions? = null
 
-public class TargetedCommandLineBuilder extends UserDataHolderBase {
-  @NotNull private TargetValue<String> myExePath = TargetValue.empty();
-  @NotNull private TargetValue<String> myWorkingDirectory = TargetValue.empty();
-  @NotNull private TargetValue<String> myInputFilePath = TargetValue.empty();
-  @NotNull private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-
-  @NotNull private final List<TargetValue<String>> myParameters = new ArrayList<>();
-  @NotNull private final Map<String, TargetValue<String>> myEnvironment = new HashMap<>();
-  @NotNull private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
-
-  @NotNull private final TargetEnvironmentRequest myRequest;
-  private boolean myRedirectErrorStream = false;
-
-  private @Nullable PtyOptions myPtyOptions = null;
-
-  public TargetedCommandLineBuilder(@NotNull TargetEnvironmentRequest request) {
-    myRequest = request;
+  fun build(): TargetedCommandLine {
+    return TargetedCommandLine(exePath, workingDirectory, inputFilePath, charset, parameters.toList(), environment.toMap(),
+                               redirectErrorStream, ptyOptions)
   }
 
-  @NotNull
-  public TargetEnvironmentRequest getRequest() {
-    return myRequest;
+  fun setCharset(charset: Charset) {
+    this.charset = charset
   }
 
-  @NotNull
-  public TargetedCommandLine build() {
-    return new TargetedCommandLine(myExePath,
-                                   myWorkingDirectory,
-                                   myInputFilePath,
-                                   myCharset,
-                                   new ArrayList<>(myParameters),
-                                   new HashMap<>(myEnvironment),
-                                   myRedirectErrorStream,
-                                   myPtyOptions);
+  fun setExePath(exePath: String) {
+    this.exePath = TargetValue.fixed(exePath)
   }
 
-  public void setCharset(@NotNull Charset charset) {
-    myCharset = charset;
+  fun setWorkingDirectory(workingDirectory: TargetValue<String>) {
+    this.workingDirectory = workingDirectory
   }
 
-  public void setExePath(@NotNull TargetValue<String> exePath) {
-    myExePath = exePath;
+  fun setWorkingDirectory(workingDirectory: String) {
+    this.workingDirectory = TargetValue.fixed(workingDirectory)
   }
 
-  public void setExePath(@NotNull String exePath) {
-    myExePath = TargetValue.fixed(exePath);
+  fun addParameter(parameter: TargetValue<String>) {
+    parameters.add(parameter)
   }
 
-  public @NotNull TargetValue<String> getExePath() {
-    return myExePath;
+  fun addParameter(parameter: String) {
+    parameters.add(TargetValue.fixed(parameter))
   }
 
-  public void setWorkingDirectory(@NotNull TargetValue<String> workingDirectory) {
-    myWorkingDirectory = workingDirectory;
-  }
-
-  public void setWorkingDirectory(@NotNull String workingDirectory) {
-    myWorkingDirectory = TargetValue.fixed(workingDirectory);
-  }
-
-  public void addParameter(@NotNull TargetValue<String> parameter) {
-    myParameters.add(parameter);
-  }
-
-  public void addParameter(@NotNull String parameter) {
-    myParameters.add(TargetValue.fixed(parameter));
-  }
-
-  public void addParameters(@NotNull List<String> parametersList) {
-    for (String parameter : parametersList) {
-      addParameter(parameter);
+  fun addParameters(parametersList: List<String>) {
+    for (parameter in parametersList) {
+      addParameter(parameter)
     }
   }
 
-  public void addParameters(String @NotNull ... parametersList) {
-    for (String parameter : parametersList) {
-      addParameter(parameter);
+  fun addParameters(vararg parametersList: String) {
+    for (parameter in parametersList) {
+      addParameter(parameter)
     }
   }
 
-  public void addParameterAt(int index, @NotNull String parameter) {
-    addParameterAt(index, TargetValue.fixed(parameter));
+  fun addParameterAt(index: Int, parameter: String) {
+    addParameterAt(index, TargetValue.fixed(parameter))
   }
 
-  public void addParameterAt(int index, @NotNull TargetValue<String> parameter) {
-    myParameters.add(index, parameter);
+  fun addParameterAt(index: Int, parameter: TargetValue<String>) {
+    parameters.add(index, parameter)
   }
 
-  public void addFixedParametersAt(int index, @NotNull List<String> parameters) {
-    addParametersAt(index, ContainerUtil.map(parameters, p -> TargetValue.fixed(p)));
+  fun addFixedParametersAt(index: Int, parameters: List<String>) {
+    addParametersAt(index, ContainerUtil.map(parameters) { p: String -> TargetValue.fixed(p) })
   }
 
-  public void addParametersAt(int index, @NotNull List<TargetValue<String>> parameters) {
-    int i = 0;
-    for (TargetValue<String> parameter : parameters) {
-      addParameterAt(index + i++, parameter);
+  fun addParametersAt(index: Int, parameters: List<TargetValue<String>>) {
+    var i = 0
+    for (parameter in parameters) {
+      addParameterAt(index + i++, parameter)
     }
   }
 
-  public void addEnvironmentVariable(@NotNull String name, @Nullable TargetValue<String> value) {
+  fun addEnvironmentVariable(name: String, value: TargetValue<String>?) {
     if (value != null) {
-      myEnvironment.put(name, value);
+      environment[name] = value
     }
     else {
-      myEnvironment.remove(name);
+      environment.remove(name)
     }
   }
 
-  public void addEnvironmentVariable(@NotNull String name, @Nullable String value) {
-    addEnvironmentVariable(name, value != null ? TargetValue.fixed(value) : null);
+  fun addEnvironmentVariable(name: String, value: String?) {
+    addEnvironmentVariable(name, if (value != null) TargetValue.fixed(value) else null)
   }
 
-  public void removeEnvironmentVariable(@NotNull String name) {
-    myEnvironment.remove(name);
+  fun removeEnvironmentVariable(name: String) {
+    environment.remove(name)
   }
 
-  public @Nullable TargetValue<String> getEnvironmentVariable(@NotNull String name) {
-    return myEnvironment.get(name);
+  fun getEnvironmentVariable(name: String): TargetValue<String>? {
+    return environment[name]
   }
 
-  public void addFileToDeleteOnTermination(@NotNull File file) {
-    myFilesToDeleteOnTermination.add(file);
+  fun addFileToDeleteOnTermination(file: File) {
+    _filesToDeleteOnTermination.add(file)
   }
 
-  public void setInputFile(@NotNull TargetValue<String> inputFilePath) {
-    myInputFilePath = inputFilePath;
+  fun setInputFile(inputFilePath: TargetValue<String>) {
+    this.inputFilePath = inputFilePath
   }
 
-  @NotNull
-  public Set<File> getFilesToDeleteOnTermination() {
-    return myFilesToDeleteOnTermination;
+  val filesToDeleteOnTermination: Set<File>
+    get() = _filesToDeleteOnTermination
+
+  fun setRedirectErrorStreamFromRegistry() {
+    setRedirectErrorStream(Registry.`is`("run.processes.with.redirectedErrorStream", false))
   }
 
-  public void setRedirectErrorStreamFromRegistry() {
-    setRedirectErrorStream(Registry.is("run.processes.with.redirectedErrorStream", false));
-  }
-
-  public void setRedirectErrorStream(boolean redirectErrorStream) {
-    myRedirectErrorStream = redirectErrorStream;
-  }
-
-  public @Nullable PtyOptions getPtyOptions() {
-    return myPtyOptions;
-  }
-
-  public void setPtyOptions(@Nullable PtyOptions ptyOptions) {
-    myPtyOptions = ptyOptions;
+  fun setRedirectErrorStream(redirectErrorStream: Boolean) {
+    this.redirectErrorStream = redirectErrorStream
   }
 }

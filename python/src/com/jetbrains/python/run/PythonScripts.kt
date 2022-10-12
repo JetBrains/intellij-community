@@ -53,7 +53,7 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
                                 ?: throw IllegalArgumentException("Python script path must be set")
-    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", moduleName)) }
+    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", it)) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {
