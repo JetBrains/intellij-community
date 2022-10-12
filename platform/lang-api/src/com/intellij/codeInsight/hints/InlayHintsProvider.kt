@@ -46,6 +46,7 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
  * To test it you may use InlayHintsProviderTestCase.
  * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  */
+@JvmDefaultWithCompatibility
 interface InlayHintsProvider<T : Any> {
   /**
    * If this method is called, provider is enabled for this file

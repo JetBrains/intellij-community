@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nls
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
 
+@JvmDefaultWithCompatibility
 interface BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -35,6 +35,7 @@ interface BaseBuilder {
   }
 }
 
+@JvmDefaultWithCompatibility
 interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")

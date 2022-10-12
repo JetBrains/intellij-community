@@ -25,6 +25,7 @@ enum class LabelPosition {
 }
 
 @ApiStatus.NonExtendable
+@JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
