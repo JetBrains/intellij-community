@@ -46,7 +46,7 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   override fun recordUpdate(action: AnAction, event: AnActionEvent, durationMs: Long) {
     if (durationMs <= 5) return
-    val dataContext = getCachedDataContext(event)
+    val dataContext = getCachedDataContext(event.dataContext)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     ActionsEventLogGroup.ACTION_UPDATED.log(project) {
       val info = getPluginInfo(action.javaClass)
@@ -62,7 +62,8 @@ class ActionsCollectorImpl : ActionsCollector() {
         add(EventFields.PluginInfo.with(info))
         add(EventFields.Language.with(language))
         add(EventFields.DurationMs.with(durationMs))
-      } else {
+      }
+      else {
         skip()
       }
     }
@@ -113,6 +114,21 @@ class ActionsCollectorImpl : ActionsCollector() {
                             event: AnActionEvent?,
                             customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
       record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customDataProvider)
+    }
+
+    @JvmStatic
+    fun recordActionGroupExpanded(action: ActionGroup, context: DataContext, place: String, durationMs: Long) {
+      val dataContext = getCachedDataContext(context)
+      val project = CommonDataKeys.PROJECT.getData(dataContext)
+      ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
+        val info = getPluginInfo(action.javaClass)
+        val language = getInjectedOrFileLanguage(project, dataContext) ?: Language.ANY
+        addActionClass(this, action, info)
+        add(EventFields.PluginInfo.with(info))
+        add(EventFields.Language.with(language))
+        add(EventFields.ActionPlace.with(place))
+        add(EventFields.DurationMs.with(durationMs))
+      }
     }
 
     @JvmStatic
@@ -219,7 +235,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     @JvmStatic
     fun onBeforeActionInvoked(action: AnAction, event: AnActionEvent) {
       val project = event.project
-      val context = getCachedDataContext(event)
+      val context = getCachedDataContext(event.dataContext)
       val stats = Stats(project, getFileLanguage(context), getInjectedOrFileLanguage(project, context))
       ourStats[event] = stats
     }
@@ -271,7 +287,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                          contextBefore: Language?,
                                          injectedContextBefore: Language?,
                                          data: MutableList<EventPair<*>>) {
-      val dataContext = getCachedDataContext(event)
+      val dataContext = getCachedDataContext(event.dataContext)
       val language = getFileLanguage(dataContext)
       data.add(EventFields.CurrentFile.with(language ?: contextBefore))
       val injectedLanguage = getInjectedOrFileLanguage(project, dataContext)
@@ -283,8 +299,8 @@ class ActionsCollectorImpl : ActionsCollector() {
      * To avoid it, we report only those fields which were already computed
      * in [AnAction.update] or [AnAction.actionPerformed]
      */
-    private fun getCachedDataContext(event: AnActionEvent): DataContext {
-      return DataContext { dataId: String? -> Utils.getRawDataIfCached(event.dataContext, dataId!!) }
+    private fun getCachedDataContext(dataContext: DataContext): DataContext {
+      return DataContext { dataId: String? -> Utils.getRawDataIfCached(dataContext, dataId!!) }
     }
 
     /**

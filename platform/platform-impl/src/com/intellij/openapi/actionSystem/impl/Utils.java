@@ -8,6 +8,7 @@ import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -209,6 +210,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to expandActionGroup@" + place);
       }
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed);
     }
   }
 
@@ -356,6 +358,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to fillMenu@" + place);
       }
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed);
     }
   }
 
@@ -508,7 +511,7 @@ public final class Utils {
       sb.append(c.getSimpleName()).append("/");
     }
     sb.append(c.getName()).append(")");
-    sb.insert(0, c.getSimpleName());
+    sb.insert(0, StringUtil.isNotEmpty(c.getSimpleName()) ? c.getSimpleName() : StringUtil.getShortName(c.getName()));
     return sb.toString();
   }
 
@@ -767,7 +770,7 @@ public final class Utils {
     }
     long elapsed = TimeoutUtil.getDurationMillis(start);
     if (elapsed > 1000) {
-      LOG.warn(elapsed + " ms to update actions for " + place);
+      LOG.warn(elapsed + " ms to runUpdateSessionForInputEvent@" + place);
     }
     return result;
   }
