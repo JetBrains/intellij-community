@@ -1,18 +1,17 @@
-Index: platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java
+Index: platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java
---- a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(revision f1d850713e9eac7b8cc7a27e215da206c9d8a393)
-+++ b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(date 1649327066295)
-@@ -680,7 +680,8 @@
+diff --git a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.kt b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.kt
+--- a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.kt	(revision 1d27236ae89e91e502e388d0c11c912f51e152a3)
++++ b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.kt	(date 1665567129435)
+@@ -495,7 +495,7 @@
  
-   public static String getUserHomeProjectDir() {
-     String productName;
--    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
-+    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() ||
-+        "MPS".equals(ApplicationNamesInfo.getInstance().getProductName())) {
-       productName = ApplicationNamesInfo.getInstance().getProductName();
+   @JvmStatic
+   fun getUserHomeProjectDir(): String {
+-    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
++    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || "MPS" == ApplicationNamesInfo.getInstance().productName) {
+       ApplicationNamesInfo.getInstance().productName
      }
      else {

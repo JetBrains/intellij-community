@@ -1,19 +1,19 @@
-Index: platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
+Index: platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
-diff --git a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
---- a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(revision 7a36c2274a1ca4f8a2fd516ab254510dc174324a)
-+++ b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(date 1654073871836)
-@@ -53,7 +53,7 @@
+diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
+--- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(revision 1d27236ae89e91e502e388d0c11c912f51e152a3)
++++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(date 1665567126676)
+@@ -51,9 +51,8 @@
+ 
+   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                           context.proprietaryBuildTools.artifactsServer != null
-   val isBundled = !pluginsToPublish.contains(plugin)
+-  val isBundled = !pluginsToPublish.contains(plugin)
    val compatibleBuildRange = when {
 -    isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
 +    plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
      context.applicationInfo.isEAP -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
      else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
    }
-
- 
