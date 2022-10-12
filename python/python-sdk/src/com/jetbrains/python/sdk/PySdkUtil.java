@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +58,14 @@ public final class PySdkUtil {
 
   private PySdkUtil() {
     // explicitly none
+  }
+
+  public static void configureCharset(@NotNull GeneralCommandLine commandLine) {
+    var charset = commandLine.getCharset();
+    if ( charset != Charsets.UTF_8) {
+      LOG.warn("Charset " + charset  + " is not UTF-8, which is likely lead to troubles");
+    }
+    PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), charset);
   }
 
   /**
@@ -130,6 +140,7 @@ public final class PySdkUtil {
         cmdLinePatcher.patchCommandLine(cmd);
       }
 
+      PythonEnvUtil.setupEncodingEnvs(commandLine.getEnvironment(), commandLine.getCharset());
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -270,6 +281,40 @@ public final class PySdkUtil {
     if (module != null) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && (allowRemote || !PythonSdkUtil.isRemote(sdk))) {
+        return sdk;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds sdk for provided directory. Takes into account both project and module SDK
+   */
+  public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, String workingDirectory) {
+    VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+    if (workingDirectoryVirtualFile != null) {
+      Sdk sdk = getLocalSdkForFile(project, workingDirectoryVirtualFile);
+      if (sdk != null) {
+        return sdk;
+      }
+    }
+
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(m);
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
+        return sdk;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Sdk getLocalSdkForFile(@NotNull Project project, @NotNull VirtualFile workingDirectoryVirtualFile) {
+    Module module = ModuleUtilCore.findModuleForFile(workingDirectoryVirtualFile, project);
+    if (module != null) {
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      if (sdk != null && !PythonSdkUtil.isRemote(sdk)) {
         return sdk;
       }
     }

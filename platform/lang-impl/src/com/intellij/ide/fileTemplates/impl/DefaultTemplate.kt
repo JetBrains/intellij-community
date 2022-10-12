@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
 import com.intellij.util.ResourceUtil
@@ -49,7 +50,7 @@ class DefaultTemplate constructor(val name: String,
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
     if (text == null) {
-      text = textSupplier.get()
+      text = StringUtil.convertLineSeparators(textSupplier.get())
       this.text = java.lang.ref.SoftReference(text)
     }
     return text

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.pom.java.LanguageLevel
@@ -66,7 +66,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
   @Test
   fun `test language level approximation`() {
-    if (isNotSupportedJava14) return
+    if (isGradleOlderThan("7.0")) return
 
     val nonPreviewLevel = LanguageLevel.HIGHEST
     val preview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1]

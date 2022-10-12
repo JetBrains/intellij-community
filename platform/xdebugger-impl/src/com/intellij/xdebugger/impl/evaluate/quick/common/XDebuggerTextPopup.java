@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
@@ -20,6 +21,7 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -27,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +67,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
   @ApiStatus.Experimental
   public XDebuggerTextPopup(@Nullable XFullValueEvaluator evaluator,
+                            @NotNull XValue value,
                             @NotNull DebuggerTreeCreator<D> creator,
                             @NotNull D initialItem,
                             @NotNull Editor editor,
@@ -71,7 +75,6 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
                             @NotNull Project project,
                             @Nullable Runnable hideRunnable) {
     super();
-    myEvaluator = evaluator;
     myTreeCreator = creator;
     myInitialItem = initialItem;
     myEditor = editor;
@@ -79,6 +82,26 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
     myProject = project;
     myHideRunnable = hideRunnable;
     myTextViewer = DebuggerUIUtil.createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), myProject);
+
+    if (evaluator == null && value instanceof XValueTextProvider) {
+      evaluator = new XFullValueEvaluator() {
+        @Override
+        public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+          value.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
+            @Override
+            public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresenter, boolean hasChildren) {
+              callback.evaluated(StringUtil.notNullize(((XValueTextProvider)value).getValueText()));
+            }
+
+            @Override
+            public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+              // do nothing - should already be set
+            }
+          }, XValuePlace.TOOLTIP);
+        }
+      };
+    }
+    myEvaluator = evaluator;
   }
 
   private JBPopup createPopup(XFullValueEvaluator evaluator, Runnable afterEvaluation, Runnable hideTextPopupRunnable) {

@@ -34,10 +34,10 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
-  suspend fun executeDefault(checker: suspend () -> CommitChecksResult) {
+  suspend fun executeDefault(executor: CommitExecutor?, checker: suspend () -> CommitChecksResult) {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
-      result = checkCommit(checker)
+      result = checkCommit(executor, checker)
       processExecuteDefaultChecksResult(result)
     }
     finally {
@@ -45,7 +45,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  private suspend fun checkCommit(checker: suspend () -> CommitChecksResult): CommitChecksResult {
+  private suspend fun checkCommit(executor: CommitExecutor?, checker: suspend () -> CommitChecksResult): CommitChecksResult {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
     fireBeforeCommitChecksStarted()
@@ -56,7 +56,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       result = CommitChecksResult.Cancelled
     }
     finally {
-      fireBeforeCommitChecksEnded(true, result)
+      fireBeforeCommitChecksEnded(true, executor, result)
     }
 
     return result

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -142,8 +143,13 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
                 it is LibraryInfo && isStdlib(it)
             } as LibraryInfo?
 
-            if (stdLib == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
-                throw ProcessCanceledException()
+            if (stdLib == null) {
+                if (runReadAction { project.isDisposed }) {
+                    throw ProcessCanceledException()
+                }
+                if (runReadAction { DumbService.isDumb(project) }) {
+                    throw IndexNotReadyException.create()
+                }
             }
 
             val stdlibDependency = StdlibDependency(stdLib)

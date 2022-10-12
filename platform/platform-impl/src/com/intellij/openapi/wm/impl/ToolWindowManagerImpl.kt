@@ -663,7 +663,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   override val activeToolWindowId: String?
     get() {
-      EDT.assertIsEdt()
       val frame = frameState?.frame ?: return null
       if (frame.isActive) {
         return getToolWindowIdForComponent(frame.mostRecentFocusOwner)

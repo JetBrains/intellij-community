@@ -246,7 +246,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun isActive(): Boolean {
-    toolWindowManager.assertIsEdt()
     return windowInfo.isVisible && decorator != null && toolWindowManager.activeToolWindowId == id
   }
 

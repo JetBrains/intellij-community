@@ -12,6 +12,7 @@ import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import java.nio.file.Path
 
 /**
  * Composes lines for execution in Python REPL to run Python script specified in the given [config].
@@ -51,7 +52,7 @@ fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnv
     config,
     ::TargetEnvironmentFunctionScriptBuilder,
     t = ::constant,
-    toTargetPath = ::getTargetEnvironmentValueForLocalPath,
+    toTargetPath = { targetPath(Path.of(it)) },
     toStringLiteral = TargetEnvironmentFunction<String>::toStringLiteral
   )
 

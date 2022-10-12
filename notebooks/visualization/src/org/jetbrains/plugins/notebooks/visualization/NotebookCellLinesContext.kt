@@ -23,7 +23,7 @@ private class NotebookCellLinesIntervalDataRule : GetDataRule {
   override fun getData(dataProvider: DataProvider): NotebookCellLines.Interval? =
     EDITORS_WITH_OFFSETS_DATA_KEY.getData(dataProvider)
       ?.firstOrNull { (editor, _) ->
-        editor.notebookCellLinesProvider != null
+        NotebookCellLinesProvider.get(editor.document) != null
       }
       ?.let { (editor, offset) ->
         NotebookCellLines.get(editor).intervalsIterator(editor.document.getLineNumber(offset)).takeIf { it.hasNext() }?.next()

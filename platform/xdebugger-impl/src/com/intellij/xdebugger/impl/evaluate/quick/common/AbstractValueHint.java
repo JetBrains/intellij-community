@@ -34,7 +34,8 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.xdebugger.impl.ui.*;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallbackBase;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.intellij.lang.annotations.JdkConstants;
@@ -394,7 +395,7 @@ public abstract class AbstractValueHint {
       }
     };
 
-    var popup = new XDebuggerTextPopup<>(evaluator, creator, descriptor, editor, point, project, hideRunnable);
+    var popup = new XDebuggerTextPopup<>(evaluator, descriptor.first, creator, descriptor, editor, point, project, hideRunnable);
     popup.show(initialText);
   }
 

@@ -356,8 +356,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   @Override
   protected @NotNull Function<TargetEnvironment, String> getTargetPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
                                                                        @NotNull Path scriptPath) {
-    return PySdkTargetPaths.getTargetPathForPythonConsoleExecution(targetEnvironmentRequest, myConfig.getProject(), myConfig.getSdk(),
-                                                                   createRemotePathMapper(), scriptPath);
+    return PySdkTargetPaths.getTargetPathForPythonConsoleExecution(myConfig.getProject(), myConfig.getSdk(), createRemotePathMapper(),
+                                                                   scriptPath);
   }
 
   private static @NotNull List<String> getExpandedScriptParameters(@NotNull PythonRunConfiguration config) {

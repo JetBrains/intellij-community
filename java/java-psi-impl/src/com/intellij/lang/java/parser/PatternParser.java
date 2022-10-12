@@ -146,8 +146,11 @@ public class PatternParser {
       done(pattern, JavaElementType.DECONSTRUCTION_PATTERN);
     }
     else {
-      assert hasIdentifier;// guarded by isPattern
-      done(patternVariable, JavaElementType.PATTERN_VARIABLE);
+      if (hasIdentifier) {
+        done(patternVariable, JavaElementType.PATTERN_VARIABLE);
+      } else {
+        patternVariable.drop();
+      }
       done(pattern, JavaElementType.TYPE_TEST_PATTERN);
     }
     return pattern;

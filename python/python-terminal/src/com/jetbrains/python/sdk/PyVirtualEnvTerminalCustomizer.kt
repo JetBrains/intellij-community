@@ -37,9 +37,10 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   }
 
   override fun customizeCommandAndEnvironment(project: Project,
+                                              workingDirectory: String?,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
-    val sdk: Sdk? = findSdk(project)
+    val sdk: Sdk? = PySdkUtil.findSdkForDirectory(project, workingDirectory)
 
     if (sdk != null &&
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
