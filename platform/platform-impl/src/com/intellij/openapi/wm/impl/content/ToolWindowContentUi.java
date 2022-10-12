@@ -129,12 +129,12 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         Content content = event.getContent();
         ContentManager manager = content.getManager();
         // merge subContents to main content if they are together inside one content manager
-        if (manager != null && !(content instanceof SingleContentLayout.FakeContent)) {
+        if (manager != null && !(content instanceof SingleContentLayout.SubContent)) {
           List<Content> contents = manager instanceof ContentManagerImpl managerImpl
                                    ? managerImpl.getContentsRecursively()
                                    : Arrays.asList(manager.getContents());
-          List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.FakeContent)).toList();
-          List<Content> subContents = contents.stream().filter(c -> c instanceof SingleContentLayout.FakeContent).toList();
+          List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.SubContent)).toList();
+          List<Content> subContents = contents.stream().filter(c -> c instanceof SingleContentLayout.SubContent).toList();
           if (mainContents.size() == 1) {
             Content mainContent = mainContents.get(0);
             JComponent component = mainContent.getComponent();
@@ -144,7 +144,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
               for (Content subContent : subContents) {
                 ContentManager m = subContent.getManager();
                 if (m != null) m.removeContent(subContent, false);
-                ((SingleContentLayout.FakeContent)subContent).getInfo().setHidden(false);
+                ((SingleContentLayout.SubContent)subContent).getInfo().setHidden(false);
               }
             }
           }

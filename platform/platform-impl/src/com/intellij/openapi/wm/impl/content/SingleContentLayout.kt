@@ -81,7 +81,7 @@ internal class SingleContentLayout(
   fun getSupplier() = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
-    return ui.contentManager.contents.singleOrNull()?.takeIf { it !is FakeContent }
+    return ui.contentManager.contents.singleOrNull()?.takeIf { it !is SubContent }
   }
 
   private fun tryUpdateContentView() {
@@ -387,7 +387,7 @@ internal class SingleContentLayout(
       val visibleTabs = jbTabs.tabs.filter { !it.isHidden }
       if (visibleTabs.size > 1 || twcui.dropOverIndex != -1) {
         labels.addAll(visibleTabs.map { info ->
-          val content = FakeContent(supplier, info)
+          val content = SubContent(supplier, info)
           supplier.addSubContent(info, content)
           MyContentTabLabel(content, this@SingleContentLayout).apply {
             addMouseListener(closeHandler)
@@ -424,7 +424,7 @@ internal class SingleContentLayout(
 
     fun showPopup(component: Component, x: Int, y: Int) {
       // ViewContext.CONTENT_KEY
-      val info = ((component as? ContentTabLabel)?.content as? FakeContent)?.info
+      val info = ((component as? ContentTabLabel)?.content as? SubContent)?.info
       if (info == null) {
         logger<SingleContentLayout>().warn("Cannot resolve label popup component. Event will be ignored")
         return
@@ -477,7 +477,7 @@ internal class SingleContentLayout(
       }
     }
 
-    private inner class MyContentTabLabel(content: FakeContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
+    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
 
       init {
         addMouseListener(popupHandler)
@@ -500,8 +500,8 @@ internal class SingleContentLayout(
         return DataManagerImpl.getDataProviderEx(retrieveInfo(this).component)?.getData(dataId)
       }
 
-      override fun getContent(): FakeContent {
-        return super.getContent() as FakeContent
+      override fun getContent(): SubContent {
+        return super.getContent() as SubContent
       }
     }
 
@@ -521,15 +521,15 @@ internal class SingleContentLayout(
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)
 
-      val step = object : BaseListPopupStep<FakeContent>(null, contentToShow) {
-        override fun onChosen(selectedValue: FakeContent, finalChoice: Boolean): PopupStep<*>? {
+      val step = object : BaseListPopupStep<SubContent>(null, contentToShow) {
+        override fun onChosen(selectedValue: SubContent, finalChoice: Boolean): PopupStep<*>? {
           jbTabs.select(selectedValue.info, true)
           return FINAL_CHOICE
         }
 
-        override fun getIconFor(value: FakeContent) = value.icon
+        override fun getIconFor(value: SubContent) = value.icon
 
-        override fun getTextFor(value: FakeContent) = value.displayName
+        override fun getTextFor(value: SubContent) = value.displayName
       }
 
       JBPopupFactory.getInstance()
@@ -581,13 +581,9 @@ internal class SingleContentLayout(
   }
 
   /**
-   * The minimal [Content] implementation.
-   *
-   * Is used only to pass as an argument to support [SingleContentLayout.TabAdapter.MyContentTabLabel].
-   *
-   * All unused methods throw [IllegalStateException].
+   * The content implementation for the tab provided by [SingleContentSupplier]
    */
-  internal class FakeContent(val supplier: SingleContentSupplier, val info: TabInfo) : ContentImpl(info.component, info.text, false) {
+  internal class SubContent(val supplier: SingleContentSupplier, val info: TabInfo) : ContentImpl(info.component, info.text, false) {
 
     private val pcs = PropertyChangeSupport(this)
 

@@ -80,7 +80,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
 
   private fun getInitialIndex(tabLabel: ContentTabLabel): Int {
     val content = tabLabel.content
-    return if (content is SingleContentLayout.FakeContent && sourceDecorator?.isSingleContentLayout() == true) {
+    return if (content is SingleContentLayout.SubContent && sourceDecorator?.isSingleContentLayout() == true) {
       content.supplier.getTabs().getIndexOf(content.info)
     }
     else content.manager!!.getIndexOfContent(content)
@@ -139,7 +139,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     val content = myDraggingTab!!.content
     val contentManager = sourceDecorator.contentManager
 
-    if (content is SingleContentLayout.FakeContent && curDecorator.isSingleContentLayout()) {
+    if (content is SingleContentLayout.SubContent && curDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
       val tabInfo = content.info
       if (currentDropIndex != -1) {
@@ -187,7 +187,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   override fun cancelDragging(): Boolean {
     if (super.cancelDragging()) {
       val content = myDraggingTab!!.content
-      if (content is SingleContentLayout.FakeContent && sourceDecorator!!.isSingleContentLayout()) {
+      if (content is SingleContentLayout.SubContent && sourceDecorator!!.isSingleContentLayout()) {
         content.info.isHidden = false
       }
       else {
@@ -241,7 +241,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
 
     val content = myDraggingTab!!.content
     content.putUserData(TEMPORARY_REMOVED_KEY, true)
-    if (content is SingleContentLayout.FakeContent && sourceDecorator.isSingleContentLayout()) {
+    if (content is SingleContentLayout.SubContent && sourceDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
       val tabInfo = content.info
       val index = tabs.getIndexOf(tabInfo)
@@ -316,7 +316,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   }
 
   private fun InternalDecoratorImpl.isSingleContentLayout(): Boolean {
-    return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.FakeContent }
+    return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.SubContent }
   }
 
   private class MyDialog(owner: JComponent, val helper: ToolWindowInnerDragHelper, tabImage: BufferedImage)
