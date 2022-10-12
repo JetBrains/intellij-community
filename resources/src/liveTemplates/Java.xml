@@ -280,24 +280,7 @@
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
             name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
-    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;import com.intellij.psi.*;import com.intellij.psi.util.PsiTreeUtil; def file = PsiDocumentManager.getInstance(_editor.project).getPsiFile(_editor.document); PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, _editor.caretModel.offset, PsiMethod.class, false); PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.parameterList.parameters; return parameters.size() == 0 ? '' : '\&quot;' + parameters.collect { def prefix = it.name + ' = '; def type = it.type; return type instanceof PsiArrayType ? type.componentType instanceof PsiPrimitiveType ? prefix + '\&quot; + java.util.Arrays.toString(' + it.name + ')' : prefix + '\&quot; + java.util.Arrays.deepToString(' + it.name + ')' : prefix + '\&quot; + ' + it.name }.join(' + \&quot;, ')&quot;, methodParameters())" name="FORMAT" />
-    <!--
-    import com.intellij.psi.*
-    import com.intellij.psi.util.PsiTreeUtil
-    
-    def file = PsiDocumentManager.getInstance(_editor.project).getPsiFile(_editor.document)
-    PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, _editor.caretModel.offset, PsiMethod.class, false)
-    PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.parameterList.parameters
-    return parameters.size() == 0 ? '' : '"' + parameters.collect {
-      def prefix = it.name + ' = '
-      def type = it.type
-      return type instanceof PsiArrayType
-        ? type.componentType instanceof PsiPrimitiveType
-               ? prefix + '" + java.util.Arrays.toString(' + it.name + ')'
-               : prefix + '" + java.util.Arrays.deepToString(' + it.name + ')'
-        : prefix + '" + ' + it.name
-    }.join(' + ", ')
-    -->
+    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;_1.isEmpty() ? '' : '\&quot;' + _1.withIndex().collect { el, index -> el + ' = \&quot; + ' + (_2[index].indexOf('[') > 0 ? (_2[index].lastIndexOf('[') != _2[index].indexOf('[') ? 'java.util.Arrays.deepToString(' : 'java.util.Arrays.toString(') + el + ')' : el) }.join(' + \&quot;, ')&quot;, methodParameters(), methodParameterTypes())" name="FORMAT" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
