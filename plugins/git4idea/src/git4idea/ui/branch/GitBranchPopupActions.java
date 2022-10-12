@@ -41,6 +41,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateExecutionProcess;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,8 @@ import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
 public class GitBranchPopupActions {
+
+  public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
   private static final int BRANCH_NAME_LENGHT_DELTA = 4;
@@ -93,7 +96,7 @@ public class GitBranchPopupActions {
     }
 
     if (ExperimentalUI.isNewUI()) {
-      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
+      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP);
       topActions.addAll(actionGroup);
       topActions.addSeparator();
     }

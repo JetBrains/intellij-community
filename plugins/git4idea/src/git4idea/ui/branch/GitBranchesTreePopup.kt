@@ -510,7 +510,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun create(project: Project): JBPopup {
       val repositories = GitRepositoryManager.getInstance(project).repositories
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories))
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories, true))
     }
 
     private fun uiScope(parent: Disposable) =
