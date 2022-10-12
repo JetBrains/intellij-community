@@ -560,6 +560,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 	"~" { yypopstate(); return TILDA; }
   [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
 	[^\S\n\r]+ { return WHITE_SPACE; }
+
+  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <annotation> {
 	\w+ { return ANNOTATION_VALUE; }
