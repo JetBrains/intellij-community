@@ -16,6 +16,7 @@ import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.PopupEvent
 import com.intellij.ide.navbar.ui.PopupEvent.*
+import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent

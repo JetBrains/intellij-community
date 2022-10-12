@@ -4,7 +4,7 @@ package com.intellij.ide.navbar.ui
 import com.intellij.ide.navbar.ide.ItemClickEvent
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
 import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
-import com.intellij.ide.navbar.ide.NavBarVmItem
+import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
