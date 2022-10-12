@@ -201,11 +201,6 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory.createExpression("null").toUElementOfType()!!
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
-        return psiFactory.createExpression(value.toString()).toUElementOfType()!!
-    }
-
     private fun KtExpression.ensureBlockExpressionBraces(): KtExpression {
         if (this !is KtBlockExpression || hasBraces(this)) return this
         val blockExpression = psiFactory.createBlock(this.statements.joinToString("\n") { "println()" })
