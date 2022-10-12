@@ -71,24 +71,6 @@ public class UseGrayInspection extends DevKitInspectionBase {
             }
           }
         }
-        else if (expressions.length == 1 && "com.intellij.ui.Gray".equals(type.getCanonicalText())) {
-          final PsiExpression e = expressions[0];
-          if (e instanceof PsiLiteralExpression) {
-            final Object literal = JavaConstantExpressionEvaluator.computeConstantExpression(e, false);
-            if (literal != null) {
-              try {
-                int num = Integer.parseInt(literal.toString());
-                if (0 <= num && num < 256) {
-                  return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.gray.constructor.used.name"),
-                                                         new ConvertToGrayQuickFix(num), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                         isOnTheFly);
-                }
-              }
-              catch (Exception ignore) {
-              }
-            }
-          }
-        }
       }
     }
     return null;

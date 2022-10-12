@@ -18,15 +18,15 @@ import org.jetbrains.idea.devkit.DevKitBundle;
  * @author Konstantin Bulenkov
  */
 public class ConvertToGrayQuickFix implements LocalQuickFix {
-  private final int myNum;
+  private final int myGrayValue;
 
-  public ConvertToGrayQuickFix(int num) {
-    myNum = num;
+  public ConvertToGrayQuickFix(int grayValue) {
+    myGrayValue = grayValue;
   }
 
   @Override
   public @IntentionName @NotNull String getName() {
-    return DevKitBundle.message("inspections.use.gray.fix.convert.name", myNum);
+    return DevKitBundle.message("inspections.use.gray.fix.convert.name", myGrayValue);
   }
 
   @Override
@@ -38,7 +38,7 @@ public class ConvertToGrayQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final PsiExpression expression = factory.createExpressionFromText("com.intellij.ui.Gray._" + myNum, element.getContext());
+    final PsiExpression expression = factory.createExpressionFromText("com.intellij.ui.Gray._" + myGrayValue, element.getContext());
     final PsiElement newElement = element.replace(expression);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
   }
