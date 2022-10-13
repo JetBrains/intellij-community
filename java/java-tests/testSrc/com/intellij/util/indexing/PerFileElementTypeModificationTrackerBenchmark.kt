@@ -12,8 +12,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.writeChild
 import kotlin.reflect.KClass
 
-class StubIndexBenchmark : HeavyPlatformTestCase() {
-
+class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
   fun testBenchmark() {
     var lastModCount = getModCount(JavaFileElementType::class)
     fun assertModCountIncreasedAtLeast(minInc: Int) {
@@ -61,5 +60,4 @@ class StubIndexBenchmark : HeavyPlatformTestCase() {
   private fun <T: IFileElementType> getModCount(elementType: KClass<T>) =
     (StubIndex.getInstance() as StubIndexEx)
       .getPerFileElementTypeModificationTracker(elementType.java).modificationCount
-
 }
