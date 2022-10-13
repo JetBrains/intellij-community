@@ -414,6 +414,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return true;
   }
 
+  @NotNull
+  protected final Icon getEnableOrDisable(@NotNull Icon icon) {
+    return isEnabled() ? icon : IconLoader.getDisabledIcon(icon);
+  }
+
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
     if (isEnabled() || !StartupUiUtil.isUnderDarcula() || ExperimentalUI.isNewUI()) {
@@ -422,8 +427,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
     if (shallPaintDownArrow()) {
-      Icon arrowIcon = isEnabled() ? AllIcons.General.Dropdown :
-                       IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
+      Icon arrowIcon = getEnableOrDisable(AllIcons.General.Dropdown);
       look.paintDownArrow(g, this, getIcon(), arrowIcon);
     }
   }

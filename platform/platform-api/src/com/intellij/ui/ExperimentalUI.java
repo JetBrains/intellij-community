@@ -161,6 +161,10 @@ public abstract class ExperimentalUI {
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
     }
 
+    public static class General {
+      public static final Icon ChevronDownLargeWhite = loadIcon("expui/general/chevronDownLargeWhite.svg");
+    }
+
     private static Icon loadIcon(String path) {
       return IconLoader.getIcon(path, AllIcons .class.getClassLoader());
     }
