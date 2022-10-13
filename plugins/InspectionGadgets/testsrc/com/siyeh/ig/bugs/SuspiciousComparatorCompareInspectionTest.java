@@ -40,6 +40,10 @@ public class SuspiciousComparatorCompareInspectionTest extends LightJavaInspecti
     doTest();
   }
 
+  public void testMinValue() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

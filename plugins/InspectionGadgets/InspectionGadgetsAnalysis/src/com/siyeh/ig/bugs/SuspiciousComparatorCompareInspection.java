@@ -118,6 +118,26 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       checkParameterList(parameters, body, compareTo ? "compareTo" : "compare");
       checkReturnValueSanity(owner instanceof PsiMethod method ? method.getNameIdentifier() : parameterList, body);
       checkReflexivity(owner, parameters, body);
+      checkReturnMinValue(body);
+    }
+
+    private void checkReturnMinValue(PsiElement body) {
+      StreamEx<PsiExpression> stream;
+      if (body instanceof PsiExpression expression) {
+        stream = StreamEx.of(expression);
+      } else if (body instanceof PsiCodeBlock block) {
+        stream = StreamEx.of(PsiUtil.findReturnStatements(block))
+          .map(PsiReturnStatement::getReturnValue)
+          .nonNull();
+      }
+      else {
+        return;
+      }
+      stream.flatMap(ExpressionUtils::nonStructuralChildren).forEach(expr -> {
+        if (ExpressionUtils.computeConstantExpression(expr) instanceof Integer i && i == Integer.MIN_VALUE) {
+          registerError(expr, InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.min.value"));
+        }
+      });
     }
 
     private void checkReturnValueSanity(PsiElement anchor, PsiElement body) {
@@ -136,12 +156,10 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
       if (range.isEmpty() || range.equals(LongRangeSet.point(0))) return;
       if (range.min() >= 0) {
-        registerError(anchor,
-                      InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.negative"));
+        registerError(anchor, InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.negative"));
       }
       else if (range.max() <= 0) {
-        registerError(anchor,
-                      InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.positive"));
+        registerError(anchor, InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.positive"));
       }
     }
 
