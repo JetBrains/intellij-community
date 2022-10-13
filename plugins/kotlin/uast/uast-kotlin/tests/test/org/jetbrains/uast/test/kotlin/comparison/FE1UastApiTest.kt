@@ -23,7 +23,7 @@ class FE1UastApiTest : AbstractFE1UastTest() {
     @TestMetadata("uast-kotlin-fir/testData/declaration")
     @TestDataPath("/")
     class Declaration : AbstractFE1UastTest(), UastApiTestBase {
-        override var testDataDir = KotlinRoot.PATH.resolve("uast/uast-kotlin-fir/testData/declaration").toFile()
+        override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/declaration")
 
         override val isFirUastPlugin: Boolean = false
 
@@ -35,12 +35,17 @@ class FE1UastApiTest : AbstractFE1UastTest() {
         fun testRetention() {
             doTest("retention", ::checkCallbackForRetention)
         }
+
+        @TestMetadata("returns.kt")
+        fun testReturnJumpTargets() {
+            doTest("returns", ::checkReturnJumpTargets)
+        }
     }
 
     @TestMetadata("uast-kotlin/testData")
     @TestDataPath("/")
     class Legacy : AbstractFE1UastTest(), UastApiTestBase {
-        override var testDataDir: File = KotlinRoot.PATH.resolve("uast/uast-kotlin/tests/testData").toFile()
+        override var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
         override val isFirUastPlugin: Boolean = false
 

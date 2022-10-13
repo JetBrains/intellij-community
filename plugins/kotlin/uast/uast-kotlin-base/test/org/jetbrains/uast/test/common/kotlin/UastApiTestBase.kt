@@ -738,6 +738,61 @@ interface UastApiTestBase : UastPluginSelection {
         }
     }
 
+    fun checkReturnJumpTargets(uFilePath: String, uFile: UFile) {
+        uFile.accept(object : AbstractUastVisitor() {
+            private val methods: MutableList<UMethod> = mutableListOf()
+            private val lambdas: MutableList<ULambdaExpression> = mutableListOf()
+            private val labels : MutableList<ULabeledExpression> = mutableListOf()
+
+            override fun visitMethod(node: UMethod): Boolean {
+                methods.add(node)
+                return super.visitMethod(node)
+            }
+
+            override fun afterVisitMethod(node: UMethod) {
+                methods.remove(node)
+                super.afterVisitMethod(node)
+            }
+
+            override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                lambdas.add(node)
+                return super.visitLambdaExpression(node)
+            }
+
+            override fun afterVisitLambdaExpression(node: ULambdaExpression) {
+                lambdas.remove(node)
+                super.afterVisitLambdaExpression(node)
+            }
+
+            override fun visitLabeledExpression(node: ULabeledExpression): Boolean {
+                labels.add(node)
+                return super.visitLabeledExpression(node)
+            }
+
+            override fun afterVisitLabeledExpression(node: ULabeledExpression) {
+                labels.remove(node)
+                super.afterVisitLabeledExpression(node)
+            }
+
+            override fun visitReturnExpression(node: UReturnExpression): Boolean {
+                TestCase.assertNotNull(node.jumpTarget)
+                when (val returnTarget = node.jumpTarget) {
+                    is UMethod -> { // return@foo
+                        TestCase.assertTrue(returnTarget in methods)
+                    }
+                    is ULambdaExpression -> { // return@forEach
+                        TestCase.assertTrue(returnTarget in lambdas)
+                    }
+                    is ULabeledExpression -> { // return@l
+                        TestCase.assertTrue(returnTarget in labels)
+                    }
+                    else -> TestCase.fail("Unexpected return target: $returnTarget")
+                }
+                return super.visitReturnExpression(node)
+            }
+        })
+    }
+
     fun checkCallbackForComplexStrings(uFilePath: String, uFile: UFile) {
         TestCase.assertEquals(
             "\"\"\"\n        text=text\n    \"\"\".trimIndent()",
