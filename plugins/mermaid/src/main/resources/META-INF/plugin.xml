@@ -50,5 +50,10 @@
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierRenameUsageSearcher"/>
 
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.ClassDiagramAnnotator"/>
+
+
   </extensions>
 </idea-plugin>
