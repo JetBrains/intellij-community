@@ -197,7 +197,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private sealed interface KotlinTarget {
+    protected sealed interface KotlinTarget {
         enum class CallableType {
             FUNCTION, PROPERTY
         }
@@ -330,7 +330,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun findPsiDeclarationToRename(
+    protected open fun findPsiDeclarationToRename(
         contextFile: KtFile,
         target: KotlinTarget
     ): PsiElement {
