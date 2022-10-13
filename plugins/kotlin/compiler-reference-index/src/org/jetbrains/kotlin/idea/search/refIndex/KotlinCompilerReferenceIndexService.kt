@@ -235,11 +235,12 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
 
     fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
         if (!isServiceEnabledFor(element)) return null
+        val originalElement = element.unwrapped ?: return null
 
         return runActionSafe("scope with code references") {
-            CachedValuesManager.getCachedValue(element) {
+            CachedValuesManager.getCachedValue(originalElement) {
                 CachedValueProvider.Result.create(
-                    buildScopeWithReferences(referentFiles(element), element),
+                    buildScopeWithReferences(referentFiles(originalElement), originalElement),
                     PsiModificationTracker.MODIFICATION_COUNT,
                     this,
                 )
