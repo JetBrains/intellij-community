@@ -57,4 +57,8 @@ public interface ListPopup extends JBPopup {
    * If disabled then mouse click needed to expand submenu
    */
   default void setShowSubmenuOnHover(boolean showSubmenuOnHover) {}
+
+  default boolean isShowSubmenuOnHover() {
+    return false;
+  }
 }
