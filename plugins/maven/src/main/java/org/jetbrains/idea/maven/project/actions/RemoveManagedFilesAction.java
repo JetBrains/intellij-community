@@ -51,11 +51,35 @@ import java.util.List;
 
 import static org.jetbrains.idea.maven.utils.actions.MavenActionUtil.getProject;
 
+/**
+ * Unlink Maven Projects
+ */
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
-  protected boolean isAvailable(@NotNull AnActionEvent e) {
-    if (!super.isAvailable(e)) return false;
-    return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() > 0;
+  protected boolean isVisible(@NotNull AnActionEvent e) {
+    if (!super.isVisible(e)) return false;
+    final DataContext context = e.getDataContext();
+
+    final Project project = getProject(context);
+    if (project == null) return false;
+
+    List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
+    if (selectedFiles.size() == 0) return false;
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    for (VirtualFile pomXml : selectedFiles) {
+      MavenProject mavenProject = projectsManager.findProject(pomXml);
+      if (mavenProject == null) return false;
+
+      MavenProject aggregator = projectsManager.findAggregator(mavenProject);
+      while (aggregator != null && !projectsManager.isManagedFile(aggregator.getFile())) {
+        aggregator = projectsManager.findAggregator(aggregator);
+      }
+
+      if (aggregator != null && !selectedFiles.contains(aggregator.getFile())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -108,7 +132,6 @@ public class RemoveManagedFilesAction extends MavenAction {
     projectsManager.removeManagedFiles(removableFiles);
     projectsManager.removeIgnoredFilesPaths(filesToUnIgnore); // hack to remove deleted files from ignore list
   }
-
 
   @Nls
   private static String getActionTitle(List<String> names) {

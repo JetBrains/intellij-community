@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing;
 
-import com.intellij.ide.DataManager;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -1353,21 +1350,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
     assertSize(0, myProjectsManager.getRootProjects());
-  }
-
-
-
-  private DataContext createTestDataContext(VirtualFile mavenParentPom) {
-    final DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return new VirtualFile[]{mavenParentPom};
-      }
-      return defaultContext.getData(dataId);
-    };
   }
 
   @Override
