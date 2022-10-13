@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.LineSeparator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
@@ -81,7 +82,7 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuild
   }
 }
 
-internal fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
+fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
   writer.writeFiles()
@@ -192,7 +193,8 @@ internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlMana
 }
 
 internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
-  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
+  private val XML_PROLOG = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
@@ -256,7 +258,13 @@ internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectCo
       if (rootElement != null) {
         replaceMacroMap.substitute(rootElement, true, true)
         FileUtil.createParentDirs(file)
-        JDOMUtil.write(rootElement, file)
+        file.outputStream().use {
+          if (isModuleFile(file)) {
+            it.write(XML_PROLOG)
+            it.write(LineSeparator.LF.separatorBytes)
+          }
+          JDOMUtil.write(rootElement, it)
+        }
       }
       else {
         FileUtil.delete(file)
