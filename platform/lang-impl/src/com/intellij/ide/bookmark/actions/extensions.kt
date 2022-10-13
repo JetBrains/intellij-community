@@ -47,8 +47,10 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     val editor = getData(CommonDataKeys.EDITOR) ?: getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val project = editor?.project ?: project ?: return null
     val manager = BookmarksManager.getInstance(project) ?: return null
+    val window = getData(PlatformDataKeys.TOOL_WINDOW)
+    if (window?.id == ToolWindowId.BOOKMARKS) return null
 
-    if (place == ActionPlaces.EDITOR_TAB_POPUP || place == ActionPlaces.PROJECT_VIEW_POPUP) {
+    if (place == ActionPlaces.EDITOR_TAB_POPUP || window?.id == ToolWindowId.PROJECT_VIEW) {
       // Create file bookmark
       val file = getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
       return manager.createBookmark(file)
@@ -60,8 +62,6 @@ internal val AnActionEvent.contextBookmark: Bookmark?
       return provider.createBookmark(editor, line)
     }
 
-    val window = getData(PlatformDataKeys.TOOL_WINDOW)
-    if (window?.id == ToolWindowId.BOOKMARKS) return null
     val component = getData(PlatformDataKeys.CONTEXT_COMPONENT)
     val allowed = UIUtil.getClientProperty(component, BookmarksManager.ALLOWED) ?: (window?.id == ToolWindowId.PROJECT_VIEW)
     if (!allowed) return null
@@ -77,6 +77,19 @@ internal val AnActionEvent.contextBookmark: Bookmark?
       else -> manager.createBookmark(item)
     }
   }
+
+internal val AnActionEvent.contextBookmarks: List<Bookmark>?
+  get() {
+    val window = getData(PlatformDataKeys.TOOL_WINDOW)
+    if (window?.id != ToolWindowId.PROJECT_VIEW) return null
+
+    val files = getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return null
+    if (files.size < 2) return null
+
+    val manager = BookmarksManager.getInstance(window.project) ?: return null
+    return files.mapNotNull { manager.createBookmark(it) }
+  }
+
 
 internal val Bookmark.bookmarksManager
   get() = BookmarksManager.getInstance(provider.project)
