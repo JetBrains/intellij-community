@@ -8,12 +8,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
 /**
@@ -21,6 +20,8 @@ import kotlin.system.exitProcess
  */
 @Internal
 abstract class ApplicationStarterBase protected constructor(private vararg val argsCount: Int) : ModernApplicationStarter() {
+  abstract val usageMessage: @NlsContexts.DialogMessage String?
+
   override val isHeadless: Boolean
     get() = false
 
@@ -30,10 +31,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       if (file == null) {
         return
       }
-      val document = FileDocumentManager.getInstance().getCachedDocument(file)
-      if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document)
-      }
+      FileDocumentManager.getInstance().getCachedDocument(file)?.let(FileDocumentManager.getInstance()::saveDocument)
     }
   }
 
@@ -44,16 +42,24 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     val commandName = commandName
     if (!checkArguments(args)) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
-      ApplicationManager.getApplication().invokeLater { Messages.showMessageDialog(usageMessage, title, Messages.getInformationIcon()) }
+      withContext(Dispatchers.EDT) {
+        Messages.showMessageDialog(usageMessage, title, Messages.getInformationIcon())
+      }
       return CliResult(1, usageMessage)
     }
+
     try {
       return executeCommand(args, currentDirectory)
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
-      ApplicationManager.getApplication().invokeLater { Messages.showMessageDialog(message, title, Messages.getErrorIcon()) }
+      withContext(Dispatchers.EDT) {
+        Messages.showMessageDialog(message, title, Messages.getErrorIcon())
+      }
       return CliResult(1, message)
     }
   }
@@ -63,18 +69,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     return Arrays.binarySearch(argsCount, args.size - 1) != -1 && commandName == args[0]
   }
 
-  abstract val usageMessage: @NlsContexts.DialogMessage String?
-
-  protected open suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
-    @Suppress("DEPRECATION")
-    return processCommand(args, currentDirectory).asDeferred().await()
-  }
-
-  @Throws(Exception::class)
-  @Deprecated("Use executeCommand")
-  protected open fun processCommand(args: List<String>, currentDirectory: String?): CompletableFuture<CliResult> {
-    throw AbstractMethodError()
-  }
+  protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
 
   override fun premain(args: List<String>) {
     if (!checkArguments(args)) {
@@ -86,8 +81,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   final override suspend fun start(args: List<String>) {
     try {
       val exitCode: Int = try {
-        val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
-        val result = executeCommand(args, currentDirectory)
+        val result = executeCommand(args = args, currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR))
         result.message?.let(::println)
         result.exitCode
       }
@@ -98,6 +92,9 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
         saveSettings(ApplicationManager.getApplication())
       }
       exitProcess(exitCode)
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       e.printStackTrace()

@@ -33,7 +33,6 @@ import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -42,13 +41,9 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
-import java.awt.Frame
-import java.awt.Window
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -330,8 +325,8 @@ private fun addActivateAndWindowsCliListeners() {
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
     ApplicationManager.getApplication().coroutineScope.async {
-      handleExternalCommand(args, currentDirectory).future.asDeferred().await()
-    }.asCompletableFuture()
+      handleExternalCommand(args, currentDirectory).future.await()
+    }
   }
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
@@ -339,52 +334,39 @@ private fun addActivateAndWindowsCliListeners() {
     if (args.isEmpty()) {
       return@BiFunction 0
     }
-    val result = runBlocking(Dispatchers.EDT) { handleExternalCommand(args.asList(), currentDirectory) }
-    CliResult.unmap(result.future, AppExitCodes.ACTIVATE_ERROR).exitCode
+    runBlocking(Dispatchers.Default) {
+      val result = handleExternalCommand(args.asList(), currentDirectory)
+      try {
+        result.future.await().exitCode
+      }
+      catch (e: Exception) {
+        AppExitCodes.ACTIVATE_ERROR
+      }
+    }
   }
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CliResult.error(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      addExternalInstanceListener { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down"))) }
       EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
 }
 
-// find a frame to activate
-private fun findVisibleFrame(): Window? {
-  // we assume that the most recently created frame is the most relevant one
-  return Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
-}
-
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
   if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
     val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
-    if (!result.showErrorIfFailed()) {
-      findVisibleFrame()?.let { frame ->
-        AppIcon.getInstance().requestFocus(frame)
+    withContext(Dispatchers.EDT) {
+      if (!result.showErrorIfFailed()) {
+        CommandLineProcessor.findVisibleFrame()?.let { frame ->
+          AppIcon.getInstance().requestFocus(frame)
+        }
       }
     }
     return result
   }
   else {
-    val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
-    // not a part of handleExternalCommand invocation - invokeLater
-    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
-      if (!result.showErrorIfFailed()) {
-        if (result.project == null) {
-          findVisibleFrame()?.let { frame ->
-            AppIcon.getInstance().requestFocus(frame)
-          }
-        }
-        else {
-          WindowManager.getInstance().getIdeFrame(result.project)?.let {
-            AppIcon.getInstance().requestFocus(it)
-          }
-        }
-      }
-    }
-    return result
+    return CommandLineProcessor.processExternalCommandLine(args, currentDirectory, focusApp = true)
   }
 }
 
