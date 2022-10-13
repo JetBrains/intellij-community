@@ -8,10 +8,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMe
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
@@ -78,7 +75,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
         SwingUtilities.invokeLater(() -> {
           if (myAction.getAction().isEnabledInModalContext() ||
               !Boolean.TRUE.equals(myContext.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
-            performAction(0);
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> performAction(0));
           }
         });
       });
