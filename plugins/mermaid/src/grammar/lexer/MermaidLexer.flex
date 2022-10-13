@@ -34,141 +34,39 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %caseless
 %ignorecase
 
-%xstate double_quoted_string
+%state double_quoted_string
 
-%xstate directive
-%xstate directive_close
-//%xstate double_quoted_string_inside_directive
-%xstate click
-%xstate acc_title
-%xstate acc_descr
-%xstate acc_title_value
-%xstate acc_descr_value
-%xstate acc_descr_multiline_value
+%state directive
+%state directive_close
+//%state double_quoted_string_inside_directive
+%state click
+%state acc_title
+%state acc_descr
+%state acc_title_value
+%state acc_descr_value
+%state acc_descr_multiline_value
 
-%xstate pie
+%states pie, pie_title, pie_title_value, value
 
-%xstate pie_title
-%xstate pie_title_value
-%xstate value
+%states journey, title,title_value,journey_task, section, section_title
 
+%states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val
 
-%xstate journey
+%states sequence, sequence_id, sequence_alias, sequence_message, sequence_links, sequence_links_values, autonumbers
 
-%xstate title
-%xstate title_value
-%xstate journey_task
-%xstate section
-%xstate section_title
+%states class_diagram, struct, generic, simple_direction_value, annotation, class_name, class_in_relation, description, class_style_id, class_member
 
+%states state_diagram, state_statement, note_statement, note_content, simple_note_content
 
-%xstate flowchart
+%states entity_relationship, entity_attributes, relationship_description
 
-%xstate flowchart_body
-%xstate node_text
-%xstate node_quoted_text
-%xstate link_text
-%xstate link_quoted_text
-%xstate direction_value
-%xstate style
-%xstate link_style
-%xstate link_style_target
-%xstate style_opt
-%xstate style_value
-%xstate flowchart_class
-%xstate flowchart_class_target
-%xstate flowchart_class_val
+%states gantt, gantt_task_data
 
+%states requirement_diagram, requirement, requirement_value, requirement_constant_value, req_element
 
-%xstate sequence
+%state gitgraph
 
-%xstate sequence_id
-%xstate sequence_alias
-%xstate sequence_message
-%xstate sequence_links
-%xstate sequence_links_values
-%xstate autonumbers
-
-
-%xstate class_diagram
-
-%xstate struct
-%xstate generic
-%xstate simple_direction_value
-%xstate annotation
-%xstate class_name
-%xstate class_in_relation
-%xstate description
-%xstate class_style_id
-%xstate class_member
-
-
-%xstate state_diagram
-
-%xstate state_statement
-%xstate note_statement
-%xstate note_content
-%xstate simple_note_content
-
-%xstate entity_relationship
-%xstate entity_attributes
-%xstate relationship_description
-
-
-%xstate gantt
-
-%xstate gantt_task_data
-
-
-%xstate requirement_diagram
-
-%xstate requirement
-%xstate requirement_value
-%xstate requirement_constant_value
-%xstate req_element
-
-
-%xstate gitgraph
-
-%xstate c4
-%xstate person
-%xstate person_ext
-%xstate system_ext_queue
-%xstate system_ext_db
-%xstate system_ext
-%xstate system_queue
-%xstate system_db
-%xstate system
-%xstate boundary
-%xstate enterprise_boundary
-%xstate system_boundary
-%xstate container_ext_db
-%xstate container_ext
-%xstate container_queue
-%xstate container_ext_queue
-%xstate container_db
-%xstate container
-%xstate container_boundary
-%xstate component_ext_db
-%xstate component_ext
-%xstate component_queue
-%xstate component_ext_queue
-%xstate component_db
-%xstate component
-%xstate node
-%xstate node_l
-%xstate node_r
-%xstate rel
-%xstate birel
-%xstate rel_u
-%xstate rel_d
-%xstate rel_l
-%xstate rel_r
-%xstate rel_b
-%xstate rel_index
-%xstate update_el_style
-%xstate update_rel_style
-%xstate update_layout_config
+%states c4, person, person_ext, system_ext_queue, system_ext_db, system_ext, system_queue, system_db, system, boundary, enterprise_boundary, system_boundary, container_ext_db, container_ext, container_queue, container_ext_queue, container_db, container, container_boundary, component_ext_db, component_ext, component_queue, component_ext_queue, component_db, component, node, node_l, node_r, rel, birel, rel_u, rel_d, rel_l, rel_r, rel_b, rel_index, update_el_style, update_rel_style, update_layout_config
 
 %%
 
@@ -206,7 +104,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "," { return COMMA; }
   ":" { return COLON; }
   [^\s:,\{\}\%\"]+ { return DIRECTIVE_TEXT; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 //<double_quoted_string_inside_directive> {
 //  [\"] { yybegin(directive); return DOUBLE_QUOTE; }
@@ -270,42 +167,35 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---pie--------------------------------------------------------------------------
 <pie_title> {
   [^\S\n\r]+ { yybegin(pie_title_value); return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <pie_title_value> {
   [\n\r] { yybegin(pie); return EOL; }
   [^\s]* { return TITLE_VALUE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <value> {
   [^\S\n\r]+ { return WHITE_SPACE; }
   [\d]+(\.[\d]+)? { yybegin(pie); return Pie.VALUE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
 //---journey----------------------------------------------------------------------
 <title> {
   [^\S\n\r]+ { yybegin(title_value); return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <title_value> {
 	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
   [^\s#;]+ { return TITLE_VALUE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <section> {
   [^\S\n\r]+ { yybegin(section_title); return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <section_title> {
 	\s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
   [^\s#:;]+ { return SECTION_TITLE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <journey_task> {
 	(#[^\n\r]*)/[\n\r]? { return IGNORED; }
@@ -314,7 +204,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 	[^\S\n\r]+ { return WHITE_SPACE; }
 	[^\s#:;,]+ { return TASK_DATA; }
   [\n\r] { yybegin(journey); return EOL; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 
 //---flowchart--------------------------------------------------------------------
@@ -361,7 +250,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [xo<]?\=\= { yybegin(link_text); return Flowchart.START_ARROW; }
   [xo<]?\-\. { yybegin(link_text); return Flowchart.START_ARROW; }
 
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <node_text> {
 	[\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
@@ -378,13 +266,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "\\]" { yybegin(flowchart_body); return Flowchart.TRAP_END; }
   "/]" { yybegin(flowchart_body); return Flowchart.INV_TRAP_END; }
   ")))" { yybegin(flowchart_body); return Flowchart.DOUBLE_CIRCLE_END; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <node_quoted_text> {
 	[\"] { yybegin(node_text); return DOUBLE_QUOTE; }
   [^\s\"]* { return ALIAS; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <link_text> {
 	[^\s;\[\]()\"|{}\-\=\.]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return Flowchart.LINK_TEXT; }
@@ -395,13 +281,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\n\r]+/\-\-+[-xo>]|\=\=+[=xo>]|\-?\.+\-[xo>] { yybegin(flowchart_body); return WHITE_SPACE; }
 	[\"] { yybegin(link_quoted_text); return DOUBLE_QUOTE; }
   "|" { yybegin(flowchart_body); return Flowchart.SEP; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <link_quoted_text> {
 	[\"] { yybegin(link_text); return DOUBLE_QUOTE; }
   [^\s\"]* { return Flowchart.LINK_TEXT; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <style> {
 	"default" { yybegin(style_opt); return Flowchart.DEFAULT; }
@@ -570,7 +454,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s~]* { return ClassDiagram.GENERIC_TYPE; }
 	[^\S\n\r]+ { return WHITE_SPACE; }
 
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <annotation> {
 	\w+ { return ANNOTATION_VALUE; }
@@ -856,7 +739,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <double_quoted_string> {
   [\"] { yypopstate(); return DOUBLE_QUOTE; }
   [^\"]* { return STRING_VALUE; }
-  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 }
 <click> {
   "call" { return CALL; }
@@ -901,4 +783,4 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "}" { yypopstate(); return CLOSE_CURLY; }
 }
 
-[^] { return BAD_CHARACTER; }
+[^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
