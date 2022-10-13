@@ -32,6 +32,8 @@ class GitBranchesTreeModelImpl(
 
   private val branchManager = project.service<GitBranchManager>()
   private val branchComparator = compareBy<GitBranch> {
+    !repositories.any { repo -> repo.currentBranch == it }
+  } then compareBy {
     !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(it), repo, it.name) }
   } then compareBy { it.name }
 
