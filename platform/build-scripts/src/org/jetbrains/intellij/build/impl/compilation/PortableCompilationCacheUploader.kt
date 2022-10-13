@@ -32,7 +32,7 @@ internal class PortableCompilationCacheUploader(
   remoteCacheUrl: String,
   private val remoteGitUrl: String,
   private val commitHash: String,
-  syncFolder: String,
+  s3Folder: String,
   private val uploadCompilationOutputsOnly: Boolean,
   private val forcedUpload: Boolean,
 ) {
@@ -43,11 +43,11 @@ internal class PortableCompilationCacheUploader(
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
 
-  private val syncFolder = Path.of(syncFolder)
+  private val s3Folder = Path.of(s3Folder)
 
   init {
-    FileUtil.delete(this.syncFolder)
-    Files.createDirectories(this.syncFolder)
+    FileUtil.delete(this.s3Folder)
+    Files.createDirectories(this.s3Folder)
   }
 
   fun upload(messages: BuildMessages) {
@@ -67,6 +67,7 @@ internal class PortableCompilationCacheUploader(
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
     uploadCompilationOutputs(currentSourcesState, uploader, tasks)
     ForkJoinTask.invokeAll(tasks)
+    uploadToS3("--include", "*")
 
     messages.reportStatisticValue("Compilation upload time, ms", (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString()))
     val totalOutputs = (sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
@@ -74,6 +75,12 @@ internal class PortableCompilationCacheUploader(
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
     uploadMetadata()
+  }
+
+  private fun uploadToS3(vararg args: String) {
+    spanBuilder("aws s3 sync").setAttribute("args", args.joinToString(separator = " ")).useWithScope {
+      awsS3Cli("sync", "--no-progress", *args, "$s3Folder", "s3://intellij-jps-cache")
+    }
   }
 
   private fun uploadJpsCaches() {
@@ -85,7 +92,7 @@ internal class PortableCompilationCacheUploader(
     val cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
-      moveFile(zipFile, syncFolder.resolve(cachePath))
+      moveFile(zipFile, s3Folder.resolve(cachePath))
     }
   }
 
@@ -93,7 +100,8 @@ internal class PortableCompilationCacheUploader(
     val metadataPath = "metadata/$commitHash"
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    moveFile(sourceStateFile, syncFolder.resolve(metadataPath))
+    moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
+    uploadToS3("--exclude", "*", "--include", metadataPath)
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
@@ -113,7 +121,7 @@ internal class PortableCompilationCacheUploader(
         if (forcedUpload || !uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
-          moveFile(zipFile, syncFolder.resolve(sourcePath))
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
         }
       }
     }
@@ -150,7 +158,7 @@ internal class PortableCompilationCacheUploader(
   }
 
   private fun writeCommitHistory(commitHistory: CommitsHistory): Path {
-    val commitHistoryFile = syncFolder.resolve(CommitsHistory.JSON_FILE)
+    val commitHistoryFile = s3Folder.resolve(CommitsHistory.JSON_FILE)
     Files.createDirectories(commitHistoryFile.parent)
     val json = commitHistory.toJson()
     Files.writeString(commitHistoryFile, json)
