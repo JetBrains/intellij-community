@@ -1,0 +1,71 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.uast.test.common.kotlin
+
+import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import junit.framework.TestCase
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.toUElement
+
+// NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
+interface LightClassBehaviorTestBase : UastPluginSelection {
+    // NB: ported [LightClassBehaviorTest#testIdentifierOffsets]
+    fun checkIdentifierOffsets(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            class A {
+                fun foo() {}
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val foo = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false)
+            .orFail("can't find fun foo")
+        val fooMethodName = foo.javaPsi.nameIdentifier!!
+
+        val offset = fooMethodName.textOffset
+        val range = fooMethodName.textRange
+
+        TestCase.assertTrue(offset > 0)
+        TestCase.assertEquals(offset, range.startOffset)
+    }
+
+    // NB: ported [LightClassBehaviorTest#testPropertyAccessorOffsets]
+    fun checkPropertyAccessorOffsets(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            class A {
+                var a: Int
+                    get() = 5
+                    set(v) {}
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val aClass = uFile.findElementByTextFromPsi<UClass>("A", strict = false)
+            .orFail("can't find class A")
+        val getAMethod = aClass.javaPsi.findMethodsByName("getA").single() as PsiMethod
+        val setAMethod = aClass.javaPsi.findMethodsByName("setA").single() as PsiMethod
+
+        val ktClass = aClass.sourcePsi as KtClassOrObject
+        val ktProperty = ktClass.declarations.filterIsInstance<KtProperty>().single()
+
+        TestCase.assertNotSame(getAMethod.textOffset, setAMethod.textOffset)
+
+        TestCase.assertTrue(getAMethod.textOffset > 0)
+        TestCase.assertNotSame(getAMethod.textOffset, ktProperty.textOffset)
+        TestCase.assertEquals(getAMethod.textOffset, ktProperty.getter?.textOffset)
+        TestCase.assertEquals(getAMethod.textOffset, getAMethod.textRange.startOffset)
+
+        TestCase.assertTrue(setAMethod.textOffset > 0)
+        TestCase.assertNotSame(setAMethod.textOffset, ktProperty.textOffset)
+        TestCase.assertEquals(setAMethod.textOffset, ktProperty.setter?.textOffset)
+        TestCase.assertEquals(setAMethod.textOffset, setAMethod.textRange.startOffset)
+    }
+
+}
