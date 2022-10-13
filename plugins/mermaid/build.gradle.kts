@@ -162,7 +162,9 @@ tasks {
 
   publishPlugin {
     dependsOn("patchChangelog")
-    token.set(System.getenv("PUBLISH_TOKEN"))
-    channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
+    token.set(System.getenv("MARKETPLACE_TOKEN") ?: "NONE")
+    System.getenv("MARKETPLACE_CHANNEL")?.let {
+      channels.set(listOf(it))
+    }
   }
 }
