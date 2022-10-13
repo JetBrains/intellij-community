@@ -22,4 +22,12 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testPropertyAccessorOffsets() {
         checkPropertyAccessorOffsets(myFixture)
     }
+
+    fun testFunctionModifierListOffsets() {
+        checkFunctionModifierListOffsets(myFixture)
+    }
+
+    fun testPropertyAccessorModifierListOffsets() {
+        checkPropertyAccessorModifierListOffsets(myFixture)
+    }
 }
