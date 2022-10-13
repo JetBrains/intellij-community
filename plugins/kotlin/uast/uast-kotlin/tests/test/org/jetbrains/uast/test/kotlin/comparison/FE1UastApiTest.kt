@@ -153,11 +153,6 @@ class FE1UastApiTest : AbstractFE1UastTest() {
             doTest("ParametersDisorder", ::checkCallbackForParametersDisorder)
         }
 
-        @TestMetadata("Resolve.kt")
-        fun testResolve() {
-            doTest("Resolve", ::checkCallbackForResolve)
-        }
-
         @TestMetadata("Lambdas.kt")
         fun testLambdas() {
             doTest("Lambdas", ::checkCallbackForLambdas)

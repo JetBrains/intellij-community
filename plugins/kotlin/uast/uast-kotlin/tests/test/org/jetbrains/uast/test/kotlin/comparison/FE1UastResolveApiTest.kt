@@ -89,5 +89,10 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         fun testReceiverFun() {
             doTest("ReceiverFun", ::checkCallbackForReceiverFun)
         }
+
+        @TestMetadata("Resolve.kt")
+        fun testResolve() {
+            doTest("Resolve", ::checkCallbackForResolve)
+        }
     }
 }

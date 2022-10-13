@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.uast.*
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import java.lang.IllegalStateException
@@ -138,6 +140,33 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
         })
         Assert.assertNull("plain `this` has `null` label", thisReference)
+    }
+
+    fun checkCallbackForResolve(uFilePath: String, uFile: UFile) {
+        fun UElement.assertResolveCall(callText: String, methodName: String = callText.substringBefore("(")) {
+            this.findElementByTextFromPsi<UCallExpression>(callText).let {
+                val resolve = it.resolve().sure { "resolving '$callText'" }
+                TestCase.assertEquals(methodName, resolve.name)
+            }
+        }
+
+        uFile.findElementByTextFromPsi<UElement>("bar").getParentOfType<UMethod>()!!.let { barMethod ->
+            barMethod.assertResolveCall("foo()")
+            barMethod.assertResolveCall("inlineFoo()")
+            barMethod.assertResolveCall("forEach { println(it) }", "forEach")
+            barMethod.assertResolveCall("joinToString()")
+            barMethod.assertResolveCall("last()")
+            barMethod.assertResolveCall("setValue(\"123\")")
+            barMethod.assertResolveCall("contains(2 as Int)", "longRangeContains")
+            barMethod.assertResolveCall("IntRange(1, 2)")
+        }
+
+        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.assertResolveCall("foo()")
+
+        uFile.findElementByTextFromPsi<UElement>("listT").getParentOfType<UMethod>()!!.let { barMethod ->
+            barMethod.assertResolveCall("isEmpty()")
+            barMethod.assertResolveCall("foo()")
+        }
     }
 
     fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
