@@ -537,9 +537,10 @@ private class JUnitMalformedSignatureVisitor(
 
   private fun hasMultipleParameters(method: PsiMethod): Boolean {
     val containingClass = method.containingClass
-    return containingClass != null && method.parameterList.parameters.count {
-      !InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
-      !InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER)
+    return containingClass != null && method.parameterList.parameters.count { param ->
+      !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
+      !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER) &&
+      !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
     } > 1 && !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(
       containingClass, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
     )

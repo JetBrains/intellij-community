@@ -106,6 +106,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["title"])
         fun implicitConversionClass(book: Book) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.ValueSource(strings = ["6.7.1", "7.3.3", "7.5.1"])
+        fun test(gradleVersion: String, @org.junit.jupiter.api.io.TempDir projectDir: java.io.File) { }
 
         class Book(val title: String) { }
       }
