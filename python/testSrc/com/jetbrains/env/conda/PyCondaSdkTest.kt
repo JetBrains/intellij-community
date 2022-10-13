@@ -77,6 +77,7 @@ internal class PyCondaSdkTest {
 
     Assert.assertTrue("Bad home path", Files.isExecutable(Path.of(sdk.homePath!!)))
     ensureHomePathCorrect(sdk)
+    Assert.assertEquals("Wrong name", env.envIdentity.userReadableName, sdk.name)
   }
 
   private suspend fun ensureHomePathCorrect(sdk: Sdk) {
