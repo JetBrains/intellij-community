@@ -211,6 +211,9 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     return null;
   }
 
+  /**
+   * @return value < 0 means that no sub indexer id corresponds to the specified file
+   */
   protected int getStoredFileSubIndexerId(int fileId) {
     if (mySubIndexerRetriever == null) throw new IllegalStateException("not a composite indexer");
     try {
