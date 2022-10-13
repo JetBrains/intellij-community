@@ -75,16 +75,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
     return myUploadRoots.computeIfAbsent(remoteRootPath, path -> new LocalUploadVolume(this, id));
   }
 
-  @Override
-  @NotNull
-  public DownloadableVolume createDownloadRoot(@Nullable String remoteRootPath) {
-    String id = nextSyntheticId();
-    if (remoteRootPath == null) {
-      remoteRootPath = "";
-    }
-    return myDownloadRoots.computeIfAbsent(remoteRootPath, path -> new LocalDownloadVolume(this, id, path));
-  }
-
   @NotNull
   @Override
   public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {

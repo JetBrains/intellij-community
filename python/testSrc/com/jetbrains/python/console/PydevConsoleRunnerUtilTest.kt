@@ -46,10 +46,6 @@ class PydevConsoleRunnerUtilTest {
     override fun createUploadRoot(remoteRootPath: String?, temporary: Boolean): TargetEnvironmentRequest.Volume =
       throw UnsupportedOperationException()
 
-    @Deprecated("Use downloadVolumes")
-    override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume =
-      throw UnsupportedOperationException()
-
     override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment = DummyTargetEnvironment(this)
 
     override fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) -> Unit) =

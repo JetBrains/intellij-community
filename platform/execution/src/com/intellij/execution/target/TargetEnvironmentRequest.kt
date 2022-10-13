@@ -106,11 +106,6 @@ interface TargetEnvironmentRequest {
     throw UnsupportedOperationException()
   }
 
-  @Deprecated("Use downloadVolumes")
-  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume {
-    throw UnsupportedOperationException()
-  }
-
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {
     val platform: Platform

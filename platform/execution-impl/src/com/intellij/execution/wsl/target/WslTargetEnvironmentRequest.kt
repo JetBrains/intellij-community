@@ -46,10 +46,6 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingR
     throw UnsupportedOperationException("createUploadRoot is not implemented")
   }
 
-  override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume {
-    throw UnsupportedOperationException("createDownloadRoot is not implemented")
-  }
-
   @Throws(ExecutionException::class)
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
     val distribution = configuration.distribution
