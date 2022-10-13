@@ -46,8 +46,8 @@ public final class IdentifierHighlighterPassFactory {
       r.run();
     }
     finally {
-      TestModeFlags.reset(ourTestingIdentifierHighlighting);
       waitForIdentifierHighlighting();
+      TestModeFlags.reset(ourTestingIdentifierHighlighting);
     }
   }
 

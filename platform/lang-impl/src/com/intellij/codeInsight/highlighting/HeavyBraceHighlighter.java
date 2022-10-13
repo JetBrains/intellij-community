@@ -45,6 +45,7 @@ public abstract class HeavyBraceHighlighter {
    * via the {@link HeavyBraceHighlighter#isAvailable(PsiFile, int) isAvailable()} method.
    * Second, these extensions are polled in unspecified order and first non-null {@link TextRange TextRange} returned.
    * Null is returned if nothing matched or no available extensions ready.
+   * This method is supposed to be called inside a background read action thread.
    *
    * @param file   {@link PsiFile PsiFile} to match in.
    * @param offset An offset in {@link PsiFile PsiFile} {@code file} to match in.
@@ -66,7 +67,8 @@ public abstract class HeavyBraceHighlighter {
   }
 
   /**
-   * Used as a fast check when possible to filter out applicable extensions
+   * Used as a fast check when possible to filter out applicable extensions.
+   * This method is supposed to be called inside a background read action thread.
    *
    * @return false if there is no way of matching anything for the given file and offset, true otherwise
    * @see PsiFile
@@ -77,6 +79,7 @@ public abstract class HeavyBraceHighlighter {
 
   /**
    * Tries to match braces nearby the caret returning text ranges of braces to highlight on match.
+   * This method is supposed to be called inside a background read action thread.
    *
    * @return null if nothing matched or some implementation-specific error occurred,
    * a {@link Pair Pair} of {@link TextRange TextRange} to highlight otherwise.
