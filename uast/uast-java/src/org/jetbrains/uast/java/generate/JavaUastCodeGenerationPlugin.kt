@@ -83,7 +83,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     return when (val replaced = updOldPsi.replace(updNewPsi)) {
       is PsiExpressionStatement -> replaced.expression.toUElementOfExpectedTypes(elementType)
       is PsiMethodCallExpression -> cleanupMethodCall(replaced).toUElementOfExpectedTypes(elementType)
-      is PsiMethodReferenceExpression -> {
+      is PsiReferenceExpression -> {
         JavaCodeStyleManager.getInstance(replaced.project).shortenClassReferences(replaced).toUElementOfExpectedTypes(elementType)
       }
       else -> replaced.toUElementOfExpectedTypes(elementType)

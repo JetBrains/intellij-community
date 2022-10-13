@@ -40,12 +40,7 @@ public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
     String jbColorConstant = JBColor.class.getName() + '.' + buildColorConstantName(element);
     UQualifiedReferenceExpression jbColorConstantReference = pluginElementFactory.createQualifiedReference(jbColorConstant, element);
     if (jbColorConstantReference != null) {
-      UQualifiedReferenceExpression replaced =
-        generationPlugin.replace(awtColorConstantReference, jbColorConstantReference, UQualifiedReferenceExpression.class);
-      if (replaced != null) {
-        // it should be shortened automatically, but is not in tests, see: IDEA-303537
-        generationPlugin.shortenReference(replaced);
-      }
+      generationPlugin.replace(awtColorConstantReference, jbColorConstantReference, UQualifiedReferenceExpression.class);
     }
   }
 
