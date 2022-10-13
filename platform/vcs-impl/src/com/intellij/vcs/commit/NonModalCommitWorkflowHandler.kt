@@ -398,19 +398,35 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return NonModalCommitChecksFailure.ERROR
   }
 
-  private fun runPostCommitChecks(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
+  private fun runPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
     val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
     scope.launch {
       withBackgroundProgressIndicator(project, message("post.commit.checks.progress.text")) {
         val postCommitInfo = createPostCommitInfo(commitInfo)
         withContext(Dispatchers.EDT) {
-          val problems = commitChecks.mapNotNull { AbstractCommitWorkflow.runCommitCheck(project, it, postCommitInfo) }
+          val problems = runAsyncPostCommitChecks(commitChecks, postCommitInfo)
           if (problems.isEmpty()) return@withContext
 
           reportPostCommitChecksFailure(problems)
         }
       }
     }
+  }
+
+  private suspend fun runAsyncPostCommitChecks(commitChecks: List<CommitCheck>,
+                                               postCommitInfo: StaticCommitInfo): MutableList<CommitProblem> {
+    val problems = mutableListOf<CommitProblem>()
+
+    if (isDumb(project)) {
+      if (commitChecks.any { !DumbService.isDumbAware(it) }) {
+        problems += TextCommitProblem(message("before.checkin.post.commit.error.dumb.mode"))
+      }
+    }
+
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo) ?: continue
+    }
+    return problems
   }
 
   private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
@@ -557,7 +573,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected inner class PostCommitChecksRunner : CommitterResultHandler {
     override fun onSuccess() {
-      pendingPostCommitChecks?.let { runPostCommitChecks(it.commitInfo, it.commitChecks) }
+      pendingPostCommitChecks?.let { runPostCommitChecksTask(it.commitInfo, it.commitChecks) }
       pendingPostCommitChecks = null
     }
 
