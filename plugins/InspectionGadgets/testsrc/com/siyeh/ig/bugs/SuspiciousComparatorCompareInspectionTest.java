@@ -31,6 +31,10 @@ public class SuspiciousComparatorCompareInspectionTest extends LightJavaInspecti
   public void testComparatorIsNotReflexive() {
     doTest();
   }
+  
+  public void testComparatorReturnValue() {
+    doTest();
+  }
 
   @Nullable
   @Override
