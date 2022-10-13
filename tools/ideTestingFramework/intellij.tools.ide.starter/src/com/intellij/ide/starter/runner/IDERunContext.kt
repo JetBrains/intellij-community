@@ -333,6 +333,12 @@ data class IDERunContext(
       artifactName = formatArtifactName("event-log-data", testContext.testName)
     )
 
+    testContext.publishArtifact(
+      source = testContext.paths.snapshotsDir,
+      artifactPath = contextName,
+      artifactName = formatArtifactName("snapshots", testContext.testName)
+    )
+
     if (!isRunSuccessful)
       testContext.publishArtifact(
         source = testContext.paths.logsDir,
