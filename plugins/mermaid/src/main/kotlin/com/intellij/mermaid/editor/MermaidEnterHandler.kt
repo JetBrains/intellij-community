@@ -1,15 +1,14 @@
 package com.intellij.mermaid.editor
 
-import com.intellij.mermaid.lang.formatter.MermaidSemanticEditorPosition
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.EXPAND_INDENT_AFTER
-import com.intellij.mermaid.lang.lexer.MermaidTokens
-import com.intellij.mermaid.lang.parser.MermaidElements
-import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.codeInsight.highlighting.BraceMatcher
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.lang.Language
+import com.intellij.mermaid.lang.formatter.MermaidSemanticEditorPosition
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.EXPAND_INDENT_AFTER
+import com.intellij.mermaid.lang.lexer.MermaidTokens
+import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -86,15 +85,17 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
     }
 
     // adjust previous line indent
-    val startOffset = document.getLineStartOffset(line - 1)
-    val endOffset =
-      if (line + 1 < document.lineCount) document.getLineEndOffset(line + 1) else document.getLineEndOffset(line)
+    if (line > 0) {
+      val startOffset = document.getLineStartOffset(line - 1)
+      val endOffset =
+        if (line + 1 < document.lineCount) document.getLineEndOffset(line + 1) else document.getLineEndOffset(line)
 
-    val stamp = document.modificationStamp
-    PsiDocumentManager.getInstance(project).commitDocument(document)
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
-    if (stamp != document.modificationStamp) {
-      caretOffset.set(document.getLineEndOffset(line))
+      val stamp = document.modificationStamp
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
+      if (stamp != document.modificationStamp) {
+        caretOffset.set(document.getLineEndOffset(line))
+      }
     }
 
     return Result.DefaultSkipIndent
