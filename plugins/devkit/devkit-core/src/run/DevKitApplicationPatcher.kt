@@ -38,7 +38,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     if (!vmParametersAsList.contains("--add-opens")) {
-      JUnitDevKitPatcher.appendAddOpensWhenNeeded(jdk, vmParameters)
+      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
     }
 
     if (!isDev) {
