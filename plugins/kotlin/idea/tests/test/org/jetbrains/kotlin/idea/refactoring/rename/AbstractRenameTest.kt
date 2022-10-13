@@ -74,7 +74,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testConfigurationFile = File(testDataPath, fileName())
+        val testConfigurationFile = dataFile()
         val renameObject = loadTestConfiguration(testConfigurationFile)
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
@@ -373,11 +373,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 }
 
-private fun String.toClassId(): ClassId {
-    val relativeClassName = FqName(substringAfterLast('/'))
-    val packageFqName = FqName(substringBeforeLast('/', "").replace('/', '.'))
-    return ClassId(packageFqName, relativeClassName, false)
-}
+private fun String.toClassId(): ClassId = ClassId.fromString(this)
 
 fun loadTestConfiguration(testFile: File): JsonObject {
     val fileText = FileUtil.loadFile(testFile, true)
