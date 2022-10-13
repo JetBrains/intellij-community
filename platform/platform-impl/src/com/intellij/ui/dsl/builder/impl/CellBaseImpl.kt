@@ -57,7 +57,6 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
       is AlignX -> setAlign(align, null)
       is AlignY -> setAlign(null, align)
       is AlignBoth -> {
-        align as AlignBothImpl
         setAlign(align.alignX, align.alignY)
       }
     }
