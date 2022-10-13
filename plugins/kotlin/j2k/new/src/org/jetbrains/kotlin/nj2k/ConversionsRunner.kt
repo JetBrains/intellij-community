@@ -23,11 +23,9 @@ object ConversionsRunner {
         BoxedTypeOperationsConversion(context),
         AnyWithStringConcatenationConversion(context),
         AssignmentExpressionUnfoldingConversion(context),
-        ThrowStatementConversion(context),
         ArrayInitializerConversion(context),
-        TryStatementConversion(context),
+        JavaStatementConversion(context),
         EnumFieldAccessConversion(context),
-        SynchronizedStatementConversion(context),
         NullabilityAnnotationsConversion(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
@@ -39,7 +37,6 @@ object ConversionsRunner {
         InsertDefaultPrimaryConstructorConversion(context),
         ClassMemberConversion(context),
         JavaStandardMethodsConversion(context),
-        AssertStatementConversion(context),
         SwitchToWhenConversion(context),
         YieldStatementConversion(context),
         ForConversion(context),
@@ -48,7 +45,6 @@ object ConversionsRunner {
         EqualsOperatorConversion(context),
         TypeMappingConversion(context),
         InternalDeclarationConversion(context),
-
         InnerClassConversion(context),
         StaticsToCompanionExtractConversion(context),
         InterfaceWithFieldConversion(context),
@@ -64,7 +60,6 @@ object ConversionsRunner {
         LiteralConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
         FunctionalInterfacesConversion(context),
-
         FilterImportsConversion(context),
         AddElementsInfoConversion(context)
     )
