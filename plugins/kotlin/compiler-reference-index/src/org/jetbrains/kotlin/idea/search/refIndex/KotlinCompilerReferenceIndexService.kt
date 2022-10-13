@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -459,22 +460,21 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
         BuildManager.getInstance().runCommand(compilationFinished)
     }
 
-private fun extractFqNames(element: PsiElement): List<FqName>? {
-    extractFqName(element)?.let { return listOf(it) }
-    return when (element) {
-        is PsiMethod -> extractFqNamesFromPsiMethod(element)
-        is KtParameter -> extractFqNamesFromParameter(element)
+private fun extractFqNames(element: PsiElement): List<FqName>? = when (element) {
+    is PsiMethod -> extractFqNamesFromPsiMethod(element)
+    is KtParameter -> extractFqNamesFromParameter(element)
+    is KtObjectDeclaration -> extractFqNamesFromObject(element)
+    else -> when (element) {
+        is KtConstructor<*> -> element.getContainingClassOrObject().fqName
+        is KtClass, is KtNamedFunction, is KtProperty, is PsiClass, is PsiField -> element.kotlinFqName
         else -> null
-    }
+    }?.let(::listOf)
 }
 
-private fun extractFqName(element: PsiElement): FqName? = when (element) {
-    is KtClassOrObject, is PsiClass -> element.kotlinFqName
-    is KtConstructor<*> -> element.getContainingClassOrObject().fqName
-    is KtNamedFunction -> element.fqName
-    is KtProperty -> element.fqName
-    is PsiField -> element.kotlinFqName
-    else -> null
+fun extractFqNamesFromObject(objectDeclaration: KtObjectDeclaration): List<FqName>? {
+    val fqName = objectDeclaration.fqName ?: return null
+    if (!objectDeclaration.isCompanion()) return listOf(fqName)
+    return listOf(fqName, fqName.child(Name.identifier("invoke")))
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
