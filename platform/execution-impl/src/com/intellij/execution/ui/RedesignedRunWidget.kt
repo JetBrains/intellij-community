@@ -2,6 +2,7 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.Executor
+import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
@@ -61,11 +64,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
   }
 }
 
-private data class RunToolbarData(val project: Project,
-                                  val chosenRunConfiguration: RunnerAndConfigurationSettings?,
-                                  val isRunning: Boolean)
-
-private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
+private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -74,7 +73,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return createRunActionToolbar {
-      presentation.getClientProperty(runToolbarDataKey)?.isRunning ?: false
+      presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
       Wrapper(it).apply { border = JBUI.Borders.empty(5, 2) }
     }
@@ -86,17 +85,35 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
       return
     }
     e.presentation.isEnabled = false
-    val project = e.project ?: return
+
+    e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
+  }
+
+  private fun isSomeRunningNow(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
     val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
-    val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
-    val someRunning = !runningDescriptors.isEmpty()
-    e.presentation.putClientProperty(runToolbarDataKey, RunToolbarData(project, selectedConfiguration, someRunning))
+
+    if (selectedConfiguration == null) {
+      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
+        // cannot get current PSI file for the Run Current configuration in dumb mode
+        return false
+      }
+      val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
+      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
+      val runConfigsForCurrentFile = ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(psiFile, false)
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { runConfigsForCurrentFile.contains(it) }
+      return !runningDescriptors.isEmpty()
+    }
+    else {
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
+      return !runningDescriptors.isEmpty()
+    }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     val data = presentation.getClientProperty(runToolbarDataKey) ?: return
     val dataPropertyName = "old-run-toolbar-data"
-    val oldData = component.getClientProperty(dataPropertyName) as? RunToolbarData
+    val oldData = component.getClientProperty(dataPropertyName) as? Boolean
     if (oldData == null) {
       component.putClientProperty(dataPropertyName, data)
     }
