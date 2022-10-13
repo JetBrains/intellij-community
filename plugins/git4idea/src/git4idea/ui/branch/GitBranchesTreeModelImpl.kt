@@ -35,7 +35,7 @@ class GitBranchesTreeModelImpl(
     !repositories.any { repo -> repo.currentBranch == it }
   } then compareBy {
     !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(it), repo, it.name) }
-  } then compareBy { it.name }
+  } then compareBy { !(isPrefixGrouping && it.name.contains('/')) } then compareBy { it.name }
 
   private lateinit var localBranchesTree: LazyBranchesSubtreeHolder
   private lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
@@ -222,7 +222,7 @@ class GitBranchesTreeModelImpl(
         else {
           groups.compute(firstPathPart) { _, currentList ->
             (currentList ?: mutableListOf()) + (restOfThePath to branch)
-          }
+          }?.let { group -> result[firstPathPart] = group }
         }
       }
 
