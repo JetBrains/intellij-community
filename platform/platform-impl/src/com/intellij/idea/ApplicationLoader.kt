@@ -41,7 +41,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
-import com.jetbrains.rd.util.forEachReversed
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
@@ -355,40 +354,38 @@ private fun addActivateAndWindowsCliListeners() {
 // find a frame to activate
 private fun findVisibleFrame(): Window? {
   // we assume that the most recently created frame is the most relevant one
-  Frame.getFrames().forEachReversed {
-    if (it.isVisible) {
-      return it
-    }
-  }
-  return null
+  return Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
 }
 
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-  val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
-    CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
-  }
-  else {
-    CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
-  }
-
-  // not a part of handleExternalCommand invocation - invokeLater
-  ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
-    if (result.showErrorIfFailed()) {
-      return@launch
-    }
-
-    if (result.project == null) {
+  if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
+    val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
+    if (!result.showErrorIfFailed()) {
       findVisibleFrame()?.let { frame ->
         AppIcon.getInstance().requestFocus(frame)
       }
     }
-    else {
-      WindowManager.getInstance().getIdeFrame(result.project)?.let {
-        AppIcon.getInstance().requestFocus(it)
+    return result
+  }
+  else {
+    val result = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+    // not a part of handleExternalCommand invocation - invokeLater
+    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
+      if (!result.showErrorIfFailed()) {
+        if (result.project == null) {
+          findVisibleFrame()?.let { frame ->
+            AppIcon.getInstance().requestFocus(frame)
+          }
+        }
+        else {
+          WindowManager.getInstance().getIdeFrame(result.project)?.let {
+            AppIcon.getInstance().requestFocus(it)
+          }
+        }
       }
     }
+    return result
   }
-  return result
 }
 
 fun findStarter(key: String): ApplicationStarter? {

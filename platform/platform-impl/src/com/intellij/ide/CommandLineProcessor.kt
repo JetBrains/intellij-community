@@ -224,10 +224,10 @@ object CommandLineProcessor {
     }
 
     val result = processApplicationStarters(args, currentDirectory)
-    return result ?: processOpenFile(args, currentDirectory)
+    return if (result == null) processOpenFile(args, currentDirectory) else CommandLineProcessorResult(project = null, result = result)
   }
 
-  private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CommandLineProcessorResult? {
+  private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CliResult? {
     val command = args.first()
 
     val starter = try {
@@ -242,15 +242,14 @@ object CommandLineProcessor {
     }
 
     if (!starter.canProcessExternalCommandLine()) {
-      return createError(IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
-                                           ApplicationNamesInfo.getInstance().productName))
+      return CliResult(1, IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
+                                            ApplicationNamesInfo.getInstance().productName))
     }
 
     LOG.info("Processing command with $starter")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
-      val result = starter.processExternalCommandLine(args, currentDirectory)
-      return CommandLineProcessorResult(project = null, result = result)
+      return starter.processExternalCommandLine(args, currentDirectory)
     }
 
     val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) {
@@ -260,8 +259,7 @@ object CommandLineProcessor {
       ModalityState.defaultModalityState()
     }
     return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
-      val result = starter.processExternalCommandLine(args, currentDirectory)
-      CommandLineProcessorResult(project = null, result = result)
+      starter.processExternalCommandLine(args, currentDirectory)
     }
   }
 

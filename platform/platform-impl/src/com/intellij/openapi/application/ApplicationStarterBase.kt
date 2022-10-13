@@ -25,16 +25,15 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     get() = false
 
   companion object {
-    protected fun saveAll() {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      ApplicationManager.getApplication().saveSettings()
-    }
-
     @JvmStatic
     protected fun saveIfNeeded(file: VirtualFile?) {
-      if (file == null) return
+      if (file == null) {
+        return
+      }
       val document = FileDocumentManager.getInstance().getCachedDocument(file)
-      if (document != null) FileDocumentManager.getInstance().saveDocument(document)
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document)
+      }
     }
   }
 
