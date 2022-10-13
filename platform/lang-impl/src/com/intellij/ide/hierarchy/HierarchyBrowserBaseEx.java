@@ -665,7 +665,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
       @Nls String currentViewType = browser.getCurrentViewType();
@@ -696,7 +696,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       presentation.setVisible(true);
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
         presentation.setEnabledAndVisible(false);
       }
