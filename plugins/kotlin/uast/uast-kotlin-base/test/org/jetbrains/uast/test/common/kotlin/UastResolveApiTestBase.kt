@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.*
-import org.jetbrains.uast.visitor.UastVisitor
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import java.lang.IllegalStateException
 
@@ -21,14 +21,10 @@ interface UastResolveApiTestBase : UastPluginSelection {
         val test = facade.methods.find { it.name == "test" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         val resolvedBinaryOperators: MutableList<PsiMethod> = mutableListOf()
-        test.accept(object : UastVisitor {
-            override fun visitElement(node: UElement): Boolean {
-                return false
-            }
-
+        test.accept(object : AbstractUastVisitor() {
             override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
                 node.resolveOperator()?.let { resolvedBinaryOperators.add(it) }
-                return false
+                return super.visitBinaryExpression(node)
             }
         })
         Assert.assertEquals("Expect != (String.equals)", 1, resolvedBinaryOperators.size)
@@ -39,19 +35,15 @@ interface UastResolveApiTestBase : UastPluginSelection {
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         resolvedBinaryOperators.clear()
         val resolvedUnaryOperators: MutableList<PsiMethod> = mutableListOf()
-        kt44412.accept(object : UastVisitor {
-            override fun visitElement(node: UElement): Boolean {
-                return false
-            }
-
+        kt44412.accept(object : AbstractUastVisitor() {
             override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
                 node.resolveOperator()?.let { resolvedBinaryOperators.add(it) }
-                return false
+                return super.visitBinaryExpression(node)
             }
 
             override fun visitPrefixExpression(node: UPrefixExpression): Boolean {
                 node.resolveOperator()?.let { resolvedUnaryOperators.add(it) }
-                return false
+                return super.visitPrefixExpression(node)
             }
         })
         Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals) are invisible", 0, resolvedBinaryOperators.size)
@@ -64,14 +56,10 @@ interface UastResolveApiTestBase : UastPluginSelection {
         val test = facade.methods.find { it.name == "test" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         val resolvedOperators: MutableList<PsiMethod> = mutableListOf()
-        test.accept(object : UastVisitor {
-            override fun visitElement(node: UElement): Boolean {
-                return false
-            }
-
+        test.accept(object : AbstractUastVisitor() {
             override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
                 node.resolveOperator()?.let { resolvedOperators.add(it) }
-                return false
+                return super.visitBinaryExpression(node)
             }
         })
         Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus) are invisible", 0, resolvedOperators.size)
@@ -83,14 +71,10 @@ interface UastResolveApiTestBase : UastPluginSelection {
         // val x = Foo::bar
         val x = facade.fields.single()
         var barReference: PsiElement? = null
-        x.accept(object : UastVisitor {
-            override fun visitElement(node: UElement): Boolean {
-                return false
-            }
-
+        x.accept(object : AbstractUastVisitor() {
             override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
                 barReference = node.resolve()
-                return false
+                return super.visitCallableReferenceExpression(node)
             }
         })
         Assert.assertNotNull("Foo::bar is not resolved", barReference)
@@ -147,14 +131,10 @@ interface UastResolveApiTestBase : UastPluginSelection {
         val foo = facade.methods.find { it.name == "foo" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
         var thisReference: PsiElement? = foo
-        foo.accept(object : UastVisitor {
-            override fun visitElement(node: UElement): Boolean {
-                return false
-            }
-
+        foo.accept(object : AbstractUastVisitor() {
             override fun visitThisExpression(node: UThisExpression): Boolean {
                 thisReference = node.resolve()
-                return false
+                return super.visitThisExpression(node)
             }
         })
         Assert.assertNull("plain `this` has `null` label", thisReference)
