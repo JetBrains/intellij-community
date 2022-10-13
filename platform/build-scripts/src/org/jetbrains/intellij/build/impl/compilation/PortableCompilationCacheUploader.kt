@@ -67,7 +67,6 @@ internal class PortableCompilationCacheUploader(
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
     uploadCompilationOutputs(currentSourcesState, uploader, tasks)
     ForkJoinTask.invokeAll(tasks)
-    uploadToS3("--include", "*")
 
     messages.reportStatisticValue("Compilation upload time, ms", (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString()))
     val totalOutputs = (sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
@@ -75,11 +74,13 @@ internal class PortableCompilationCacheUploader(
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
     uploadMetadata()
+    uploadToS3()
   }
 
-  private fun uploadToS3(vararg args: String) {
-    spanBuilder("aws s3 sync").setAttribute("args", args.joinToString(separator = " ")).useWithScope {
-      awsS3Cli("sync", "--no-progress", *args, "$s3Folder", "s3://intellij-jps-cache")
+  private fun uploadToS3() {
+    spanBuilder("aws s3 sync").useWithScope {
+      awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache")
+      println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
     }
   }
 
@@ -101,7 +102,6 @@ internal class PortableCompilationCacheUploader(
     val sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
     moveFile(sourceStateFile, s3Folder.resolve(metadataPath))
-    uploadToS3("--exclude", "*", "--include", metadataPath)
   }
 
   private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
