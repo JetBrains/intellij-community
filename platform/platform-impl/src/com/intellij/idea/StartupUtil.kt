@@ -80,7 +80,6 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
-import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
@@ -206,7 +205,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
-  // async - handle error separatly
+  // async - handle error separately
   val telemetryInitJob = async {
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
@@ -394,11 +393,8 @@ internal val isUsingSeparateWriteThread: Boolean
 
 // called by the app after startup
 @Synchronized
-fun addExternalInstanceListener(processor: Function<List<String>, Future<CliResult>>) {
-  if (socketLock == null) {
-    throw AssertionError("Not initialized yet")
-  }
-  socketLock!!.setCommandProcessor(processor)
+fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
+  requireNotNull(socketLock) { "Not initialized yet" }.setCommandProcessor(processor)
 }
 
 // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)

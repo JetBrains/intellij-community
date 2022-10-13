@@ -42,7 +42,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
     else -> PyTargetAwareAdditionalData(flavorAndData, targetConfig)
   }
 
-  val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName("$condaIdentity@$fullCondaPathOnTarget", existingSdks),
+  val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
                            PythonSdkType.getInstance())
   sdk.sdkAdditionalData = additionalData
   sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
@@ -73,6 +73,8 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
     Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
                              "~/miniconda3/bin/conda",
                              "/usr/local/bin/conda",
+                             "~/opt/miniconda3/condabin/conda",
+                             "~/opt/anaconda3/condabin/conda",
                              "/opt/miniconda3/condabin/conda",
                              "/opt/anaconda3/condabin/conda")
     Platform.WINDOWS -> arrayOf("%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",

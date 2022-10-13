@@ -93,6 +93,6 @@ interface ApplicationStarter {
   /** @see .canProcessExternalCommandLine
    */
   suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
-    throw UnsupportedOperationException("Class " + javaClass.name + " must implement `processExternalCommandLineAsync()`")
+    throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
   }
 }

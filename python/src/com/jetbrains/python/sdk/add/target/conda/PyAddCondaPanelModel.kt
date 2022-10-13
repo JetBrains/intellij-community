@@ -103,7 +103,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Name for the new conda environment
    */
-  val newEnvNameRwProperty: ObservableMutableProperty<String> = propertyGraph.property("")
+  val newEnvNameRwProperty: ObservableMutableProperty<String> = propertyGraph.property(if (project.isDefault) "" else project.name)
 
   /**
    * Python version for the new conda environment dropdown
@@ -122,7 +122,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Loaded list of existing conda envs
    */
-  private var condaEnvs: Result<CondaInfo> = Result.failure(Exception("Check conda path and click 'OK"))
+  private var condaEnvs: Result<CondaInfo> = Result.failure(Exception(PyBundle.message("python.sdk.conda.no.exec")))
 
   /**
    * To be called when user sets path to conda and clicks "On".

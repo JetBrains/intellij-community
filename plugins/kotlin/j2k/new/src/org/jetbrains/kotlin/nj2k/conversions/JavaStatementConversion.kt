@@ -5,30 +5,54 @@ package org.jetbrains.kotlin.nj2k.conversions
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
+import org.jetbrains.kotlin.nj2k.kotlinAssert
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-
-class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element !is JKJavaTryStatement) return recurse(element)
-        return if (element.isTryWithResources)
-            recurse(convertTryStatementWithResources(element))
-        else
-            recurse(convertNoResourcesTryStatement(element))
+        if (element !is JKStatement) return recurse(element)
+        return recurse(
+            when (element) {
+                is JKJavaThrowStatement -> convertThrow(element)
+                is JKJavaAssertStatement -> convertAssert(element)
+                is JKJavaSynchronizedStatement -> convertSynchronized(element)
+                is JKJavaTryStatement -> convertTry(element)
+                else -> element
+            }
+        )
     }
 
-    private fun convertNoResourcesTryStatement(tryStatement: JKJavaTryStatement): JKStatement =
-        JKExpressionStatement(
-            JKKtTryExpression(
-                tryStatement::tryBlock.detached(),
-                tryStatement::finallyBlock.detached(),
-                tryStatement.catchSections.flatMap(::convertCatchSection)
-            )
-        ).withFormattingFrom(tryStatement)
+    private fun convertThrow(element: JKJavaThrowStatement): JKExpressionStatement =
+        JKExpressionStatement(JKKtThrowExpression(element::exception.detached()))
+
+    private fun convertAssert(element: JKJavaAssertStatement): JKExpressionStatement {
+        val messageExpression =
+            if (element.description is JKStubExpression) null
+            else JKLambdaExpression(JKExpressionStatement(element::description.detached()), parameters = emptyList())
+        return JKExpressionStatement(kotlinAssert(element::condition.detached(), messageExpression, typeFactory))
+    }
+
+    private fun convertSynchronized(element: JKJavaSynchronizedStatement): JKExpressionStatement {
+        element.invalidate()
+        val lambdaBody = JKLambdaExpression(JKBlockStatement(element.body), parameters = emptyList())
+        return JKExpressionStatement(
+            JKCallExpressionImpl(
+                symbolProvider.provideMethodSymbol("kotlin.synchronized"),
+                JKArgumentList(element.lockExpression, lambdaBody)
+            ).withFormattingFrom(element)
+        )
+    }
+
+    private fun convertTry(element: JKJavaTryStatement): JKStatement =
+        if (element.isTryWithResources) {
+            convertTryStatementWithResources(element)
+        } else {
+            convertNoResourcesTryStatement(element)
+        }
 
     private fun convertTryStatementWithResources(tryStatement: JKJavaTryStatement): JKStatement {
         val body =
@@ -83,4 +107,13 @@ class TryStatementConversion(context: NewJ2kConverterContext) : RecursiveApplica
             ).withFormattingFrom(javaCatchSection)
         }
     }
+
+    private fun convertNoResourcesTryStatement(tryStatement: JKJavaTryStatement): JKStatement =
+        JKExpressionStatement(
+            JKKtTryExpression(
+                tryStatement::tryBlock.detached(),
+                tryStatement::finallyBlock.detached(),
+                tryStatement.catchSections.flatMap(::convertCatchSection)
+            )
+        ).withFormattingFrom(tryStatement)
 }

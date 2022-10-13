@@ -2,9 +2,10 @@
 package com.intellij.ui.win
 
 import com.intellij.ide.CliResult
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.AppIcon
 import java.nio.file.Path
 
 internal class RecentProjectApplication : ApplicationStarterBase(1) {
@@ -15,7 +16,12 @@ internal class RecentProjectApplication : ApplicationStarterBase(1) {
     get() = "This command is used for internal purpose only." //NON-NLS
 
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
-    ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(args[1]).toAbsolutePath().normalize(), OpenProjectTask())
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(args[1]).toAbsolutePath().normalize())
+    if (project != null) {
+      WindowManager.getInstance().getIdeFrame(project)?.let {
+        AppIcon.getInstance().requestFocus(it)
+      }
+    }
     return CliResult.OK
   }
 }

@@ -292,6 +292,10 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
 
+
+    <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
+                 description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
+
     <registryKey key="maven.dedicated.indexer" defaultValue="false"
                  description="Dedicated maven indexer" restartRequired="true"/>
 

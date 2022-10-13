@@ -6,7 +6,7 @@ public final class BuildTargetState {
   private final String hash;
   private final String relativePath;
 
-  private BuildTargetState(String hash, String relativePath) {
+  public BuildTargetState(String hash, String relativePath) {
     this.hash = hash;
     this.relativePath = relativePath;
   }

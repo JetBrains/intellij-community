@@ -1205,12 +1205,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     @Override
     protected PsiElement @NotNull [] getSelectedPSIElements(@NotNull DataContext dataContext) {
-      return AbstractProjectViewPane.this.getSelectedPSIElements();
+      Object[] objects = dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (objects == null) return PsiElement.EMPTY_ARRAY;
+      return PsiUtilCore.toPsiElementArray(ContainerUtil.flatMap(Arrays.asList(objects), o -> getElementsFromNode(o)));
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override

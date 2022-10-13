@@ -197,10 +197,11 @@ public final class Utils {
     RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
                           JBPopupFactory.getInstance().guessBestPopupLocation(context);
     Runnable removeIcon = addLoadingIcon(point, place);
+    List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("expandActionGroup").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
     try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
-      return computeWithRetries(
+      return result = computeWithRetries(
         () -> expandActionGroupImpl(group, presentationFactory, context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
         null, removeIcon);
     }
@@ -210,7 +211,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to expandActionGroup@" + place);
       }
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed);
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed, result);
     }
   }
 
@@ -341,16 +342,17 @@ public final class Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
+    List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
     try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
       Runnable removeIcon = addLoadingIcon(progressPoint, place);
-      List<AnAction> list = computeWithRetries(
+      result = computeWithRetries(
         () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
         expire, removeIcon);
       boolean checked = group instanceof CheckedActionGroup;
       boolean multiChoice = isMultiChoiceGroup(group);
-      fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+      fillMenuInner(component, result, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
     }
     finally {
       long elapsed = TimeoutUtil.getDurationMillis(start);
@@ -358,7 +360,8 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to fillMenu@" + place);
       }
-      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, elapsed);
+      boolean submenu = component instanceof ActionMenu;
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, !submenu ? place : place + " (submenu)", elapsed, result);
     }
   }
 

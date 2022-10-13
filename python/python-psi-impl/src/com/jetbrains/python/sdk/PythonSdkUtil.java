@@ -521,7 +521,7 @@ public class PythonSdkUtil {
   }
 
   @Nullable
-  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
+  public static VirtualFile findCondaMeta(@Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
     }
