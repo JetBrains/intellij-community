@@ -197,7 +197,7 @@
                  key="feature.suggester.send.statistics"/>
     <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
                  key="feature.suggester.force.show.suggestions"/>
-    <registryKey defaultValue="true" description="Should suggesters be enabled in settings by default or not"
+    <registryKey defaultValue="false" description="Should suggesters be enabled in settings by default or not"
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
         bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
