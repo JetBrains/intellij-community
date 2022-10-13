@@ -1,36 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.win;
+package com.intellij.ui.win
 
-import com.intellij.ide.CliResult;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.openapi.application.ApplicationStarterBase;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.CliResult
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.ApplicationStarterBase
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import java.nio.file.Path
 
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+internal class RecentProjectApplication : ApplicationStarterBase(1) {
+  override val commandName: String
+    get() = "reopen"
 
-final class RecentProjectApplication extends ApplicationStarterBase {
-  RecentProjectApplication() {
-    super(1);
-  }
+  override val usageMessage: String
+    get() = "This command is used for internal purpose only." //NON-NLS
 
-  @Override
-  public String getCommandName() {
-    return "reopen";
-  }
-
-  @Override
-  public String getUsageMessage() {
-    return "This command is used for internal purpose only."; //NON-NLS
-  }
-
-  @NotNull
-  @Override
-  protected CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), OpenProjectTask.build());
-    return CompletableFuture.completedFuture(CliResult.OK);
+  override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
+    ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(args[1]).toAbsolutePath().normalize(), OpenProjectTask())
+    return CliResult.OK
   }
 }
