@@ -10,7 +10,6 @@
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
         <dependency maven-id="io.ktor:ktor-websocket-serialization-jvm" />
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
-        <dependency maven-id="io.ktor:ktor-websockets-jvm" />
       </exclude>
     </properties>
     <CLASSES>
@@ -20,6 +19,7 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.2/ktor-events-jvm-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.1.2/ktor-http-cio-jvm-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.1.2/ktor-network-jvm-2.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.2/ktor-websockets-jvm-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.1.2/ktor-network-tls-jvm-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.2/ktor-utils-jvm-2.1.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.2/ktor-io-jvm-2.1.2.jar!/" />
@@ -32,6 +32,7 @@
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.1.2/ktor-events-jvm-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.1.2/ktor-http-cio-jvm-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.1.2/ktor-network-jvm-2.1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.1.2/ktor-websockets-jvm-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.1.2/ktor-network-tls-jvm-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.1.2/ktor-utils-jvm-2.1.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.1.2/ktor-io-jvm-2.1.2-sources.jar!/" />
