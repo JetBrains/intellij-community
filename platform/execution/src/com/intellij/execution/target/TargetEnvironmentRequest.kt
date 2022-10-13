@@ -120,20 +120,6 @@ interface TargetEnvironmentRequest {
     fun createUpload(localPath: String): TargetValue<String>
   }
 
-  @Deprecated("Use TargetEnvironment.DownloadVolume")
-  interface DownloadableVolume : Volume {
-    val remoteRoot: String
-
-    /**
-     * Creates the requirement to download the local path from the target environment.
-     *
-     * Returned value has remote promise resolved to `getRemoteRoot().resolve(rootRelativePath).
-     * Local value is a promise which is resolved just before environment termination, when the files are actually downloaded from
-     * target to local machine.
-     */
-    fun createDownload(rootRelativePath: String): TargetValue<String>
-  }
-
   /**
    * Prepares the actual environment.
    * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed [progressIndicator].

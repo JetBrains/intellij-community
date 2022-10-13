@@ -6,7 +6,6 @@ import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetValue;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,6 @@ import java.util.Set;
 public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest {
   private static int nextSyntheticId = 0;
   private Volume myDefaultVolume;
-  private final Map<String, LocalDownloadVolume> myDownloadRoots = new LinkedHashMap<>();
   private final Map<String, LocalUploadVolume> myUploadRoots = new LinkedHashMap<>();
 
   public LocalTargetEnvironmentRequest() {
@@ -120,33 +118,6 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
     @Override
     public TargetValue<String> createUpload(@NotNull String localPath) {
       return TargetValue.fixed(localPath);
-    }
-  }
-
-  private static class LocalDownloadVolume extends LocalUploadVolume implements TargetEnvironmentRequest.DownloadableVolume {
-    private final String myRootPath;
-
-    LocalDownloadVolume(@NotNull LocalTargetEnvironmentRequest request, @NotNull String volumeId, @NotNull String rootPath) {
-      super(request, volumeId);
-      myRootPath = rootPath;
-    }
-
-    @Override
-    @NotNull
-    public String getRemoteRoot() {
-      return myRootPath;
-    }
-
-    @Override
-    @NotNull
-    public TargetValue<String> createDownload(@NotNull String rootRelativePath) {
-      String fullPath = concatPaths(myRootPath, rootRelativePath);
-      return TargetValue.fixed(fullPath);
-    }
-
-    @NotNull
-    private static String concatPaths(@NotNull String parent, @NotNull String child) {
-      return StringUtil.isEmptyOrSpaces(parent) ? child : parent + Platform.current().fileSeparator + child;
     }
   }
 }
