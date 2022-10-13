@@ -11,6 +11,7 @@ import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
+import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
@@ -369,17 +370,9 @@ private suspend fun getFocusedData(): DataContext = suspendCancellableCoroutine 
 }
 
 private fun buildModel(ctx: DataContext): List<NavBarVmItem> {
-  val result = arrayListOf<NavBarVmItem>()
-  var element = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
-  while (element != null) {
-    val p = element.presentation()
-    result.add(NavBarVmItem(element.createPointer(), p, element.javaClass))
-    element = element.findParent()
+  val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
+                    ?: return emptyList()
+  return contextItem.pathToItem().map {
+    NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
   }
-  return (result as List<NavBarVmItem>).asReversed()
 }
-
-private fun NavBarItem.findParent(): NavBarItem? =
-  NavBarItemProvider.EP_NAME
-    .extensionList
-    .firstNotNullOfOrNull { ext -> ext.findParent(this) }
