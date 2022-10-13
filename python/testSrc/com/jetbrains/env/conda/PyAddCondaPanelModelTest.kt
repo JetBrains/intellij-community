@@ -99,6 +99,9 @@ class PyAddCondaPanelModelTest {
 
     model.condaActionCreateNewEnvRadioRwProp.set(true)
     model.condaActionUseExistingEnvRadioRwProp.set(false)
+    Assert.assertEquals("Env name not set", projectRule.project.name, model.newEnvNameRwProperty.get())
+
+    model.newEnvNameRwProperty.set("")
     Assert.assertNotNull("No validation error, but conda env name not set", model.getValidationError())
 
     model.newEnvNameRwProperty.set("SomeEnvName")
