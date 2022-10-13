@@ -195,53 +195,62 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // return actual children
   private static @NotNull List<? extends ChildInfo> persistAllChildren(VirtualFile dir, int id) {
-    NewVirtualFileSystem fs = replaceWithNativeFS(getFileSystem(dir));
-    Map<String, ChildInfo> justCreated = new HashMap<>();
-    String[] fsNames = VfsUtil.filterNames(fs.list(dir));
-    ListResult saved = FSRecords.update(dir, id, current -> {
-      List<? extends ChildInfo> currentChildren = current.children;
-      if (fsNames.length == 0 && !currentChildren.isEmpty()) {
-        return current;
-      }
-      // preserve current children which match fsNames (to have stable id)
-      // (on case-insensitive systems, replace those from current with case-changes ones from fsNames preserving the id)
-      // add those from fsNames which are absent from current
-      boolean caseSensitive = dir.isCaseSensitive();
-      Set<String> toAddNames = CollectionFactory.createFilePathSet(fsNames, caseSensitive);
-      for (ChildInfo currentChild : currentChildren) {
-        toAddNames.remove(currentChild.getName().toString());
-      }
+    NewVirtualFileSystem fs = getFileSystem(dir);
 
-      List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
-      if (fs instanceof BatchingFileSystem) {
-        Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, toAddNames);
-        for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
-          String newName = entry.getKey();
-          FileAttributes attrs = entry.getValue();
-          String target = attrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newName)) : null;
-          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, attrs, target);
-          ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
-          toAddChildren.add(newChild);
+    try {
+      String[] fsNames = VfsUtil.filterNames(fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir));
+
+      Map<String, ChildInfo> justCreated = new HashMap<>();
+      ListResult saved = FSRecords.update(dir, id, current -> {
+        List<? extends ChildInfo> currentChildren = current.children;
+        if (fsNames.length == 0 && !currentChildren.isEmpty()) {
+          return current;
         }
-      }
-      else {
-        for (String newName : toAddNames) {
-          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, null, null);
-          if (childData != null) {
+        // preserve current children which match fsNames (to have stable id)
+        // (on case-insensitive systems, replace those from current with case-changes ones from fsNames preserving the id)
+        // add those from fsNames which are absent from current
+        boolean caseSensitive = dir.isCaseSensitive();
+        Set<String> toAddNames = CollectionFactory.createFilePathSet(fsNames, caseSensitive);
+        for (ChildInfo currentChild : currentChildren) {
+          toAddNames.remove(currentChild.getName().toString());
+        }
+
+        List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
+        if (fs instanceof BatchingFileSystem) {
+          Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, toAddNames);
+          for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
+            String newName = entry.getKey();
+            FileAttributes attrs = entry.getValue();
+            String target = attrs.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(dir, newName)) : null;
+            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, attrs, target);
             ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
             toAddChildren.add(newChild);
           }
         }
+        else {
+          for (String newName : toAddNames) {
+            Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, null, null);
+            if (childData != null) {
+              ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
+              toAddChildren.add(newChild);
+            }
+          }
+        }
+
+        // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
+        toAddChildren.sort(ChildInfo.BY_ID);
+        return current.merge(toAddChildren, caseSensitive);
+      });
+
+      setChildrenCached(id);
+
+      return saved.children;
+    }
+    finally {
+      if (fs instanceof LocalFileSystemImpl) {
+        ((LocalFileSystemImpl)fs).clearListCache();
       }
-
-      // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
-      toAddChildren.sort(ChildInfo.BY_ID);
-      return current.merge(toAddChildren, caseSensitive);
-    });
-
-    setChildrenCached(id);
-
-    return saved.children;
+    }
   }
 
   private static void setChildrenCached(int id) {
@@ -1243,7 +1252,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) return;
     parent = (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
-    NewVirtualFileSystem fs = replaceWithNativeFS(getFileSystem(parent));
+    NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
     for (VFileCreateEvent createEvent : createEvents) {

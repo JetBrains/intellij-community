@@ -130,7 +130,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
-  private static @NotNull String toIoPath(@NotNull VirtualFile file) {
+  protected static @NotNull String toIoPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (path.length() == 2 && SystemInfo.isWindows && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
       // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
