@@ -22,7 +22,6 @@ import java.awt.event.*
 import javax.swing.*
 
 private fun registerListActions(list: JList<NavBarVmItem>, popup: LightweightHint, vm: NavBarPopupVm) {
-
   list.actionMap.put(ListActions.Left.ID, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
       vm.popupResult(PopupResultLeft)
@@ -50,7 +49,6 @@ private fun registerListActions(list: JList<NavBarVmItem>, popup: LightweightHin
       popup.hide(true)
     }
   })
-
 }
 
 internal class NavigationBarPopup(private val vm: NavBarPopupVm) : LightweightHint(createPopupContents(vm)) {
@@ -58,38 +56,37 @@ internal class NavigationBarPopup(private val vm: NavBarPopupVm) : LightweightHi
   init {
     setFocusRequestor(component)
     setForceShowAsPopup(true)
+    @Suppress("UNCHECKED_CAST")
     registerListActions((component as ListWithFilter<NavBarVmItem>).list, this, vm)
   }
 
   override fun onPopupCancel() {
     vm.popupResult(PopupResultCancel)
   }
-
-  companion object {
-    private fun createPopupContents(vm: NavBarPopupVm): JComponent {
-      val list = JBList<NavBarVmItem>()
-      list.model = CollectionListModel(vm.items)
-      list.border = JBUI.Borders.empty(5)
-      HintUpdateSupply.installSimpleHintUpdateSupply(list)
-
-      list.installCellRenderer { item -> NavigationBarPopupItemComponent(item.presentation) }
-
-      val selectedChild = vm.selectedChild
-      if (selectedChild != null) {
-        list.setSelectedValue(selectedChild, /* shouldScroll = */ true)
-      }
-      else {
-        list.selectedIndex = 0
-      }
-
-      return ListWithFilter.wrap(list, NavBarListWrapper(list)) { item ->
-        item.presentation.popupText ?: item.presentation.text
-      }
-    }
-  }
-
 }
 
+private fun createPopupContents(vm: NavBarPopupVm): JComponent {
+  val list = JBList<NavBarVmItem>()
+  list.model = CollectionListModel(vm.items)
+  list.border = JBUI.Borders.empty(5)
+  HintUpdateSupply.installSimpleHintUpdateSupply(list)
+
+  list.installCellRenderer { item -> NavigationBarPopupItemComponent(item.presentation) }
+
+  val selectedChild = vm.selectedChild
+  if (selectedChild != null) {
+    list.setSelectedValue(selectedChild, /* shouldScroll = */ true)
+  }
+  else {
+    list.selectedIndex = 0
+  }
+
+  return ListWithFilter.wrap(list, NavBarListWrapper(list)) { item ->
+    item.presentation.popupText ?: item.presentation.text
+  }
+}
+
+private const val MAX_SIZE = 20
 
 private class NavBarListWrapper<T>(private val myList: JList<T>) : JBScrollPane(myList), DataProvider {
 
@@ -134,9 +131,5 @@ private class NavBarListWrapper<T>(private val myList: JList<T>) : JBScrollPane(
   @Synchronized
   override fun addMouseListener(l: MouseListener) {
     myList.addMouseListener(l)
-  }
-
-  companion object {
-    private const val MAX_SIZE = 20
   }
 }
