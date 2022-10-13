@@ -3,7 +3,6 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.DataManager
-import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
@@ -68,7 +67,6 @@ internal class NavigationBar(
   private val myItemClickEvents = MutableSharedFlow<ItemClickEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
   private lateinit var myComponent: NewNavBarPanel
 
-  private val myActivityEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = DROP_OLDEST)
   private val myItems: MutableStateFlow<List<NavBarVmItem>>
 
   init {
@@ -91,13 +89,8 @@ internal class NavigationBar(
 
     if (dataContext == null) {
 
-      // Watch the user activities
-      IdeEventQueue.getInstance().addActivityListener(Runnable {
-        myActivityEvents.tryEmit(Unit)
-      }, this)
-
       cs.launch(Dispatchers.Default) {
-        myActivityEvents
+        activityFlow()
           .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
           .collectLatest {
             try {
