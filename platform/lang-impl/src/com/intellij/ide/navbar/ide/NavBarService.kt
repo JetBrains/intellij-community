@@ -15,12 +15,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Service(PROJECT)
 internal class NavBarService(val myProject: Project) : Disposable {
 
-  private val cs = CoroutineScope(CoroutineName("NavigationBarScope"))
+  private val cs: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
   private val staticPanel = JPanel(BorderLayout())
   private var staticNavigationBar: NavigationBar? = null
@@ -28,7 +29,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
   private val staticBarShown = MutableStateFlow(UISettings.getInstance().isNavbarShown())
 
   override fun dispose() {
-    cs.coroutineContext.cancel()
+    cs.cancel()
   }
 
   init {
