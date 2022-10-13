@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -350,33 +349,6 @@ interface UastApiTestBase : UastPluginSelection {
         )
         assertArguments(listOf("\"%i %i %i\"", "\"\".chunked(2).toTypedArray()"), "format(\"%i %i %i\", *\"\".chunked(2).toTypedArray())")
         assertArguments(listOf("\"def\"", "8", "7.0"), "with2Receivers(8, 7.0F)")
-    }
-
-    fun checkCallbackForResolve(uFilePath: String, uFile: UFile) {
-        fun UElement.assertResolveCall(callText: String, methodName: String = callText.substringBefore("(")) {
-            this.findElementByTextFromPsi<UCallExpression>(callText).let {
-                val resolve = it.resolve().sure { "resolving '$callText'" }
-                TestCase.assertEquals(methodName, resolve.name)
-            }
-        }
-
-        uFile.findElementByTextFromPsi<UElement>("bar").getParentOfType<UMethod>()!!.let { barMethod ->
-            barMethod.assertResolveCall("foo()")
-            barMethod.assertResolveCall("inlineFoo()")
-            barMethod.assertResolveCall("forEach { println(it) }", "forEach")
-            barMethod.assertResolveCall("joinToString()")
-            barMethod.assertResolveCall("last()")
-            barMethod.assertResolveCall("setValue(\"123\")")
-            barMethod.assertResolveCall("contains(2 as Int)", "longRangeContains")
-            barMethod.assertResolveCall("IntRange(1, 2)")
-        }
-
-        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.assertResolveCall("foo()")
-
-        uFile.findElementByTextFromPsi<UElement>("listT").getParentOfType<UMethod>()!!.let { barMethod ->
-            barMethod.assertResolveCall("isEmpty()")
-            barMethod.assertResolveCall("foo()")
-        }
     }
 
     fun checkCallbackForLambdas(uFilePath: String, uFile: UFile) {

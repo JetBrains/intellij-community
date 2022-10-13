@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.uast
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
@@ -21,8 +20,6 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
     }
 
     private val whitelist : Set<String> = setOf(
-        // TODO: resolve to inline and stdlib
-        FileUtil.toSystemDependentName("uast-kotlin/tests/testData/Resolve.kt"),
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
@@ -141,11 +138,6 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
         @TestMetadata("ParametersDisorder.kt")
         fun testParametersDisorder() {
             doCheck("uast-kotlin/tests/testData/ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
-        }
-
-        @TestMetadata("Resolve.kt")
-        fun testResolve() {
-            doCheck("uast-kotlin/tests/testData/Resolve.kt", ::checkCallbackForResolve)
         }
 
         @TestMetadata("Lambdas.kt")
