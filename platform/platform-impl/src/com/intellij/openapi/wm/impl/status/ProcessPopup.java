@@ -202,6 +202,6 @@ class ProcessPopup {
       return true;
     });
 
-    myPopup = builder.addUserData("SIMPLE_WINDOW").createPopup();
+    myPopup = builder.createPopup();
   }
 }

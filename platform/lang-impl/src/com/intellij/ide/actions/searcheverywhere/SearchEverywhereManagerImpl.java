@@ -107,7 +107,6 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
         DIALOG_CLOSED.log(myProject);
         return true;
       })
-      .addUserData("SIMPLE_WINDOW")
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
