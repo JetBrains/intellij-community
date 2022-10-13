@@ -240,6 +240,7 @@ abstract class RestService : HttpRequestHandler() {
         LOG.error(e)
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR
       }
+
       status.send(context.channel(), request, XmlStringUtil.escapeString(ExceptionUtil.getThrowableText(e)))
     }
 
