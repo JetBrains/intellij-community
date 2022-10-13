@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -150,7 +150,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
     Project project = getProject();
-    T repository = guessCurrentRepository(project, getSelectedFileFromEditorManager());
+    T repository = guessCurrentRepository(project, DvcsUtil.getSelectedFile(myProject));
     if (repository == null) return null;
 
     return getWidgetPopup(project, repository);
@@ -163,12 +163,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return null;
   }
 
-  @Nullable
-  private VirtualFile getSelectedFileFromEditorManager() {
-    FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
-    return fileEditor == null ? null : fileEditor.getFile();
-  }
-
   private void clearStatus() {
     myText = null;
     myTooltip = null;
@@ -179,7 +173,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     UIUtil.invokeLaterIfNeeded(() -> {
       if (isDisposed()) return;
 
-      VirtualFile selectedFile = getSelectedFileFromEditorManager();
+      VirtualFile selectedFile = DvcsUtil.getSelectedFile(myProject);
       myUpdateBackgroundAlarm.cancelAllRequests();
       myUpdateBackgroundAlarm.addRequest(() -> {
         if (isDisposed()) {
