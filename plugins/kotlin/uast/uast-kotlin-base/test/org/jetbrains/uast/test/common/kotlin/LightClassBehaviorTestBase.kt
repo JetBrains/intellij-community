@@ -67,6 +67,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertNotSame(setAMethod.textOffset, ktProperty.textOffset)
         TestCase.assertEquals(setAMethod.textOffset, ktProperty.setter?.textOffset)
         TestCase.assertEquals(setAMethod.textOffset, setAMethod.textRange.startOffset)
+        TestCase.assertEquals("set(v) {}", setAMethod.text)
     }
 
     fun checkFunctionModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
@@ -87,11 +88,13 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertTrue(fooMethodJavaPsiModifierList.textOffset > 0)
         TestCase.assertFalse(fooMethodJavaPsiModifierList.textRange.isEmpty)
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textOffset, fooMethodJavaPsiModifierList.textRange.startOffset)
+        TestCase.assertEquals("@MyAnnotation", fooMethodJavaPsiModifierList.text)
 
         val fooMethodSourcePsiModifierList = (foo.sourcePsi as KtModifierListOwner).modifierList!!
         TestCase.assertTrue(fooMethodSourcePsiModifierList.textOffset > 0)
         TestCase.assertFalse(fooMethodSourcePsiModifierList.textRange.isEmpty)
         TestCase.assertEquals(fooMethodSourcePsiModifierList.textOffset, fooMethodSourcePsiModifierList.textRange.startOffset)
+        TestCase.assertEquals("@MyAnnotation", fooMethodSourcePsiModifierList.text)
 
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textOffset, fooMethodSourcePsiModifierList.textOffset)
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textRange, fooMethodSourcePsiModifierList.textRange)
@@ -118,6 +121,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertTrue(getAMethodModifierList.textOffset > 0)
         TestCase.assertFalse(getAMethodModifierList.textRange.isEmpty)
         TestCase.assertEquals(getAMethodModifierList.textOffset, getAMethodModifierList.textRange.startOffset)
+        TestCase.assertEquals("@MyAnnotation", getAMethodModifierList.text)
 
         val ktClass = aClass.sourcePsi as KtClassOrObject
         val ktProperty = ktClass.declarations.filterIsInstance<KtProperty>().single()
