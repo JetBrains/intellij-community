@@ -10,10 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
@@ -22,6 +19,9 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                                       private val project: Project,
                                       private val rootFileSupplier: RootFileSupplier) {
   private val contributors = contributorList.groupBy { it.entityClass }
+  private val contributorsWithDependency = contributorList
+    .flatMap { contributor -> contributor.dependenciesOnParentEntities.map { it to contributor } }
+    .groupBy({ it.second.entityClass }, { it.first to it.second })
   private val fileSets = MultiMap.create<VirtualFile, WorkspaceFileSetImpl>()
   private val excludedRoots = MultiMap.create<VirtualFile, ExcludedRootData>()
   private val exclusionPatternsByRoot = MultiMap.create<VirtualFile, ExclusionPatterns>()
@@ -141,9 +141,35 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   }
 
   private fun <E : WorkspaceEntity> processChanges(event: VersionedStorageChange, entityClass: Class<out E>) {
-    event.getChanges(entityClass).forEach { change ->
-      change.oldEntity?.let { unregisterFileSets(it, entityClass, event.storageBefore) }
-      change.newEntity?.let { registerFileSets(it, entityClass, event.storageAfter) }
+    val changes = event.getChanges(entityClass)
+    changes.forEach { change -> processChange(change, entityClass, event) }
+    collectChangesFromParents(event, entityClass)
+  }
+
+  private fun <C : WorkspaceEntity> collectChangesFromParents(event: VersionedStorageChange, childClass: Class<C>) {
+    val contributors = contributorsWithDependency[childClass] ?: return
+    contributors.forEach { (dependency, contributor) ->
+      @Suppress("UNCHECKED_CAST")
+      processChangeInDependency(dependency as DependencyOnParentEntity<C, WorkspaceEntity>,
+                                contributor as WorkspaceFileIndexContributor<C>, event)
+    }
+  }
+
+  private fun <E : WorkspaceEntity> processChange(change: EntityChange<out E>, entityClass: Class<out E>, event: VersionedStorageChange) {
+    change.oldEntity?.let { unregisterFileSets(it, entityClass, event.storageBefore) }
+    change.newEntity?.let { registerFileSets(it, entityClass, event.storageAfter) }
+  }
+
+  private fun <C : WorkspaceEntity, P : WorkspaceEntity> processChangeInDependency(dependency: DependencyOnParentEntity<C, P>,
+                                                                                   contributor: WorkspaceFileIndexContributor<C>,
+                                                                                   event: VersionedStorageChange) {
+    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
+      dependency.childrenGetter(change.oldEntity).forEach {
+        contributor.registerFileSets(it, removeFileSetRegistrar, event.storageBefore)
+      }
+      dependency.childrenGetter(change.newEntity).forEach {
+        contributor.registerFileSets(it, storeFileSetRegistrar, event.storageAfter)
+      }
     }
   }
 

@@ -34,10 +34,12 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
       val contentRoot = entity.contentRoot.url.virtualFile
       val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT 
       registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType))
-      //todo update index when parent ContentRootEntity is modified
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
+
+  override val dependenciesOnParentEntities: List<DependencyOnParentEntity<SourceRootEntity, *>>
+    get() = listOf(DependencyOnParentEntity(ContentRootEntity::class.java) { it.sourceRoots.asSequence() })
 }
 
 /**
