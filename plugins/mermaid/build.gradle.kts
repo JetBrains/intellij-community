@@ -1,3 +1,4 @@
+import de.undercouch.gradle.tasks.download.Download
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.tasks.RunIdeTask
@@ -14,6 +15,7 @@ plugins {
   id("org.jetbrains.changelog") version "1.3.1"
   id("org.jetbrains.qodana") version "0.1.13"
   id("org.jetbrains.grammarkit") version "2021.2.2"
+  id("de.undercouch.download") version "5.2.1"
 }
 
 group = properties("pluginGroup")
@@ -66,6 +68,25 @@ val commonJvmArgs = buildList {
   }
 }
 
+val mermaidVersion = properties("mermaidVersion")
+val mermaidArtifactName = "mermaid.min.js"
+
+val mermaidArtifactPath
+  get() = buildDir.resolve("mermaid-$mermaidVersion/$mermaidArtifactName")
+
+val downloadMermaidArtifact by tasks.creating(type = Download::class) {
+  src("https://cdn.jsdelivr.net/npm/mermaid@$mermaidVersion/dist/$mermaidArtifactName")
+  dest(mermaidArtifactPath)
+  overwrite(false)
+}
+
+val copyMermaidArtifactToResources by tasks.creating(type = Copy::class) {
+  dependsOn(downloadMermaidArtifact)
+  from(mermaidArtifactPath)
+  destinationDir = buildDir.resolve("resources/main/mermaid")
+  to(mermaidArtifactName)
+}
+
 tasks {
   withType<JavaCompile> {
     sourceCompatibility = "17"
@@ -93,6 +114,10 @@ tasks {
 
   buildSearchableOptions {
     jvmArgs = commonJvmArgs
+  }
+
+  withType<ProcessResources> {
+    dependsOn(copyMermaidArtifactToResources)
   }
 
   withType<Test> {
