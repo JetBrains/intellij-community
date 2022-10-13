@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
-@State(name = "ToolWindowLayout", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "ToolWindowLayout", storages = [Storage(value = "window.layouts.xml")])
 class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
