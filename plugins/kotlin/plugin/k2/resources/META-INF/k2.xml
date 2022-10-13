@@ -6,7 +6,7 @@
   <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
 
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.idea</depends>
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.java-capable</depends>
 
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
