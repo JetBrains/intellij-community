@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
+import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
-import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -17,74 +17,64 @@ import com.intellij.ui.popup.HintUpdateSupply
 import com.intellij.ui.speedSearch.ListWithFilter
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CancellableContinuation
 import org.jetbrains.annotations.NonNls
 import java.awt.event.*
 import javax.swing.*
-import kotlin.coroutines.resume
 
-
-private fun registerListActions(list: JList<NavBarVmItem>,
-                                popup: LightweightHint,
-                                continuation: CancellableContinuation<PopupResult>) {
+private fun registerListActions(list: JList<NavBarVmItem>, popup: LightweightHint, vm: NavBarPopupVm) {
 
   list.actionMap.put(ListActions.Left.ID, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupResultLeft)
+      vm.popupResult(PopupResultLeft)
       popup.hide(true)
     }
   })
 
   list.actionMap.put(ListActions.Right.ID, object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupResultRight)
+      vm.popupResult(PopupResultRight)
       popup.hide(true)
     }
   })
 
   list.registerKeyboardAction(object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) {
-      continuation.resume(PopupResultSelect(list.selectedValue))
+      vm.popupResult(PopupResultSelect(list.selectedValue))
       popup.hide(true)
     }
   }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
 
   list.addMouseListener(object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent) {
-      continuation.resume(PopupResultSelect(list.selectedValue))
+      vm.popupResult(PopupResultSelect(list.selectedValue))
       popup.hide(true)
     }
   })
 
 }
 
-internal class NavigationBarPopup(
-  items: List<NavBarVmItem>,
-  selectedChild: NavBarVmItem?,
-  private val continuation: CancellableContinuation<PopupResult>
-) : LightweightHint(createPopupContents(items, selectedChild)) {
+internal class NavigationBarPopup(private val vm: NavBarPopupVm) : LightweightHint(createPopupContents(vm)) {
 
   init {
     setFocusRequestor(component)
     setForceShowAsPopup(true)
-    registerListActions((component as ListWithFilter<NavBarVmItem>).list, this, continuation)
+    registerListActions((component as ListWithFilter<NavBarVmItem>).list, this, vm)
   }
 
   override fun onPopupCancel() {
-    if (continuation.isActive) {
-      continuation.resume(PopupResultCancel)
-    }
+    vm.popupResult(PopupResultCancel)
   }
 
   companion object {
-    private fun createPopupContents(items: List<NavBarVmItem>, selectedChild: NavBarVmItem?): JComponent {
+    private fun createPopupContents(vm: NavBarPopupVm): JComponent {
       val list = JBList<NavBarVmItem>()
-      list.model = CollectionListModel(items)
+      list.model = CollectionListModel(vm.items)
       list.border = JBUI.Borders.empty(5)
       HintUpdateSupply.installSimpleHintUpdateSupply(list)
 
       list.installCellRenderer { item -> NavigationBarPopupItemComponent(item.presentation) }
 
+      val selectedChild = vm.selectedChild
       if (selectedChild != null) {
         list.setSelectedValue(selectedChild, /* shouldScroll = */ true)
       }

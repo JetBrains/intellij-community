@@ -166,7 +166,7 @@ internal class NavigationBar(
       SwingUtilities.invokeLater {
         myComponent.scrollTo(selectedItemIndex)
         val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
-        val popupHint = NavigationBarPopup(children, nextItem, it)
+        val popupHint = NavigationBarPopup(NavBarPopupVmImpl(children, nextItem, it))
         val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex, popupHint)
         popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
       }
