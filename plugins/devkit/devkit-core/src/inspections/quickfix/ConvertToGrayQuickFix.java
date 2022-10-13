@@ -47,10 +47,6 @@ public class ConvertToGrayQuickFix implements LocalQuickFix {
     String grayConstant = Gray.class.getName() + "._" + myGrayValue;
     UQualifiedReferenceExpression grayConstantReference = pluginElementFactory.createQualifiedReference(grayConstant, element);
     if (grayConstantReference == null) return;
-    UQualifiedReferenceExpression replaced =
-      generationPlugin.replace(awtGrayColorConstructor, grayConstantReference, UQualifiedReferenceExpression.class);
-    if (replaced == null) return;
-    // it should be shortened automatically, but is not in tests, see: IDEA-303537
-    generationPlugin.shortenReference(replaced);
+    generationPlugin.replace(awtGrayColorConstructor, grayConstantReference, UQualifiedReferenceExpression.class);
   }
 }
