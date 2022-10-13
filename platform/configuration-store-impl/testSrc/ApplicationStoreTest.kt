@@ -525,8 +525,8 @@ internal class ApplicationStoreTest {
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = EnumMap(RoamingType::class.java)
 
-    override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, 0, size, Charsets.UTF_8))
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+      getMap(roamingType).put(fileSpec, String(content, Charsets.UTF_8))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }

@@ -91,11 +91,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     return SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates, pluginsState)
   }
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
     val file = getFileRelativeToRootConfig(fileSpec)
 
     writeUnderLock(file) {
-      rootConfig.resolve(file).write(content, 0, size)
+      rootConfig.resolve(file).write(content)
     }
 
     val syncEnabled = isSyncEnabled(fileSpec, roamingType)
@@ -105,7 +105,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val snapshot = SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
-                                    setOf(FileState.Modified(file, content.copyOfRange(0, size))), plugins = null)
+                                    setOf(FileState.Modified(file, content)), plugins = null)
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
