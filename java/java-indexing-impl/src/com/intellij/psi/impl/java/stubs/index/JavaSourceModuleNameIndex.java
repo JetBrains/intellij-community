@@ -3,7 +3,6 @@ package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
@@ -24,14 +23,6 @@ import static java.util.Collections.singletonMap;
 
 public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.source.module.name");
-
-  private final FileBasedIndex.InputFilter myFilter =
-    new DefaultFileTypeSpecificInputFilter(FileTypeRegistry.getInstance().getFileTypeByExtension("MF")) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile f) {
-        return "MANIFEST.MF".equalsIgnoreCase(f.getName());
-      }
-    };
 
   private final DataIndexer<String, Void, FileContent> myIndexer = data -> {
     try {
@@ -64,7 +55,7 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return myFilter;
+    return file -> "MANIFEST.MF".equalsIgnoreCase(file.getName());
   }
 
   @Override
