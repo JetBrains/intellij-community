@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -160,7 +161,7 @@ final class RefreshWorker {
         continue;
       }
 
-      var fs = PersistentFS.replaceWithNativeFS(file.getFileSystem());
+      var fs = file.getFileSystem();
 
       try {
         if (myRoots.contains(file)) {
@@ -193,6 +194,11 @@ final class RefreshWorker {
           catch (InvalidVirtualFileAccessException e) {
             events.subList(mark, events.size()).clear();
             continue nextDir;
+          }
+          finally {
+            if (fs instanceof LocalFileSystemImpl) {
+              ((LocalFileSystemImpl)fs).clearListCache();
+            }
           }
         }
         myProcessed.incrementAndGet();
@@ -228,7 +234,7 @@ final class RefreshWorker {
     }
     else {
       dirList = new HashMap<>();
-      for (String name : fs.list(dir)) {
+      for (String name : fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)) {
         dirList.put(name, null);
       }
     }
@@ -326,7 +332,8 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(fs.list(dir), false);
+      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir);
+      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
 
