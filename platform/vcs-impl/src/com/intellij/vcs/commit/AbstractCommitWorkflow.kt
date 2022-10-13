@@ -426,7 +426,3 @@ internal class UnknownCommitProblem(val result: CheckinHandler.ReturnResult) : C
 
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult = result
 }
-
-interface DynamicCommitInfo : CommitInfo {
-  fun asStaticInfo(): CommitInfo
-}

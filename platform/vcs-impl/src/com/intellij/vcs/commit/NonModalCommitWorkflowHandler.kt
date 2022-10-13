@@ -398,18 +398,32 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return NonModalCommitChecksFailure.ERROR
   }
 
-  private fun runPostCommitChecks(commitInfo: CommitInfo, commitChecks: List<CommitCheck>) {
-    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.EDT)
+  private fun runPostCommitChecks(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
+    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
     scope.launch {
       withBackgroundProgressIndicator(project, message("post.commit.checks.progress.text")) {
+        val postCommitInfo = createPostCommitInfo(commitInfo)
         withContext(Dispatchers.EDT) {
-          val problems = commitChecks.mapNotNull { AbstractCommitWorkflow.runCommitCheck(project, it, commitInfo) }
+          val problems = commitChecks.mapNotNull { AbstractCommitWorkflow.runCommitCheck(project, it, postCommitInfo) }
           if (problems.isEmpty()) return@withContext
 
           reportPostCommitChecksFailure(problems)
         }
       }
     }
+  }
+
+  private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
+    val changeConverters = commitInfo.affectedVcses.mapNotNull { it.checkinEnvironment?.postCommitChangeConverter }
+    if (changeConverters.isEmpty()) LOG.warn("Post-commit change converters not found for ${commitInfo.affectedVcses}")
+
+    var staticChanges = commitInfo.committedChanges
+    for (changeConverter in changeConverters) {
+      staticChanges = changeConverter.convertChangesAfterCommit(staticChanges, commitContext)
+    }
+
+    return StaticCommitInfo(commitContext, commitInfo.executor, commitInfo.commitActionText,
+                            staticChanges, commitInfo.affectedVcses, commitInfo.commitMessage)
   }
 
   private fun reportCommitCheckFailure(problem: CommitProblem) {
@@ -554,7 +568,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 }
 
-private class PendingPostCommitChecks(val commitInfo: CommitInfo, val commitChecks: List<CommitCheck>)
+private class PendingPostCommitChecks(val commitInfo: StaticCommitInfo, val commitChecks: List<CommitCheck>)
 
 private enum class NonModalCommitChecksFailure { EARLY_FAILED, MODIFICATIONS_FAILED, ABORTED, ERROR }
 
