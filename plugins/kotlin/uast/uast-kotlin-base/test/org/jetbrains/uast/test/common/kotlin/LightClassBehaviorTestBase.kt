@@ -5,6 +5,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
@@ -66,6 +67,64 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertNotSame(setAMethod.textOffset, ktProperty.textOffset)
         TestCase.assertEquals(setAMethod.textOffset, ktProperty.setter?.textOffset)
         TestCase.assertEquals(setAMethod.textOffset, setAMethod.textRange.startOffset)
+    }
+
+    fun checkFunctionModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            annotation class MyAnnotation
+            class A {
+                @MyAnnotation
+                fun foo() {}
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        val foo = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false)
+            .orFail("can't find fun foo")
+        val fooMethodJavaPsiModifierList = foo.javaPsi.modifierList
+        TestCase.assertTrue(fooMethodJavaPsiModifierList.textOffset > 0)
+        TestCase.assertFalse(fooMethodJavaPsiModifierList.textRange.isEmpty)
+        TestCase.assertEquals(fooMethodJavaPsiModifierList.textOffset, fooMethodJavaPsiModifierList.textRange.startOffset)
+
+        val fooMethodSourcePsiModifierList = (foo.sourcePsi as KtModifierListOwner).modifierList!!
+        TestCase.assertTrue(fooMethodSourcePsiModifierList.textOffset > 0)
+        TestCase.assertFalse(fooMethodSourcePsiModifierList.textRange.isEmpty)
+        TestCase.assertEquals(fooMethodSourcePsiModifierList.textOffset, fooMethodSourcePsiModifierList.textRange.startOffset)
+
+        TestCase.assertEquals(fooMethodJavaPsiModifierList.textOffset, fooMethodSourcePsiModifierList.textOffset)
+        TestCase.assertEquals(fooMethodJavaPsiModifierList.textRange, fooMethodSourcePsiModifierList.textRange)
+    }
+
+    fun checkPropertyAccessorModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            annotation class MyAnnotation
+            class Foo {
+                var a: Int
+                    @MyAnnotation
+                    get() = 5
+                    set(v) {}
+            }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val aClass = uFile.findElementByTextFromPsi<UClass>("Foo", strict = false)
+            .orFail("can't find class Foo")
+        val getAMethod = aClass.javaPsi.findMethodsByName("getA").single() as PsiMethod
+        val getAMethodModifierList = getAMethod.modifierList
+
+        TestCase.assertTrue(getAMethodModifierList.textOffset > 0)
+        TestCase.assertFalse(getAMethodModifierList.textRange.isEmpty)
+        TestCase.assertEquals(getAMethodModifierList.textOffset, getAMethodModifierList.textRange.startOffset)
+
+        val ktClass = aClass.sourcePsi as KtClassOrObject
+        val ktProperty = ktClass.declarations.filterIsInstance<KtProperty>().single()
+        val ktPropertyAccessorModifierList = ktProperty.getter!!.modifierList!!
+
+        TestCase.assertEquals(getAMethodModifierList.textOffset, ktPropertyAccessorModifierList.textOffset)
+        TestCase.assertEquals(getAMethodModifierList.textRange, ktPropertyAccessorModifierList.textRange)
     }
 
 }
