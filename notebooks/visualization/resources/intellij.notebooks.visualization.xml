@@ -2,6 +2,7 @@
   <module value="com.intellij.modules.notebooks.visualization" />
   <dependencies>
     <plugin id="com.intellij.platform.images"/>
+    <module name="intellij.notebooks.ui"/>
   </dependencies>
 
   <extensionPoints>
