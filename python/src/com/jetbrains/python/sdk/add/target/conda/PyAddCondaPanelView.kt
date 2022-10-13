@@ -41,7 +41,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   private val condaPathField = TextFieldWithBrowseButton()
   private val panel = panel {
 
-    row(PyBundle.message("python.add.sdk.panel.path.to.conda.field")) {
+    row(PyBundle.message("python.add.sdk.panel.path.to.conda.field") + ":") {
 
       cell(condaPathField.apply {
         addBrowseFolderListener(PyBundle.message("python.add.sdk.panel.path.to.conda.field"),
