@@ -237,6 +237,12 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
                                ActionManager.getInstance().getAction("ChooseRunConfiguration")))
   }
 
+  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+    actions.add(SelectCurrentFileWithInlineActions(listOf(
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))))
+  }
+  actions.add(Separator.create())
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
   return actions
 }
@@ -295,12 +301,12 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               debugExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
-                                              shouldBeShown: () -> Boolean = { true }): ActionGroupWithInlineActions {
+                                              shouldBeShown: () -> Boolean = { true }): SelectRunConfigurationWithInlineActions {
   val inlineActions = mutableListOf<AnAction>()
   inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
   inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-  return ActionGroupWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  return SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
 }
 
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
@@ -337,7 +343,7 @@ private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnActi
   }
 }
 
-internal class ActionGroupWithInlineActions(
+internal class SelectRunConfigurationWithInlineActions(
   private val actions: List<AnAction>,
   configuration: RunnerAndConfigurationSettings,
   project: Project,
@@ -345,6 +351,12 @@ internal class ActionGroupWithInlineActions(
 ) : SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder, HideableAction {
   override fun getInlineActions(): List<AnAction> = actions
 }
+
+internal class SelectCurrentFileWithInlineActions(private val actions: List<AnAction>) :
+  RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug), InlineActionsHolder {
+  override fun getInlineActions(): List<AnAction> = actions
+}
+
 
 class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
 
