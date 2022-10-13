@@ -2,27 +2,36 @@
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.configurations.ParametersList
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
 class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
   @Rule @JvmField val projectRule = ProjectRule()
 
+  private lateinit var file: VirtualFile
+
+  @After fun tearDown() {
+    if (this::file.isInitialized) {
+      runWriteActionAndWait { file.delete(this) }
+    }
+  }
+
   @Test fun jdk17AddOpens() {
     val module = projectRule.module
     runWriteActionAndWait {
+      file = ModuleRootManager.getInstance(module).contentRoots[0].createChildData(this, "OpenedPackages.txt")
       @Suppress("SpellCheckingInspection")
-      ModuleRootManager.getInstance(module).contentRoots[0]
-        .createChildData(this, "OpenedPackages.txt")
-        .setBinaryContent("""
+      file.setBinaryContent("""
           --add-opens=java.base/java.io=ALL-UNNAMED
           --add-opens=java.base/java.lang=ALL-UNNAMED
           --add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED
