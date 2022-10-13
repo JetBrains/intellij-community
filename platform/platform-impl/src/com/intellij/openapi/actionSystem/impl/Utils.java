@@ -86,7 +86,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem");
+           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem", true);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
