@@ -592,7 +592,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected List<? extends MavenSimpleNode> doGetChildren() {
-      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), super.doGetChildren());
+      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), new ArrayList<>(super.doGetChildren()));
     }
 
     public void updateProfiles() {
@@ -803,7 +803,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected List<? extends MavenSimpleNode> doGetChildren() {
       return ContainerUtil.concat(
         Arrays.asList(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode),
-        super.doGetChildren()
+        new ArrayList<>(super.doGetChildren())
       );
     }
 
