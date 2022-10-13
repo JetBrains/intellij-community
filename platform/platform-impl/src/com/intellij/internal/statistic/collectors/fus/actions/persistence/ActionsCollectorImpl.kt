@@ -117,7 +117,11 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     @JvmStatic
-    fun recordActionGroupExpanded(action: ActionGroup, context: DataContext, place: String, durationMs: Long) {
+    fun recordActionGroupExpanded(action: ActionGroup,
+                                  context: DataContext,
+                                  place: String,
+                                  durationMs: Long,
+                                  result: List<AnAction>?) {
       val dataContext = getCachedDataContext(context)
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
@@ -128,6 +132,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         add(EventFields.Language.with(language))
         add(EventFields.ActionPlace.with(place))
         add(EventFields.DurationMs.with(durationMs))
+        add(EventFields.Size.with(result?.size ?: -1))
       }
     }
 

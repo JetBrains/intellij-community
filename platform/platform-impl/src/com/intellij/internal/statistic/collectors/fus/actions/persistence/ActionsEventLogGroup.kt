@@ -64,7 +64,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val ACTION_GROUP_EXPANDED = GROUP.registerVarargEvent("action.group.expanded", EventFields.PluginInfo,
                                                           ACTION_ID, ACTION_CLASS, ACTION_PARENT,
-                                                          EventFields.ActionPlace,
+                                                          EventFields.ActionPlace, EventFields.Size,
                                                           EventFields.Language, EventFields.DurationMs)
 
 
