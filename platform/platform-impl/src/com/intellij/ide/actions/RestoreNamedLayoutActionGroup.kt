@@ -11,11 +11,7 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
-    if (it != ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME) {
-      RestoreNamedLayoutActionImpl(it)
-    } else {
-      null
-    }
+    RestoreNamedLayoutActionImpl(it)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
@@ -25,7 +21,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
   private class RestoreNamedLayoutActionImpl(layoutName: String) : RestoreNamedLayoutAction(layoutName) {
     override fun update(e: AnActionEvent) {
       super.update(e)
-      e.presentation.text = layoutName
+      e.presentation.text = layoutNameSupplier()
     }
   }
 

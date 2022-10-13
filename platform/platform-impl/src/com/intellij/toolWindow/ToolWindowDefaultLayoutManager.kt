@@ -43,7 +43,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi) ?: DesktopLayout()
 
-  fun setLayout(layout: DesktopLayout) = setLayout(DEFAULT_LAYOUT_NAME, layout)
+  fun setLayout(layout: DesktopLayout) = setLayout(activeLayoutName, layout)
 
   fun setLayout(name: String, layout: DesktopLayout) {
     tracker.incModificationCount()

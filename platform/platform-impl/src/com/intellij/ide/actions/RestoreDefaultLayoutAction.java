@@ -12,6 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class RestoreDefaultLayoutAction extends RestoreNamedLayoutAction {
   public RestoreDefaultLayoutAction() {
-    super(ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME);
+    super(() -> ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName());
   }
 }

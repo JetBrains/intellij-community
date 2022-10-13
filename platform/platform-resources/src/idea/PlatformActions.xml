@@ -728,25 +728,17 @@
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
+        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
         <group id="StoreLayoutGroup" popup="true">
-          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction">
-            <override-text place="MainMenu"/>
-          </action>
           <group id="StoreNamedLayoutGroup" class="com.intellij.ide.actions.StoreNamedLayoutActionGroup"/>
           <separator/>
           <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction">
             <override-text place="MainMenu"/>
           </action>
         </group>
-        <group id="RestoreLayoutGroup" popup="true">
-          <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction">
-            <override-text place="MainMenu"/>
-          </action>
-          <group id="RestoreNamedLayoutGroup" class="com.intellij.ide.actions.RestoreNamedLayoutActionGroup"/>
-        </group>
-        <group id="DeleteLayoutGroup" popup="true">
-          <group id="DeleteNamedLayoutGroup" class="com.intellij.ide.actions.DeleteNamedLayoutActionGroup"/>
-        </group>
+        <group id="RestoreNamedLayoutGroup" class="com.intellij.ide.actions.RestoreNamedLayoutActionGroup" popup="true"/>
+        <group id="DeleteNamedLayoutGroup" class="com.intellij.ide.actions.DeleteNamedLayoutActionGroup" popup="true"/>
         <separator/>
         <group id="ActiveToolwindowGroup" popup="true">
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>

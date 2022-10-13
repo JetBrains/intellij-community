@@ -13,6 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StoreDefaultLayoutAction extends StoreNamedLayoutAction {
   public StoreDefaultLayoutAction() {
-    super(ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME);
+    super(() -> ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName());
   }
 }
