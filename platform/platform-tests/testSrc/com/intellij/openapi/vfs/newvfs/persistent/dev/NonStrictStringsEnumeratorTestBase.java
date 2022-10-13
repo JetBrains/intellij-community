@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.DataEnumerator;
@@ -117,11 +118,8 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
   @Test
   public void manyValuesEnumeratedCouldBeGetBack_ByProcessAllDataObjects() throws Exception {
     final String[] values = manyValues;
-    final int[] ids = new int[values.length];
-    for (int i = 0; i < values.length; i++) {
-      final String value = values[i];
-      final int id = enumerator.enumerate(value);
-      ids[i] = id;
+    for (final String value : values) {
+      enumerator.enumerate(value);
     }
 
     final Set<String> expectedNames = ContainerUtil.set(values);
@@ -161,6 +159,42 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
       returnedNames
     );
   }
+
+
+  @Test
+  @Ignore("poor-man benchmark, not a test")
+  public void manyValuesEnumeratedCouldBeGetBack_ByProcessAllDataObjects_AfterReload_Benchmark() throws Exception {
+    final String[] values = manyValues;
+    for (final String value : values) {
+      enumerator.enumerate(value);
+    }
+
+    closeEnumerator(enumerator);
+    enumerator = openEnumerator(storageFile);
+
+    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> returnedNames = new HashSet<>(expectedNames.size());
+    enumerator.processAllDataObjects(name -> {
+      returnedNames.add(name);
+      return true;
+    });
+
+    final long startedAtNs = System.nanoTime();
+    for (int i = 0; i < 16; i++) {
+      enumerator.processAllDataObjects(name -> {
+        returnedNames.add(name);
+        return true;
+      });
+    }
+    System.out.println(returnedNames.size() + " names: " + TimeoutUtil.getDurationMillis(startedAtNs) / 10.0 + " ms per listing");
+
+    assertEquals(
+      "processAllDataObjects must return all names put into enumerator",
+      expectedNames,
+      returnedNames
+    );
+  }
+
 
   protected void closeEnumerator(final DataEnumerator<String> enumerator) throws Exception {
     if (enumerator instanceof AutoCloseable) {
