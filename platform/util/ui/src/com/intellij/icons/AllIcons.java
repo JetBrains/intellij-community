@@ -1022,6 +1022,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Oracle = load("providers/oracle.svg", 501669974, 0);
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 808589440, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", -1973458769, 2);
+    /** 16x16 */ public static final @NotNull Icon Redis = load("providers/redis.svg", -1913770236, 2);
     /** 16x16 */ public static final @NotNull Icon Redshift = load("providers/redshift.svg", -158004877, 0);
     /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", 1556951403, 0);
     /** 16x16 */ public static final @NotNull Icon Snowflake = load("providers/snowflake.svg", -1972320959, 0);
