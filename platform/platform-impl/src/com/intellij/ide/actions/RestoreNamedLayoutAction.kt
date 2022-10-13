@@ -4,17 +4,16 @@ package com.intellij.ide.actions
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-abstract class RestoreNamedLayoutAction(protected val layoutNameSupplier: () -> @NlsSafe String) : DumbAwareAction() {
+abstract class RestoreNamedLayoutAction(protected val layoutNameSupplier: () -> @NlsSafe String) : DumbAwareToggleAction() {
 
   constructor(@NlsSafe layoutName: String) : this({ layoutName })
 
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
     layoutManager.activeLayoutName = layoutNameSupplier()
@@ -22,6 +21,7 @@ abstract class RestoreNamedLayoutAction(protected val layoutNameSupplier: () -> 
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.isEnabled = e.project != null
     e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutNameSupplier())
   }

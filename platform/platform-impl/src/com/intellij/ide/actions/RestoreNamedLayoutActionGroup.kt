@@ -19,10 +19,15 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   private class RestoreNamedLayoutActionImpl(layoutName: String) : RestoreNamedLayoutAction(layoutName) {
+
+    override fun isSelected(e: AnActionEvent): Boolean =
+      ToolWindowDefaultLayoutManager.getInstance().activeLayoutName == layoutNameSupplier()
+
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.text = layoutNameSupplier()
     }
+
   }
 
 }
