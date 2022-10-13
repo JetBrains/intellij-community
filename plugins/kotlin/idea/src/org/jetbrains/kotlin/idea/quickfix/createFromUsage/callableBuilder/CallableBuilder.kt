@@ -596,6 +596,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 if (callableInfo is PropertyInfo) {
                     callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
                 }
+                if (callableInfo is ConstructorInfo) {
+                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
+                }
 
                 val newInitializer = pointerOfAssignmentToReplace?.element
                 if (newInitializer != null) {
