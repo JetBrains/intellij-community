@@ -599,6 +599,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanion.0.kt");
             }
 
+            @TestMetadata("invokeFromClassCompanionExtension.0.kt")
+            public void testInvokeFromClassCompanionExtension() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanionExtension.0.kt");
+            }
+
             @TestMetadata("invokeFromInterfaceCompanion.0.kt")
             public void testInvokeFromInterfaceCompanion() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/invokeFromInterfaceCompanion.0.kt");

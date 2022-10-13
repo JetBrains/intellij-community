@@ -18,9 +18,6 @@ package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class PluginXmlAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 

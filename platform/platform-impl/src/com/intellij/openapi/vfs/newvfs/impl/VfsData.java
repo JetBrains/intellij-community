@@ -53,8 +53,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  *
  * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
- *
- * @author peter
  */
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);

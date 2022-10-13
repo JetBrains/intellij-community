@@ -6,9 +6,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class LightResolveClassTest extends LightJavaCodeInsightFixtureTestCase {
 

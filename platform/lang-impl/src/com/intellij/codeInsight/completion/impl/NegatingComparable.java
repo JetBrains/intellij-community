@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.psi.ForceableComparable;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 public class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T>, ForceableComparable {
   private final Comparable myWeigh;
 

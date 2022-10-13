@@ -6,9 +6,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class RangeMarkerSpy implements DocumentListener {
   private final RangeMarker myMarker;
 

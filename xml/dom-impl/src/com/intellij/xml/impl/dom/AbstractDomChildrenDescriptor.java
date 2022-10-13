@@ -39,9 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class AbstractDomChildrenDescriptor implements XmlElementDescriptor {
   protected final DomManager myManager;
 

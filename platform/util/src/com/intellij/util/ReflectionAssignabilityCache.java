@@ -19,9 +19,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public class ReflectionAssignabilityCache {
   private final ConcurrentMap<Class, ConcurrentMap<Class, Boolean>> myCache =
     ConcurrentFactoryMap.createMap(anc -> ConcurrentFactoryMap.createMap(

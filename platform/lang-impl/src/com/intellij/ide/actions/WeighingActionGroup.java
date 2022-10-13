@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 abstract class WeighingActionGroup extends ActionGroup {
 
   @Override

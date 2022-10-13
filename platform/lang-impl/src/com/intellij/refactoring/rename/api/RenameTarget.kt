@@ -32,7 +32,6 @@ interface RenameTarget {
    * Returns maximal search scope where usages to this target might exist, or `null` to search everywhere.
    * Returning [com.intellij.psi.search.LocalSearchScope] will also make search scope unavailable to change in the UI.
    */
-  @JvmDefault
   val maximalSearchScope: SearchScope?
     get() = null
 
@@ -51,6 +50,5 @@ interface RenameTarget {
    * The single [RenameTarget] might be referenced differently in different contexts,
    * e.g. we search for short name of a Java class in strings and comments, and fully qualified name in plain text.
    */
-  @JvmDefault
   fun textTargets(context: ReplaceTextTargetContext): Collection<ReplaceTextTarget> = emptyList()
 }

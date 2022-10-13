@@ -27,7 +27,6 @@ class GroovyPluginConfigurator : MavenWorkspaceConfigurator {
 
     data class PluginDependency(val groupId: String, val artifactId: String)
 
-    @JvmDefault
     fun findInProject(mavenProject: MavenProject): MavenPlugin? {
       val plugin = mavenProject.findPlugin(groupId, artifactId)
       if (plugin == null) return null

@@ -23,7 +23,6 @@ import java.io.File;
 /**
  * @see LightJavaCodeInsightFixtureTestCase4
  * @see LightJavaCodeInsightFixtureTestCase5
- * @author peter
  */
 @TestDataPath("$CONTENT_ROOT/testData")
 public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {

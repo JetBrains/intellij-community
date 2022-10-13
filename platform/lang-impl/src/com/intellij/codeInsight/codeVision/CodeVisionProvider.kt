@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
@@ -31,13 +31,11 @@ interface CodeVisionProvider<T> {
    * WARNING! Must work very fast, it is invoked for a file during its opening. The user won't see the file's content if this method works long.
    * @return true iff it could potentially provide any lenses for the project
    */
-  @JvmDefault
   fun isAvailableFor(project: Project): Boolean = true
 
   /**
    * Prepares data for preview (to understand later that it is a preview), for example, stores user data in the editor/file.
    */
-  @JvmDefault
   fun preparePreview(editor: Editor, file: PsiFile) {
   }
   

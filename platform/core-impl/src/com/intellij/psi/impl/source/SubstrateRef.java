@@ -32,9 +32,6 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class SubstrateRef {
   private static final Logger LOG = Logger.getInstance(SubstrateRef.class);
 

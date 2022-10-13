@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * Please consider putting this logic into {@link com.intellij.codeInsight.lookup.LookupElement#handleInsert} or
  * {@link com.intellij.codeInsight.completion.InsertHandler},
  * as they're more flexible, and having all document modification code in one place will probably be more comprehensive.
- * @author peter
  */
 public abstract class TailType {
 

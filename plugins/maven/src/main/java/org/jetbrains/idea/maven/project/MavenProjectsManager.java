@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
@@ -81,7 +80,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -873,6 +871,20 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public boolean isIgnored(@NotNull MavenProject project) {
     if (!isInitialized()) return false;
     return myProjectsTree.isIgnored(project);
+  }
+
+  public void ignoreMavenProject(@Nullable MavenProject mavenProject) {
+    if (mavenProject != null && !isIgnored(mavenProject)) {
+      VirtualFile file = mavenProject.getFile();
+
+      if (isManagedFile(file) && getModules(mavenProject).isEmpty()) {
+        MavenLog.LOG.info("Removing managed maven project  + " + mavenProject + "because there is no module for it");
+        removeManagedFiles(Collections.singletonList(file));
+      } else {
+        MavenLog.LOG.info("Ignoring " + mavenProject);
+        setIgnoredState(Collections.singletonList(mavenProject), true);
+      }
+    }
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {

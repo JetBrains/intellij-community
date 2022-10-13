@@ -11,9 +11,6 @@ import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 
-/**
- * @author peter
- */
 final class CpuTimings {
 
   private static final Mandelbrot MANDELBROT = new Mandelbrot(765);

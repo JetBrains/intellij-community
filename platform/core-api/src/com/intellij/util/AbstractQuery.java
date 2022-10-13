@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public abstract class AbstractQuery<Result> implements Query<Result> {
   private final ThreadLocal<Boolean> myIsProcessing = new ThreadLocal<>();
 

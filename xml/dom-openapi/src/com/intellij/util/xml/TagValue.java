@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * Annotates DOM XML tag or attribute value getters. The getters may be annotated with {@link Convert} annotation.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

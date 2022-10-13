@@ -20,6 +20,8 @@ internal data class Configuration(@JvmField val products: Map<String, ProductCon
 @Serializable
 internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
 
+private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
+
 internal class BuildServer(homePath: Path, productionClassOutput: Path) {
   private val configuration: Configuration
 
@@ -30,7 +32,7 @@ internal class BuildServer(homePath: Path, productionClassOutput: Path) {
     System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
 
     val jsonFormat = Json { isLenient = true }
-    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve("build/dev-build.json")))
+    configuration = jsonFormat.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve(PRODUCTS_PROPERTIES_PATH)))
   }
 
   // not synchronized version
@@ -61,7 +63,7 @@ internal class BuildServer(homePath: Path, productionClassOutput: Path) {
 
   private fun getProductConfiguration(platformPrefix: String): ProductConfiguration {
     return configuration.products.get(platformPrefix) ?: throw ConfigurationException(
-      "No production configuration for platform prefix `$platformPrefix` please add to `dev-build-server.json` if needed"
+      "No production configuration for platform prefix `$platformPrefix` please add to `$PRODUCTS_PROPERTIES_PATH` if needed"
     )
   }
 

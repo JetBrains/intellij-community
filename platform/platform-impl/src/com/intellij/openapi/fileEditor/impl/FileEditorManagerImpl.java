@@ -4,12 +4,14 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.MaximizeEditorInSplitAction;
 import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -1170,7 +1172,12 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
         AsyncFileEditorProvider.Builder builder = builders.isEmpty() ? null : builders.get(i);
         FileEditor editor = builder == null ? provider.createEditor(myProject, file) : builder.build();
-        LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " + provider.getClass().getName());
+        if (!editor.isValid()) {
+          PluginDescriptor pluginDescriptor = PluginManager.getPluginByClass(provider.getClass());
+          LOG.error(new PluginException("Invalid editor created by provider " + provider.getClass().getName(),
+                                        pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
+          continue;
+        }
         editorsWithProviders.add(new FileEditorWithProvider(editor, provider));
       }
       catch (ProcessCanceledException e) {

@@ -27,9 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DefaultCompletionContributor extends CompletionContributor implements DumbAware {
 
   static void addDefaultAdvertisements(LookupImpl lookup, boolean includePsiFeatures) {

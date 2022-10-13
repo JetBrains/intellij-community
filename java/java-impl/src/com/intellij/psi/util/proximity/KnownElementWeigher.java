@@ -18,9 +18,6 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
- * @author peter
-*/
 public class KnownElementWeigher extends ProximityWeigher {
   private static final Set<String> POPULAR_JDK_CLASSES = ContainerUtil.newHashSet(
     JAVA_LANG_STRING,

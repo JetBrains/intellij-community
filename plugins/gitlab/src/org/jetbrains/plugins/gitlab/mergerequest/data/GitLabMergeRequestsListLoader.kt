@@ -13,10 +13,11 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequests
 
-class GitLabMergeRequestsListLoader(
+internal class GitLabMergeRequestsListLoader(
   private val api: GitLabApi,
-  private val project: GitLabProjectCoordinates)
-  : SequentialListLoader<GitLabMergeRequestShortDTO> {
+  private val project: GitLabProjectCoordinates,
+  private val searchQuery: String
+) : SequentialListLoader<GitLabMergeRequestShortDTO> {
 
   private val loadingMutex = Mutex()
 
@@ -30,7 +31,7 @@ class GitLabMergeRequestsListLoader(
   }
 
   private suspend fun loadMergeRequests(nextUri: String?): Pair<List<GitLabMergeRequestShortDTO>, String?> {
-    val response = if (nextUri == null) api.loadMergeRequests(project) else api.loadMergeRequests(nextUri)
+    val response = if (nextUri == null) api.loadMergeRequests(project, searchQuery) else api.loadMergeRequests(nextUri)
     val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
     return response.body() to linkHeader?.nextLink
   }

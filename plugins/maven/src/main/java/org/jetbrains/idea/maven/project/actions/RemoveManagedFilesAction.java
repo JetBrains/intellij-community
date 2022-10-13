@@ -104,7 +104,7 @@ public class RemoveManagedFilesAction extends MavenAction {
       return;
     }
 
-    removeModules(ModuleManager.getInstance(project), projectsManager, modulesToRemove);
+    removeModules(ModuleManager.getInstance(project), modulesToRemove);
     projectsManager.removeManagedFiles(removableFiles);
     projectsManager.removeIgnoredFilesPaths(filesToUnIgnore); // hack to remove deleted files from ignore list
   }
@@ -123,7 +123,7 @@ public class RemoveManagedFilesAction extends MavenAction {
     modulesToRemove.add(module);
   }
 
-  private static void removeModules(ModuleManager moduleManager, MavenProjectsManager mavenProjectsManager,  List<Module> modulesToRemove) {
+  private static void removeModules(ModuleManager moduleManager, List<Module> modulesToRemove) {
     WriteAction.run(() -> {
       List<ModifiableRootModel> usingModels = new SmartList<>();
 
@@ -137,7 +137,6 @@ public class RemoveManagedFilesAction extends MavenAction {
           }
         }
       }
-
 
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
       for (Module module : modulesToRemove) {

@@ -21,9 +21,6 @@ import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public final class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 

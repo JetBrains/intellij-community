@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public abstract class Identikit {
   private static final Interner<ByType> ourPlainInterner = Interner.createWeakInterner();
   private static final Interner<ByAnchor> ourAnchorInterner = Interner.createWeakInterner();

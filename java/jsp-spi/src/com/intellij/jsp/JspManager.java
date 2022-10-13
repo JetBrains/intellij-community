@@ -18,9 +18,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class JspManager implements IBaseJspManager {
 
   public static JspManager getInstance(@NotNull Project project) {

@@ -15,6 +15,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/addNameToArgument", pattern = pattern)
             model("${idea}intentions/addNamesToCallArguments", pattern = pattern)
             model("${idea}intentions/addNamesToFollowingArguments", pattern = pattern)
+            model("${idea}intentions/addOpenModifier", pattern = pattern)
             model("${idea}intentions/addPropertyAccessors", pattern = pattern)
             model("${idea}intentions/specifyTypeExplicitly", pattern = pattern)
             model("${idea}intentions/importAllMembers", pattern = pattern)

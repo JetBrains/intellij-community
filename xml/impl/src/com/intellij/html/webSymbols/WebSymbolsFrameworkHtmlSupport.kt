@@ -12,15 +12,12 @@ import java.util.function.Predicate
 
 interface WebSymbolsFrameworkHtmlSupport {
 
-  @JvmDefault
   fun createHtmlAttributeDescriptor(info: WebSymbolHtmlAttributeInfo, tag: XmlTag?): WebSymbolAttributeDescriptor =
     WebSymbolAttributeDescriptor(info, tag)
 
-  @JvmDefault
   fun createHtmlElementDescriptor(info: WebSymbolHtmlElementInfo, tag: XmlTag): WebSymbolElementDescriptor =
     WebSymbolElementDescriptor(info, tag)
 
-  @JvmDefault
   fun getAttributeNameCodeCompletionFilter(tag: XmlTag): Predicate<String> = Predicate { true }
 
   companion object {

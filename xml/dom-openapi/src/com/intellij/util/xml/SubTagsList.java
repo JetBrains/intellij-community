@@ -28,8 +28,6 @@ import java.lang.annotation.Target;
   addition methods for each subtag name, each returning its own DomElement type, each may have an "index" parameter.
   The element will be inserted in proper place in the "merged" collection, allowing you to mix elements of different
   types (if Schema or DTD allows).
- *
- * @author peter
  */
 
 @Retention(RetentionPolicy.RUNTIME)

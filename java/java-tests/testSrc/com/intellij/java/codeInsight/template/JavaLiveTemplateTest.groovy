@@ -20,9 +20,6 @@ import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 
-/**
- * @author peter
- */
 @CompileStatic
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
 

@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public class WeighingNewActionGroup extends WeighingActionGroup implements DumbAware {
   private ActionGroup myDelegate;
 

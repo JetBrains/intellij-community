@@ -25,7 +25,6 @@ interface NavBarItemProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun findParent(item: NavBarItem): NavBarItem? = null
 
   /**
@@ -33,7 +32,6 @@ interface NavBarItemProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> = emptyList()
 
 }

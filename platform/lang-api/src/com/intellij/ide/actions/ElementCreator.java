@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class ElementCreator implements WriteActionAware {
   private static final Logger LOG = Logger.getInstance(ElementCreator.class);
   private final Project myProject;

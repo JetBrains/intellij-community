@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class VirtualDomParentStrategy implements DomParentStrategy {
   private final DomInvocationHandler myParentHandler;
   private long myModCount;

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
-*/
 public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChooserObject {
   public PsiDocCommentOwnerMemberChooserObject(@NotNull PsiDocCommentOwner owner, final @NlsSafe String text, Icon icon) {
     super(owner, text, icon);

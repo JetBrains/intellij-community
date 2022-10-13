@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPattern> {
   public PsiMethodPattern() {
     super(PsiMethod.class);

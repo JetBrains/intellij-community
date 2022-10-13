@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public final class GradleClassFinder extends NonClasspathClassFinder {
 
   private static final String KOTLIN_DEFAULT_EXTENSION = "kt";

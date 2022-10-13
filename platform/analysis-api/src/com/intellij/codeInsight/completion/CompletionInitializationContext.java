@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class CompletionInitializationContext {
   public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset", false);
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");

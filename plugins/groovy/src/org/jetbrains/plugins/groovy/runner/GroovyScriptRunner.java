@@ -23,9 +23,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(@NotNull Module module);

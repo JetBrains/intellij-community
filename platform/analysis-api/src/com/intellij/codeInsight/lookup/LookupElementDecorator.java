@@ -16,7 +16,6 @@ import java.util.Set;
  * Please decorate only when necessary, e.g. when intercepting other contributors
  * ({@link com.intellij.codeInsight.completion.CompletionResultSet#runRemainingContributors}).
  * There's usually no point in doing so when you create them yourself in the same place of code.
- * @author peter
  *
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */

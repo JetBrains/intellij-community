@@ -10,9 +10,6 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 
-/**
- * @author peter
- */
 public abstract class ComboBoxCellEditor extends DefaultCellEditor {
   public ComboBoxCellEditor() {
     super(new ComboBox());

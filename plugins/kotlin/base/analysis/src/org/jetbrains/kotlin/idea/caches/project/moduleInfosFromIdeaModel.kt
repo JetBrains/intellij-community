@@ -81,7 +81,11 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         val cachedValuesManager = CachedValuesManager.getManager(project)
         resultByPlatform = cachedValuesManager.createCachedValue {
-            CachedValueProvider.Result.create(ConcurrentHashMap<TargetPlatform, List<IdeaModuleInfo>>(), modificationTracker)
+            CachedValueProvider.Result.create(
+                ConcurrentHashMap<TargetPlatform, List<IdeaModuleInfo>>(),
+                modificationTracker,
+                LibraryInfoCache.getInstance(project).removedLibraryInfoTracker(),
+            )
         }
 
         modulesAndSdk = cachedValuesManager.createCachedValue {

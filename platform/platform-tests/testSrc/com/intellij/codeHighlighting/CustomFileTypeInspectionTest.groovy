@@ -19,9 +19,6 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class CustomFileTypeInspectionTest extends BasePlatformTestCase {
 

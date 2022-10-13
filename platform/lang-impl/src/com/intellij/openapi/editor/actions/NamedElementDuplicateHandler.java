@@ -31,9 +31,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class NamedElementDuplicateHandler extends EditorWriteActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginal;
 

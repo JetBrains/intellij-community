@@ -7,9 +7,6 @@ import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class DelegatingScopeProcessor implements PsiScopeProcessor {
   private final PsiScopeProcessor myDelegate;
 

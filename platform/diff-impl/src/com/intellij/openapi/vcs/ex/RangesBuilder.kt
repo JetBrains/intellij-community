@@ -55,6 +55,10 @@ private fun createRanges(current: CharSequence,
                          currentLineOffsets: LineOffsets,
                          vcsLineOffsets: LineOffsets): List<LstRange> {
   val iterable = compareLines(vcs, current, vcsLineOffsets, currentLineOffsets)
+  return createRanges(iterable)
+}
+
+fun createRanges(iterable: FairDiffIterable): List<LstRange> {
   return iterable.iterateChanges().map { LstRange(it.start2, it.end2, it.start1, it.end1) }
 }
 

@@ -49,6 +49,9 @@ private class CommitProperty<T>(private val key: Key<T>, private val defaultValu
 fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitProperty(key, false)
 fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> = CommitProperty(key, defaultValue)
 
+private val IS_POST_COMMIT_CHECK_KEY = Key.create<Boolean>("Vcs.Commit.IsPostCommitCheck")
+var CommitContext.isPostCommitCheck: Boolean by commitProperty(IS_POST_COMMIT_CHECK_KEY)
+
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
 
@@ -222,6 +225,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val handlers = commitHandlers
       val commitChecks = handlers
         .map { it.asCommitCheck(commitInfo) }
+        .filter { it.isEnabled() }
         .groupBy { it.getExecutionOrder() }
 
       if (!checkDumbMode(commitInfo, commitChecks.values.flatten())) {
@@ -230,13 +234,14 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
-      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
       runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
+      runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT])?.let { return it }
 
       return CommitChecksResult.Passed
     }
@@ -326,7 +331,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
-    suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
+    suspend fun runMetaHandlers(@Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>) {
       EDT.assertIsEdt()
       // reversed to have the same order as when wrapping meta handlers into each other
       for (metaHandler in metaHandlers.reversed()) {
@@ -352,10 +357,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
 
     suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
-      if (!commitCheck.isEnabled()) {
-        LOG.debug("Commit check disabled $commitCheck")
-        return null
-      }
       if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
         LOG.debug("Skipped commit check in dumb mode $commitCheck")
         return null
@@ -412,7 +413,7 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {
-      checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
+      @Suppress("DEPRECATION") checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
     }
     if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
     return UnknownCommitProblem(result)
@@ -427,8 +428,4 @@ internal class UnknownCommitProblem(val result: CheckinHandler.ReturnResult) : C
   override val text: String get() = message("before.checkin.error.unknown")
 
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult = result
-}
-
-interface DynamicCommitInfo : CommitInfo {
-  fun asStaticInfo(): CommitInfo
 }

@@ -58,7 +58,6 @@ interface TargetEnvironmentRequest {
    * I.e., neither `setOf(UploadRoot("/local", Persistent("/remote1")), UploadRoot("/local", Persistent("/remote2")))`,
    * nor `setOf(UploadRoot("/local1", Persistent("/remote")), UploadRoot("/local2", Persistent("/remote")))` can be resolved.
    */
-  @JvmDefault
   val uploadVolumes: MutableSet<TargetEnvironment.UploadRoot>
     get() = throw UnsupportedOperationException()
 
@@ -66,20 +65,16 @@ interface TargetEnvironmentRequest {
    * Set of required download roots.
    * Like for [uploadVolumes], both local and remote paths must be unique across all requests.
    */
-  @JvmDefault
   val downloadVolumes: MutableSet<TargetEnvironment.DownloadRoot>
     get() = throw UnsupportedOperationException()
 
   /** Values are local ports. */
-  @JvmDefault
   val targetPortBindings: MutableSet<TargetEnvironment.TargetPortBinding>
     get() = throw UnsupportedOperationException()
 
-  @JvmDefault
   val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding>
     get() = throw UnsupportedOperationException()
 
-  @JvmDefault
   fun duplicate(): TargetEnvironmentRequest = throw UnsupportedOperationException()
 
   var projectPathOnTarget: String
@@ -96,7 +91,6 @@ interface TargetEnvironmentRequest {
    * @return new, separate, upload-only volume at some unspecified remote location
    */
   @Deprecated("Use uploadVolumes")
-  @JvmDefault
   fun createTempVolume(): Volume {
     return createUploadRoot(null, true)
   }

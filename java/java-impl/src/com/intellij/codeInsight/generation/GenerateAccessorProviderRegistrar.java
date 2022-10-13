@@ -9,9 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public final class GenerateAccessorProviderRegistrar {
 
   public final static ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");

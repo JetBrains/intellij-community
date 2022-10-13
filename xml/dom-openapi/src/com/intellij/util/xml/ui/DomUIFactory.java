@@ -23,9 +23,6 @@ import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomUIFactory {
 
   public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");

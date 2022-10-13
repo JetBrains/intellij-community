@@ -1,9 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.builder.impl.AlignBothImpl
+import org.jetbrains.annotations.ApiStatus
 
-sealed interface Align
+sealed interface Align {
+  companion object {
+    @JvmField
+    val FILL = AlignX.FILL + AlignY.FILL
+
+    @JvmField
+    val CENTER = AlignX.CENTER + AlignY.CENTER
+  }
+}
 
 sealed interface AlignX : Align {
   object LEFT : AlignX
@@ -19,16 +27,13 @@ sealed interface AlignY : Align {
   object FILL : AlignY
 }
 
-interface AlignBoth : Align {
-  companion object {
-    @JvmField
-    val FILL = AlignX.FILL + AlignY.FILL
-
-    @JvmField
-    val CENTER = AlignX.CENTER + AlignY.CENTER
-  }
+operator fun AlignX.plus(alignY: AlignY): Align {
+  return AlignBoth(this, alignY)
 }
 
-operator fun AlignX.plus(alignY: AlignY): AlignBoth {
-  return AlignBothImpl(this, alignY)
+operator fun AlignY.plus(alignX: AlignX): Align {
+  return AlignBoth(alignX, this)
 }
+
+@ApiStatus.Internal
+internal class AlignBoth(val alignX: AlignX, val alignY: AlignY) : Align

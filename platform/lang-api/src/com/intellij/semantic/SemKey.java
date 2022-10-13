@@ -14,8 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p/>
  * Use {@link #createKey(String, SemKey[])} to create a new "root" key, on which you can attach "sub"-keys via
  * {@link #subKey(String, SemKey[])}.
- *
- * @author peter
  */
 public final class SemKey<T extends SemElement> {
   private static final AtomicInteger counter = new AtomicInteger(0);

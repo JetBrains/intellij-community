@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public class ExceptionInfoCache {
   private final ConcurrentMap<String, ClassResolveInfo> myCache = ContainerUtil.createConcurrentSoftValueMap();
   private final Project myProject;

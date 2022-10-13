@@ -23,9 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaMembersGetter extends MembersGetter {
   private final @NotNull PsiType myExpectedType;
   private final CompletionParameters myParameters;

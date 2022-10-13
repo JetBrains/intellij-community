@@ -24,9 +24,6 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class SamePsiMemberWeigher extends ProximityWeigher {
   private static final NotNullLazyKey<Boolean, ProximityLocation> INSIDE_PSI_MEMBER = NotNullLazyKey.create("insidePsiMember",
                                                                                                             proximityLocation -> PsiTreeUtil.getContextOfType(proximityLocation.getPosition(), PsiMember.class, false) != null);

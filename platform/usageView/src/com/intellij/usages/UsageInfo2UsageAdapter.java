@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -106,6 +107,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     if (document.getTextLength() == 0) return 0;
     if (startOffset >= document.getTextLength()) return document.getLineCount();
     return document.getLineNumber(startOffset);
+  }
+
+  private Color computeBackgroundColor() {
+    VirtualFile file = getFile();
+    if (file == null) {
+      return null;
+    }
+
+    return EditorTabPresentationUtil.getFileBackgroundColor(getProject(), file);
   }
 
   private TextChunk @NotNull [] computeText() {
@@ -394,7 +404,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText()));
+    myCachedPresentation = new SoftReference<>(new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor()));
   }
 
   @Override
@@ -471,7 +481,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (cachedPresentation == null || isModified && isValid()) {
-      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText());
+      UsageNodePresentation presentation = new UsageNodePresentation(computeIcon(), computeText(), computeBackgroundColor());
       myCachedPresentation = new SoftReference<>(presentation);
       myModificationStamp = currentModificationStamp;
       return presentation;
@@ -523,6 +533,11 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       }
     }
     return UsageViewBundle.message("node.invalid");
+  }
+
+  @Override
+  public @Nullable Color getBackgroundColor() {
+    return doUpdateCachedPresentation().getBackgroundColor();
   }
 
   @Override

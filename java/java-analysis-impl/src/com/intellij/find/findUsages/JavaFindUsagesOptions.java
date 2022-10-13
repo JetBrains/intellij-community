@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
   public boolean isSkipImportStatements;
 

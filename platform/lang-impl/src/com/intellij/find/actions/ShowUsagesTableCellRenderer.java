@@ -5,22 +5,15 @@ import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.usages.TextChunk;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsagePresentation;
+import com.intellij.usages.*;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,18 +33,15 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
   static final int MARGIN = 2;
 
-  private final @NotNull Project myProject;
   private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
   private final @NotNull AtomicInteger myOutOfScopeUsages;
   private final @NotNull SearchScope mySearchScope;
 
   ShowUsagesTableCellRenderer(
-    @NotNull Project project,
     @NotNull Predicate<? super Usage> originUsageCheck,
     @NotNull AtomicInteger outOfScopeUsages,
     @NotNull SearchScope searchScope
   ) {
-    myProject = project;
     myOriginUsageCheck = originUsageCheck;
     myOutOfScopeUsages = outOfScopeUsages;
     mySearchScope = searchScope;
@@ -79,10 +69,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     UsageNode usageNode = (UsageNode)value;
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
-    Color fileBgColor = getBackgroundColor(usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
     Color selectionFg = NamedColorUtil.getListSelectionForeground(true);
-    Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
     Color rowSelectionBackground = isSelected ? selectionBg : null;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();
 
@@ -94,14 +82,14 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       else {
         textChunks.append(((ShowUsagesAction.StringNode)value).getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, list.getBackground(), rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).MORE_USAGES_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
       textChunks.append(FindBundle.message("show.usages.more.usages.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, list.getBackground(), rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       String message = UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope);
@@ -109,13 +97,13 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append("...<");
       textChunks.append(message, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
-      return textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
+      return textComponentSpanningWholeRow(textChunks, list.getBackground(), rowSelectionBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).USAGES_FILTERED_OUT_SEPARATOR) {
       ShowUsagesAction.FilteredOutUsagesNode filtered = (ShowUsagesAction.FilteredOutUsagesNode)usageNode;
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append(filtered.getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      JComponent component = textComponentSpanningWholeRow(textChunks, rowBackground, rowSelectionBackground, rowForeground, column, list);
+      JComponent component = textComponentSpanningWholeRow(textChunks, list.getBackground(), rowSelectionBackground, rowForeground, column, list);
       component.setToolTipText(filtered.getTooltip());
       return component;
     }
@@ -137,6 +125,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setLayout(layout);
     panel.setFont(null);
 
+    UsagePresentation presentation = usage.getPresentation();
+    UsageNodePresentation cachedPresentation = presentation.getCachedPresentation();
+    Color fileBgColor = cachedPresentation == null ? presentation.getBackgroundColor() : cachedPresentation.getBackgroundColor();
+    Color rowBackground =  fileBgColor == null ? list.getBackground() : fileBgColor;
+
     // greying the current usage the "find usages" was originated from
     boolean isOriginUsage = myOriginUsageCheck.test(usage);
     if (isOriginUsage && !ExperimentalUI.isNewUI()) {
@@ -148,8 +141,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setForeground(rowForeground);
     applyBackground(panel, column, rowBackground, rowSelectionBackground);
 
-    UsagePresentation presentation = usage.getPresentation();
-    TextChunk[] text = presentation.getText();
+    TextChunk[] text = cachedPresentation == null ? presentation.getText() : cachedPresentation.getText();
 
     switch (column) {
       case CURRENT_ASTERISK_COL -> {
@@ -182,7 +174,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
         textChunks.setOpaque(false);
 
-        Icon icon = presentation.getIcon();
+        Icon icon = cachedPresentation == null ? presentation.getIcon() : cachedPresentation.getIcon();
         textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
         textChunks.append("").appendTextPadding(JBUIScale.scale(16 + 5));
         for (int i = 1; i < text.length; i++) {
@@ -312,11 +304,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       attributes = attributes.derive(-1, null, fileBgColor, null);
     }
     return attributes;
-  }
-
-  private Color getBackgroundColor(Usage usage) {
-    VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
-    return virtualFile == null ? null : VfsPresentationUtil.getFileBackgroundColor(myProject, virtualFile);
   }
 
   private static void appendGroupText(

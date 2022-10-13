@@ -65,9 +65,6 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.ui.IdeBorderFactory.*;
 
-/**
- * @author peter
- */
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
   public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
   }

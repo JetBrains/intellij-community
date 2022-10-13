@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.editor.Editor;
 
-/**
- * @author peter
- */
 public interface EditorDataProvider {
   @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret);
 }

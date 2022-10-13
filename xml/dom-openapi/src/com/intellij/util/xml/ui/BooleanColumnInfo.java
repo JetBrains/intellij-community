@@ -22,9 +22,6 @@ import com.intellij.util.xml.GenericDomValue;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
-/**
- * @author peter
- */
 public class BooleanColumnInfo extends DomColumnInfo<GenericDomValue<Boolean>, Boolean> {
 
   public BooleanColumnInfo(final @ColumnName String name) {

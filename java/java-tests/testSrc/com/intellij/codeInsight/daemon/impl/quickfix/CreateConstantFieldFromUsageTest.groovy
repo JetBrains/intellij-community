@@ -4,9 +4,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class CreateConstantFieldFromUsageTest extends LightJavaCodeInsightFixtureTestCase {
 

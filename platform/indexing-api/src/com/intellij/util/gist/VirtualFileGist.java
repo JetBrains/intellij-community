@@ -42,7 +42,6 @@ import java.util.function.Supplier;
  *   <li>Gists are project-dependent.</li>
  *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
  * </ul>
- * @author peter
  */
 @ApiStatus.NonExtendable
 public interface VirtualFileGist<Data> {

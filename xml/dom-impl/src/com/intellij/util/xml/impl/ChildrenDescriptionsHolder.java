@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
   private final Map<XmlName, T> myMap = new HashMap<>();
   private final ChildrenDescriptionsHolder<? extends T> myDelegate;

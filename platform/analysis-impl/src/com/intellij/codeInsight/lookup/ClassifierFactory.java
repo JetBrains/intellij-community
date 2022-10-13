@@ -17,9 +17,6 @@ package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public abstract class ClassifierFactory<T> {
   private final String myId;
 

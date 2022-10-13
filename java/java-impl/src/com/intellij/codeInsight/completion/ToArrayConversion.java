@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 
-/**
- * @author peter
- */
 public final class ToArrayConversion {
   static void addConversions(final @NotNull PsiFile file,
                              final PsiElement element, final String prefix, final PsiType itemType,

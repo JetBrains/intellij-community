@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
@@ -15,11 +16,13 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.*
@@ -60,6 +63,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
                                                                        NotificationType.ERROR)
+
+  private var pendingPostCommitChecks: PendingPostCommitChecks? = null
 
   protected fun setupCommitHandlersTracking() {
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
@@ -103,7 +108,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun updateDefaultCommitActionName() {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
+    val isSkipCommitChecks = willSkipCommitChecks()
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses, isAmend, isSkipCommitChecks)
   }
 
@@ -188,6 +193,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }, this)
   }
 
+  private fun willSkipCommitChecks() = willSkipEarlyCommitChecks() || willSkipModificationCommitChecks()
+
+  private fun willSkipEarlyCommitChecks() = isCommitChecksResultUpToDate == RecentCommitChecks.EARLY_FAILED ||
+                                            isCommitChecksResultUpToDate == RecentCommitChecks.MODIFICATIONS_FAILED
+
+  private fun willSkipModificationCommitChecks() = isCommitChecksResultUpToDate == RecentCommitChecks.MODIFICATIONS_FAILED
+
+
   protected fun resetCommitChecksResult() {
     isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
     hideCommitChecksFailureNotification()
@@ -208,10 +221,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     if (result is CommitChecksResult.Failed ||
         result is CommitChecksResult.ExecutionError) {
       val executor = sessionInfo.executor
+      val failures = ui.commitProgressUi.getCommitCheckFailures()
       val commitActionText = getCommitActionTextForNotification(executor, false)
       val commitAnywayActionText = getCommitActionTextForNotification(executor, true)
       val title = message("commit.checks.failed.notification.title", commitActionText)
-      val description = getCommitCheckFailureDescription()
+      val description = getCommitCheckFailureDescription(failures)
       checkinErrorNotifications.notify(title, description, project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
         it.addAction(
@@ -220,37 +234,39 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
               executorCalled(executor)
             }
           })
-        it.addAction(createShowDetailsNotificationAction())
+        appendShowDetailsNotificationActions(it, failures)
       }
     }
 
     if (result is CommitChecksResult.OnlyChecks && !result.checksPassed) {
+      val failures = ui.commitProgressUi.getCommitCheckFailures()
       val commitActionText = getCommitActionTextForNotification(null, false)
       val title = message("commit.checks.failed.notification.title", commitActionText)
-      val description = getCommitCheckFailureDescription()
+      val description = getCommitCheckFailureDescription(failures)
       checkinErrorNotifications.notify(title, description, project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_ONLY_FAILED)
-        it.addAction(createShowDetailsNotificationAction())
+        appendShowDetailsNotificationActions(it, failures)
       }
     }
   }
 
-  private fun getCommitCheckFailureDescription(): @NlsContexts.NotificationContent String {
-    return ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.text }.joinToString()
+  private fun getCommitCheckFailureDescription(failures: List<CommitCheckFailure>): @NlsContexts.NotificationContent String {
+    return failures.filterIsInstance<CommitCheckFailure.WithDescription>().joinToString("<br>") { it.text }
   }
 
-  private fun createShowDetailsNotificationAction(): NotificationAction {
-    return NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
-      val detailsViewer = ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.detailsViewer }.singleOrNull()
-      if (detailsViewer != null) {
-        detailsViewer()
-      }
-      else {
+  private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
+    for (failure in failures.filterIsInstance<CommitCheckFailure.WithDetails>()) {
+      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ -> failure.viewDetails() })
+    }
+
+    val hasGenericFailure = failures.any { it !is CommitCheckFailure.WithDetails }
+    if (hasGenericFailure) {
+      notification.addAction(NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
         val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
         toolWindow?.activate {
           ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
         }
-      }
+      })
     }
   }
 
@@ -260,54 +276,235 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
 
     workflow.asyncSession(coroutineScope, sessionInfo) {
+      pendingPostCommitChecks = null
+
       val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
       commitContext.isOnlyRunCommitChecks = false
 
-      val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
-      if (isSkipCommitChecks && !isOnlyRunCommitChecks) {
-        return@asyncSession CommitChecksResult.Passed
-      }
+      val skipEarlyCommitChecks = !isOnlyRunCommitChecks && willSkipEarlyCommitChecks()
+      val skipModificationCommitChecks = !isOnlyRunCommitChecks && willSkipModificationCommitChecks()
+      resetCommitChecksResult()
 
       ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
-        val problem = workflow.runBackgroundBeforeCommitChecks(commitInfo)
-        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo.asStaticInfo())
+        val failure = runNonModalBeforeCommitChecks(commitInfo, skipEarlyCommitChecks, skipModificationCommitChecks)
+        handleCommitProblem(failure, isOnlyRunCommitChecks)
       }
     }
 
     return true
   }
 
-  private fun handleCommitProblem(problem: CommitProblem?,
-                                  isOnlyRunCommitChecks: Boolean,
-                                  commitInfo: CommitInfo): CommitChecksResult {
-    if (problem != null) {
-      val checkFailure = when (problem) {
-        is UnknownCommitProblem -> CommitCheckFailure(null, null)
-        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
-        else -> CommitCheckFailure(problem.text, null)
+  private suspend fun runNonModalBeforeCommitChecks(commitInfo: DynamicCommitInfo,
+                                                    skipEarlyCommitChecks: Boolean,
+                                                    skipModificationCommitChecks: Boolean): NonModalCommitChecksFailure? {
+    try {
+      val handlers = workflow.commitHandlers
+      val commitChecks = handlers
+        .map { it.asCommitCheck(commitInfo) }
+        .filter { it.isEnabled() }
+        .groupBy { it.getExecutionOrder() }
+
+      val earlyChecks = commitChecks[CommitCheck.ExecutionOrder.EARLY].orEmpty()
+      val modificationChecks = commitChecks[CommitCheck.ExecutionOrder.MODIFICATION].orEmpty()
+      val lateChecks = commitChecks[CommitCheck.ExecutionOrder.LATE].orEmpty()
+      val postCommitChecks = commitChecks[CommitCheck.ExecutionOrder.POST_COMMIT].orEmpty()
+      @Suppress("DEPRECATION") val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+
+      if (!skipEarlyCommitChecks) {
+        runEarlyCommitChecks(commitInfo, earlyChecks)?.let { return it }
       }
-      ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+
+      if (!skipModificationCommitChecks) {
+        runModificationCommitChecks(commitInfo, modificationChecks, metaHandlers)?.let { return it }
+      }
+
+      runLateCommitChecks(commitInfo, lateChecks)?.let { return it }
+
+      if (postCommitChecks.isNotEmpty() &&
+          Registry.`is`("vcs.non.modal.post.commit.checks") &&
+          commitInfo.executor?.requiresSyncCommitChecks() != true) {
+        pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
+      }
+      else {
+        runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
+      }
+
+      return null // checks passed
+    }
+    catch (ce: CancellationException) {
+      // Do not report error on cancellation
+      throw ce
+    }
+    catch (e: Throwable) {
+      LOG.warn(Throwable(e))
+      reportCommitCheckFailure(CommitProblem.createError(e))
+      return NonModalCommitChecksFailure.ERROR
+    }
+  }
+
+  private suspend fun runEarlyCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
+    val problems = mutableListOf<CommitProblem>()
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+    }
+    if (problems.isEmpty()) return null
+
+    problems.forEach { reportCommitCheckFailure(it) }
+    return NonModalCommitChecksFailure.EARLY_FAILED
+  }
+
+  private suspend fun runModificationCommitChecks(commitInfo: DynamicCommitInfo,
+                                                  commitChecks: List<CommitCheck>,
+                                                  @Suppress("DEPRECATION")
+                                                  metaHandlers: List<CheckinMetaHandler>): NonModalCommitChecksFailure? {
+    if (metaHandlers.isEmpty() && commitChecks.isEmpty()) return null
+
+    return workflow.runModificationCommitChecks underChangelist@{
+      AbstractCommitWorkflow.runMetaHandlers(metaHandlers)
+
+      for (commitCheck in commitChecks) {
+        val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+        reportCommitCheckFailure(problem)
+        return@underChangelist NonModalCommitChecksFailure.MODIFICATIONS_FAILED
+      }
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return@underChangelist null
+    }
+  }
+
+  private suspend fun runLateCommitChecks(commitInfo: DynamicCommitInfo, commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
+    for (commitCheck in commitChecks) {
+      val problem = AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+
+      val solution = problem.showModalSolution(project, commitInfo)
+      if (solution == CheckinHandler.ReturnResult.COMMIT) continue
+
+      reportCommitCheckFailure(problem)
+      return NonModalCommitChecksFailure.ABORTED
+    }
+    return null
+  }
+
+  private suspend fun runSyncPostCommitChecks(commitInfo: DynamicCommitInfo,
+                                              commitChecks: List<CommitCheck>): NonModalCommitChecksFailure? {
+    val problems = mutableListOf<CommitProblem>()
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo) ?: continue
+    }
+    if (problems.isEmpty()) return null
+
+    problems.forEach { reportCommitCheckFailure(it) }
+    return NonModalCommitChecksFailure.ERROR
+  }
+
+  private fun runPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
+    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
+    scope.launch {
+      withBackgroundProgressIndicator(project, message("post.commit.checks.progress.text")) {
+        val postCommitInfo = createPostCommitInfo(commitInfo)
+        withContext(Dispatchers.EDT) {
+          val problems = runAsyncPostCommitChecks(commitChecks, postCommitInfo)
+          if (problems.isEmpty()) return@withContext
+
+          reportPostCommitChecksFailure(problems)
+        }
+      }
+    }
+  }
+
+  private suspend fun runAsyncPostCommitChecks(commitChecks: List<CommitCheck>,
+                                               postCommitInfo: StaticCommitInfo): MutableList<CommitProblem> {
+    val problems = mutableListOf<CommitProblem>()
+
+    if (isDumb(project)) {
+      if (commitChecks.any { !DumbService.isDumbAware(it) }) {
+        problems += TextCommitProblem(message("before.checkin.post.commit.error.dumb.mode"))
+      }
     }
 
-    val checksPassed = problem == null
-    when {
-      isOnlyRunCommitChecks -> {
-        if (checksPassed) {
-          isCommitChecksResultUpToDate = RecentCommitChecks.PASSED
-        }
-        else {
-          isCommitChecksResultUpToDate = RecentCommitChecks.FAILED
-        }
-        return CommitChecksResult.OnlyChecks(checksPassed)
+    for (commitCheck in commitChecks) {
+      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo) ?: continue
+    }
+    return problems
+  }
+
+  private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
+    val changeConverters = commitInfo.affectedVcses.mapNotNull { it.checkinEnvironment?.postCommitChangeConverter }
+    if (changeConverters.isEmpty()) LOG.warn("Post-commit change converters not found for ${commitInfo.affectedVcses}")
+
+    val commitContext = commitInfo.commitContext
+    commitContext.isPostCommitCheck = true
+
+    var staticChanges = commitInfo.committedChanges
+    for (changeConverter in changeConverters) {
+      staticChanges = changeConverter.convertChangesAfterCommit(staticChanges, commitContext)
+    }
+
+    return StaticCommitInfo(commitContext, commitInfo.executor, commitInfo.commitActionText,
+                            staticChanges, commitInfo.affectedVcses, commitInfo.commitMessage)
+  }
+
+  private fun reportCommitCheckFailure(problem: CommitProblem) {
+    val checkFailure = when (problem) {
+      is UnknownCommitProblem -> CommitCheckFailure.Unknown
+      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsAction) {
+        problem.showDetails(project)
       }
-      checksPassed -> {
+      else -> CommitCheckFailure.WithDescription(problem.text)
+    }
+    ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+  }
+
+  private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
+    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(message("post.commit.checks.failed.notification.title"),
+                          problems.joinToString("<br>") { it.text },
+                          NotificationType.ERROR)
+      .setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
+
+    for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
+      notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
+        problem.showDetails(project)
+      })
+    }
+
+    notification.notify(project)
+  }
+
+  private fun handleCommitProblem(failure: NonModalCommitChecksFailure?, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
+    val checksPassed = failure == null
+    val aborted = failure == NonModalCommitChecksFailure.ABORTED
+
+    if (checksPassed) {
+      if (isOnlyRunCommitChecks) {
+        isCommitChecksResultUpToDate = RecentCommitChecks.PASSED
+      }
+      else {
         isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN // We are going to commit, remembering the result is not needed.
-        return CommitChecksResult.Passed
       }
-      else -> {
-        isCommitChecksResultUpToDate = RecentCommitChecks.FAILED
-        return CommitChecksResult.Failed()
-      }
+    }
+    else if (failure == NonModalCommitChecksFailure.EARLY_FAILED) {
+      isCommitChecksResultUpToDate = RecentCommitChecks.EARLY_FAILED
+    }
+    else if (failure == NonModalCommitChecksFailure.MODIFICATIONS_FAILED) {
+      isCommitChecksResultUpToDate = RecentCommitChecks.MODIFICATIONS_FAILED
+    }
+    else {
+      isCommitChecksResultUpToDate = RecentCommitChecks.FAILED
+    }
+
+    if (aborted) {
+      return CommitChecksResult.Cancelled
+    }
+    else if (isOnlyRunCommitChecks) {
+      return CommitChecksResult.OnlyChecks(checksPassed)
+    }
+    else if (checksPassed) {
+      return CommitChecksResult.Passed
+    }
+    else {
+      return CommitChecksResult.Failed()
     }
   }
 
@@ -354,7 +551,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun getState(): CommitWorkflowHandlerState {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
+    val isSkipCommitChecks = willSkipCommitChecks()
     return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
@@ -373,6 +570,25 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
+
+  protected inner class PostCommitChecksRunner : CommitterResultHandler {
+    override fun onSuccess() {
+      pendingPostCommitChecks?.let { runPostCommitChecksTask(it.commitInfo, it.commitChecks) }
+      pendingPostCommitChecks = null
+    }
+
+    override fun onCancel() {
+      pendingPostCommitChecks = null
+    }
+
+    override fun onFailure() {
+      pendingPostCommitChecks = null
+    }
+  }
 }
 
-private enum class RecentCommitChecks { UNKNOWN, PASSED, FAILED }
+private class PendingPostCommitChecks(val commitInfo: StaticCommitInfo, val commitChecks: List<CommitCheck>)
+
+private enum class NonModalCommitChecksFailure { EARLY_FAILED, MODIFICATIONS_FAILED, ABORTED, ERROR }
+
+private enum class RecentCommitChecks { UNKNOWN, PASSED, EARLY_FAILED, MODIFICATIONS_FAILED, FAILED }

@@ -62,6 +62,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     workflow.addListener(this, this)
     workflow.addVcsCommitListener(GitCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(PostCommitChecksRunner(), this)
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)

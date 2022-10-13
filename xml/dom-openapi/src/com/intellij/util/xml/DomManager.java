@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomManager extends CompositeModificationTracker implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 

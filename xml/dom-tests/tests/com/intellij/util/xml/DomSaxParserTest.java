@@ -22,9 +22,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class DomSaxParserTest extends BasePlatformTestCase {
 
   public void testGetRootTagNameWithoutNamespace() {

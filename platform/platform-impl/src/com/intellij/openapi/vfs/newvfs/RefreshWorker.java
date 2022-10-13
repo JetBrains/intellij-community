@@ -229,9 +229,7 @@ final class RefreshWorker {
     else {
       dirList = new HashMap<>();
       for (String name : fs.list(dir)) {
-        if (!VfsUtil.isBadName(name)) {
-          dirList.put(name, null);
-        }
+        dirList.put(name, null);
       }
     }
     myIoTime.addAndGet(System.nanoTime() - t);
@@ -252,6 +250,7 @@ final class RefreshWorker {
 
     List<ChildInfo> newKids = newNames.isEmpty() ? List.of() : new ArrayList<>(newNames.size());
     for (String newName : newNames) {
+      if (VfsUtil.isBadName(newName)) continue;
       checkCancelled(dir);
       FakeVirtualFile child = new FakeVirtualFile(dir, newName);
       FileAttributes attributes = getAttributes(fs, dirList, child);
@@ -327,7 +326,7 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(VfsUtil.filterNames(fs.list(dir)), false);
+      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(fs.list(dir), false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
 
@@ -337,7 +336,7 @@ final class RefreshWorker {
 
     List<ChildInfo> newKids = wanted.isEmpty() ? List.of() : new ArrayList<>(wanted.size());
     for (String newName : wanted) {
-      if (newName.isEmpty()) continue;
+      if (VfsUtil.isBadName(newName)) continue;
       checkCancelled(dir);
       FakeVirtualFile child = new FakeVirtualFile(dir, newName);
       FileAttributes attributes = getAttributes(fs, dirList, child);
@@ -372,17 +371,13 @@ final class RefreshWorker {
   }
 
   private static Map<String, FileAttributes> filterDirectoryList(Map<String, FileAttributes> rawDirList, boolean cs) {
-    if (!cs || ContainerUtil.exists(rawDirList.keySet(), VfsUtil::isBadName)) {
-      Map<String, FileAttributes> filtered = CollectionFactory.createFilePathMap(rawDirList.size(), cs);
-      for (var entry : rawDirList.entrySet()) {
-        if (!VfsUtil.isBadName(entry.getKey())) {
-          filtered.put(entry.getKey(), entry.getValue());
-        }
-      }
-      return filtered;
+    if (cs) {
+      return rawDirList;
     }
     else {
-      return rawDirList;
+      Map<String, FileAttributes> filtered = CollectionFactory.createFilePathMap(rawDirList.size(), false);
+      filtered.putAll(rawDirList);
+      return filtered;
     }
   }
 

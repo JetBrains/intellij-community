@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class XmlFileHeader {
   public static final XmlFileHeader EMPTY = new XmlFileHeader(null, null, null, null);
 

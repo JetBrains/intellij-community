@@ -10,8 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A task that should be executed in IDE dumb mode, via {@link DumbService#queueTask(DumbModeTask)}.
- *
- * @author peter
  */
 public abstract class DumbModeTask implements Disposable, MergeableQueueTask<DumbModeTask> {
   @Nullable

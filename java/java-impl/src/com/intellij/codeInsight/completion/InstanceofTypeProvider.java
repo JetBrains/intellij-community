@@ -16,9 +16,6 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class InstanceofTypeProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
 

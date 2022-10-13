@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class LogModel  {
   public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
   public record StatusMessage(Notification notification, @NotNull @NlsContexts.StatusBarText String text, long stamp) {}

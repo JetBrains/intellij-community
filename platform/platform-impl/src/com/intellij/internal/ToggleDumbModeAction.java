@@ -14,9 +14,6 @@ import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 final class ToggleDumbModeAction extends DumbAwareAction {
 
   private static final Key<Boolean> DUMB = Key.create("ToggleDumbModeAction");

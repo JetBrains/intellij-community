@@ -40,7 +40,6 @@ interface DocumentationTarget {
   fun presentation(): TargetPresentation
 
   @Suppress("DEPRECATION") // deprecated JvmDefault
-  @JvmDefault
   val navigatable: Navigatable?
     @RequiresReadLock
     @RequiresBackgroundThread
@@ -55,7 +54,6 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun computeDocumentationHint(): @HintText String? = null
 
   /**
@@ -71,6 +69,5 @@ interface DocumentationTarget {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun computeDocumentation(): DocumentationResult? = null
 }

@@ -14,9 +14,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public final class LastUnchangedContentTracker {
   private static final Logger LOG = Logger.getInstance(LastUnchangedContentTracker.class);
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");

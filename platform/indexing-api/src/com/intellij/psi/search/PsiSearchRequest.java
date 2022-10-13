@@ -18,9 +18,6 @@ package com.intellij.psi.search;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiSearchRequest {
   @NotNull public final SearchScope searchScope;
   @NotNull public final String word;

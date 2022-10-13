@@ -20,9 +20,6 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl implements DomCollectionChildDescription, AbstractCollectionChildDescription {
   private final Collection<JavaMethod> myGetterMethods;
 

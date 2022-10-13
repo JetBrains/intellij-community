@@ -39,9 +39,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 @SuppressWarnings({"ConstantConditions", "EmptyCatchBlock"})
 public class XmlTagTest extends LightJavaCodeInsightTestCase {
   private XmlTag createTag(String value) throws IncorrectOperationException {

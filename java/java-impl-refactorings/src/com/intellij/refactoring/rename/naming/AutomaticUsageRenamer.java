@@ -12,9 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class AutomaticUsageRenamer<T> {
   private final String myOldName;
   private final String myNewName;

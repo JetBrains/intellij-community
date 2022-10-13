@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class CustomCodeStyleSettings implements Cloneable {
   private CodeStyleSettings myContainer;
   private final String myTagName;

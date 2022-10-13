@@ -3,14 +3,10 @@ package com.intellij.webSymbols.registry
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 
 /*
@@ -19,19 +15,15 @@ import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 @Suppress("DEPRECATION")
 interface WebSymbolsRegistryExtension {
 
-  @JvmDefault
   fun getContainers(project: Project, element: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsContainer> =
     emptyList()
 
-  @JvmDefault
   fun getContextRulesProviders(dir: PsiDirectory): List<WebSymbolsContextRulesProvider> =
     emptyList()
 
-  @JvmDefault
   fun getNameConversionRulesProviders(project: Project, element: PsiElement?, context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
     emptyList()
 
-  @JvmDefault
   fun beforeRegistryCreation(project: Project, element: PsiElement?) {
   }
 

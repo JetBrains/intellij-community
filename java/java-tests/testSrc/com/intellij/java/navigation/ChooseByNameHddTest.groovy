@@ -27,9 +27,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
-/**
- * @author peter
- */
 @CompileStatic
 class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
   void "test go to file by full path"() {

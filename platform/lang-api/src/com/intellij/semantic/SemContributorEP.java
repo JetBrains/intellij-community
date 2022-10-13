@@ -3,9 +3,6 @@ package com.intellij.semantic;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
- * @author peter
- */
 public final class SemContributorEP  {
   @Attribute("implementation")
   public String implementation;

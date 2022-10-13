@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * @author peter
-*/
 public class ExpressionLookupItem extends LookupElement implements TypedLookupItem {
   private final PsiExpression myExpression;
   private final Icon myIcon;
