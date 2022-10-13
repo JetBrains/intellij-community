@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -78,10 +79,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      if (!MethodUtils.isComparatorCompare(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
-        return;
+      if (MethodUtils.isComparatorCompare(method) && !ControlFlowUtils.methodAlwaysThrowsException(method)) {
+        check(method, false);
       }
-      check(method);
+      if (MethodUtils.isCompareTo(method) && !ControlFlowUtils.methodAlwaysThrowsException(method)) {
+        check(method, true);
+      }
     }
 
     @Override
@@ -92,13 +95,14 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           ControlFlowUtils.lambdaExpressionAlwaysThrowsException(lambda)) {
         return;
       }
-      check(lambda);
+      check(lambda, false);
     }
 
-    private void check(PsiParameterListOwner owner) {
+    private void check(PsiParameterListOwner owner, boolean compareTo) {
       PsiParameterList parameterList = owner.getParameterList();
       PsiElement body = owner.getBody();
-      if (body == null || parameterList.getParametersCount() != 2) return;
+      int expectedParameters = compareTo ? 1 : 2;
+      if (body == null || parameterList.getParametersCount() != expectedParameters) return;
       // comparator like "(a, b) -> 0" fulfills the comparator contract, so no need to warn its parameters are not used
       if (body instanceof PsiExpression && ExpressionUtils.isZero((PsiExpression)body)) return;
       if (body instanceof PsiCodeBlock) {
@@ -111,7 +115,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
       }
       PsiParameter[] parameters = parameterList.getParameters();
-      checkParameterList(parameters, body);
+      checkParameterList(parameters, body, compareTo ? "compareTo" : "compare");
       checkReturnValueSanity(owner instanceof PsiMethod method ? method.getNameIdentifier() : parameterList, body);
       checkReflexivity(owner, parameters, body);
     }
@@ -141,12 +145,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
     }
 
-    private void checkParameterList(PsiParameter[] parameters, PsiElement context) {
+    private void checkParameterList(PsiParameter[] parameters, PsiElement context, String methodName) {
       final ParameterAccessVisitor visitor = new ParameterAccessVisitor(parameters);
       context.accept(visitor);
       for (PsiParameter unusedParameter : visitor.getUnusedParameters()) {
         registerVariableError(unusedParameter, InspectionGadgetsBundle.message(
-          "suspicious.comparator.compare.descriptor.parameter.not.used"));
+          "suspicious.comparator.compare.descriptor.parameter.not.used", methodName));
       }
     }
 
@@ -156,7 +160,15 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       if (flow == null) return;
       DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
       DfaVariableValue var1 = PlainDescriptor.createVariableValue(factory, parameters[0]);
-      DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
+      DfaVariableValue var2;
+      if (parameters.length == 2) {
+        // compare()
+        var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
+      } else {
+        // compareTo()
+        assert owner instanceof PsiMethod;
+        var2 = ThisDescriptor.createThisValue(factory, ((PsiMethod)owner).getContainingClass());
+      }
       state.applyCondition(var1.eq(var2));
       var interceptor = new ComparatorListener(owner);
       if (new StandardDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;

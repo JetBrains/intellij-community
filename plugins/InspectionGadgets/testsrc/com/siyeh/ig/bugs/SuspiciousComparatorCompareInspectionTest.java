@@ -36,6 +36,10 @@ public class SuspiciousComparatorCompareInspectionTest extends LightJavaInspecti
     doTest();
   }
 
+  public void testComparable() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
