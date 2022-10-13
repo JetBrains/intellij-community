@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent

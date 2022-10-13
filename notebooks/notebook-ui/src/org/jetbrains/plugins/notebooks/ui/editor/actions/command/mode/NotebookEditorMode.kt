@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.notebooks.editor.actions.command.mode
+package org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager

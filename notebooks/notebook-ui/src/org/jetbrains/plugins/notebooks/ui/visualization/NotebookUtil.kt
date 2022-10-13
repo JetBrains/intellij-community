@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.notebooks.visualization
+package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle

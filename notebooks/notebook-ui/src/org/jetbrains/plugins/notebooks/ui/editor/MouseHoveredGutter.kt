@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.notebooks.editor
+package org.jetbrains.plugins.notebooks.ui.editor
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key

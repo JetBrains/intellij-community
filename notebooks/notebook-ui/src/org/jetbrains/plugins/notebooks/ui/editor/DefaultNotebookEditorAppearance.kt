@@ -1,13 +1,15 @@
-package org.jetbrains.plugins.notebooks.editor
+package org.jetbrains.plugins.notebooks.ui.editor
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.notebooks.editor.actions.command.mode.NotebookEditorMode
-import org.jetbrains.plugins.notebooks.editor.actions.command.mode.currentMode
-import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
+import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import java.awt.Color
 
 
