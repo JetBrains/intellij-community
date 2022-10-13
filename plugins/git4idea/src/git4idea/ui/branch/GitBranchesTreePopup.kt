@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -549,7 +550,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(JBUI.Panels.simplePanel(mainIconComponent).addToRight(mainTextComponent).andTransparent())
+        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
         .addToCenter(secondaryLabel)
         .andTransparent()
 
