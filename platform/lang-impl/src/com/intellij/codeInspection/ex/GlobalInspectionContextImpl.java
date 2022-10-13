@@ -612,6 +612,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections, "Must not run under read action, too unresponsive");
+
+    if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
+      return;
+    }
+
     buildRefGraphIfNeeded(globalTools);
 
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
