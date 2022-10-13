@@ -2,6 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
@@ -48,7 +49,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       if (decorator != null &&
           ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
           child is ContentTabLabel &&
-          (child.parent is ToolWindowContentUi.TabPanel || child.parent is SingleContentLayout.TabAdapter)) {
+          (child.parent is ToolWindowContentUi.TabPanel ||
+           Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter)) {
         return child
       }
       else {
@@ -94,7 +96,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
       return -1
     }
     val tabAdapter = tabPanel.components.filterIsInstance<SingleContentLayout.TabAdapter>().singleOrNull()
-    return if (tabAdapter != null) {
+    return if (tabAdapter != null && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
       doGetTabIndex(tabAdapter, point)
     }
     else doGetTabIndex(tabPanel, point).coerceAtLeast(1)

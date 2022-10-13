@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.MouseDragHelper;
@@ -379,7 +380,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       ui.getTabComponent().add(each);
       ToolWindowContentUi.initMouseListeners(each, ui, false);
     }
-    if (!isSingleContentView && ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
+    if ((!isSingleContentView || !Registry.is("debugger.new.tool.window.layout.dnd", false))
+        && ui.dropOverIndex >= 0 && !tabs.isEmpty()) {
       int index = Math.min(ui.dropOverIndex, ui.getTabComponent().getComponentCount());
       ui.getTabComponent().add(dropOverPlaceholder, index);
     }

@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI.isNewUI
 import com.intellij.ui.MouseDragHelper
@@ -27,6 +29,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.impl.ContentImpl
+import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.MorePopupAware
@@ -68,7 +71,7 @@ internal class SingleContentLayout(
   override fun rebuild() {
     super.rebuild()
 
-    if (isSingleContentView) {
+    if (isSingleContentView && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
       resetSingleContentView()
     }
     tryUpdateContentView()
@@ -81,7 +84,14 @@ internal class SingleContentLayout(
   fun getSupplier() = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
-    return ui.contentManager.contents.singleOrNull()?.takeIf { it !is SubContent }
+    return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
+      ui.contentManager.contents.singleOrNull()?.takeIf { it !is SubContent }
+    }
+    else findTopLevelContentManager()?.contentsRecursively?.singleOrNull()
+  }
+
+  private fun findTopLevelContentManager(): ContentManagerImpl? {
+    return InternalDecoratorImpl.findTopLevelDecorator(ui.component)?.contentManager as? ContentManagerImpl
   }
 
   private fun tryUpdateContentView() {
@@ -352,7 +362,7 @@ internal class SingleContentLayout(
         labels.find { it.content.info == jbTabs.selectedInfo }
       }
 
-      if (twcui.dropOverIndex != -1) {
+      if (twcui.dropOverIndex != -1 && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
         add(dropOverPlaceholder, twcui.dropOverIndex.coerceAtMost(this.componentCount))
       }
 
@@ -385,7 +395,7 @@ internal class SingleContentLayout(
 
       val supplier = getSingleContentOrNull()?.getSupplier() ?: return
       val visibleTabs = jbTabs.tabs.filter { !it.isHidden }
-      if (visibleTabs.size > 1 || twcui.dropOverIndex != -1) {
+      if (visibleTabs.size > 1 || twcui.dropOverIndex != -1 && Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
         labels.addAll(visibleTabs.map { info ->
           val content = SubContent(supplier, info)
           supplier.addSubContent(info, content)
