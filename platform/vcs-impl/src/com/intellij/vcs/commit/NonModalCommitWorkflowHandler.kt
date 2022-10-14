@@ -21,8 +21,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.*
@@ -38,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
@@ -262,11 +265,15 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     val hasGenericFailure = failures.any { it !is CommitCheckFailure.WithDetails }
     if (hasGenericFailure) {
       notification.addAction(NotificationAction.create(message("commit.checks.failed.notification.show.details.action")) { _, _ ->
-        val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
-        toolWindow?.activate {
-          ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
-        }
+        showCommitCheckFailuresPanel()
       })
+    }
+  }
+
+  private fun showCommitCheckFailuresPanel() {
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, LOCAL_CHANGES)
+    toolWindow?.activate {
+      ChangesViewContentManager.getInstance(project).selectContent(LOCAL_CHANGES)
     }
   }
 
@@ -320,13 +327,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       runLateCommitChecks(commitInfo, lateChecks)?.let { return it }
 
-      if (postCommitChecks.isNotEmpty() &&
-          Registry.`is`("vcs.non.modal.post.commit.checks") &&
-          commitInfo.executor?.requiresSyncCommitChecks() != true) {
-        pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
-      }
-      else {
-        runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
+      if (postCommitChecks.isNotEmpty()) {
+        if (Registry.`is`("vcs.non.modal.post.commit.checks") &&
+            commitInfo.executor?.requiresSyncCommitChecks() != true) {
+          pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
+        }
+        else {
+          runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
+        }
       }
 
       return null // checks passed
@@ -394,8 +402,37 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
     if (problems.isEmpty()) return null
 
-    problems.forEach { reportCommitCheckFailure(it) }
-    return NonModalCommitChecksFailure.ERROR
+    val onlyDetailedProblem = problems.singleOrNull() as? CommitProblemWithDetails
+    if (onlyDetailedProblem != null) {
+      val commit = MessageDialogBuilder.yesNo(message("checkin.commit.checks.failed"),
+                                              problems.joinToString("<br>") { it.text })
+        .icon(UIUtil.getErrorIcon())
+        .yesText(commitInfo.commitActionText)
+        .noText(StringUtil.toTitleCase(onlyDetailedProblem.showDetailsAction))
+        .ask(project)
+      if (commit) {
+        return null
+      }
+      else {
+        onlyDetailedProblem.showDetails(project)
+        return NonModalCommitChecksFailure.ABORTED
+      }
+    }
+    else {
+      val commit = MessageDialogBuilder.yesNo(message("checkin.commit.checks.failed"),
+                                              problems.joinToString("<br>") { it.text })
+        .icon(UIUtil.getErrorIcon())
+        .yesText(commitInfo.commitActionText)
+        .noText(StringUtil.toTitleCase(message("commit.checks.failed.notification.show.details.action")))
+        .ask(project)
+      if (commit) {
+        showCommitCheckFailuresPanel()
+        return null
+      }
+      else {
+        return NonModalCommitChecksFailure.ABORTED
+      }
+    }
   }
 
   private fun runPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
