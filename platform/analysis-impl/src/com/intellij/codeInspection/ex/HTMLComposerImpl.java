@@ -79,6 +79,11 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append(NBSP);
       appendElementReference(buf, refElement, false);
     }
+    else if (refElement instanceof RefDirectory){
+      buf.append("dir");
+      buf.append(NBSP);
+      appendElementReference(buf, refElement, false);
+    }
   }
 
   @Nullable
@@ -174,7 +179,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
-    } else if (refElement instanceof RefFile) {
+    } else if (refElement instanceof RefFile || refElement instanceof RefDirectory) {
       buf.append(A_HREF_OPENING);
 
       buf.append(((RefElementImpl)refElement).getURL());
