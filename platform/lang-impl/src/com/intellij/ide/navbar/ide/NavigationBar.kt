@@ -239,9 +239,9 @@ internal class NavigationBar(
   }
 }
 
-private sealed class ExpandResult {
-  class NavigateTo(val target: NavBarVmItem) : ExpandResult()
-  class NextPopup(val expanded: List<NavBarVmItem>, val children: List<NavBarVmItem>) : ExpandResult()
+private sealed interface ExpandResult {
+  class NavigateTo(val target: NavBarVmItem) : ExpandResult
+  class NextPopup(val expanded: List<NavBarVmItem>, val children: List<NavBarVmItem>) : ExpandResult
 }
 
 private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
