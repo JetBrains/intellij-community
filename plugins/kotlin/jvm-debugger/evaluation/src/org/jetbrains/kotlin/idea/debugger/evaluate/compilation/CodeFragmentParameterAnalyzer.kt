@@ -47,8 +47,7 @@ class CodeFragmentParameterInfo(
 class CodeFragmentParameterAnalyzer(
     private val context: ExecutionContext,
     private val codeFragment: KtCodeFragment,
-    private val bindingContext: BindingContext,
-    private val evaluationStatus: EvaluationStatus
+    private val bindingContext: BindingContext
 ) {
     private val parameters = LinkedHashMap<DeclarationDescriptor, Smart>()
     private val crossingBounds = mutableSetOf<Dumb>()
@@ -283,7 +282,6 @@ class CodeFragmentParameterAnalyzer(
 
     private fun processSimpleNameExpression(target: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
         if (target is ValueParameterDescriptor && target.isCrossinline) {
-            evaluationStatus.error(EvaluationError.CrossInlineLambda)
             throw EvaluateExceptionUtil.createEvaluateException(
                 KotlinDebuggerEvaluationBundle.message("error.crossinline.lambda.evaluation")
             )
