@@ -51,7 +51,9 @@ fn prepare_test_env_impl(layout_kind: &LayoutSpecification) -> Result<TestEnviro
 
     match layout_kind {
         LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE => {
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
+        | LayoutSpecification::MainBinOrderTestsSpecification
+        | LayoutSpecification::PluginsBinOrderTestsSpecification => {
             create_dummy_config(&shared.jbrsdk_root);
             debug!("Custom user file with runtime is created. JBR is not included in layout")
         }
@@ -194,10 +196,12 @@ pub enum LayoutSpecification {
     LauncherLocationMainBinJavaIsEnvVar,
     LauncherLocationMainBinJavaIsUserJRE,
     LauncherLocationMainBinJavaIsJBR,
+    MainBinOrderTestsSpecification,
 
     LauncherLocationPluginsBinJavaIsEnvVar,
     LauncherLocationPluginsBinJavaIsUserJRE,
     LauncherLocationPluginsBinJavaIsJBR,
+    PluginsBinOrderTestsSpecification,
 }
 
 #[cfg(target_os = "linux")]
@@ -428,11 +432,13 @@ pub fn resolve_launcher_dir(test_dir: &Path, layout_kind: &LayoutSpecification) 
     match layout_kind {
         LayoutSpecification::LauncherLocationMainBinJavaIsEnvVar
         | LayoutSpecification::LauncherLocationMainBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationMainBinJavaIsJBR => root.join("bin"),
+        | LayoutSpecification::LauncherLocationMainBinJavaIsJBR
+        | LayoutSpecification::MainBinOrderTestsSpecification => root.join("bin"),
 
         LayoutSpecification::LauncherLocationPluginsBinJavaIsEnvVar
         | LayoutSpecification::LauncherLocationPluginsBinJavaIsUserJRE
-        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR => root.join("plugins/remote-dev-server/bin")
+        | LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR
+        | LayoutSpecification::PluginsBinOrderTestsSpecification => root.join("plugins/remote-dev-server/bin")
     }
 }
 
@@ -522,14 +528,15 @@ pub struct IntellijMainDumpedLaunchParameters {
     pub systemProperties: HashMap<String, String>
 }
 
-pub fn run_launcher_with_default_args_and_env(test: &TestEnvironment, args: &[&str], env: (&str, &str)) -> LauncherRunResult {
+pub fn run_launcher_with_default_args_and_env(test: &TestEnvironment, args: &[&str], envs: HashMap<&str, &str>) -> LauncherRunResult {
     let output_file = test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME);
     let output_args = ["dump-launch-parameters", "--output", &output_file.to_string_lossy()];
     let full_args = &mut output_args.to_vec();
     full_args.append(&mut args.to_vec());
-    let default_env_var = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1"), env]);
+    let default_env_var : HashMap<&str, &str> = HashMap::from([(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")]);
+    let full_env_vars = default_env_var.into_iter().chain(envs).collect();
 
-    let result = match run_launcher_impl(test, full_args, default_env_var, &output_file) {
+    let result = match run_launcher_impl(test, full_args, full_env_vars, &output_file) {
         Ok(x) => x,
         Err(e) => {
             panic!("Failed to get launcher run result: {e:?}")
@@ -601,26 +608,31 @@ fn read_launcher_run_result(path: &Path) -> Result<IntellijMainDumpedLaunchParam
 
 pub fn run_launcher_and_get_dump(layout_kind: &LayoutSpecification) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, &[], (" ", ""));
+    let result = run_launcher_with_default_args_and_env(&test, &[], HashMap::from([(" ", "")]));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
 pub fn run_launcher_and_get_dump_with_args(layout_kind: &LayoutSpecification, args: &[&str]) -> IntellijMainDumpedLaunchParameters {
     let test = prepare_test_env(layout_kind);
-    let result = run_launcher_with_default_args_and_env(&test, args, (" ", ""));
+    let result = run_launcher_with_default_args_and_env(&test, args, HashMap::from([(" ", "")]));
     assert!(result.exit_status.success(), "Launcher didn't exit successfully");
     result.dump.expect("Launcher exited successfully, but there is no output")
 }
 
 pub fn run_launcher_and_get_dump_with_java_env(launcher_location: &LayoutSpecification, java_env_var: &str) -> IntellijMainDumpedLaunchParameters {
-    let test = prepare_test_env(launcher_location);
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let launcher_jdk = get_jbrsdk_from_project_root(&project_root);
+
+    run_launcher_and_get_dump_with_env_vars(launcher_location, HashMap::from([(java_env_var, launcher_jdk.to_str().unwrap())]))
+}
+
+pub fn run_launcher_and_get_dump_with_env_vars(launcher_location: &LayoutSpecification, env_vars: HashMap<&str, &str>) -> IntellijMainDumpedLaunchParameters {
+    let test = prepare_test_env(launcher_location);
     let result = run_launcher_with_default_args_and_env(
         &test,
         &[],
-        (java_env_var, launcher_jdk.to_str().unwrap())
+        env_vars
     );
     let dump = result.dump
         .expect("Launcher exited successfully, but there is no output");

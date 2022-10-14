@@ -20,7 +20,7 @@ mod tests {
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
     fn correct_launcher_startup_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
-        let status = &run_launcher_with_default_args_and_env(&test, &[], (" ", "")).exit_status;
+        let status = &run_launcher_with_default_args_and_env(&test, &[], std::collections::HashMap::from([(" ", "")])).exit_status;
 
         let exit_status_string = exit_status_to_string(status);
         println!("Launcher's exit status:\n{exit_status_string}");
@@ -64,7 +64,7 @@ mod tests {
         let test = prepare_test_env(launcher_location);
 
         let args = &["arguments-test-123"];
-        let result = run_launcher_with_default_args_and_env(&test, args, (" ", ""));
+        let result = run_launcher_with_default_args_and_env(&test, args, std::collections::HashMap::from([(" ", "")]));
         assert!(&result.exit_status.success());
 
         let dump = &result.dump.expect("Launcher exited successfully, but no dump received");
@@ -178,7 +178,7 @@ mod tests {
     #[case::plugins_bin(&LayoutSpecification::LauncherLocationPluginsBinJavaIsJBR)]
     fn jre_is_jbr_test(#[case] launcher_location: &LayoutSpecification) {
         let test = prepare_test_env(launcher_location);
-        let result = run_launcher_with_default_args_and_env(&test, &[], (" ", ""));
+        let result = run_launcher_with_default_args_and_env(&test, &[], std::collections::HashMap::from([(" ", "")]));
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
 
         let dump = result.dump.expect("Launcher exited successfully, but there is no output");
