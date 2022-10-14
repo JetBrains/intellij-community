@@ -126,7 +126,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
     if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) return;
 
-    LOG.debug("Will set size %s to global font (presentation mode is %b)".formatted(size, UISettings.getInstance().getPresentationMode()));
+    LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
     LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
