@@ -737,6 +737,20 @@ static String test(String a, String b) {
     def c = inferContracts("""StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""")
     assert c == ['_ -> param1']
   }
+  
+  void "test boxed boolean equals"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.FALSE.equals(condition);
+    }""")
+    assert c == ['false -> true', '_ -> false']
+  }
+
+  void "test boxed boolean equals2"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.TRUE.equals(condition);
+    }""")
+    assert c == ['true -> true', '_ -> false']
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
