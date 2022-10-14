@@ -9,32 +9,24 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.asJava.toPsiParameters
-import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.inheritorsSearch.findFullHierarchy
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.utils.ifEmpty
-import java.util.*
 
-fun getParametersToSearch(element: KtParameter): List<PsiElement> {
-        return element.toPsiParameters().flatMap { psiParameter ->
-            checkParametersInMethodHierarchy(psiParameter) ?: emptyList()
-        }.ifEmpty { listOf(element) }
-    }
+internal fun getParametersToSearch(element: KtParameter): List<PsiElement> {
+    val elements = checkParametersInMethodHierarchy(element) ?: return listOf(element)
+    return elements.toList()
+}
 
-private fun checkParametersInMethodHierarchy(parameter: PsiParameter): Collection<PsiElement>? {
-    val method = parameter.declarationScope as PsiMethod
-
+private fun checkParametersInMethodHierarchy(parameter: KtParameter): Collection<PsiElement>? {
+    val method = parameter.ownerFunction ?: return null
     val parametersToDelete = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(ThrowableComputable<Collection<PsiElement>?, RuntimeException> {
-            runReadAction { collectParametersHierarchy(method, parameter) }
+            runReadAction { collectParameterHierarchy( parameter) }
         }, JavaRefactoringBundle.message("progress.title.collect.hierarchy", parameter.name), true, parameter.project)
     if (parametersToDelete == null || parametersToDelete.size <= 1 || isUnitTestMode()) return parametersToDelete
 
@@ -47,37 +39,17 @@ private fun checkParametersInMethodHierarchy(parameter: PsiParameter): Collectio
     return if (exitCode == Messages.OK) parametersToDelete else null
 }
 
-private fun collectParametersHierarchy(method: PsiMethod, parameter: PsiParameter): Set<PsiElement> {
-    val queue = ArrayDeque<PsiMethod>()
-    val visited = HashSet<PsiMethod>()
+private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
+    val function = parameter.ownerFunction as? KtFunction ?: return emptySet()
+    val parameterIndex = parameter.parameterIndex()
     val parametersToDelete = HashSet<PsiElement>()
-
-    queue.add(method)
-    while (!queue.isEmpty()) {
-        val currentMethod = queue.poll()
-
-        visited += currentMethod
-        addParameter(currentMethod, parametersToDelete, parameter)
-
-        currentMethod.findSuperMethods(true)
-            .filter { it !in visited }
-            .forEach { queue.offer(it) }
-        OverridingMethodsSearch.search(currentMethod)
-            .filter { it !in visited }
-            .forEach { queue.offer(it) }
+    findFullHierarchy(function).forEach {
+        if (it is KtFunction) {
+            parametersToDelete.add(it.valueParameters[parameterIndex])
+        }
+        else if (it is PsiMethod) {
+            parametersToDelete.add(it.parameterList.parameters[parameterIndex])
+        }
     }
     return parametersToDelete
-}
-
-private fun addParameter(method: PsiMethod, result: MutableSet<PsiElement>, parameter: PsiParameter) {
-    val parameterIndex = parameter.unwrapped!!.parameterIndex()
-
-    if (method is KtLightMethod) {
-        val declaration = method.kotlinOrigin
-        if (declaration is KtFunction) {
-            result.add(declaration.valueParameters[parameterIndex])
-        }
-    } else {
-        result.add(method.parameterList.parameters[parameterIndex])
-    }
 }
