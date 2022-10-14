@@ -21,8 +21,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.asSafely
 import com.intellij.util.io.isDirectory
@@ -132,7 +130,7 @@ class RuntimeChooserDialog(
     return panel {
       row {
         icon(AllIcons.General.Warning)
-          .verticalAlign(VerticalAlign.TOP)
+          .align(AlignY.TOP)
           .gap(RightGap.SMALL)
         text(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName),
              maxLineLength = DEFAULT_COMMENT_WIDTH)
@@ -175,7 +173,7 @@ class RuntimeChooserDialog(
     return panel {
       row(LangBundle.message("dialog.label.choose.ide.runtime.current")) {
         val control = SimpleColoredComponent()
-        cell(control).horizontalAlign(HorizontalAlign.FILL)
+        cell(control).align(AlignX.FILL)
 
         model.currentRuntime.getAndSubscribe(disposable) {
           control.clear()
@@ -188,7 +186,7 @@ class RuntimeChooserDialog(
       }
 
       row(LangBundle.message("dialog.label.choose.ide.runtime.combo")) {
-        cell(jdkCombobox).horizontalAlign(HorizontalAlign.FILL)
+        cell(jdkCombobox).align(AlignX.FILL)
       }
 
       //download row
@@ -197,7 +195,7 @@ class RuntimeChooserDialog(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
           fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        ).horizontalAlign(HorizontalAlign.FILL)
+        ).align(AlignX.FILL)
           .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
           .component
 

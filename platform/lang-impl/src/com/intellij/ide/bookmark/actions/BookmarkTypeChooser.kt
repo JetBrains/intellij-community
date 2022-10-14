@@ -9,10 +9,10 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.RowGridLayout
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.UIUtil
@@ -82,12 +82,12 @@ internal class BookmarkTypeChooser(
 
         row {
           cell(bookmarkLayoutGrid)
-            .horizontalAlign(HorizontalAlign.CENTER)
+            .align(AlignX.CENTER)
         }.bottomGap(BottomGap.MEDIUM)
 
         row {
           descriptionField = textField()
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .applyToComponent {
               text = description ?: ""
               emptyText.text = message("mnemonic.chooser.description")

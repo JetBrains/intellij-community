@@ -42,10 +42,9 @@ import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.PropertyBinding
+import com.intellij.ui.layout.asRange
+import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
@@ -423,7 +422,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
 
     cell(ComboBox(model))
       .applyToComponent { renderer = SeparatorAwareListItemRenderer() }
-      .horizontalAlign(HorizontalAlign.FILL)
+      .align(AlignX.FILL)
       .bind(
         {
           val item = it.selectedItem as? EditorCaretStopPolicyItem

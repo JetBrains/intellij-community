@@ -20,8 +20,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
@@ -72,7 +70,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     val result = panel {
       row {
         cell(searchField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .resizableColumn()
         checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified"))
           .actionListener { _, component ->
@@ -83,8 +81,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
       nothingFoundRow = row {
         label(ApplicationBundle.message("search.advanced.settings.nothing.found"))
-          .horizontalAlign(HorizontalAlign.CENTER)
-          .verticalAlign(VerticalAlign.CENTER)
+          .align(Align.CENTER)
           .applyToComponent {
             foreground = NamedColorUtil.getInactiveTextColor()
           }
@@ -94,8 +91,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         val scrollable = ScrollPaneFactory.createScrollPane(extensionsSettings, true)
         scrollable.preferredSize = Dimension(JBUI.scale(300), JBUI.scale(200))
         cell(scrollable)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
     }
     result.registerIntegratedPanel(extensionsSettings)

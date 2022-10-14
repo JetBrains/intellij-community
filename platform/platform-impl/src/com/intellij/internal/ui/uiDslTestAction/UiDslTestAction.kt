@@ -12,8 +12,6 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -73,7 +71,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
       row("Text field 2:") {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .comment("horizontalAlign(HorizontalAlign.FILL)")
       }
       row("Int text field 1:") {
@@ -138,7 +136,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
               }
             }
           }
-        }.verticalAlign(VerticalAlign.TOP)
+        }.align(AlignY.TOP)
 
         panel {
           row {
@@ -171,7 +169,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
                 }
             }
           }
-        }.horizontalAlign(HorizontalAlign.RIGHT)
+        }.align(AlignX.RIGHT)
       }
 
       group("Control visibility by visibleIf") {
@@ -213,18 +211,18 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
       row("Row 3") {
         textField()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row("Row 4") {
         val subPanel = com.intellij.ui.dsl.builder.panel {
           row {
             textField()
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
               .text("Sub-Paneled Row")
           }
         }
         cell(subPanel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }
@@ -234,8 +232,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       for (rowLayout in RowLayout.values()) {
         row(rowLayout.name) {
           textArea()
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
         }.layout(rowLayout)
           .resizableRow()
       }

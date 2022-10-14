@@ -3,9 +3,8 @@ package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
@@ -17,8 +16,7 @@ class MavenManageCatalogsDialog(private val project: Project) : DialogWrapper(pr
     table.catalogs = catalogsManager.getCatalogs(project)
     row {
       cell(table.component)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }.resizableRow()
     onApply {
       catalogsManager.setCatalogs(table.catalogs)

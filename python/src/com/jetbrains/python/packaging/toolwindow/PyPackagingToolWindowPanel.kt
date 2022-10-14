@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
@@ -268,7 +267,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
         textField()
           .columns(COLUMNS_MEDIUM)
           .bindText({ link }, { link = it })
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         checkBox(message("python.toolwindow.packages.add.package.as.editable"))
@@ -301,7 +300,7 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       row(message("python.toolwindow.packages.add.package.path")) {
         cell(textField)
           .columns(COLUMNS_MEDIUM)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
       row {
         checkBox(message("python.toolwindow.packages.add.package.as.editable"))

@@ -19,8 +19,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.listCellRenderer
 import javax.swing.JComponent
 
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
@@ -77,7 +76,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       }
       row {
         cell(excludeTable.component)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .label(JavaBundle.message("exclude.from.completion.group"), LabelPosition.TOP)
           .comment(JavaBundle.message("exclude.import.wildcard.comment"))
           .onApply { excludeTable.apply() }

@@ -11,8 +11,6 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
@@ -41,8 +39,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     return panel {
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .also {
             DataManager.registerDataProvider(it.component) { key ->
               if (GHAccountsHost.KEY.`is`(key)) accountsModel

@@ -8,10 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsComboBoxModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
@@ -52,16 +49,15 @@ class GithubCreateGistDialog(
   override fun createCenterPanel() = panel {
     fileNameField?.let {
       row(message("create.gist.dialog.filename.field")) {
-        cell(it).horizontalAlign(HorizontalAlign.FILL)
+        cell(it).align(AlignX.FILL)
       }
     }
 
     row {
       label(message("create.gist.dialog.description.field"))
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
       scrollCell(descriptionField)
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }.layout(RowLayout.LABEL_ALIGNED).resizableRow()
 
     row("") {
@@ -73,7 +69,7 @@ class GithubCreateGistDialog(
     if (accountsModel.size != 1) {
       row(message("create.gist.dialog.create.for.field")) {
         comboBox(accountsModel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
           .resizableColumn()
 
