@@ -314,7 +314,7 @@ public final class PythonSdkType extends SdkType {
       .findFirst()
       .orElseGet(() -> PythonSdkAdditionalData.loadFromElement(additional));
     // Convert legacy conda SDK, temporary fix.
-    PyCondaSdkFixKt.fixPythonSdk(currentSdk, additionalData);
+    PyCondaSdkFixKt.fixPythonCondaSdk(currentSdk, additionalData);
     return additionalData;
   }
 

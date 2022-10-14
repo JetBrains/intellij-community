@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.jetbrains.python.FullPathOnTarget
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.isTargetBased
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -18,11 +19,12 @@ import kotlin.io.path.pathString
  * Given that [sdk] is local python SDK with ``homePath`` pointing to some ``python`` inside of conda env, we fix [additionalData]
  */
 @Suppress("DEPRECATION")
-internal fun fixPythonSdk(sdk: Sdk, additionalData: SdkAdditionalData) {
+@JvmOverloads
+internal fun fixPythonCondaSdk(sdk: Sdk, additionalData: SdkAdditionalData, suggestedCondaPath: FullPathOnTarget? = null) {
   if (additionalData !is PythonSdkAdditionalData) return
   if (sdk.isTargetBased) return
   if (additionalData.flavor is CondaEnvSdkFlavor) return
-  val condaPath = PyCondaPackageService.getCondaExecutable(sdk.homePath) ?: return
+  val condaPath = suggestedCondaPath ?: PyCondaPackageService.getCondaExecutable(sdk.homePath) ?: return
   val envPath = PythonSdkUtil.findCondaMeta(sdk.homePath)?.parent?.toNioPath()?.pathString ?: return
 
   val env = PyCondaEnv(PyCondaEnvIdentity.UnnamedEnv(envPath, isBase = condaPath.startsWith(envPath)), condaPath)
