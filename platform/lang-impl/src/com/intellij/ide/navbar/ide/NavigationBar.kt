@@ -18,10 +18,7 @@ import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
@@ -312,9 +309,7 @@ private suspend fun <T1, T2> NavBarVmItem.fetch(
 private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
   iterateAllChildren()
     .sortedWith(siblingsComparator)
-    .map {
-      NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
-    }
+    .toVmItems()
 }
 
 private fun NavBarItem.weight() = when (this) {
@@ -341,7 +336,12 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
 internal fun buildModel(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
                     ?: return emptyList()
-  return contextItem.pathToItem().map {
+  return contextItem.pathToItem().toVmItems()
+}
+
+private fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
+  ApplicationManager.getApplication().assertReadAccessAllowed()
+  return map {
     NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
   }
 }
