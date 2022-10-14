@@ -227,8 +227,9 @@ internal class NavigationBar(
   }
 
   private suspend fun handleItemSelected(index: Int) {
+    var items = myItems.value
     var selectedIndex = index
-    var children = myItems.value.getOrNull(selectedIndex)?.fetch(childrenSelector) ?: return
+    var children = items.getOrNull(selectedIndex)?.fetch(childrenSelector) ?: return
 
     while (true) {
       // Popup with *children* should be displayed for user at *selectedItem* item
@@ -250,14 +251,14 @@ internal class NavigationBar(
         PopupResultLeft -> {
           if (selectedIndex > 0) {
             selectedIndex--
-            children = myItems.value[selectedIndex].fetch(childrenSelector) ?: return
+            children = items[selectedIndex].fetch(childrenSelector) ?: return
           }
         }
         PopupResultRight -> {
-          if (selectedIndex < myItems.value.size - 1) {
+          if (selectedIndex < items.size - 1) {
             selectedIndex++
           }
-          val localChildren = myItems.value[selectedIndex].fetch(childrenSelector) ?: return
+          val localChildren = items[selectedIndex].fetch(childrenSelector) ?: return
           if (localChildren.isEmpty()) {
             selectedIndex--
           }
@@ -280,9 +281,10 @@ internal class NavigationBar(
               return
             }
             is ExpandResult.NextPopup -> {
-              val newModel = myItems.value.slice(0..selectedIndex) + expandResult.expanded
+              val newModel = items.slice(0..selectedIndex) + expandResult.expanded
+              myItems.value = newModel
+              items = newModel
               selectedIndex = newModel.indices.last
-              myItems.emit(newModel)
               children = expandResult.children
             }
           }
