@@ -138,12 +138,7 @@ internal class NavBarVmImpl(
           val expandResult = autoExpand(selectedChild) ?: return
           when (expandResult) {
             is ExpandResult.NavigateTo -> {
-              val navigationRequest = expandResult.target.fetch(NavBarItem::navigationRequest)
-              if (navigationRequest != null) {
-                withContext(Dispatchers.EDT) {
-                  navigateRequest(myProject, navigationRequest)
-                }
-              }
+              navigateTo(myProject, expandResult.target)
               return
             }
             is ExpandResult.NextPopup -> {
@@ -219,14 +214,10 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
 }
 
 private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
-  val navigationRequest = readAction {
-    item.pointer.dereference()?.navigationRequest()
-  }
-  if (navigationRequest != null) {
-    CoroutineScope(currentCoroutineContext())
-      .launch(ModalityState.NON_MODAL.asContextElement()) {
-        navigateRequest(project, navigationRequest)
-      }
+  val navigationRequest = item.fetch(NavBarItem::navigationRequest)
+                          ?: return
+  withContext(Dispatchers.EDT) {
+    navigateRequest(project, navigationRequest)
   }
 }
 
