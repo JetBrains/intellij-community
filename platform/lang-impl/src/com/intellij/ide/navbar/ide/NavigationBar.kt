@@ -293,10 +293,8 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
 }
 
 private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
-  val navigationRequest = withContext(Dispatchers.Default) {
-    readAction {
-      item.pointer.dereference()?.navigationRequest()
-    }
+  val navigationRequest = readAction {
+    item.pointer.dereference()?.navigationRequest()
   }
   if (navigationRequest != null) {
     CoroutineScope(currentCoroutineContext())
@@ -311,10 +309,8 @@ private suspend fun NavBarVmItem.children(): List<NavBarVmItem>? {
 }
 
 private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
-  return withContext(Dispatchers.Default) {
-    readAction {
-      pointer.dereference()?.selector()
-    }
+  return readAction {
+    pointer.dereference()?.selector()
   }
 }
 
