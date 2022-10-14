@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.TypeUtils
-import java.util.*
 
 interface JavaDataFlowAnalyzerFacade {
 
@@ -404,7 +403,11 @@ class TypeFlavorCalculator(val converter: TypeFlavorConverterFacade) {
                     }
                 }
 
-                override fun visitMethod(method: PsiMethod) {
+                override fun visitLambdaExpression(expression: PsiLambdaExpression) {
+                    // do not go into lambdas
+                }
+
+                override fun visitClass(cls: PsiClass) {
                     // do not go inside any other method (e.g. in anonymous class)
                 }
             })
