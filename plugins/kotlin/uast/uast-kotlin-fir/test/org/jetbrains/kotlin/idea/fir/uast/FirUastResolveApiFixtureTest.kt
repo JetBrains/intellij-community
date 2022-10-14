@@ -192,4 +192,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
     }
 
+    fun testResolveLambdaInvoke() {
+        doCheck("LambdaInvoke", ::checkLambdaInvoke)
+    }
+
 }
