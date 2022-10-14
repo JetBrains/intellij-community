@@ -3,9 +3,7 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemProvider
-import com.intellij.ide.navbar.impl.ModuleNavBarItem
-import com.intellij.ide.navbar.impl.PsiNavBarItem
+import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavigationBarPopup
@@ -21,11 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiDirectoryContainer
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
@@ -305,33 +298,9 @@ private suspend fun <T1, T2> NavBarVmItem.fetch(
   selector2: NavBarItem.() -> T2
 ): Pair<T1, T2>? = fetch { Pair(selector1(), selector2()) }
 
-
 private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
-  iterateAllChildren()
-    .sortedWith(siblingsComparator)
-    .toVmItems()
+  children().toVmItems()
 }
-
-private fun NavBarItem.weight() = when (this) {
-  is ModuleNavBarItem -> 5
-  is PsiNavBarItem -> when (data) {
-    is PsiDirectoryContainer -> 4
-    is PsiDirectory -> 4
-    is PsiFile -> 2
-    is PsiNamedElement -> 3
-    else -> Int.MAX_VALUE
-  }
-  else -> Int.MAX_VALUE
-}
-
-private val weightComparator = compareBy<NavBarItem> { -it.weight() }
-private val nameComparator = compareBy<NavBarItem, String>(NaturalComparator.INSTANCE) { it.presentation().text }
-private val siblingsComparator = weightComparator.then(nameComparator)
-
-private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
-  NavBarItemProvider.EP_NAME
-    .extensionList
-    .flatMap { ext -> ext.iterateChildren(this) }
 
 internal fun buildModel(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
