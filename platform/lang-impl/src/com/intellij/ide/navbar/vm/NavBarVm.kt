@@ -13,4 +13,6 @@ internal interface NavBarVm {
   fun selectItem(item: NavBarVmItem)
 
   fun activateItem(item: NavBarVmItem)
+
+  fun selectTail()
 }

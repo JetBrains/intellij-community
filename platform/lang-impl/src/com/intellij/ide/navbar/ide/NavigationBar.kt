@@ -85,13 +85,11 @@ internal class NavigationBar(
     myItemEvents.tryEmit(ItemEvent.Activate(item))
   }
 
-  fun focusTail() {
-    cs.launch(Dispatchers.Default) {
-      val items = myItems.value
-      val i = (items.size - 2).coerceAtLeast(0)
-      val item = items[i]
-      myItemEvents.emit(ItemEvent.Select(item))
-    }
+  override fun selectTail() {
+    val items = myItems.value
+    val i = (items.size - 2).coerceAtLeast(0)
+    val item = items[i]
+    myItemEvents.tryEmit(ItemEvent.Select(item))
   }
 
   // Run body with no external model changes allowed

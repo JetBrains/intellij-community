@@ -55,7 +55,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
   fun getStaticNavbarPanel() = staticPanel
 
   fun jumpToNavbar(dataContext: DataContext) {
-    (staticNavigationBar ?: createFloatingNavbar(dataContext)).focusTail()
+    (staticNavigationBar ?: createFloatingNavbar(dataContext)).selectTail()
   }
 
   private fun createFloatingNavbar(dataContext: DataContext): NavigationBar {
