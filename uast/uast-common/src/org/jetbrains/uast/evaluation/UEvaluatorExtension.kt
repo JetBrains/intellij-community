@@ -4,13 +4,15 @@ package org.jetbrains.uast.evaluation
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.values.UValue
 
+@ApiStatus.Experimental
 interface UEvaluatorExtension {
 
   companion object {
-    val EXTENSION_POINT_NAME = ExtensionPointName<UEvaluatorExtension>("org.jetbrains.uast.evaluation.UEvaluatorExtension")
+    val EXTENSION_POINT_NAME = ExtensionPointName<UEvaluatorExtension>("org.jetbrains.uast.evaluation.uastEvaluatorExtension")
   }
 
   val language: Language
