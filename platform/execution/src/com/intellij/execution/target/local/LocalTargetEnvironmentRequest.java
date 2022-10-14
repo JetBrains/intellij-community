@@ -63,9 +63,8 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
     return myDefaultVolume;
   }
 
-  @Override
   @NotNull
-  public Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary) {
+  private Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary) {
     String id = nextSyntheticId();
     if (remoteRootPath == null) {
       remoteRootPath = id;

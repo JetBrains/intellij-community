@@ -42,10 +42,6 @@ class PydevConsoleRunnerUtilTest {
     override val defaultVolume: TargetEnvironmentRequest.Volume
       get() = throw UnsupportedOperationException()
 
-    @Deprecated("Use uploadVolumes")
-    override fun createUploadRoot(remoteRootPath: String?, temporary: Boolean): TargetEnvironmentRequest.Volume =
-      throw UnsupportedOperationException()
-
     override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment = DummyTargetEnvironment(this)
 
     override fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) -> Unit) =

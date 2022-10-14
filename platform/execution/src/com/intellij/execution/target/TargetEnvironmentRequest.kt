@@ -87,25 +87,6 @@ interface TargetEnvironmentRequest {
   val defaultVolume: Volume
     get() = throw UnsupportedOperationException()
 
-  /**
-   * @return new, separate, upload-only volume at some unspecified remote location
-   */
-  @Deprecated("Use uploadVolumes")
-  fun createTempVolume(): Volume {
-    return createUploadRoot(null, true)
-  }
-
-  /**
-   * @param temporary If true, volume should be deleted after calling
-   * [TargetEnvironment.shutdown()][TargetEnvironment.shutdown]
-   * of owning environment instance.
-   */
-  @Deprecated("Use uploadVolumes")
-  fun createUploadRoot(remoteRootPath: String?,
-                       temporary: Boolean): Volume {
-    throw UnsupportedOperationException()
-  }
-
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {
     val platform: Platform
