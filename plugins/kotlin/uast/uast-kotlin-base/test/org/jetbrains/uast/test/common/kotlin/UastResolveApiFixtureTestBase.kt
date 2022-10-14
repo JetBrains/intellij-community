@@ -1261,4 +1261,32 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         )
     }
 
+    fun checkLambdaInvoke(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                val lambda = {}
+
+                fun box() {
+                  lambda()
+                  lambda.invoke()
+
+                  val lambda_local = {}
+                  lambda_local()
+                  lambda_local.invoke()
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertEquals("invoke", resolved!!.name)
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+    }
+
 }

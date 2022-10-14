@@ -163,4 +163,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveEnumEntrySuperType(myFixture)
     }
 
+    fun testResolveLambdaInvoke() {
+        checkLambdaInvoke(myFixture)
+    }
+
 }

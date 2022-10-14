@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -305,6 +306,13 @@ internal fun resolveToPsiMethod(
             return UastFakeLightPrimaryConstructor(source, lightClass)
         }
         return null
+    }
+
+    // FunctionN::invoke
+    if (descriptor is FunctionInvokeDescriptor) {
+        return resolveToPsiClass({ null }, descriptor.containingDeclaration, context)
+            ?.methods
+            ?.singleOrNull() // FunctionN is SAM!
     }
 
     return when (source) {
