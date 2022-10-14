@@ -3,6 +3,7 @@ package com.intellij.ide.todo
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -61,29 +62,32 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
       }
     }.asCompletableFuture()
   }
-}
 
-@RequiresBackgroundThread
-@RequiresReadLock
-private fun TodoTreeBuilder.collectFiles() {
-  clearCache()
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private fun TodoTreeBuilder.collectFiles() {
+    ProgressManager.checkCanceled()
+    clearCache()
 
-  collectFiles {
-    myFileTree.add(it.virtualFile)
+    collectFiles {
+      myFileTree.add(it.virtualFile)
 
-    if (myFileTree.size() % ASYNC_BATCH_SIZE.asInteger() == 0) {
-      validateCacheAndUpdateTree()
+      if (myFileTree.size() % ASYNC_BATCH_SIZE.asInteger() == 0) {
+        validateCacheAndUpdateTree()
+      }
     }
+
+    validateCacheAndUpdateTree()
   }
 
-  validateCacheAndUpdateTree()
-}
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
+    ProgressManager.checkCanceled()
 
-@RequiresBackgroundThread
-@RequiresReadLock
-private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
-  todoTreeStructure.validateCache()
-  updateVisibleTree()
+    todoTreeStructure.validateCache()
+    updateVisibleTree()
+  }
 }
 
 @RequiresBackgroundThread
