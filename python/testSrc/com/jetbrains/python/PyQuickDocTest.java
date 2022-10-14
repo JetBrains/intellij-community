@@ -5,7 +5,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -15,7 +14,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -24,11 +22,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
   private DocStringFormat myFormat;
-
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPy2Descriptor;
-  }
 
   @Override
   protected void setUp() throws Exception {
@@ -170,27 +163,18 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropNewSetter() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON26,
-      () -> {
-        Map<String, PsiElement> marks = loadTest();
-        PsiElement referenceElement = marks.get("<the_ref>");
-        final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
-        checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
-      }
-    );
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement referenceElement = marks.get("<the_ref>");
+    final PyDocStringOwner docStringOwner = (PyDocStringOwner)referenceElement.getParent().getReference().resolve();
+    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 
   public void testPropNewDeleter() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON26,
-      () -> {
-        Map<String, PsiElement> marks = loadTest();
-        PsiElement referenceElement = marks.get("<the_ref>");
-        final PyDocStringOwner docStringOwner = (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
-        checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
-      }
-    );
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement referenceElement = marks.get("<the_ref>");
+    final PyDocStringOwner docStringOwner =
+      (PyDocStringOwner)((PyReferenceExpression)(referenceElement.getParent())).getReference().resolve();
+    checkByHTML(myProvider.generateDoc(docStringOwner, referenceElement));
   }
 
   public void testPropOldGetter() {
@@ -302,23 +286,23 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-17705
   public void testOptionalParameterType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testHomogeneousTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testHeterogeneousTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testUnknownTuple() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testTypeVars() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-28808
@@ -328,7 +312,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-22730
   public void testOptionalAndUnionTypesContainingTypeVars() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-22685
@@ -423,42 +407,37 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testHoverOverClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHover);
+    checkHover();
   }
 
   // PY-23247
   public void testOverloads() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-23247
   public void testHoverOverOverloads() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+    checkHover();
   }
 
   // PY-23247
   public void testOverloadsAndImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-23247
   public void testHoverOverOverloadsAndImplementation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+    checkHover();
   }
 
   // PY-23247
   public void testDocOnImplementationWithOverloads() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PsiElement originalElement = loadTest().get("<the_ref>");
-        checkByHTML(myProvider.generateDoc(originalElement.getParent(), originalElement));
-      }
-    );
+    final PsiElement originalElement = loadTest().get("<the_ref>");
+    checkByHTML(myProvider.generateDoc(originalElement.getParent(), originalElement));
   }
 
   public void testPlainTextDocstringsQuotesPlacementDoesntAffectFormatting() {
@@ -492,22 +471,22 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-42334
   public void testTypeOfExplicitTypeAlias() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-29339
   public void testAsyncFunctionTooltip() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+    checkHover();
   }
 
   // PY-29339
   public void testAsyncFunctionQuickDoc() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-30103
   public void testFunctionWrapping() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-30103
@@ -517,12 +496,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-30103
   public void testReturnTypeWrappedBecauseOfParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-30103
   public void testReturnTypeWrappedBecauseOfFunctionName() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testParamDescriptionOrder() {
@@ -571,7 +550,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testKeywordArgsDescriptionForMissingParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testArgsKwargsTypes() {
@@ -579,7 +558,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testExplicitlyAnnotatedSelfParamType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   public void testExplicitlyAnnotatedClsParamType() {
@@ -628,7 +607,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-31862
   public void testEscapedSummaryOfFunctionDocstringInQuickNavigationInfo() {
-    checkHover();    
+    checkHover();
   }
 
   // PY-31862
@@ -643,21 +622,21 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHover);
+    checkHover();
   }
 
   public void testStandardCollectionTypesRenderedCapitalizedBefore39() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-42418
   public void testStandardCollectionTypesRenderedWithOriginalCase() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-42418
   public void testTupleTypeIsRenderedLowercased() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-52281
@@ -732,7 +711,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-55521
   public void testTargetExpressionInsideTypeDeclaration() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+    checkHTMLOnly();
   }
 
   // PY-33341
@@ -837,6 +816,31 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-28900
   public void testParameterDescriptionFromInitDocstringOverClassDocstringGoogle() {
+    checkHTMLOnly();
+  }
+
+  // PY-49935
+  public void testConcatenateInReturn() {
+    checkHTMLOnly();
+  }
+
+  // PY-49935
+  public void testConcatenateInParam() {
+    checkHTMLOnly();
+  }
+
+  // PY-49935
+  public void testConcatenateSeveralFirstParamInParam() {
+    checkHTMLOnly();
+  }
+
+  // PY-49935
+  public void testConcatenateInGeneric() {
+    checkHTMLOnly();
+  }
+
+  // PY-49935
+  public void testSeveralParamSpecs() {
     checkHTMLOnly();
   }
 
