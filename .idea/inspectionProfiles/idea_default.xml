@@ -1308,13 +1308,13 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" text="@$Anno$ $Type$ $x$($T$ $param$);" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="member">
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
         <constraint name="T" within="" contains="" />
         <constraint name="param" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
@@ -1696,12 +1696,12 @@
         <constraint name="states" within="" contains="" />
         <constraint name="dd" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="c" within="" contains="" />
