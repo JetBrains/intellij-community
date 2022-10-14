@@ -66,14 +66,15 @@ internal class NewNavBarPanel(
 
       itemComponent.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          if (!e.isConsumed) {
-            e.consume()
-            if (e.clickCount == 1) {
-              vm.selectItem(item)
-            }
-            else if (e.button == MouseEvent.BUTTON1) {
-              vm.activateItem(item)
-            }
+          if (e.isConsumed) {
+            return
+          }
+          e.consume()
+          if (e.clickCount == 1) {
+            vm.selectItem(item)
+          }
+          else if (e.button == MouseEvent.BUTTON1) {
+            vm.activateItem(item)
           }
         }
       })
@@ -92,7 +93,6 @@ internal class NewNavBarPanel(
     }
 
     onSizeChange?.accept(preferredSize)
-
   }
 
   private fun showPopup(item: NavBarVmItem, vm: NavBarPopupVm) {

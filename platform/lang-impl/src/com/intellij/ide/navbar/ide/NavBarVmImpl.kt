@@ -20,16 +20,16 @@ import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class NavBarVmImpl(
-  private val myProject: Project,
   cs: CoroutineScope,
+  private val project: Project,
   initialItems: List<NavBarVmItem>,
   activityFlow: Flow<Unit>,
 ) : NavBarVm {
 
-  private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
-  override val items: StateFlow<List<NavBarVmItem>> = myItems.asStateFlow()
+  private val _items: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
+  override val items: StateFlow<List<NavBarVmItem>> = _items.asStateFlow()
 
-  private val myItemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
+  private val _itemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
 
   // Flag to block external model changes while user click is being processed
   private val skipFocusUpdates = AtomicBoolean(false)
@@ -40,43 +40,40 @@ internal class NavBarVmImpl(
         if (skipFocusUpdates.get()) {
           return@collectLatest
         }
-        val items = focusModel(myProject)
+        val items = focusModel(project)
         if (items.isNotEmpty()) {
-          myItems.value = items
+          _items.value = items
         }
       }
     }
-
-    // handle clicks on navigation bar
     cs.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      myItemEvents.collectLatest { e ->
+      _itemEvents.collectLatest { e ->
         when (e) {
           is ItemEvent.Select -> freezeModelAndInvoke {
             handleItemSelected(e.item)
             FloatingModeHelper.hideHint(false)
           }
-          is ItemEvent.Activate -> navigateTo(myProject, e.item)
+          is ItemEvent.Activate -> navigateTo(project, e.item)
         }
       }
     }
-
   }
 
   override val popup = MutableSharedFlow<Pair<NavBarVmItem, NavBarPopupVm>>(replay = 1, onBufferOverflow = DROP_OLDEST)
 
   override fun selectItem(item: NavBarVmItem) {
-    myItemEvents.tryEmit(ItemEvent.Select(item))
+    _itemEvents.tryEmit(ItemEvent.Select(item))
   }
 
   override fun activateItem(item: NavBarVmItem) {
-    myItemEvents.tryEmit(ItemEvent.Activate(item))
+    _itemEvents.tryEmit(ItemEvent.Activate(item))
   }
 
   override fun selectTail() {
-    val items = myItems.value
+    val items = _items.value
     val i = (items.size - 2).coerceAtLeast(0)
     val item = items[i]
-    myItemEvents.tryEmit(ItemEvent.Select(item))
+    _itemEvents.tryEmit(ItemEvent.Select(item))
   }
 
   // Run body with no external model changes allowed
@@ -91,7 +88,7 @@ internal class NavBarVmImpl(
   }
 
   private suspend fun handleItemSelected(item: NavBarVmItem) {
-    var items = myItems.value
+    var items = _items.value
     var selectedIndex = items.indexOf(item).takeUnless { it < 0 } ?: return
     var children = item.children() ?: return
 
@@ -138,12 +135,12 @@ internal class NavBarVmImpl(
           val expandResult = autoExpand(selectedChild) ?: return
           when (expandResult) {
             is ExpandResult.NavigateTo -> {
-              navigateTo(myProject, expandResult.target)
+              navigateTo(project, expandResult.target)
               return
             }
             is ExpandResult.NextPopup -> {
               val newModel = items.slice(0..selectedIndex) + expandResult.expanded
-              myItems.value = newModel
+              _items.value = newModel
               items = newModel
               selectedIndex = newModel.indices.last
               children = expandResult.children

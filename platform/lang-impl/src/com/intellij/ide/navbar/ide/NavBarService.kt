@@ -22,7 +22,7 @@ import javax.swing.JComponent
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Service(PROJECT)
-internal class NavBarService(private val myProject: Project) : Disposable {
+internal class NavBarService(private val project: Project) : Disposable {
 
   private val cs: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
@@ -30,7 +30,7 @@ internal class NavBarService(private val myProject: Project) : Disposable {
     cs.cancel()
   }
 
-  private val staticNavBarVm = StaticNavBarVmImpl(cs, myProject, UISettings.getInstance().isNavbarShown())
+  private val staticNavBarVm = StaticNavBarVmImpl(cs, project, UISettings.getInstance().isNavbarShown())
 
   fun uiSettingsChanged(uiSettings: UISettings) {
     staticNavBarVm.isVisible = uiSettings.isNavbarShown()
@@ -55,9 +55,9 @@ internal class NavBarService(private val myProject: Project) : Disposable {
     cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project)
       val barScope = this@launch
-      val vm = NavBarVmImpl(cs = barScope, myProject, model, activityFlow = emptyFlow())
+      val vm = NavBarVmImpl(cs = barScope, project, model, activityFlow = emptyFlow())
       withContext(Dispatchers.EDT) {
-        FloatingModeHelper.showHint(dataContext, barScope, vm, myProject)
+        FloatingModeHelper.showHint(dataContext, barScope, vm, project)
         vm.selectTail()
       }
     }
