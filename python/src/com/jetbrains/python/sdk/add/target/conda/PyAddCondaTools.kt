@@ -76,6 +76,7 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
                              "~/opt/miniconda3/condabin/conda",
                              "~/opt/anaconda3/condabin/conda",
                              "/opt/miniconda3/condabin/conda",
+                             "/opt/conda/bin/conda",
                              "/opt/anaconda3/condabin/conda")
     Platform.WINDOWS -> arrayOf("%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
                                 "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
