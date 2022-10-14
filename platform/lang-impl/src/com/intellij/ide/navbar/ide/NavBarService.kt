@@ -5,57 +5,46 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NewNavBarPanel
+import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.childScope
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import java.awt.BorderLayout
-import javax.swing.JPanel
+import kotlinx.coroutines.flow.*
+import javax.swing.JComponent
 import kotlin.coroutines.EmptyCoroutineContext
 
-
 @Service(PROJECT)
-internal class NavBarService(val myProject: Project) : Disposable {
+internal class NavBarService(private val myProject: Project) : Disposable {
 
   private val cs: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
-
-  private val staticPanel = JPanel(BorderLayout())
-  private var staticNavigationBar: NavBarVmImpl? = null
-
-  private val staticBarShown = MutableStateFlow(UISettings.getInstance().isNavbarShown())
 
   override fun dispose() {
     cs.cancel()
   }
 
-  init {
-    cs.launch(Dispatchers.EDT) {
-      staticBarShown.collect { show ->
-        if (show) show() else hide()
-      }
-    }
-  }
+  private val staticNavBarVm = StaticNavBarVmImpl(cs, myProject, UISettings.getInstance().isNavbarShown())
 
   fun uiSettingsChanged(uiSettings: UISettings) {
-    staticBarShown.tryEmit(uiSettings.isNavbarShown())
+    staticNavBarVm.isVisible = uiSettings.isNavbarShown()
   }
 
-  fun getStaticNavBarPanel() = staticPanel
+  val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
+    EDT.assertIsEdt()
+    StaticNavBarPanel(cs, staticNavBarVm)
+  }
 
   fun jumpToNavbar(dataContext: DataContext) {
-    (staticNavigationBar ?: createFloatingNavbar(dataContext)).selectTail()
+    (staticNavBarVm.vm.value ?: createFloatingNavbar(dataContext)).selectTail()
   }
 
   private fun createFloatingNavbar(dataContext: DataContext): NavBarVmImpl {
@@ -69,31 +58,6 @@ internal class NavBarService(val myProject: Project) : Disposable {
     FloatingModeHelper.showHint(dataContext, childScope, popupNavbar, myProject)
     return popupNavbar
   }
-
-  private fun show() {
-    if (staticNavigationBar != null) {
-      return
-    }
-    val initialModel = runBlocking {
-      focusModel(myProject)
-    }
-
-    val barScope = cs.childScope()
-    val staticBar = NavBarVmImpl(myProject, barScope, initialModel)
-    val panel = NewNavBarPanel(barScope, staticBar)
-    Disposer.register(this, staticBar)
-    staticNavigationBar = staticBar
-    staticPanel.add(panel)
-  }
-
-  private fun hide() {
-    staticNavigationBar?.let {
-      staticPanel.removeAll()
-      Disposer.dispose(it)
-      staticNavigationBar = null
-    }
-  }
-
 }
 
 internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
