@@ -4,8 +4,6 @@ package com.intellij.ide.navbar.ide
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
-import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
-import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
@@ -43,10 +41,6 @@ import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 
-
-internal enum class ItemSelectType { OPEN_POPUP, NAVIGATE }
-internal class ItemClickEvent(val type: ItemSelectType, val index: Int, val item: NavBarVmItem)
-
 internal class NavigationBar(
   private val myProject: Project,
   private val cs: CoroutineScope,
@@ -56,10 +50,11 @@ internal class NavigationBar(
   // Flag to block external model changes while user click is being processed
   private val modelChangesAllowed = AtomicBoolean(true)
 
-  private val myItemClickEvents = MutableSharedFlow<ItemClickEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
   private lateinit var myComponent: NewNavBarPanel
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>>
+
+  private val myItemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
 
   init {
     val initialContext = dataContext ?: runBlocking { focusDataContext() }
@@ -115,13 +110,13 @@ internal class NavigationBar(
 
     // handle clicks on navigation bar
     cs.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      myItemClickEvents.collectLatest { e ->
-        when (e.type) {
-          OPEN_POPUP -> freezeModelAndInvoke {
-            handleItemSelected(e.index)
+      myItemEvents.collectLatest { e ->
+        when (e) {
+          is ItemEvent.Select -> freezeModelAndInvoke {
+            handleItemSelected(e.item)
             FloatingModeHelper.hideHint(false)
           }
-          NAVIGATE -> navigateTo(myProject, e.item)
+          is ItemEvent.Activate -> navigateTo(myProject, e.item)
         }
       }
     }
@@ -137,14 +132,14 @@ internal class NavigationBar(
       val items = myItems.value
       val i = (items.size - 2).coerceAtLeast(0)
       val item = items[i]
-      myItemClickEvents.emit(ItemClickEvent(OPEN_POPUP, i, item))
+      myItemEvents.emit(ItemEvent.Select(item))
     }
   }
 
 
   fun getPanel(): NewNavBarPanel {
     EDT.assertIsEdt()
-    myComponent = NewNavBarPanel(myItemClickEvents, myItems.asStateFlow(), cs)
+    myComponent = NewNavBarPanel(myItemEvents, myItems.asStateFlow(), cs)
     return myComponent
   }
 
@@ -170,10 +165,10 @@ internal class NavigationBar(
     }
   }
 
-  private suspend fun handleItemSelected(index: Int) {
+  private suspend fun handleItemSelected(item: NavBarVmItem) {
     var items = myItems.value
-    var selectedIndex = index
-    var children = items.getOrNull(selectedIndex)?.children() ?: return
+    var selectedIndex = items.indexOf(item).takeUnless { it < 0 } ?: return
+    var children = item.children() ?: return
 
     while (true) {
       // Popup with [children] should be displayed for user at [selectedItem] item
@@ -236,6 +231,11 @@ internal class NavigationBar(
       }
     }
   }
+}
+
+private sealed interface ItemEvent {
+  class Select(val item: NavBarVmItem) : ItemEvent
+  class Activate(val item: NavBarVmItem) : ItemEvent
 }
 
 private sealed interface ExpandResult {
