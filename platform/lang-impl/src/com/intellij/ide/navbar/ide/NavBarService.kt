@@ -61,11 +61,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
         buildModel(dataContext)
       }
       items.ifEmpty {
-        readAction {
-          val projectItem = ProjectNavBarItem(myProject)
-          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
-          listOf(uiProjectItem)
-        }
+        defaultModel(myProject)
       }
     }
 
@@ -85,11 +81,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
         buildModel(initialContext)
       }
       items.ifEmpty {
-        readAction {
-          val projectItem = ProjectNavBarItem(myProject)
-          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
-          listOf(uiProjectItem)
-        }
+        defaultModel(myProject)
       }
     }
 
@@ -109,3 +101,9 @@ internal class NavBarService(val myProject: Project) : Disposable {
 
 }
 
+private suspend fun defaultModel(project: Project): List<NavBarVmItem> {
+  return readAction {
+    val item = ProjectNavBarItem(project)
+    listOf(NavBarVmItem(item.createPointer(), item.presentation(), item.javaClass))
+  }
+}
