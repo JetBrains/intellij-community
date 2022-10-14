@@ -527,12 +527,12 @@ public final class MavenServerManager implements Disposable {
   }
 
 
+  /**
+   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
+   * @see MavenDistributionsCache
+   */
   @Nullable
   @ApiStatus.Internal
-  /*
-    @do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
-   * @see MavenDistributionResolver
-   */
   public static File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
     for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
