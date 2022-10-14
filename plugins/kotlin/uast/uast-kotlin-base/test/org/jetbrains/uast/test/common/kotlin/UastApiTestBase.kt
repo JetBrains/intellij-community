@@ -681,6 +681,14 @@ interface UastApiTestBase : UastPluginSelection {
         )
         TestCase.assertEquals(
             "java.lang.Runnable",
+            uFile.findElementByText<ULambdaExpression>("{ return@Runnable }").functionalInterfaceType?.canonicalText
+        )
+        TestCase.assertEquals(
+            "java.lang.Runnable",
+            uFile.findElementByText<ULambdaExpression>("{ return@l }").functionalInterfaceType?.canonicalText
+        )
+        TestCase.assertEquals(
+            "java.lang.Runnable",
             uFile.findElementByText<ULambdaExpression>("{ println(\"hello1\") }").functionalInterfaceType?.canonicalText
         )
         TestCase.assertEquals(

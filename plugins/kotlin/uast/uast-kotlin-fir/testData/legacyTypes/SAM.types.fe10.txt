@@ -23,6 +23,23 @@ UFile (package = ) [import java.lang.Thread...]
                     USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}]
+        UField (name = samImplicitLabel) [@org.jetbrains.annotations.NotNull private static final var samImplicitLabel: java.lang.Runnable = Runnable({ ...})]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
+                UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
+                ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                    UBlockExpression [{...}]
+                        UReturnExpression [return] : PsiType:Void
+        UField (name = samExplicitLabel) [@org.jetbrains.annotations.NotNull private static final var samExplicitLabel: java.lang.Runnable = Runnable(l@ { ...})]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable(l@ { ...})] : PsiType:Runnable
+                UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
+                ULabeledExpression (label = l) [l@ { ...}]
+                    ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                        UBlockExpression [{...}]
+                            UReturnExpression [return] : PsiType:Void
         UMethod (name = getNotSam) [public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression]
         UMethod (name = getFoo) [public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = setFoo) [public static final fun setFoo(@org.jetbrains.annotations.NotNull <set-?>: java.lang.Runnable) : void = UastEmptyExpression]
@@ -49,6 +66,8 @@ UFile (package = ) [import java.lang.Thread...]
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}]
         UMethod (name = getBaz) [public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression]
+        UMethod (name = getSamImplicitLabel) [public static final fun getSamImplicitLabel() : java.lang.Runnable = UastEmptyExpression]
+        UMethod (name = getSamExplicitLabel) [public static final fun getSamExplicitLabel() : java.lang.Runnable = UastEmptyExpression]
         UMethod (name = runRunnable) [public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {...}]
             UParameter (name = r) [@org.jetbrains.annotations.NotNull var r: java.lang.Runnable]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
