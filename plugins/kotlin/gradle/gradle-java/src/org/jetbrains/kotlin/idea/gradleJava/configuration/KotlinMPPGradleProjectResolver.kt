@@ -216,7 +216,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     companion object {
-        private val MPP_CONFIGURATION_ARTIFACTS =
+        val MPP_CONFIGURATION_ARTIFACTS =
             Key.create<MutableMap<String/* artifact path */, MutableList<String> /* module ids*/>>("gradleMPPArtifactsMap")
         val proxyObjectCloningCache = WeakHashMap<Any, Any>()
 
