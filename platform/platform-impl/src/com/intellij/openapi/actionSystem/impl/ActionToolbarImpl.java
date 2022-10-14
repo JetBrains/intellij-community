@@ -1096,6 +1096,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return image;
   }
 
+  protected static boolean isSeparator(Component component) {
+    return component instanceof MySeparator;
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
