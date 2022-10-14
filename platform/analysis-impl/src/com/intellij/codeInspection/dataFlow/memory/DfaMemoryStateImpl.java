@@ -177,6 +177,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
+  public int getStackSize() {
+    return myStack.size();
+  }
+
+  @Override
   public void push(@NotNull DfaValue value) {
     assert value.getFactory() == myFactory : value;
     myCachedHash = null;
