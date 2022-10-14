@@ -313,7 +313,7 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
   override fun processMessage(message: BuildMessage) {
     val text = message.messageText
     when (message.kind) {
-      BuildMessage.Kind.ERROR -> {
+      BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
         val compilerName: String
         val messageText: String
         if (message is CompilerMessage) {
@@ -336,7 +336,7 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
         errorMessagesByCompiler.putValue(compilerName, messageText)
       }
       BuildMessage.Kind.WARNING -> context.messages.warning(text)
-      BuildMessage.Kind.INFO -> if (message is BuilderStatisticsMessage) {
+      BuildMessage.Kind.INFO, BuildMessage.Kind.JPS_INFO -> if (message is BuilderStatisticsMessage) {
         val buildKind = if (context.options.incrementalCompilation) " (incremental)" else ""
         context.messages.reportStatisticValue("Compilation time '${message.builderName}'$buildKind, ms", message.elapsedTimeMs.toString())
         val sources = message.numberOfProcessedSources
@@ -367,9 +367,7 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
           compilationFinishTimeForTarget.put(targetId, System.nanoTime())
         }
       }
-      else -> {
-        // ignore
-      }
+      BuildMessage.Kind.OTHER, null -> context.messages.warning(text)
     }
   }
 
