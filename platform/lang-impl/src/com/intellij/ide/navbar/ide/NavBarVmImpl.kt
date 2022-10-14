@@ -23,7 +23,7 @@ import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class NavigationBar(
+internal class NavBarVmImpl(
   private val myProject: Project,
   private val cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,

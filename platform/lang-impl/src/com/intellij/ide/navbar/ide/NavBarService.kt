@@ -32,7 +32,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
   private val cs: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
   private val staticPanel = JPanel(BorderLayout())
-  private var staticNavigationBar: NavigationBar? = null
+  private var staticNavigationBar: NavBarVmImpl? = null
 
   private val staticBarShown = MutableStateFlow(UISettings.getInstance().isNavbarShown())
 
@@ -58,14 +58,14 @@ internal class NavBarService(val myProject: Project) : Disposable {
     (staticNavigationBar ?: createFloatingNavbar(dataContext)).selectTail()
   }
 
-  private fun createFloatingNavbar(dataContext: DataContext): NavigationBar {
+  private fun createFloatingNavbar(dataContext: DataContext): NavBarVmImpl {
     val childScope = cs.childScope()
 
     val initialModel = runBlocking {
       contextModel(dataContext)
     }
 
-    val popupNavbar = NavigationBar(myProject, childScope, initialModel, dataContext)
+    val popupNavbar = NavBarVmImpl(myProject, childScope, initialModel, dataContext)
     FloatingModeHelper.showHint(dataContext, childScope, popupNavbar, myProject)
     return popupNavbar
   }
@@ -79,7 +79,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
     }
 
     val barScope = cs.childScope()
-    val staticBar = NavigationBar(myProject, barScope, initialModel)
+    val staticBar = NavBarVmImpl(myProject, barScope, initialModel)
     val panel = NewNavBarPanel(barScope, staticBar)
     Disposer.register(this, staticBar)
     staticNavigationBar = staticBar

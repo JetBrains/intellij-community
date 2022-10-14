@@ -4,7 +4,7 @@ package com.intellij.ide.navbar.ui;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.navbar.ide.NavigationBar;
+import com.intellij.ide.navbar.ide.NavBarVmImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -35,7 +35,7 @@ public class FloatingModeHelper {
   private static JComponent myHintContainer;
   private static RelativePoint myLocationCache;
 
-  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavigationBar navigationBar, Project project) {
+  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavBarVmImpl navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
     NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar);
     panel.add(component);
