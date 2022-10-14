@@ -747,7 +747,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
 
         override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
-          extension.initializeConfigurationTypes()
+          extension.configurationTypes
         }
       }, true, this)
   }

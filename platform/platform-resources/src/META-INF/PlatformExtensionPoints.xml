@@ -326,7 +326,7 @@
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
     <extensionPoint name="execution.syntheticConfigurationTypeProvider"
-                    interface="com.intellij.execution.SyntheticConfigurationTypeProvider"
+                    interface="com.intellij.execution.configurations.SyntheticConfigurationTypeProvider"
                     dynamic="true"/>
 
     <extensionPoint name="executionActionSuppressor"
