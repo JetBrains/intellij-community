@@ -10,10 +10,11 @@ import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-
-internal class NavBarItemComponent(presentation: NavBarItemPresentation,
-                                   isIconNeeded: Boolean = false,
-                                   isChevronNeeded: Boolean = true) : JPanel(BorderLayout()) {
+internal class NavBarItemComponent(
+  presentation: NavBarItemPresentation,
+  isIconNeeded: Boolean = false,
+  isChevronNeeded: Boolean = true,
+) : JPanel(BorderLayout()) {
   init {
     val coloredComponent = SimpleColoredComponent().apply {
       if (isIconNeeded) {
