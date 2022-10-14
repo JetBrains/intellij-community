@@ -22,6 +22,7 @@ class FE1UastApiTest : AbstractFE1UastTest() {
 
     @TestMetadata("uast-kotlin-fir/testData/declaration")
     @TestDataPath("/")
+    @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastApiTestBase {
         override var testDataDir = KotlinRoot.PATH.resolve("uast/uast-kotlin-fir/testData/declaration").toFile()
 
@@ -39,6 +40,7 @@ class FE1UastApiTest : AbstractFE1UastTest() {
 
     @TestMetadata("uast-kotlin/testData")
     @TestDataPath("/")
+    @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : AbstractFE1UastTest(), UastApiTestBase {
         override var testDataDir: File = KotlinRoot.PATH.resolve("uast/uast-kotlin/tests/testData").toFile()
 
@@ -206,6 +208,11 @@ class FE1UastApiTest : AbstractFE1UastTest() {
         @TestMetadata("StringTemplateComplexForUInjectionHost.kt")
         fun testStringTemplateComplexForUInjectionHost() {
             doTest("StringTemplateComplexForUInjectionHost", ::checkCallbackForComplexStrings)
+        }
+
+        @TestMetadata("WhenIs.kt")
+        fun testWhenIs() {
+            doTest("WhenIs", ::checkSwitchYieldTargets)
         }
     }
 }

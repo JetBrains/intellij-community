@@ -22,6 +22,12 @@ class KotlinUSwitchEntry(
         }
     }
 
+    private val containingWhenExpression by lz {
+        baseResolveProviderService.baseKotlinConverter.unwrapElements(sourcePsi.parent)?.let { parentUnwrapped ->
+            languagePlugin?.convertElementWithParent(parentUnwrapped, null)
+        }
+    }
+
     override val body: UExpressionList by lz {
         object : KotlinUExpressionList(
             sourcePsi,
@@ -60,15 +66,16 @@ class KotlinUSwitchEntry(
                                         it, this, DEFAULT_EXPRESSION_TYPES_LIST
                                     )
                                 }
+
+                        override val jumpTarget: UElement?
+                            get() = containingWhenExpression
                     }
                 else emptyList()
         }
     }
 
     override fun convertParent(): UElement? {
-        val result = baseResolveProviderService.baseKotlinConverter.unwrapElements(sourcePsi.parent)?.let { parentUnwrapped ->
-            languagePlugin?.convertElementWithParent(parentUnwrapped, null)
-        }
-        return (result as? KotlinUSwitchExpression)?.body ?: result
+        return (containingWhenExpression as? KotlinUSwitchExpression)?.body
+            ?: containingWhenExpression
     }
 }

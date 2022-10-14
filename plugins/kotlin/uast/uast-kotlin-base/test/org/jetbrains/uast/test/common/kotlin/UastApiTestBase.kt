@@ -719,6 +719,28 @@ interface UastApiTestBase : UastPluginSelection {
         TestCase.assertEquals("PsiType:Unit", functionCall.getExpressionType()?.toString())
     }
 
+    fun checkSwitchYieldTargets(uFilePath: String, uFile: UFile) {
+        uFile.accept(object : AbstractUastVisitor() {
+            private val switches: MutableList<USwitchExpression> = mutableListOf()
+
+            override fun visitSwitchExpression(node: USwitchExpression): Boolean {
+                switches.add(node)
+                return super.visitSwitchExpression(node)
+            }
+
+            override fun afterVisitSwitchExpression(node: USwitchExpression) {
+                switches.remove(node)
+                super.afterVisitSwitchExpression(node)
+            }
+
+            override fun visitYieldExpression(node: UYieldExpression): Boolean {
+                TestCase.assertNotNull(node.jumpTarget)
+                TestCase.assertTrue(node.jumpTarget in switches)
+                return super.visitYieldExpression(node)
+            }
+        })
+    }
+
     fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
         val anno = uFile.classes.find { it.name == "Anno" }
             ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
