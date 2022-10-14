@@ -52,7 +52,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
     staticBarShown.tryEmit(uiSettings.isNavbarShown())
   }
 
-  fun getStaticNavbarPanel() = staticPanel
+  fun getStaticNavBarPanel() = staticPanel
 
   fun jumpToNavbar(dataContext: DataContext) {
     (staticNavigationBar ?: createFloatingNavbar(dataContext)).selectTail()
