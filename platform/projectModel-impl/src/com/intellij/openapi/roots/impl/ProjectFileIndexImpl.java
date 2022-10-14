@@ -83,7 +83,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, null);
+      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true);
       return info == WorkspaceFileInternalInfo.NonWorkspace.IGNORED || info == WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED;
     }
     DirectoryInfo info = getInfoForFileOrDirectory(file);
@@ -93,7 +93,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isUnderIgnored(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, null);
+      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true);
       return info == WorkspaceFileInternalInfo.NonWorkspace.IGNORED;
     }
     return getInfoForFileOrDirectory(file).isIgnored();
@@ -111,7 +111,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInProjectOrExcluded(@NotNull VirtualFile file) {
     if (myWorkspaceFileIndex != null) {
-      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true, null);
+      WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, true);
       return info == WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED || !(info instanceof WorkspaceFileInternalInfo.NonWorkspace);
     }
     DirectoryInfo directoryInfo = getInfoForFileOrDirectory(file);

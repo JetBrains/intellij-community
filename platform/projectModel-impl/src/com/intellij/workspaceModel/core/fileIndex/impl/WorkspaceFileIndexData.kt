@@ -52,8 +52,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean,
-                  customDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileInternalInfo {
+                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
@@ -100,8 +99,8 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
         if (relevant.isNotEmpty()) {
           val notExcluded = relevant.filter { it.kind.toMask() and kindMask and currentExclusionMask.inv() != 0 }
           if (notExcluded.isNotEmpty()) {
-            val accepted = notExcluded.find { customDataClass == null || customDataClass.isInstance(it.data) }
-            return accepted ?: WorkspaceFileInternalInfo.NonWorkspace.NO_SUITABLE_CUSTOM_DATA
+            val single = notExcluded.singleOrNull()
+            return single ?: MultipleWorkspaceFileSets(notExcluded)
           }
           relevant.forEach { 
             kindMask = kindMask and it.kind.toMask().inv()
@@ -319,6 +318,8 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }
 }
+
+internal class MultipleWorkspaceFileSets(val fileSets: List<WorkspaceFileSetImpl>) : WorkspaceFileInternalInfo
 
 internal object DummyWorkspaceFileSetData : WorkspaceFileSetData
 

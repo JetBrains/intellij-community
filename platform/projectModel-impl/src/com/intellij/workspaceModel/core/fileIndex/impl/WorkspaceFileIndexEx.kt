@@ -15,8 +15,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean,
-                  customDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileInternalInfo
+                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
 
   /**
    * Reset caches which cannot be updated incrementally.
@@ -51,9 +50,8 @@ sealed interface WorkspaceFileInternalInfo {
     /** File or one of its parents is excluded */
     EXCLUDED, 
     /** File is not located under any registered workspace root */
-    NOT_UNDER_ROOTS, 
-    /** No file set associated with the found file has custom data of specified type */
-    NO_SUITABLE_CUSTOM_DATA,
+    NOT_UNDER_ROOTS,
+
     /** File is invalid */
     INVALID
   }

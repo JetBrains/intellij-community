@@ -44,7 +44,7 @@ interface WorkspaceFileIndex {
     includeContentSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
-    customDataClass: Class<out D>?
+    customDataClass: Class<out D>
   ): WorkspaceFileSetWithCustomData<D>?
 }
 
