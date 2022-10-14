@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
@@ -19,7 +18,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.flow.throttle
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
@@ -31,8 +29,6 @@ internal class NavigationBar(
   initialItems: List<NavBarVmItem>,
   dataContext: DataContext? = null
 ) : NavBarVm, Disposable {
-
-  private lateinit var myComponent: NewNavBarPanel
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
   override val items: StateFlow<List<NavBarVmItem>> = myItems.asStateFlow()
@@ -96,13 +92,6 @@ internal class NavigationBar(
       val item = items[i]
       myItemEvents.emit(ItemEvent.Select(item))
     }
-  }
-
-
-  fun getPanel(): NewNavBarPanel {
-    EDT.assertIsEdt()
-    myComponent = NewNavBarPanel(cs, this)
-    return myComponent
   }
 
   // Run body with no external model changes allowed

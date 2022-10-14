@@ -5,6 +5,7 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
+import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -65,7 +66,7 @@ internal class NavBarService(val myProject: Project) : Disposable {
     }
 
     val popupNavbar = NavigationBar(myProject, childScope, initialModel, dataContext)
-    FloatingModeHelper.showHint(dataContext, popupNavbar, myProject)
+    FloatingModeHelper.showHint(dataContext, childScope, popupNavbar, myProject)
     return popupNavbar
   }
 
@@ -77,10 +78,12 @@ internal class NavBarService(val myProject: Project) : Disposable {
       focusModel(myProject)
     }
 
-    val staticBar = NavigationBar(myProject, cs.childScope(), initialModel)
+    val barScope = cs.childScope()
+    val staticBar = NavigationBar(myProject, barScope, initialModel)
+    val panel = NewNavBarPanel(barScope, staticBar)
     Disposer.register(this, staticBar)
     staticNavigationBar = staticBar
-    staticPanel.add(staticBar.getPanel())
+    staticPanel.add(panel)
   }
 
   private fun hide() {

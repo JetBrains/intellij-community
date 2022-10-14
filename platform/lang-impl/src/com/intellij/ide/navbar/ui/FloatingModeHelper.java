@@ -23,6 +23,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,9 +35,9 @@ public class FloatingModeHelper {
   private static JComponent myHintContainer;
   private static RelativePoint myLocationCache;
 
-  public static LightweightHint showHint(DataContext dataContext, NavigationBar navigationBar, Project project) {
+  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavigationBar navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
-    NewNavBarPanel component = navigationBar.getPanel();
+    NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar);
     panel.add(component);
     panel.setOpaque(true);
 
