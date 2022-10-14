@@ -298,7 +298,7 @@ public class TestAll implements Test {
       }
       catch (Exception e) {
         System.err.println("Unexpected error happened during sending test results to Nastradamus");
-        System.err.println(e);
+        e.printStackTrace();
       }
     }
   }
@@ -444,7 +444,7 @@ public class TestAll implements Test {
         }
 
         @Nullable
-        private Method findTestMethod(final TestCase testCase) {
+        private static Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
