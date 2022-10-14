@@ -2,7 +2,6 @@
 package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
-import com.intellij.ide.DataManager
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
@@ -19,15 +18,15 @@ import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDirectoryContainer
 import com.intellij.psi.PsiFile
@@ -43,7 +42,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
-import kotlin.coroutines.resume
 
 
 internal enum class ItemSelectType { OPEN_POPUP, NAVIGATE }
@@ -64,7 +62,7 @@ internal class NavigationBar(
   private val myItems: MutableStateFlow<List<NavBarVmItem>>
 
   init {
-    val initialContext = dataContext ?: runBlocking { getFocusedData() }
+    val initialContext = dataContext ?: runBlocking { focusDataContext() }
 
     val initialModel = runBlocking {
       val items = readAction {
@@ -89,7 +87,7 @@ internal class NavigationBar(
           .collectLatest {
             try {
               if (modelChangesAllowed.get()) {
-                val focusedData = getFocusedData()
+                val focusedData = focusDataContext()
                 val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
                 if (focusedProject == myProject) {
                   val model = readAction {
@@ -348,17 +346,6 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
   NavBarItemProvider.EP_NAME
     .extensionList
     .flatMap { ext -> ext.iterateChildren(this) }
-
-
-private suspend fun getFocusedData(): DataContext = suspendCancellableCoroutine {
-  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
-    @Suppress("DEPRECATION")
-    val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
-    val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
-    val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
-    it.resume(asyncDataContext)
-  }, ModalityState.any())
-}
 
 private fun buildModel(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
