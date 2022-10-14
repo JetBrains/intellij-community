@@ -10,6 +10,7 @@ import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
+import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.navbar.vm.PopupResult.*
@@ -33,10 +34,7 @@ import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 
@@ -45,7 +43,7 @@ internal class NavigationBar(
   private val cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   dataContext: DataContext? = null
-) : Disposable {
+) : NavBarVm, Disposable {
 
   // Flag to block external model changes while user click is being processed
   private val modelChangesAllowed = AtomicBoolean(true)
@@ -53,6 +51,7 @@ internal class NavigationBar(
   private lateinit var myComponent: NewNavBarPanel
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
+  override val items: StateFlow<List<NavBarVmItem>> = myItems.asStateFlow()
 
   private val myItemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
 
@@ -110,6 +109,14 @@ internal class NavigationBar(
     cs.coroutineContext.cancel()
   }
 
+  override fun selectItem(item: NavBarVmItem) {
+    myItemEvents.tryEmit(ItemEvent.Select(item))
+  }
+
+  override fun activateItem(item: NavBarVmItem) {
+    myItemEvents.tryEmit(ItemEvent.Activate(item))
+  }
+
   fun focusTail() {
     cs.launch(Dispatchers.Default) {
       val items = myItems.value
@@ -122,7 +129,7 @@ internal class NavigationBar(
 
   fun getPanel(): NewNavBarPanel {
     EDT.assertIsEdt()
-    myComponent = NewNavBarPanel(myItemEvents, myItems.asStateFlow(), cs)
+    myComponent = NewNavBarPanel(cs, this)
     return myComponent
   }
 

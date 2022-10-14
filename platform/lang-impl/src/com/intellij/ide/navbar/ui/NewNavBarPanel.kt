@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.ide.ItemClickEvent
-import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
-import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
+import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
@@ -14,8 +12,6 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.FlowLayout
@@ -26,11 +22,9 @@ import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-
 internal class NewNavBarPanel(
-  private val itemClickEvents: MutableSharedFlow<ItemClickEvent>,
-  private val myItems: StateFlow<List<NavBarVmItem>>,
-  cs: CoroutineScope
+  cs: CoroutineScope,
+  private val vm: NavBarVm,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
   private val myItemComponents = arrayListOf<NavBarItemComponent>()
@@ -41,7 +35,7 @@ internal class NewNavBarPanel(
     EDT.assertIsEdt()
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      myItems.collect {
+      vm.items.collect {
         rebuild(it)
       }
     }
@@ -66,10 +60,10 @@ internal class NewNavBarPanel(
           if (!e.isConsumed) {
             e.consume()
             if (e.clickCount == 1) {
-              itemClickEvents.tryEmit(ItemClickEvent(OPEN_POPUP, i, item))
+              vm.selectItem(item)
             }
             else if (e.button == MouseEvent.BUTTON1) {
-              itemClickEvents.tryEmit(ItemClickEvent(NAVIGATE, i, item))
+              vm.activateItem(item)
             }
           }
         }
