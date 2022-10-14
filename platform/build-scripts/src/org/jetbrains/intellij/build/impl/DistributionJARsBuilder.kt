@@ -424,7 +424,7 @@ class DistributionJARsBuilder {
     spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope2 {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
-                   targetDir = pluginsToPublishDir,
+                   targetDir = pluginsToPublishDir.resolve(directory),
                    state = state,
                    context = context,
                    buildPlatformJob = null)
