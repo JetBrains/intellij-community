@@ -2,25 +2,26 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.assignment.plugin.AbstractAssignPluginResolutionAltererExtension
-import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
-import org.jetbrains.kotlin.idea.compilerPlugin.assignment.ScriptAnnotationNames.Companion.ANNOTATION_OPTION_PREFIX
-import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.scripting.definitions.isScript
 
-class IdeAssignPluginResolutionAltererExtension(project: Project) : AbstractAssignPluginResolutionAltererExtension() {
-
-    private val scriptCache = ScriptAnnotationNames(project)
-    private val moduleCache = CachedAnnotationNames(project, ANNOTATION_OPTION_PREFIX)
-
+class IdeAssignPluginResolutionAltererExtension(private val project: Project) : AbstractAssignPluginResolutionAltererExtension() {
     override fun getAnnotationFqNames(modifierListOwner: KtModifierListOwner?): List<String> {
-        if (modifierListOwner == null) return emptyList()
-        return if (modifierListOwner.containingFile.isScript()) {
-            scriptCache.getNamesForPsiFile(modifierListOwner.containingFile)
+        if (modifierListOwner == null) {
+            return emptyList()
+        }
+
+        val cache = project.service<AssignmentAnnotationNamesCache>()
+
+        if (modifierListOwner.containingFile.isScript()) {
+            return cache.getNamesForPsiFile(modifierListOwner.containingFile)
         } else {
-            moduleCache.getAnnotationNames(modifierListOwner)
+            val module = modifierListOwner.module ?: return emptyList()
+            return cache.getNamesForModule(module)
         }
     }
 }
