@@ -4,7 +4,6 @@ package com.intellij.ide.navbar.ide
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.children
-import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
@@ -14,10 +13,11 @@ import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
@@ -52,30 +52,12 @@ internal class NavigationBar(
         activityFlow()
           .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
           .collectLatest {
-            try {
-              if (skipFocusUpdates.get()) {
-                return@collectLatest
-              }
-              val focusedData = focusDataContext()
-              val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
-              if (focusedProject == myProject) {
-                val model = readAction {
-                  buildModel(focusedData)
-                }
-                if (model.isNotEmpty()) {
-                  myItems.emit(model)
-                }
-              }
+            if (skipFocusUpdates.get()) {
+              return@collectLatest
             }
-            catch (ce: CancellationException) {
-              throw ce
-            }
-            catch (pce: ProcessCanceledException) {
-              // To throw or not to throw that is a question...
-              // ignore // TODO find out why it is being actually thrown
-            }
-            catch (t: Throwable) {
-              LOG.error(t)
+            val items = focusModel(myProject)
+            if (items.isNotEmpty()) {
+              myItems.value = items
             }
           }
       }
@@ -300,17 +282,4 @@ private suspend fun <T1, T2> NavBarVmItem.fetch(
 
 private val childrenSelector: NavBarItem.() -> List<NavBarVmItem> = {
   children().toVmItems()
-}
-
-internal fun buildModel(ctx: DataContext): List<NavBarVmItem> {
-  val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
-                    ?: return emptyList()
-  return contextItem.pathToItem().toVmItems()
-}
-
-private fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-  return map {
-    NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
-  }
 }
