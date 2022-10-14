@@ -6,5 +6,9 @@
               implementationClass="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameUsageSearcher"/>
     <rename.symbolRenameTargetFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameTargetProvider"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K2ReferenceMutateService"/>
+
   </extensions>
 </idea-plugin>

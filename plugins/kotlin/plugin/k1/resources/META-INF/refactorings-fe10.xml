@@ -112,7 +112,11 @@
 
     <moveFileHandler
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.MoveKotlinFileHandler"/>
-    
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
+            serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1ReferenceMutateService"/>
+
     <renamePsiElementProcessor id="KotlinAwareJavaGetter"
                                implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
                                order="first"/>
