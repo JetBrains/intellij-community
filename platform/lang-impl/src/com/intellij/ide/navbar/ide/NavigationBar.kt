@@ -134,8 +134,9 @@ internal class NavigationBar(
 
   fun focusTail() {
     cs.launch(Dispatchers.Default) {
-      val i = (myItems.value.size - 2).coerceAtLeast(0)
-      val item = myItems.value[i]
+      val items = myItems.value
+      val i = (items.size - 2).coerceAtLeast(0)
+      val item = items[i]
       myItemClickEvents.emit(ItemClickEvent(OPEN_POPUP, i, item))
     }
   }
