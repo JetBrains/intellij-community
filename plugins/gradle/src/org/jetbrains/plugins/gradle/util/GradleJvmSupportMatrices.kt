@@ -7,7 +7,7 @@ import org.gradle.util.GradleVersion
 
 // Java versions which can be suggested to use with Intellij Idea
 private val SUPPORTED_JAVA_VERSIONS = listOf(
-  7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+  7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
 ).map(JavaVersion::compose)
 
 val MINIMUM_SUPPORTED_JAVA = SUPPORTED_JAVA_VERSIONS.first()
@@ -19,7 +19,7 @@ private val SUPPORTED_GRADLE_VERSIONS = listOf(
   "4.0", "4.1", "4.2", "4.3", "4.4", "4.5", "4.5.1", "4.6", "4.7", "4.8", "4.9", "4.10", "4.10.3",
   "5.0", "5.1", "5.2", "5.3", "5.3.1", "5.4", "5.4.1", "5.5", "5.5.1", "5.6", "5.6.2",
   "6.0", "6.0.1", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7", "6.8", "6.8.3", "6.9",
-  "7.0", "7.1", "7.2", "7.3", "7.4", "7.5"
+  "7.0", "7.1", "7.2", "7.3", "7.4", "7.5", "7.5.1"
 ).map(GradleVersion::version)
 
 // Sync with https://docs.gradle.org/current/userguide/compatibility.html
@@ -43,7 +43,8 @@ private val COMPATIBILITY = listOf(
   // Gradle 7.2 and Java 17 are partially compatible
   // https://github.com/gradle/gradle/issues/16857
   range(17 to 18) to range("7.2" to INF),
-  range(18 to INF) to range("7.5" to INF)
+  range(18 to 19) to range("7.5" to INF),
+  range(19 to INF) to range("7.6" to INF)
 ).map {
   it.first.map(JavaVersion::compose) to
     it.second.map(GradleVersion::version)
