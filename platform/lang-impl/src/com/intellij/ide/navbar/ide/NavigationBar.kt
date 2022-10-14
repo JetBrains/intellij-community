@@ -45,15 +45,15 @@ internal class NavigationBar(
   dataContext: DataContext? = null
 ) : NavBarVm, Disposable {
 
-  // Flag to block external model changes while user click is being processed
-  private val modelChangesAllowed = AtomicBoolean(true)
-
   private lateinit var myComponent: NewNavBarPanel
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
   override val items: StateFlow<List<NavBarVmItem>> = myItems.asStateFlow()
 
   private val myItemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
+
+  // Flag to block external model changes while user click is being processed
+  private val skipFocusUpdates = AtomicBoolean(false)
 
   init {
     if (dataContext == null) {
@@ -63,16 +63,17 @@ internal class NavigationBar(
           .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
           .collectLatest {
             try {
-              if (modelChangesAllowed.get()) {
-                val focusedData = focusDataContext()
-                val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
-                if (focusedProject == myProject) {
-                  val model = readAction {
-                    buildModel(focusedData)
-                  }
-                  if (model.isNotEmpty()) {
-                    myItems.emit(model)
-                  }
+              if (skipFocusUpdates.get()) {
+                return@collectLatest
+              }
+              val focusedData = focusDataContext()
+              val focusedProject = CommonDataKeys.PROJECT.getData(focusedData)
+              if (focusedProject == myProject) {
+                val model = readAction {
+                  buildModel(focusedData)
+                }
+                if (model.isNotEmpty()) {
+                  myItems.emit(model)
                 }
               }
             }
@@ -146,12 +147,12 @@ internal class NavigationBar(
 
   // Run body with no external model changes allowed
   private suspend fun freezeModelAndInvoke(body: suspend () -> Unit) {
-    modelChangesAllowed.set(false)
+    check(!skipFocusUpdates.getAndSet(true))
     try {
       body()
     }
     finally {
-      modelChangesAllowed.set(true)
+      check(skipFocusUpdates.getAndSet(false))
     }
   }
 
@@ -203,7 +204,6 @@ internal class NavigationBar(
               val navigationRequest = expandResult.target.fetch(NavBarItem::navigationRequest)
               if (navigationRequest != null) {
                 withContext(Dispatchers.EDT) {
-                  modelChangesAllowed.set(true)
                   navigateRequest(myProject, navigationRequest)
                 }
               }
