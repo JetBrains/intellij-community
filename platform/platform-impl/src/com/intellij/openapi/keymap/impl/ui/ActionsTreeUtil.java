@@ -276,10 +276,15 @@ public final class ActionsTreeUtil {
     path.add(groupName);
 
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(groupName, actionManager.getId(actionGroup), actionGroup.getTemplatePresentation().getIcon());
+    String groupId = actionManager.getId(actionGroup);
+    Group group = new Group(groupName, groupId, actionGroup.getTemplatePresentation().getIcon());
     List<AnAction> children = ContainerUtil.newArrayList(getActions(actionGroup, actionManager));
 
     for (ActionUrl actionUrl : actionUrls) {
+      Object component = actionUrl.getComponent();
+      if (component instanceof Group correctedGroup && Objects.equals(correctedGroup.getId(), groupId)) {
+        group.setForceShowAsPopup(correctedGroup.isForceShowAsPopup());
+      }
       if (areEqual(path, actionUrl)) { //actual path is shorter when we use custom root
         AnAction componentAction = actionUrl.getComponentAction();
         if (componentAction != null) {
