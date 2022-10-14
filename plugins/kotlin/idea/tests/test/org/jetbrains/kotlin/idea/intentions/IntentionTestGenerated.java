@@ -5705,6 +5705,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testSecondaryConstructor() throws Exception {
             runTest("testData/intentions/convertFunctionTypeReceiverToParameter/secondaryConstructor.kt");
         }
+
+        @TestMetadata("usagesInLambda.kt")
+        public void testUsagesInLambda() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeReceiverToParameter/usagesInLambda.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
