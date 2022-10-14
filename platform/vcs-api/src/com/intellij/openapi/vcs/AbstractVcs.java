@@ -179,6 +179,10 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public boolean markExternalChangesAsUpToDate() {
     return false;
   }
@@ -227,6 +231,10 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public String getMenuItemText() {
     return getDisplayName();
   }
@@ -654,6 +662,10 @@ public abstract class AbstractVcs extends StartedActivated {
     return false;
   }
 
+  /**
+   * @deprecated dead code
+   */
+  @Deprecated(forRemoval = true)
   public CheckoutProvider getCheckoutProvider() {
     return null;
   }
