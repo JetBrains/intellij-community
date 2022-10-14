@@ -177,8 +177,8 @@ internal class NavigationBar(
     var children = items.getOrNull(selectedIndex)?.fetch(childrenSelector) ?: return
 
     while (true) {
-      // Popup with *children* should be displayed for user at *selectedItem* item
-      // Empty *children* is an illegal case, popup navigation ends
+      // Popup with [children] should be displayed for user at [selectedItem] item
+      // Empty [children] is an illegal case, popup navigation ends
       if (children.isEmpty()) {
         return
       }
@@ -254,10 +254,10 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
   }
 
   while (true) {
-    // *currentItem* -- is being evaluated
-    // *expanded* -- list of the elements starting from *child* argument and up to *currentItem*. Both exclusively
-    // *children* -- children of the *currentItem*
-    // *showPopup* -- if *currentItem*'s children should be shown as a popup
+    // [currentItem] -- is being evaluated
+    // [expanded] -- list of the elements starting from [child] argument and up to [currentItem]. Both exclusively
+    // [children] -- children of the [currentItem]
+    // [showPopup] -- if [currentItem]'s children should be shown as a popup
 
     // No automatic navigation in this cycle!
     // It is only allowed as reaction to a users click
@@ -265,18 +265,18 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
 
     when (children.size) {
       0 -> {
-        // No children, *currentItem* is an only leaf on its branch, but no auto navigation allowed
+        // No children, [currentItem] is an only leaf on its branch, but no auto navigation allowed
         // So returning the previous state
         return ExpandResult.NextPopup(expanded, listOf(currentItem))
       }
       1 -> {
         if (navigateOnClick) {
-          // *currentItem* is navigation target regardless of its children count, but no auto navigation allowed
+          // [currentItem] is navigation target regardless of its children count, but no auto navigation allowed
           // So returning the previous state
           return ExpandResult.NextPopup(expanded, listOf(currentItem))
         }
         else {
-          // Performing autoexpand, keeping invariant
+          // Performing auto-expand, keeping invariant
           expanded = expanded + currentItem
           currentItem = children.single()
           val fetch = currentItem.fetch(childrenSelector, NavBarItem::navigateOnClick) ?: return null
@@ -285,7 +285,7 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
         }
       }
       else -> {
-        // *currentItem* has several children, so return it with current *expanded* trace.
+        // [currentItem] has several children, so return it with current [expanded] trace.
         return ExpandResult.NextPopup(expanded + currentItem, children)
       }
     }
