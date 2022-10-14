@@ -32,7 +32,7 @@ internal class GitStageShowNotificationCommitResultHandler(private val committer
     if (repositories.isEmpty()) return
 
     val repositoriesText = repositories.joinToString { "'${getShortVcsRootName(project, it.root)}'" }
-    notifier.notifySuccess(
+    notifier.notifyMinorInfo(
       STAGE_COMMIT_SUCCESS,
       "",
       message("stage.commit.successful", repositoriesText, escapeString(commitMessage))
