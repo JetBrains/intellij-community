@@ -19,12 +19,11 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.JComponent
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Service(PROJECT)
 internal class NavBarService(private val project: Project) : Disposable {
 
-  private val cs: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
+  private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
 
   override fun dispose() {
     cs.cancel()
