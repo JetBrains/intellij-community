@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
@@ -24,6 +23,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +53,7 @@ public class FloatingModeHelper {
       @Override
       public void hide() {
         super.hide();
-        Disposer.dispose(navigationBar);
+        CoroutineScopeKt.cancel(cs, null);
       }
     };
     myHint.setForceShowAsPopup(true);

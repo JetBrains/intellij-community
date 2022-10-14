@@ -9,7 +9,6 @@ import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.navbar.vm.PopupResult.*
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -22,10 +21,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal class NavBarVmImpl(
   private val myProject: Project,
-  private val cs: CoroutineScope,
+  cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   activityFlow: Flow<Unit>,
-) : NavBarVm, Disposable {
+) : NavBarVm {
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
   override val items: StateFlow<List<NavBarVmItem>> = myItems.asStateFlow()
@@ -61,10 +60,6 @@ internal class NavBarVmImpl(
       }
     }
 
-  }
-
-  override fun dispose() {
-    cs.coroutineContext.cancel()
   }
 
   override val popup = MutableSharedFlow<Pair<NavBarVmItem, NavBarPopupVm>>(replay = 1, onBufferOverflow = DROP_OLDEST)
