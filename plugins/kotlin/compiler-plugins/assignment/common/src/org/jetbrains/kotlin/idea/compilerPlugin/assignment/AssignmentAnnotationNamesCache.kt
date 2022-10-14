@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.assignment
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiFile
@@ -12,16 +14,19 @@ import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_O
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import java.util.concurrent.ConcurrentMap
 
-internal class ScriptAnnotationNames(project: Project) {
-
+@Service(Service.Level.PROJECT)
+internal class AssignmentAnnotationNamesCache(project: Project) {
     companion object {
         const val ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:$ANNOTATION_OPTION_NAME="
     }
+
+    private val moduleCache = CachedAnnotationNames(project, ANNOTATION_OPTION_PREFIX)
 
     private val scriptDefinitionCache: CachedValue<ConcurrentMap<String, List<String>>> = cachedValue(project) {
         CachedValueProvider.Result.create(
@@ -48,6 +53,10 @@ internal class ScriptAnnotationNames(project: Project) {
             val scriptDefinition = psiFile.findScriptDefinition() ?: return emptyList()
             scriptDefinition.getSpecialAnnotations(ANNOTATION_OPTION_PREFIX)
         }
+    }
+
+    fun getNamesForModule(module: Module): List<String> {
+        return moduleCache.getNamesForModule(module)
     }
 
     /**
