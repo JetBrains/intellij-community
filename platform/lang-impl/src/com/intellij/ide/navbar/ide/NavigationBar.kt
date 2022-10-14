@@ -5,11 +5,10 @@ import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.ui.NavigationBarPopup
 import com.intellij.ide.navbar.ui.NewNavBarPanel
+import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
-import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.navbar.vm.PopupResult.*
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
@@ -19,14 +18,12 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.HintHint
 import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.SwingUtilities
 
 internal class NavigationBar(
   private val myProject: Project,
@@ -82,6 +79,8 @@ internal class NavigationBar(
     cs.coroutineContext.cancel()
   }
 
+  override val popup = MutableSharedFlow<Pair<NavBarVmItem, NavBarPopupVm>>(replay = 1, onBufferOverflow = DROP_OLDEST)
+
   override fun selectItem(item: NavBarVmItem) {
     myItemEvents.tryEmit(ItemEvent.Select(item))
   }
@@ -105,17 +104,6 @@ internal class NavigationBar(
     myComponent = NewNavBarPanel(cs, this)
     return myComponent
   }
-
-  private suspend fun childrenPopupPrompt(selectedItemIndex: Int, children: List<NavBarVmItem>): PopupResult =
-    suspendCancellableCoroutine {
-      SwingUtilities.invokeLater {
-        myComponent.scrollTo(selectedItemIndex)
-        val nextItem = myItems.value.getOrNull(selectedItemIndex + 1)
-        val popupHint = NavigationBarPopup(NavBarPopupVmImpl(children, nextItem, it))
-        val absolutePoint = myComponent.getItemPopupLocation(selectedItemIndex, popupHint)
-        popupHint.show(myComponent, absolutePoint.x, absolutePoint.y, myComponent, HintHint(myComponent, absolutePoint))
-      }
-    }
 
   // Run body with no external model changes allowed
   private suspend fun freezeModelAndInvoke(body: suspend () -> Unit) {
@@ -143,7 +131,10 @@ internal class NavigationBar(
       // Force suspend to render new navbar for proper popup positioning
       yield()
 
-      val popupResult = childrenPopupPrompt(selectedIndex, children)
+      val popupResult = suspendCancellableCoroutine { continuation ->
+        val nextItem = items.getOrNull(selectedIndex + 1)
+        popup.tryEmit(Pair(items[selectedIndex], NavBarPopupVmImpl(children, nextItem, continuation)))
+      }
 
       when (popupResult) {
         PopupResultCancel -> {

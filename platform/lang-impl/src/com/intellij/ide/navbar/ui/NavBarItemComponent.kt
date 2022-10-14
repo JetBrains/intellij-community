@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.navbar.NavBarItemPresentation
+import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ui.SimpleColoredComponent
 import org.apache.commons.lang.StringUtils
 import java.awt.BorderLayout
@@ -11,6 +12,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class NavBarItemComponent(
+  val item: NavBarVmItem,
   presentation: NavBarItemPresentation,
   isIconNeeded: Boolean = false,
   isChevronNeeded: Boolean = true,
