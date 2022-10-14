@@ -11,12 +11,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -44,19 +42,25 @@ internal class NavBarService(private val myProject: Project) : Disposable {
   }
 
   fun jumpToNavbar(dataContext: DataContext) {
-    (staticNavBarVm.vm.value ?: createFloatingNavbar(dataContext)).selectTail()
+    val navBarVm = staticNavBarVm.vm.value
+    if (navBarVm != null) {
+      navBarVm.selectTail()
+    }
+    else {
+      showFloatingNavbar(dataContext)
+    }
   }
 
-  private fun createFloatingNavbar(dataContext: DataContext): NavBarVmImpl {
-    val childScope = cs.childScope()
-
-    val initialModel = runBlocking {
-      contextModel(dataContext)
+  private fun showFloatingNavbar(dataContext: DataContext) {
+    cs.launch(ModalityState.current().asContextElement()) {
+      val model = contextModel(dataContext, project)
+      val barScope = this@launch
+      val vm = NavBarVmImpl(cs = barScope, myProject, model, activityFlow = emptyFlow())
+      withContext(Dispatchers.EDT) {
+        FloatingModeHelper.showHint(dataContext, barScope, vm, myProject)
+        vm.selectTail()
+      }
     }
-
-    val popupNavbar = NavBarVmImpl(myProject, childScope, initialModel, activityFlow = emptyFlow())
-    FloatingModeHelper.showHint(dataContext, childScope, popupNavbar, myProject)
-    return popupNavbar
   }
 }
 
