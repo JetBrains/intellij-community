@@ -84,9 +84,8 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
           addParameter(identity.envName)
         }
       }
-      // Otherwise we wouldn't have interactive output (for console etc)
+      // Otherwise we wouldn't have interactive output (for console etc.)
       addParameter("--no-capture-output")
-      addParameter("--live-stream")
     }
   }
 
