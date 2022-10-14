@@ -21,16 +21,18 @@ class ClassDiagramAnnotator : Annotator {
 
     val identifier = element.classDiagramIdentifier
     val text = identifier.text
-    val prevSiblings = element.parent
+    val parent = element.parent ?: return
+
+    val prevSiblings = parent
       .siblings(forward = false, withSelf = false)
-      .filterIsInstance(MermaidClassDiagramStatement::class.java)
+      .filterIsInstance<MermaidClassDiagramStatement>()
       .map { it.firstChild }
 
     val classStatementIdentifiers = prevSiblings
-      .filterIsInstance(MermaidClassStatement::class.java)
+      .filterIsInstance<MermaidClassStatement>()
       .map { it.classDiagramIdentifier }
     val mermaidStatementIdentifiers = prevSiblings
-      .filterIsInstance(MermaidRelationStatement::class.java)
+      .filterIsInstance<MermaidRelationStatement>()
       .flatMap { it.classDiagramIdentifierList }
     val matchingIds = (classStatementIdentifiers + mermaidStatementIdentifiers)
       .map { it.text }
@@ -44,6 +46,6 @@ class ClassDiagramAnnotator : Annotator {
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
       .withFix(CreateClassDeclarationIntention(identifier))
-      .create();
+      .create()
   }
 }
