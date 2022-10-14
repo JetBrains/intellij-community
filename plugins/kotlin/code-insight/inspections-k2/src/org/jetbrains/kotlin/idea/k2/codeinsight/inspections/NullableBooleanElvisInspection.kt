@@ -37,7 +37,7 @@ class NullableBooleanElvisInspection :
 
     override fun getApplicator() =
         applicator<KtBinaryExpression, NullableBooleanInput> {
-            familyAndActionName(KotlinBundle.lazyMessage(("inspection.nullable.boolean.elvis.display.name")))
+            familyAndActionName(KotlinBundle.lazyMessage("inspection.nullable.boolean.elvis.display.name"))
             isApplicableByPsi { expression -> expression.isTargetOfNullableBooleanElvisInspection() }
             applyTo { expression, _ ->
                 val lhs = expression.left ?: return@applyTo
