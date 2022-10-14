@@ -70,6 +70,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
   public static final String SUPPRESS_FAST_TRACK = "ActionToolbarImpl.suppressFastTrack";
 
+  /**
+   * Put {@code TRUE} into {@link #putClientProperty(Object, Object)} to mark that toolbar
+   * should not be hidden by {@link com.intellij.ide.actions.ToggleToolbarAction}.
+   */
+  public static final String IMPORTANT_TOOLBAR_KEY = "ActionToolbarImpl.importantToolbar";
+
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
       ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
