@@ -174,7 +174,7 @@ internal class NavigationBar(
   private suspend fun handleItemSelected(index: Int) {
     var items = myItems.value
     var selectedIndex = index
-    var children = items.getOrNull(selectedIndex)?.fetch(childrenSelector) ?: return
+    var children = items.getOrNull(selectedIndex)?.children() ?: return
 
     while (true) {
       // Popup with [children] should be displayed for user at [selectedItem] item
@@ -196,14 +196,14 @@ internal class NavigationBar(
         PopupResultLeft -> {
           if (selectedIndex > 0) {
             selectedIndex--
-            children = items[selectedIndex].fetch(childrenSelector) ?: return
+            children = items[selectedIndex].children() ?: return
           }
         }
         PopupResultRight -> {
           if (selectedIndex < items.size - 1) {
             selectedIndex++
           }
-          val localChildren = items[selectedIndex].fetch(childrenSelector) ?: return
+          val localChildren = items[selectedIndex].children() ?: return
           if (localChildren.isEmpty()) {
             selectedIndex--
           }
@@ -306,6 +306,9 @@ private suspend fun navigateTo(project: Project, item: NavBarVmItem) {
   }
 }
 
+private suspend fun NavBarVmItem.children(): List<NavBarVmItem>? {
+  return fetch(childrenSelector)
+}
 
 private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
   return withContext(Dispatchers.Default) {
