@@ -94,7 +94,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
     additionalIdeJvmArguments = ["-XX:FlightRecorderOptions=stackdepth=256"]
 
-    productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES
+    productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES + ["intellij.cidr.common.testFramework.core"]
     productLayout.productImplementationModules = BaseIdeaPropertiesKt.JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
@@ -148,9 +148,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.cidr.common", it.mainJarName)
         it.withModule("intellij.cidr.runner", it.mainJarName)
         it.withModule("intellij.cmake.psi", it.mainJarName)
-        // The cidr test framework is included in the IDE base in Clion. But we
-        // include it here to support writing tests in plugins.
-        it.withModule("intellij.cidr.common.testFramework.core", it.mainJarName)
       },
       plugin("intellij.c.plugin") {
         it.withModule("intellij.c", it.mainJarName)
