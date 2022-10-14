@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
-import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
@@ -44,6 +43,7 @@ import javax.swing.SwingUtilities
 internal class NavigationBar(
   private val myProject: Project,
   private val cs: CoroutineScope,
+  initialItems: List<NavBarVmItem>,
   dataContext: DataContext? = null
 ) : Disposable {
 
@@ -52,28 +52,11 @@ internal class NavigationBar(
 
   private lateinit var myComponent: NewNavBarPanel
 
-  private val myItems: MutableStateFlow<List<NavBarVmItem>>
+  private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
 
   private val myItemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
 
   init {
-    val initialContext = dataContext ?: runBlocking { focusDataContext() }
-
-    val initialModel = runBlocking {
-      val items = readAction {
-        buildModel(initialContext)
-      }
-      items.ifEmpty {
-        readAction {
-          val projectItem = ProjectNavBarItem(myProject)
-          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
-          listOf(uiProjectItem)
-        }
-      }
-    }
-
-    myItems = MutableStateFlow(initialModel)
-
     if (dataContext == null) {
 
       cs.launch(Dispatchers.Default) {
@@ -348,7 +331,7 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
     .extensionList
     .flatMap { ext -> ext.iterateChildren(this) }
 
-private fun buildModel(ctx: DataContext): List<NavBarVmItem> {
+internal fun buildModel(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
                     ?: return emptyList()
   return contextItem.pathToItem().map {

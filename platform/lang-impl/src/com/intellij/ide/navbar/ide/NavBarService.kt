@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
+import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
+import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.project.Project
@@ -52,7 +55,21 @@ internal class NavBarService(val myProject: Project) : Disposable {
 
   private fun createFloatingNavbar(dataContext: DataContext): NavigationBar {
     val childScope = cs.childScope()
-    val popupNavbar = NavigationBar(myProject, childScope, dataContext)
+
+    val initialModel = runBlocking {
+      val items = readAction {
+        buildModel(dataContext)
+      }
+      items.ifEmpty {
+        readAction {
+          val projectItem = ProjectNavBarItem(myProject)
+          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
+          listOf(uiProjectItem)
+        }
+      }
+    }
+
+    val popupNavbar = NavigationBar(myProject, childScope, initialModel, dataContext)
     FloatingModeHelper.showHint(dataContext, popupNavbar, myProject)
     return popupNavbar
   }
@@ -61,7 +78,22 @@ internal class NavBarService(val myProject: Project) : Disposable {
     if (staticNavigationBar != null) {
       return
     }
-    val staticBar = NavigationBar(myProject, cs.childScope())
+    val initialContext = runBlocking { focusDataContext() }
+
+    val initialModel = runBlocking {
+      val items = readAction {
+        buildModel(initialContext)
+      }
+      items.ifEmpty {
+        readAction {
+          val projectItem = ProjectNavBarItem(myProject)
+          val uiProjectItem = NavBarVmItem(projectItem.createPointer(), projectItem.presentation(), projectItem.javaClass)
+          listOf(uiProjectItem)
+        }
+      }
+    }
+
+    val staticBar = NavigationBar(myProject, cs.childScope(), initialModel)
     Disposer.register(this, staticBar)
     staticNavigationBar = staticBar
     staticPanel.add(staticBar.getPanel())
