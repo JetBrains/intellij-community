@@ -79,7 +79,7 @@ internal class PortableCompilationCacheUploader(
 
   private fun uploadToS3() {
     spanBuilder("aws s3 sync").useWithScope {
-      awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache")
+      context.messages.info(awsS3Cli("sync", "--no-progress", "--include", "*", "$s3Folder", "s3://intellij-jps-cache"))
       println("##teamcity[setParameter name='jps.caches.aws.sync.skip' value='true']")
     }
   }
