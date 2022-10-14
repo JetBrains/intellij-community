@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -249,7 +246,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
-    final PsiFile containingFile = element.getContainingFile();
+    final PsiFileSystemItem containingFile = (element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile());
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;

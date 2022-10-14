@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -130,7 +131,8 @@ public class DescriptorComposer extends HTMLComposerImpl {
     VirtualFile vFile = null;
 
     if (expression != null) {
-      vFile = expression.getContainingFile().getVirtualFile();
+      vFile = (expression instanceof PsiFileSystemItem ? (PsiFileSystemItem) expression : expression.getContainingFile()).getVirtualFile();
+
       if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
 
       anchor.append("<a HREF=\"");
