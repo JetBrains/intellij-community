@@ -58,18 +58,15 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
   @NotNull
   public Volume getDefaultVolume() {
     if (myDefaultVolume == null) {
-      myDefaultVolume = createUploadRoot(null, true);
+      myDefaultVolume = createTempVolume();
     }
     return myDefaultVolume;
   }
 
   @NotNull
-  private Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary) {
+  private Volume createTempVolume() {
     String id = nextSyntheticId();
-    if (remoteRootPath == null) {
-      remoteRootPath = id;
-    }
-    return myUploadRoots.computeIfAbsent(remoteRootPath, path -> new LocalUploadVolume(this, id));
+    return myUploadRoots.computeIfAbsent(id, path -> new LocalUploadVolume(this, id));
   }
 
   @NotNull
