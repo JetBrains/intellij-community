@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
@@ -24,16 +23,18 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
     }
 
     val srcDir = createTestProjectStructure()
-    val pkg = WriteAction.compute<VirtualFile, Nothing> {
+    val pkg = runWriteAction {
       srcDir.createChildDirectory(this, "pkg")
     }
 
-    for (i in 0..1000) {
-      pkg.writeChild("C$i.java", """
+    runWriteAction {
+      for (i in 0..1000) {
+        pkg.writeChild("C$i.java", """
           class C$i {
             String s$i;
           }
         """.trimIndent())
+      }
     }
 
     srcDir.refresh(false, true)
@@ -42,12 +43,12 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
     val durations = mutableListOf<Double>()
     repeat(25) {
       val startMs = System.currentTimeMillis()
-
-      WriteAction.compute<Unit, Nothing> { pkg.rename(this, "pkg2") }
+      
+      runWriteAction { pkg.rename(this, "pkg2") }
       srcDir.refresh(false, true)
       assertModCountIncreasedAtLeast(1)
 
-      WriteAction.compute<Unit, Nothing> { pkg.rename(this, "pkg") }
+      runWriteAction { pkg.rename(this, "pkg") }
       srcDir.refresh(false, true)
       assertModCountIncreasedAtLeast(1)
 
