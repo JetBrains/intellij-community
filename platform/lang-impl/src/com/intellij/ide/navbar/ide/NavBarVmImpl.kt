@@ -9,15 +9,12 @@ import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.navbar.vm.PopupResult.*
-import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
@@ -27,7 +24,7 @@ internal class NavBarVmImpl(
   private val myProject: Project,
   private val cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
-  dataContext: DataContext? = null
+  activityFlow: Flow<Unit>,
 ) : NavBarVm, Disposable {
 
   private val myItems: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
@@ -39,20 +36,15 @@ internal class NavBarVmImpl(
   private val skipFocusUpdates = AtomicBoolean(false)
 
   init {
-    if (dataContext == null) {
-
-      cs.launch(Dispatchers.Default) {
-        activityFlow()
-          .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
-          .collectLatest {
-            if (skipFocusUpdates.get()) {
-              return@collectLatest
-            }
-            val items = focusModel(myProject)
-            if (items.isNotEmpty()) {
-              myItems.value = items
-            }
-          }
+    cs.launch(Dispatchers.Default) {
+      activityFlow.collectLatest {
+        if (skipFocusUpdates.get()) {
+          return@collectLatest
+        }
+        val items = focusModel(myProject)
+        if (items.isNotEmpty()) {
+          myItems.value = items
+        }
       }
     }
 

@@ -3,7 +3,9 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.StaticNavBarVm
+import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.project.Project
+import com.intellij.util.flow.throttle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +45,7 @@ internal class StaticNavBarVmImpl(
               project,
               this@supervisorScope, // scope will die once [_isVisible] changes
               initialItems = focusModel(project),
-              dataContext = null,
+              activityFlow = activityFlow().throttle(DEFAULT_UI_RESPONSE_TIMEOUT),
             )
           }
         }

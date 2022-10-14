@@ -54,7 +54,7 @@ internal class NavBarService(private val myProject: Project) : Disposable {
       contextModel(dataContext)
     }
 
-    val popupNavbar = NavBarVmImpl(myProject, childScope, initialModel, dataContext)
+    val popupNavbar = NavBarVmImpl(myProject, childScope, initialModel, activityFlow = emptyFlow())
     FloatingModeHelper.showHint(dataContext, childScope, popupNavbar, myProject)
     return popupNavbar
   }
