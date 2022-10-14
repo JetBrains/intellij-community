@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationCo
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.ClassLoadingResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
@@ -179,9 +178,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val compiledData = getCompiledCodeFragment(context, status)
 
         val classLoadingResult = loadClassesSafely(context, compiledData.classes)
-        val classLoaderRef = (classLoadingResult as? ClassLoadingResult.Success)?.classLoader
+        val classLoaderRef = classLoadingResult.getOrNull()
 
-        if (classLoadingResult is ClassLoadingResult.Failure) {
+        if (classLoadingResult.isFailure) {
             status.classLoadingFailed()
         }
 
