@@ -102,17 +102,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
   @Nullable
-  protected DefaultMutableTreeNode getSelectedNode() {
-    JTree tree = getCurrentTree();
-    if (tree == null) return null;
-    TreePath path = tree.getSelectionPath();
-    if (path == null) return null;
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
-    return (DefaultMutableTreeNode)lastPathComponent;
-  }
-
-  @Nullable
   protected final PsiElement getSelectedElement(@NotNull DataContext dataContext) {
     Object element = ArrayUtil.getFirstElement(dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
     if (!(element instanceof HierarchyNodeDescriptor)) return null;
