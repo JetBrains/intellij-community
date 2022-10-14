@@ -2,6 +2,9 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
@@ -16,6 +19,15 @@ import java.awt.Color
  * style for Markdown preview from IntelliJ LAF Settings
  */
 internal object PreviewLAFThemeStyles {
+  private fun obtainColorsScheme(): EditorColorsScheme {
+    val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+    val activeScheme = manager.schemeManager.activeScheme
+    if (activeScheme != null) {
+      return activeScheme
+    }
+    return DefaultColorSchemesManager.getInstance().firstScheme
+  }
+
   /**
    * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.
    * Generated CSS will override base rules from the default.css, so the preview elements will have correct colors.
@@ -24,7 +36,8 @@ internal object PreviewLAFThemeStyles {
    */
   @JvmStatic
   fun createStylesheet(): String {
-    with(EditorColorsManager.getInstance().globalScheme) {
+    val scheme = obtainColorsScheme()
+    with(scheme) {
       val contrastedForeground = defaultForeground.contrast(0.1)
 
       val panelBackground = UIUtil.getPanelBackground()
