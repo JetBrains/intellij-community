@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 
 @Suppress("EqualsOrHashCode")
@@ -30,13 +29,6 @@ open class KotlinStackFrame(
     visibleVariables: List<LocalVariableProxyImpl>
 ) : JavaStackFrame(StackFrameDescriptorImpl(frame, MethodsTracker()), true) {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
-
-    private val kotlinEvaluator by lazy {
-        val debugProcess = descriptor.debugProcess as DebugProcessImpl // Cast as in JavaStackFrame
-        KotlinDebuggerEvaluator(debugProcess, this@KotlinStackFrame)
-    }
-
-    override fun getEvaluator() = kotlinEvaluator
 
     override fun buildLocalVariables(
         evaluationContext: EvaluationContextImpl,

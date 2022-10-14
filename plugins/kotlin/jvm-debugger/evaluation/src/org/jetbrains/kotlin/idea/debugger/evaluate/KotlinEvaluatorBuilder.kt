@@ -94,11 +94,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         val status = EvaluationStatus()
 
-        val evaluationType = codeFragment.getUserData(KotlinCodeFragmentFactory.EVALUATION_TYPE)
-        if (evaluationType != null) {
-            status.evaluationType(evaluationType)
-        }
-
         val language = runReadAction {
             when {
                 codeFragment.getCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) != null -> EvaluationContextLanguage.Java
