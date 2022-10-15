@@ -142,5 +142,9 @@
       <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
       <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
     </group>
+
+    <action id="XDebugger.Show.Breakpoints.Over.Line.Numbers" class="com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction">
+      <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="after" relative-to-action="EditorGutterToggleGlobalLineNumbers"/>
+    </action>
   </actions>
 </idea-plugin>
