@@ -157,14 +157,13 @@ class GitBranchesTreePopupStep(private val project: Project,
     return FINAL_CHOICE
   }
 
-  override fun getTitle(): String =
-    if (repositories.size > 1) {
-      DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
-    }
-    else {
-      val repository = repositories.single()
-      DvcsBundle.message("branch.popup.vcs.name.branches.in.repo",
-                         repository.vcs.displayName, DvcsUtil.getShortRepositoryName(repository))
+  override fun getTitle(): String? =
+    when {
+      !isFirstStep -> null
+      repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
+      else -> repositories.single().let {
+        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", it.vcs.displayName, DvcsUtil.getShortRepositoryName(it))
+      }
     }
 
   fun getIncomingOutgoingIcon(treeNode: Any?): Icon? {
