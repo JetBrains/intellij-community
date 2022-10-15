@@ -123,8 +123,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private boolean myUpdateOnly;
   private SelectionBasedPluginModelAction.OptionButtonController<PluginDetailsPageComponent> myEnableDisableController;
 
+  public static boolean isMultiTabs() {
+    return Registry.is("plugins.show.multi.tabs", false);
+  }
+
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
-    this(pluginModel, searchListener, marketplace, Registry.is("plugins.show.multi.tabs", false));
+    this(pluginModel, searchListener, marketplace, isMultiTabs());
   }
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel,
@@ -1138,7 +1142,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       myInstallButton.setVisible(false);
       myUpdateButton.setVisible(false);
       myGearButton.setVisible(false);
-      myEnableDisableButton.setVisible(false);
+      if (myMultiTabs) {
+        myEnableDisableButton.setVisible(false);
+      }
       return;
     }
 
@@ -1153,7 +1159,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
       myUpdateButton.setVisible(false);
       myGearButton.setVisible(false);
-      myEnableDisableButton.setVisible(false);
+      if (myMultiTabs) {
+        myEnableDisableButton.setVisible(false);
+      }
     }
     else {
       myInstallButton.setVisible(false);

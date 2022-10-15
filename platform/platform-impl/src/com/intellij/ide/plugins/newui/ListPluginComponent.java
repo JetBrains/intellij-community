@@ -9,13 +9,16 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
@@ -23,10 +26,7 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +76,7 @@ public final class ListPluginComponent extends JPanel {
   private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
   private ErrorComponent myErrorComponent;
-  private OneLineProgressIndicator myIndicator;
+  private ProgressIndicatorEx myIndicator;
   private EventHandler myEventHandler;
   @NotNull private EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
@@ -611,9 +611,29 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void showProgress(boolean repaint) {
-    myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
-    myLayout.setProgressComponent(myIndicator.createBaselineWrapper());
+    if (PluginDetailsPageComponent.isMultiTabs()) {
+      myIndicator = new AbstractProgressIndicatorExBase();
+      myLayout.setProgressComponent(new AsyncProcessIcon("PluginListComponentIconProgress") {
+        @Override
+        public int getBaseline(int width, int height) {
+          return (int)(height * 0.85);
+        }
+
+        @Override
+        public void removeNotify() {
+          super.removeNotify();
+          if (!isDisposed()) {
+            Disposer.dispose(this);
+          }
+        }
+      });
+    }
+    else {
+      OneLineProgressIndicator indicator = new OneLineProgressIndicator(false);
+      indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
+      myLayout.setProgressComponent(indicator.createBaselineWrapper());
+      myIndicator = indicator;
+    }
 
     MyPluginModel.addProgress(myPlugin, myIndicator);
 
