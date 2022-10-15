@@ -59,6 +59,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Ddm Library", libraryName = "precompiled-ddmlib"),
     androidDependency(name = "Android Deployer Library", libraryName = "precompiled-deployer"),
     androidDependency(name = "Android Deployer Library (libjava_sites)", libraryName = "libjava_sites"),
+    androidDependency(name = "Android Device Provisioner Library", libraryName = "precompiled-device-provisioner"),
     androidDependency(name = "Android DEX library", libraryName = "dexlib2"),
     androidDependency(name = "Android draw9patch library", libraryName = "precompiled-draw9patch"),
     androidDependency(name = "Android dvlib library", libraryName = "precompiled-dvlib"),
@@ -73,10 +74,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
     androidDependency(name = "Android Layout Api Library", libraryName = "precompiled-layoutlib-api"),
-    androidDependency(name = "Android Layout Inspector (Compose Proto)", libraryName = "layout_inspector_compose_java_proto"),
     androidDependency(name = "Android Layout Inspector (Skia Proto)", libraryName = "layoutinspector-skia-proto"),
-    androidDependency(name = "Android Layout Inspector (Snapshot Proto)", libraryName = "layout_inspector_snapshot_java_proto"),
-    androidDependency(name = "Android Layout Inspector (View Proto)", libraryName = "layout_inspector_view_java_proto"),
+    androidDependency(name = "Android Layout Inspector (View Proto)", libraryName = "layoutinspector-view-proto"),
     androidDependency(name = "Android Layout Library", libraryName = "layoutlib"),
     LibraryLicense(name = "Android libwebp library", libraryName = "libwebp.jar",
                    url = "https://github.com/webmproject/libwebp",
@@ -106,9 +105,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
     LibraryLicense(name = "AndroidX Compose Compiler (Hosted)", libraryName = "compiler-hosted-1.2.0-SNAPSHOT.jar", version = "1.1.0-SNAPSHOT",
                        url = "https://source.android.com/").apache("https://source.android.com/setup/start/licenses"),
-    androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto"),
-    // for androidx-test-core-proto module library in intellij.android.core
-    androidDependency(name = "AndroidX Test Library core protos", libraryName = "androidx-test-core-proto"),
+    androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto-jarjar"),
     LibraryLicense(name = "ANTLR 4.5", libraryName = "compilerCommon.antlr.shaded",
                        url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
     LibraryLicense(name = "ANTLR 4.5 Runtime", libraryName = "compilerCommon.antlr_runtime.shaded",
@@ -682,6 +679,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/package-search-version-utils").apache(),
     LibraryLicense(name = "PEPK", libraryName = "pepk", url = "https://source.android.com/",
                    version = LibraryLicense.CUSTOM_REVISION).apache(),
+    androidDependency(name = "Perfetto Library", libraryName = "trace-perfetto-library"),
     androidDependency(name = "Perfetto protos", libraryName = "perfetto-proto"),
     LibraryLicense(name = "pip", attachedTo = "intellij.python", version = "20.3.4",
                    url = "https://pip.pypa.io/")
