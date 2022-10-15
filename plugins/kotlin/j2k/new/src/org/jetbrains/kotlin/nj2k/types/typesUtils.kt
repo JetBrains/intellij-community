@@ -140,7 +140,7 @@ fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
 
 fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
     if (this is JKJavaPrimitiveType) this
-    else when ((this as? JKClassType)?.classReference?.fqName) {
+    else when (fqName) {
         StandardNames.FqNames._char.asString(), CommonClassNames.JAVA_LANG_CHARACTER -> JKJavaPrimitiveType.CHAR
         StandardNames.FqNames._boolean.asString(), CommonClassNames.JAVA_LANG_BOOLEAN -> JKJavaPrimitiveType.BOOLEAN
         StandardNames.FqNames._int.asString(), CommonClassNames.JAVA_LANG_INTEGER -> JKJavaPrimitiveType.INT
@@ -181,7 +181,6 @@ fun JKType.arrayFqName(): String =
 fun JKClassSymbol.isArrayType(): Boolean =
     fqName in arrayFqNames
 
-@OptIn(ExperimentalStdlibApi::class)
 private val arrayFqNames = buildList {
     JKJavaPrimitiveType.ALL.mapTo(this) { PrimitiveType.valueOf(it.jvmPrimitiveType.name).arrayTypeFqName.asString() }
     add(StandardNames.FqNames.array.asString())
@@ -194,11 +193,14 @@ fun JKType.isArrayType() =
         else -> false
     }
 
-fun JKType.isUnit() =
-    safeAs<JKClassType>()?.classReference?.fqName == StandardNames.FqNames.unit.asString()
+fun JKType.isUnit(): Boolean =
+    fqName == StandardNames.FqNames.unit.asString()
 
 val JKType.isCollectionType: Boolean
-    get() = safeAs<JKClassType>()?.classReference?.fqName in collectionFqNames
+    get() = fqName in collectionFqNames
+
+val JKType.fqName: String?
+    get() = safeAs<JKClassType>()?.classReference?.fqName
 
 private val collectionFqNames = setOf(
     StandardNames.FqNames.mutableIterator.asString(),
