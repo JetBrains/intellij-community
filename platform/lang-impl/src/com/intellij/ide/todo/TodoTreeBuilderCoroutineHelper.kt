@@ -62,32 +62,32 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
       }
     }.asCompletableFuture()
   }
+}
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
-  private fun TodoTreeBuilder.collectFiles() {
-    ProgressManager.checkCanceled()
-    clearCache()
+@RequiresBackgroundThread
+@RequiresReadLock
+private fun TodoTreeBuilder.collectFiles() {
+  ProgressManager.checkCanceled()
+  clearCache()
 
-    collectFiles {
-      myFileTree.add(it.virtualFile)
+  collectFiles {
+    myFileTree.add(it.virtualFile)
 
-      if (myFileTree.size() % ASYNC_BATCH_SIZE.asInteger() == 0) {
-        validateCacheAndUpdateTree()
-      }
+    if (myFileTree.size() % ASYNC_BATCH_SIZE.asInteger() == 0) {
+      validateCacheAndUpdateTree()
     }
-
-    validateCacheAndUpdateTree()
   }
 
-  @RequiresBackgroundThread
-  @RequiresReadLock
-  private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
-    ProgressManager.checkCanceled()
+  validateCacheAndUpdateTree()
+}
 
-    todoTreeStructure.validateCache()
-    updateVisibleTree()
-  }
+@RequiresBackgroundThread
+@RequiresReadLock
+private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
+  ProgressManager.checkCanceled()
+
+  todoTreeStructure.validateCache()
+  updateVisibleTree()
 }
 
 @RequiresBackgroundThread
