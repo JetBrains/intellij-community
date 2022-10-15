@@ -103,8 +103,6 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Wizard Template", libraryName = "precompiled-wizardTemplate.impl"),
     androidDependency(name = "Android Wizard Template Plugin", libraryName = "precompiled-wizardTemplate.plugin"),
     androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
-    LibraryLicense(name = "AndroidX Compose Compiler (Hosted)", libraryName = "compiler-hosted-1.2.0-SNAPSHOT.jar", version = "1.1.0-SNAPSHOT",
-                       url = "https://source.android.com/").apache("https://source.android.com/setup/start/licenses"),
     androidDependency(name = "AndroidX Test Library", libraryName = "utp-core-proto-jarjar"),
     LibraryLicense(name = "ANTLR 4.5", libraryName = "compilerCommon.antlr.shaded",
                        url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
