@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 import java.util.List;
@@ -40,7 +41,8 @@ public class RedundantModifiersQuickFixTest extends AbstractLombokLightCodeInsig
 
     final List<IntentionAction> availableActions = getAvailableActions();
     assertTrue(message,
-      availableActions.stream().anyMatch(action -> action.getText().contains("Change access modifier")));
+               ContainerUtil.exists(availableActions,
+                                    action -> action.getText().contains("Change access modifier")));
   }
 
   protected List<IntentionAction> getAvailableActions() {
