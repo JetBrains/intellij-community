@@ -8901,6 +8901,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantLambdaArrow/explicitType.kt");
         }
 
+        @TestMetadata("for.kt")
+        public void testFor() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/for.kt");
+        }
+
         @TestMetadata("forEach.kt")
         public void testForEach() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/forEach.kt");
@@ -9064,6 +9069,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("underscore.kt")
         public void testUnderscore() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/underscore.kt");
+        }
+
+        @TestMetadata("while.kt")
+        public void testWhile() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/while.kt");
         }
     }
 
