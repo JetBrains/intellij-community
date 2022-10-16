@@ -40,6 +40,10 @@ public class Version implements Comparable<Version>, Serializable {
     return new Version(major, minor, patch);
   }
 
+  public boolean supportsRegexLiterals() {
+    return isOrGreaterThan(6);
+  }
+
   private static int parseNumber(String num, int def) {
     return StringUtil.parseInt(num.replaceFirst("(\\d+).*", "$1"), def);
   }
