@@ -44,12 +44,6 @@ public class PyPackagesUpdater implements StartupActivity.Background {
   @Override
   public void runActivity(@NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    try {
-      PyPIPackageRanking.INSTANCE.reload();
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
 
     if (!checkNeeded(project)) return;
 

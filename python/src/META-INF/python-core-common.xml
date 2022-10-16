@@ -483,6 +483,8 @@
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="sdk.has.been.configured.notification.name"/>
     <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <notificationGroup id="PythonPackages" displayType="TOOL_WINDOW" toolWindowId="Python Packages"
+                       bundle="messages.PyBundle" key="notification.group.packaging.toolwindow"/>
     <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.poetry.pip.file.watcher"/>
 
@@ -498,6 +500,8 @@
 
     <!--  Code vision -->
     <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
+
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
   </extensions>
 
   <extensionPoints>
@@ -589,6 +593,10 @@
 
     <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
                     interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
+                    interface="com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -685,6 +693,9 @@
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
     <remoteSdkValidator implementation="com.jetbrains.python.target.PyTargetSdkValidator"/>
+
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
   <actions>

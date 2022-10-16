@@ -87,6 +87,24 @@ suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequ
     }
   }
 
+  /**
+   * Add conda prefix to [targetedCommandLineBuilder] without specifying the 'run' command
+   */
+  fun addCondaEnvironmentToTargetBuilder(targetedCommandLineBuilder: TargetedCommandLineBuilder) {
+    targetedCommandLineBuilder.apply {
+      when (val identity = this@PyCondaEnv.envIdentity) {
+        is PyCondaEnvIdentity.UnnamedEnv -> {
+          addParameter("-p")
+          addParameter(identity.envPath) // TODO: Escape. Shouldn't target have something like "addEscaped"?
+        }
+        is PyCondaEnvIdentity.NamedEnv -> {
+          addParameter("-n")
+          addParameter(identity.envName)
+        }
+      }
+    }
+  }
+
   override fun toString(): String = "$envIdentity@$fullCondaPathOnTarget"
 }
 
