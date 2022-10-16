@@ -4,6 +4,7 @@ package org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretVisualAttributes
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -38,7 +39,7 @@ interface NotebookEditorModeListener {
   fun onModeChange(mode: NotebookEditorMode)
 }
 
-abstract class NotebookEditorModeListenerAdapter : TextEditor, NotebookEditorModeListener, CaretListener {
+class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEditorModeListener, CaretListener {
   private var currentEditorMode: NotebookEditorMode? = null
 
   private fun getCaretAttributes(mode: NotebookEditorMode): CaretVisualAttributes {
