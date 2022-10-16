@@ -17,7 +17,10 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.asAssignment
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -29,27 +32,9 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
     }
 
     private fun convertClass(klass: KtClass) {
-        val initializations = runReadAction { collectPropertyInitializations(klass) }.ifEmpty { return }
+        val initializations = runReadAction { collectPropertyInitializations(klass) }
         runUndoTransparentActionInEdt(inWriteAction = true) {
-            for (initialization in initializations) {
-                val commentSaver = CommentSaver(initialization.assignment, saveLineBreaks = true)
-                val restoreCommentsTarget: KtExpression
-                when (initialization) {
-                    is ConstructorParameterInitialization -> {
-                        initialization.mergePropertyAndConstructorParameter()
-                        restoreCommentsTarget = initialization.initializer
-                    }
-
-                    is LiteralInitialization -> {
-                        val (property, initializer, _) = initialization
-                        property.initializer = initializer
-                        restoreCommentsTarget = property
-                    }
-                }
-                initialization.assignment.delete()
-                commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
-            }
-
+            initializations.forEach(::convertInitialization)
             klass.removeEmptyInitBlocks()
             klass.removeRedundantEnumSemicolon()
         }
@@ -74,18 +59,14 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
             return KotlinTypeChecker.DEFAULT.equalTypes(propertyType, parameterType)
         }
 
-        val initializer = klass.getAnonymousInitializers().singleOrNull() ?: return emptyList()
-        val statements = initializer.body?.safeAs<KtBlockExpression>()?.statements ?: return emptyList()
-
-        for (statement in statements) {
-            val assignment = statement.asAssignment() ?: break
-            val property = assignment.left?.asProperty() ?: break
+        fun collectInitialization(expression: KtExpression): Boolean {
+            val assignment = expression.asAssignment() ?: return false
+            val property = assignment.left?.asProperty() ?: return false
             usedProperties += property
-
             when (val rightSide = assignment.right) {
                 is KtReferenceExpression -> {
-                    val parameter = rightSide.asParameter() ?: break
-                    if (!property.isSameTypeAs(parameter)) break
+                    val parameter = rightSide.asParameter() ?: return false
+                    if (!property.isSameTypeAs(parameter)) return false
                     usedParameters += parameter
                     initializations += ConstructorParameterInitialization(property, parameter, assignment)
                 }
@@ -96,9 +77,34 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
 
                 else -> {}
             }
+            return true
         }
 
+        val initializer = klass.getAnonymousInitializers().singleOrNull() ?: return emptyList()
+        val statements = initializer.body?.safeAs<KtBlockExpression>()?.statements ?: return emptyList()
+        for (statement in statements) {
+            if (!collectInitialization(statement)) break
+        }
         return initializations
+    }
+
+    private fun convertInitialization(initialization: Initialization<*>) {
+        val commentSaver = CommentSaver(initialization.assignment, saveLineBreaks = true)
+        val restoreCommentsTarget: KtExpression
+        when (initialization) {
+            is ConstructorParameterInitialization -> {
+                initialization.mergePropertyAndConstructorParameter()
+                restoreCommentsTarget = initialization.initializer
+            }
+
+            is LiteralInitialization -> {
+                val (property, initializer, _) = initialization
+                property.initializer = initializer
+                restoreCommentsTarget = property
+            }
+        }
+        initialization.assignment.delete()
+        commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
     }
 
     private fun ConstructorParameterInitialization.mergePropertyAndConstructorParameter() {
@@ -118,7 +124,11 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
                 if (entry.useSiteTarget == null) entry.addUseSiteTarget(FIELD, property.project)
             }
         }
-        property.typeReference?.annotationEntries?.forEach { parameter.typeReference?.addAnnotationEntry(it) }
+        property.typeReference?.annotationEntries?.forEach { entry ->
+            if (parameter.typeReference?.annotationEntries?.all { it.shortName != entry.shortName } == true) {
+                parameter.typeReference?.addAnnotationEntry(entry)
+            }
+        }
 
         property.delete()
         commentSaver.restore(parameter, forceAdjustIndent = false)
