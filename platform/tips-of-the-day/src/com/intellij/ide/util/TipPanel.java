@@ -28,8 +28,10 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
+  private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
@@ -66,10 +69,24 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
+
+    JPanel contentPanel = new JPanel();
+    contentPanel.setBackground(UIUtil.getTextFieldBackground());
+    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+    mySubSystemLabel = new JLabel();
+    mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
+    mySubSystemLabel.setFont(JBFont.label().lessOn(1.0f));
+    mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
+    mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    contentPanel.add(mySubSystemLabel);
+
     myTextPane = new StyledTextPane();
     myTextPane.setBackground(UIUtil.getTextFieldBackground());
     myTextPane.setBorder(null);
+    myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
+    contentPanel.add(myTextPane);
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -80,7 +97,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     // scroll will not be shown in a regular case
     // it is required only for technical writers to test whether the content of the new do not exceed the bounds
-    JBScrollPane scrollPane = new JBScrollPane(myTextPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    JBScrollPane scrollPane = new JBScrollPane(contentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     centerPanel.add(scrollPane);
 
@@ -248,6 +265,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
+
+    String groupName = TipUtils.getGroupDisplayNameForTip(tip);
+    mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
+    mySubSystemLabel.setVisible(groupName != null);
 
     List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
     myTextPane.setParagraphs(tipContent);
