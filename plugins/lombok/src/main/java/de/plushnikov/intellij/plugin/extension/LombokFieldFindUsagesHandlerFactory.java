@@ -40,9 +40,8 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     return new FindUsagesHandler(element) {
-      @NotNull
       @Override
-      public PsiElement[] getSecondaryElements() {
+      public PsiElement @NotNull [] getSecondaryElements() {
         final PsiField psiField = (PsiField) getPsiElement();
         final PsiClass containingClass = psiField.getContainingClass();
         if (containingClass != null) {

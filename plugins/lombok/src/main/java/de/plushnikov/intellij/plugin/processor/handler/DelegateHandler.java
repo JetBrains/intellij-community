@@ -227,7 +227,7 @@ public class DelegateHandler {
   private static <T extends PsiModifierListOwner & PsiNamedElement> String createCodeBlockText(@NotNull T psiElement,
                                                                                                @NotNull PsiMethod psiMethod,
                                                                                                @NotNull PsiType returnType,
-                                                                                               @NotNull PsiParameter[] psiParameters) {
+                                                                                               PsiParameter @NotNull [] psiParameters) {
     final String blockText;
     final StringBuilder paramString = new StringBuilder();
 
