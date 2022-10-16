@@ -117,6 +117,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private boolean myIsPluginAvailable;
   private boolean myIsPluginCompatible;
   private IdeaPluginDescriptor myUpdateDescriptor;
+  private IdeaPluginDescriptor myInstalledDescriptorForMarketplace;
 
   private ListPluginComponent myShowComponent;
 
@@ -152,6 +153,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   @Nullable IdeaPluginDescriptor getPlugin() {
     return myPlugin;
+  }
+
+  IdeaPluginDescriptor getDescriptorForActions() {
+    return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin : myInstalledDescriptorForMarketplace;
   }
 
   void setPlugin(@Nullable IdeaPluginDescriptor plugin) {
@@ -766,7 +771,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     if (component == null) {
-      myPlugin = myUpdateDescriptor = null;
+      myPlugin = myUpdateDescriptor = myInstalledDescriptorForMarketplace = null;
       select(1, true);
       setEmptyState(multiSelection ? EmptyState.MULTI_SELECT : EmptyState.NONE_SELECTED);
     }
@@ -851,6 +856,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginCompatible = PluginManagerCore.getIncompatiblePlatform(pluginDescriptor).isEmpty();
     myIsPluginAvailable = myIsPluginCompatible && org.isPluginAllowed(!myMarketplace, pluginDescriptor);
+    if (myMarketplace) {
+      myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+    }
     showPlugin();
 
     select(0, true);
@@ -1158,21 +1166,44 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       myInstallButton.setVisible(!installed);
 
       myUpdateButton.setVisible(false);
-      myGearButton.setVisible(false);
       if (myMultiTabs) {
+        if (installed || myInstalledDescriptorForMarketplace == null) {
+          myGearButton.setVisible(false);
+        }
+        else {
+          boolean[] state = getDeletedState(myInstalledDescriptorForMarketplace);
+          boolean uninstalled = state[0];
+          boolean uninstalledWithoutRestart = state[1];
+
+          myInstallButton.setVisible(false);
+
+          if (uninstalled) {
+            if (uninstalledWithoutRestart) {
+              myRestartButton.setVisible(false);
+              myInstallButton.setVisible(true);
+              myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+            }
+            else {
+              myRestartButton.setVisible(true);
+            }
+          }
+
+          myEnableDisableController.update();
+          myGearButton.setVisible(!uninstalled);
+          updateEnableForNameAndIcon();
+        }
         myEnableDisableButton.setVisible(false);
+      }
+      else {
+        myGearButton.setVisible(false);
       }
     }
     else {
       myInstallButton.setVisible(false);
 
-      boolean uninstalled = myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted();
-      boolean uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(myPlugin.getPluginId());
-      if (!uninstalled) {
-        InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
-        PluginId id = myPlugin.getPluginId();
-        uninstalled = pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id);
-      }
+      boolean[] state = getDeletedState(myPlugin);
+      boolean uninstalled = state[0];
+      boolean uninstalledWithoutRestart = state[1];
 
       if (uninstalled) {
         if (uninstalledWithoutRestart) {
@@ -1207,6 +1238,19 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       updateEnableForNameAndIcon();
       updateErrors();
     }
+  }
+
+  private static boolean[] getDeletedState(@NotNull IdeaPluginDescriptor descriptor) {
+    PluginId pluginId = descriptor.getPluginId();
+
+    boolean uninstalled = NewUiUtil.isDeleted(descriptor);
+    boolean uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId);
+    if (!uninstalled) {
+      InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
+      uninstalled = pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdated(pluginId);
+    }
+
+    return new boolean[]{uninstalled, uninstalledWithoutRestart};
   }
 
   private void updateIcon() {
@@ -1272,7 +1316,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateEnableForNameAndIcon() {
-    boolean enabled = myPluginModel.isEnabled(myPlugin);
+    boolean enabled = myPluginModel.isEnabled(getDescriptorForActions());
     myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
     if (myIconLabel != null) {
       myIconLabel.setEnabled(enabled);
@@ -1280,12 +1324,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   public void updateEnabledState() {
-    if (myMarketplace || myPlugin == null) {
+    if ((myMarketplace && myInstalledDescriptorForMarketplace == null) || myPlugin == null) {
       return;
     }
 
     if (myMultiTabs) {
       updateButtons();
+
+      if (myInstalledDescriptorForMarketplace != null) {
+        updateEnableForNameAndIcon();
+        fullRepaint();
+        return;
+      }
     }
 
     updateEnableForNameAndIcon();
@@ -1355,18 +1405,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel,
-                                                                     action,
-                                                                     false,
-                                                                     List.of(this),
-                                                                     PluginDetailsPageComponent::getPlugin);
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, false, List.of(this),
+                                                                     PluginDetailsPageComponent::getDescriptorForActions);
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> createUninstallAction() {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel,
-                                                                 false,
-                                                                 this,
-                                                                 List.of(this),
-                                                                 PluginDetailsPageComponent::getPlugin);
+    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, false, this, List.of(this),
+                                                                 PluginDetailsPageComponent::getDescriptorForActions);
   }
 }
