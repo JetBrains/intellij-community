@@ -3,5 +3,6 @@
   "mainFile": "test/break/test.kt",
   "newName": "for",
   "withRuntime": "true",
-  "byRef": "true"
+  "byRef": "true",
+  "enabledInK2": true
 }

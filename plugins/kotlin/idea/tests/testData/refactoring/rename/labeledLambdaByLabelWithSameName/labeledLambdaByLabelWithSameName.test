@@ -1,5 +1,6 @@
 {
   "type": "MARKED_ELEMENT",
   "mainFile": "test.kt",
-  "newName": "baz"
+  "newName": "baz",
+  "enabledInK2": true
 }

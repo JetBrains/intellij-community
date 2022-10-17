@@ -3,5 +3,6 @@
   "fqn": "cccc.ssss",
   "newName": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
   "comment": "KT-35338",
-  "mainFile": "Y.kt"
+  "mainFile": "Y.kt",
+  "enabledInK2": true
 }
