@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
+    <orderEntry type="module" module-name="intellij.fullLine" />
     <orderEntry type="module" module-name="intellij.fullLine.core" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
