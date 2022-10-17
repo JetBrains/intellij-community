@@ -23,7 +23,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

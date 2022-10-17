@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtil
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootPropertiesEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;

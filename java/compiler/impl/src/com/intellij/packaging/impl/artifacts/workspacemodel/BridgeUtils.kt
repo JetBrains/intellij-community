@@ -21,7 +21,7 @@ import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.Nls
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {
