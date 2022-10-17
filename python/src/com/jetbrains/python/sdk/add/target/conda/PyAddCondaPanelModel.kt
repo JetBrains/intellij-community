@@ -27,7 +27,7 @@ import kotlin.coroutines.CoroutineContext
  * Model for [PyAddCondaPanelView]
  * Each boundable property ends with "Prop" and either "ro" (view can read it) or "rw" (view can set it)
  *
- * First, user fills [condaPathTextBoxRwProp] then clicks [onCondaPathSetOkClicked]
+ * First, user fills [condaPathTextBoxRwProp] then clicks [onLoadEnvsClicked]
  * (if [showCondaPathSetOkButtonRoProp] is true).
  *
  * After path validation [showCondaActionsPanelRoProp] becomes "true", hence radio buttons should be displayed
@@ -125,13 +125,13 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   private var condaEnvs: Result<CondaInfo> = Result.failure(Exception(PyBundle.message("python.sdk.conda.no.exec")))
 
   /**
-   * To be called when user sets path to conda and clicks "On".
+   * To be called when user sets path to conda and clicks "Load Envs".
    *
    * [uiContext] is for swing.
    * Result may contain an error
    */
-  suspend fun onCondaPathSetOkClicked(uiContext: CoroutineContext,
-                                      progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
+  suspend fun onLoadEnvsClicked(uiContext: CoroutineContext,
+                                progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
     progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
     PyCondaEnv.getEnvs(PyCondaCommand(path.trim(), targetConfiguration))
@@ -141,6 +141,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         showCondaActionsPanelRoProp.set(false)
       }
       .onSuccess { condaEnvsList ->
+        condaEnvModel.removeAllElements()
         condaEnvs = Result.success(CondaInfo(path, condaEnvsList))
         condaEnvModel.addAll(condaEnvsList.map { it.envIdentity })
         condaEnvModel.selectedItem = condaEnvModel.getElementAt(0)
@@ -164,7 +165,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
       // Since path is set, lets click button on behalf of user
-      onCondaPathSetOkClicked(uiContext, progressSink)
+      onLoadEnvsClicked(uiContext, progressSink)
     }
   }
 

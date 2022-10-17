@@ -57,7 +57,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
         runBlockingModal(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
-          model.onCondaPathSetOkClicked(Dispatchers.EDT, this.progressSink)
+          model.onLoadEnvsClicked(Dispatchers.EDT, this.progressSink)
         }.onFailure {
           showError(it.localizedMessage)
         }
