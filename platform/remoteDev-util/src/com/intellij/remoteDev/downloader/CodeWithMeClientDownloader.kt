@@ -141,9 +141,10 @@ object CodeWithMeClientDownloader {
   }
 
   fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): CodeWithMeSessionInfoProvider {
-    if ("SNAPSHOT" in clientBuildVersion) {
-      LOG.warn(
-        "Thin client download from sources may result in failure due to different sources on host and client, don't forget to update your locally built archive")
+    val isSnapshot = "SNAPSHOT" in clientBuildVersion
+    if (isSnapshot) {
+      LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
+               "don't forget to update your locally built archive")
     }
 
     val bundledJre = isClientWithBundledJre(clientBuildVersion)
@@ -155,6 +156,7 @@ object CodeWithMeClientDownloader {
     }
 
     val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
+
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
       SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
@@ -174,7 +176,9 @@ object CodeWithMeClientDownloader {
     } ?: error("Current platform is not supported: OS ${SystemInfo.OS_NAME} ARCH ${SystemInfo.OS_ARCH}")
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
-    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$hostBuildNumber$platformSuffix"
+
+    val clientBuildNumber = if (isSnapshot && config.downloadLatestBuildFromCDNForSnapshotHost) getLatestBuild(hostBuildNumber) else hostBuildNumber
+    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$clientBuildNumber$platformSuffix"
 
     val jreDownloadUrl = if (jreBuildToDownload != null) {
       val platformString = when {
@@ -223,6 +227,22 @@ object CodeWithMeClientDownloader {
 
     LOG.info("Generated session info: $sessionInfo")
     return sessionInfo
+  }
+
+  private fun getLatestBuild(hostBuildNumber: String): String {
+    val majorVersion = hostBuildNumber.substringBefore('.')
+    val latestBuildTxtFileName = "$majorVersion-LAST-BUILD.txt"
+    val latestBuildTxtUri = "${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName"
+
+    val tempFile = Files.createTempFile(latestBuildTxtFileName, "")
+    return try {
+      downloadWithRetries(URI(latestBuildTxtUri), tempFile, EmptyProgressIndicator()).let {
+        tempFile.readText().trim()
+      }
+    }
+    finally {
+      Files.delete(tempFile)
+    }
   }
 
   private val currentlyDownloading = ConcurrentHashMap<Path, CompletableFuture<Boolean>>()
@@ -797,9 +817,6 @@ object CodeWithMeClientDownloader {
     return null
   }
 
-  private fun getJdkRoot(jdkDownload: Path): Path =
-    tryGetJdkRoot(jdkDownload) ?: error ("JDK root (bin/lib directories) was not found under $jdkDownload")
-
   private fun tryGetMacOsJbrDirectory(root: Path): Path? {
     if (!SystemInfo.isMac) {
       return null
@@ -810,9 +827,6 @@ object CodeWithMeClientDownloader {
     LOG.debug { "JBR directory: $jbrDirectory" }
     return jbrDirectory
   }
-
-  private fun getMacOsJbrDirectory(root: Path): Path =
-    tryGetMacOsJbrDirectory(root) ?: error ("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
 
   fun versionsMatch(hostBuildNumberString: String, localBuildNumberString: String): Boolean {
     try {

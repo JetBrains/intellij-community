@@ -39,6 +39,8 @@ interface JetBrainsClientDownloaderConfigurationProvider {
    */
   fun patchVmOptions(vmOptionsFile: Path)
   val clientLaunched: Signal<Unit>
+
+  val downloadLatestBuildFromCDNForSnapshotHost: Boolean
 }
 
 @ApiStatus.Experimental
@@ -60,6 +62,8 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override fun patchVmOptions(vmOptionsFile: Path) { }
   override val clientLaunched: Signal<Unit> = Signal()
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = true
 }
 
 @ApiStatus.Experimental
@@ -87,6 +91,9 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override var verifySignature: Boolean = true
 
   override val clientLaunched: Signal<Unit> = Signal()
+
+  override val downloadLatestBuildFromCDNForSnapshotHost = false
+
   override fun patchVmOptions(vmOptionsFile: Path) {
     thisLogger().info("Patching $vmOptionsFile")
 

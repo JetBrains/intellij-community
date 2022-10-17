@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::fs;
 use std::fs::File;
@@ -115,8 +116,12 @@ impl DefaultLaunchConfiguration {
     }
 }
 
-impl RemoteDevLaunchConfiguration {
+struct IjStarterCommand {
+    ij_command: String,
+    is_project_path_required: bool
+}
 
+impl RemoteDevLaunchConfiguration {
     // launcher.exe --remote-dev command_name /path/to/project args ->
     // launcher.exe ij_command_name /path/to/project args
     pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
@@ -131,38 +136,77 @@ impl RemoteDevLaunchConfiguration {
         }
 
         let remote_dev_starter_command = args[2].as_str();
-        let ij_starter_command = match remote_dev_starter_command {
-            "registerBackendLocationForGateway" => {
-                register_backend();
-                std::process::exit(0)
-            }
-            "run" => { "cwmHostNoLobby" }
-            "status" => { "cwmHostStatus" }
-            "dumpLaunchParameters" => { "dump-launch-parameters" }
-            x => {
+        let is_project_required_by_known_commands = HashMap::from([
+            ("registerBackendLocationForGateway", ("", false)),
+            ("run", ("cwmHostNoLobby", true)),
+            ("status", ("cwmHostStatus", false)),
+            ("cwmHostStatus", ("cwmHostStatus", false)),
+            ("dumpLaunchParameters", ("dump-launch-parameters", false)),
+            ("warmup", ("warmup", true)),
+            ("warm-up", ("warmup", true)),
+            ("invalidate-caches", ("invalidateCaches", true)),
+            ("installPlugins", ("installPlugins", false)),
+        ]);
+
+        let ij_starter_command = match is_project_required_by_known_commands.get(remote_dev_starter_command) {
+            Some((ij_command, is_project_path_required)) => IjStarterCommand {
+                ij_command: ij_command.to_string(),
+                is_project_path_required: *is_project_path_required
+            },
+            None => {
                 print_help();
-                bail!("Unknown command: {x}")
+                bail!("Unknown command: {remote_dev_starter_command}")
             }
         };
 
-        if args.len() < 4 {
-            print_help();
-            bail!("Project path is not specified");
-        }
+        let project_path = if args.len() > 3 {
+            let arg = args[3].as_str();
+            if arg == "-h" || arg == "--help" {
+                return Ok(
+                    RemoteDevArgs {
+                        project_path: None,
+                        ij_args: vec![
+                            args[0].to_string(),
+                            "remoteDevShowHelp".to_string(),
+                            ij_starter_command.ij_command
+                        ]
+                    }
+                );
+            }
 
-        let project_path_string = args[3].as_str();
-        if project_path_string == "-h" || project_path_string == "--help" {
-            return Ok(
-                RemoteDevArgs {
-                    project_path: None,
-                    ij_args: vec![
-                        args[0].to_string(),
-                        "remoteDevShowHelp".to_string(),
-                        ij_starter_command.to_string()
-                    ]
+            Some(Self::get_project_path(arg)?)
+        } else {
+            None
+        };
+
+        let ij_args = match &project_path {
+            None => {
+                if ij_starter_command.is_project_path_required {
+                    print_help();
+                    bail!("Project path is not specified");
                 }
-            );
-        }
+
+                let command_arguments = args[3..].to_vec();
+
+                [vec![ij_starter_command.ij_command], command_arguments]
+            }
+            Some(x) => {
+                let project_path_string = x.to_string_lossy().to_string();
+                let command_arguments = args[4..].to_vec();
+
+                if ij_starter_command.ij_command == "warmup" {
+                    [vec![ij_starter_command.ij_command, format!("--project-dir={project_path_string}")], command_arguments]
+                } else {
+                    [vec![ij_starter_command.ij_command, project_path_string], command_arguments]
+                }
+            }
+        }.concat();
+
+        Ok(RemoteDevArgs { project_path, ij_args })
+    }
+
+    fn get_project_path(argument: &str) -> Result<PathBuf> {
+        let project_path_string = argument;
 
         // TODO: expand tilde
         let project_path = PathBuf::from(project_path_string);
@@ -182,38 +226,16 @@ impl RemoteDevLaunchConfiguration {
             false => project_path.parent_or_err()?,
         }.absolutize()?.to_path_buf();
 
-        let mut ij_args = args[4..].to_vec();
-        let absolute_project_path_string = absolute_project_path.to_string_lossy().to_string();
-
-        match ij_starter_command {
-            "warm-up" | "warmup" => {
-                ij_args.insert(0, absolute_project_path_string);
-                ij_args.insert(0, "warmup".to_string());
-            }
-            "installPlugins" => {
-                ij_args.insert(0, "installPlugins".to_string())
-            }
-            _ => {
-                ij_args.insert(0, absolute_project_path_string);
-                ij_args.insert(0, ij_starter_command.to_string())
-            }
-        };
-
-        // path to executable itself
-        ij_args.insert(0, args[0].to_string());
-
-        Ok(
-            RemoteDevArgs {
-                project_path: Some(absolute_project_path),
-                ij_args
-            }
-        )
+        return Ok(absolute_project_path);
     }
 
     pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
         let per_project_config_dir_name = project_path.file_name()
             .context("Failed to get project dir name, project path: {project_path:?}")
-            ?.to_string_lossy();
+            ?.to_string_lossy()
+            .replace("/", "_")
+            .replace("\\", "_")
+            .replace(":", "_");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
         let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;
@@ -319,10 +341,6 @@ struct IdeProperty {
 pub struct RemoteDevArgs {
     pub project_path: Option<PathBuf>,
     pub ij_args: Vec<String>
-}
-
-fn register_backend() {
-    todo!("")
 }
 
 fn print_help() {
