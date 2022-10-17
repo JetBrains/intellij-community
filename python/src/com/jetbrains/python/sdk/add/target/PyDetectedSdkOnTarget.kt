@@ -5,15 +5,13 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.flavors.PyFlavorAndData
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
 /**
  * Allows passing SDK with such additional data [com.jetbrains.python.sdk.PythonSdkUtil.isRemote] check.
  *
  * This class is meant for use in UI and should be used with caution.
  */
-private class PyDetectedSdkAdditionalData : PythonSdkAdditionalData(), PyRemoteSdkAdditionalDataMarker
+class PyDetectedSdkAdditionalData(val temporaryConfiguration: TargetEnvironmentConfiguration?) : PythonSdkAdditionalData(), PyRemoteSdkAdditionalDataMarker
 
 /**
  * Returns new [PyDetectedSdk] with the additional data that corresponds to the local or non-local interpreter based on the provided flag.
@@ -22,15 +20,9 @@ private class PyDetectedSdkAdditionalData : PythonSdkAdditionalData(), PyRemoteS
  */
 internal fun createDetectedSdk(name: String, isLocal: Boolean): PyDetectedSdk {
   val sdk = PyDetectedSdk(name)
-  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData()
+  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(null)
   return sdk
 }
 
-internal fun createDetectedSdk(name: String, targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): PyDetectedSdk {
-  val sdk = PyDetectedSdk(name)
-  sdk.sdkAdditionalData = when (targetEnvironmentConfiguration) {
-    is TargetEnvironmentConfiguration -> PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA, targetEnvironmentConfiguration)
-    else -> PythonSdkAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
-  }
-  return sdk
-}
+internal fun createDetectedSdk(name: String, targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): PyDetectedSdk =
+  PyDetectedSdk(name).apply { sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration) }
