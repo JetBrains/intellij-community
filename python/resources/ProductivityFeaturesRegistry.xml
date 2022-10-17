@@ -2,31 +2,31 @@
   <group id="navigation">
     <feature
       id="navigation.popup.class"
-      tip-file="GoToClass.html"
+      tip-id="GoToClass"
       min-usage-count="3"
       first-show="1"
       successive-show="5"/>
     <feature
       id="navigation.popup.file"
-      tip-file="GoToFile.html"
+      tip-id="GoToFile"
       min-usage-count="2"
       first-show="3"
       successive-show="5"/>
     <feature
       id="navigation.popup.symbol"
-      tip-file="GoToSymbol.html"
+      tip-id="GoToSymbol"
       first-show="5"
       successive-show="8"/>
     <feature
         id="SearchEverywhere"
-        tip-file="SearchEverywhere.html"
+        tip-id="SearchEverywhere"
         first-show="1"
         successive-show="1"
         min-usage-count="1"
         />
     <feature
       id="navigation.popup.camelprefix"
-      tip-file="CamelPrefixesInNavigationPopups.html"
+      tip-id="CamelPrefixesInNavigationPopups"
       min-usage-count="3"
       first-show="4"
       successive-show="7">
@@ -36,7 +36,7 @@
     </feature>
     <feature
       id="navigation.popup.wildcards"
-      tip-file="WildcardsInNavigationPopups.html"
+      tip-id="WildcardsInNavigationPopups"
       min-usage-count="2"
       first-show="3"
       successive-show="5">
@@ -46,35 +46,35 @@
     </feature>
     <feature
       id="navigation.popup.file.structure"
-      tip-file="FileStructurePopup.html"
+      tip-id="FileStructurePopup"
       min-usage-count="3"
       first-show="2"
       successive-show="5"
       />
     <feature
       id="navigation.recent.files"
-      tip-file="RecentFiles.html"
+      tip-id="RecentFiles"
       min-usage-count="3"
       first-show="3"
       successive-show="5"
       />
     <feature
       id="navigation.select.in"
-      tip-file="SelectIn.html"
+      tip-id="SelectIn"
       min-usage-count="3"
       first-show="4"
       successive-show="7"
       />
     <feature
       id="navigation.goto.declaration"
-      tip-file="GoToDeclaration.html"
+      tip-id="GoToDeclaration"
       min-usage-count="15"
       first-show="1"
       successive-show="4"
       />
     <feature
       id="navigation.goto.usages"
-      tip-file="ShowUsages.html"
+      tip-id="ShowUsages"
       min-usage-count="3"
       first-show="5"
       successive-show="5"/>
@@ -83,40 +83,40 @@
   <group id="completion">
     <feature
       id="editing.completion.basic"
-      tip-file="CodeCompletion.html"
+      tip-id="CodeCompletion"
       min-usage-count="15"
       first-show="1"
       successive-show="3"/>
     <feature
       id="editing.completion.replace"
-      tip-file="TabInLookups.html"
+      tip-id="TabInLookups"
       min-usage-count="10"
       first-show="6"
       successive-show="8"
       />
     <feature
         id="editing.completion.finishByCtrlDot"
-        tip-file="CtrlDotInLookups.html"
+        tip-id="CtrlDotInLookups"
         min-usage-count="7"
         first-show="4"
         successive-show="8"
         />
     <feature
       id="editing.completion.camelHumps"
-      tip-file="CamelHumpsInCodeCompletion.html"
+      tip-id="CamelHumpsInCodeCompletion"
       min-usage-count="8"
       first-show="5"
       successive-show="7"
       />
     <feature
       id="editing.completion.cancelByControlArrows"
-      tip-file="CancelByControlArrows.html"
+      tip-id="CancelByControlArrows"
       min-usage-count="10"
       first-show="2"
       successive-show="3"/>
     <feature
         id="editing.completion.changeSorting"
-        tip-file="ChangeSorting.html"
+        tip-id="ChangeSorting"
         min-usage-count="10"
         first-show="2"
         successive-show="3"/>
@@ -125,7 +125,7 @@
   <group id="editing">
     <feature
       id="editing.select.word"
-      tip-file="CtrlW.html"
+      tip-id="CtrlW"
       min-usage-count="10"
       first-show="2"
       successive-show="4"/>
@@ -134,21 +134,21 @@
   <group id="codeassists">
     <feature
       id="codeassists.quickjavadoc"
-      tip-file="QuickJavaDoc.html"
+      tip-id="QuickJavaDoc"
       min-usage-count="3"
       first-show="3"
       successive-show="5"
     />
     <feature
       id="codeassists.quickdefinition"
-      tip-file="CtrlShiftI.html"
+      tip-id="CtrlShiftI"
       min-usage-count="9"
       first-show="3"
       successive-show="5"
     />
     <feature
       id="codeassists.quickdefinition.lookup"
-      tip-file="CtrlShiftIForLookup.html"
+      tip-id="CtrlShiftIForLookup"
       min-usage-count="1"
       first-show="5"
       successive-show="7">
@@ -156,7 +156,7 @@
     </feature>
     <feature
       id="codeassists.quickjavadoc.lookup"
-      tip-file="QuickJavaDocInLookups.html"
+      tip-id="QuickJavaDocInLookups"
       min-usage-count="1"
       first-show="5"
       successive-show="7">
@@ -164,7 +164,7 @@
     </feature>
     <feature
       id="codeassists.quickjavadoc.ctrln"
-      tip-file="QuickJavaDocInLookups.html"
+      tip-id="QuickJavaDocInLookups"
       min-usage-count="1"
       first-show="5"
       successive-show="7">
@@ -172,7 +172,7 @@
     </feature>
     <feature
       id="codeassists.surroundwith.statement"
-      tip-file="SurroundWith.html"
+      tip-id="SurroundWith"
       first-show="5"
       successive-show="5"
       min-usage-count="4"
@@ -180,14 +180,14 @@
     <!--
     <feature
       id="codeassists.surroundwith.expression"
-      tip-file="Surround.html"
+      tip-id="Surround"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
       />
     <feature
       id="codeassists.comment.block"
-      tip-file="CommentCode.html"
+      tip-id="CommentCode"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
@@ -198,7 +198,7 @@
   <group id="refactoring">
     <feature
       id="refactoring.introduceVariable"
-      tip-file="IntroduceVariable.html"
+      tip-id="IntroduceVariable"
       min-usage-count="5"
       first-show="1"
       successive-show="3"
@@ -206,7 +206,7 @@
 
     <feature
       id="refactoring.rename"
-      tip-file="Rename.html"
+      tip-id="Rename"
       min-usage-count="2"
       first-show="1"
       successive-show="3"
@@ -218,28 +218,28 @@
   <group id="ui">
     <feature
       id="ui.tree.speedsearch"
-      tip-file="SpeedSearch.html"
+      tip-id="SpeedSearch"
       first-show="5"
       successive-show="4"
       min-usage-count="6"
       />
     <feature
       id="ui.scheme.quickswitch"
-      tip-file="QuickSwitchScheme.html"
+      tip-id="QuickSwitchScheme"
       first-show="7"
       successive-show="3"
       min-usage-count="1"
       />
     <feature
       id="ui.recentchanges"
-      tip-file="RecentChanges.html"
+      tip-id="RecentChanges"
       first-show="5"
       successive-show="5"
       min-usage-count="1"
       />
     <feature
       id="ui.horizontal.scrolling"
-      tip-file="HorizontalScrolling.html"
+      tip-id="HorizontalScrolling"
       first-show="1"
       successive-show="1"
       min-usage-count="1"
@@ -248,30 +248,30 @@
     <feature
       id="ui.commandLine.insertPath"
       name="Insert path in command line"
-      tip-file="InsertPathShortcut.html"
+      tip-id="InsertPathShortcut"
       first-show="6"
       successive-show="5"
       min-usage-count="3"
       />
     -->
     <feature id="navigation.popup.action"
-      tip-file="GoToAction.html"
+      tip-id="GoToAction"
       first-show="7"
       successive-show="3"
       min-usage-count="1"/>
     <feature
       id="navigation.goto.inspection"
-      tip-file="GoToInspection.html"
+      tip-id="GoToInspection"
       min-usage-count="3"
       first-show="5"
       successive-show="5"/>
     <feature id="find.recent.search"
-      tip-file="RecentSearch.html"
+      tip-id="RecentSearch"
       first-show="10"
       successive-show="3"
       min-usage-count="5"/>
     <feature id="find.completion"
-      tip-file="CodeCompletionInSearch.html"
+      tip-id="CodeCompletionInSearch"
       first-show="10"
       successive-show="3"
       min-usage-count="5"/>

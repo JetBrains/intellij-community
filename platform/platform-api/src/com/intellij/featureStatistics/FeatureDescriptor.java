@@ -15,7 +15,7 @@ public class FeatureDescriptor {
   @NotNull private String myId;
   @NotNull private String myDisplayName;
   @Nullable private String myGroupId;
-  @Nullable private String myTipFileName;
+  @Nullable private String myTipId;
   @Nullable private Set<String> myDependencies;
   private int myDaysBeforeFirstShowUp;
   private int myDaysBetweenSuccessiveShowUps;
@@ -36,7 +36,7 @@ public class FeatureDescriptor {
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
   @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
   @NonNls private static final String ATTRIBUTE_ID = "id";
-  @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
+  @NonNls private static final String ATTRIBUTE_TIP_ID = "tip-id";
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
@@ -54,7 +54,7 @@ public class FeatureDescriptor {
 
   public FeatureDescriptor(@NonNls @NotNull String id,
                            @NonNls @Nullable String groupId,
-                           @NonNls @Nullable String tipFileName,
+                           @NonNls @Nullable String tipId,
                            @NotNull String displayName,
                            int daysBeforeFirstShowUp,
                            int daysBetweenSuccessiveShowUps,
@@ -63,7 +63,7 @@ public class FeatureDescriptor {
                            @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
-    myTipFileName = tipFileName;
+    myTipId = tipId;
     myDisplayName = displayName;
     myDaysBeforeFirstShowUp = daysBeforeFirstShowUp;
     myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
@@ -74,7 +74,7 @@ public class FeatureDescriptor {
 
   private void readExternal(Element element) {
     myId = Objects.requireNonNull(element.getAttributeValue(ATTRIBUTE_ID));
-    myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
+    myTipId = element.getAttributeValue(ATTRIBUTE_TIP_ID);
     myDisplayName = FeatureStatisticsBundle.message(myId);
     String needToBeShownInGuide = element.getAttributeValue(ATTRIBUTE_SHOW_IN_GUIDE);
     if (needToBeShownInGuide != null) {
@@ -116,8 +116,16 @@ public class FeatureDescriptor {
     return myGroupId;
   }
 
+  /**
+   * @deprecated Use {@code getTipId()} instead
+   */
+  @Deprecated
   public @Nullable String getTipFileName() {
-    return myTipFileName;
+    return myTipId;
+  }
+
+  public @Nullable String getTipId() {
+    return myTipId;
   }
 
   public List<FeatureUsageEvent.Action> getActionEvents() {
