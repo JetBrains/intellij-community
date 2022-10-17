@@ -1004,6 +1004,7 @@ public final class IconUtil {
   public static @NotNull Icon toStrokeIcon(@NotNull Icon original, @NotNull Color resultColor) {
     List<String> strokeColors = List.of("black", "#000000",
                                         "white", "#ffffff",
+                                        "#818594",
                                         "#6c707e",
                                         "#3574f0",
                                         "#5fb865",
