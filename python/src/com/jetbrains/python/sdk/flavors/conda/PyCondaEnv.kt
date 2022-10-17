@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
 import com.intellij.util.io.exists
 import com.jetbrains.python.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
@@ -34,9 +34,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
         addParameters("info", "--envs", "--json")
       }.build()
       val json = env.createProcessWithResult(commandLine)
-        .getOrElse { return@withContext Result.failure(it) }
-        .getResultStdoutStr()
-        .await()
+        .mapFlat { it.getResultStdoutStr() }
         .getOrElse { return@withContext Result.failure(it) }
 
       val info = Gson().fromJson(json, CondaInfoJson::class.java)
@@ -51,7 +49,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       return@withContext Result.success(result)
     }
 
-    fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
 
       val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 

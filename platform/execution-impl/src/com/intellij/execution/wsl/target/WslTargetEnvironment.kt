@@ -98,7 +98,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
 
   private val TargetPath.remoteRoot: String
     get() = when (this) {
-      is TargetPath.Temporary -> distribution.runCommand("mktemp", "-d").also { remoteDirsToDelete += it }
+      is TargetPath.Temporary -> distribution.runCommand("mktemp", "-d").getOrThrow().also { remoteDirsToDelete += it }
       is TargetPath.Persistent -> absolutePath
     }
 

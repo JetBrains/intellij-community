@@ -12,21 +12,21 @@ import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import org.junit.Assert
 
 
-internal fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentRequest): String? {
+internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentRequest): String? {
   val commandLineBuilder = TargetedCommandLineBuilder(request)
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   val flavor = sdk.getOrCreateAdditionalData().flavor
   return getPythonVersion(commandLineBuilder, flavor, request)
 }
 
-internal fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
+internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
                               flavor: PythonSdkFlavor<*>,
                               request: TargetEnvironmentRequest): String? {
   commandLineBuilder.addParameter(flavor.versionOption)
   val commandLine = commandLineBuilder.build()
   val result = request
     .prepareEnvironment(TargetProgressIndicator.EMPTY)
-    .createProcess(commandLine).getBareExecutionResult().get()
+    .createProcess(commandLine).getBareExecutionResult()
 
   // Conda python may send version to stderr, check both
 

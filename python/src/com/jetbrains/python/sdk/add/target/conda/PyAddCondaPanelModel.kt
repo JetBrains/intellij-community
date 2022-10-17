@@ -130,8 +130,10 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * [uiContext] is for swing.
    * Result may contain an error
    */
-  suspend fun onCondaPathSetOkClicked(uiContext: CoroutineContext): Result<List<PyCondaEnv>> = withContext(uiContext) {
+  suspend fun onCondaPathSetOkClicked(uiContext: CoroutineContext,
+                                      progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
+    progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
     PyCondaEnv.getEnvs(PyCondaCommand(path.trim(), targetConfiguration))
       .onFailure {
         condaEnvs = Result.failure(it)
@@ -151,9 +153,9 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
 
   /**
-   * Detects conds in well-known locations so user doesn't have to provide conda path
+   * Detects condas in well-known locations so user doesn't have to provide conda path
    */
-  suspend fun detectConda(uiContext: CoroutineContext) {
+  suspend fun detectConda(uiContext: CoroutineContext, progressSink: ProgressSink? = null) {
     if (withContext(uiContext) {
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
@@ -161,7 +163,8 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     val condaPath = suggestCondaPath(targetConfiguration) ?: return
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
-      onCondaPathSetOkClicked(uiContext)
+      // Since path is set, lets click button on behalf of user
+      onCondaPathSetOkClicked(uiContext, progressSink)
     }
   }
 

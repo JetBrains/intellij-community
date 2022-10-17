@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLineBuilder
@@ -50,7 +51,7 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
 
     val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
     return withContext(Dispatchers.IO) {
-      environment.createProcessWithResult(cmd).map { it.getResultStdoutStr().await() }.getOrElse { Result.failure(it) }
+      environment.createProcessWithResult(cmd).mapFlat { it.getResultStdoutStr() }
     }
   }
 
