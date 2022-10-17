@@ -39,23 +39,22 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     shownTips.put(tip.id, System.currentTimeMillis())
   }
 
-  fun filterShownTips(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
-    val resultTips = tips.toMutableList()
-    for (tipId in shownTips.keys.shuffled()) {
-      resultTips.find { it.id == tipId }?.let { tip ->
-        resultTips.remove(tip)
-        resultTips.add(tip)
-      }
-    }
-    if (wereTipsShownToday()) {
+  fun getLastTimeShown(tipId: String): Long {
+    return shownTips.getLong(tipId)
+  }
+
+  fun makeLastShownTipFirst(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
+    return if (wereTipsShownToday()) {
+      val resultTips = tips.toMutableList()
       shownTips.maxByOrNull { it.value }?.let {
         resultTips.find { tip -> tip.id == it.key }?.let { tip ->
           resultTips.remove(tip)
           resultTips.add(0, tip)
         }
       }
+      resultTips
     }
-    return resultTips
+    else tips
   }
 
   fun wereTipsShownToday(): Boolean = System.currentTimeMillis() - (shownTips.maxOfOrNull { it.value } ?: 0) < DateFormatUtil.DAY
@@ -66,7 +65,7 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   private class TipsUsageListener : FeaturesRegistryListener {
     override fun featureUsed(feature: FeatureDescriptor) {
       val tip = TipUtils.getTip(feature) ?: return
-      val timestamp = getInstance().shownTips.getLong(tip.id)
+      val timestamp = getInstance().getLastTimeShown(tip.id)
       if (timestamp != 0L) {
         TipsOfTheDayUsagesCollector.triggerTipUsed(tip.id, System.currentTimeMillis() - timestamp)
       }

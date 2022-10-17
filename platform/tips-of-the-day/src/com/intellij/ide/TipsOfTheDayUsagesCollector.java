@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.ide.util.TipsOrderUtil.SHUFFLE_ALGORITHM;
+import static com.intellij.ide.util.TipsOrderUtil.SORTING_ALGORITHM;
+
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 11);
 
@@ -30,7 +33,7 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     GROUP.registerEvent("dialog.closed", EventFields.Boolean("keep_showing_before"), EventFields.Boolean("keep_showing_after"));
 
   private static final StringEventField ALGORITHM_FIELD =
-    EventFields.String("algorithm", List.of("shuffle", "unknown"));
+    EventFields.String("algorithm", List.of(SHUFFLE_ALGORITHM, SORTING_ALGORITHM, "unknown"));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
                         EventFields.StringValidatedByCustomRule("tip_id", TipInfoValidationRule.class),
