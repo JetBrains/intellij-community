@@ -1,19 +1,19 @@
 <component name="libraryTable">
   <library name="kodein-di-jvm" type="repository">
-    <properties maven-id="org.kodein.di:kodein-di-jvm:7.14.0">
+    <properties maven-id="org.kodein.di:kodein-di-jvm:7.15.0">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.14.0/kodein-di-jvm-7.14.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.1.0/kaverit-jvm-2.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.15.0/kodein-di-jvm-7.15.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.2.1-kotlin-1.7.20-RC/kaverit-jvm-2.2.1-kotlin-1.7.20-RC.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.14.0/kodein-di-jvm-7.14.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.1.0/kaverit-jvm-2.1.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/di/kodein-di-jvm/7.15.0/kodein-di-jvm-7.15.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/kodein/type/kaverit-jvm/2.2.1-kotlin-1.7.20-RC/kaverit-jvm-2.2.1-kotlin-1.7.20-RC-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
