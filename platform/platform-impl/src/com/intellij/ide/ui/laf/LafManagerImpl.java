@@ -286,29 +286,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if (isNewUIPlugin(pluginDescriptor)) {
-          ExperimentalUI.getInstance().onExpUIDisabled();
-        }
-      }
-
-      @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         isUpdatingPlugin = false;
         themeIdBeforePluginUpdate = null;
-        if (isNewUIPlugin(pluginDescriptor)) {
-          enableExpUI();
-        }
-      }
-
-      private boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
-      }
-
-      private void enableExpUI() {
-        if (!Registry.is("ide.experimental.ui")) {
-          ExperimentalUI.getInstance().onExpUIEnabled();
-        }
       }
     });
   }
