@@ -3,3 +3,5 @@
 interface My {
     <caret>open fun foo()
 }
+
+/* IGNORE_FIR */

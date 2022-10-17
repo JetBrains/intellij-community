@@ -1,0 +1,93 @@
+<problems>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>4</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'final' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>13</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'final' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>22</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'open' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>25</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'final' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>29</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'abstract' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>33</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'open' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>39</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'open' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>46</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'open' modifier</description>
+    </problem>
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>53</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'open' modifier</description>
+    </problem>
+    <!--
+    See: https://youtrack.jetbrains.com/issue/KTIJ-23301
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>56</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'abstract' modifier</description>
+    </problem>
+    -->
+    <problem>
+        <file>redundantModalityModifier.kt</file>
+        <line>58</line>
+        <module>light_idea_test_case</module>
+        <entry_point TYPE="file" FQNAME="temp:///src/redundantModalityModifier.kt" />
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant modality modifier</problem_class>
+        <description>Remove redundant 'final' modifier</description>
+    </problem>
+</problems>

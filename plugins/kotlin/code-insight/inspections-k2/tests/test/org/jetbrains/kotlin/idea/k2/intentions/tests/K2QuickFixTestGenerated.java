@@ -77,6 +77,24 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/redundantModalityModifier")
+    public static class RedundantModalityModifier extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("redundantAbstract.kt")
+        public void testRedundantAbstract() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantModalityModifier/redundantAbstract.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantModalityModifier/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeToStringInStringTemplate")
     public static class RemoveToStringInStringTemplate extends AbstractK2QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -60,11 +60,6 @@ open class RemoveModifierFixBase(
         val removeNonRedundantModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFactory(isRedundant = false)
         val removeAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> =
             createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.ABSTRACT_KEYWORD)
-        val removeRedundantOpenModifier: QuickFixesPsiBasedFactory<KtModifierListOwner> =
-            createRemoveModifierFromListOwnerFactoryByModifierListOwner(
-                modifier = KtTokens.OPEN_KEYWORD,
-                isRedundant = true
-            )
         val removeOpenModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD)
         val removePrivateModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.PRIVATE_KEYWORD)
 
