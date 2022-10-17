@@ -168,7 +168,7 @@ class CheckerRunner(val text: TextContent) {
     return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
   }
 
-  private fun findSentence(problem: TextProblem) =
+  public fun findSentence(problem: TextProblem) =
     sentences.find { problem.highlightRanges.any { range -> range.intersects(it.range.first, it.range.last + 1) } }?.token
 
   fun toFixes(problem: TextProblem, descriptor: ProblemDescriptor): Array<LocalQuickFix> {
@@ -202,7 +202,7 @@ class CheckerRunner(val text: TextContent) {
       .toList()
   }
 
-  private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
+  public fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
     val text = problem.text
     val patternRange = problem.patternRange
     if (patternRange != null) {

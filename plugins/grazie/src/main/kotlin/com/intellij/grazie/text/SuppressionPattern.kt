@@ -3,9 +3,9 @@ package com.intellij.grazie.text
 import com.intellij.grazie.GrazieConfig
 
 class SuppressionPattern(errorText: CharSequence, sentenceText: String?) {
-  internal val errorText : String = normalize(errorText)
-  internal val sentenceText : String? = sentenceText?.let(::normalize)
-  internal val full : String = this.errorText + (if (sentenceText == null) "" else "|" + this.sentenceText)
+  val errorText : String = normalize(errorText)
+  val sentenceText : String? = sentenceText?.let(::normalize)
+  val full : String = this.errorText + (if (sentenceText == null) "" else "|" + this.sentenceText)
 
   private fun normalize(text: CharSequence) = text.replace(Regex("\\s+"), " ").trim()
   

@@ -16,7 +16,7 @@ import java.net.URL
 import java.util.*
 
 class LanguageToolRule(
-  private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
+  private val lang: Lang, val ltRule: org.languagetool.rules.Rule
 ) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
 
   override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
