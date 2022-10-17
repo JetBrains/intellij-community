@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkListItem
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
 
 
 fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider): String? {
