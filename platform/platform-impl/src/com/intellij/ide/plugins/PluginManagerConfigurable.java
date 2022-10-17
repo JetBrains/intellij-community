@@ -443,6 +443,20 @@ public final class PluginManagerConfigurable
               }
               myMarketplacePanel.doLayout();
               myMarketplacePanel.initialSelection();
+
+              if (PluginDetailsPageComponent.isMultiTabs()) {
+                myPluginUpdatesService.calculateUpdates(updates -> {
+                  if (ContainerUtil.isEmpty(updates)) {
+                    clearUpdates(myMarketplacePanel);
+                    clearUpdates(myMarketplaceSearchPanel.getPanel());
+                  }
+                  else {
+                    applyUpdates(myMarketplacePanel, updates);
+                    applyUpdates(myMarketplaceSearchPanel.getPanel(), updates);
+                  }
+                  selectionListener.accept(myMarketplacePanel);
+                });
+              }
             }, ModalityState.any());
           }
         };

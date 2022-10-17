@@ -537,7 +537,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.getPlugin() == descriptor) {
+      if (panel.getDescriptorForActions() == descriptor) {
         panel.showProgress();
       }
     }
@@ -566,6 +566,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           gridComponent.setPluginDescriptor(installedDescriptor);
         }
         gridComponent.hideProgress(success, restartRequired);
+        if (gridComponent.myInstalledDescriptorForMarketplace != null) {
+          gridComponent.updateErrors();
+        }
       }
     }
     List<ListPluginComponent> installedComponents = myInstalledPluginComponentMap.get(pluginId);
@@ -1017,6 +1020,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateErrors();
+    }
+    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
+      for (ListPluginComponent plugin : plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          plugin.updateErrors();
+        }
+      }
     }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {

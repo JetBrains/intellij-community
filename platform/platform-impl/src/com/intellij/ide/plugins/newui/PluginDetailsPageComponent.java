@@ -245,16 +245,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.add(myVersion1 = new JBLabel().setCopyable(true));
 
     createButtons();
+    myNameAndButtons.setProgressDisabledButton(myMarketplace ? myInstallButton : myUpdateButton);
 
-    if (myMarketplace) {
-      myNameAndButtons.setProgressDisabledButton(myInstallButton);
-    }
-    else {
-      myNameAndButtons.setProgressDisabledButton(myUpdateButton);
-
-      topPanel.add(myErrorComponent = new ErrorComponent(), VerticalLayout.FILL_HORIZONTAL);
-    }
-
+    topPanel.add(myErrorComponent = new ErrorComponent(), VerticalLayout.FILL_HORIZONTAL);
     topPanel.add(myLicensePanel);
     myLicensePanel.setBorder(JBUI.Borders.emptyBottom(5));
 
@@ -360,8 +353,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
     myNameAndButtons.addButtonComponent(myUpdateButton = new UpdateButton());
-    myUpdateButton.addActionListener(
-      e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+    myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, getDescriptorForActions(), myUpdateDescriptor,
+                                                                              ModalityState.stateForComponent(myUpdateButton)));
 
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
     myInstallButton
@@ -766,7 +759,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myShowComponent = component;
 
     if (myIndicator != null) {
-      MyPluginModel.removeProgress(myPlugin, myIndicator);
+      MyPluginModel.removeProgress(getDescriptorForActions(), myIndicator);
       hideProgress(false, false);
     }
 
@@ -856,8 +849,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
     myIsPluginCompatible = PluginManagerCore.getIncompatiblePlatform(pluginDescriptor).isEmpty();
     myIsPluginAvailable = myIsPluginCompatible && org.isPluginAllowed(!myMarketplace, pluginDescriptor);
-    if (myMarketplace) {
+    if (myMarketplace && myMultiTabs) {
       myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+      myNameAndButtons.setProgressDisabledButton(myUpdateDescriptor == null ? myInstallButton : myUpdateButton);
     }
     showPlugin();
 
@@ -894,14 +888,19 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     updateNotifications();
     updateIcon();
 
+    if (myErrorComponent != null) {
+      myErrorComponent.setVisible(false);
+    }
+
     updateButtons();
 
-    String version = myPlugin.getVersion();
-    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()) {
+    IdeaPluginDescriptor plugin = getDescriptorForActions();
+    String version = plugin.getVersion();
+    if (plugin.isBundled() && !plugin.allowBundledUpdate()) {
       version = IdeBundle.message("plugin.version.bundled") + (Strings.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
-      version = NewUiUtil.getVersion(myPlugin, myUpdateDescriptor);
+      version = NewUiUtil.getVersion(plugin, myUpdateDescriptor);
     }
 
     boolean isVersion = !Strings.isEmptyOrSpaces(version);
@@ -1083,8 +1082,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showLicensePanel() {
-    String productCode = myPlugin.getProductCode();
-    if (myPlugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
+    IdeaPluginDescriptor plugin = getDescriptorForActions();
+    String productCode = plugin.getProductCode();
+    if (plugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
       myLicensePanel.hideWithChildren();
       return;
     }
@@ -1108,14 +1108,14 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
     else if (myMarketplace) {
       String message;
-      if (myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getTags().contains(Tags.Freemium.name())) {
+      if (plugin instanceof PluginNode && ((PluginNode)plugin).getTags().contains(Tags.Freemium.name())) {
         message = IdeBundle.message("label.install.a.limited.functionality.for.free");
       }
       else {
         message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
       }
       myLicensePanel.setText(message, false, false);
-      myLicensePanel.showBuyPlugin(() -> myPlugin);
+      myLicensePanel.showBuyPlugin(() -> plugin);
       myLicensePanel.setVisible(true);
     }
     else {
@@ -1190,7 +1190,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
           myEnableDisableController.update();
           myGearButton.setVisible(!uninstalled);
+          myUpdateButton.setVisible(!uninstalled && myUpdateDescriptor != null && !installedWithoutRestart);
           updateEnableForNameAndIcon();
+          updateErrors();
         }
         myEnableDisableButton.setVisible(false);
       }
@@ -1254,7 +1256,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateIcon() {
-    updateIcon(myPluginModel.getErrors(myPlugin));
+    updateIcon(myPluginModel.getErrors(getDescriptorForActions()));
   }
 
   private void updateIcon(@NotNull List<? extends HtmlChunk> errors) {
@@ -1270,13 +1272,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateErrors() {
-    @NotNull List<? extends HtmlChunk> errors = myPluginModel.getErrors(myPlugin);
+    @NotNull List<? extends HtmlChunk> errors = myPluginModel.getErrors(getDescriptorForActions());
     updateIcon(errors);
     myErrorComponent.setErrors(errors, this::handleErrors);
   }
 
   private void handleErrors() {
-    myPluginModel.enableRequiredPlugins(myPlugin);
+    myPluginModel.enableRequiredPlugins(getDescriptorForActions());
 
     updateIcon();
     updateEnabledState();
@@ -1285,10 +1287,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   public void showProgress() {
     myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
+    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(getDescriptorForActions(), null, false, false, true));
     myNameAndButtons.setProgressComponent(null, myIndicator.createBaselineWrapper());
 
-    MyPluginModel.addProgress(myPlugin, myIndicator);
+    MyPluginModel.addProgress(getDescriptorForActions(), myIndicator);
 
     fullRepaint();
   }
@@ -1330,12 +1332,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     if (myMultiTabs) {
       updateButtons();
-
-      if (myInstalledDescriptorForMarketplace != null) {
-        updateEnableForNameAndIcon();
-        fullRepaint();
-        return;
-      }
     }
 
     updateEnableForNameAndIcon();
