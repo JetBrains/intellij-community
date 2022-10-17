@@ -412,6 +412,19 @@ fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFi
   }
 }
 
+fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile expectedFile: String) {
+  val path = "$testDataPath/$expectedFile"
+  val file = File(path)
+  if (!file.exists() && file.createNewFile()) {
+    Logger.getInstance("#WebTestUtilKt").warn("File $file has been created.")
+  }
+  val actualContentsTrimmed = actualContents.trim() + "\n"
+  val expectedContents = FileUtil.loadFile(file, "UTF-8", true).trim() + "\n"
+  if (expectedContents != actualContentsTrimmed) {
+    throw FileComparisonFailure(expectedFile, expectedContents, actualContentsTrimmed, path)
+  }
+}
+
 fun CodeInsightTestFixture.canRenameWebSymbolAtCaret() =
   webSymbolAtCaret().let {
     it is RenameableSymbol || it is RenameTarget || (it is PsiSourcedWebSymbol && it.source != null)
