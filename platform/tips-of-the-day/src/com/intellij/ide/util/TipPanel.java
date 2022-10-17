@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -41,6 +40,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.*;
 
@@ -225,23 +225,11 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull List<TipAndTrickBean> list) {
-    RecommendationDescription recommendation = ApplicationManager.getApplication().getService(TipsOrderUtil.class).sort(list);
-    myTips = new ArrayList<>(recommendation.getTips());
+    RecommendationDescription recommendation = TipsOrderUtil.getInstance().sort(list);
+    myTips = recommendation.getTips();
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
-    if (!isExperiment(myAlgorithm)) {
-      myTips = TipsUsageManager.getInstance().filterShownTips(myTips);
-    }
     showNext(true);
-  }
-
-  /**
-   * We are running the experiment for research purposes and we want the experiment to be pure.
-   * This requires disabling idea's filtering mechanism as this mechanism affects the experiment
-   * results by modifying tips order.
-   */
-  private static boolean isExperiment(String algorithm) {
-    return algorithm.endsWith("_SUMMER2020");
   }
 
   private void showNext(boolean forward) {
