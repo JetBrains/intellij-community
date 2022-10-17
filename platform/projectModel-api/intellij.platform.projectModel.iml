@@ -13,5 +13,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="library" name="Kryo5" level="project" />
   </component>
 </module>
