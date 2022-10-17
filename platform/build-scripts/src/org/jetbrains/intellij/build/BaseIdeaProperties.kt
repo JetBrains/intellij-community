@@ -174,8 +174,10 @@ abstract class BaseIdeaProperties : ProductProperties() {
       // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
       layout.withoutProjectLibrary("Gradle")
 
-      //this library is placed into subdirectory of 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
+      // this library is placed into subdirectory of 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
+
+      layout.withoutProjectLibrary("qodana-sarif")
     }
 
     productLayout.compatiblePluginsToIgnore = persistentListOf(
