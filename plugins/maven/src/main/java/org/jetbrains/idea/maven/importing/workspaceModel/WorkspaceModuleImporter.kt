@@ -44,9 +44,7 @@ internal class WorkspaceModuleImporter(
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
   fun importModule(): ModuleEntity {
-    val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: importData.mavenProject.directory
-    val baseModuleDir = virtualFileUrlManager.fromPath(baseModuleDirPath)
-
+    val baseModuleDir = virtualFileUrlManager.fromPath(importData.mavenProject.directory)
     val moduleName = importData.moduleData.moduleName
 
     val moduleLibrarySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,

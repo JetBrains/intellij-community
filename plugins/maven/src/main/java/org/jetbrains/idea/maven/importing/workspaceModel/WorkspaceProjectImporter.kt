@@ -4,7 +4,9 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -62,7 +64,17 @@ internal class WorkspaceProjectImporter(
 
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
 
-    val (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
+    var (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
+
+    val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
+    if (!externalStorageManager.isEnabled) {
+      MavenLog.LOG.info("Project#isExternalStorageEnabled is false. Converting storage to external for workspace import")
+      ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
+      hasChanges = true
+
+      if (!externalStorageManager.isEnabled) MavenLog.LOG.error("Failed to update Project#isExternalStorageEnabled flag")
+    }
+
     if (!hasChanges) return emptyList()
 
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
@@ -125,8 +137,7 @@ internal class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
     val mavenProjectToModuleName = HashMap<MavenProject, String>()
-    MavenModuleNameMapper.map(projectToImport.keys, emptyMap(), mavenProjectToModuleName, HashMap(),
-                              myImportingSettings.dedicatedModuleDir)
+    MavenModuleNameMapper.map(projectToImport.keys, emptyMap(), mavenProjectToModuleName, HashMap(), null)
     return mavenProjectToModuleName
   }
 
