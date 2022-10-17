@@ -108,6 +108,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private volatile boolean myUpdating;
+  private volatile boolean myFixesAvailable;
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -302,6 +303,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public void syncRightPanel() {
+    myFixesAvailable = false;
     final Editor oldEditor = myPreviewEditor;
     try {
       if (myLoadingProgressPreview != null) {
@@ -717,6 +719,14 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                               "inspection.results.for.inspection.toolwindow.title" :
                               "inspection.results.for.profile.toolwindow.title",
                               getCurrentProfileName(), myScope.getShortenName());
+  }
+
+  public void setFixesAvailable(boolean available) {
+    myFixesAvailable = available;
+  }
+
+  public boolean areFixesAvailable() {
+    return myFixesAvailable;
   }
 
   @Nullable

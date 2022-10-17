@@ -202,7 +202,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     return dataFile.resolveSibling(dataFile.fileName.toString() + ".require.compaction")
   }
 
-  fun getDataFile(): Path {
+  private fun getDataFile(): Path {
     return baseStorageFile.resolveSibling(baseStorageFile.fileName.toString() + ".project")
   }
 

@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
@@ -14,10 +16,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -25,11 +24,11 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -53,7 +52,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -239,8 +242,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
+        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
+        info.findRegisteredQuickFix((descriptor, range) -> {
+          actionRanges.add(Pair.create(descriptor, range));
+          return null;
+        });
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                                info.getGutterIconRenderer(), info.quickFixActionRanges,
+                                                                                info.getGutterIconRenderer(), actionRanges,
                                                                                 psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
         myFileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
@@ -259,9 +267,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                     @NotNull Document document,
                                                     @NotNull ProgressIndicator progress) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IllegalStateException("Must not run highlighting from under EDT");
-    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       throw new IllegalStateException("Must run highlighting outside read action, external annotators do not support checkCanceled");
     }
@@ -371,7 +377,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myPassExecutorService.cancelAll(false);
 
     FileStatusMap fileStatusMap = getFileStatusMap();
-    fileStatusMap.allowDirt(canChangeDocument);
+    boolean old = fileStatusMap.allowDirt(canChangeDocument);
     for (int ignoreId : passesToIgnore) {
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
@@ -381,7 +387,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      fileStatusMap.allowDirt(true);
+      fileStatusMap.allowDirt(old);
     }
   }
 
@@ -433,7 +439,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
-        assert progress.isCanceled() && progress.isDisposed();
+        assert progress.isCanceled();
       }
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
@@ -704,7 +710,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                              boolean includeFixRange,
                                              @NotNull Processor<? super HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-      if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
+      if (!info.containsOffset(offset, includeFixRange)) return true;
 
       int compare = info.getSeverity().compareTo(minSeverity);
       return compare < 0 || processor.process(info);
@@ -735,13 +741,41 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
    */
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
-                                              int offset,
-                                              boolean includeFixRange,
-                                              boolean highestPriorityOnly,
-                                              @NotNull HighlightSeverity minSeverity) {
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity) {
     HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();
+  }
+
+  @ApiStatus.Internal
+  public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    CaretModel caretModel = editor.getCaretModel();
+    int offset = caretModel.getOffset();
+    Project project = file.getProject();
+    List<HighlightInfo> relevantInfos = new ArrayList<>();
+    Document document = editor.getDocument();
+    int logicalLine = caretModel.getLogicalPosition().line;
+    processHighlights(document, project, null, 0, document.getTextLength(), info -> {
+      if (info.containsOffset(offset, true)) {
+        relevantInfos.add(info);
+        return true;
+      }
+      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
+      boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
+      if (atTheSameLine) {
+        relevantInfos.add(info);
+      }
+      return true;
+    });
+    for (HighlightInfo info : relevantInfos) {
+      if (info.isUnresolvedReference()) {
+        UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, file, editor);
+      }
+    }
   }
 
   static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
@@ -779,25 +813,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
       return HighlightInfoComposite.create(foundInfoList);
     }
-  }
-
-  private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
-    RangeHighlighterEx highlighter = info.getHighlighter();
-    if (highlighter == null || !highlighter.isValid()) return false;
-    int startOffset = highlighter.getStartOffset();
-    int endOffset = highlighter.getEndOffset();
-    if (startOffset <= offset && offset <= endOffset) {
-      return true;
-    }
-    if (!includeFixRange) return false;
-    RangeMarker fixMarker = info.fixMarker;
-    if (fixMarker != null) {  // null means its range is the same as highlighter
-      if (!fixMarker.isValid()) return false;
-      startOffset = fixMarker.getStartOffset();
-      endOffset = fixMarker.getEndOffset();
-      return startOffset <= offset && offset <= endOffset;
-    }
-    return false;
   }
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
@@ -932,9 +947,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     Map<FileEditor, BackgroundEditorHighlighter> highlighters = new HashMap<>(fileEditors.size());
 
     for (FileEditor fileEditor : fileEditors) {
-      BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
-      if (highlighter != null) {
-        highlighters.put(fileEditor, highlighter);
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+        BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
+        if (highlighter != null) {
+          highlighters.put(fileEditor, highlighter);
+        }
       }
     }
     DaemonProgressIndicator progress = createUpdateProgress(highlighters.keySet());
@@ -953,7 +970,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         return null;
       }
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+        session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
+      }
     }
     if (session == null) {
       // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
@@ -969,7 +988,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
-    PsiFile psiFile = virtualFile == null ? null : PsiManager.getInstance(project).findFile(virtualFile);
+    PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null : PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(virtualFile);
     psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
     return psiFile;
   }
@@ -1028,13 +1047,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                 // editor or something was changed between commit document notification in EDT and this point in the FJP thread
                 throw new ProcessCanceledException();
               }
-              HighlightingPass[] result = highlighter instanceof TextEditorBackgroundHighlighter ?
-                                          ((TextEditorBackgroundHighlighter)highlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
-                                          highlighter.createPassesForEditor();
-              if (heavyProcessIsRunning) {
-                result = ContainerUtil.findAllAsArray(result, DumbService::isDumbAware);
+              try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+                HighlightingPass[] result = highlighter instanceof TextEditorBackgroundHighlighter ?
+                                            ((TextEditorBackgroundHighlighter)highlighter).getPasses(passesToIgnore)
+                                              .toArray(HighlightingPass.EMPTY_ARRAY) :
+                                            highlighter.createPassesForEditor();
+                if (heavyProcessIsRunning) {
+                  result = ContainerUtil.findAllAsArray(result, DumbService::isDumbAware);
+                }
+                return result;
               }
-              return result;
             });
             info.myHighlightingPasses = passes;
             hasPasses = hasPasses || passes.length != 0;
@@ -1062,7 +1084,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   // return list of document/virtualFile/opened fileEditors for these (with preferred file editor in the head)
   private @NotNull List<FileEditorInfo> createPreferredFileEditorMap(@NotNull Collection<? extends FileEditor> fileEditors,
-                                                            @NotNull Map<FileEditor, BackgroundEditorHighlighter> highlighters) {
+                                                                     @NotNull Map<? extends FileEditor, ? extends BackgroundEditorHighlighter> highlighters) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FileEditorInfo> result = new ArrayList<>(fileEditors.size());
     MultiMap<Pair<Document, VirtualFile>, FileEditor> map = ContainerUtil.groupBy(fileEditors, fileEditor -> {
@@ -1096,6 +1118,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                            @NotNull List<FileEditorInfo.FileEditorHighlightingInfo> fileEditors) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !fileEditors.isEmpty();
+    // todo decide what to do with focuses and remote-dev
     int focusedIndex = ContainerUtil.indexOf(fileEditors, info -> info.myFileEditor instanceof TextEditor &&
                                                                   ((TextEditor)info.myFileEditor).getEditor().getContentComponent().isFocusOwner());
     if (focusedIndex == -1) {

@@ -47,7 +47,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {
-      final PsiClassType psiTypeBaseWithGenerics = builderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
+      final PsiClassType psiTypeBaseWithGenerics = SuperBuilderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
       builderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
@@ -61,7 +61,7 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
           builderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
 
-          builderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          SuperBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
         }
       }

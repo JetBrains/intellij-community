@@ -7,8 +7,8 @@ import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 import org.jetbrains.kotlin.psi.*
 
-class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid() {
-    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context)
+class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement) : KtTreeVisitorVoid() {
+    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context, element)
     private val myContext = context
 
     fun getFeatures(): Bag {
@@ -22,8 +22,16 @@ class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid
     }
 
     override fun visitProperty(property: KtProperty) {
-        myUsageSimilarityFeaturesRecorder.addAllFeatures(property, "VAR: ")
+        myUsageSimilarityFeaturesRecorder.addAllFeatures(property, "PROPERTY: ")
         super.visitProperty(property)
+    }
+
+    override fun visitCallExpression(expression: KtCallExpression) {
+        val calleeExpression = expression.calleeExpression
+        if (calleeExpression is KtNameReferenceExpression) {
+            myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "{CALL: ${calleeExpression.getReferencedName()}}")
+        }
+        super.visitCallExpression(expression)
     }
 
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
@@ -46,17 +54,24 @@ class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid
         super.visitUnaryExpression(expression)
     }
 
+    override fun visitTypeReference(typeReference: KtTypeReference) {
+        myUsageSimilarityFeaturesRecorder.addAllFeatures(typeReference, "TYPE: ${typeReference.nameForReceiverLabel()}")
+        super.visitTypeReference(typeReference)
+    }
+
     override fun visitReferenceExpression(expression: KtReferenceExpression) {
-        var feature = "VAR:"
-        if (!theFirstReferenceInQualifiedExpression(expression)) {
+        var feature = "REFERENCE: "
+        val parent = expression.parent
+        if (fieldOrMethodReference(parent, expression) || parent is KtUserType) {
             if (expression is KtNameReferenceExpression) {
-                feature = "{CALL: ${expression.getReferencedName()}}"
+                feature = "{REFERENCE: ${expression.getReferencedName()}}"
             }
         }
         myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, feature)
         super.visitReferenceExpression(expression)
     }
 
-    private fun theFirstReferenceInQualifiedExpression(expression: KtReferenceExpression) =
-        (expression.parent is KtQualifiedExpression && expression.parent.firstChild == expression)
+    private fun fieldOrMethodReference(parent: PsiElement?, expression: KtReferenceExpression) =
+        parent is KtQualifiedExpression && parent.firstChild != expression
+
 }

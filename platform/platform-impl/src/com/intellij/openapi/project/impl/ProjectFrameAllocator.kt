@@ -106,6 +106,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         val showIndicatorJob = showModalIndicatorForProjectLoading(
           windowDeferred = deferredWindow,
           title = getProgressTitle(),
+          isVisibleManaged = options.isVisibleManaged,
         )
         try {
           task(saveTemplateDeferred)
@@ -163,10 +164,11 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
 
       val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
-      val editorSplitters = fileEditorManager.init()
-
       // not as a part of a project modal dialog
-      project.coroutineScope.buildUi(editorSplitters, fileEditorManager, frameHelper, project)
+      project.coroutineScope.buildUi(editorSplitters = fileEditorManager.init(),
+                                     fileEditorManager = fileEditorManager,
+                                     frameHelper = frameHelper,
+                                     project = project)
     }
   }
 
@@ -180,7 +182,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 
     launchAndMeasure("tool window pane creation") {
       val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-      toolWindowManager.init(frameHelper, editorSplitters)
+      toolWindowManager.init(frameHelper, editorSplitters, reopeningEditorJob)
     }
     launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val rootPane = frameHelper.rootPane!!
@@ -192,7 +194,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         rootPane.initOrCreateToolbar(project)
       }
 
-      frameHelper.frameOrNull?.isVisible = true
+      if (!options.isVisibleManaged) {
+        frameHelper.frameOrNull?.isVisible = true
+      }
     }
     return reopeningEditorJob
   }
@@ -232,6 +236,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
 private fun CoroutineScope.showModalIndicatorForProjectLoading(
   windowDeferred: Deferred<Window>,
   title: @NlsContexts.ProgressTitle String,
+  isVisibleManaged: Boolean,
 ): Job {
   return launch(Dispatchers.IO) {
     delay(300L)
@@ -267,7 +272,9 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
       }.invokeOnCompletion {
         dialog.close(DialogWrapper.OK_EXIT_CODE)
       }
-      window.isVisible = true
+      if (!isVisibleManaged) {
+        window.isVisible = true
+      }
       // will spin an inner event loop
       dialog.show()
     }
@@ -391,7 +398,11 @@ internal val OpenProjectTask.frameInfo: FrameInfo?
 internal val OpenProjectTask.frameManager: ProjectUiFrameManager?
   get() = (implOptions as OpenProjectImplOptions?)?.frameManager
 
+private val OpenProjectTask.isVisibleManaged: Boolean
+  get() = (implOptions as OpenProjectImplOptions?)?.isVisibleManaged ?: false
+
 internal data class OpenProjectImplOptions(
   @JvmField val frameInfo: FrameInfo? = null,
   @JvmField val frameManager: ProjectUiFrameManager? = null,
+  @JvmField val isVisibleManaged: Boolean = false,
 )

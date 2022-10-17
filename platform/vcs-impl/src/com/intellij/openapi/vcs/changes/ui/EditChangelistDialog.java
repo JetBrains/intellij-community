@@ -9,7 +9,9 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -25,7 +27,7 @@ public class EditChangelistDialog extends DialogWrapper {
     myList = list;
     myPanel = new NewEditChangelistPanel(project) {
       @Override
-      protected void nameChanged(String errorMessage) {
+      protected void nameChanged(@Nullable @Nls String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage, myPanel);
       }

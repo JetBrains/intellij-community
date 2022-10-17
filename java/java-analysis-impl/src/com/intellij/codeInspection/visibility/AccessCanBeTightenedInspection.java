@@ -25,7 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       myHolder = holder;
       myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }
-    private final TObjectIntHashMap<PsiClass> maxSuggestedLevelForChildMembers = new TObjectIntHashMap<>();
+    private final Object2IntMap<PsiClass> maxSuggestedLevelForChildMembers = new Object2IntOpenHashMap<>();
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -101,7 +102,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
       if (memberClass != null) {
         synchronized (maxSuggestedLevelForChildMembers) {
-          int prevMax = maxSuggestedLevelForChildMembers.get(memberClass);
+          int prevMax = maxSuggestedLevelForChildMembers.getInt(memberClass);
           maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
         }
       }
@@ -114,7 +115,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         if (member instanceof PsiClass) {
           int memberMaxLevel;
           synchronized (maxSuggestedLevelForChildMembers) {
-            memberMaxLevel = maxSuggestedLevelForChildMembers.get((PsiClass)member);
+            memberMaxLevel = maxSuggestedLevelForChildMembers.getInt(member);
           }
           if (memberMaxLevel > suggestedLevel) {
             // a class can't have visibility less than its members
@@ -335,7 +336,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
 
-    private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
+    private static boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
       PsiExpression qualifier = getQualifier(element);
       if (qualifier == null) {
         PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Conditions.alwaysTrue(), true);

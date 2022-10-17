@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.ILightLazyParseableElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 class EmbeddedHtmlContentElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
   public EmbeddedHtmlContentElementType() {
@@ -18,7 +19,7 @@ class EmbeddedHtmlContentElementType extends ILazyParseableElementType implement
   }
 
   @Override
-  public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+  public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
     final PsiFile file = chameleon.getContainingFile();
     assert file != null : chameleon;
 

@@ -25,7 +25,7 @@ abstract class Java8OverrideImplementTest<T : ClassMember> : AbstractOverrideImp
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/overrideImplement/jdk8")
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     fun testOverrideCollectionStream() = doOverrideFileTest("stream")
     

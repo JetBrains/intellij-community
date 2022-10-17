@@ -9,15 +9,21 @@ import java.util.Collections;
 
 public abstract class ProductivityFeaturesProvider {
   public static final ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = new ExtensionPointName<>("com.intellij.productivityFeaturesProvider");
-  
-  public abstract FeatureDescriptor[] getFeatureDescriptors();
 
-  public abstract GroupDescriptor[] getGroupDescriptors();
+  public FeatureDescriptor[] getFeatureDescriptors() {
+    return new FeatureDescriptor[0];
+  }
 
-  public abstract ApplicabilityFilter[] getApplicabilityFilters();
+  public GroupDescriptor[] getGroupDescriptors() {
+    return new GroupDescriptor[0];
+  }
+
+  public ApplicabilityFilter[] getApplicabilityFilters() {
+    return new ApplicabilityFilter[0];
+  }
 
   /**
-   * @return list of xml file urls with features configurations
+   * @return list of xml file paths with features configurations
    */
   public @NotNull Collection<String> getXmlFilesUrls() {
     return Collections.emptyList();

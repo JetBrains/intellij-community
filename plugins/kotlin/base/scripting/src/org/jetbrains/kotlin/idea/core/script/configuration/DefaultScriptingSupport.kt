@@ -360,7 +360,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         cache.clear()
     }
 
-    fun hideInterceptedNotification(file: VirtualFile) {
+    private fun hideInterceptedNotification(file: VirtualFile) {
         loaders.forEach {
             it.hideInterceptedNotification(file)
         }

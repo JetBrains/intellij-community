@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.BorderLayout
 import java.awt.Component
@@ -54,7 +53,9 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
       background = null
       isOpaque = false
 
-      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(value) }
+      isVisible = tree.isShowCheckboxes &&
+                  (value is ChangesTree.FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                   tree.isInclusionVisible(value))
       if (isVisible) {
         state = tree.getNodeStatus(value)
         isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }

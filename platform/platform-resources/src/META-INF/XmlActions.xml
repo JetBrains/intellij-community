@@ -27,26 +27,6 @@
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </reference>
 
-    <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
-            class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
-            use-shortcut-of="EditSource"/>
-
-    <action id="DomElementsTreeView.AddElement" class="com.intellij.util.xml.tree.actions.AddElementInCollectionAction">
-      <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-    </action>
-    <action id="DomElementsTreeView.DeleteElement" class="com.intellij.util.xml.tree.actions.DeleteDomElement"
-            use-shortcut-of="$Delete"/>
-
-    <group id="DomElementsTreeView.AddElementGroup" class="com.intellij.util.xml.tree.actions.AddDomElementActionGroup"/>
-
-    <group id="DomElementsTreeView.TreePopup">
-      <reference ref="DomElementsTreeView.GotoDomElementDeclarationAction"/>
-
-      <separator/>
-      <reference ref="DomElementsTreeView.AddElementGroup"/>
-      <reference ref="DomElementsTreeView.DeleteElement"/>
-    </group>
-
     <group id="DomCollectionControl">
       <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
         <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
@@ -114,5 +94,10 @@
         </action>
       </group>
     </group>
+
+    <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
+    <action id="MinimapFilter" class="com.intellij.ide.minimap.actions.MinimapFilterActionGroup"/>
+    <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
+    <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
   </actions>
 </idea-plugin>

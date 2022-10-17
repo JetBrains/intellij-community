@@ -10,106 +10,113 @@ import org.jetbrains.annotations.NotNull;
 public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("class X {\n" +
-           "  private void /*Method 'foo()'is only used from inner class 'Inner'*/foo/**/() {}\n" +
-           "  \n" +
-           "  class Inner {\n" +
-           "    void test() {foo();}\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               private void /*Method 'foo()'is only used from inner class 'Inner'*/foo/**/() {}
+              \s
+               class Inner {
+                 void test() {foo();}
+               }
+             }""");
   }
 
   public void testAnonymous() {
-    doTest("class X {\n" +
-           "  private int /*Method 'foo()'is only used from an anonymous class derived from 'Inner'*/foo/**/() {return 5;}\n" +
-           "  \n" +
-           "  void test() {\n" +
-           "    new Inner(1) {\n" +
-           "      int x = foo();\n" +
-           "    };\n" +
-           "  }\n" +
-           "  \n" +
-           "  static class Inner { Inner(int x) {}}\n" +
-           "}");
+    doTest("""
+             class X {
+               private int /*Method 'foo()'is only used from an anonymous class derived from 'Inner'*/foo/**/() {return 5;}
+              \s
+               void test() {
+                 new Inner(1) {
+                   int x = foo();
+                 };
+               }
+              \s
+               static class Inner { Inner(int x) {}}
+             }""");
   }
 
   public void testAnonymousCtor() {
-    doTest("class X {\n" +
-           "  private int foo() {return 5;}\n" +
-           "  \n" +
-           "  void test() {\n" +
-           "    new Inner(foo()) {\n" +
-           "      int x = 5;\n" +
-           "    };\n" +
-           "  }\n" +
-           "  \n" +
-           "  static class Inner { Inner(int x) {}}\n" +
-           "}");
+    doTest("""
+             class X {
+               private int foo() {return 5;}
+              \s
+               void test() {
+                 new Inner(foo()) {
+                   int x = 5;
+                 };
+               }
+              \s
+               static class Inner { Inner(int x) {}}
+             }""");
   }
 
   public void testLocalClass() {
-    doTest("class X {\n" +
-           "  private void /*Method 'foo()'is only used from local class 'Local'*/foo/**/() {}\n" +
-           "  \n" +
-           "   void x() {\n" +
-           "    class Local {\n" +
-           "      void test() {foo();}\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               private void /*Method 'foo()'is only used from local class 'Local'*/foo/**/() {}
+              \s
+                void x() {
+                 class Local {
+                   void test() {foo();}
+                 }
+               }
+             }""");
   }
 
   public void testNoWarnLocalClass() {
     final MethodOnlyUsedFromInnerClassInspection inspection = new MethodOnlyUsedFromInnerClassInspection();
     inspection.ignoreMethodsAccessedFromAnonymousClass = true;
     myFixture.enableInspections(inspection);
-    doTest("class X {\n" +
-           "  private void foo() {}\n" +
-           "  \n" +
-           "   void x() {\n" +
-           "    class Local {\n" +
-           "      void test() {foo();}\n" +
-           "    }\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class X {
+               private void foo() {}
+              \s
+                void x() {
+                 class Local {
+                   void test() {foo();}
+                 }
+               }
+             }""");
   }
 
   @SuppressWarnings({"PublicConstructorInNonPublicClass", "Convert2Lambda"})
   public void testIgnoreUsedOutsideInnerClass() {
-    doTest("class OnlyUsedFromAnonymousWarning {\n" +
-           "\n" +
-           "\t public OnlyUsedFromAnonymousWarning() {\n" +
-           "\t\tRunnable someInterface = new Runnable() {\n" +
-           "\t\t\t@Override\n" +
-           "\t\t\tpublic void run() {\n" +
-           "\t\t\t\tproblemMethod();\n" +
-           "\t\t\t}\n" +
-           "\t\t};\n" +
-           "\t\tproblemMethod();\n" +
-           "\t}\n" +
-           "\n" +
-           "\tprivate static void problemMethod() {\n" +
-           "\t\tSystem.out.println(\"Is used not only from anonymous class!\");\n" +
-           "\t}\n" +
-           "}");
+    doTest("""
+             class OnlyUsedFromAnonymousWarning {
+
+             \t public OnlyUsedFromAnonymousWarning() {
+             \t\tRunnable someInterface = new Runnable() {
+             \t\t\t@Override
+             \t\t\tpublic void run() {
+             \t\t\t\tproblemMethod();
+             \t\t\t}
+             \t\t};
+             \t\tproblemMethod();
+             \t}
+
+             \tprivate static void problemMethod() {
+             \t\tSystem.out.println("Is used not only from anonymous class!");
+             \t}
+             }""");
   }
 
   public void testIgnoreStaticMethodCalledFromNonStaticInnerClass() {
-    doTest("class Outer {\n" +
-           "    public static void main(String[] args) {\n" +
-           "        class Local {\n" +
-           "            void run(String arg) {\n" +
-           "                if (!isEmpty(arg)) {\n" +
-           "                    System.out.println(\"Argument is supplied\");\n" +
-           "                }\n" +
-           "            }\n" +
-           "        }\n" +
-           "        new Local().run(args[0]);\n" +
-           "    }\n" +
-           "    private static boolean isEmpty(String s) {\n" +
-           "        return s != null && s.trim().isEmpty();\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Outer {
+                 public static void main(String[] args) {
+                     class Local {
+                         void run(String arg) {
+                             if (!isEmpty(arg)) {
+                                 System.out.println("Argument is supplied");
+                             }
+                         }
+                     }
+                     new Local().run(args[0]);
+                 }
+                 private static boolean isEmpty(String s) {
+                     return s != null && s.trim().isEmpty();
+                 }
+             }""");
   }
 
   @Override

@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,9 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 
 public class LineStatusMarkerPopupPanel extends JPanel {
+  private static final JBColor TOOLBAR_BACKGROUND_COLOR =
+    JBColor.namedColor("VersionControl.MarkerPopup.Toolbar.background", UIUtil.getPanelBackground());
+
   @Nullable private final JComponent myEditorComponent;
   @NotNull private final Editor myEditor;
 
@@ -60,12 +65,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setBorder(null);
+    toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets", JBInsets.create(1, 5));
     Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
+    toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
     if (additionalInfo != null) {
       toolbarPanel.add(additionalInfo, BorderLayout.EAST);
@@ -168,11 +175,11 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     ApplicationManager.getApplication().getMessageBus().connect(childDisposable)
       .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
         @Override
-        public void hintShown(Project project, @NotNull LightweightHint newHint, int flags) {
+        public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
           // Ex: if popup re-shown by ToggleByWordDiffAction
           if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel) {
             LineStatusMarkerPopupPanel newPopupPanel = (LineStatusMarkerPopupPanel)newHint.getComponent();
-            if (newPopupPanel.getEditor().equals(editor)) {
+            if (newPopupPanel.getEditor().equals(newEditor)) {
               hint.hide();
             }
           }
@@ -226,7 +233,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
   }
 
   public static Color getEditorBackgroundColor(@NotNull Editor editor) {
-    return EditorFragmentComponent.getBackgroundColor(editor, true);
+    Color color = editor.getColorsScheme().getColor(EditorColors.CHANGED_LINES_POPUP);
+    return color != null ? color : EditorFragmentComponent.getBackgroundColor(editor);
   }
 
   @NotNull

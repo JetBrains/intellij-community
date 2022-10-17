@@ -145,6 +145,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
     Set<VirtualFile> filesFirst = getLikelyFiles(descriptors, allFiles, session.project);
     Processor<VirtualFile> vFileProcessor = vFile -> {
+      if (vFile.isDirectory()) return true;
       Collection<FunExprOccurrence> occurrences = allCandidates.get(vFile);
       session.contextsConsidered.addAndGet(occurrences.size());
       Map<FunExprOccurrence, Confidence> toLoad = filterInapplicable(samClasses, vFile, occurrences, session.project);
@@ -166,13 +167,13 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @NotNull
   private static Map<FunExprOccurrence, Confidence> filterInapplicable(@NotNull List<? extends PsiClass> samClasses,
-                                                           @NotNull VirtualFile vFile,
-                                                           @NotNull Collection<? extends FunExprOccurrence> occurrences,
-                                                           @NotNull Project project) {
+                                                                       @NotNull VirtualFile vFile,
+                                                                       @NotNull Collection<? extends FunExprOccurrence> occurrences,
+                                                                       @NotNull Project project) {
     return ReadAction.nonBlocking(() -> {
       Map<FunExprOccurrence, Confidence> map = new HashMap<>();
       for (FunExprOccurrence occurrence : occurrences) {
-        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile);
+        ThreeState result = occurrence.checkHasTypeLight(samClasses, vFile, project);
         if (result != ThreeState.NO) {
           map.put(occurrence, result == ThreeState.YES ? Confidence.sure : Confidence.needsCheck);
         }

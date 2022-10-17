@@ -20,9 +20,6 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 abstract class GroovyParsingTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   String getBasePath() {

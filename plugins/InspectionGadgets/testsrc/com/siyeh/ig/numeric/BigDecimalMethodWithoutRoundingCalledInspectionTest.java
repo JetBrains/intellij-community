@@ -50,17 +50,18 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
   }
 
   public void testNoWarnOnOtherMethod() {
-    doTest("import java.math.BigDecimal;\n" +
-           "import java.math.RoundingMode;\n" +
-           "class B {\n" +
-           "    public static BigDecimal scaleValue(BigDecimal v) {\n" +
-           "        return setScale(v);\n" +
-           "    }\n" +
-           "\n" +
-           "    public static BigDecimal setScale(BigDecimal v) {\n" +
-           "        return v != null ? v.setScale(6, RoundingMode.HALF_EVEN) : null;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.math.BigDecimal;
+             import java.math.RoundingMode;
+             class B {
+                 public static BigDecimal scaleValue(BigDecimal v) {
+                     return setScale(v);
+                 }
+
+                 public static BigDecimal setScale(BigDecimal v) {
+                     return v != null ? v.setScale(6, RoundingMode.HALF_EVEN) : null;
+                 }
+             }""");
   }
 
   @NotNull

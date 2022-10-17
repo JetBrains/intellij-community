@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SortModifiersIns
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/inspections/cleanup")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinCleanupInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     private fun doTest(dir: String, result: String, vararg files: String) {
         myFixture.enableInspections(KotlinCleanupInspection::class.java)

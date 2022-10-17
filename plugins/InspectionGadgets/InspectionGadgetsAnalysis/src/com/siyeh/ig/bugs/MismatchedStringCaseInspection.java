@@ -213,15 +213,10 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
         StringCase qualifierCase = fromExpression(qualifier, ANALYSIS_COMPLEXITY);
         PsiElement anchor = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
         String methodName = anchor.getText();
-        String returnValue;
-        switch (methodName) {
-          case "indexOf":
-          case "lastIndexOf":
-            returnValue = "-1";
-            break;
-          default:
-            returnValue = "false";
-        }
+        String returnValue = switch (methodName) {
+          case "indexOf", "lastIndexOf" -> "-1";
+          default -> "false";
+        };
         String errorMessage;
         if (qualifierCase.myHasLower == ThreeState.NO && argCase.myHasLower == ThreeState.YES) {
           errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.arg.is.lower", methodName, returnValue);

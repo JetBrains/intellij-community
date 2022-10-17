@@ -177,7 +177,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         }));
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
-      xmlTag().withLocalName(string().oneOf("categoryKey", "familyNameKey")).
+      xmlTag().withLocalName("categoryKey").
         withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
     registrar.registerReferenceProvider(intentionActionKeyTagPattern,
                                         new PropertyKeyReferenceProvider(true, null, INTENTION_ACTION_BUNDLE_TAG));
@@ -223,7 +223,6 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static XmlAttributeValuePattern extensionAttributePattern(@NonNls String[] attributeNames,
                                                                     @NonNls String... extensionPointClassNames) {
-    //noinspection deprecation
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
       .withSuperParent(2, extensionPointCapture(extensionPointClassNames));
@@ -239,7 +238,6 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   @NotNull
   private static XmlTagPattern.Capture extensionPointCapture(@NonNls String[] extensionPointClassNames) {
-    //noinspection deprecation
     return xmlTag()
       .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
         @Override

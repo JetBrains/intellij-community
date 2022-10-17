@@ -4,6 +4,7 @@ package com.intellij.ide.ui.text.parts
 import com.intellij.ide.ui.text.StyledTextPaneUtils.drawRectangleAroundText
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +24,7 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
 
   init {
     fontGetter = {
-      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size2D)
+      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size)
     }
     editAttributes {
       StyleConstants.setForeground(this, JBUI.CurrentTheme.Label.foreground())
@@ -31,15 +32,25 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
   }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    val textToInsert = if (addSpaceAround) " $text " else text
-    textPane.document.insertString(startOffset, textToInsert, attributes)
-    val endOffset = startOffset + textToInsert.length
-
-    val highlightStart = if (addSpaceAround) startOffset + 1 else startOffset
-    val highlightEnd = if (addSpaceAround) endOffset - 1 else endOffset
-    textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
-      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fill = false)
+    var curOffset = startOffset
+    if (addSpaceAround) {
+      curOffset = insertNonBreakSpace(textPane, curOffset)
     }
-    return endOffset
+    textPane.document.insertString(curOffset, text, attributes)
+    curOffset += text.length
+    if (addSpaceAround) {
+      curOffset = insertNonBreakSpace(textPane, curOffset)
+    }
+
+    val highlightStart = if (addSpaceAround) startOffset + 2 else startOffset
+    val highlightEnd = if (addSpaceAround) curOffset - 2 else curOffset
+    textPane.highlighter.addHighlight(highlightStart, highlightEnd) { g, _, _, _, c ->
+      c.drawRectangleAroundText(highlightStart, highlightEnd, g, frameColor, fontGetter(), fill = false)
+    }
+    return curOffset
+  }
+
+  private fun insertNonBreakSpace(textPane: JTextPane, startOffset: Int): Int {
+    return RegularTextPart("$NON_BREAK_SPACE$NON_BREAK_SPACE").insertToTextPane(textPane, startOffset)
   }
 }

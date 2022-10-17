@@ -93,7 +93,6 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowNotificationAfterOptimizeImports(), Settings.AFTER_OPTIMIZE_NOTIFICATION);
     addBoolIfDiffers(set, es, esDefault, s -> s.isSmartHome(), Settings.SMART_HOME);
     addBoolIfDiffers(set, es, esDefault, s -> s.isCamelWords(), Settings.CAMEL_WORDS);
-    addBoolIfDiffers(set, es, esDefault, s -> s.isShowParameterNameHints(), Settings.EDITOR_INLAY_PARAMETER_HINTS);
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsAbove(), Settings.BREADCRUMBS_ABOVE);
     addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShown(), Settings.ALL_BREADCRUMBS);
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionBulb(), Settings.INTENTION_BULB);
@@ -273,7 +272,6 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     AFTER_OPTIMIZE_NOTIFICATION("afterOptimizeNotification"),
     SMART_HOME("smartHome"),
     CAMEL_WORDS("camelWords"),
-    EDITOR_INLAY_PARAMETER_HINTS("editor.inlay.parameter.hints"),
     BREADCRUMBS_ABOVE("breadcrumbsAbove"),
     ALL_BREADCRUMBS("all.breadcrumbs"),
     INTENTION_BULB("intentionBulb"),

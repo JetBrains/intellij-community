@@ -27,7 +27,7 @@ public abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
   protected final void applyFix(Project project, CommonProblemDescriptor descriptor) {
     //noinspection unchecked
     QuickFix<ProblemDescriptor>[] fixes = descriptor.getFixes();
-    if (fixes != null && fixes.length > 0) {
+    if (fixes != null) {
       for (final QuickFix<ProblemDescriptor> fix : fixes) {
         if (fix != null && (myQuickfixClass == null || fix.getClass().isAssignableFrom(myQuickfixClass))) {
           final ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;

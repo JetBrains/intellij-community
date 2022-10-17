@@ -221,7 +221,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private static int calcNewState(final ASTNode child, int state) {
     switch (state) {
-      case BEFORE_FIRST: {
+      case BEFORE_FIRST -> {
         if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
           return BEFORE_FIRST;
         }
@@ -232,7 +232,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           return BEFORE_LBRACE;
         }
       }
-      case BEFORE_LBRACE: {
+      case BEFORE_LBRACE -> {
         if (child.getElementType() == JavaTokenType.LBRACE) {
           return INSIDE_BODY;
         }

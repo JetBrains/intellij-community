@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.injection
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 
-internal class InjectionInfo(val languageId: String?, val prefix: String?, val suffix: String?) {
+internal class InjectionInfo(private val languageId: String?, val prefix: String?, val suffix: String?) {
     fun toBaseInjection(injectionSupport: LanguageInjectionSupport): BaseInjection? {
         if (languageId == null) return null
 

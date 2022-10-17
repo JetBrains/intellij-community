@@ -133,11 +133,11 @@ public class SuperBuilderHandler extends BuilderHandler {
     return Optional.of(methodBuilder);
   }
 
-  public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
-                                                              @NotNull PsiClass builderBaseClass,
-                                                              @NotNull PsiClass builderImplClass,
-                                                              @NotNull PsiAnnotation psiAnnotation,
-                                                              @NotNull PsiClassType psiTypeBaseWithGenerics) {
+  public static Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
+                                                                     @NotNull PsiClass builderBaseClass,
+                                                                     @NotNull PsiClass builderImplClass,
+                                                                     @NotNull PsiAnnotation psiAnnotation,
+                                                                     @NotNull PsiClassType psiTypeBaseWithGenerics) {
     if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
       return Optional.empty();
     }
@@ -155,11 +155,11 @@ public class SuperBuilderHandler extends BuilderHandler {
     return Optional.of(methodBuilder);
   }
 
-  private boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false);
   }
 
-  private String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
+  private static String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
     String result = classGenericName;
     if (typeParamStrings.contains(classGenericName)) {
       int counter = 2;
@@ -244,7 +244,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     return builderInfos;
   }
 
-  private void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
+  private static void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
     for (BuilderInfo builderInfo : builderInfos) {
       builderInfo.withBuilderClassType(bType);
     }
@@ -440,13 +440,13 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   @NotNull
-  public PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+  public static PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
     final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
     return getTypeWithSpecificTypeParameters(psiClass, wildcardType, wildcardType);
   }
 
   @NotNull
-  private PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
+  private static PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, PsiType @NotNull... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final int substituteTypesCount = psiTypes.length;

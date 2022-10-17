@@ -26,6 +26,7 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.Collections;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
@@ -146,7 +147,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     else {
       myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
       myMnemonicLabel.setPreferredSize(preferredSize);
@@ -185,13 +186,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.add(myIconBar, BorderLayout.WEST);
     }
 
-    JPanel result = new JPanel();
+    JPanel result;
     if (ExperimentalUI.isNewUI()) {
       result = new SelectablePanel();
       result.setOpaque(false);
-      PopupUtil.configSelectablePanel(((SelectablePanel)result));
+      PopupUtil.configListRendererFixedHeight(((SelectablePanel)result));
     }
     else {
+      result = new JPanel();
       result.setBorder(JBUI.Borders.empty());
     }
     result.setLayout(new GridBagLayout());
@@ -201,8 +203,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.setBorder(JBUI.Borders.empty());
       right.setBorder(JBUI.Borders.empty());
     } else {
-      left.setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, 0));
-      right.setBorder(new EmptyBorder(insets.top, leftRightInset, insets.bottom, insets.right));
+      left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
+      right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
     }
 
     GridBag gbc = new GridBag()
@@ -239,7 +241,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected static JComponent createButtonsSeparator() {
     SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
     separator.setHGap(1);
-    separator.setVGap(0);
+    separator.setVGap(JBUI.CurrentTheme.List.buttonSeparatorInset());
     return separator;
   }
 
@@ -259,11 +261,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     updateExtraButtons(list, value, step, isSelected);
 
     boolean nextStepButtonSelected = false;
-    if (step.hasSubstep(value)) {
+    boolean showNextStepLabel = step.hasSubstep(value) && (myPopup.isShowSubmenuOnHover() || !step.isFinal(value));
+    if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       if (!ExperimentalUI.isNewUI() ) {
-        myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+        myComponent.setBackground(calcBackground(isSelected && isSelectable));
       }
       setForegroundSelected(myTextLabel, isSelected && isSelectable);
     }
@@ -303,7 +306,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
         JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.mnemonicInsets());
-        myMnemonicLabel.setText("  ");
+        myMnemonicLabel.setText("");
       }
       Color foreground =
         ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.mnemonicForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND;
@@ -370,16 +373,25 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       .setDefaultWeightY(1.0);
 
     boolean isSelectable = step.isSelectable(value);
+    java.util.List<JComponent> extraButtons;
     if (!isSelected || !isSelectable) {
-      myButtonsSeparator.setVisible(false);
-      myButtonPane.add(myNextStepLabel, gb.next());
-      return;
+      extraButtons = Collections.emptyList();
+    } else {
+      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, true);
     }
 
-    java.util.List<JComponent> extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     if (!extraButtons.isEmpty()) {
       myButtonsSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
+      Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
+      // We ONLY need to update the tooltip if there's an active inline action button.
+      // Otherwise, it's set earlier from the main action.
+      // If there is an active button without a tooltip, we still need to set the tooltip
+      // to null, otherwise it'll look ugly, as if the inline action button has the same
+      // tooltip as the main action.
+      if (activeButtonIndex != null) {
+        myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
+      }
     }
     else {
       myButtonsSeparator.setVisible(false);
@@ -404,18 +416,15 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     return res;
   }
 
-  private Color calcBackground(boolean selected, boolean hovered) {
-    if (selected) return getSelectionBackground();
-    if (hovered) return JBUI.CurrentTheme.Table.Hover.background(true);
-
-    return getBackground();
+  private Color calcBackground(boolean selected) {
+    return selected ? getSelectionBackground() : getBackground();
   }
 
   @NotNull
   static Insets getListCellPadding() {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-      return JBUI.insets(0, leftRightInset, 0, leftRightInset);
+      return JBUI.insets(0, leftRightInset, 0, leftRightInset + leftRightInset);
     }
 
     return UIUtil.getListCellPadding();

@@ -520,7 +520,7 @@ public final class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotato
       final FileEditor[] editors = fileEditorManager.getAllEditors(vFile);
       for (final FileEditor editor : editors) {
         if (isCurrentEditor(editor)) {
-          final EditorNotificationPanel panel = new EditorNotificationPanel(editor) {
+          final EditorNotificationPanel panel = new EditorNotificationPanel(editor, EditorNotificationPanel.Status.Warning) {
             {
               myLabel.setIcon(AllIcons.General.ExclMark);
               myLabel.setText(message);

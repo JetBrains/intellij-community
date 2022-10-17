@@ -137,7 +137,7 @@ internal class PackageDetailsHeaderPanel(
         add(copyMenuItem)
     }
 
-    private val infoPanel = PackageSearchUI.headerPanel {
+    private val infoPanel = PackageSearchUI.borderPanel(PackageSearchUI.Colors.panelBackground) {
         border = emptyBorder(12.scaled())
         layout = HeaderLayout()
 
@@ -149,7 +149,6 @@ internal class PackageDetailsHeaderPanel(
 
     init {
         layout = BorderLayout()
-
         border = JBEmptyBorder(0)
 
         add(repoWarningBanner, BorderLayout.NORTH)

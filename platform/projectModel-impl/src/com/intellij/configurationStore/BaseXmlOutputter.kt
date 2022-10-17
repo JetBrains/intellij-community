@@ -39,7 +39,7 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
     if (publicID != null) {
       out.write(" PUBLIC \"")
       out.write(publicID)
-      out.write('"'.toInt())
+      out.write('"'.code)
       hasPublic = true
     }
     if (systemID != null) {

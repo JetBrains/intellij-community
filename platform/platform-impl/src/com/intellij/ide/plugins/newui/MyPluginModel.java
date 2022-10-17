@@ -129,9 +129,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     assertCanApply(pluginIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
-    DynamicPluginEnablerState pluginEnablerState = pluginEnabler instanceof DynamicPluginEnabler ?
-                                                   ((DynamicPluginEnabler)pluginEnabler).getState() :
-                                                   null;
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
       myDiff.remove(pluginDescriptor);
@@ -152,10 +149,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       else {
         getEnabledMap().remove(pluginId);
-      }
-
-      if (pluginEnablerState != null) {
-        pluginEnablerState.stopTracking(List.of(pluginId));
       }
     }
 
@@ -241,17 +234,25 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     boolean appliedWithoutRestart = true;
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      PluginEnableDisableAction action = entry.getKey();
+      boolean enable = entry.getKey().isEnable();
       List<IdeaPluginDescriptor> descriptors = entry.getValue();
 
-      appliedWithoutRestart &= pluginEnabler instanceof DynamicPluginEnabler ?
-                               ((DynamicPluginEnabler)pluginEnabler).updatePluginsState(descriptors,
-                                                                                        action,
-                                                                                        getProject(),
-                                                                                        parentComponent) :
-                               action.isEnable() ?
-                               pluginEnabler.enable(descriptors) :
-                               pluginEnabler.disable(descriptors);
+
+      boolean applied;
+      if (pluginEnabler instanceof DynamicPluginEnabler dynamicPluginEnabler) {
+        Project project = getProject();
+        applied = enable ?
+                  dynamicPluginEnabler.enable(descriptors, project) :
+                  dynamicPluginEnabler.disable(descriptors, project, parentComponent);
+      }
+      else {
+        applied = enable ?
+                  pluginEnabler.enable(descriptors) :
+                  pluginEnabler.disable(descriptors);
+      }
+
+
+      appliedWithoutRestart &= applied;
     }
     return appliedWithoutRestart;
   }
@@ -826,13 +827,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return getState(descriptor.getPluginId());
   }
 
-  @NotNull ProjectDependentPluginEnabledState getProjectDependentState(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    return new ProjectDependentPluginEnabledState(pluginId,
-                                                  getState(pluginId),
-                                                  getProject());
-  }
-
   /**
    * @see #isEnabled(PluginId, Map)
    */
@@ -963,6 +957,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateEnabledState();
     }
+    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
+      for (ListPluginComponent plugin : plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          plugin.updateEnabledState();
+        }
+      }
+    }
     for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
       detailPanel.updateEnabledState();
     }
@@ -996,10 +997,21 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
-    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor.getPluginId());
+    PluginId pluginId = descriptor.getPluginId();
+
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(pluginId);
     if (listComponents != null) {
       for (ListPluginComponent listComponent : listComponents) {
         listComponent.updateAfterUninstall(needRestartForUninstall);
+      }
+    }
+
+    List<ListPluginComponent> marketplaceComponents = myMarketplacePluginComponentMap.get(pluginId);
+    if (marketplaceComponents != null) {
+      for (ListPluginComponent component : marketplaceComponents) {
+        if (component.myInstalledDescriptorForMarketplace != null) {
+          component.updateAfterUninstall(needRestartForUninstall);
+        }
       }
     }
 
@@ -1008,7 +1020,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.getPlugin() == descriptor) {
+      if (panel.getDescriptorForActions() == descriptor) {
         panel.updateButtons();
       }
     }

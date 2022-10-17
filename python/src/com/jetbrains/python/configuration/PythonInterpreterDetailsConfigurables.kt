@@ -80,7 +80,7 @@ private fun PyRemoteSdkAdditionalData.convertToTargetAwareAdditionalData(): PyTa
     it.tryConvert(connectionCredentials)
   }
   if (targetEnvironmentConfiguration == null) return null
-  val targetAwareAdditionalData = PyTargetAwareAdditionalData(flavor = UnixPythonSdkFlavor.getInstance())
+  val targetAwareAdditionalData = PyTargetAwareAdditionalData(flavorAndData)
   targetAwareAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
   targetAwareAdditionalData.interpreterPath = this.interpreterPath
   return targetAwareAdditionalData

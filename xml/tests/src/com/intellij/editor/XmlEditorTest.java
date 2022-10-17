@@ -43,12 +43,13 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
 
   public void testHardWrap() {
     configureFromFileText("a.xml",
-                          "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
-                          "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
-                          "<g>\n" +
-                          "        <path clip-path=\"url(#SVGID_2_)\" fill=\"#ffffff\" stroke=\"<selection>#000000</selection>\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-miterlimit=\"10\" d=\"M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333\"/>\n" +
-                          "</g>\n" +
-                          "</svg>");
+                          """
+                            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
+                            <g>
+                                    <path clip-path="url(#SVGID_2_)" fill="#ffffff" stroke="<selection>#000000</selection>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333"/>
+                            </g>
+                            </svg>""");
 
     CodeStyle.doWithTemporarySettings(
       getProject(),
@@ -58,13 +59,14 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
         EditorTestUtil.performTypingAction(getEditor(), 'x');
       }
     );
-    checkResultByText("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
-                      "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
-                      "<g>\n" +
-                      "        <path clip-path=\"url(#SVGID_2_)\" fill=\"#ffffff\" stroke=\"x\" stroke-width=\"2\" stroke-linecap=\"round\" \n" +
-                      "              stroke-linejoin=\"round\" stroke-miterlimit=\"10\" d=\"M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333\"/>\n" +
-                      "</g>\n" +
-                      "</svg>");
+    checkResultByText("""
+                        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                                <path clip-path="url(#SVGID_2_)" fill="#ffffff" stroke="x" stroke-width="2" stroke-linecap="round"\s
+                                      stroke-linejoin="round" stroke-miterlimit="10" d="M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333"/>
+                        </g>
+                        </svg>""");
   }
 
   public void testHardWrapInComment() {

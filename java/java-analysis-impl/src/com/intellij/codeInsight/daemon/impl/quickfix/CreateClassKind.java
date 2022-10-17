@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.JavaDirectoryService;
@@ -20,7 +6,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,16 +39,15 @@ public enum CreateClassKind implements ClassKind {
     return myKind.object();
   }
 
-  @NotNull
-  public Icon getKindIcon() {
-    switch (this) {
-      case CLASS:      return PlatformIcons.CLASS_ICON;
-      case INTERFACE:  return PlatformIcons.INTERFACE_ICON;
-      case ENUM:       return PlatformIcons.ENUM_ICON;
-      case ANNOTATION: return PlatformIcons.ANNOTATION_TYPE_ICON;
-      case RECORD:     return PlatformIcons.RECORD_ICON;
-      default:         throw new IllegalStateException("Unexpected value: " + this);
-    }
+  public @NotNull Icon getKindIcon() {
+    IconManager iconManager = IconManager.getInstance();
+    return switch (this) {
+      case CLASS -> iconManager.getPlatformIcon(PlatformIcons.Class);
+      case INTERFACE -> iconManager.getPlatformIcon(PlatformIcons.Interface);
+      case ENUM -> iconManager.getPlatformIcon(PlatformIcons.Enum);
+      case ANNOTATION -> iconManager.getPlatformIcon(PlatformIcons.Annotation);
+      case RECORD -> iconManager.getPlatformIcon(PlatformIcons.Record);
+    };
   }
 
   /**
@@ -70,16 +56,14 @@ public enum CreateClassKind implements ClassKind {
    * @param name name of the new class
    * @return newly created class
    */
-  @NotNull
-  public PsiClass create(PsiElementFactory factory, String name) {
-    switch (this) {
-      case CLASS:      return factory.createClass(name);
-      case INTERFACE:  return factory.createInterface(name);
-      case ENUM:       return factory.createEnum(name);
-      case ANNOTATION: return factory.createAnnotationType(name);
-      case RECORD:     return factory.createRecord(name);
-      default:         throw new IllegalStateException("Unexpected value: " + this);
-    }
+  public @NotNull PsiClass create(PsiElementFactory factory, String name) {
+    return switch (this) {
+      case CLASS -> factory.createClass(name);
+      case INTERFACE -> factory.createInterface(name);
+      case ENUM -> factory.createEnum(name);
+      case ANNOTATION -> factory.createAnnotationType(name);
+      case RECORD -> factory.createRecord(name);
+    };
   }
 
   /**
@@ -88,16 +72,14 @@ public enum CreateClassKind implements ClassKind {
    * @param name name of the new class
    * @return newly created class
    */
-  @NotNull
-  public PsiClass createInDirectory(PsiDirectory directory, String name) {
+  public @NotNull PsiClass createInDirectory(PsiDirectory directory, String name) {
     JavaDirectoryService service = JavaDirectoryService.getInstance();
-    switch (this) {
-      case INTERFACE:  return service.createInterface(directory, name);
-      case CLASS:      return service.createClass(directory, name);
-      case ENUM:       return service.createEnum(directory, name);
-      case RECORD:     return service.createRecord(directory, name);
-      case ANNOTATION: return service.createAnnotationType(directory, name);
-      default:         throw new IllegalStateException("Unexpected value: " + this);
-    }
+    return switch (this) {
+      case INTERFACE -> service.createInterface(directory, name);
+      case CLASS -> service.createClass(directory, name);
+      case ENUM -> service.createEnum(directory, name);
+      case RECORD -> service.createRecord(directory, name);
+      case ANNOTATION -> service.createAnnotationType(directory, name);
+    };
   }
 }

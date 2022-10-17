@@ -1461,23 +1461,26 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        String[] expectedOutput = ("[True] \t [True]\n" +
-                                   "[False] \t [False]\n" +
-                                   "[None] \t [None]").split("\n");
+        String[] expectedOutput = ("""
+                                     [True] \t [True]
+                                     [False] \t [False]
+                                     [None] \t [None]""").split("\n");
         waitForPause();
         for (String line : expectedOutput) {
           waitForOutput(line);
         }
-        consoleExec("TFN = [True, False, None]\n" +
-                    "for q in TFN:\n" +
-                    "    gen = (c for c in TFN if c == q)\n" +
-                    "    lcomp = [c for c in TFN if c == q]\n" +
-                    "    print(list(gen), \"\\t\", list(lcomp))");
+        consoleExec("""
+                      TFN = [True, False, None]
+                      for q in TFN:
+                          gen = (c for c in TFN if c == q)
+                          lcomp = [c for c in TFN if c == q]
+                          print(list(gen), "\\t", list(lcomp))""");
         if (hasPython2Tag()) {
           // Python 2 formats the output slightly differently.
-          expectedOutput = ("([True], '\\t', [True])\n" +
-                            "([False], '\\t', [False])\n" +
-                            "([None], '\\t', [None])").split("\n");
+          expectedOutput = ("""
+                              ([True], '\\t', [True])
+                              ([False], '\\t', [False])
+                              ([None], '\\t', [None])""").split("\n");
           for (String line : expectedOutput) {
             waitForOutput(line);
           }
@@ -1487,11 +1490,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
             waitForOutput(line, 2);
           }
         }
-        consoleExec("def g():\n" +
-                    "    print(\"Foo, bar, baz\")\n" +
-                    "def f():\n" +
-                    "    g()\n" +
-                    "f()");
+        consoleExec("""
+                      def g():
+                          print("Foo, bar, baz")
+                      def f():
+                          g()
+                      f()""");
         waitForOutput("Foo, bar, baz");
         resume();
       }

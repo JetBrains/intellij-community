@@ -18,8 +18,8 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.usages.TextChunk;
 
 import java.util.List;
-import java.util.Set;
 
+@Deprecated(forRemoval = true)
 public class InvalidUsageNoteNode {
   final List<TextChunk> myText;
 

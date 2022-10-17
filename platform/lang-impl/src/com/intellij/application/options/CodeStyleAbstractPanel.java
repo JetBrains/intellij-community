@@ -246,7 +246,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     });
   }
 
-  private void applySettingsToModel() {
+  protected void applySettingsToModel() {
     if (mySettings instanceof CodeStyleSchemesModel.ModelSettings && ((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
@@ -628,11 +628,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   public void setupCopyFromMenu(@NotNull JPopupMenu copyMenu) {
     copyMenu.removeAll();
-  }
-
-  @Deprecated(forRemoval = true)
-  public boolean isCopyFromMenuAvailable() {
-    return false;
   }
 
   @Override

@@ -122,8 +122,6 @@ import java.util.List;
  * Q: The suggestion popup hides when I type some exotic character,
  * but I want completion to keep going, matching against the typed character.<br>
  * A: See {@link com.intellij.codeInsight.lookup.CharFilter#acceptChar(char, int, com.intellij.codeInsight.lookup.Lookup)}.
- *
- * @author peter
  */
 public abstract class CompletionContributor {
   public static final ExtensionPointName<CompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.contributor");

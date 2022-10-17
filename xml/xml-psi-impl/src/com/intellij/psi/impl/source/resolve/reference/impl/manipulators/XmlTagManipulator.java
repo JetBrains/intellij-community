@@ -35,14 +35,11 @@ public class XmlTagManipulator extends SimpleTagManipulator<XmlTag> {
 
     final XmlTagValue value = tag.getValue();
     final XmlText[] texts = value.getTextElements();
-    switch (texts.length) {
-      case 0:
-        return value.getTextRange().shiftRight(-tag.getTextOffset());
-      case 1:
-        return getValueRange(texts[0]);
-      default:
-        return TextRange.EMPTY_RANGE;
-    }
+    return switch (texts.length) {
+      case 0 -> value.getTextRange().shiftRight(-tag.getTextOffset());
+      case 1 -> getValueRange(texts[0]);
+      default -> TextRange.EMPTY_RANGE;
+    };
   }
 
   private static TextRange getValueRange(final XmlText xmlText) {

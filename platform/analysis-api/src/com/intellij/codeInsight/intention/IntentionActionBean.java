@@ -17,6 +17,9 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
   @RequiredElement
   public String className;
 
+  @Tag
+  public String language;
+
   @Tag public @Nls(capitalization = Nls.Capitalization.Sentence) String category;
 
   @Tag public @Nls(capitalization = Nls.Capitalization.Sentence) String categoryKey;

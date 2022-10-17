@@ -7,9 +7,12 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationGroupEP;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -34,6 +37,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(RegistryManager.class));
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
     moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(ITNReporter.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
@@ -44,6 +48,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
     moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
     moduleBuilder.addLibrary("editor-ui-api", PathUtil.getJarPathForClass(AdvancedSettings.class));
+    moduleBuilder.addLibrary("extensions", PathUtil.getJarPathForClass(BaseExtensionPointName.class));
   }
 
   public void testRegistryKeyIdHighlighting() {
@@ -132,6 +137,27 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(" (my.toolwindow.id)", toolwindow.getTailText());
     assertEquals("TOOL_WINDOW", toolwindow.getTypeText());
     assertNull(toolwindow.getTypeIcon());
+  }
+
+  public void testExtensionPointHighlighting() {
+    doHighlightingTest("ExtensionPointReference.java",
+                       "extensionPointReference.xml");
+  }
+
+  public void testExtensionPointCompletion() {
+    List<String> variants = myFixture.getCompletionVariants("ExtensionPointReferenceCompletion.java",
+                                                            "extensionPointReference.xml");
+
+    assertContainsElements(variants,
+                           "plugin.id.ep.name",
+                           "ep.qualified.name");
+
+    final LookupElementPresentation epPresentation = getLookupElementPresentation("plugin.id.ep.name");
+    assertTrue(epPresentation.isItemTextBold());
+    assertEquals(" (extensionPointReference.xml)", epPresentation.getTailText());
+    assertEquals(myFixture.getModule().getName(), epPresentation.getTypeText());
+    assertEquals(ModuleType.get(myFixture.getModule()).getIcon(), epPresentation.getTypeIcon());
+    assertTrue(epPresentation.isTypeIconRightAligned());
   }
 
   private void doHighlightingTest(String... filePaths) {

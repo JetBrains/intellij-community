@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 

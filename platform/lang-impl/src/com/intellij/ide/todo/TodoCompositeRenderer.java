@@ -16,7 +16,6 @@ import java.awt.*;
 
 /**
  * todo: replace this highlightable crap with regular NodeRenderer
- * @author Vladimir Kondratyev
  */
 final class TodoCompositeRenderer implements TreeCellRenderer {
   private final NodeRenderer myNodeRenderer;

@@ -27,7 +27,7 @@ import com.intellij.vcs.commit.CommitModeManager
 import javax.swing.JPanel
 
 private val IS_CONTENT_CREATED = Key.create<Boolean>("ToolWindow.IsContentCreated")
-private val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
+internal val CHANGES_VIEW_EXTENSION = Key.create<ChangesViewContentEP>("Content.ChangesViewExtension")
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
@@ -35,6 +35,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
       AppUIExecutor.onUiThread().expireWith(window.disposable).execute {
         updateState(window)
+        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
@@ -45,7 +46,6 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {
         updateState(window)
-        window.contentManagerIfCreated?.selectFirstContent()
       }
     })
     CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {

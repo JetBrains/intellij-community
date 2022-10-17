@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase() {
+open class ArtifactsOrderEntityImpl(val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,16 +33,14 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
   }
 
-  @JvmField
-  var _orderOfArtifacts: List<String>? = null
   override val orderOfArtifacts: List<String>
-    get() = _orderOfArtifacts!!
+    get() = dataSource.orderOfArtifacts
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
+  class Builder(var result: ArtifactsOrderEntityData?) : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>(), ArtifactsOrderEntity.Builder {
     constructor() : this(ArtifactsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,6 +58,9 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -68,11 +69,11 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isOrderOfArtifactsInitialized()) {
         error("Field ArtifactsOrderEntity#orderOfArtifacts should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactsOrderEntity#entitySource should be initialized")
       }
     }
 
@@ -80,15 +81,31 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
+      if (collection_orderOfArtifacts is MutableWorkspaceList<*>) {
+        collection_orderOfArtifacts.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactsOrderEntity
-      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.orderOfArtifacts != dataSource.orderOfArtifacts) this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -98,22 +115,18 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
       get() {
         val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
         if (collection_orderOfArtifacts !is MutableWorkspaceList) return collection_orderOfArtifacts
-        collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        }
+        else {
+          collection_orderOfArtifacts.cleanModificationUpdateAction()
+        }
         return collection_orderOfArtifacts
       }
       set(value) {
         checkModificationAllowed()
         getEntityData().orderOfArtifacts = value
         orderOfArtifactsUpdater.invoke(value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ArtifactsOrderEntityData = result ?: super.getEntityData() as ArtifactsOrderEntityData
@@ -139,12 +152,13 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ArtifactsOrderEntity {
-    val entity = ArtifactsOrderEntityImpl()
-    entity._orderOfArtifacts = orderOfArtifacts.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ArtifactsOrderEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ArtifactsOrderEntityData {
@@ -176,18 +190,18 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactsOrderEntityData
 
-    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ArtifactsOrderEntityData
 

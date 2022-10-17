@@ -98,9 +98,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     StatusBarWidget widget;
     String anchor;
 
-    static WidgetBean create(@NotNull final StatusBarWidget widget,
-                             @NotNull final Position position,
-                             @NotNull final JComponent component,
+    static WidgetBean create(final @NotNull StatusBarWidget widget,
+                             final @NotNull Position position,
+                             final @NotNull JComponent component,
                              @NotNull String anchor) {
       final WidgetBean bean = new WidgetBean();
       bean.widget = widget;
@@ -131,9 +131,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
   }
 
-  @NotNull
   @Override
-  public StatusBar createChild(@NotNull IdeFrame frame) {
+  public @NotNull StatusBar createChild(@NotNull IdeFrame frame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
     bar.setVisible(isVisible());
@@ -167,6 +166,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
               JBUI.Borders.empty(1, 0, 0, 6));
 
     myInfoAndProgressPanel = new InfoAndProgressPanel(UISettings.getShadowInstance());
+    Disposer.register(this, myInfoAndProgressPanel);
+
     addWidget(myInfoAndProgressPanel, Position.CENTER, "__IGNORED__");
     Project project = myFrame.getProject();
     if (project != null) {
@@ -225,24 +226,26 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void addWidget(@NotNull StatusBarWidget widget) {
     addWidget(widget, "__AUTODETECT__");
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
     UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, anchor));
   }
 
   @Override
-  public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Disposable parentDisposable) {
+  public void addWidget(final @NotNull StatusBarWidget widget, final @NotNull Disposable parentDisposable) {
     addWidget(widget);
     String id = widget.ID();
     Disposer.register(parentDisposable, () -> removeWidget(id));
   }
 
   @Override
-  public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor, @NotNull final Disposable parentDisposable) {
+  public void addWidget(final @NotNull StatusBarWidget widget, @NotNull String anchor, final @NotNull Disposable parentDisposable) {
     addWidget(widget, anchor);
     String id = widget.ID();
     Disposer.register(parentDisposable, () -> removeWidget(id));
@@ -267,18 +270,17 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void addCustomIndicationComponent(@NotNull final JComponent c) {
+  @SuppressWarnings("removal")
+  public void addCustomIndicationComponent(final @NotNull JComponent c) {
     final String customId = c.getClass().getName() + new Random().nextLong();
     addWidget(new CustomStatusBarWidget() {
       @Override
-      @NotNull
-      public String ID() {
+      public @NotNull String ID() {
         return customId;
       }
 
       @Override
-      @Nullable
-      public WidgetPresentation getPresentation() {
+      public @Nullable WidgetPresentation getPresentation() {
         return null;
       }
 
@@ -300,7 +302,8 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void removeCustomIndicationComponent(@NotNull final JComponent c) {
+  @SuppressWarnings("removal")
+  public void removeCustomIndicationComponent(final @NotNull JComponent c) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Set<String> keySet = myWidgetMap.keySet();
     final String[] keys = ArrayUtilRt.toStringArray(keySet);
@@ -391,8 +394,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return -1;
   }
 
-  @NotNull
-  private JPanel getTargetPanel(@NotNull IdeStatusBarImpl.Position position) {
+  private @NotNull JPanel getTargetPanel(@NotNull IdeStatusBarImpl.Position position) {
     if (position == Position.RIGHT) {
       return rightPanel();
     }
@@ -402,8 +404,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return centerPanel();
   }
 
-  @NotNull
-  private JPanel centerPanel() {
+  private @NotNull JPanel centerPanel() {
     if (myCenterPanel == null) {
       myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
       myCenterPanel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, 1));
@@ -412,8 +413,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return myCenterPanel;
   }
 
-  @NotNull
-  private JPanel rightPanel() {
+  private @NotNull JPanel rightPanel() {
     if (myRightPanel == null) {
       myRightPanel = new JPanel();
       myRightPanel.setBorder(JBUI.Borders.emptyLeft(1));
@@ -438,8 +438,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return myRightPanel;
   }
 
-  @NotNull
-  private JPanel leftPanel() {
+  private @NotNull JPanel leftPanel() {
     if (myLeftPanel == null) {
       myLeftPanel = new JPanel();
       myLeftPanel.setBorder(JBUI.Borders.empty(0, 4, 0, 1));
@@ -451,7 +450,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void setInfo(@Nullable final String s) {
+  public void setInfo(final @Nullable String s) {
     setInfo(s, null);
   }
 
@@ -465,8 +464,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  @NlsContexts.StatusBarText
-  public String getInfo() {
+  public @NlsContexts.StatusBarText String getInfo() {
     return myInfo;
   }
 
@@ -491,17 +489,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void startRefreshIndication(final String tooltipText) {
-    myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
-    myInfoAndProgressPanel.setRefreshVisible(true);
-
+  public void startRefreshIndication(@NlsContexts.Tooltip String tooltipText) {
+    myInfoAndProgressPanel.setRefreshVisible(tooltipText);
     updateChildren(child -> child.startRefreshIndication(tooltipText));
   }
 
   @Override
   public void stopRefreshIndication() {
-    myInfoAndProgressPanel.setRefreshVisible(false);
-
+    myInfoAndProgressPanel.setRefreshHidden();
     updateChildren(IdeStatusBarImpl::stopRefreshIndication);
   }
 
@@ -523,14 +518,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     new NotificationPopup(this, content, backgroundColor);
   }
 
-  public static JComponent wrap(@NotNull final StatusBarWidget widget) {
+  public static JComponent wrap(final @NotNull StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
       JComponent component = ((CustomStatusBarWidget)widget).getComponent();
       if (component.getBorder() == null) {
         component.setBorder(widget instanceof IconLikeCustomStatusBarWidget ? JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
                                                                             : JBUI.CurrentTheme.StatusBar.Widget.border());
       }
-      // wrap with a panel, so it will fill entire status bar height
+      // wrap with a panel, so it will fill the entire status bar height
       JComponent result = component instanceof JLabel ? new NonOpaquePanel(new BorderLayout(), component) : component;
       ClientProperty.put(result, WIDGET_ID, widget.ID());
       return result;
@@ -557,7 +552,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       repaint(new RelativeRectangle(myEffectComponent).getRectangleOn(this));
     }
     myEffectComponent = component;
-    // widgets shall not be opaque, as it may conflict with bg images
+    // widgets shall not be opaque, as it may conflict with a background image
     // the following code can be dropped in future
     if (myEffectComponent != null) {
       myEffectComponent.setBackground(null);
@@ -690,7 +685,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  public void updateWidget(@NotNull final String id) {
+  public void updateWidget(final @NotNull String id) {
     UIUtil.invokeLaterIfNeeded(() -> {
       JComponent widgetComponent = getWidgetComponent(id);
       if (widgetComponent != null) {
@@ -706,8 +701,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @Override
-  @Nullable
-  public StatusBarWidget getWidget(String id) {
+  public @Nullable StatusBarWidget getWidget(String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.widget;
   }
@@ -717,37 +711,31 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return ContainerUtil.map(myWidgetMap.values(), bean -> bean.widget);
   }
 
-  @NonNls
-  @Nullable
   @Override
-  public String getWidgetAnchor(@NotNull String id) {
+  public @NonNls @Nullable String getWidgetAnchor(@NotNull String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.anchor;
   }
 
-  @ApiStatus.Internal
-  @Nullable
   //todo: make private after removing all external usages
-  public JComponent getWidgetComponent(@NotNull String id) {
+  @ApiStatus.Internal
+  public @Nullable JComponent getWidgetComponent(@NotNull String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.component;
   }
 
-  @NotNull
   @Override
-  public IdeFrame getFrame() {
+  public @NotNull IdeFrame getFrame() {
     return myFrame;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myFrame.getProject();
   }
 
-  @Nullable
   @Override
-  public FileEditor getCurrentEditor() {
+  public @Nullable FileEditor getCurrentEditor() {
     return myEditorProvider != null ? myEditorProvider.getCurrentEditor() : null;
   }
 
@@ -791,21 +779,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     ApplicationManager.getApplication().getMessageBus()
       .connect(this)
       .subscribe(CloneableProjectsService.TOPIC, new CloneableProjectsService.CloneProjectListener() {
-        @Override
-        public void onCloneCanceled() {
-        }
-
-        @Override
-        public void onCloneFailed() {
-        }
-
-        @Override
-        public void onCloneSuccess() {
-        }
-
-        @Override
-        public void onCloneRemoved() {
-        }
+        @Override public void onCloneCanceled() { }
+        @Override public void onCloneFailed() { }
+        @Override public void onCloneSuccess() { }
+        @Override public void onCloneRemoved() { }
 
         @Override
         public void onCloneAdded(@NotNull ProgressIndicatorEx progressIndicator, @NotNull TaskInfo taskInfo) {

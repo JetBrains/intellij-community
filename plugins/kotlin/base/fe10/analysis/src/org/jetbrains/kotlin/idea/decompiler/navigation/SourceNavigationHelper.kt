@@ -1,26 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.impl.JavaPsiImplementationHelperImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
@@ -86,8 +82,7 @@ object SourceNavigationHelper {
                     // if the asked element is multifile classs, it might be compiled into .kotlin_metadata and .class
                     // but we don't have support of metadata declarations in light classes and in reference search (without
                     // acceptOverrides). That's why we include only .class jar in the scope.
-                    val psiClass = JavaElementFinder.getInstance(containingFile.project)
-                        .findClass(containingFile.javaFileFacadeFqName.asString(), declaration.resolveScope)
+                    val psiClass = containingFile.findFacadeClass()
                     if (psiClass != null) {
                         return ModuleInfoProvider.getInstance(declaration.project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
@@ -173,6 +168,7 @@ object SourceNavigationHelper {
                     }
                 }
             }
+
             else -> throw KotlinExceptionWithAttachments("Unexpected container of ${if (navigationKind == NavigationKind.CLASS_FILES_TO_SOURCES) "decompiled" else "source"} declaration: ${decompiledContainer::class.java.simpleName}")
                 .withPsiAttachment("declaration", declaration)
                 .withPsiAttachment("container", decompiledContainer)
@@ -261,18 +257,13 @@ object SourceNavigationHelper {
         name == declaration.nameAsSafeName
     }
 
-    fun getOriginalClass(classOrObject: KtClassOrObject): PsiClass? {
-        val fqName = classOrObject.fqName ?: return null
-        val project = classOrObject.project
-
-        return JavaPsiImplementationHelperImpl.findCompiledElement(project, classOrObject) { scope ->
-            listOfNotNull(JavaPsiFacade.getInstance(project).findClass(fqName.asString(), scope))
-        } as? PsiClass
+    fun getNavigationElement(declaration: KtDeclaration): KtDeclaration {
+        return navigateToDeclaration(declaration, NavigationKind.CLASS_FILES_TO_SOURCES)
     }
 
-    fun getNavigationElement(declaration: KtDeclaration) = navigateToDeclaration(declaration, NavigationKind.CLASS_FILES_TO_SOURCES)
-
-    fun getOriginalElement(declaration: KtDeclaration) = navigateToDeclaration(declaration, NavigationKind.SOURCES_TO_CLASS_FILES)
+    fun getOriginalElement(declaration: KtDeclaration): KtDeclaration {
+        return navigateToDeclaration(declaration, NavigationKind.SOURCES_TO_CLASS_FILES)
+    }
 
     private fun navigateToDeclaration(
         from: KtDeclaration,

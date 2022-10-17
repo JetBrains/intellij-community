@@ -28,6 +28,7 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
   public void testBAOStoString() {doTest();}
   public void testNewStringNewChar() {doTest();}
   public void testStringValueOfNewChar() {doTest();}
+  public void testRedundantStringOperation() {doTest();}
 
   @Override
   protected String getBasePath() {

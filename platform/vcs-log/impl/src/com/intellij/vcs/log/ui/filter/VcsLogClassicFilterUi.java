@@ -3,11 +3,10 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,6 +67,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final SearchFieldWithExtension mySearchComponent;
 
   @NotNull private VcsLogDataPack myDataPack;
 
@@ -75,7 +76,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   @NotNull protected final FilterModel<VcsLogDateFilter> myDateFilterModel;
   @NotNull protected final FileFilterModel myStructureFilterModel;
   @NotNull protected final TextFilterModel myTextFilterModel;
-  @NotNull private final TextFilterField myFilterField;
 
   @NotNull private final EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
 
@@ -97,7 +97,10 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myStructureFilterModel = new FileFilterModel(myLogData.getLogProviders().keySet(), myUiProperties, filters);
     myTextFilterModel = new TextFilterModel(myUiProperties, filters, parentDisposable);
 
-    myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
+    TextFilterField myFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
+
+    ActionToolbar toolbar = createTextActionsToolbar(myFilterField.getTextEditor());
+    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), myFilterField);
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
@@ -109,6 +112,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
   }
 
+  @NotNull
+  private ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
+    ActionManager actionManager = ActionManager.getInstance();
+    @NotNull ActionGroup textActionGroup = (ActionGroup)actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP);
+    ActionToolbar toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
+      @Override
+      protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
+
+        super.applyToolbarLook(look, presentation, component);
+      }
+    };
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(editor);
+    toolbar.updateActionsImmediately();
+    return toolbar;
+  }
+
   @Override
   public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
     myDataPack = newDataPack;
@@ -116,8 +136,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   @NotNull
-  public SearchTextField getTextFilterComponent() {
-    return myFilterField;
+  public SearchFieldWithExtension getTextFilterComponent() {
+    return mySearchComponent;
   }
 
   @Override
@@ -769,7 +789,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
   }
 
-  private static class TextFilterField extends SearchTextField {
+  private class TextFilterField extends SearchTextField implements DataProvider {
     @NotNull private final TextFilterModel myTextFilterModel;
 
     TextFilterField(@NotNull TextFilterModel model, @NotNull Disposable parentDisposable) {
@@ -790,7 +810,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       });
       myTextFilterModel.addSetFilterListener(() -> {
         String modelText = myTextFilterModel.getText();
-        if (getText() != modelText) setText(modelText);
+        if (!Objects.equals(getText(), modelText)) setText(modelText);
       });
       new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
         .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
@@ -814,6 +834,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       if (myTextFilterModel.hasUnsavedChanges()) {
         applyFilter();
       }
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
+        return myUiProperties;
+      }
+      return null;
     }
   }
 }

@@ -85,18 +85,18 @@ class CallBuilder(private val context: PsiElement) {
     }
   }
 
-  fun buildCall(methodCall: String, flowOutput: FlowOutput, dataOutput: DataOutput, exposedDeclarations: List<PsiVariable>): List<PsiStatement> {
+  private fun buildCall(methodCall: String, flowOutput: FlowOutput, dataOutput: DataOutput, exposedDeclarations: List<PsiVariable>): List<PsiStatement> {
     val variableDeclaration = if (flowOutput !is ConditionalFlow && dataOutput is ExpressionOutput) emptyList() else variableDeclaration(methodCall, dataOutput)
     return variableDeclaration + createFlowStatements(methodCall, flowOutput, dataOutput) + exposedDeclarations.map { createDeclaration(it) }
   }
 
-  fun buildExpressionCall(methodCall: String, dataOutput: DataOutput): List<PsiElement> {
+  private fun buildExpressionCall(methodCall: String, dataOutput: DataOutput): List<PsiElement> {
     require(dataOutput is ExpressionOutput)
     val expression = if (dataOutput.name != null) "${dataOutput.name} = $methodCall" else methodCall
     return listOf(factory.createExpressionFromText(expression, context))
   }
 
-  fun createMethodCall(method: PsiMethod, parameters: List<PsiExpression>): PsiMethodCallExpression {
+  private fun createMethodCall(method: PsiMethod, parameters: List<PsiExpression>): PsiMethodCallExpression {
     val name = if (method.isConstructor) "this" else method.name
     val callText = name + "(" + parameters.joinToString { it.text } + ")"
     val factory = PsiElementFactory.getInstance(method.project)

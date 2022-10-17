@@ -7,12 +7,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -73,7 +70,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     row {
       textField()
         .bindText(::branchName, { branchName = it })
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
         .focused().validationOnApply(
         validateBranchName()).apply { startTrackingValidationIfNeeded() }

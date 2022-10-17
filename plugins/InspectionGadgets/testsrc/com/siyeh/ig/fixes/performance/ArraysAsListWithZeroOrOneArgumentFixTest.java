@@ -13,27 +13,31 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
 
   public void testZeroArguments() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Arrays.asList/**/();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Collections.emptyList();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Arrays.asList/**/();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Collections.emptyList();
+             }}""");
   }
 
   @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = Arrays.<String>/**/asList().spliterator();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = Collections.<String>emptyList().spliterator();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = Arrays.<String>/**/asList().spliterator();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = Collections.<String>emptyList().spliterator();
+             }}""");
   }
 
   public void testOneArgument() {

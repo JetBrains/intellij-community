@@ -13,7 +13,8 @@ data class ReleaseInfo(val date: LocalDate,
 data class Download(val linux: OperatingSystem?,
                     val mac: OperatingSystem?,
                     val macM1: OperatingSystem?,
-                    val windows: OperatingSystem?)
+                    val windows: OperatingSystem?,
+                    val windowsZip: OperatingSystem?)
 
 data class OperatingSystem(val link: String)
 

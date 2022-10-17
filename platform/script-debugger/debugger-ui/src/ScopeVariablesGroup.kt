@@ -10,7 +10,7 @@ import org.jetbrains.concurrency.onError
 import org.jetbrains.concurrency.onSuccess
 import org.jetbrains.concurrency.thenAsyncAccept
 
-class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?, val firstScope: Boolean? = null) : XValueGroup(scope.createScopeNodeName()) {
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?, private val firstScope: Boolean? = null) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
   private val callFrame = if (scope.type == ScopeType.LOCAL) callFrame else null

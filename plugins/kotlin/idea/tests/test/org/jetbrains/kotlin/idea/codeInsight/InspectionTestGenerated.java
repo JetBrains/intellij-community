@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -198,6 +198,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/naming/function/inspectionData/inspections.test");
         }
 
+        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
+        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("naming/objectPrivateProperty/inspectionData/inspections.test")
+        public void testNaming_objectPrivateProperty_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/objectPrivateProperty/inspectionData/inspections.test");
+        }
+
         @TestMetadata("naming/objectProperty/inspectionData/inspections.test")
         public void testNaming_objectProperty_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/objectProperty/inspectionData/inspections.test");
@@ -263,11 +273,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantSemicolon/inspectionData/inspections.test")
-        public void testRedundantSemicolon_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSemicolon/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
         public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
@@ -291,11 +296,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("redundantWith/inspectionData/inspections.test")
         public void testRedundantWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantWith/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("removeSetterParameterType/inspectionData/inspections.test")
-        public void testRemoveSetterParameterType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/removeSetterParameterType/inspectionData/inspections.test");
         }
 
         @TestMetadata("removeSingleExpressionStringTemplate/inspectionData/inspections.test")
@@ -336,16 +336,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
         public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOff/inspectionData/inspections.test")
-        public void testTrailingCommaOff_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOff/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("trailingCommaOn/inspectionData/inspections.test")
-        public void testTrailingCommaOn_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/trailingCommaOn/inspectionData/inspections.test");
         }
 
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
@@ -422,11 +412,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         public void testUnusedSymbol_typeParameter_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedSymbol/typeParameter/inspectionData/inspections.test");
         }
-
-        @TestMetadata("wrapUnaryOperator/inspectionData/inspections.test")
-        public void testWrapUnaryOperator_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/wrapUnaryOperator/inspectionData/inspections.test");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -454,11 +439,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("deprecatedCallableAddReplaceWith/inspectionData/inspections.test")
         public void testDeprecatedCallableAddReplaceWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/deprecatedCallableAddReplaceWith/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("simplifyNegatedBinaryExpression/inspectionData/inspections.test")
-        public void testSimplifyNegatedBinaryExpression_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
         }
     }
 }

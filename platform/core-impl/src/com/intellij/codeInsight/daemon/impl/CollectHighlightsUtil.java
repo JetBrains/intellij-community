@@ -27,18 +27,18 @@ public final class CollectHighlightsUtil {
   private CollectHighlightsUtil() { }
 
   @NotNull
-  public static List<PsiElement> getElementsInRange(@NotNull PsiElement root, final int startOffset, final int endOffset) {
+  public static List<PsiElement> getElementsInRange(@NotNull PsiElement root, int startOffset, int endOffset) {
     return getElementsInRange(root, startOffset, endOffset, false);
   }
 
   @NotNull
   public static List<PsiElement> getElementsInRange(@NotNull PsiElement root,
-                                                    final int startOffset,
-                                                    final int endOffset,
+                                                    int startOffset,
+                                                    int endOffset,
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return new ArrayList<>();
-    final List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
+    List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
 
     PsiElement parent = commonParent;
     while (parent != null && parent != root) {
@@ -54,20 +54,22 @@ public final class CollectHighlightsUtil {
   private static final int STARTING_TREE_HEIGHT = 100;
 
   @NotNull
-  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, final int startOffset, final int endOffset) {
-    final List<PsiElement> result = new ArrayList<>();
+  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, int startOffset, int endOffset) {
+    int estimatedElements = parent.getTextLength()/2;
+    List<PsiElement> result = new ArrayList<>(estimatedElements);
     int offset = parent.getTextRange().getStartOffset();
 
-    final IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = parent;
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
+    Condition<PsiElement> @NotNull [] filters = EP_NAME.getExtensions();
     while (true) {
       ProgressIndicatorProvider.checkCanceled();
 
-      for (Condition<PsiElement> filter : EP_NAME.getExtensionList()) {
+      for (Condition<PsiElement> filter : filters) {
         if (!filter.value(element)) {
           assert child == PsiUtilCore.NULL_PSI_ELEMENT;
           child = null; // do not want to process children
@@ -119,9 +121,9 @@ public final class CollectHighlightsUtil {
 
 
   @Nullable
-  public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+  public static PsiElement findCommonParent(PsiElement root, int startOffset, int endOffset) {
     if (startOffset == endOffset) return null;
-    final PsiElement left = findElementAtInRoot(root, startOffset);
+    PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset - 1);
     if (left == null || right == null) return null;
 
@@ -140,7 +142,7 @@ public final class CollectHighlightsUtil {
   }
 
   @Nullable
-  private static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
+  private static PsiElement findElementAtInRoot(PsiElement root, int offset) {
     if (root instanceof PsiFile) {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }

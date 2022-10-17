@@ -5,10 +5,7 @@ import com.intellij.dvcs.push.PushSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -145,7 +142,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
       @Override
       protected void installSpeedSearch() {
-        new TreeSpeedSearch(this, path -> {
+        new TreeSpeedSearch(this, false, path -> {
           Object pathComponent = path.getLastPathComponent();
           if (pathComponent instanceof RepositoryNode) {
             return ((RepositoryNode)pathComponent).getRepositoryName();
@@ -784,6 +781,11 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
     private boolean getValue() {
       return mySettings.getShowDetailsInPushDialog();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

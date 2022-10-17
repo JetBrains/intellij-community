@@ -914,58 +914,54 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-26354
   public void testAttrsField() {
-    runWithAdditionalClassEntryInSdkRoots(
-      "../packages",
-      () -> {
-        final PyFile file = getTestFile();
+    final PyFile file = getTestFile();
 
-        final DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
-        checker.check("a", true, false, true);
-        checker.check("b", false, true, true);
-        checker.check("c", false, false, true);
-        checker.check("d", false, false, false);
-        checker.check("e", false, false, false);
-        checker.check("f", false, false, false);
-        checker.check("g", false, false, true);
-        checker.check("h", false, true, true);
-        checker.check("i", false, false, true);
+    DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+    checker.check("a", true, false, true);
+    checker.check("b", false, true, true);
+    checker.check("c", false, false, true);
+    checker.check("d", false, false, false);
+    checker.check("e", false, false, false);
+    checker.check("f", false, false, false);
+    checker.check("g", false, false, true);
+    checker.check("h", false, true, true);
+    checker.check("i", false, false, true);
 
-        assertNotParsed(file);
-      }
-    );
+    checker = new DataclassFieldChecker(file.findTopLevelClass("B"));
+    checker.check("a", true, false, true);
+    checker.check("b", false, true, true);
+    checker.check("c", false, false, true);
+    checker.check("d", false, false, false);
+    checker.check("e", false, false, false);
+    checker.check("f", false, false, false);
+    checker.check("g", false, false, true);
+    checker.check("h", false, true, true);
+    checker.check("i", false, false, true);
+
+    assertNotParsed(file);
   }
 
   // PY-34374
   public void testAttrsKwOnlyOnClass() {
-    runWithAdditionalClassEntryInSdkRoots(
-      "../packages",
-      () -> {
-        final PyFile file = getTestFile();
+    final PyFile file = getTestFile();
 
-        assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-        assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-        assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
 
-        assertNotParsed(file);
-      }
-    );
+    assertNotParsed(file);
   }
 
   // PY-33189
   public void testAttrsKwOnlyOnField() {
-    runWithAdditionalClassEntryInSdkRoots(
-      "../packages",
-      () -> {
-        final PyFile file = getTestFile();
-        final PyClass cls = file.findTopLevelClass("Foo");
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Foo");
 
-        assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
-        assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
-        assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
-        assertNotParsed(file);
-      }
-    );
+    assertNotParsed(file);
   }
 
   // PY-27398

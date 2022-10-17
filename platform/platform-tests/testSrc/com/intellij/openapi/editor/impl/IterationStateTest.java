@@ -48,9 +48,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelection() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 4).release();
     verifySplitting(false,
@@ -65,9 +66,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastNonEmptyLine() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 6).release();
     verifySplitting(false,

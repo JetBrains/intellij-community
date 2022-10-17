@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,10 +21,15 @@ import org.jetbrains.annotations.NotNull;
  * @param <T> type of element you want register quick fixes for; for example, in Java language it may be {@link com.intellij.psi.PsiJavaCodeReferenceElement}
  */
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
+  /**
+   * Call each registered {@link UnresolvedReferenceQuickFixProvider} for its quick fixes.
+   * Please don't use because it might be very expensive.
+   */
+  @ApiStatus.Internal
   public static <T extends PsiReference> void registerReferenceFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar) {
-    final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
+    boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
     Class<? extends PsiReference> referenceClass = ref.getClass();
-    for (UnresolvedReferenceQuickFixProvider<?> each : EXTENSION_NAME.getExtensionList()) {
+    for (UnresolvedReferenceQuickFixProvider<?> each : EP_NAME.getExtensionList()) {
       if (dumb && !DumbService.isDumbAware(each)) {
         continue;
       }
@@ -34,7 +40,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
     }
   }
 
-  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider<?>> EXTENSION_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
+  static final ExtensionPointName<UnresolvedReferenceQuickFixProvider<?>> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
 
   public abstract void registerFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar);
 

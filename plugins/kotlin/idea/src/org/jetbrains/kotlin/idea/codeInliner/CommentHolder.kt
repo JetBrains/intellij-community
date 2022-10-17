@@ -63,7 +63,7 @@ class CommentHolder(val leadingComments: List<CommentNode>, val trailingComments
             }
         }
 
-        fun Sequence<PsiElement>.collectComments(): List<CommentNode> = this.filterIsInstance<PsiComment>()
+        private fun Sequence<PsiElement>.collectComments(): List<CommentNode> = this.filterIsInstance<PsiComment>()
             .map { CommentNode.create(it) }
             .toList()
     }

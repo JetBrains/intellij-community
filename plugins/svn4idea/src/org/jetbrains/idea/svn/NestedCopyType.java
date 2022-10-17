@@ -12,13 +12,10 @@ public enum NestedCopyType {
   inner;
 
   public @NlsContexts.Label @NotNull String getDisplayName() {
-    switch (this) {
-      case external:
-        return message("label.nested.copy.type.external");
-      case switched:
-        return message("label.nested.copy.type.switched");
-      default:
-        return message("label.nested.copy.type.inner");
-    }
+    return message(switch (this) {
+      case external -> "label.nested.copy.type.external";
+      case switched -> "label.nested.copy.type.switched";
+      case inner -> "label.nested.copy.type.inner";
+    });
   }
 }

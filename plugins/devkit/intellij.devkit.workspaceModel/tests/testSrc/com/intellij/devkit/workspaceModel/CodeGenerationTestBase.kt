@@ -11,12 +11,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
@@ -72,25 +74,34 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor
-  
-  protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary)
+
+  /**
+   * Returns `true` if compiled content of intellij.platform.workspaceModel.storage should be added as a library. 
+   */
+  protected open val shouldAddWorkspaceStorageLibrary: Boolean
+    get() = true
+
+  protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false,
+                                   pathToPackage: String = ".") {
     val (srcRoot, genRoot) = generateCode(".", keepUnknownFields)
+    val srcPackageDir = srcRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $srcRoot")
+    val genPackageDir = genRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $genRoot")
 
     val expectedApiDirPath = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_api", true)
-    val expectedApiDir = VirtualFileManager.getInstance().findFileByNioPath(expectedApiDirPath.toPath())!!
+    val expectedApiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedApiDirPath.toPath())!!
     if (FileUtil.isAncestor(dirWithExpectedApiFiles, dirWithExpectedImplFiles, true)) {
       runWriteActionAndWait {
-        VfsUtil.copyDirectory(this, srcRoot, expectedApiDir, null)
+        VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, null)
       }
       expectedApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
     }
     else {
       val expectedImplDirPath: Path = FileUtil.createTempDirectory(CodeGenerationTestBase::class.java.simpleName, "${testDirectoryName}_impl", true).toPath()
-      val expectedImplDir = VirtualFileManager.getInstance().findFileByNioPath(expectedImplDirPath)!!
+      val expectedImplDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(expectedImplDirPath)!!
       runWriteActionAndWait {
-        VfsUtil.copyDirectory(this, srcRoot, expectedApiDir, VirtualFileFilter { it != genRoot })
-        VfsUtil.copyDirectory(this, genRoot, expectedImplDir, null)
+        VfsUtil.copyDirectory(this, srcPackageDir, expectedApiDir, VirtualFileFilter { it != genRoot })
+        VfsUtil.copyDirectory(this, genPackageDir, expectedImplDir, null)
       }
       expectedApiDirPath.assertMatches(directoryContentOf(dirWithExpectedApiFiles))
       expectedImplDirPath.assertMatches(directoryContentOf(dirWithExpectedImplFiles))
@@ -100,23 +111,57 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected fun generateCode(relativePathToEntitiesDirectory: String, keepUnknownFields: Boolean = false): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
-    runWriteActionAndWait {
-      CodeWriter.generate(project, srcRoot, keepUnknownFields) { genRoot }
-      FileDocumentManager.getInstance().saveAllDocuments()
+    val keepUnknownFieldsValue = Registry.get("workspace.model.generator.keep.unknown.fields")
+    keepUnknownFieldsValue.setValue(keepUnknownFields)
+    try {
+      runWriteActionAndWait {
+        CodeWriter.generate(project, module, srcRoot) { genRoot }
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
+    }
+    finally {
+      keepUnknownFieldsValue.setValue(false)
     }
     return srcRoot to genRoot
   }
 
-  object WorkspaceEntitiesProjectDescriptor : KotlinLightProjectDescriptor() {
+  class WorkspaceEntitiesProjectDescriptor(private val addWorkspaceStorageLibrary: Boolean) : KotlinLightProjectDescriptor() {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
       val contentEntry = model.contentEntries.first()
       val genFolder = VfsUtil.createDirectoryIfMissing(contentEntry.file, "gen")
 
       contentEntry.addSourceFolder(genFolder, JavaSourceRootType.SOURCE,
                                    JpsJavaExtensionService.getInstance().createSourceRootProperties("", true))
+      if (addWorkspaceStorageLibrary) {
+        addWorkspaceStorageLibrary(model)
+      }
+    }
+
+    override fun equals(other: Any?): Boolean {
+      return other is WorkspaceEntitiesProjectDescriptor && addWorkspaceStorageLibrary == other.addWorkspaceStorageLibrary
+    }
+
+    override fun hashCode(): Int {
+      return addWorkspaceStorageLibrary.hashCode()
+    }
+  }
+
+  companion object {
+    internal fun removeWorkspaceStorageLibrary(model: ModifiableRootModel) {
+      val moduleLibraryTable = model.moduleLibraryTable
+      val modifiableModel = model.moduleLibraryTable.modifiableModel
+      modifiableModel.removeLibrary(moduleLibraryTable.libraries.first())
+      modifiableModel.commit()
+    }
+
+    internal fun addWorkspaceStorageLibrary(model: ModifiableRootModel) {
       val library = model.moduleLibraryTable.modifiableModel.createLibrary("workspace-storage")
       val modifiableModel = library.modifiableModel
-      modifiableModel.addRoot(VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java)), OrderRootType.CLASSES)
+      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+      val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
+      assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
+      VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)
+      modifiableModel.addRoot(workspaceStorageClassesRoot!!, OrderRootType.CLASSES)
       modifiableModel.commit()
     }
   }

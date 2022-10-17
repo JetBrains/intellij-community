@@ -5,7 +5,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.ext.ginq.ast.*
 import org.jetbrains.plugins.groovy.ext.ginq.types.inferDataSourceComponentType
@@ -42,7 +42,7 @@ class GinqHighlightingVisitor : GroovyRecursiveElementVisitor() {
     val filteringFragments = ginq.getFilterFragments()
     val filterResults = filteringFragments.mapNotNull { fragment ->
       val type = fragment.filter.type
-      val parentCall = fragment.filter.parentOfType<GrMethodCall>()?.parentOfType<GrMethodCall>()?.invokedExpression?.castSafelyTo<GrReferenceExpression>()?.takeIf { it.referenceName == "exists" }
+      val parentCall = fragment.filter.parentOfType<GrMethodCall>()?.parentOfType<GrMethodCall>()?.invokedExpression?.asSafely<GrReferenceExpression>()?.takeIf { it.referenceName == "exists" }
       if (type != PsiType.BOOLEAN && type?.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) != true && parentCall == null) {
         fragment.filter to GroovyBundle.message("ginq.error.message.boolean.condition.expected")
       }

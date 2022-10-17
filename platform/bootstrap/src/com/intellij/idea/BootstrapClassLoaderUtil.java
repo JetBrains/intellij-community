@@ -30,48 +30,40 @@ public final class BootstrapClassLoaderUtil {
 
   private BootstrapClassLoaderUtil() { }
 
-  private static boolean isDevServer() {
-    return Boolean.getBoolean("idea.use.dev.build.server");
-  }
-
   // for CWM
   // Marketplace plugin, PROPERTY_IGNORE_CLASSPATH and PROPERTY_ADDITIONAL_CLASSPATH is not supported by intention
   public static @NotNull Collection<Path> getProductClassPath() throws IOException {
     Path distDir = Path.of(PathManager.getHomePath());
-    if (isDevServer()) {
-      return loadClassPathFromDevBuildServer(distDir);
+    if (AppMode.isDevServer()) {
+      return loadClassPathFromDevBuild(distDir);
     }
-    else {
-      Path libDir = distDir.resolve("lib");
-      Collection<Path> classpath = new LinkedHashSet<>();
 
-      parseClassPathString(System.getProperty("java.class.path"), classpath);
+    Path libDir = distDir.resolve("lib");
+    Collection<Path> classpath = new LinkedHashSet<>();
 
-      Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
-      String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      assert selfRootPath != null;
-      Path selfRoot = Path.of(selfRootPath);
-      classpath.add(selfRoot);
-      addLibraries(classpath, libDir, selfRoot);
-      addLibraries(classpath, libDir.resolve("ant/lib"), null);
-      return classpath;
-    }
+    parseClassPathString(System.getProperty("java.class.path"), classpath);
+
+    Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
+    String selfRootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    assert selfRootPath != null;
+    Path selfRoot = Path.of(selfRootPath);
+    classpath.add(selfRoot);
+    addLibraries(classpath, libDir, selfRoot);
+    addLibraries(classpath, libDir.resolve("ant/lib"), null);
+    return classpath;
   }
 
   public static void initClassLoader(boolean addCwmLibs) throws Throwable {
     Path distDir = Path.of(PathManager.getHomePath());
     ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
+    if (!(classLoader instanceof PathClassLoader)) {
+      throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
+    }
+    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
 
-    if (isDevServer()) {
-      if (!(classLoader instanceof PathClassLoader)) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("Please run with VM option -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
-        System.exit(1);
-      }
-
-      List<Path> paths = loadClassPathFromDevBuildServer(distDir);
-      PathClassLoader result = (PathClassLoader)classLoader;
-      result.getClassPath().appendFiles(paths);
+    if (AppMode.isDevServer()) {
+      List<Path> paths = loadClassPathFromDevBuild(distDir);
+      pathClassLoader.getClassPath().appendFiles(paths);
       return;
     }
 
@@ -132,11 +124,6 @@ public final class BootstrapClassLoaderUtil {
       updateSystemClassLoader = true;
     }
 
-    if (!(classLoader instanceof PathClassLoader)) {
-      throw new RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
-    }
-
-    PathClassLoader pathClassLoader = (PathClassLoader)classLoader;
     if (!classpath.isEmpty()) {
       pathClassLoader.getClassPath().appendFiles(List.copyOf(classpath));
     }
@@ -169,8 +156,18 @@ public final class BootstrapClassLoaderUtil {
     return pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
   }
 
-  private static @NotNull List<Path> loadClassPathFromDevBuildServer(@NotNull Path distDir) throws IOException {
+  private static @NotNull List<Path> loadClassPathFromDevBuild(@NotNull Path distDir) throws IOException {
     String platformPrefix = System.getProperty("idea.platform.prefix", "idea");
+    Path devRunDir = distDir.resolve("out/dev-run");
+    Path productDevRunDir = devRunDir.resolve(AppMode.getDevBuildRunDirName(platformPrefix));
+    Path coreClassPathFile = productDevRunDir.resolve("core-classpath.txt");
+    FileSystem fs = FileSystems.getDefault();
+    try {
+      return loadCoreClassPath(fs, coreClassPathFile);
+    }
+    catch (NoSuchFileException ignore) {
+    }
+
     URL serverUrl = new URL("http://127.0.0.1:20854/build?platformPrefix=" + platformPrefix);
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("Waiting for " + serverUrl + " (first launch can take up to 1-2 minute)");
@@ -183,7 +180,8 @@ public final class BootstrapClassLoaderUtil {
       responseCode = connection.getResponseCode();
     }
     catch (ConnectException e) {
-      throw new RuntimeException("Please run Dev Build Server. Run build/dev-build-server.cmd in OS terminal. See https://bit.ly/3rMPnUX", e);
+      throw new RuntimeException("Please run Dev Build Server. Run build/dev-build-server.cmd in OS terminal. See https://bit.ly/3rMPnUX",
+                                 e);
     }
 
     connection.disconnect();
@@ -191,9 +189,11 @@ public final class BootstrapClassLoaderUtil {
       throw new RuntimeException("Dev Build server is not able to handle build request, see server's log for details");
     }
 
+    return loadCoreClassPath(fs, productDevRunDir.resolve("libClassPath.txt"));
+  }
+
+  private static @NotNull List<Path> loadCoreClassPath(FileSystem fs, Path excludedModuleListPath) throws IOException {
     List<Path> result = new ArrayList<>();
-    FileSystem fs = FileSystems.getDefault();
-    Path excludedModuleListPath = distDir.resolve("out/dev-run/" + platformPrefix + "/libClassPath.txt");
     try (Stream<String> lineStream = Files.lines(excludedModuleListPath)) {
       lineStream.forEach(s -> {
         if (!s.isEmpty()) {

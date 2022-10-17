@@ -13,12 +13,12 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
 
   constructor(consumer: DoubleConsumer) : this(Easing.LINEAR, consumer)
 
-  fun setVisible(visible: Boolean) {
+  fun setVisible(visible: Boolean, updateVisibility: () -> Unit) {
     if (visible != atomicVisible.getAndSet(visible)) {
       val value = statefulEasing.value
       when {
-        !visible && value > 0.0 -> animator.animate(createHidingAnimation(value))
-        visible && value < 1.0 -> animator.animate(createShowingAnimation(value))
+        !visible && value > 0.0 -> animator.animate(createHidingAnimation(value, updateVisibility))
+        visible && value < 1.0 -> animator.animate(createShowingAnimation(value, updateVisibility))
         else -> animator.stop()
       }
     }
@@ -31,19 +31,19 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
     }
   }
 
-  protected val showingDelay
+  private val showingDelay
     get() = intValue("ide.animation.showing.delay", 0)
 
-  protected val showingDuration
+  private val showingDuration
     get() = intValue("ide.animation.showing.duration", 130)
 
-  protected val hidingDelay
+  private val hidingDelay
     get() = intValue("ide.animation.hiding.delay", 140)
 
-  protected val hidingDuration
+  private val hidingDuration
     get() = intValue("ide.animation.hiding.duration", 150)
 
-  private fun createShowingAnimation(value: Double) = Animation(consumer).apply {
+  private fun createShowingAnimation(value: Double, visibility: () -> Unit) = Animation(consumer).apply {
     if (value > 0.0) {
       duration = (showingDuration * (1 - value)).roundToInt()
       easing = statefulEasing.coerceIn(value, 1.0)
@@ -53,9 +53,9 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       duration = showingDuration
       easing = statefulEasing
     }
-  }
+  }.runWhenScheduled(visibility)
 
-  private fun createHidingAnimation(value: Double) = Animation(consumer).apply {
+  private fun createHidingAnimation(value: Double, visibility: () -> Unit) = Animation(consumer).apply {
     if (value < 1.0) {
       duration = (hidingDuration * value).roundToInt()
       easing = statefulEasing.coerceIn(0.0, value).reverse()
@@ -65,5 +65,5 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       duration = hidingDuration
       easing = statefulEasing.reverse()
     }
-  }
+  }.runWhenExpiredOrCancelled(visibility)
 }

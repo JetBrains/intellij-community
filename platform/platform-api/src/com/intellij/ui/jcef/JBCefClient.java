@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -77,7 +77,7 @@ public final class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefDisplayHandler> myDisplayHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDownloadHandler> myDownloadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDragHandler> myDragHandler = new HandlerSupport<>();
-  private final HandlerSupport<CefMediaAccessHandler> myMediaAccessHandler = new HandlerSupport<>();
+  private final HandlerSupport<CefPermissionHandler> myPermissionHandler = new HandlerSupport<>();
   private final HandlerSupport<CefFocusHandler> myFocusHandler = new HandlerSupport<>();
   private final HandlerSupport<CefJSDialogHandler> myJSDialogHandler = new HandlerSupport<>();
   private final HandlerSupport<CefKeyboardHandler> myKeyboardHandler = new HandlerSupport<>();
@@ -255,10 +255,9 @@ public final class JBCefClient implements JBCefDisposable {
                                     String title,
                                     String defaultFilePath,
                                     Vector<String> acceptFilters,
-                                    int selectedAcceptFilter,
                                     CefFileDialogCallback callback) {
           return myDialogHandler.handleBoolean(browser, handler -> {
-            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, selectedAcceptFilter, callback);
+            return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, callback);
           });
         }
       });
@@ -365,9 +364,9 @@ public final class JBCefClient implements JBCefDisposable {
     myDragHandler.remove(handler, browser, () -> myCefClient.removeDragHandler());
   }
 
-  public JBCefClient addMediaAccessHandler(@NotNull CefMediaAccessHandler handler, @NotNull CefBrowser browser) {
-    return myMediaAccessHandler.add(handler, browser, () -> {
-      myCefClient.addMediaAccessHandler(new CefMediaAccessHandler() {
+  public JBCefClient addPermissionHandler(@NotNull CefPermissionHandler handler, @NotNull CefBrowser browser) {
+    return myPermissionHandler.add(handler, browser, () -> {
+      myCefClient.addPermissionHandler(new CefPermissionHandler() {
 
         @Override
         public boolean onRequestMediaAccessPermission(CefBrowser browser,
@@ -375,7 +374,7 @@ public final class JBCefClient implements JBCefDisposable {
                                                       String requesting_url,
                                                       int requested_permissions,
                                                       CefMediaAccessCallback callback) {
-          Boolean res = myMediaAccessHandler.handle(browser, handler -> {
+          Boolean res = myPermissionHandler.handle(browser, handler -> {
             return handler.onRequestMediaAccessPermission(browser, frame, requesting_url, requested_permissions, callback);
           });
           return ObjectUtils.notNull(res, false);
@@ -627,13 +626,6 @@ public final class JBCefClient implements JBCefDisposable {
                                           CefCallback callback) {
           return myRequestHandler.handleBoolean(browser, handler -> {
             return handler.onCertificateError(browser, cert_error, request_url, callback);
-          });
-        }
-
-        @Override
-        public void onPluginCrashed(CefBrowser browser, String pluginPath) {
-          myRequestHandler.handle(browser, handler -> {
-            handler.onPluginCrashed(browser, pluginPath);
           });
         }
 

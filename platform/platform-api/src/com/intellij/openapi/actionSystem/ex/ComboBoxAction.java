@@ -20,8 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,15 +35,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon;
   private static Icon myDisabledIcon;
 
-  @NotNull
-  public static Icon getArrowIcon(boolean enabled) {
+  public static @NotNull Icon getArrowIcon(boolean enabled) {
     if (myIcon != AllIcons.General.ArrowDown) {
       myIcon = UIManager.getIcon("ComboBoxButton.arrowIcon");
       myDisabledIcon = UIManager.getIcon("ComboBoxButton.arrowIconDisabled");
@@ -72,8 +70,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     popup.showCenteredInCurrentWindow(project);
   }
 
-  @NotNull
-  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+  protected @NotNull ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     return createActionPopup(createPopupActionGroup(component, context), context, disposeCallback);
   }
 
@@ -84,19 +81,23 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JPanel panel = new JPanel(new GridBagLayout());
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = createComboBoxButton(presentation);
+    if (isNoWrapping(place)) return button;
+
+    JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints(
       0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.create(0, 3), 0, 0);
     panel.add(button, constraints);
     return panel;
   }
 
-  @NotNull
-  protected ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+  protected boolean isNoWrapping(@NotNull String place) {
+    return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
+  }
+
+  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
     return new ComboBoxButton(presentation);
   }
 
@@ -116,11 +117,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-  @NotNull
-  protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+  /** @deprecated override {@link #createPopupActionGroup(JComponent, DataContext)} instead */
+  @Deprecated
+  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+    throw new UnsupportedOperationException();
+  }
 
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull  DataContext dataContext) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
   }
 
@@ -140,6 +143,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private final Presentation myPresentation;
     private boolean myForcePressed;
     private @TooltipTitle String myTooltipText;
+
+    @Override
+    public String getUIClassID() {
+      return "ComboBoxButtonUI";
+    }
 
     public ComboBoxButton(@NotNull Presentation presentation) {
       myPresentation = presentation;
@@ -241,8 +249,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @TestOnly
-    @NotNull
-    public Presentation getPresentation() {
+    public @NotNull Presentation getPresentation() {
       return myPresentation;
     }
 
@@ -266,9 +273,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       fireStateChanged();
     }
 
-    @Nullable
     @Override
-    public String getToolTipText() {
+    public @Nullable String getToolTipText() {
       return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
     }
 
@@ -282,13 +288,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       popup.showUnderneathOf(this);
     }
 
-    @NotNull
-    protected JBPopup createPopup(@Nullable Runnable onDispose) {
+    protected @NotNull JBPopup createPopup(@Nullable Runnable onDispose) {
       return createActionPopup(getDataContext(), this, onDispose);
     }
 
-    @NotNull
-    protected DataContext getDataContext() {
+    protected @NotNull DataContext getDataContext() {
       return ActionToolbar.getDataContextFor(this);
     }
 
@@ -335,27 +339,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public Dimension getPreferredSize() {
-      Dimension prefSize = super.getPreferredSize();
-      Insets i = getInsets();
-      int width = prefSize.width + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0) +
-       (myPresentation == null || !isArrowVisible(myPresentation) ? 0 : JBUIScale.scale(16));
-
-      int height = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + i.top + i.bottom;
-      if (!isSmallVariant()) {
-        height = Math.max(height, prefSize.height);
-      }
-      Dimension size = new Dimension(width, height);
-      JBInsets.addTo(size, getMargin());
-      return size;
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return new Dimension(super.getMinimumSize().width, getPreferredSize().height);
-    }
-
-    @Override
     public Font getFont() {
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
     }
@@ -365,55 +348,23 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
     }
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      if (!isArrowVisible(myPresentation)) {
-        return;
-      }
-
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        Icon icon = getArrowIcon(isEnabled());
-        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUIScale.scale(3) + getArrowGap();
-        int y = (getHeight() - icon.getIconHeight()) / 2;
-        icon.paintIcon(null, g, x, y);
-      }
-      else {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          int iconSize = JBUIScale.scale(16);
-          int x = getWidth() - iconSize - getInsets().right - getMargin().right + getArrowGap(); // Different icons correction
-          int y = (getHeight() - iconSize)/2;
-
-          g2.translate(x, y);
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-          g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
-
-          Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          arrow.moveTo(JBUIScale.scale(3.5f), JBUIScale.scale(6f));
-          arrow.lineTo(JBUIScale.scale(12.5f), JBUIScale.scale(6f));
-          arrow.lineTo(JBUIScale.scale(8f), JBUIScale.scale(11f));
-          arrow.closePath();
-
-          g2.fill(arrow);
-        }
-        finally {
-          g2.dispose();
-        }
-      }
-    }
-
     /*
     should be used with margin
      */
-    protected int getArrowGap() {
+    public int getArrowGap() {
       return 0;
     }
 
     protected boolean isArrowVisible(@NotNull Presentation presentation) {
       return true;
+    }
+
+    public boolean isArrowVisible() {
+      return myPresentation != null && isArrowVisible(myPresentation);
+    }
+
+    public boolean isSmallVariant() {
+      return ComboBoxAction.this.isSmallVariant();
     }
 
     @Override

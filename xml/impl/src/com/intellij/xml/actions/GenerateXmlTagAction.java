@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.xml.XMLConstants;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -149,18 +150,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return;
     switch (selected.getContentType()) {
-      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY -> {
         newTag.collapseIfEmpty();
         ASTNode node = newTag.getNode();
         assert node != null;
         ASTNode elementEnd = node.findChildByType(XmlTokenType.XML_EMPTY_ELEMENT_END);
         if (elementEnd == null) {
-          LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
+          LeafElement emptyTagEnd =
+            Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
           node.addChild(emptyTagEnd);
         }
-        break;
-      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
-        newTag.getValue().setText("");
+      }
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED -> newTag.getValue().setText("");
     }
     for (XmlAttributeDescriptor descriptor : selected.getAttributesDescriptors(newTag)) {
       if (descriptor.isRequired()) {
@@ -237,10 +238,22 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
     if (group.getMinOccurs() < 1) return Collections.emptyList();
     switch (group.getGroupType()) {
-      case LEAF:
+      case LEAF -> {
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
+        
+        PsiElement declaration = descriptor.getDeclaration();
+        // don't add abstract elements to required sub tags list
+        if (declaration instanceof XmlTag) {
+          XmlTag tag = (XmlTag)descriptor.getDeclaration();
+          String abstractValue = tag.getAttributeValue("abstract", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+          if ("true".equals(abstractValue)) {
+            return Collections.emptyList();
+          }
+        }
+        
         return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
-      case CHOICE:
+      }
+      case CHOICE -> {
         LinkedHashSet<XmlElementDescriptor> set = null;
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           List<XmlElementDescriptor> descriptors = computeRequiredSubTags(subGroup);
@@ -255,13 +268,14 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           return Collections.singletonList(null); // placeholder for smart completion
         }
         return new ArrayList<>(set);
-
-      default:
+      }
+      default -> {
         ArrayList<XmlElementDescriptor> list = new ArrayList<>();
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           list.addAll(computeRequiredSubTags(subGroup));
         }
         return list;
+      }
     }
   }
 

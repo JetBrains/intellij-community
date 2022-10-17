@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,14 +13,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Deque;
-import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory {
@@ -32,7 +34,7 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
   }
 
   @Override
-  public @Nls @NotNull String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return UIBundle.message("status.bar.write.thread.widget.name");
   }
 
@@ -71,7 +73,6 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
     private final JPanel myComponent = new MyComponent();
     private final Deque<AtomicIntegerArray> myStatsDeque = new LinkedBlockingDeque<>();
     private volatile AtomicIntegerArray myCurrentStats = new AtomicIntegerArray(4);
-
     private final Timer myTimer = new Timer(500, e -> {
       myStatsDeque.add(myCurrentStats);
       while (myStatsDeque.size() > WIDGET_SIZE.width) {
@@ -80,8 +81,7 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
       myCurrentStats = new AtomicIntegerArray(4);
       myComponent.repaint();
     });
-    private final java.util.Timer ourTimer2 = new java.util.Timer("Write Thread Widget Timer");
-
+    private Future<?> ourTimer2 = new CompletableFuture<>();
 
     @Override
     public JComponent getComponent() {
@@ -101,21 +101,18 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
         return;
       }
 
-      ourTimer2.scheduleAtFixedRate(new TimerTask() {
-        @Override
-        public void run() {
-          boolean currentValue = application.isCurrentWriteOnEdt();
-          AtomicIntegerArray currentStats = myCurrentStats;
-          currentStats.incrementAndGet((currentValue ? ThreeState.YES : ThreeState.NO).ordinal());
-          currentStats.incrementAndGet(3);
-        }
-      }, 0, 1);
+      ourTimer2 = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
+        boolean currentValue = application.isCurrentWriteOnEdt();
+        AtomicIntegerArray currentStats = myCurrentStats;
+        currentStats.incrementAndGet((currentValue ? ThreeState.YES : ThreeState.NO).ordinal());
+        currentStats.incrementAndGet(3);
+      }, 0, 1, TimeUnit.MILLISECONDS);
       myTimer.start();
     }
 
     @Override
     public void dispose() {
-      ourTimer2.cancel();
+      ourTimer2.cancel(true);
       myTimer.stop();
     }
 
@@ -141,27 +138,27 @@ public class WriteThreadIndicatorWidgetFactory implements StatusBarWidgetFactory
         if (g instanceof Graphics2D) {
           Graphics2D g2d = (Graphics2D)g;
 
-          int offsetx = 0;
+          int xOffset = 0;
           for (AtomicIntegerArray stats : myStatsDeque) {
             g2d.setColor(JBColor.GRAY);
-            g2d.fillRect(offsetx, 0, 1, WIDGET_SIZE.height);
+            g2d.fillRect(xOffset, 0, 1, WIDGET_SIZE.height);
 
             int sum = stats.get(3);
-            int offsety = 0;
+            int yOffset = 0;
             int height;
 
             if (sum > 0) {
               g2d.setColor(JBColor.RED);
               height = (stats.get(0) * WIDGET_SIZE.height + sum - 1) / sum;
-              g2d.fillRect(offsetx, WIDGET_SIZE.height - offsety - height, 1, height);
-              offsety -= height;
+              g2d.fillRect(xOffset, WIDGET_SIZE.height - yOffset - height, 1, height);
+              yOffset -= height;
 
               g2d.setColor(JBColor.GREEN);
               height = (stats.get(1) * WIDGET_SIZE.height + sum - 1) / sum;
-              g2d.fillRect(offsetx, WIDGET_SIZE.height - offsety - height, 1, height);
+              g2d.fillRect(xOffset, WIDGET_SIZE.height - yOffset - height, 1, height);
             }
 
-            offsetx++;
+            xOffset++;
           }
         }
       }

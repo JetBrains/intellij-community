@@ -172,21 +172,9 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
       myProject = element.getProject();
 
       switch (myTagId) {
-        case "artifactId":
-        case "groupId":
-        case "version": {
-          checkPlaceForChildrenTags(tag);
-          break;
-        }
-
-        case "dependency":
-        case "extension":
-        case "plugin": {
-          checkPlaceForParentTags(tag);
-          break;
-        }
-        default:
-          badPlace = true;
+        case "artifactId", "groupId", "version" -> checkPlaceForChildrenTags(tag);
+        case "dependency", "extension", "plugin" -> checkPlaceForParentTags(tag);
+        default -> badPlace = true;
       }
 
       return this;

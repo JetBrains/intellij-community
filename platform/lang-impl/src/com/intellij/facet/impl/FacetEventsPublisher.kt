@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-@Service
 internal class FacetEventsPublisher(private val project: Project) {
   private val facetsByType: MutableMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>> = HashMap()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
@@ -78,8 +77,8 @@ internal class FacetEventsPublisher(private val project: Project) {
     onFacetRemoved(facet, false)
   }
 
-  fun fireFacetRenamed(facet: Facet<*>, newName: String) {
-    getPublisher(facet.module).facetRenamed(facet, newName)
+  fun fireFacetRenamed(facet: Facet<*>, oldName: String) {
+    getPublisher(facet.module).facetRenamed(facet, oldName)
   }
 
   fun fireFacetConfigurationChanged(facet: Facet<*>) {

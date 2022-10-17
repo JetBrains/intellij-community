@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -20,6 +21,7 @@ import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -180,6 +182,10 @@ public class TabLabel extends JPanel implements Accessible {
     return myTabs.isHoveredTab(this);
   }
 
+  private boolean isSelected() {
+    return myTabs.getSelectedLabel() == this;
+  }
+
   @Override
   public boolean isFocusable() {
     // We don't want the focus unless we are the selected tab.
@@ -243,7 +249,9 @@ public class TabLabel extends JPanel implements Accessible {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && (UISettings.getShadowInstance().getShowCloseButton() || myInfo.isPinned()) && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
-        insets.right -= JBUIScale.scale(4);
+        if (!ExperimentalUI.isNewUI()) {
+          insets.right -= JBUIScale.scale(4);
+        }
       }
       else {
         insets.left -= JBUIScale.scale(4);
@@ -285,6 +293,50 @@ public class TabLabel extends JPanel implements Accessible {
       return;
     }
     doPaint(g);
+    if (Registry.is("ide.editor.tabs.show.fadeout", true)
+        && !Registry.is("ui.no.bangs.and.whistles", false)
+        && UISettings.getInstance().getHideTabsIfNeeded()
+        && myTabs.isSingleRow() && !isHovered() && !isSelected()) {
+      paintFadeout(g);
+    }
+  }
+
+  protected void paintFadeout(final Graphics g) {
+    Graphics2D g2d = (Graphics2D)g.create();
+    try {
+      Color tabBg = myTabs.getTabPainter().getBackgroundColor();
+      Color transparent = ColorUtil.withAlpha(tabBg, 0);
+      int borderThickness = myTabs.getBorderThickness();
+      int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
+
+      Rectangle myRect = getBounds();
+      // Fadeout for left part (needed only in top and bottom placements)
+      if (myRect.x < 0) {
+        Rectangle leftRect = new Rectangle(-myRect.x, borderThickness, width, myRect.height - 2 * borderThickness);
+        paintGradientRect(g2d, leftRect, tabBg, transparent);
+      }
+
+      Rectangle contentRect = myLabelPlaceholder.getBounds();
+      // Fadeout for right side before pin/close button (needed only in side placements)
+      if (contentRect.width < myLabelPlaceholder.getPreferredSize().width + myTabs.getTabHGap()) {
+        Rectangle rightRect =
+          new Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
+        paintGradientRect(g2d, rightRect, transparent, tabBg);
+      }
+      // Fadeout for right side
+      else if (myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
+        Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
+        paintGradientRect(g2d, rightRect, transparent, tabBg);
+      }
+    }
+    finally {
+      g2d.dispose();
+    }
+  }
+
+  private static void paintGradientRect(Graphics2D g, Rectangle rect, Color fromColor, Color toColor) {
+    g.setPaint(new GradientPaint(rect.x, rect.y, fromColor, rect.x + rect.width, rect.y, toColor));
+    g.fill(rect);
   }
 
   private void doPaint(final Graphics g) {
@@ -690,9 +742,11 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     private boolean doCustomLayout(Container parent) {
-      int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
+      UISettings settings = UISettings.getInstance();
+      int tabPlacement = settings.getEditorTabPlacement();
       if (!myInfo.isPinned() && myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
-          (tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
+          (ExperimentalUI.isNewUI() && !isHovered() || tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
+          settings.getShowCloseButton() && settings.getCloseTabButtonOnTheRight() &&
           parent.getWidth() < parent.getPreferredSize().width) {
         int spaceTop = parent.getInsets().top;
         int spaceLeft = parent.getInsets().left;
@@ -723,7 +777,7 @@ public class TabLabel extends JPanel implements Accessible {
       if (component == null) return;
 
       int height = component.getPreferredSize().height;
-      int top = spaceTop + (spaceHeight - height) / 2;
+      int top = spaceTop + (spaceHeight - height) / 2 + (spaceHeight - height) % 2;
       component.setBounds(left, top, width, height);
     }
   }

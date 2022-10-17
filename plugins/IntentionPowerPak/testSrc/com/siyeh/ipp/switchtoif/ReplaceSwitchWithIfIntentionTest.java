@@ -5,7 +5,9 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
 
@@ -29,6 +31,10 @@ public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
     assertIntentionNotAvailable();
   }
 
+  public void testReplaceRecordPattern() {
+    doTest();
+  }
+
   public void testReplaceEnum() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, () -> {
       doTest();
@@ -43,5 +49,10 @@ public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
   @Override
   protected String getRelativePath() {
     return "switchtoif/replaceSwitchToIf";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_19;
   }
 }

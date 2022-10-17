@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class MockGenericAttributeValue extends MockDomElement implements GenericAttributeValue<Object> {
   @Override
   public XmlAttribute getXmlAttribute() {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -275,6 +276,23 @@ public enum SpecialField implements DerivedVariableDescriptor {
     @Override
     boolean isMyAccessor(PsiMember accessor) {
       return accessor instanceof PsiMethod && ENUM_ORDINAL_METHOD.methodMatches((PsiMethod)accessor);
+    }
+  },
+  CONSUMED_STREAM("linkedOrConsumed", "special.field.consumed.stream", false) {
+    @Override
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isSubtypeOf(JAVA_UTIL_STREAM_BASE_STREAM);
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return false;
+    }
+
+    @Override
+    public @NotNull DfType getDefaultValue() {
+      return DfStreamStateType.UNKNOWN;
     }
   };
 

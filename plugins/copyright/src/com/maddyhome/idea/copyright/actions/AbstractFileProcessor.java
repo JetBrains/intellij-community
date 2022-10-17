@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,25 +39,36 @@ public abstract class AbstractFileProcessor {
   private final PsiFile[] files;
   private final @NlsContexts.ProgressText String message;
   private final @NlsContexts.ProgressTitle String title;
+  private final boolean myWithModalProgress;
 
   protected abstract Runnable preprocessFile(PsiFile file, boolean allowReplacement) throws IncorrectOperationException;
 
-  protected AbstractFileProcessor(@NotNull Project project, @NotNull PsiFile file, @NotNull @NlsContexts.ProgressTitle String title, @NotNull @NlsContexts.ProgressText String message) {
+  protected AbstractFileProcessor(@NotNull Project project,
+                                  @NotNull PsiFile file,
+                                  @NotNull @NlsContexts.ProgressTitle String title,
+                                  @NotNull @NlsContexts.ProgressText String message,
+                                  boolean withModalProgress) {
     myProject = project;
     myModule = null;
     this.file = file;
     files = null;
     this.message = message;
     this.title = title;
+    myWithModalProgress = withModalProgress;
   }
 
-  protected AbstractFileProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull @NlsContexts.ProgressTitle String title, @NotNull @NlsContexts.ProgressText String message) {
+  protected AbstractFileProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @NotNull @NlsContexts.ProgressTitle String title,
+                                  @NotNull @NlsContexts.ProgressText String message,
+                                  boolean withModalProgress) {
     myProject = project;
     myModule = null;
     file = null;
     this.files = files;
     this.message = message;
     this.title = title;
+    myWithModalProgress = withModalProgress;
   }
 
   public void run() {
@@ -76,18 +88,14 @@ public abstract class AbstractFileProcessor {
 
   private void process(@NotNull PsiFile file) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
-    final Runnable[] resultRunnable = new Runnable[1];
 
     execute(() -> {
       try {
-        resultRunnable[0] = preprocessFile(file, true);
+        return preprocessFile(file, true);
       }
       catch (IncorrectOperationException incorrectoperationexception) {
         LOG.error(incorrectoperationexception);
-      }
-    }, () -> {
-      if (resultRunnable[0] != null) {
-        resultRunnable[0].run();
+        return null;
       }
     });
   }
@@ -169,23 +177,18 @@ public abstract class AbstractFileProcessor {
   }
 
   private void process(final PsiFile @NotNull [] files) {
-    final Runnable[] resultRunnable = new Runnable[1];
-    execute(() -> resultRunnable[0] = prepareFiles(new ArrayList<>(Arrays.asList(files))), () -> {
-      if (resultRunnable[0] != null) {
-        resultRunnable[0].run();
-      }
-    });
+    execute(() -> prepareFiles(new ArrayList<>(Arrays.asList(files))));
   }
 
   private void process(@NotNull Project project) {
     final List<PsiFile> pfiles = new ArrayList<>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(project, pfiles), title, true, project);
+    runWithProgress(() -> findFiles(project, pfiles));
     handleFiles(pfiles);
   }
 
   private void process(@NotNull Module module) {
     final List<PsiFile> pfiles = new ArrayList<>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> findFiles(module, pfiles), title, true, myProject);
+    runWithProgress(() -> findFiles(module, pfiles));
     handleFiles(pfiles);
   }
 
@@ -223,12 +226,7 @@ public abstract class AbstractFileProcessor {
     }
     if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(list).hasReadonlyFiles()) {
       if (!files.isEmpty()) {
-        final Runnable[] resultRunnable = new Runnable[1];
-        execute(() -> resultRunnable[0] = prepareFiles(files), () -> {
-          if (resultRunnable[0] != null) {
-            resultRunnable[0].run();
-          }
-        });
+        execute(() -> prepareFiles(files));
       }
     }
   }
@@ -250,11 +248,25 @@ public abstract class AbstractFileProcessor {
     }
   }
 
-  private void execute(@NotNull Runnable readAction, @NotNull Runnable writeAction) {
-    ProgressManager.getInstance()
-                   .runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(readAction), title, true,
-                                                        myProject);
-    WriteCommandAction.writeCommandAction(myProject).withName(title).run(() -> writeAction.run());
+  private void runWithProgress(@NotNull Runnable action) {
+    if (myWithModalProgress) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, title, true, myProject);
+    }
+    else {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+      action.run();
+    }
   }
 
+  private void execute(@NotNull Computable<Runnable> readAction) {
+    final Runnable[] writeAction = new Runnable[1];
+    runWithProgress(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      writeAction[0] = readAction.compute();
+    }));
+    if (writeAction[0] != null) {
+      WriteCommandAction.writeCommandAction(myProject).withName(title).run(() -> {
+        writeAction[0].run();
+      });
+    }
+  }
 }

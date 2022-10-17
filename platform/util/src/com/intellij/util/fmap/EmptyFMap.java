@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-final class EmptyFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class EmptyFMap<K, V> implements FMap<K, V> {
 
   static final EmptyFMap<?, ?> INSTANCE = new EmptyFMap<>();
 

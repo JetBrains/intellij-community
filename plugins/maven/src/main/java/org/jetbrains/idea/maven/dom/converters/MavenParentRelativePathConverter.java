@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -93,6 +94,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   }
 
   private static class RelativePathFix implements LocalQuickFix {
+    @SafeFieldForPreview
     private final ConvertContext myContext;
 
     RelativePathFix(ConvertContext context) {
@@ -113,14 +115,15 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      GenericDomValue el = (GenericDomValue)myContext.getInvocationElement();
       MavenId id = MavenArtifactCoordinatesHelper.getId(myContext);
 
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
       MavenProject parentFile = manager.findProject(id);
       if (parentFile != null) {
         VirtualFile currentFile = myContext.getFile().getVirtualFile();
-        el.setStringValue(MavenDomUtil.calcRelativePath(currentFile.getParent(), parentFile.getFile()));
+        String relativePath = MavenDomUtil.calcRelativePath(currentFile.getParent(), parentFile.getFile());
+        var xmlTag = (XmlTag)descriptor.getPsiElement();
+        xmlTag.getValue().setText(relativePath);
       }
     }
   }

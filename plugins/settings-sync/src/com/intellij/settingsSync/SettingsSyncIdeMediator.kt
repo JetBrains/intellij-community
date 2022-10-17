@@ -17,6 +17,11 @@ interface SettingsSyncIdeMediator {
 
   fun removeStreamProvider()
 
-  fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path>
+  /**
+   * Returns the settings snapshot according to the state of the IDE. This method is called on start of the IDE session.
+   * Sometimes the last saved snapshot can be needed to form the current snapshot properly
+   * (e.g. not remove certain data from the saved snapshot).
+   */
+  fun getInitialSnapshot(appConfigPath: Path, lastSavedSnapshot: SettingsSnapshot): SettingsSnapshot
 
 }

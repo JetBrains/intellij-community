@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -26,6 +26,11 @@ public class MultiPlatformCompletionTestGenerated extends AbstractMultiPlatformC
     @TestMetadata("classInCommon")
     public void testClassInCommon() throws Exception {
         runTest("../testData/multiPlatform/classInCommon/");
+    }
+
+    @TestMetadata("classInCommonNonImported")
+    public void testClassInCommonNonImported() throws Exception {
+        runTest("../testData/multiPlatform/classInCommonNonImported/");
     }
 
     @TestMetadata("classInPlatform")

@@ -23,36 +23,40 @@ import com.siyeh.ipp.IPPTestCase;
 public class MergeElseIfIntentionTest extends IPPTestCase {
 
   public void testCommentsAreKept() {
-    doTest("class X {\n" +
-           "    void test(boolean foo, boolean bar) {\n" +
-           "        if (foo) { //asdf\n" +
-           "\n" +
-           "        } else/*_Merge 'else if'*/ {\n" +
-           "            // blubb\n" +
-           "            // blabb\n" +
-           "            if (bar) { // asdf3\n" +
-           "\n" +
-           "            } // other\n" +
-           "            // bla\n" +
-           "        } // asdf1\n" +
-           "        // asdf4\n" +
-           "    }\n" +
-           "}\n",
+    doTest("""
+             class X {
+                 void test(boolean foo, boolean bar) {
+                     if (foo) { //asdf
 
-           "class X {\n" +
-           "    void test(boolean foo, boolean bar) {\n" +
-           "        if (foo) { //asdf\n" +
-           "\n" +
-           "        } else\n" +
-           "            // blubb\n" +
-           "            // blabb\n" +
-           "            if (bar) { // asdf3\n" +
-           "\n" +
-           "            } // other\n" +
-           "// bla\n" +
-           "// asdf1\n" +
-           "        // asdf4\n" +
-           "    }\n" +
-           "}\n");
+                     } else/*_Merge 'else if'*/ {
+                         // blubb
+                         // blabb
+                         if (bar) { // asdf3
+
+                         } // other
+                         // bla
+                     } // asdf1
+                     // asdf4
+                 }
+             }
+             """,
+
+           """
+             class X {
+                 void test(boolean foo, boolean bar) {
+                     if (foo) { //asdf
+
+                     } else
+                         // blubb
+                         // blabb
+                         if (bar) { // asdf3
+
+                         } // other
+             // bla
+             // asdf1
+                     // asdf4
+                 }
+             }
+             """);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -15,8 +16,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
@@ -69,12 +70,31 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     @Override
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       final String word = reference.getReferenceName();
-      if (!handleWord(word, CODE, myCompilingVisitor.getContext())) return;
-      if (reference.isQualified() && isClassFromJavaLangPackage(reference.resolve())) return;
-      super.visitReferenceElement(reference);
+      final PsiElement target = reference.resolve();
+      if (target == null && Strings.isCapitalized(word)) {
+        return;
+      }
+      if (handleWord(word, CODE, myCompilingVisitor.getContext())) {
+        if (!isStaticAccessibleFromSubclass(target) && (!reference.isQualified() || !isClassFromJavaLangPackage(target))) {
+          super.visitReferenceElement(reference);
+        }
+      }
     }
 
-    private boolean isClassFromJavaLangPackage(PsiElement target) {
+    private static boolean isStaticAccessibleFromSubclass(PsiElement element) {
+      if (!(element instanceof PsiMember member) || !member.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+      final PsiClass aClass = member.getContainingClass();
+      return aClass == null || (!aClass.isInterface() && !aClass.hasModifierProperty(PsiModifier.FINAL));
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    private static boolean isClassFromJavaLangPackage(PsiElement target) {
       if (!(target instanceof PsiClass)) {
         return false;
       }
@@ -207,7 +227,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
 
       comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
-      final RegExpPredicate predicate = handler.findRegExpPredicate();
+      final RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
       if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), COMMENT);
       }
@@ -507,8 +527,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, true);
+    if (classQualifier) substitutionHandler.setSubtype(true);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
-    substitutionHandler.setPredicate(new RegExpPredicate(StructuralSearchUtil.shieldRegExpMetaChars(referenceText),
+    substitutionHandler.setPredicate(new RegExpPredicate(MatchUtil.shieldRegExpMetaChars(referenceText),
                                                          caseSensitive, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
   }

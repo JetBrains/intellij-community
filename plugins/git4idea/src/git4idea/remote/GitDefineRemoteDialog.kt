@@ -16,7 +16,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
@@ -59,11 +60,14 @@ class GitDefineRemoteDialog(
   override fun createCenterPanel(): JComponent =
     panel {
       row(message("remotes.define.remote.name")) {
-        nameField(growX).withValidationOnApply { nameNotBlank() ?: nameWellFormed() ?: nameUnique() }
+        cell(nameField)
+          .align(AlignX.FILL)
+          .validationOnApply { nameNotBlank() ?: nameWellFormed() ?: nameUnique() }
       }
       row(message("remotes.define.remote.url")) {
-        urlField(growX)
-          .withValidationOnApply { urlNotBlank() ?: urlAccessError }
+        cell(urlField)
+          .align(AlignX.FILL)
+          .validationOnApply { urlNotBlank() ?: urlAccessError }
           .applyToComponent { clearUrlAccessErrorOnTextChanged() }
       }
     }

@@ -13,7 +13,7 @@ internal class MessagePart(val type: MessageType, private val textAndSplitFn: ()
   var startOffset = 0
   var endOffset = 0
   var link: String? = null
-  var runnable: Runnable? = null
+  private var runnable: Runnable? = null
 
   override fun toString(): String {
     return "Message{" +

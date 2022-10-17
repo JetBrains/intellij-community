@@ -18,21 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public class ExceptionInfoCache {
   private final ConcurrentMap<String, ClassResolveInfo> myCache = ContainerUtil.createConcurrentSoftValueMap();
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
-
-  /**
-   * @deprecated use {@link #ExceptionInfoCache(Project, GlobalSearchScope)}
-   */
-  @Deprecated(forRemoval = true)
-  public ExceptionInfoCache(@NotNull GlobalSearchScope searchScope) {
-    this(Objects.requireNonNull(searchScope.getProject()), searchScope);
-  }
 
   public ExceptionInfoCache(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     myProject = project;

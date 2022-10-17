@@ -12,10 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class AbstractInsetsProperty<T extends RadComponent> extends Property<T, Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;

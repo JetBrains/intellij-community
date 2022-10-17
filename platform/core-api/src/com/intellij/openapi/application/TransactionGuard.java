@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  *
  * @see ModalityState
- * @author peter
  */
 public abstract class TransactionGuard {
   private static volatile TransactionGuard ourInstance = CachedSingletonsRegistry.markCachedField(TransactionGuard.class);

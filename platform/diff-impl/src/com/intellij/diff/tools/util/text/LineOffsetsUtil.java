@@ -11,7 +11,7 @@ public final class LineOffsetsUtil {
   }
 
   /**
-   * NB: Does not support CRLF separators, use {@link StringUtil#convertLineSeparators}.
+   * NB: Does not support CRLF separators, use {@link com.intellij.openapi.util.text.StringUtil#convertLineSeparators}.
    */
   @NotNull
   public static LineOffsets create(@NotNull CharSequence text) {

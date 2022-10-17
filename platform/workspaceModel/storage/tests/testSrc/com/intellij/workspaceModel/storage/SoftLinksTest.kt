@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertNotNull
-import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Test
-import org.junit.jupiter.api.assertAll
+import kotlin.test.assertTrue
 
 /**
  * Soft reference
@@ -39,7 +38,7 @@ class SoftLinksTest {
     builder.addDiff(newBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(newId)))
+    assertTrue(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
   }
 
@@ -66,7 +65,7 @@ class SoftLinksTest {
     builder.addDiff(newBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(newId)))
+    assertNotNull(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
 
     // Change persistent id to the initial value
@@ -80,7 +79,7 @@ class SoftLinksTest {
     builder.addDiff(anotherNewBuilder)
 
     // Check
-    assertNotNull(builder.resolve(NameId(id)))
+    assertNotNull(NameId(id) in builder)
     assertOneElement(builder.referrers(NameId(id), WithSoftLinkEntity::class.java).toList())
   }
 

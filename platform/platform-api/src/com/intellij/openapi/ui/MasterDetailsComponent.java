@@ -20,6 +20,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -185,8 +186,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         //do nothing
       }
 
+      @RequiresEdt
       @Override
-      protected void scrollToSource(Component tree) {
+      protected void scrollToSource(@NotNull Component tree) {
         updateSelectionFromTree();
       }
 

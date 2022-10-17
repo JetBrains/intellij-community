@@ -4,21 +4,20 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -175,16 +174,11 @@ public abstract class AutoScrollToSourceHandler {
     return file.getLength() <= PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
-  protected void scrollToSource(final Component tree) {
-    DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    getReady(dataContext).doWhenDone(() -> ApplicationManager.getApplication().invokeLater(() -> {
-      DataContext context = DataManager.getInstance().getDataContext(tree);
-      final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-      Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
-      if (navigatables != null && navigatables.length == 1 && (vFile == null || isAutoScrollEnabledFor(vFile))) {
-        OpenSourceUtil.navigateToSource(false, true, navigatables[0]);
-      }
-    }));
+  @RequiresEdt
+  protected void scrollToSource(@NotNull Component tree) {
+    AutoScrollToSourceTaskManager.getInstance()
+      .scheduleScrollToSource(this,
+                              DataManager.getInstance().getDataContext(tree));
   }
 
   @NotNull
@@ -211,11 +205,6 @@ public abstract class AutoScrollToSourceHandler {
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }
-  }
-
-  private ActionCallback getReady(DataContext context) {
-    ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
-    return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
   }
 }
 

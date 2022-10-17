@@ -57,7 +57,9 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     super.searchStarted(contributors);
     resetState(contributors);
-    flushFuture = scheduleFlash();
+    if (useBuffer) {
+      flushFuture = scheduleFlash();
+    }
   }
 
   @Override
@@ -119,6 +121,6 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
       .collect(Collectors.toMap(Function.identity(), c -> false));
     contributorsMap.clear();
     contributorsMap.putAll(map);
-    useBuffer = true;
+    useBuffer = contributors.size() > 1;
   }
 }

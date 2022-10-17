@@ -2,10 +2,8 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
@@ -45,26 +43,6 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("appendDslConfigurable"))
-  protected fun RowBuilder.appendDslConfigurableRow(configurable: UnnamedConfigurable) {
-    if (configurable is UiDslConfigurable) {
-      val builder = this
-      with(configurable) {
-        builder.createComponentRow()
-      }
-    }
-    else {
-      val panel = configurable.createComponent()
-      if (panel != null) {
-        row {
-          component(panel)
-            .constraints(CCFlags.growX)
-        }
-      }
-    }
-  }
-
   protected fun Panel.appendDslConfigurable(configurable: UnnamedConfigurable) {
     if (configurable is UiDslUnnamedConfigurable) {
       val builder = this
@@ -77,7 +55,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
       if (panel != null) {
         row {
           cell(panel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
         }
       }
     }

@@ -1,4 +1,4 @@
-class kkjk {
+class kkjk_ {
     void t() {
         new KKJK().test();
     }

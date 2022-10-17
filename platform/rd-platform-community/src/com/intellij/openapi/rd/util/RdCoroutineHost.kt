@@ -2,6 +2,7 @@
 package com.intellij.openapi.rd.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
@@ -32,7 +33,9 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
 
   override val defaultDispatcher: CoroutineContext get() = applicationThreadPool
 
-  val uiDispatcher = object : CoroutineDispatcher() {
+  val uiDispatcher get() = Dispatchers.EDT
+
+  val uiDispatcherWithInlining = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = invokeLater { block.run() }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {

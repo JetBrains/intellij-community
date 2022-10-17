@@ -225,7 +225,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   protected open fun ValidationInfoBuilder.validateVersion() = superValidateVersion()
-  protected fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
     if (version.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.presentation")
       val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.missing.error",
@@ -253,7 +253,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   protected open fun ValidationInfoBuilder.validateLocation() = superValidateLocation()
-  protected fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
     val location = location
     if (location.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.presentation")

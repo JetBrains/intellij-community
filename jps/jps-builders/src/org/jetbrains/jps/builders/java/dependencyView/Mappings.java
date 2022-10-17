@@ -2062,7 +2062,7 @@ public class Mappings {
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else if (diff.targetAttributeCategoryMightChange()) {
-              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE target, adding class usage to affected usages");
+              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE or RECORD_COMPONENT target, adding class usage to affected usages");
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else {

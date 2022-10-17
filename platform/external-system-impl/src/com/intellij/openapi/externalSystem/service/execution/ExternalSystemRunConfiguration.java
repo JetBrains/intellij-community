@@ -34,7 +34,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
@@ -171,14 +171,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         // only these fields due to backward compatibility
-        switch (accessor.getName()) {
-          case "passParentEnvs":
-            return !mySettings.isPassParentEnvs();
-          case "env":
-            return !mySettings.getEnv().isEmpty();
-          default:
-            return true;
-        }
+        return switch (accessor.getName()) {
+          case "passParentEnvs" -> !mySettings.isPassParentEnvs();
+          case "env" -> !mySettings.getEnv().isEmpty();
+          default -> true;
+        };
       }
     }));
 
@@ -234,7 +231,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (scope == null) {
       VirtualFile file = VfsUtil.findFileByIoFile(new File(mySettings.getExternalProjectPath()), false);
       if (file != null) {
-        Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
+        Module module = ProjectFileIndex.getInstance(getProject()).getModuleForFile(file, false);
         if (module != null) {
           scope = ExecutionSearchScopes.executionScope(Collections.singleton(module));
         }

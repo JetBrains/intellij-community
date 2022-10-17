@@ -419,9 +419,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   public void testPointerDisambiguationAfterDupLine() {
-    String text = "class XXX{ void foo() { \n" +
-                  " <caret>foo();\n" +
-                  "}}";
+    String text = """
+      class XXX{ void foo() {\s
+       <caret>foo();
+      }}""";
     PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, text);
     PsiClass aClass = file.getClasses()[0];
     assertNotNull(aClass);
@@ -546,13 +547,14 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testInXml() {
     @Language("HTML")
-    String text = "<!doctype html>\n" +
-                  "<html>\n" +
-                  "    <fieldset></fieldset>\n" +
-                  "    <select></select>\n" +
-                  "\n" +
-                  "    <caret>\n" +
-                  "</html>";
+    String text = """
+      <!doctype html>
+      <html>
+          <fieldset></fieldset>
+          <select></select>
+
+          <caret>
+      </html>""";
     final PsiFile file = configureByText(HtmlFileType.INSTANCE,
                                          text
     );
@@ -582,12 +584,13 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   public void testInXml2() {
-    String text = "<html>\n" +
-                  "    <ul class=\"dropdown-menu\">\n" +
-                  "        <li><a href=\"#\">One more separated link</a></li>\n" +
-                  "    </ul>\n" +
-                  "<caret>\n" +
-                  "</html>";
+    String text = """
+      <html>
+          <ul class="dropdown-menu">
+              <li><a href="#">One more separated link</a></li>
+          </ul>
+      <caret>
+      </html>""";
     final PsiFile file = configureByText(XmlFileType.INSTANCE,
                                          text
     );
@@ -601,8 +604,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       int offset = getEditor().getCaretModel().getOffset();
-      insertString(getEditor().getDocument(), offset, "    <ul class=\"nav navbar-nav navbar-right\">\n" +
-                                                      "    </ul>\n");
+      insertString(getEditor().getDocument(), offset, """
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        """);
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -757,17 +762,21 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   }
 
   public void testUpdateAfterInsertingIdenticalText() {
-    String text = "class Foo {\n" +
-                  "    void m() {\n" +
-                  "    }\n" +
-                  "<caret>}\n";
+    String text = """
+      class Foo {
+          void m() {
+          }
+      <caret>}
+      """;
     PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, text);
     PsiMethod method = file.getClasses()[0].getMethods()[0];
     TextRange originalRange = method.getTextRange();
     SmartPsiElementPointer pointer = createPointer(method);
 
-    ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.insertStringAtCaret(myEditor, "    void m() {\n" +
-                                                                                                                "    }\n"));
+    ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.insertStringAtCaret(myEditor, """
+          void m() {
+          }
+      """));
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     PsiElement element = pointer.getElement();
@@ -791,9 +800,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testPointerToEmptyElement() {
     @Language("JAVA")
-    String text = "class Foo {\n" +
-                  "  Test<String> test = new Test<>();\n" +
-                  "}";
+    String text = """
+      class Foo {
+        Test<String> test = new Test<>();
+      }""";
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("<>"), PsiJavaCodeReferenceElement.class, false);
     SmartPointerEx pointer = createPointer(ref.getParameterList().getTypeParameterElements()[0]);
@@ -807,9 +817,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testPointerToEmptyElement2() {
     @Language("JAVA")
-    String text = "class Foo {\n" +
-                  "  void foo() {}\n" +
-                  "}";
+    String text = """
+      class Foo {
+        void foo() {}
+      }""";
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("void"), PsiMethod.class, false);
     SmartPointerEx pointer1 = createPointer(method.getModifierList());
@@ -893,10 +904,11 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testCommentingField() throws Exception {
     @Language("JAVA")
-    String text = "class A {\n" +
-                  "    int x;\n" +
-                  "    int y;\n" +
-                  "}";
+    String text = """
+      class A {
+          int x;
+          int y;
+      }""";
     PsiJavaFile file = (PsiJavaFile)createFile("a.java", text);
     PsiField[] fields = file.getClasses()[0].getFields();
     SmartPointerEx<PsiField> pointer0 = createPointer(fields[0]);
@@ -1027,16 +1039,16 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testSurviveAfterWholeTextReplace() throws Exception {
     @Language("JAVA")
-    String text = "class A {" +
-                  "void foo() {\n" +
-                  "  //comment\n" +
-                  "\n}" +
-                  "\n" +
-                  "void bar() {}\n" +
-                  "void bar2() {}\n" +
-                  "void bar3() {}\n" +
-                  "void bar4() {}\n" +
-                  "}";
+    String text = """
+      class A {void foo() {
+        //comment
+
+      }
+      void bar() {}
+      void bar2() {}
+      void bar3() {}
+      void bar4() {}
+      }""";
     PsiJavaFileImpl file = (PsiJavaFileImpl)createFile("a.java", text);
     SmartPointerEx<PsiMethod> pointer = createPointer(file.getClasses()[0].getMethods()[1]);
 

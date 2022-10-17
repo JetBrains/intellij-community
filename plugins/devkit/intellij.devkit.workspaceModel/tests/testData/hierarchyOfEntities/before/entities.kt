@@ -9,6 +9,7 @@ interface GrandParentEntity : WorkspaceEntity {
   val data1: String
 }
 
+@Open
 interface ParentEntity : GrandParentEntity {
   val data2: String
 }

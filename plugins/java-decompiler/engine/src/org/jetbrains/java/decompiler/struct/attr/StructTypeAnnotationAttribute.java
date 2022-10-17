@@ -33,61 +33,37 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
 
   private static TypeAnnotation parse(DataInputStream data, ConstantPool pool) throws IOException {
     int targetType = data.readUnsignedByte();
-    TargetInfo targetInfo;
 
-    switch (targetType) {
-      case TypeAnnotation.CLASS_TYPE_PARAMETER:
-      case TypeAnnotation.METHOD_TYPE_PARAMETER:
-        targetInfo = new TargetInfo.TypeParameterTarget(data.readUnsignedByte());
-        break;
-      case TypeAnnotation.SUPER_TYPE_REFERENCE:
-        targetInfo = new TargetInfo.SupertypeTarget(data.readUnsignedShort());
-        break;
-      case TypeAnnotation.CLASS_TYPE_PARAMETER_BOUND:
-      case TypeAnnotation.METHOD_TYPE_PARAMETER_BOUND:
-        targetInfo = new TargetInfo.TypeParameterBoundTarget(data.readUnsignedByte(), data.readUnsignedByte());
-        break;
-      case TypeAnnotation.FIELD:
-      case TypeAnnotation.METHOD_RETURN_TYPE:
-      case TypeAnnotation.METHOD_RECEIVER:
-        targetInfo = new TargetInfo.EmptyTarget();
-        break;
-      case TypeAnnotation.METHOD_PARAMETER:
-        targetInfo = new TargetInfo.FormalParameterTarget(data.readUnsignedByte());
-        break;
-      case TypeAnnotation.THROWS_REFERENCE:
-        targetInfo = new TargetInfo.ThrowsTarget(data.readUnsignedShort());
-        break;
-      case TypeAnnotation.LOCAL_VARIABLE:
-      case TypeAnnotation.RESOURCE_VARIABLE:
+    TargetInfo targetInfo = switch (targetType) {
+      case TypeAnnotation.CLASS_TYPE_PARAMETER, TypeAnnotation.METHOD_TYPE_PARAMETER ->
+        new TargetInfo.TypeParameterTarget(data.readUnsignedByte());
+      case TypeAnnotation.SUPER_TYPE_REFERENCE ->
+        new TargetInfo.SupertypeTarget(data.readUnsignedShort());
+      case TypeAnnotation.CLASS_TYPE_PARAMETER_BOUND, TypeAnnotation.METHOD_TYPE_PARAMETER_BOUND ->
+        new TargetInfo.TypeParameterBoundTarget(data.readUnsignedByte(), data.readUnsignedByte());
+      case TypeAnnotation.FIELD, TypeAnnotation.METHOD_RETURN_TYPE, TypeAnnotation.METHOD_RECEIVER ->
+        new TargetInfo.EmptyTarget();
+      case TypeAnnotation.METHOD_PARAMETER ->
+        new TargetInfo.FormalParameterTarget(data.readUnsignedByte());
+      case TypeAnnotation.THROWS_REFERENCE ->
+        new TargetInfo.ThrowsTarget(data.readUnsignedShort());
+      case TypeAnnotation.LOCAL_VARIABLE, TypeAnnotation.RESOURCE_VARIABLE -> {
         int tableLength = data.readUnsignedShort();
         TargetInfo.LocalvarTarget.Offsets[] offsets = new TargetInfo.LocalvarTarget.Offsets[tableLength];
         for (int i = 0; i < tableLength; i++) {
           offsets[i] = new TargetInfo.LocalvarTarget.Offsets(data.readUnsignedShort(), data.readUnsignedShort(), data.readUnsignedShort());
         }
-        targetInfo = new TargetInfo.LocalvarTarget(offsets);
-        break;
-
-      case TypeAnnotation.CATCH_CLAUSE:
-        targetInfo = new TargetInfo.CatchTarget(data.readUnsignedShort());
-        break;
-      case TypeAnnotation.EXPR_INSTANCEOF:
-      case TypeAnnotation.EXPR_NEW:
-      case TypeAnnotation.EXPR_CONSTRUCTOR_REF:
-      case TypeAnnotation.EXPR_METHOD_REF:
-        targetInfo = new TargetInfo.OffsetTarget(data.readUnsignedShort());
-        break;
-
-      case TypeAnnotation.TYPE_ARG_CAST:
-      case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_CALL:
-      case TypeAnnotation.TYPE_ARG_METHOD_CALL:
-      case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_REF:
-      case TypeAnnotation.TYPE_ARG_METHOD_REF:
-        targetInfo = new TargetInfo.TypeArgumentTarget(data.readUnsignedShort(), data.readUnsignedByte());
-        break;
-      default:
-        throw new RuntimeException("unknown target type: " + targetType);
-    }
+        yield new TargetInfo.LocalvarTarget(offsets);
+      }
+      case TypeAnnotation.CATCH_CLAUSE ->
+        new TargetInfo.CatchTarget(data.readUnsignedShort());
+      case TypeAnnotation.EXPR_INSTANCEOF, TypeAnnotation.EXPR_NEW, TypeAnnotation.EXPR_CONSTRUCTOR_REF, TypeAnnotation.EXPR_METHOD_REF ->
+        new TargetInfo.OffsetTarget(data.readUnsignedShort());
+      case TypeAnnotation.TYPE_ARG_CAST, TypeAnnotation.TYPE_ARG_CONSTRUCTOR_CALL, TypeAnnotation.TYPE_ARG_METHOD_CALL,
+        TypeAnnotation.TYPE_ARG_CONSTRUCTOR_REF, TypeAnnotation.TYPE_ARG_METHOD_REF ->
+        new TargetInfo.TypeArgumentTarget(data.readUnsignedShort(), data.readUnsignedByte());
+      default -> throw new RuntimeException("unknown target type: " + targetType);
+    };
 
     int pathLength = data.readUnsignedByte();
     List<StructTypePathEntry> paths = new ArrayList<>(pathLength);

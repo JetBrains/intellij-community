@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,12 +173,13 @@ public final class GuiUtils {
     if (component instanceof JPanel) {
       final Border border = ((JPanel)component).getBorder();
       if (border instanceof TitledBorder) {
-        Color color = enabled ? component.getForeground() : UIUtil.getInactiveTextColor();
+        Color color;
+        color = enabled ? component.getForeground() : NamedColorUtil.getInactiveTextColor();
         ((TitledBorder)border).setTitleColor(color);
       }
     }
     else if (component instanceof JLabel) {
-      Color color = UIUtil.getInactiveTextColor();
+      Color color = NamedColorUtil.getInactiveTextColor();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) + ">";
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();

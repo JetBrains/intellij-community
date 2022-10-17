@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,7 +91,7 @@ public class LatestExistentSearcher {
         final LogEntryPath path = (LogEntryPath)o;
         if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
           latest.set(logEntry.getRevision());
-          throw new SvnBindException(message("error.latest.existent.revision.found.for.url", myRelativeUrl));
+          throw new SvnBindException(message("error.latest.existing.revision.found.for.url", myRelativeUrl));
         }
       }
     };

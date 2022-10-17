@@ -22,35 +22,18 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
 
   val service: VisualFormattingLayerService by lazy { VisualFormattingLayerService.getInstance() }
 
-  var myVisualFormattingLayerElements: List<VisualFormattingLayerElement>? = null
+  var myVisualFormattingLayerElements: List<VisualFormattingLayerElement> = emptyList()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     //progress.start()
 
-    myVisualFormattingLayerElements = service.getVisualFormattingLayerElements(myEditor)
+    myVisualFormattingLayerElements = service.collectVisualFormattingLayerElements(myEditor)
 
     //progress.stop()
   }
 
   override fun doApplyInformationToEditor() {
-    myEditor.inlayModel
-      .getInlineElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
-      .forEach { it.dispose() }
-
-    myEditor.inlayModel
-      .getBlockElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)
-      .forEach { it.dispose() }
-
-    myEditor.foldingModel.runBatchFoldingOperation({
-      myEditor.foldingModel
-        .allFoldRegions
-        .filter { it.getUserData(visualFormattingElementKey) == true }
-        .forEach { it.dispose() }
-    }, true, false)
-
-    myVisualFormattingLayerElements?.forEach {
-      it.applyToEditor(myEditor)
-    }
+    service.applyVisualFormattingLayerElementsToEditor(myEditor, myVisualFormattingLayerElements)
   }
 
 }

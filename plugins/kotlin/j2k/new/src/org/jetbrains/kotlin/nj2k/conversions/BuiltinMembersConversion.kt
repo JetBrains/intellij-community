@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isArrayType
+import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.isStringType
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -188,17 +189,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         val fqName: String
     }
 
-    private data class Method(
-        override val fqName: String,
-        val parameterTypesFqNames: List<String>? = null,
-        val isTopLevel: Boolean = false
-    ) : SymbolInfo {
-        init {
-            if (isTopLevel) {
-                TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS.add(fqName)
-            }
-        }
-    }
+    private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null) : SymbolInfo
     private data class NewExpression(override val fqName: String) : SymbolInfo
     private data class Field(override val fqName: String) : SymbolInfo
     private data class ExtensionMethod(override val fqName: String) : SymbolInfo
@@ -402,25 +393,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.String.replaceAll")
                     convertTo Method("kotlin.text.replace")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.replaceFirst")
                     convertTo Method("kotlin.text.replaceFirst")
-                    withArgumentsProvider { arguments ->
-                val detachedArguments = arguments::arguments.detached()
-                val first =
-                    detachedArguments.first()::value.detached().callOn(
-                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
 
-                    )
-                JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
-            },
             Method("java.lang.String.equalsIgnoreCase")
                     convertTo Method("kotlin.text.equals")
                     withArgumentsProvider { arguments ->
@@ -449,7 +427,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     )
                 )
             },
-            Method("java.lang.String.matches") convertTo Method("kotlin.text.matches"),
+            Method("java.lang.String.matches")
+                    convertTo Method("kotlin.text.matches")
+                    withArgumentsProvider ::convertFirstArgumentToRegex,
+
             Method("java.lang.String.regionMatches")
                     convertTo Method("kotlin.text.regionMatches")
                     withByArgumentsFilter { it.size == 5 }
@@ -576,36 +557,55 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     (expression as JKCallExpression).arguments::arguments.detached()
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-
-            NewExpression("java.lang.String") convertTo Method("kotlin.text.String"),
-            NewExpression("kotlin.String") convertTo Method("kotlin.text.String"),
-
-            // Top-level functions
-
+            
+            NewExpression("java.lang.String")
+                    convertTo Method("kotlin.text.String")
+                    withByArgumentsFilter { it.isNotEmpty() },
+            Method("java.util.Arrays.asList")
+                    convertTo Method("kotlin.collections.mutableListOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && (it.size > 1 || !containsNull(it.cast())) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.Set.of")
+                    convertTo Method("kotlin.collections.setOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && containsOnlyUnique(it.cast()) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.util.List.of")
+                    convertTo Method("kotlin.collections.listOf")
+                    withByArgumentsFilter { containsOnlyLiterals(it) && !containsNull(it.cast()) }
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.singletonList")
-                    convertTo Method("kotlin.collections.listOf", isTopLevel = true)
+                    convertTo Method("kotlin.collections.listOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.singleton")
-                    convertTo Method("kotlin.collections.setOf", isTopLevel = true)
+                    convertTo Method("kotlin.collections.setOf")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyList")
-                    convertTo Method("kotlin.collections.emptyList", isTopLevel = true)
+                    convertTo Method("kotlin.collections.emptyList")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptySet")
-                    convertTo Method("kotlin.collections.emptySet", isTopLevel = true)
+                    convertTo Method("kotlin.collections.emptySet")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.util.Collections.emptyMap")
-                    convertTo Method("kotlin.collections.emptyMap", isTopLevel = true)
+                    convertTo Method("kotlin.collections.emptyMap")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.io.PrintStream.println")
-                    convertTo Method("kotlin.io.println", isTopLevel = true)
+                    convertTo Method("kotlin.io.println")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall,
             Method("java.io.PrintStream.print")
-                    convertTo Method("kotlin.io.print", isTopLevel = true)
+                    convertTo Method("kotlin.io.print")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
+
+    private fun convertFirstArgumentToRegex(arguments: JKArgumentList): JKArgumentList {
+        val detachedArguments = arguments::arguments.detached()
+        val first =
+            detachedArguments.first()::value.detached().callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+            )
+        return JKArgumentList(listOf(JKArgumentImpl(first)) + detachedArguments.drop(1))
+    }
 
 
     private fun JKExpression.callOn(symbol: JKMethodSymbol, arguments: List<JKArgument> = emptyList()) =
@@ -654,17 +654,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         return arguments
     }
 
+    private fun containsOnlyLiterals(list: List<JKExpression>): Boolean = list.all { it is JKLiteralExpression }
+    private fun containsOnlyUnique(list: List<JKLiteralExpression>): Boolean = list.size == list.distinctBy { it.literal }.size
+    private fun containsNull(list: List<JKLiteralExpression>): Boolean = list.any { it.isNull() }
+
     private val neutralLocaleFQNames = listOf(
         "java.util.Locale.ROOT",
         "java.util.Locale.US",
         "java.util.Locale.ENGLISH"
     )
 }
-
-/**
- * All the generated top-level function symbols must be printed with their fully qualified names (see JKSymbolRenderer),
- * otherwise they can start to resolve to existing methods with the same short name. We collect such functions here.
- *
- * Note: redundant fully qualified names are shortened in a later post-processing.
- */
-val TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS: MutableSet<String> = mutableSetOf()

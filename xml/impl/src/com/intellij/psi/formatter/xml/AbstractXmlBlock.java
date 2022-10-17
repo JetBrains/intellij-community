@@ -290,19 +290,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
-  /** @deprecated use and override {@code createSimpleChild } overload with {@code range } provided */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  protected XmlBlock createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
-    return null;
-  }
-
   protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
                                                 @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable TextRange range) {
-    XmlBlock blockFromDeprecatedCall = createSimpleChild(child, indent, wrap, alignment);
-    if (blockFromDeprecatedCall != null) {
-      return blockFromDeprecatedCall;
-    }
     return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, range, isPreserveSpace());
   }
 

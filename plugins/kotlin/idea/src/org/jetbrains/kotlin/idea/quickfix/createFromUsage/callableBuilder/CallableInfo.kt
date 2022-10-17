@@ -258,7 +258,8 @@ class ConstructorInfo(
     val targetClass: PsiElement,
     val isPrimary: Boolean = false,
     modifierList: KtModifierList? = null,
-    val withBody: Boolean = false
+    val withBody: Boolean = false,
+    val annotations: List<KtAnnotationEntry> = emptyList()
 ) : CallableInfo("", TypeInfo.Empty, TypeInfo.Empty, Collections.emptyList(), Collections.emptyList(), false, modifierList = modifierList) {
     override val kind: CallableKind get() = CallableKind.CONSTRUCTOR
 
@@ -292,7 +293,7 @@ class PropertyInfo(
         modifierList: KtModifierList?
     ) = copyProperty(receiverTypeInfo, possibleContainers, modifierList)
 
-    fun copyProperty(
+    private fun copyProperty(
         receiverTypeInfo: TypeInfo = this.receiverTypeInfo,
         possibleContainers: List<KtElement> = this.possibleContainers,
         modifierList: KtModifierList? = this.modifierList,

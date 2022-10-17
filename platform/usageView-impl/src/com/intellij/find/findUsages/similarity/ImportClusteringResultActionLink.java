@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
+import com.intellij.ide.actions.RefreshAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +32,8 @@ import static com.intellij.find.findUsages.similarity.ExportClusteringResultActi
 public class ImportClusteringResultActionLink extends ActionLink {
   private static final Logger LOG = Logger.getLogger(ImportClusteringResultActionLink.class.getName());
 
-  public ImportClusteringResultActionLink(@NotNull Project project, ClusteringSearchSession session) {
+  public ImportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session,
+                                          @NotNull RefreshAction refreshAction) {
     super(UsageViewBundle.message("similar.usages.internal.import.clustering.data"),
           (event) -> {
             final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
@@ -39,8 +42,8 @@ public class ImportClusteringResultActionLink extends ActionLink {
             if (file == null) return;
             try {
               Map<String, SimilarUsage> usageIndex = buildIndex(session);
-              List<UsageCluster> parsedClusters = new ArrayList<>(parseFile(file, usageIndex));
-              session.updateClusters(parsedClusters);
+              session.updateClusters(parseFile(file, usageIndex));
+              refreshAction.actionPerformed(ActionUtil.createEmptyEvent());
             }
             catch (IOException ioe) {
               throw new RuntimeException(ioe);

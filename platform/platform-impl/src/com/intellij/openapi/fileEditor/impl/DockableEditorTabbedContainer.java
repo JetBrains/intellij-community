@@ -23,6 +23,7 @@ import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
+import kotlin.Unit;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -135,7 +135,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     EditorWindow window = null;
     final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
-    Integer dragStartLocation = file.getUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY);
+    Integer dragStartLocation = file.getUserData(EditorWindow.Companion.getDRAG_START_LOCATION_HASH_KEY$intellij_platform_ide_impl());
     boolean sameWindow = myCurrentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(myCurrentOver);
     int dropSide = getCurrentDropSide();
     if (myCurrentOver != null) {
@@ -164,7 +164,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
         TabInfo previousInfo = index > 0 ? myCurrentOver.getTabAt(index - 1) : null;
         boolean previousIsPinned = previousInfo != null && previousInfo.isPinned();
-        if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE) {
+        if (file.getUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl()) == Boolean.TRUE) {
           dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || previousIsPinned;
         }
         else {
@@ -181,14 +181,14 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
             && bounds.y < dropPoint.y && bounds.getMaxY() > dropPoint.y;
         }
       }
-      Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
+      Integer dragStartIndex = file.getUserData(EditorWindow.Companion.getDRAG_START_INDEX_KEY$intellij_platform_ide_impl());
       boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
-        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), dropInBetweenPinnedTabs);
       }
       if (dropInPinnedRow) {
-        file.putUserData(EditorWindow.DRAG_START_INDEX_KEY, index + 1);
-        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, Boolean.TRUE);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_INDEX_KEY$intellij_platform_ide_impl(), index + 1);
+        file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), Boolean.TRUE);
         dropInBetweenPinnedTabs = true;
       }
     }
@@ -201,33 +201,26 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   private void recordDragStats(int dropSide, boolean sameWindow) {
-    String actionId = null;
-    switch (dropSide) {
-      case -1:
-        actionId = "OpenElementInNewWindow";
-        break;
-      case TOP:
-        actionId = "SplitVertically";
-        break;
-      case LEFT:
-        actionId = "SplitHorizontally";
-        break;
-      case BOTTOM:
-        actionId = "MoveTabDown";
-        break;
-      case RIGHT:
-        actionId = "MoveTabRight";
-        break;
-      case CENTER:
-        return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
-    }
+    String actionId = switch (dropSide) {
+      case -1 -> "OpenElementInNewWindow";
+      case TOP -> "SplitVertically";
+      case LEFT -> "SplitHorizontally";
+      case BOTTOM -> "MoveTabDown";
+      case RIGHT -> "MoveTabRight";
+      case CENTER -> null; // This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+      default -> null;
+    };
     if (actionId != null) {
       AnActionEvent event = AnActionEvent.createFromInputEvent(
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
-      ActionsCollectorImpl.recordActionInvoked(myProject, ActionManager.getInstance().getAction(actionId), event,
-                                               Collections.singletonList(ActionsEventLogGroup.ADDITIONAL.with(
-                                                 new ObjectEventData(SAME_WINDOW.with(sameWindow)))));
+      ActionsCollectorImpl.recordActionInvoked(
+        myProject, ActionManager.getInstance().getAction(actionId), event,
+        (list) -> {
+          list.add(ActionsEventLogGroup.ADDITIONAL.with(
+            new ObjectEventData(SAME_WINDOW.with(sameWindow))));
+          return Unit.INSTANCE;
+        });
     }
   }
 
@@ -327,7 +320,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   public void showNotify() {
     if (!myWasEverShown) {
       myWasEverShown = true;
-      getSplitters().openFiles();
+      getSplitters().openFilesAsync();
     }
   }
 

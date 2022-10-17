@@ -37,7 +37,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.system.CpuArch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.*
@@ -69,8 +68,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
-    assumeTrue("${SystemInfo.OS_NAME}/${CpuArch.CURRENT} is not supported", !CpuArch.isArm64() || SystemInfo.isMac)
-
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()

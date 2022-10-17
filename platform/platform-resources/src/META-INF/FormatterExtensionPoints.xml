@@ -1,52 +1,20 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/CodeStyle.xml"/>
+
   <extensionPoints>
-    <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.formatting.FormattingModelBuilder"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.formatter.newLineIndentMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.formatter.restriction" interface="com.intellij.lang.LanguageFormattingRestriction" dynamic="true"/>
-    <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.ImportOptimizer"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.arrangement.Rearranger"/>
-    </extensionPoint>
     <extensionPoint name="lang.formatting.extractor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor"/>
     </extensionPoint>
     <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory" dynamic="true"/>
 
-    <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor" dynamic="true"/>
-    <extensionPoint name="formattingService" interface="com.intellij.formatting.service.FormattingService" dynamic="true"/>
     <extensionPoint name="documentMerger" interface="com.intellij.formatting.service.DocumentMerger" dynamic="true"/>
-    <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
-    <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor" dynamic="true"/>
-    <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider" dynamic="true"/>
     <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider" dynamic="true"/>
-    <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier" dynamic="true"/>
-
-    <extensionPoint name="lang.lineWrapStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.LineWrapPositionStrategy"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.whiteSpaceFormattingStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.formatter.WhiteSpaceFormattingStrategy"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.indentStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
-    </extensionPoint>
+    <extensionPoint name="formatting.injectedOptions" interface="com.intellij.formatting.InjectedFormattingOptionsProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider" dynamic="true"/>
-    <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider" dynamic="true"/>
-    <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
 
     <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider" dynamic="true"/>
+    <extensionPoint name="langCodeStyleSettingsContributor" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsContributor" dynamic="true"/>
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle" dynamic="true"/>
 
     <extensionPoint name="fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>

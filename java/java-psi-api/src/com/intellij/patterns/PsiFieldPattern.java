@@ -5,9 +5,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiFieldPattern extends PsiMemberPattern<PsiField, PsiFieldPattern>{
   public PsiFieldPattern() {
     super(new InitialPatternCondition<PsiField>(PsiField.class) {

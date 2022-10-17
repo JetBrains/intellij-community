@@ -20,8 +20,8 @@ interface KeyParent : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : KeyParent, ModifiableWorkspaceEntity<KeyParent>, ObjBuilder<KeyParent> {
-    override var keyField: String
     override var entitySource: EntitySource
+    override var keyField: String
     override var notKeyField: String
     override var children: List<KeyChild>
   }
@@ -53,8 +53,8 @@ interface KeyChild : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : KeyChild, ModifiableWorkspaceEntity<KeyChild>, ObjBuilder<KeyChild> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var parentEntity: KeyParent
   }
 

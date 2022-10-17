@@ -17,3 +17,17 @@ fun <C : JComponent> Cell<C>.visibleIf(property: ObservableProperty<Boolean>): C
     visible(it)
   }
 }
+
+fun Row.visibleIf(property: ObservableProperty<Boolean>): Row = apply {
+  visible(property.get())
+  property.afterChange {
+    visible(it)
+  }
+}
+
+fun RowsRange.visibleIf(property: ObservableProperty<Boolean>): RowsRange = apply {
+  visible(property.get())
+  property.afterChange {
+    visible(it)
+  }
+}

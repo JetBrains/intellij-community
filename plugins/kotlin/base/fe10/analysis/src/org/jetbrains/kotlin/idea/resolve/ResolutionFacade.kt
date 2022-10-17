@@ -29,6 +29,8 @@ interface ResolutionFacade {
 
     fun analyzeWithAllCompilerChecks(elements: Collection<KtElement>, callback: DiagnosticSink.DiagnosticsCallback? = null): AnalysisResult
 
+    fun fetchWithAllCompilerChecks(element: KtElement): AnalysisResult? = null
+
     fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL): DeclarationDescriptor
 
     val moduleDescriptor: ModuleDescriptor

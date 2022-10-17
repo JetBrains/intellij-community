@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntityBase() {
+open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleData) : ParentWithNullsMultiple, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsMultiple::class.java,
@@ -37,10 +37,8 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _parentData: String? = null
   override val parentData: String
-    get() = _parentData!!
+    get() = dataSource.parentData
 
   override val children: List<ChildWithNullsMultiple>
     get() = snapshot.extractOneToManyChildren<ChildWithNullsMultiple>(CHILDREN_CONNECTION_ID, this)!!.toList()
@@ -49,7 +47,7 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
     return connections
   }
 
-  class Builder(val result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple>(), ParentWithNullsMultiple.Builder {
+  class Builder(var result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple>(), ParentWithNullsMultiple.Builder {
     constructor() : this(ParentWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +65,9 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -75,11 +76,11 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentDataInitialized()) {
         error("Field ParentWithNullsMultiple#parentData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentWithNullsMultiple#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -101,20 +102,12 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNullsMultiple
-      this.parentData = dataSource.parentData
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.parentData != dataSource.parentData) this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }
 
-
-    override var parentData: String
-      get() = getEntityData().parentData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentData = value
-        changedProperty.add("parentData")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -123,6 +116,14 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentData: String
+      get() = getEntityData().parentData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentData = value
+        changedProperty.add("parentData")
       }
 
     // List of non-abstract referenced types
@@ -146,6 +147,12 @@ open class ParentWithNullsMultipleImpl : ParentWithNullsMultiple, WorkspaceEntit
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -187,12 +194,13 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
   }
 
   override fun createEntity(snapshot: EntityStorage): ParentWithNullsMultiple {
-    val entity = ParentWithNullsMultipleImpl()
-    entity._parentData = parentData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ParentWithNullsMultipleImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -217,18 +225,18 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentWithNullsMultipleData
 
-    if (this.parentData != other.parentData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentData != other.parentData) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentWithNullsMultipleData
 

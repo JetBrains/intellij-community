@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'Some.get'" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
 /* IGNORE_FIR */
@@ -26,7 +26,7 @@ operator fun Some.get(s: String) {}
 
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'Some.get'" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
 /* IGNORE_FIR */

@@ -6,88 +6,105 @@ import com.intellij.testFramework.fixtures.EditorMouseFixture;
 
 public class FindInEditorMultiCaretTest extends AbstractFindInEditorTest {
   public void testBasic() {
-    init("abc\n" +
-         "abc\n" +
-         "abc");
+    init("""
+           abc
+           abc
+           abc""");
     initFind();
     setTextToFind("b");
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "abc\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        abc
+                        abc""");
     addOccurrence();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        a<selection>b<caret></selection>c
+                        abc""");
     nextOccurrence();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "abc\n" +
-                      "a<selection>b<caret></selection>c");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        abc
+                        a<selection>b<caret></selection>c""");
     prevOccurrence();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        a<selection>b<caret></selection>c
+                        abc""");
     removeOccurrence();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "abc\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        abc
+                        abc""");
     allOccurrences();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        a<selection>b<caret></selection>c
+                        a<selection>b<caret></selection>c""");
     assertNull(getEditorSearchComponent());
   }
 
   public void testActionsInEditorWorkIndependently() {
-    init("abc\n" +
-         "abc\n" +
-         "abc");
+    init("""
+           abc
+           abc
+           abc""");
     initFind();
     setTextToFind("b");
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "abc\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        abc
+                        abc""");
     new EditorMouseFixture((EditorImpl)myFixture.getEditor()).clickAt(0, 1);
     addOccurrenceFromEditor();
     addOccurrenceFromEditor();
-    checkResultByText("<selection>a<caret>bc</selection>\n" +
-                      "<selection>a<caret>bc</selection>\n" +
-                      "abc");
+    checkResultByText("""
+                        <selection>a<caret>bc</selection>
+                        <selection>a<caret>bc</selection>
+                        abc""");
     nextOccurrenceFromEditor();
-    checkResultByText("<selection>a<caret>bc</selection>\n" +
-                      "abc\n" +
-                      "<selection>a<caret>bc</selection>");
+    checkResultByText("""
+                        <selection>a<caret>bc</selection>
+                        abc
+                        <selection>a<caret>bc</selection>""");
     prevOccurrenceFromEditor();
-    checkResultByText("<selection>a<caret>bc</selection>\n" +
-                      "<selection>a<caret>bc</selection>\n" +
-                      "abc");
+    checkResultByText("""
+                        <selection>a<caret>bc</selection>
+                        <selection>a<caret>bc</selection>
+                        abc""");
     removeOccurrenceFromEditor();
-    checkResultByText("<selection>a<caret>bc</selection>\n" +
-                      "abc\n" +
-                      "abc");
+    checkResultByText("""
+                        <selection>a<caret>bc</selection>
+                        abc
+                        abc""");
     allOccurrencesFromEditor();
-    checkResultByText("<selection>a<caret>bc</selection>\n" +
-                      "<selection>a<caret>bc</selection>\n" +
-                      "<selection>a<caret>bc</selection>");
+    checkResultByText("""
+                        <selection>a<caret>bc</selection>
+                        <selection>a<caret>bc</selection>
+                        <selection>a<caret>bc</selection>""");
     assertNotNull(getEditorSearchComponent());
   }
 
   public void testCloseRetainsMulticaretSelection() {
-    init("abc\n" +
-         "abc\n" +
-         "abc");
+    init("""
+           abc
+           abc
+           abc""");
     initFind();
     setTextToFind("b");
     addOccurrence();
     closeFind();
-    checkResultByText("a<selection>b<caret></selection>c\n" +
-                      "a<selection>b<caret></selection>c\n" +
-                      "abc");
+    checkResultByText("""
+                        a<selection>b<caret></selection>c
+                        a<selection>b<caret></selection>c
+                        abc""");
   }
 
   public void testTextModificationRemovesOldSelections() {
-    init("abc\n" +
-         "abc\n" +
-         "abc");
+    init("""
+           abc
+           abc
+           abc""");
     initFind();
     setTextToFind("b");
     addOccurrence();
@@ -98,20 +115,23 @@ public class FindInEditorMultiCaretTest extends AbstractFindInEditorTest {
   }
 
   public void testSecondFindNavigatesToTheSameOccurrence() {
-    init("ab<caret>c\n" +
-         "abc\n" +
-         "abc");
+    init("""
+           ab<caret>c
+           abc
+           abc""");
     initFind();
     setTextToFind("abc");
-    checkResultByText("abc\n" +
-                      "<selection>abc<caret></selection>\n" +
-                      "abc");
+    checkResultByText("""
+                        abc
+                        <selection>abc<caret></selection>
+                        abc""");
     closeFind();
     initFind();
     setTextToFind("abc");
-    checkResultByText("abc\n" +
-                      "<selection>abc<caret></selection>\n" +
-                      "abc");
+    checkResultByText("""
+                        abc
+                        <selection>abc<caret></selection>
+                        abc""");
   }
   
   public void testFindNextRetainsOnlyOneCaretIfNotUsedAsMoveToNextOccurrence() {

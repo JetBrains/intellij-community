@@ -24,7 +24,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -278,28 +277,19 @@ public class Alarm implements Disposable {
   @TestOnly
   public void drainRequestsInTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    for (Runnable task : getUnfinishedRequests()) {
-      task.run();
-    }
-  }
-
-  protected @NotNull List<Runnable> getUnfinishedRequests() {
-    List<Runnable> unfinishedTasks;
+    List<Runnable> result = new ArrayList<>();
     synchronized (LOCK) {
-      if (myRequests.isEmpty()) {
-        return Collections.emptyList();
-      }
-
-      unfinishedTasks = new ArrayList<>(myRequests.size());
       for (Request request : myRequests) {
         Runnable existingTask = request.cancel();
         if (existingTask != null) {
-          unfinishedTasks.add(existingTask);
+          result.add(existingTask);
         }
       }
       myRequests.clear();
     }
-    return unfinishedTasks;
+    for (Runnable task : result) {
+      task.run();
+    }
   }
 
   /**

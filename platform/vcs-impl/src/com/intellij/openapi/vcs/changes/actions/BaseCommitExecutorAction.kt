@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.util.ui.JButtonAction
@@ -19,7 +19,7 @@ abstract class CommitExecutorAction : JButtonAction(null) {
     isEnabledInModalContext = true
   }
 
-  override fun createButton(): JButton = JButton().apply { isOpaque = false }
+  override fun createButton(): JButton = JButton()
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT

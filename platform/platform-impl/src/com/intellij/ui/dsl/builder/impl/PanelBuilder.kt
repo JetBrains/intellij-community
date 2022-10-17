@@ -14,7 +14,7 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConfig: DialogPanelConfig,
-                            val spacingConfiguration: SpacingConfiguration,
+                            private val spacingConfiguration: SpacingConfiguration,
                             val panel: DialogPanel, val grid: Grid) {
 
   fun build() {
@@ -219,7 +219,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
                                               gaps = gaps)
         cell.init(panel, constraints, spacingConfiguration)
       }
-      null -> {
+      else -> {
         builder.skip(1)
       }
     }

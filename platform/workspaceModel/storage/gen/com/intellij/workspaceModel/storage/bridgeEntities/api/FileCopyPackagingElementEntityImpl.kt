@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
+open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -42,21 +42,17 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  @JvmField
-  var _filePath: VirtualFileUrl? = null
   override val filePath: VirtualFileUrl
-    get() = _filePath!!
+    get() = dataSource.filePath
 
-  @JvmField
-  var _renamedOutputFileName: String? = null
   override val renamedOutputFileName: String?
-    get() = _renamedOutputFileName
+    get() = dataSource.renamedOutputFileName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
+  class Builder(var result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
     constructor() : this(FileCopyPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,6 +70,9 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -82,11 +81,11 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FileCopyPackagingElementEntity#entitySource should be initialized")
       }
     }
 
@@ -97,14 +96,26 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FileCopyPackagingElementEntity
-      this.filePath = dataSource.filePath
-      this.renamedOutputFileName = dataSource.renamedOutputFileName
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.renamedOutputFileName != dataSource?.renamedOutputFileName) this.renamedOutputFileName = dataSource.renamedOutputFileName
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositePackagingElementEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -163,15 +174,6 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
         changedProperty.add("renamedOutputFileName")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): FileCopyPackagingElementEntityData = result ?: super.getEntityData() as FileCopyPackagingElementEntityData
     override fun getEntityClass(): Class<FileCopyPackagingElementEntity> = FileCopyPackagingElementEntity::class.java
   }
@@ -196,13 +198,13 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   }
 
   override fun createEntity(snapshot: EntityStorage): FileCopyPackagingElementEntity {
-    val entity = FileCopyPackagingElementEntityImpl()
-    entity._filePath = filePath
-    entity._renamedOutputFileName = renamedOutputFileName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FileCopyPackagingElementEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -229,19 +231,19 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FileCopyPackagingElementEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     if (this.renamedOutputFileName != other.renamedOutputFileName) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FileCopyPackagingElementEntityData
 

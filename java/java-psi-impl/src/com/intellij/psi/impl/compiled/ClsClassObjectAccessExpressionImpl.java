@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
@@ -6,16 +6,13 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author ven
- */
-public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
+public final class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implements PsiClassObjectAccessExpression {
   private final ClsElementImpl myParent;
   private final ClsTypeElementImpl myTypeElement;
 
@@ -57,14 +54,12 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getOperand() {
+  public @NotNull PsiTypeElement getOperand() {
     return myTypeElement;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return PsiImplUtil.getType(this);
   }
 
@@ -77,8 +72,9 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
 
   @Override
   public Icon getElementIcon(final int flags) {
-    RowIcon rowIcon = IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
-    rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon rowIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), 0);
+    rowIcon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Public), 1);
     return rowIcon;
   }
 }

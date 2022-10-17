@@ -29,6 +29,7 @@ import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -37,6 +38,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails.PackageDetailsPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computeModuleTreeModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -52,7 +54,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import java.awt.Dimension
-import javax.swing.BorderFactory
 import javax.swing.JScrollPane
 
 @Suppress("MagicNumber") // Swing dimension constants
@@ -80,7 +81,6 @@ internal class PackageManagementPanel(
     private val packagesListPanel = PackagesListPanel(
         project = project,
         operationExecutor = operationExecutor,
-        operationFactory = operationFactory,
         viewModelFlow = combine(
             modulesTree.targetModulesStateFlow,
             project.packageSearchProjectService.installedPackagesStateFlow,
@@ -107,21 +107,23 @@ internal class PackageManagementPanel(
         firstComponent = packagesListPanel.content
         secondComponent = packageDetailsPanel.content
         orientation = false // Horizontal split
-        dividerWidth = 2.scaled()
+        dividerWidth = 1.scaled()
+        divider.background = PackageSearchUI.Colors.border
     }
 
     private val mainSplitter = JBSplitter("PackageSearch.PackageManagementPanel.Splitter", 0.1f).apply {
         firstComponent = modulesScrollPanel
         secondComponent = packagesSplitter
         orientation = false // Horizontal split
-        dividerWidth = 2.scaled()
+        dividerWidth = 1.scaled()
+        divider.background = PackageSearchUI.Colors.border
     }
 
     init {
         updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible)
 
         modulesScrollPanel.apply {
-            border = BorderFactory.createEmptyBorder()
+            border = emptyBorder()
             minimumSize = Dimension(250.scaled(), 0)
 
             UIUtil.putClientProperty(verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
@@ -189,10 +191,12 @@ internal class PackageManagementPanel(
         togglePackageDetailsAction
     )
 
-    override fun buildTitleActions(): Array<AnAction> = arrayOf(togglePackageDetailsAction)
+    override fun buildTitleActions(): List<AnAction> = listOf(togglePackageDetailsAction)
 
-    override fun getData(dataId: String) = when {
-        PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
-        else -> null
+    override fun getData(dataId: String): PackageModel.Installed? {
+        return when {
+            PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
+            else -> null
+        }
     }
 }

@@ -11,9 +11,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.text
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.createMergeActions
@@ -31,7 +31,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
             urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
                                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
               .text(icsManager.repositoryManager.getUpstream() ?: "")
-              .horizontalAlign(HorizontalAlign.FILL)
+              .align(AlignX.FILL)
               .component
           }
           row {

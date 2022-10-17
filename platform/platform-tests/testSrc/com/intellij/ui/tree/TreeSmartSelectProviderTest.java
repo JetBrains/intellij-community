@@ -69,70 +69,78 @@ public class TreeSmartSelectProviderTest {
 
   @Test
   public void testDecreaseFromLeafNode() {
-    testDecreaseDoNotClearSelection(10, "-Root\n" +
-                                        " -Color\n" +
-                                        "  Red\n" +
-                                        "  Green\n" +
-                                        "  Blue\n" +
-                                        " +Digit\n" +
-                                        " -Letter\n" +
-                                        "  -Greek\n" +
-                                        "   Alpha\n" +
-                                        "   Beta\n" +
-                                        "   [Gamma]\n" +
-                                        "   Delta\n" +
-                                        "   Epsilon\n");
+    testDecreaseDoNotClearSelection(10, """
+      -Root
+       -Color
+        Red
+        Green
+        Blue
+       +Digit
+       -Letter
+        -Greek
+         Alpha
+         Beta
+         [Gamma]
+         Delta
+         Epsilon
+      """);
   }
 
   @Test
   public void testDecreaseFromCollapsedNode() {
-    testDecreaseDoNotClearSelection(5, "-Root\n" +
-                                       " -Color\n" +
-                                       "  Red\n" +
-                                       "  Green\n" +
-                                       "  Blue\n" +
-                                       " +[Digit]\n" +
-                                       " -Letter\n" +
-                                       "  -Greek\n" +
-                                       "   Alpha\n" +
-                                       "   Beta\n" +
-                                       "   Gamma\n" +
-                                       "   Delta\n" +
-                                       "   Epsilon\n");
+    testDecreaseDoNotClearSelection(5, """
+      -Root
+       -Color
+        Red
+        Green
+        Blue
+       +[Digit]
+       -Letter
+        -Greek
+         Alpha
+         Beta
+         Gamma
+         Delta
+         Epsilon
+      """);
   }
 
   @Test
   public void testDecreaseFromExpandedNode() {
-    testDecreaseDoNotClearSelection(7, "-Root\n" +
-                                       " -Color\n" +
-                                       "  Red\n" +
-                                       "  Green\n" +
-                                       "  Blue\n" +
-                                       " +Digit\n" +
-                                       " -Letter\n" +
-                                       "  -[Greek]\n" +
-                                       "   Alpha\n" +
-                                       "   Beta\n" +
-                                       "   Gamma\n" +
-                                       "   Delta\n" +
-                                       "   Epsilon\n");
+    testDecreaseDoNotClearSelection(7, """
+      -Root
+       -Color
+        Red
+        Green
+        Blue
+       +Digit
+       -Letter
+        -[Greek]
+         Alpha
+         Beta
+         Gamma
+         Delta
+         Epsilon
+      """);
   }
 
   @Test
   public void testDecreaseFromExpandedParentNode() {
-    testDecreaseDoNotClearSelection(6, "-Root\n" +
-                                       " -Color\n" +
-                                       "  Red\n" +
-                                       "  Green\n" +
-                                       "  Blue\n" +
-                                       " +Digit\n" +
-                                       " -[Letter]\n" +
-                                       "  -Greek\n" +
-                                       "   Alpha\n" +
-                                       "   Beta\n" +
-                                       "   Gamma\n" +
-                                       "   Delta\n" +
-                                       "   Epsilon\n");
+    testDecreaseDoNotClearSelection(6, """
+      -Root
+       -Color
+        Red
+        Green
+        Blue
+       +Digit
+       -[Letter]
+        -Greek
+         Alpha
+         Beta
+         Gamma
+         Delta
+         Epsilon
+      """);
   }
 
   @Test
@@ -140,61 +148,69 @@ public class TreeSmartSelectProviderTest {
     test(true, tree -> {
       select(tree, 5);
       testIncrease(tree,
-                   "-Root\n" +
-                   " -Color\n" +
-                   "  Red\n" +
-                   "  Green\n" +
-                   "  Blue\n" +
-                   " +[Digit]\n" +
-                   " -Letter\n" +
-                   "  -Greek\n" +
-                   "   Alpha\n" +
-                   "   Beta\n" +
-                   "   Gamma\n" +
-                   "   Delta\n" +
-                   "   Epsilon\n",
+                   """
+                     -Root
+                      -Color
+                       Red
+                       Green
+                       Blue
+                      +[Digit]
+                      -Letter
+                       -Greek
+                        Alpha
+                        Beta
+                        Gamma
+                        Delta
+                        Epsilon
+                     """,
                    // 1 // 1 // 1 // select siblings of node
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n",
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """,
                    // 2 // 2 // 2 // select visible root
-                   "-[Root]\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n",
+                   """
+                     -[Root]
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """,
                    // 3 // 3 // 3 // do nothing
-                   "-[Root]\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n");
+                   """
+                     -[Root]
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """);
     });
   }
 
@@ -203,47 +219,53 @@ public class TreeSmartSelectProviderTest {
     test(false, tree -> {
       select(tree, 5);
       testIncrease(tree,
-                   "-Root\n" +
-                   " -Color\n" +
-                   "  Red\n" +
-                   "  Green\n" +
-                   "  Blue\n" +
-                   " +[Digit]\n" +
-                   " -Letter\n" +
-                   "  -Greek\n" +
-                   "   Alpha\n" +
-                   "   Beta\n" +
-                   "   Gamma\n" +
-                   "   Delta\n" +
-                   "   Epsilon\n",
+                   """
+                     -Root
+                      -Color
+                       Red
+                       Green
+                       Blue
+                      +[Digit]
+                      -Letter
+                       -Greek
+                        Alpha
+                        Beta
+                        Gamma
+                        Delta
+                        Epsilon
+                     """,
                    // 1 // 1 // 1 // select siblings of node
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n",
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """,
                    // 2 // 2 // 2 // do nothing
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n");
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """);
     });
   }
 
@@ -252,75 +274,85 @@ public class TreeSmartSelectProviderTest {
     test(tree -> {
       select(tree, 10);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   [Gamma]\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                [Gamma]
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // select siblings of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 2 // 2 // 2 // select parent of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 3 // 3 // 3 // select grand parent of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 4 // 4 // 4 // select siblings of grand parent
-                           "-Root\n" +
-                           " -[Color]\n" +
-                           "  [Red]\n" +
-                           "  [Green]\n" +
-                           "  [Blue]\n" +
-                           " +[Digit]\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n");
+                           """
+                             -Root
+                              -[Color]
+                               [Red]
+                               [Green]
+                               [Blue]
+                              +[Digit]
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """);
     });
   }
 
@@ -329,33 +361,37 @@ public class TreeSmartSelectProviderTest {
     test(tree -> {
       select(tree, 5);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +[Digit]\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   Gamma\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +[Digit]
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                Gamma
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // select siblings of node
-                           "-Root\n" +
-                           " -[Color]\n" +
-                           "  [Red]\n" +
-                           "  [Green]\n" +
-                           "  [Blue]\n" +
-                           " +[Digit]\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n");
+                           """
+                             -Root
+                              -[Color]
+                               [Red]
+                               [Green]
+                               [Blue]
+                              +[Digit]
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """);
     });
   }
 
@@ -364,61 +400,69 @@ public class TreeSmartSelectProviderTest {
     test(tree -> {
       select(tree, 7);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -[Greek]\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   Gamma\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -[Greek]
+                                Alpha
+                                Beta
+                                Gamma
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // select children of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 2 // 2 // 2 // select parent of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 3 // 3 // 3 // select siblings of parent
-                           "-Root\n" +
-                           " -[Color]\n" +
-                           "  [Red]\n" +
-                           "  [Green]\n" +
-                           "  [Blue]\n" +
-                           " +[Digit]\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n");
+                           """
+                             -Root
+                              -[Color]
+                               [Red]
+                               [Green]
+                               [Blue]
+                              +[Digit]
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """);
     });
   }
 
@@ -427,47 +471,53 @@ public class TreeSmartSelectProviderTest {
     test(tree -> {
       select(tree, 6);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -[Letter]\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   Gamma\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -[Letter]
+                               -Greek
+                                Alpha
+                                Beta
+                                Gamma
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // select descendants of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 2 // 2 // 2 // select siblings of node
-                           "-Root\n" +
-                           " -[Color]\n" +
-                           "  [Red]\n" +
-                           "  [Green]\n" +
-                           "  [Blue]\n" +
-                           " +[Digit]\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n");
+                           """
+                             -Root
+                              -[Color]
+                               [Red]
+                               [Green]
+                               [Blue]
+                              +[Digit]
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """);
     });
   }
 
@@ -476,61 +526,69 @@ public class TreeSmartSelectProviderTest {
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, tree -> {
       select(tree, 3, 10);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  [Green]\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   [Gamma]\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               [Green]
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                [Gamma]
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // select siblings of second node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  [Green]\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               [Green]
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 2 // 2 // 2 // select parent of second node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  [Green]\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               [Green]
+                               Blue
+                              +Digit
+                              -Letter
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """,
                            // 3 // 3 // 3 // grand parent of node
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  [Green]\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -[Letter]\n" +
-                           "  -[Greek]\n" +
-                           "   [Alpha]\n" +
-                           "   [Beta]\n" +
-                           "   [Gamma]\n" +
-                           "   [Delta]\n" +
-                           "   [Epsilon]\n");
+                           """
+                             -Root
+                              -Color
+                               Red
+                               [Green]
+                               Blue
+                              +Digit
+                              -[Letter]
+                               -[Greek]
+                                [Alpha]
+                                [Beta]
+                                [Gamma]
+                                [Delta]
+                                [Epsilon]
+                             """);
     });
   }
 
@@ -539,75 +597,85 @@ public class TreeSmartSelectProviderTest {
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, tree -> {
       select(tree, 10, 3);
       testIncrease(tree,
-                   "-Root\n" +
-                   " -Color\n" +
-                   "  Red\n" +
-                   "  [Green]\n" +
-                   "  Blue\n" +
-                   " +Digit\n" +
-                   " -Letter\n" +
-                   "  -Greek\n" +
-                   "   Alpha\n" +
-                   "   Beta\n" +
-                   "   [Gamma]\n" +
-                   "   Delta\n" +
-                   "   Epsilon\n",
+                   """
+                     -Root
+                      -Color
+                       Red
+                       [Green]
+                       Blue
+                      +Digit
+                      -Letter
+                       -Greek
+                        Alpha
+                        Beta
+                        [Gamma]
+                        Delta
+                        Epsilon
+                     """,
                    // 1 // 1 // 1 // select siblings of second node
-                   "-Root\n" +
-                   " -Color\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +Digit\n" +
-                   " -Letter\n" +
-                   "  -Greek\n" +
-                   "   Alpha\n" +
-                   "   Beta\n" +
-                   "   [Gamma]\n" +
-                   "   Delta\n" +
-                   "   Epsilon\n",
+                   """
+                     -Root
+                      -Color
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +Digit
+                      -Letter
+                       -Greek
+                        Alpha
+                        Beta
+                        [Gamma]
+                        Delta
+                        Epsilon
+                     """,
                    // 2 // 2 // 2 // select parent of second node
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +Digit\n" +
-                   " -Letter\n" +
-                   "  -Greek\n" +
-                   "   Alpha\n" +
-                   "   Beta\n" +
-                   "   [Gamma]\n" +
-                   "   Delta\n" +
-                   "   Epsilon\n",
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +Digit
+                      -Letter
+                       -Greek
+                        Alpha
+                        Beta
+                        [Gamma]
+                        Delta
+                        Epsilon
+                     """,
                    // 3 // 3 // 3 // select siblings of parent
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n");
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """);
       testDecrease(tree,
-                   "-Root\n" +
-                   " -[Color]\n" +
-                   "  [Red]\n" +
-                   "  [Green]\n" +
-                   "  [Blue]\n" +
-                   " +[Digit]\n" +
-                   " -[Letter]\n" +
-                   "  -[Greek]\n" +
-                   "   [Alpha]\n" +
-                   "   [Beta]\n" +
-                   "   [Gamma]\n" +
-                   "   [Delta]\n" +
-                   "   [Epsilon]\n",
+                   """
+                     -Root
+                      -[Color]
+                       [Red]
+                       [Green]
+                       [Blue]
+                      +[Digit]
+                      -[Letter]
+                       -[Greek]
+                        [Alpha]
+                        [Beta]
+                        [Gamma]
+                        [Delta]
+                        [Epsilon]
+                     """,
                    // 1 // 1 // 1 // unselect siblings of parent
                    "-Root\n" +
                    " -[Color]\n" +
@@ -658,47 +726,53 @@ public class TreeSmartSelectProviderTest {
     test(TreeSelectionModel.SINGLE_TREE_SELECTION, tree -> {
       select(tree, 10);
       testIncreaseDecrease(tree,
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   [Gamma]\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                [Gamma]
+                                Delta
+                                Epsilon
+                             """,
                            // 1 // 1 // 1 // do nothing
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   [Gamma]\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n",
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                [Gamma]
+                                Delta
+                                Epsilon
+                             """,
                            // 2 // 2 // 2 // do nothing
-                           "-Root\n" +
-                           " -Color\n" +
-                           "  Red\n" +
-                           "  Green\n" +
-                           "  Blue\n" +
-                           " +Digit\n" +
-                           " -Letter\n" +
-                           "  -Greek\n" +
-                           "   Alpha\n" +
-                           "   Beta\n" +
-                           "   [Gamma]\n" +
-                           "   Delta\n" +
-                           "   Epsilon\n");
+                           """
+                             -Root
+                              -Color
+                               Red
+                               Green
+                               Blue
+                              +Digit
+                              -Letter
+                               -Greek
+                                Alpha
+                                Beta
+                                [Gamma]
+                                Delta
+                                Epsilon
+                             """);
     });
   }
 
@@ -726,21 +800,23 @@ public class TreeSmartSelectProviderTest {
     waitForTestOnEDT(() -> {
       tree.setSelectionRow(10);
       Assert.assertEquals(15, tree.getRowCount());
-      assertTree(tree, "-/\n" +
-                       " -ktor\n" +
-                       "  ktor-core\n" +
-                       "  -ktor-features\n" +
-                       "   jetty-http-client\n" +
-                       "   -ktor-locations\n" +
-                       "    -src\n" +
-                       "     -asdsd.asdas.asdas\n" +
-                       "      a\n" +
-                       "      b\n" +
-                       "      [c]\n" +
-                       "    -tests\n" +
-                       "     fooo\n" +
-                       "    zar.txt\n" +
-                       "    zoo.txt\n");
+      assertTree(tree, """
+        -/
+         -ktor
+          ktor-core
+          -ktor-features
+           jetty-http-client
+           -ktor-locations
+            -src
+             -asdsd.asdas.asdas
+              a
+              b
+              [c]
+            -tests
+             fooo
+            zar.txt
+            zoo.txt
+        """);
 
       TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
       provider.increaseSelection(tree);
@@ -748,21 +824,23 @@ public class TreeSmartSelectProviderTest {
       provider.increaseSelection(tree);
       provider.increaseSelection(tree);
       provider.increaseSelection(tree);
-      assertTree(tree, "-/\n" +
-                       " -ktor\n" +
-                       "  ktor-core\n" +
-                       "  -ktor-features\n" +
-                       "   jetty-http-client\n" +
-                       "   -[ktor-locations]\n" +
-                       "    -[src]\n" +
-                       "     -[asdsd.asdas.asdas]\n" +
-                       "      [a]\n" +
-                       "      [b]\n" +
-                       "      [c]\n" +
-                       "    -[tests]\n" +
-                       "     [fooo]\n" +
-                       "    [zar.txt]\n" +
-                       "    [zoo.txt]\n");
+      assertTree(tree, """
+        -/
+         -ktor
+          ktor-core
+          -ktor-features
+           jetty-http-client
+           -[ktor-locations]
+            -[src]
+             -[asdsd.asdas.asdas]
+              [a]
+              [b]
+              [c]
+            -[tests]
+             [fooo]
+            [zar.txt]
+            [zoo.txt]
+        """);
     });
   }
 
@@ -829,19 +907,21 @@ public class TreeSmartSelectProviderTest {
     waitForTestOnEDT(() -> {
       tree.collapseRow(normalize(tree, 5));
       tree.clearSelection();
-      assertTree(tree, "-Root\n" +
-                       " -Color\n" +
-                       "  Red\n" +
-                       "  Green\n" +
-                       "  Blue\n" +
-                       " +Digit\n" +
-                       " -Letter\n" +
-                       "  -Greek\n" +
-                       "   Alpha\n" +
-                       "   Beta\n" +
-                       "   Gamma\n" +
-                       "   Delta\n" +
-                       "   Epsilon\n");
+      assertTree(tree, """
+        -Root
+         -Color
+          Red
+          Green
+          Blue
+         +Digit
+         -Letter
+          -Greek
+           Alpha
+           Beta
+           Gamma
+           Delta
+           Epsilon
+        """);
       consumer.accept(tree);
     });
   }

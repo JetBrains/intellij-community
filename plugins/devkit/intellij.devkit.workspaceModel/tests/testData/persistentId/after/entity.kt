@@ -5,7 +5,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -21,8 +23,8 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SimplePersistentIdEntity, ModifiableWorkspaceEntity<SimplePersistentIdEntity>, ObjBuilder<SimplePersistentIdEntity> {
-    override var version: Int
     override var entitySource: EntitySource
+    override var version: Int
     override var name: String
     override var related: SimpleId
     override var sealedClassWithLinks: SealedClassWithLinks
@@ -65,7 +67,7 @@ sealed class SealedClassWithLinks {
 
   sealed class Many() : SealedClassWithLinks() {
     data class Ordered(val list: List<SimpleId>) : Many()
-    data class Unordered(val set: List<SimpleId>) : Many()
+    data class Unordered(val set: Set<SimpleId>) : Many()
   }
 
 }

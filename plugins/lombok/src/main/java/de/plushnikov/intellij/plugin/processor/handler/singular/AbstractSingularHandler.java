@@ -95,7 +95,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @NotNull
-  private String createSingularClearMethodName(String fieldName) {
+  private static String createSingularClearMethodName(String fieldName) {
     return "clear" + StringUtil.capitalize(fieldName);
   }
 

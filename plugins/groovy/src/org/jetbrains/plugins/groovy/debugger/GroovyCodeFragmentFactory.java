@@ -120,17 +120,20 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
     }
 
-    javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
-                    "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
-                    "   final java.lang.Class |c = |loader.parseClass(");
+    javaText.append("""
+                      final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();
+                         final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);
+                         final java.lang.Class |c = |loader.parseClass(""");
     javaText.append("\"" + IMPORTS + "class DUMMY").append(" { ").append("public groovy.lang.Closure ")
       .append(EVAL_NAME).append(" = {\\n").append(TEXT).append("\\n}}\"");
-    javaText.append(", \"DUMMY.groovy\");\n" +
-                    "   int |i;\n" +
-                    "   java.lang.reflect.Field[] |fields = |c.getFields();\n" +
-                    "   for (int |j = 0; |j < |fields.length; |j++) if (|fields[|j].getName().equals(\"_JETGROOVY_EVAL_\")) {|i = |j; break;}\n" +
-                    "   final java.lang.reflect.Field |field = |fields[|i];\n" +
-                    "   final java.lang.Object |closure = |field.get(|c.newInstance());\n");
+    javaText.append("""
+                      , "DUMMY.groovy");
+                         int |i;
+                         java.lang.reflect.Field[] |fields = |c.getFields();
+                         for (int |j = 0; |j < |fields.length; |j++) if (|fields[|j].getName().equals("_JETGROOVY_EVAL_")) {|i = |j; break;}
+                         final java.lang.reflect.Field |field = |fields[|i];
+                         final java.lang.Object |closure = |field.get(|c.newInstance());
+                      """);
 
     javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {

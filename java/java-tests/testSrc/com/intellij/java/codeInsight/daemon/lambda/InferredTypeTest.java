@@ -29,14 +29,16 @@ import java.util.Map;
 
 public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNestedCallReturnType() {
-    myFixture.configureByText("a.java", "import java.util.List;\n" +
-                                        "abstract class Test {\n" +
-                                        "    abstract <R, K> R foo(K k1, K k2);\n" +
-                                        "    {\n" +
-                                        "        String str = \"\";\n" +
-                                        "        List<String> l = f<caret>oo(foo(str, str), str);\n" +
-                                        "    }\n" +
-                                        "}\n");
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      abstract class Test {
+          abstract <R, K> R foo(K k1, K k2);
+          {
+              String str = "";
+              List<String> l = f<caret>oo(foo(str, str), str);
+          }
+      }
+      """);
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     Assert.assertTrue(elementAtCaret instanceof PsiIdentifier);
 
@@ -48,19 +50,20 @@ public class InferredTypeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testCashedTypes() {
-    myFixture.configureByText("a.java", "import java.util.*;\n" +
-                                        "abstract class Main {\n" +
-                                        "    void test(List<Integer> li) {\n" +
-                                        "       foo(li, s -> <caret>s.substr(0), Collections.emptyList());\n" +
-                                        "    }\n" +
-                                        "    abstract <T, U> Collection<U> foo(Collection<T> coll, Fun<Stream<T>, U> f, List<U> it);" +
-                                        "    interface Stream<T> {\n" +
-                                        "        T substr(long startingOffset);\n" +
-                                        "    }\n" +
-                                        "    interface Fun<T, R> {\n" +
-                                        "        R _(T t);\n" +
-                                        "    }\n" +
-                                        "}\n");
+    myFixture.configureByText("a.java", """
+      import java.util.*;
+      abstract class Main {
+          void test(List<Integer> li) {
+             foo(li, s -> <caret>s.substr(0), Collections.emptyList());
+          }
+          abstract <T, U> Collection<U> foo(Collection<T> coll, Fun<Stream<T>, U> f, List<U> it);    interface Stream<T> {
+              T substr(long startingOffset);
+          }
+          interface Fun<T, R> {
+              R _(T t);
+          }
+      }
+      """);
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     Assert.assertTrue(elementAtCaret instanceof PsiIdentifier);
 

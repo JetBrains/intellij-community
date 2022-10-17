@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
+open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
@@ -39,16 +39,14 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
   override val parentEntity: CompositeBaseEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  @JvmField
-  var _property: String? = null
   override val property: String
-    get() = _property!!
+    get() = dataSource.property
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
+  class Builder(var result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity>(), MiddleEntity.Builder {
     constructor() : this(MiddleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +64,9 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -74,11 +75,11 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isPropertyInitialized()) {
         error("Field MiddleEntity#property should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MiddleEntity#entitySource should be initialized")
       }
     }
 
@@ -89,13 +90,25 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MiddleEntity
-      this.property = dataSource.property
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.property != dataSource.property) this.property = dataSource.property
       if (parents != null) {
-        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+        val parentEntityNew = parents.filterIsInstance<CompositeBaseEntity?>().singleOrNull()
+        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
+          this.parentEntity = parentEntityNew
+        }
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositeBaseEntity?
       get() {
@@ -144,15 +157,6 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
         changedProperty.add("property")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): MiddleEntityData = result ?: super.getEntityData() as MiddleEntityData
     override fun getEntityClass(): Class<MiddleEntity> = MiddleEntity::class.java
   }
@@ -176,12 +180,13 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): MiddleEntity {
-    val entity = MiddleEntityImpl()
-    entity._property = property
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = MiddleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -207,18 +212,18 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MiddleEntityData
 
-    if (this.property != other.property) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.property != other.property) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MiddleEntityData
 

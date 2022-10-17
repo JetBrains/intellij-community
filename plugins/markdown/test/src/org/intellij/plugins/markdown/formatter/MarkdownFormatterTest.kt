@@ -34,6 +34,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test punctuation`() = doTest()
 
+  fun `test emphasis`() = doTest()
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
@@ -62,6 +64,7 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
       doReformatTest(after, after)
     }
   }
+
   private fun runWithTemporaryStyleSettings(block: (CodeStyleSettings) -> Unit) {
     val settings = CodeStyle.getSettings(project)
     CodeStyle.doWithTemporarySettings(project, settings, block)

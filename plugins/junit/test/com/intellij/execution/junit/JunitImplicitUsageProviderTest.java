@@ -14,29 +14,30 @@ public class JunitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureT
   }
 
   public void testRecognizeTestMethodInParameterizedClass() {
-    myFixture.configureByText("Test.java", "import org.junit.jupiter.params.provider.EnumSource;\n" +
-                                           "\n" +
-                                           "class Test {\n" +
-                                           "  enum HostnameVerification {\n" +
-                                           "    YES, NO;\n" +
-                                           "  }\n" +
-                                           "   @EnumSource(HostnameVerification.class)\n" +
-                                           "   static void test(HostnameVerification hostnameVerification) {\n" +
-                                           "        System.out.println(hostnameVerification);\n" +
-                                           "    }\n" +
-                                           "    public static void main(String[] args) {\n" +
-                                           "        test(null);\n" +
-                                           "    }\n" +
-                                           "}");
+    myFixture.configureByText("Test.java", """
+      import org.junit.jupiter.params.provider.EnumSource;
+
+      class Test {
+        enum HostnameVerification {
+          YES, NO;
+        }
+         @EnumSource(HostnameVerification.class)
+         static void test(HostnameVerification hostnameVerification) {
+              System.out.println(hostnameVerification);
+          }
+          public static void main(String[] args) {
+              test(null);
+          }
+      }""");
     myFixture.testHighlighting(true, false, false);
   }
 
   public void testParameterizedDisplayNameByParameter() {
-    myFixture.configureByText("MyTest.java", "import org.junit.jupiter.params.ParameterizedTest;" +
-                                             "class MyTest {\n" +
-                                             "@ParameterizedTest(name = \"{0}\")\n" +
-                                             "void byName(String name) {}\n" +
-                                             "}");
+    myFixture.configureByText("MyTest.java", """
+      import org.junit.jupiter.params.ParameterizedTest;class MyTest {
+      @ParameterizedTest(name = "{0}")
+      void byName(String name) {}
+      }""");
     myFixture.testHighlighting(true, false, false);
   }
 }

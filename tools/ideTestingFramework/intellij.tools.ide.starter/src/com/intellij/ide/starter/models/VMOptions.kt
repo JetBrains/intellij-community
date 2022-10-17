@@ -67,6 +67,9 @@ data class VMOptions(
     return addLine(line = "-D$key=$value", filterPrefix = "-D$key=")
   }
 
+  fun removeSystemProperty(key: String): VMOptions =
+    copy(data = data.filterNot { it.trim().startsWith("-D${key}") })
+
   fun addLine(line: String, filterPrefix: String? = null): VMOptions {
     if (data.contains(line)) return this
     val copy = if (filterPrefix == null) data else data.filterNot { it.trim().startsWith(filterPrefix) }
@@ -87,7 +90,7 @@ data class VMOptions(
     return VMOptionsDiff(originalLines = this.data, actualLines = loadedOptions)
   }
 
-  fun writeJavaArgsFile(theFile: File) {
+  fun writeJavaArgsFile(theFile: Path) {
     writeJvmArgsFile(theFile, this.data)
   }
 
@@ -116,6 +119,10 @@ data class VMOptions(
     return this
       .addSystemProperty("idea.log.vmtrace.file", filePath)
       .addLine("-agentpath:${vmTraceFile.toAbsolutePath()}=${filePath.toAbsolutePath()}")
+  }
+
+  fun enableExitMetrics(filePath: Path): VMOptions {
+    return this.addSystemProperty("idea.log.exit.metrics.file", filePath)
   }
 
   fun configureLoggers(
@@ -150,8 +157,11 @@ data class VMOptions(
     .addSystemProperty("jb.consents.confirmation.enabled", false)
     .addSystemProperty("jb.privacy.policy.text", "<!--999.999-->")
 
-  fun takeScreenshotIfFailure(logsDir: Path) = this
-    .addSystemProperty("ide.performance.screenshot.before.kill", logsDir.resolve("screenshot_beforeKill.jpg").toString())
+  fun takeScreenshotsPeriodically(logsDir: Path) = this
+    .addSystemProperty("ide.performance.screenshot", logsDir.resolve("screenshot.png").toString())
+
+  fun takeScreenshotOnFailure(logsDir: Path) = this
+    .addSystemProperty("ide.performance.screenshot.on.failure", logsDir.resolve("screenshot_onFailure.jpg").toString())
 
   fun installTestScript(testName: String,
                         paths: IDEDataPaths,
@@ -228,6 +238,10 @@ data class VMOptions(
 
   fun withXmx(sizeMb: Int) = this
     .addLine("-Xmx" + sizeMb + "m", "-Xmx")
+
+  fun withClassFileVerification() = this
+    .addLine("-XX:+UnlockDiagnosticVMOptions")
+    .addLine("-XX:+BytecodeVerificationLocal")
 
   fun withG1GC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }

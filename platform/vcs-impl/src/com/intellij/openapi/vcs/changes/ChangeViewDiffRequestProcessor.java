@@ -10,7 +10,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -276,14 +275,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    Objects.requireNonNull(getSelectionStrategy(false)).goNext();
-    updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
+    goToNextChangeImpl(fromDifferences, () -> {
+      Objects.requireNonNull(getSelectionStrategy(false)).goNext();
+    });
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    Objects.requireNonNull(getSelectionStrategy(false)).goPrev();
-    updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
+    goToPrevChangeImpl(fromDifferences, () -> {
+      Objects.requireNonNull(getSelectionStrategy(false)).goPrev();
+    });
   }
 
   @Override

@@ -18,8 +18,8 @@ interface ParentAbEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentAbEntity, ModifiableWorkspaceEntity<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
-    override var children: List<ChildAbstractBaseEntity>
     override var entitySource: EntitySource
+    override var children: List<ChildAbstractBaseEntity>
   }
 
   companion object : Type<ParentAbEntity, Builder>() {
@@ -48,8 +48,8 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
-    override var commonData: String
     override var entitySource: EntitySource
+    override var commonData: String
     override var parentEntity: ParentAbEntity
   }
 
@@ -74,10 +74,10 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, ModifiableWorkspaceEntity<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
+    override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
     override var firstData: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ChildFirstEntity, Builder>(ChildAbstractBaseEntity) {
@@ -112,10 +112,10 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, ModifiableWorkspaceEntity<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
+    override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
     override var secondData: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ChildSecondEntity, Builder>(ChildAbstractBaseEntity) {

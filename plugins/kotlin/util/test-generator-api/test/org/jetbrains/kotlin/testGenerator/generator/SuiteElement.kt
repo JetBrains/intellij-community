@@ -70,7 +70,8 @@ class SuiteElement private constructor(
                     methodNameBase,
                     if (file.isDirectory) "$path/" else path,
                     file.toRelativeStringSystemIndependent(rootFile),
-                    group.isCompilerTestData
+                    group.isCompilerTestData,
+                    model.passTestDataPath
                 )
             }
 
@@ -115,7 +116,10 @@ class SuiteElement private constructor(
             }
 
             val result = ArrayList<TestMethod>(2)
-            result += RunTestMethod(model)
+
+            if (model.passTestDataPath) {
+                result += RunTestMethod(model)
+            }
 
             if (group.isCompilerTestData) {
                 result += SetUpMethod(

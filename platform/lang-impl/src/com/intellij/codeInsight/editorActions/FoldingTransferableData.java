@@ -16,6 +16,9 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
@@ -27,7 +30,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return FoldingData.getDataFlavor();
   }
 
@@ -37,7 +40,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
   }
 
   @Override
-  public int getOffsets(final int[] offsets, int index) {
+  public int getOffsets(int @NotNull [] offsets, int index) {
     for (FoldingData data : myFoldingDatas) {
       offsets[index++] = data.startOffset;
       offsets[index++] = data.endOffset;
@@ -46,7 +49,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
   }
 
   @Override
-  public int setOffsets(final int[] offsets, int index) {
+  public int setOffsets(int @NotNull [] offsets, int index) {
     for (FoldingData data : myFoldingDatas) {
       data.startOffset = offsets[index++];
       data.endOffset = offsets[index++];

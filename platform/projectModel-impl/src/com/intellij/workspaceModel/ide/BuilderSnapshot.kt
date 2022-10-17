@@ -7,19 +7,20 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 class StorageReplacement internal constructor(
   val version: Long,
-  val snapshot: EntityStorageSnapshot,
+  val builder: MutableEntityStorage,
   val changes: Map<Class<*>, List<EntityChange<*>>>
 )
 
 class BuilderSnapshot(val version: Long, private val storage: EntityStorageSnapshot) {
   val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
+  
+  fun areEntitiesChanged(): Boolean = !builder.hasSameEntities(storage)
 
   /**
    * It's suggested to call this method WITHOUT write locks or anything
    */
   fun getStorageReplacement(): StorageReplacement {
     val changes = builder.collectChanges(storage)
-    val newStorage = builder.toSnapshot()
-    return StorageReplacement(version, newStorage, changes)
+    return StorageReplacement(version, builder, changes)
   }
 }

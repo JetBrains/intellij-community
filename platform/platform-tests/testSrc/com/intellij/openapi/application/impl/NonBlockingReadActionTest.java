@@ -48,9 +48,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
-/**
- * @author peter
- */
 public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
   public void testCoalesceEqual() {

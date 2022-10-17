@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 @Presentation(typeName = "XML Tag")
 public interface DomCollectionChildDescription extends DomChildrenDescription {
 

@@ -36,10 +36,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
 import org.jdom.Element
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.resolvedPromise
 import java.awt.Component
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -254,7 +253,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun getCurrentWindow(): EditorWindow? = null
 
-  override fun getActiveWindow(): Promise<EditorWindow> = resolvedPromise()
+  override fun getActiveWindow(): CompletableFuture<EditorWindow?> = CompletableFuture.completedFuture(null)
 
   override fun setCurrentWindow(window: EditorWindow) {}
 
@@ -269,8 +268,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun getSelectedEditor(file: VirtualFile): FileEditor? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-      return clientManager?.getSelectedEditor()
+      return clientFileEditorManager?.getSelectedEditor()
     }
 
     getEditor(file)?.let { return TextEditorProvider.getInstance().getTextEditor(it) }
@@ -474,20 +472,17 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override fun getPreferredFocusedComponent(): JComponent = throw UnsupportedOperationException()
 
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+    return EditorComposite.retrofit(getComposite(file))
+  }
+
+  override fun getComposite(file: VirtualFile): FileEditorComposite? {
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager
-                          ?: return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
-      return EditorComposite.retrofit(clientManager.getComposite(file))
+      return clientFileEditorManager?.getComposite(file)
     }
 
-    val editorAndProvider = testEditorSplitter.getEditorAndProvider(file)
-    var fileEditor = FileEditor.EMPTY_ARRAY
-    var fileEditorProvider = FileEditorProvider.EMPTY_ARRAY
-    if (editorAndProvider != null) {
-      fileEditor = arrayOf(editorAndProvider.first)
-      fileEditorProvider = arrayOf(editorAndProvider.second)
+    return testEditorSplitter.getEditorAndProvider(file)?.let {
+      TestEditorComposite(it.first, it.second)
     }
-    return Pair(fileEditor, fileEditorProvider)
   }
 
   override fun getWindowSplitCount() = 0
@@ -512,4 +507,13 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
       }
     }
   }
+}
+
+data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : FileEditorComposite() {
+  override val allEditors: List<FileEditor>
+    get() = listOf(editor)
+  override val allProviders: List<FileEditorProvider>
+    get() = listOf(provider)
+  override val isPreview: Boolean
+    get() = false
 }

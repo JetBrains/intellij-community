@@ -814,3 +814,80 @@ class TestInsertCode(unittest.TestCase):
             offset *= 2
         with(pytest.raises(RuntimeError)):
             add_jump_instruction(offset, foo.__code__)
+
+    @pytest.mark.skipif(
+        IS_PY310_OR_GREATER, reason="Test is specific for Python versions < 3.10")
+    def testing_add_extended_arg(self):
+
+        def backtrack(move_list, board_p, number_p):
+            for i in range(2, len(move_list)):
+                x = move_list[-i][0]
+                y = move_list[-i][1]
+                available_0 = False
+
+                try:
+                    if board_p[y + 1][x] == 0:
+                        available_0 = True
+                        new_x = x
+                        new_y = y + 1
+                except IndexError:
+                    available_0 = False
+
+                if not available_0:
+                    if y - 1 != -1:
+                        if board_p[y - 1][x] == 0:
+                            available_0 = True
+                            new_x = x
+                            new_y = y - 1
+                    else:
+                        available_0 = False
+
+                if not available_0:  # first error
+                    try:
+                        if board_p[y][x + 1] == 0:
+                            available_0 = True
+                            new_x = x + 1
+                            new_y = y
+                    except IndexError:  # second error
+                        available_0 = False
+
+                if not available_0:
+                    if x - 1 != -1:
+                        if board_p[y][x - 1] == 0:
+                            available_0 = True
+                            new_x = x - 1
+                            new_y = y
+                    else:
+                        available_0 = False
+
+                if available_0:
+                    # set all moves after chosen one back to 0 in board - tick
+                    # return new board - tick
+                    # pop all useless moves - tick
+                    # return new move list - tick
+                    # have to send back new cell number based on how many deleted
+                    index = move_list.index((x, y))
+                    counter = 0
+                    for g in range(len(move_list) - 1, index, -1):
+                        board_p[move_list[g][1]][move_list[g][0]] = 0
+                        del move_list[g]
+                        counter += 1
+                    number_p -= counter - 1
+                    return new_x, new_y, board_p, move_list
+
+        line = backtrack.__code__.co_firstlineno + 1
+        from _pydevd_frame_eval.pydevd_frame_tracing import create_pydev_trace_code_wrapper
+        breakpoint_code = create_pydev_trace_code_wrapper(line)
+
+        success, result = insert_code(backtrack.__code__, breakpoint_code, line)
+
+        assert success
+        result_lnotab = list(result.co_lnotab)
+
+        # first error, see `backtrack` function
+        assert result_lnotab[19 * 2] == 6
+        assert result_lnotab[19 * 2 + 1] == 1
+
+        # second error, see `backtrack` function
+        assert result_lnotab[25 * 2] == 16
+        assert result_lnotab[25 * 2 + 1] == 1

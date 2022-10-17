@@ -113,9 +113,20 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
    */
   public void setValueAt(Object aValue, int rowIndex, int columnIndex, boolean notifyListeners) {
     if (rowIndex < myItems.size()) {
-      myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
+      //noinspection unchecked
+      setValue(aValue, rowIndex, myColumnInfos[columnIndex]);
     }
     if (notifyListeners) fireTableCellUpdated(rowIndex, columnIndex);
+  }
+
+  private <Aspect> void setValue(Aspect aValue, int rowIndex, ColumnInfo<Item, Aspect> info) {
+    Item item = getItem(rowIndex);
+    if (info instanceof ImmutableColumnInfo) {
+      setItem(rowIndex, ((ImmutableColumnInfo<Item, Aspect>)info).withValue(item, aValue));
+    }
+    else {
+      info.setValue(item, aValue);
+    }
   }
 
   /**

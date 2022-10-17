@@ -49,7 +49,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
     }
 
 
-    fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?) {
+    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)

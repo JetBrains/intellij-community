@@ -34,7 +34,7 @@ public class FileDescriptorsContainerTest extends DescriptorsTestCase {
     assertSame(configuration, assertOneElement(myContainer.getConfigFiles()).getInfo());
 
     myContainer.getConfiguration().removeConfigFile(configuration);
-    assertEquals(0, myContainer.getConfigFiles().length);
+    assertEquals(0, myContainer.getConfigFiles().size());
   }
 
 

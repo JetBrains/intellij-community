@@ -6,6 +6,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightTestCase() {
   fun `test all none`() {
     // language=Markdown

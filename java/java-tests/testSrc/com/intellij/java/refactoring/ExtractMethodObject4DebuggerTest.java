@@ -80,256 +80,274 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
   public void testSimpleGeneration() throws Exception {
     doTest("int i = 0; int j = 0;", "Test test = new Test().invoke();int i = test.getI();int j = test.getJ();",
 
-           "static class Test {\n" +
-           "        private int i;\n" +
-           "        private int j;\n" +
-           "\n" +
-           "        public int getI() {\n" +
-           "            return i;\n" +
-           "        }\n" +
-           "\n" +
-           "        public int getJ() {\n" +
-           "            return j;\n" +
-           "        }\n" +
-           "\n" +
-           "        public Test invoke() {\n" +
-           "            i = 0;\n" +
-           "            j = 0;\n" +
-           "            return this;\n" +
-           "        }\n" +
-           "    }");
+           """
+             static class Test {
+                     private int i;
+                     private int j;
+
+                     public int getI() {
+                         return i;
+                     }
+
+                     public int getJ() {
+                         return j;
+                     }
+
+                     public Test invoke() {
+                         i = 0;
+                         j = 0;
+                         return this;
+                     }
+                 }""");
   }
 
   public void testInvokeReturnType() throws Exception {
     doTest("x = 6; y = 6;", "Test test = new Test().invoke();x = test.getX();y = test.getY();",
 
-           "static class Test {\n" +
-           "        private int x;\n" +
-           "        private int y;\n" +
-           "\n" +
-           "        public int getX() {\n" +
-           "            return x;\n" +
-           "        }\n" +
-           "\n" +
-           "        public int getY() {\n" +
-           "            return y;\n" +
-           "        }\n" +
-           "\n" +
-           "        public Test invoke() {\n" +
-           "            x = 6;\n" +
-           "            y = 6;\n" +
-           "            return this;\n" +
-           "        }\n" +
-           "    }");
+           """
+             static class Test {
+                     private int x;
+                     private int y;
+
+                     public int getX() {
+                         return x;
+                     }
+
+                     public int getY() {
+                         return y;
+                     }
+
+                     public Test invoke() {
+                         x = 6;
+                         y = 6;
+                         return this;
+                     }
+                 }""");
   }
 
   public void testAnonymousClassParams() throws Exception {
     doTest("new I() {public void foo(int i) {i++;}};", "I result = Test.invoke();",
 
-           "static class Test {\n" +
-           "        static I invoke() {\n" +
-           "            return new I() {\n" +
-           "                public void foo(int i) {\n" +
-           "                    i++;\n" +
-           "                }\n" +
-           "            };\n" +
-           "        }\n" +
-           "    }");
+           """
+             static class Test {
+                     static I invoke() {
+                         return new I() {
+                             public void foo(int i) {
+                                 i++;
+                             }
+                         };
+                     }
+                 }""");
   }
 
   public void testInnerClass() throws Exception {
     doTest("   new I(2).foo()", "new Test().invoke();",
 
-           "class Test {\n" +
-           "        public void invoke() {\n" +
-           "            new Sample.I(2).foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public void invoke() {
+                         new Sample.I(2).foo();
+                     }
+                 }""");
   }
 
   public void testResultExpr() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testResultStatements() throws Exception {
     doTest("int i = 0;\nfoo()", "Test test = new Test().invoke();int i = test.getI();int result = test.getResult();",
 
-           "class Test {\n" +
-           "        private int i;\n" +
-           "        private int result;\n" +
-           "\n" +
-           "        public int getI() {\n" +
-           "            return i;\n" +
-           "        }\n" +
-           "\n" +
-           "        public int getResult() {\n" +
-           "            return result;\n" +
-           "        }\n" +
-           "\n" +
-           "        public Test invoke() {\n" +
-           "            i = 0;\n" +
-           "            result = foo();\n" +
-           "            return this;\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     private int i;
+                     private int result;
+
+                     public int getI() {
+                         return i;
+                     }
+
+                     public int getResult() {
+                         return result;
+                     }
+
+                     public Test invoke() {
+                         i = 0;
+                         result = foo();
+                         return this;
+                     }
+                 }""");
   }
 
 
   public void testOffsetsAtCallSite() throws Exception {
     doTest("map.entrySet().stream().filter((a) -> (a.getKey()>0));",
            "Stream<Map.Entry<Integer,Integer>> result = new Test(map).invoke();",
-           "static class Test {\n" +
-           "        private Map<Integer, Integer> map;\n" +
-           "\n" +
-           "        public Test(Map<Integer, Integer> map) {\n" +
-           "            this.map = map;\n" +
-           "        }\n" +
-           "\n" +
-           "        public Stream<Map.Entry<Integer, Integer>> invoke() {\n" +
-           "            return map.entrySet().stream().filter((a) -> (a.getKey() > 0));\n" +
-           "        }\n" +
-           "    }");
+           """
+             static class Test {
+                     private Map<Integer, Integer> map;
+
+                     public Test(Map<Integer, Integer> map) {
+                         this.map = map;
+                     }
+
+                     public Stream<Map.Entry<Integer, Integer>> invoke() {
+                         return map.entrySet().stream().filter((a) -> (a.getKey() > 0));
+                     }
+                 }""");
   }
 
   public void testHangingFunctionalExpressions() throws Exception {
-    doTest("() -> {}", "Test.invoke();", "static class Test {\n" +
-                                               "        static void invoke() {\n" +
-                                               "            () -> {\n" +
-                                               "            };\n" +
-                                               "        }\n" +
-                                               "    }");
+    doTest("() -> {}", "Test.invoke();", """
+      static class Test {
+              static void invoke() {
+                  () -> {
+                  };
+              }
+          }""");
   }
 
   public void testArrayInitializer() throws Exception {
-    doTest("{new Runnable() {public void run(){} } }", 
+    doTest("{new Runnable() {public void run(){} } }",
            "Runnable[] result = Test.invoke();",
-           "static class Test {\n" +
-           "        static Runnable[] invoke() {\n" +
-           "            return new Runnable[]{new Runnable() {\n" +
-           "                public void run() {\n" +
-           "                }\n" +
-           "            }};\n" +
-           "        }\n" +
-           "    }", false);
+           """
+             static class Test {
+                     static Runnable[] invoke() {
+                         return new Runnable[]{new Runnable() {
+                             public void run() {
+                             }
+                         }};
+                     }
+                 }""", false);
   }
 
   public void testNewArrayInitializer() throws Exception {
     doTest("new Runnable[] {new Runnable() {public void run(){} } }",
            "Runnable[] result = Test.invoke();",
-           "static class Test {\n" +
-           "        static Runnable[] invoke() {\n" +
-           "            return new Runnable[]{new Runnable() {\n" +
-           "                public void run() {\n" +
-           "                }\n" +
-           "            }};\n" +
-           "        }\n" +
-           "    }", false);
+           """
+             static class Test {
+                     static Runnable[] invoke() {
+                         return new Runnable[]{new Runnable() {
+                             public void run() {
+                             }
+                         }};
+                     }
+                 }""", false);
   }
 
   public void testThisAndSuperReferences() throws Exception {
-    doTest("list.forEach(i -> {\n" +
-           "      new Runnable() {\n" +
-           "        int xxx = 0;\n" +
-           "        @Override\n" +
-           "        public void run() {\n" +
-           "          this.xxx = 5; // this stays the same\n" +
-           "        }\n" +
-           "      }.run();\n" +
-           "      this.a++;  // have to be qualified\n" +
-           "      super.foo();  // have to be qualified\n" +
-           "      a++;\n" +
-           "      foo();\n" +
-           "    });",
+    doTest("""
+             list.forEach(i -> {
+                   new Runnable() {
+                     int xxx = 0;
+                     @Override
+                     public void run() {
+                       this.xxx = 5; // this stays the same
+                     }
+                   }.run();
+                   this.a++;  // have to be qualified
+                   super.foo();  // have to be qualified
+                   a++;
+                   foo();
+                 });""",
            "new Test(list).invoke();",
-           "class Test {\n" +
-           "        private List<Integer> list;\n" +
-           "\n" +
-           "        public Test(List<Integer> list) {\n" +
-           "            this.list = list;\n" +
-           "        }\n" +
-           "\n" +
-           "        public void invoke() {\n" +
-           "            list.forEach(i -> {\n" +
-           "                new Runnable() {\n" +
-           "                    int xxx = 0;\n" +
-           "\n" +
-           "                    @Override\n" +
-           "                    public void run() {\n" +
-           "                        this.xxx = 5; // this stays the same\n" +
-           "                    }\n" +
-           "                }.run();\n" +
-           "                Sample.this.a++;  // have to be qualified\n" +
-           "                Sample.super.foo();  // have to be qualified\n" +
-           "                a++;\n" +
-           "                foo();\n" +
-           "            });\n" +
-           "        }\n" +
-           "    }", false);
+           """
+             class Test {
+                     private List<Integer> list;
+
+                     public Test(List<Integer> list) {
+                         this.list = list;
+                     }
+
+                     public void invoke() {
+                         list.forEach(i -> {
+                             new Runnable() {
+                                 int xxx = 0;
+
+                                 @Override
+                                 public void run() {
+                                     this.xxx = 5; // this stays the same
+                                 }
+                             }.run();
+                             Sample.this.a++;  // have to be qualified
+                             Sample.super.foo();  // have to be qualified
+                             a++;
+                             foo();
+                         });
+                     }
+                 }""", false);
   }
 
   public void testOnClosingBrace() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testOnClosingBraceLocalClass() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testOnFieldInitialization() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testOnEmptyMethod() throws Exception {
     doTest("   foo()", "int result = Test.invoke();",
 
-           "static class Test {\n" +
-           "        static int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             static class Test {
+                     static int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testOnSuperConstructorCall() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 
   public void testOnPrivateField() throws Exception {
     doTest("   foo()", "int result = new Test().invoke();",
 
-           "class Test {\n" +
-           "        public int invoke() {\n" +
-           "            return foo();\n" +
-           "        }\n" +
-           "    }");
+           """
+             class Test {
+                     public int invoke() {
+                         return foo();
+                     }
+                 }""");
   }
 }

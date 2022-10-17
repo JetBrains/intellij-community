@@ -14,8 +14,6 @@ import java.io.InputStream;
 
 /**
  * Reads settings from Eclipse XML profile. The actual work is done by an implementor of <code>handleOption()</code> method.
- * 
- * @author Rustam Vishnyakov
  */
 public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXmlProfileElements {
 

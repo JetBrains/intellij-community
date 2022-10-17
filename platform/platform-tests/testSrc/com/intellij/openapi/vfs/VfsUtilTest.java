@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -61,7 +62,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void testFixIdeaUrl() {
@@ -109,7 +110,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindChildWithTrailingSpace() {
-    File tempDir = myTempDir.newDirectory();
+    File tempDir = this.tempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -122,7 +123,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testDirAttributeRefreshes() throws IOException {
-    File file = myTempDir.newFile("test");
+    File file = tempDir.newFile("test");
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
@@ -142,7 +143,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testPresentableUrlSurvivesDeletion() throws IOException {
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.newFile("file.txt"));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.newFile("file.txt"));
     assertNotNull(file);
     String url = file.getPresentableUrl();
     assertNotNull(url);
@@ -216,7 +217,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindRootWithDenormalizedPath() {
-    File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
+    File tempJar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
@@ -225,8 +226,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(root1);
     assertSame(root1, root2);
 
-    assertNull(LocalFileSystem.getInstance().findFileByPath("//../blah-blah")); // must not crash in FsRoot("//..")
-    assertNull(LocalFileSystem.getInstance().findFileByPath("//./blah-blah")); // must not crash in FsRoot("//.")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//../blah-blah")); // it must not crash in FsRoot("//..")
+    assertNull(LocalFileSystem.getInstance().findFileByPath("//./blah-blah")); // it must not crash in FsRoot("//.")
   }
 
   @Test
@@ -242,7 +243,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testNotCanonicallyNamedChild() throws IOException {
-    File tempDir = myTempDir.newDirectory();
+    File tempDir = this.tempDir.newDirectory();
     assertTrue(new File(tempDir, "libFiles").createNewFile());
     assertTrue(new File(tempDir, "CssInvalidElement").createNewFile());
     assertTrue(new File(tempDir, "extFiles").createNewFile());
@@ -277,7 +278,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-    File tempDir = myTempDir.newDirectory();
+    File tempDir = this.tempDir.newDirectory();
     assertTrue(new File(tempDir, "child").createNewFile());
 
     VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
@@ -333,15 +334,14 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     );
   }
 
-  private void checkNewDirAndRefresh(@NotNull Consumer<? super Path> dirCreatedCallback,
-                                     @NotNull Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(Consumer<Path> dirCreatedCallback, Consumer<AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ((ProjectManagerImpl)ProjectManager.getInstance()).testOnlyGetExcludedUrlsCallback(getTestRootDisposable(), () -> {
       getAllExcludedCalled.set(true);
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
     });
 
-    final File temp = myTempDir.newDirectory();
+    final File temp = tempDir.newDirectory();
     VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
     assertNotNull(vTemp);
     vTemp.getChildren(); //to force full dir refresh?!
@@ -367,10 +367,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void asyncRefreshInModalProgressCompletesWithinIt() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.getRoot());
       assertThat(vTemp.getChildren()).isEmpty();
 
-      myTempDir.newFile("x.txt");
+      tempDir.newFile("x.txt");
 
       ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
@@ -398,9 +398,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) throws IOException {
     EdtTestUtil.runInEdtAndWait(() -> {
-      File dir1 = myTempDir.newDirectory("dir1");
-      File dir2 = myTempDir.newDirectory("dir2");
-      VirtualFile vDir = VfsUtil.findFileByIoFile(myTempDir.getRoot(), true);
+      File dir1 = tempDir.newDirectory("dir1");
+      File dir2 = tempDir.newDirectory("dir2");
+      VirtualFile vDir = VfsUtil.findFileByIoFile(tempDir.getRoot(), true);
       assertThat(Stream.of(vDir.getChildren()).map(VirtualFile::getName)).containsExactly(dir1.getName(), dir2.getName());
       VirtualFile vDir1 = vDir.getChildren()[0];
       VirtualFile vDir2 = vDir.getChildren()[1];
@@ -460,7 +460,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testVfsUtilCopyMustCopyBOMCorrectly() throws IOException {
-    File file = myTempDir.newFile("test.txt");
+    File file = tempDir.newFile("test.txt");
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
     assertFalse(vFile.isDirectory());
@@ -477,7 +477,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testVfsUtilCopyMustCopyBOMCorrectlyForFileUnderProjectRoot() throws IOException {
-    File dir1 = myTempDir.newDirectory("dir1");
+    File dir1 = tempDir.newDirectory("dir1");
     Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir1);
@@ -500,7 +500,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testVfsUtilCopyMustCopyBOMLessFileCorrectlyWhenEncodingProjectManagerBOMForNewFilesOptionIsSetToTrue() throws IOException {
-    File dir1 = myTempDir.newDirectory("dir1");
+    File dir1 = tempDir.newDirectory("dir1");
     Project project = PlatformTestUtil.loadAndOpenProject(Paths.get(dir1.getPath()), getTestRootDisposable());
     WriteAction.runAndWait(() -> {
       ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project)).setBOMForNewUtf8Files(
@@ -529,10 +529,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     IoTestUtil.assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
-    File dir = new File(myTempDir.getRoot(), "dir");
+    File dir = new File(tempDir.getRoot(), "dir");
     File file = new File(dir, "child.txt");
     assertFalse(file.exists());
-    assertEquals(myTempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(myTempDir.getRoot()));
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
 
     assertTrue(dir.mkdirs());
     assertTrue(file.createNewFile());
@@ -549,7 +549,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void pathEqualsWorksForWslPaths() throws IOException {
+  public void pathEqualsWorksForWslPaths() {
     IoTestUtil.assumeWindows();
     IoTestUtil.assumeWslPresence();
     List<@NotNull String> distributions = IoTestUtil.enumerateWslDistributions();
@@ -566,5 +566,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//xxx$/" + wslName + "/usr/bin/"));
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/xxx/usr/bin/"));
     assertFalse(VfsUtilCore.pathEqualsTo(usrBin.getParent(), "//wsl$/xxx/usr"));
+  }
+
+  @Test
+  public void testGetPathForVFileCreateEventForJarReturnsNormalizedPathSeparators() {
+    File jarFile = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFile));
+    VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
+    assertNotNull(jarRoot);
+
+    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, null, false, null);
+    assertEquals(FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/x.txt", event.getPath());
   }
 }

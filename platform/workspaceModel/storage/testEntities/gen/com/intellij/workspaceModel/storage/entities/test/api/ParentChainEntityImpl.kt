@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
+open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java,
@@ -43,7 +43,7 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
+  class Builder(var result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
     constructor() : this(ParentChainEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,6 +61,9 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -70,7 +73,7 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentChainEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -81,11 +84,20 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentChainEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var root: CompositeAbstractEntity?
       get() {
@@ -122,15 +134,6 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
         changedProperty.add("root")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): ParentChainEntityData = result ?: super.getEntityData() as ParentChainEntityData
     override fun getEntityClass(): Class<ParentChainEntity> = ParentChainEntity::class.java
   }
@@ -152,11 +155,13 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ParentChainEntity {
-    val entity = ParentChainEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ParentChainEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -181,7 +186,7 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentChainEntityData
 
@@ -191,7 +196,7 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ParentChainEntityData
 

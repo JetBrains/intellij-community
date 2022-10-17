@@ -45,7 +45,7 @@ class RangeCodeVisionModel(
     projectModel.handleLensExtraAction(editor, anchoringRange, selectedValue, actionId)
   }
 
-  fun sortedLenses(): List<CodeVisionEntry> {
+  private fun sortedLenses(): List<CodeVisionEntry> {
     return lensForRange.sortedBy { projectModel.getLensIndex(it) }
   }
 

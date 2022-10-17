@@ -277,7 +277,7 @@ public class GenerateEqualsHelper implements Runnable {
     }
   }
 
-  static class EqualsFieldsComparator implements Comparator<PsiField> {
+  private static class EqualsFieldsComparator implements Comparator<PsiField> {
     public static final EqualsFieldsComparator INSTANCE = new EqualsFieldsComparator();
 
     @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,7 +63,7 @@ abstract class GithubGitRepoTest : GithubTest() {
     assertNotNull(repository)
     val mappings = project.service<GHHostedRepositoriesManager>().knownRepositories
     assertTrue("GitHub remote is not configured, current mappings: $mappings", mappings.any {
-      it.gitRemoteUrlCoordinates.repository == repository
+      it.remote.repository == repository
     })
   }
 

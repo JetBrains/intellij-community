@@ -89,7 +89,7 @@ class XDebugTabLayoutSettings(
   inner class XDebugFramesAndThreadsLayoutOptions(
     val session: XDebugSessionImpl,
     val content: Content,
-    val debugTab: XDebugSessionTab3) : PersistentContentCustomLayoutOptions(content, THREADS_VIEW_SETTINGS_KEY) {
+    private val debugTab: XDebugSessionTab3) : PersistentContentCustomLayoutOptions(content, THREADS_VIEW_SETTINGS_KEY) {
 
     private val options = arrayOf<PersistentContentCustomLayoutOption>(
       DefaultLayoutOption(this),
@@ -135,7 +135,7 @@ class XDebugTabLayoutSettings(
 
   inner class XDebugVariablesLayoutSettings(
     val content: Content,
-    val debugTab: XDebugSessionTab3
+    private val debugTab: XDebugSessionTab3
   ) : ContentLayoutStateSettings {
 
     override fun isSelected(): Boolean = debugTab.getView(DebuggerContentInfo.VARIABLES_CONTENT,

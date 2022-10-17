@@ -8,6 +8,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
 
+/**
+ * @deprecated unused
+ */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class SelectDateDialog extends DialogWrapper {
   private CalendarView myCalendarView;
   private JPanel myPanel;

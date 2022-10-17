@@ -208,6 +208,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -244,6 +249,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
                                              myEntryTable);
@@ -262,15 +272,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   @NotNull
   private static SortOrder getNextSortOrder(@NotNull SortOrder order) {
-    switch (order) {
-      case ASCENDING:
-        return SortOrder.DESCENDING;
-      case DESCENDING:
-        return SortOrder.UNSORTED;
-      case UNSORTED:
-      default:
-        return SortOrder.ASCENDING;
-    }
+    return switch (order) {
+      case ASCENDING -> SortOrder.DESCENDING;
+      case DESCENDING -> SortOrder.UNSORTED;
+      case UNSORTED -> SortOrder.ASCENDING;
+    };
   }
 
   private ClasspathTableItem<?> getItemAt(int selectedRow) {
@@ -697,6 +703,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     protected boolean isEnabled() {
       return getSelectedElement() != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

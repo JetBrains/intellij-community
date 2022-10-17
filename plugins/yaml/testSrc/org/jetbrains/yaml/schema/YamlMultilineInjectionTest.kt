@@ -17,7 +17,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.injectionForHost
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
@@ -59,7 +59,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myInjectionFixture.assertInjectedLangAtCaret("XML")
     assertInjectedAndLiteralValue("<html>\n<body>boo</body>\n</html>")
   }
-  
+
   fun testBashCommentInjection() {
     myFixture.configureByText("test.yaml", """
       # language=bash
@@ -175,7 +175,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
               </xml>
     """.trimIndent())
   }
-  
+
   fun testNewLineInInjectedYamlCaretMoved() {
     myFixture.configureByText("test.yaml", """
       |myyaml: |
@@ -199,7 +199,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  """.trimMargin())
     myInjectionFixture.assertInjectedContent("boo:\n  - 1\n\n\n  - 2\n    \n")
   }
-  
+
   fun testNewLineInInjectedXMLinNested() {
     myFixture.configureByText("test.yaml", """
       long:
@@ -295,7 +295,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     testNewLineInInjectedXMLinNested()
 
     // then undo and try again to check that all editors are disposed properly
-    val hostEditor = myFixture.editor.let { it.castSafelyTo<EditorWindow>()?.delegate ?: it }
+    val hostEditor = myFixture.editor.let { it.asSafely<EditorWindow>()?.delegate ?: it }
     val hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document) ?: throw AssertionError("no psi file")
     val hostVFile = hostFile.virtualFile
     myFixture.openFileInEditor(hostVFile)
@@ -303,11 +303,11 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     val simultaneouslyRequestedEditorsByOtherThreads = (1..10).map {
       runAsync {
         runReadAction {
-            val hostCaret = hostEditor.caretModel.offset
-            val psiElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostCaret)
-                             ?: throw AssertionError("can't get injected element in the background at $hostCaret")
-            InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, hostEditor.caretModel.currentCaret,
-                                                                  psiElement.containingFile)
+          val hostCaret = hostEditor.caretModel.offset
+          val psiElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(hostFile, hostCaret)
+                           ?: throw AssertionError("can't get injected element in the background at $hostCaret")
+          InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, hostEditor.caretModel.currentCaret,
+                                                                psiElement.containingFile)
         }
       }
     }
@@ -331,7 +331,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
-  
+
   fun testInjectedJsonBlock() {
     myFixture.configureByText("test.yaml", """
     myyaml:
@@ -357,7 +357,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           
     """.trimIndent())
   }
-  
+
   fun testInjectedJsonBlockQuickfix() {
     myFixture.enableInspections(JsonStandardComplianceInspection::class.java)
     myFixture.configureByText("test.yaml", """
@@ -367,7 +367,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         ab<caret>c: 1
 
     """.trimIndent())
-    
+
     myFixture.doHighlighting()
     myInjectionFixture.assertInjectedLangAtCaret("JSON")
     val wrapQuickfix = myFixture.getAvailableIntention("Wrap with double quotes")!!
@@ -380,7 +380,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
   
     """.trimIndent())
   }
-  
+
   fun testInjectedFlatIndentBlock() {
     myFixture.configureByText("test.yaml", """
       myyaml:
@@ -405,7 +405,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
             
     """.trimIndent())
   }
-  
+
   fun testInjectedStartIndented() {
     myFixture.configureByText("test.yaml", """
     myyaml:
@@ -493,7 +493,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  """.trimMargin())
     myInjectionFixture.assertInjectedContent("root:\n  abc:\n    def: 1\n    \n")
   }
-  
+
   fun testYamlToYamlEnterInBefore() {
     myFixture.configureByText("test.yaml", """
       |myyaml: |
@@ -515,7 +515,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  """.trimMargin())
     myInjectionFixture.assertInjectedContent("root:\n  abc:\n    \n    def: 1\n    \n")
   }
-  
+
   fun testYamlToYamlEnterInBeforeNoInject() {
     myFixture.configureByText("test.yaml", """
       |myyaml:  
@@ -524,7 +524,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |      def: 1
       |      
       |  """.trimMargin())
-    
+
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       |myyaml:  
@@ -535,7 +535,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |      
       |  """.trimMargin())
   }
-  
+
   fun testYamlToYamlReformat() {
     myFixture.configureByText("test.yaml", """
       |myyaml: |
@@ -553,7 +553,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |      
       |  """.trimMargin())
   }
-  
+
   fun testMultilanguageReformat() {
     myFixture.configureByText("test.yaml", """
       myyaml:
@@ -602,7 +602,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |    prop.b=4
 """.trimMargin())
   }
-  
+
   fun testXmlEmptyLineReformat() {
     myFixture.configureByText("test.yaml", """
       myyaml:
@@ -644,7 +644,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |</html>
       |""".trimMargin())
   }
-  
+
   fun testBlockInjectionStrip() {
     myFixture.configureByText("test.yaml", """
         X: |-
@@ -685,10 +685,10 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myFixture.checkResult("""
         |X: |-
         |  """.trimMargin())
-    
+
   }
-  
-  
+
+
   fun testPutEnterInTheEnd() {
     myFixture.configureByText("test.yaml", """
         X: |
@@ -738,7 +738,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           
     """.trimIndent())
   }
-  
+
   fun testPutEnterInTheEndWithBlankLine() {
     myFixture.configureByText("test.yaml", """
         X: |
@@ -792,7 +792,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
-  
+
   fun testTypeHtmlFromEmpty() {
     myFixture.configureByText("test.yaml", """
         X: |
@@ -816,7 +816,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
         Y: 12
     """.trimIndent())
   }
-  
+
   fun testFEinPlainText() {
     myFixture.configureByText("test.yaml", """
         myyaml:
@@ -838,7 +838,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           <xml>
                <aaa></aaa>
           </xml>
-    """.trimIndent())  
+    """.trimIndent())
     fe.type(" ")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     myFixture.checkResult("""
@@ -974,7 +974,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
     myInjectionFixture.assertInjectedContent("abc: \\\n\n")
   }
-  
+
   fun testYamlToYamlQuotedMultilineDoubleEscape() {
     myFixture.configureByText("test.yaml", """
       myyaml: "abc: \
@@ -992,7 +992,44 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
     myInjectionFixture.assertInjectedContent("abc: \\\n\\\n\n")
   }
-  
+
+  fun testLargeInjectionTypingPerformance() {
+
+    val size = 100
+    val half = size / 2
+    myFixture.configureByText("test.yaml", """
+      |myyaml: |
+      |  root:
+      ${(0..size).map { i -> "|    key$i: val$i" }.joinToString("\n")}
+      |
+      |""".trimMargin())
+
+    myInjectionFixture.assertInjectedContent("""root:
+    ${(0..size).map { i -> "|  key$i: val$i" }.joinToString("\n")}
+    |
+    |
+      """.trimMargin())
+
+    val pos = myFixture.file.text.indexOf("key$half: val$half") + "key$half: val$half".length
+    myFixture.editor.caretModel.moveToOffset(pos)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PlatformTestUtil.startPerformanceTest("Typing in injected", 30 * size * size) {
+      for (i in 0..size) {
+        myFixture.type("newkey$i: val$i")
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+      }
+    }.attempts(1)
+      .assertTiming()
+
+    myInjectionFixture.assertInjectedContent("""root:
+    ${(0..half).map { i -> "|  key$i: val$i" }.joinToString("\n")}
+    ${(0..size).map { i -> "|  newkey$i: val$i" }.joinToString("\n")}
+    |  
+    ${((half + 1)..size).map { i -> "|  key$i: val$i" }.joinToString("\n")}
+    |  
+    |""".trimMargin())
+  }
+
 
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)
@@ -1002,7 +1039,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
   val literalTextAtTheCaret: String
     get() {
       val elementAt = myInjectionFixture.topLevelFile.findElementAt(myInjectionFixture.topLevelCaretPosition)
-      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalarImpl>() }?.firstOrNull()
+      return elementAt?.parents(true)?.mapNotNull { it.asSafely<YAMLScalarImpl>() }?.firstOrNull()
                ?.let { psi -> psi.contentRanges.joinToString("") { it.subSequence(psi.text) } }
              ?: throw AssertionError("no literal element at the caret position, only $elementAt were found")
     }

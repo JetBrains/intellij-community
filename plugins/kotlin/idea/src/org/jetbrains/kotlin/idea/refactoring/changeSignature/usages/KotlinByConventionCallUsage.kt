@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.RemoveEmptyParenthesesFromLambdaCallApplicator
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
-import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceInvokeIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,10 +31,12 @@ class KotlinByConventionCallUsage(
                 with(ReplaceInvokeIntention()) {
                     if (applicabilityRange(expression) != null) {
                         OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(expression)
-                            ?.getPossiblyQualifiedCallExpression()
-                            ?.valueArgumentList
-                            ?.let {
-                                RemoveEmptyParenthesesFromLambdaCallIntention.applyToIfApplicable(it)
+                            ?.getPossiblyQualifiedCallExpression()?.valueArgumentList?.let {
+                                if (RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.isApplicableByPsi(it, it.project)) {
+                                    RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.applyTo(
+                                        it, KotlinApplicatorInput.Empty, it.project, editor = null
+                                    )
+                                }
                             }
                     }
                 }

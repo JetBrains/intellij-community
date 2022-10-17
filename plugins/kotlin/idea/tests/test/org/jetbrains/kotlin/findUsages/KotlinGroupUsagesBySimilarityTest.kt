@@ -6,8 +6,8 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.usages.UsageInfoToUsageConverter
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider
-import org.jetbrains.kotlin.idea.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -21,11 +21,21 @@ import java.io.File
 )
 class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
     fun testSimpleFeatures() {
-        myFixture.configureByFile(getTestName(true)+".kt")
+        myFixture.configureByFile(getTestName(true) + ".kt")
         val elementAtCaret = myFixture.getReferenceAtCaretPosition()!!.element
         val features = KotlinUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret)
-        assertEquals(1, features["VAR: "])
-        assertEquals(1, features["{CALL: inc}"])
+        assertEquals(1, features["CONTEXT: REFERENCE: "])
+        assertEquals(1, features["USAGE: {CALL: inc}"])
+    }
+
+    fun testNoVariableNameFeatures() {
+        doTest()
+    }
+
+    @TestMetadata("declaration.kt")
+    @Throws(Exception::class)
+    fun testDeclaration() {
+        doTest()
     }
 
     @TestMetadata("general.kt")
@@ -36,12 +46,7 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
 
     @TestMetadata("chainCalls")
     fun testChainCalls() {
-        myFixture.configureByFile(getTestName(true)+".kt")
-        val findUsages = findUsages(myFixture.elementAtCaret, null, false, myFixture.project)
-        val session = ClusteringSearchSession();
-        findUsages.forEach { usage -> UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session) }
-        val file = File(testDataDirectory, getTestName(true)+".results.txt")
-        assertEqualsToFile("", file, session.clusters.toString())
+        doTest()
     }
 
     fun testListAdd() {
@@ -52,10 +57,18 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
         doTest()
     }
 
+    fun testImport() {
+        doTest()
+    }
+
+    fun testTypeReference() {
+        doTest()
+    }
+
     private fun doTest() {
-        myFixture.configureByFile(getTestName(true)+".kt")
+        myFixture.configureByFile(getTestName(true) + ".kt")
         val findUsages = findUsages(myFixture.elementAtCaret, null, false, myFixture.project)
-        val session = ClusteringSearchSession();
+        val session = ClusteringSearchSession()
         findUsages.forEach { usage -> UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session) }
         val file = File(testDataDirectory, getTestName(true) + ".results.txt")
         assertEqualsToFile("", file, session.clusters.toString())

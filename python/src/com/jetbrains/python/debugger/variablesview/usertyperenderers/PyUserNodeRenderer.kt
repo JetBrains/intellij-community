@@ -46,7 +46,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
 
   fun isDefault() = valueRenderer.isDefault && childrenRenderer.isDefault
 
-  fun hasNoEmptyTypeInfo() = typeQualifiedName != "" || typeCanonicalImportPath != ""
+  private fun hasNoEmptyTypeInfo() = typeQualifiedName != "" || typeCanonicalImportPath != ""
 
   fun isApplicable() = hasNoEmptyTypeInfo() && isEnabled
 

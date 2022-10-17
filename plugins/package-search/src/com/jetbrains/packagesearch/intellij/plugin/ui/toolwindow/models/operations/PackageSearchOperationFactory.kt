@@ -101,7 +101,6 @@ internal class PackageSearchOperationFactory {
     ) = createChangePackageOperations(
         packageModel = packageModel,
         newVersion = newVersion,
-        newScope = PackageScope.Missing,
         targetModules = targetModules,
         repoToInstall = repoToInstall
     )
@@ -145,10 +144,10 @@ internal class PackageSearchOperationFactory {
         }
     }
 
-    fun createChangePackageOperations(
+    private fun createChangePackageOperations(
         packageModel: PackageModel.Installed,
         newVersion: PackageVersion,
-        newScope: PackageScope,
+        newScope: PackageScope? = null,
         targetModules: TargetModules,
         repoToInstall: RepositoryModel?
     ): List<PackageSearchOperation<*>> {
@@ -162,7 +161,7 @@ internal class PackageSearchOperationFactory {
                     currentVersion = usageInfo.declaredVersion,
                     currentScope = usageInfo.scope,
                     newVersion = newVersion,
-                    newScope = newScope
+                    newScope = newScope ?: usageInfo.scope
                 )
 
                 if (repoToInstall != null) {

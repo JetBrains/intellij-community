@@ -131,6 +131,8 @@ class Main {
     String str;
     str = switch (i) {
       case <error descr="'null' cannot be converted to 'int'">null</error> -> "ok";
+        case Integer integer -> "int";
+        case Object obj -> "Object";
         default -> "not ok";
     };
   }

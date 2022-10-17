@@ -41,7 +41,7 @@ internal class NodeChooseTypeAction : DumbAwareAction(BookmarkBundle.messagePoin
       BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.popup.title")
       else -> BookmarkBundle.message("mnemonic.chooser.mnemonic.change.popup.title")
     }
-    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser, chooser.firstButton)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(chooser.content, chooser.firstButton)
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()

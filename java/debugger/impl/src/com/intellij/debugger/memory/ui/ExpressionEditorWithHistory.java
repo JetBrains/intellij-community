@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -47,6 +48,11 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(LookupManager.getActiveLookup(getEditor()) == null);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), getComponent(), parentDisposable);
 

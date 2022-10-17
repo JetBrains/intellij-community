@@ -9,12 +9,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -23,6 +26,17 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
         val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
+    }
+
+val KtCallableDeclaration.callableIdIfNotLocal: CallableId?
+    get() {
+        val callableName = this.nameAsName ?: return null
+        if (isTopLevelInFileOrScript(this)) {
+            return CallableId(containingKtFile.packageFqName, callableName)
+        }
+
+        val classId = containingClassOrObject?.classIdIfNonLocal ?: return null
+        return CallableId(classId, callableName)
     }
 
 fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
@@ -134,3 +148,18 @@ fun KtPropertyAccessor.deleteBody() {
     val leftParenthesis = leftParenthesis ?: return
     deleteChildRange(leftParenthesis, lastChild)
 }
+
+fun KtDeclarationWithBody.singleExpressionBody(): KtExpression? =
+    when (val body = bodyExpression) {
+        is KtBlockExpression -> body.statements.singleOrNull()?.asSafely<KtReturnExpression>()?.returnedExpression
+        else -> body
+    }
+
+fun KtNamedDeclaration.isConstructorDeclaredProperty(): Boolean =
+    this is KtParameter && ownerFunction is KtPrimaryConstructor && hasValOrVar()
+
+fun KtExpression.getCallChain(): List<KtExpression> =
+    generateSequence(this) { (it as? KtDotQualifiedExpression)?.receiverExpression }
+        .map { (it as? KtDotQualifiedExpression)?.selectorExpression ?: it }
+        .toList()
+        .reversed()

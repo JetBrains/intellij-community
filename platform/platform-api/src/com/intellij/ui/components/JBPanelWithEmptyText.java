@@ -2,8 +2,8 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,10 +24,16 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
 
   public JBPanelWithEmptyText() {
     super();
+    registerEmptyTextComponents();
   }
 
   public JBPanelWithEmptyText(LayoutManager layout) {
     super(layout);
+    registerEmptyTextComponents();
+  }
+
+  private void registerEmptyTextComponents() {
+    putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, emptyText.getWrappedFragmentsIterable());
   }
 
   @Override
@@ -44,10 +50,5 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     emptyText.paint(this, g);
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 }

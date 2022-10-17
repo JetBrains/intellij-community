@@ -14,7 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +83,7 @@ public final class ExceptionExFilterFactory implements ExceptionFilterFactory {
           }
         }
         int off = startOffset + lineStartOffset;
-        final Color color = UIUtil.getInactiveTextColor();
+        final Color color = NamedColorUtil.getInactiveTextColor();
         consumer.consume(new AdditionalHighlight(off + info.classFqnRange.getStartOffset(), off + info.methodNameRange.getEndOffset()) {
           @NotNull
           @Override

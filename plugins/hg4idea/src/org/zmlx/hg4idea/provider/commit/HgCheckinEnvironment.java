@@ -330,7 +330,6 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
       myCommitSubrepos = new JCheckBox(HgBundle.message("repositories.commit.subs"), false);
       myCommitSubrepos.setVisible(hasSubrepos);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(HgBundle.message("repositories.commit.subs.tooltip")));
-      myCommitSubrepos.setMnemonic('s');
       myCommitSubrepos.addActionListener(e -> updateAmendState(!myCommitSubrepos.isSelected()));
 
       GridBag gb = new GridBag().

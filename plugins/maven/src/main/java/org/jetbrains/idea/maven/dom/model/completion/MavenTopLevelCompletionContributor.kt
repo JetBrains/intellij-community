@@ -63,7 +63,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
     return service.suggestPrefix(splitted[0], splitted[1], searchParameters) { (it as? MavenRepositoryArtifactInfo)?.let { cld.add(it) } }
   }
 
-  protected fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
+  private fun createSearchParameters(parameters: CompletionParameters): SearchParameters {
     return SearchParameters(parameters.invocationCount < 2, MavenUtil.isMavenUnitTestModeEnabled())
   }
 }

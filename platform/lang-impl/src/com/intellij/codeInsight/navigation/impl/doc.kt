@@ -3,16 +3,22 @@ package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseDocInfo
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
+import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
 import com.intellij.model.Symbol
-import com.intellij.model.documentation.impl.getSymbolDocumentation
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.psi.PsiElement
 
 @Suppress("DEPRECATION")
 @Deprecated("Unused in v2 implementation")
 internal fun docInfo(symbol: Symbol, elementAtPointer: PsiElement): CtrlMouseDocInfo {
-  return fromPsi(symbol, elementAtPointer)
-         ?: CtrlMouseDocInfo(getSymbolDocumentation(symbol), null, null)
+  fromPsi(symbol, elementAtPointer)?.let {
+    return it
+  }
+  val target = symbolDocumentationTarget(elementAtPointer.project, symbol)
+  if (target == null) {
+    return CtrlMouseDocInfo.EMPTY
+  }
+  return CtrlMouseDocInfo(target.computeDocumentationHint(), null, null)
 }
 
 @Suppress("DEPRECATION")

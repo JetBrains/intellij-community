@@ -9,4 +9,24 @@
         <line>37</line>
         <description>Property name &lt;code&gt;Foo&lt;/code&gt; should start with a lowercase letter #loc</description>
     </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>45</line>
+        <description>Property name &lt;code&gt;interface_p1&lt;/code&gt; should start with a lowercase letter #loc</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>46</line>
+        <description>Property name &lt;code&gt;interface_p2&lt;/code&gt; should start with a lowercase letter #loc</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>52</line>
+        <description>Property name &lt;code&gt;ctor_val&lt;/code&gt; should start with a lowercase letter #loc</description>
+    </problem>
+    <problem>
+        <file>test.kt</file>
+        <line>53</line>
+        <description>Property name &lt;code&gt;ctor_var&lt;/code&gt; should start with a lowercase letter #loc</description>
+    </problem>
 </problems>

@@ -43,6 +43,7 @@ internal class TextSearchContributor(
   val event: AnActionEvent
 ) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
     SearchFieldActionsContributor,
+    PossibleSlowContributor,
     DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)

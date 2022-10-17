@@ -51,9 +51,10 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
-      "this.{0}.add({1});\n" +
-      "return {4};";
+    final String codeBlockTemplate = """
+      if (this.{0} == null) this.{0} = {2}.{3};\s
+      this.{0}.add({1});
+      return {4};""";
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, typeCollectionQualifiedName,
       sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
@@ -61,9 +62,10 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
 
   @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n"
-      + "this.{0}.addAll({0});\n" +
-      "return {3};";
+    final String codeBlockTemplate = """
+      if (this.{0} == null) this.{0} = {1}.{2};\s
+      this.{0}.addAll({0});
+      return {3};""";
 
     return MessageFormat.format(codeBlockTemplate, singularName, typeCollectionQualifiedName,
       sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());

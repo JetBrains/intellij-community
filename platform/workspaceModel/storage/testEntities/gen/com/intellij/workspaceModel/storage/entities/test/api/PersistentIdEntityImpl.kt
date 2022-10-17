@@ -18,13 +18,14 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
+open class PersistentIdEntityImpl(val dataSource: PersistentIdEntityData) : PersistentIdEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,16 +35,14 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: PersistentIdEntityData?) : ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
+  class Builder(var result: PersistentIdEntityData?) : ModifiableWorkspaceEntityBase<PersistentIdEntity>(), PersistentIdEntity.Builder {
     constructor() : this(PersistentIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,6 +60,9 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -69,11 +71,11 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field PersistentIdEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field PersistentIdEntity#entitySource should be initialized")
       }
     }
 
@@ -84,20 +86,12 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as PersistentIdEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -106,6 +100,14 @@ open class PersistentIdEntityImpl : PersistentIdEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override fun getEntityData(): PersistentIdEntityData = result ?: super.getEntityData() as PersistentIdEntityData
@@ -131,12 +133,13 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
   }
 
   override fun createEntity(snapshot: EntityStorage): PersistentIdEntity {
-    val entity = PersistentIdEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = PersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -165,18 +168,18 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as PersistentIdEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as PersistentIdEntityData
 

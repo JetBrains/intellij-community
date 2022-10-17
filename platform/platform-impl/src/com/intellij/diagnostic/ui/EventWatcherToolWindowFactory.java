@@ -57,7 +57,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
 
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return EventWatcher.isEnabled();
+    return EventWatcher.isDetailedWatcherEnabled();
   }
 
   private static final class TableProvidingListener implements RunnablesListener {

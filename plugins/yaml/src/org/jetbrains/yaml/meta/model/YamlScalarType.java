@@ -69,26 +69,21 @@ public abstract class YamlScalarType extends YamlMetaType {
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
     switch (relation) {
-      case OBJECT_CONTENTS:
-        // weird, but let's ignore and breakthrough to defaults
-      case SCALAR_VALUE: {
+      case OBJECT_CONTENTS /* weird, but let's ignore and breakthrough to defaults */, SCALAR_VALUE -> {
         markup.append(": ");
         if (iteration.isEndOfPathReached()) {
           markup.appendCaret();
         }
-        break;
       }
-      case SEQUENCE_ITEM: {
+      case SEQUENCE_ITEM -> {
         markup.append(":");
         markup.doTabbedBlockForSequenceItem(() -> {
           if (iteration.isEndOfPathReached()) {
             markup.appendCaret();
           }
         });
-        break;
       }
-      default:
-        throw new IllegalStateException("Unknown relation: " + relation); //NON-NLS
+      default -> throw new IllegalStateException("Unknown relation: " + relation); //NON-NLS
     }
   }
 }

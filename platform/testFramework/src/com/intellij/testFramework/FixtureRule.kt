@@ -396,7 +396,7 @@ private fun Project.closeProject(save: Boolean = false) {
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
   if (ApplicationManager.getApplication().isDispatchThread) {
     runBlockingUnderModalProgress {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this@closeProjectAsync, save = save)
     }
   }
   else {

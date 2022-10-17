@@ -40,4 +40,6 @@ private class UsageFilteringRuleAction(
     val project = e.project ?: return
     project.messageBus.syncPublisher(UsageFilteringRuleProvider.RULES_CHANGED).run()
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }

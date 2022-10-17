@@ -16,97 +16,13 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectDataPath
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
-import com.intellij.util.io.readText
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Garbage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.Semantic
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion.TimestampLike
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesListPanel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.UiPackageModelCacheKey
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
-import java.nio.file.Files
-import kotlin.io.path.writeText
-
-internal class PackageSearchCachesService : Disposable {
-
-    private val persistentCacheFile = appSystemDir.resolve("caches/pkgs/normalizedVersions.json")
-
-    private val json = Json {
-        prettyPrint = true
-        allowStructuredMapKeys = true
-    }
-
-    private val normalizerCache: CoroutineLRUCache<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>> =
-        persistentCacheFile.takeIf { it.exists() }
-            ?.runCatching {
-                json.decodeFromString(
-                    CoroutineLRUCache.serializer<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>>(),
-                    readText()
-                )
-            }
-            ?.getOrNull()
-            ?: CoroutineLRUCache(4_000)
-
-    val normalizer = PackageVersionNormalizer(normalizerCache)
-
-    override fun dispose() {
-        persistentCacheFile
-            .apply { if (!parent.exists()) Files.createDirectories(parent) }
-            .writeText(json.encodeToString(CoroutineLRUCache.serializer(), normalizerCache))
-    }
-
-    suspend fun clear() = coroutineScope {
-        launch { normalizerCache.clear() }
-        launch { persistentCacheFile.delete() }
-    }
-}
-
-internal class PackageSearchProjectCachesService(project: Project) {
-
-    val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
-        CoroutineLRUCache(2000)
-
-    val searchCache: CoroutineLRUCache<PackagesListPanel.SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
-        CoroutineLRUCache(200)
-
-    val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
-        CoroutineLRUCache(1000)
-
-    val installedDependencyCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage> =
-        CoroutineLRUCache(500)
-
-    val projectCacheDirectory = project.getProjectDataPath("pkgs")
-        .also { if (!it.exists()) it.createDirectories() }
-
-    suspend fun clear() = coroutineScope {
-        launch { headerOperationsCache.clear() }
-        launch { searchCache.clear() }
-        launch { searchPackageModelCache.clear() }
-        launch { installedDependencyCache.clear() }
-        launch {
-            projectCacheDirectory.delete(true)
-            projectCacheDirectory.createDirectories()
-        }
-    }
-}
 
 internal class PackageVersionNormalizer(
     private val versionsCache: CoroutineLRUCache<PackageVersion.Named, NormalizedPackageVersion<PackageVersion.Named>> = CoroutineLRUCache(2_000)

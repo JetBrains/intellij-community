@@ -1,4 +1,4 @@
-// "Make 'b' return 'java.lang.Integer'" "true"
+// "Make 'b()' return 'java.lang.Integer'" "true"
 
 class MyClass {
     interface BaseInterface {

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +15,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.util.function.Consumer
+import java.util.function.Function
 import javax.swing.KeyStroke
 
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -61,9 +64,8 @@ abstract class ActionManagerEx : ActionManager() {
       val app = ApplicationManager.getApplication()
       val created = app.serviceIfCreated<ActionManager>()
       if (created == null) {
-        // IO, because getInstance is blocking (there is no non-blocking API to get service yet)
-        (scope ?: app.coroutineScope).launch(Dispatchers.IO) {
-          val actionManager = getInstance()
+        (scope ?: app.coroutineScope).launch {
+          val actionManager = (app as ComponentManagerEx).getServiceAsync(ActionManager::class.java).await()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             task(actionManager)
           }
@@ -76,6 +78,11 @@ abstract class ActionManagerEx : ActionManager() {
   }
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
+
+  abstract fun createActionToolbar(place: String,
+                                   group: ActionGroup,
+                                   horizontal: Boolean,
+                                   separatorCreator: Function<String, Component>): ActionToolbar
 
   /**
    * Do not call directly, prefer [ActionUtil] methods.

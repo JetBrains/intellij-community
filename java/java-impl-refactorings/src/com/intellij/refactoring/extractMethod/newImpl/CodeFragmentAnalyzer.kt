@@ -268,6 +268,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     fun findReturnExpressionsIn(scope: PsiElement): List<PsiExpression> {
       val expressions = mutableListOf<PsiExpression>()
       val visitor: JavaRecursiveElementWalkingVisitor = object : JavaRecursiveElementWalkingVisitor() {
+        override fun visitClass(aClass: PsiClass) {}
+        override fun visitLambdaExpression(expression: PsiLambdaExpression) {}
         override fun visitReturnStatement(statement: PsiReturnStatement) {
           val returnExpression = statement.returnValue
           if (returnExpression != null) expressions += returnExpression

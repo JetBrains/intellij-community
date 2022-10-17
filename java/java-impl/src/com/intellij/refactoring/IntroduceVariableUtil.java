@@ -4,6 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddNewArrayExpressionFix;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
@@ -29,14 +30,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -254,8 +257,19 @@ public class IntroduceVariableUtil {
     if (needParenthesis != null && needParenthesis.booleanValue()) {
       return JavaBundle.message("introduce.variable.change.semantics.warning");
     }
-    if (expr instanceof PsiClassObjectAccessExpression && PsiUtil.hasErrorElementChild(expr)) {
+    if (expr instanceof PsiClassObjectAccessExpression && PsiUtilCore.hasErrorElementChild(expr)) {
       return JavaRefactoringBundle.message("selected.block.should.represent.an.expression");
+    }
+    if (!CodeBlockSurrounder.canSurround(expr)) {
+      PsiExpression topLevelExpression = ExpressionUtils.getTopLevelExpression(expr);
+      if (topLevelExpression != expr) {
+        for (PsiVariable variable : VariableAccessUtils.collectUsedVariables(expr)) {
+          if (variable instanceof PsiPatternVariable && PsiTreeUtil.isAncestor(topLevelExpression, variable, true) &&
+              !PsiTreeUtil.isAncestor(expr, variable, true)) {
+            return JavaRefactoringBundle.message("introduce.variable.message.expression.refers.to.pattern.variable.declared.outside", variable.getName());
+          }
+        }
+      }
     }
     return null;
   }
@@ -420,7 +434,7 @@ public class IntroduceVariableUtil {
     } else {
       expr2 = CommonJavaRefactoringUtil.outermostParenthesizedExpression(expr1);
     }
-    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null) {
+    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null || IntentionPreviewUtils.isPreviewElement(expr2)) {
       return expr2.replace(ref);
     }
     else {

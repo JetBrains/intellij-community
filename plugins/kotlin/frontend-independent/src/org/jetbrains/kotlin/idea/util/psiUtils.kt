@@ -3,11 +3,6 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.base.psi.deleteBody
-import org.jetbrains.kotlin.idea.codeinsight.utils.canBeCompletelyDeleted
-import org.jetbrains.kotlin.idea.codeinsight.utils.isBackingFieldReferenceTo
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.psi.*
@@ -39,26 +34,4 @@ fun PsiClass.isSyntheticKotlinClass(): Boolean {
     val metadata = modifierList?.findAnnotation(JvmAnnotationNames.METADATA_FQ_NAME.asString())
     return (metadata?.findAttributeValue(JvmAnnotationNames.KIND_FIELD_NAME) as? PsiLiteral)?.value ==
             KotlinClassHeader.Kind.SYNTHETIC_CLASS.id
-}
-
-fun KtPropertyAccessor.isRedundantSetter(): Boolean {
-    if (!isSetter) return false
-    val expression = bodyExpression ?: return canBeCompletelyDeleted()
-    if (expression is KtBlockExpression) {
-        val statement = expression.statements.singleOrNull() ?: return false
-        val parameter = valueParameters.singleOrNull() ?: return false
-        val binaryExpression = statement as? KtBinaryExpression ?: return false
-        return binaryExpression.operationToken == KtTokens.EQ
-                && binaryExpression.left?.isBackingFieldReferenceTo(property) == true
-                && binaryExpression.right?.mainReference?.resolve() == parameter
-    }
-    return false
-}
-
-fun removeRedundantSetter(setter: KtPropertyAccessor) {
-    if (setter.canBeCompletelyDeleted()) {
-        setter.delete()
-    } else {
-        setter.deleteBody()
-    }
 }

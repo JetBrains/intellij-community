@@ -23,7 +23,6 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
@@ -39,7 +38,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingConstants.TOP
+import javax.swing.SwingConstants
 
 internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   JBPanel<CloneDialogLoginPanel>(VerticalLayout(0)),
@@ -53,7 +52,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   }
   private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(message("button.login.mnemonic"))
-  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply { verticalAlignment = TOP }
+  private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
+    verticalAlignment = SwingConstants.CENTER
+  }
 
   private var errors = emptyList<ValidationInfo>()
   private var loginIndicator: ProgressIndicator? = null
@@ -123,7 +124,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
   }
 
   private fun Panel.buttonPanel() =
-    row(EMPTY_LABEL) {
+    row("") {
       cell(loginButton)
       cell(backLink)
     }

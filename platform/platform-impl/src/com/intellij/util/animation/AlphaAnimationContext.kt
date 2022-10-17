@@ -9,7 +9,11 @@ import java.util.function.Consumer
 
 class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Consumer<AlphaComposite?>) {
   constructor(consumer: Consumer<AlphaComposite?>) : this(AlphaComposite.SrcOver, consumer)
-  constructor(component: Component) : this({ if (component.isShowing) component.repaint() })
+  constructor(component: Component) : this({ if (component.isShowing) component.repaint() }) {
+    this.component = component
+  }
+
+  var component: Component? = null
 
   var composite: AlphaComposite? = null
     private set
@@ -25,7 +29,11 @@ class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Cons
 
   var isVisible: Boolean
     get() = composite != null
-    set(visible) = animator.setVisible(visible)
+    set(visible) {
+      animator.setVisible(visible) {
+        component?.isVisible = visible
+      }
+    }
 
   fun paint(g: Graphics, paint: Runnable) {
     when {

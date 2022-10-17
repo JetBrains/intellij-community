@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.test
 
 import java.io.File
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 
 object TestMetadataUtil {

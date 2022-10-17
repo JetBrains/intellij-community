@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -32,8 +32,6 @@ import java.util.function.Consumer;
 /**
  * A progress indicator for write actions. Paints itself explicitly, without resorting to normal Swing's delayed repaint API.
  * Doesn't dispatch Swing events, except for handling manually those that can cancel it or affect the visual presentation.
- *
- * @author peter
  */
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
@@ -159,18 +157,18 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   /** Executes the action in a background thread, block Swing thread, handles selected input events and paints itself periodically. */
   public void runInBackground(@NotNull Runnable action) {
     myApp.assertIsDispatchThread();
-    enterModality();
 
     try {
-      ensureBackgroundThreadStarted(action);
+      executeInModalContext(() -> {
+        ensureBackgroundThreadStarted(action);
 
-      while (isRunning()) {
-        myEventStealer.dispatchEvents(10);
-        updateUI(System.currentTimeMillis());
-      }
+        while (isRunning()) {
+          myEventStealer.dispatchEvents(10);
+          updateUI(System.currentTimeMillis());
+        }
+      });
     }
     finally {
-      exitModality();
       progressFinished();
     }
   }

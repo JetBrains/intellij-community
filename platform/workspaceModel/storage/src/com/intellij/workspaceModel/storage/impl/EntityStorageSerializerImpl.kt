@@ -27,11 +27,9 @@ import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.*
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 import java.io.OutputStream
@@ -79,7 +77,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v40"
+    const val SERIALIZER_VERSION = "v41"
   }
 
   internal val KRYO_BUFFER_SIZE = 64 * 1024
@@ -334,7 +332,7 @@ class EntityStorageSerializerImpl(
           collectAndRegisterClasses(kryo, output, storage)
         }
         catch (e: NotGeneratedRuntimeException) {
-          LOG.error(e)
+          LOG.warn(e)
           newCacheType = false
         }
       }
@@ -411,12 +409,17 @@ class EntityStorageSerializerImpl(
       collector.add(it::class.java)
       recursiveClassFinder(kryo, it, simpleClasses, objectClasses)
     }
-    simpleClasses.forEach { collector.add(it.value) }
-    objectClasses.forEach { collector.add(it.value) }
 
     entityStorage.indexes.virtualFileIndex.vfu2EntityId.forEach { virtualFileUrl, object2LongOpenHashMap ->
       collector.add(virtualFileUrl::class.java)
     }
+
+    collector.collectionToInspection.forEach { data ->
+      recursiveClassFinder(kryo, data, simpleClasses, objectClasses)
+    }
+
+    simpleClasses.forEach { collector.add(it.value) }
+    objectClasses.forEach { collector.addObject(it.value) }
 
     output.writeVarInt(collector.collectionObjects.size, true)
     collector.collectionObjects.forEach { clazz ->
@@ -502,7 +505,7 @@ class EntityStorageSerializerImpl(
 
         val entityId2VirtualFileUrlInfo = kryo.readObject(input, Long2ObjectOpenHashMap::class.java) as Long2ObjectOpenHashMap<Any>
         val vfu2VirtualFileUrlInfo = kryo.readObject(input,
-                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongOpenHashMap<String>>
+                                                     Object2ObjectOpenCustomHashMap::class.java) as Object2ObjectOpenCustomHashMap<VirtualFileUrl, Object2LongMap<String>>
         val entityId2JarDir = kryo.readObject(input, BidirectionalLongMultiMap::class.java) as BidirectionalLongMultiMap<VirtualFileUrl>
 
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)

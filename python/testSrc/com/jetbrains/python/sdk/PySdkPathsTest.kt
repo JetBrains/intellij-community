@@ -199,7 +199,7 @@ class PySdkPathsTest {
     val sdkModificator = editableSdk.sdkModificator
     assertThat(sdkModificator.sdkAdditionalData).isNull()
     mockPythonPluginDisposable()
-    sdkModificator.sdkAdditionalData = PythonSdkAdditionalData(null).apply {
+    sdkModificator.sdkAdditionalData = PythonSdkAdditionalData().apply {
       setAddedPathsFromVirtualFiles(setOf(userAddedPath))
     }
     runWriteActionAndWait { sdkModificator.commitChanges() }

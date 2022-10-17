@@ -25,7 +25,7 @@ class KotlinSupertypeDelegationUExpression(
         }
     }
 
-    val delegateExpression: UExpression? by lz {
+    private val delegateExpression: UExpression? by lz {
         sourcePsi.delegateExpression?.let { languagePlugin?.convertElement(it, this, UExpression::class.java) as? UExpression }
     }
 

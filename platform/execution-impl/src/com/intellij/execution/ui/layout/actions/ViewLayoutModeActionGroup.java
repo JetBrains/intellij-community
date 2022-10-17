@@ -1,13 +1,13 @@
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOption;
+import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewLayoutModeActionGroup extends DefaultActionGroup implements ViewLayoutModificationAction {
@@ -56,6 +56,11 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myOption.isSelected();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

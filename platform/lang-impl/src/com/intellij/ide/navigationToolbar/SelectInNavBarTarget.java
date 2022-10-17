@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
@@ -41,6 +42,9 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
 
   @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
+      return false;
+    }
     return UISettings.getInstance().getShowNavigationBar();
   }
 
@@ -55,6 +59,9 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public static void selectInNavBar(boolean showPopup) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
+      return;
+    }
     DataManager.getInstance().getDataContextFromFocus()
       .doWhenDone((Consumer<DataContext>)context -> {
         IdeFrame frame = IdeFrame.KEY.getData(context);

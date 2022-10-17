@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.kdoc;
 
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KDocUnresolvedReferenceInspection;
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest;
 import org.jetbrains.kotlin.idea.inspections.kdoc.KDocMissingDocumentationInspection;
 
@@ -9,7 +10,6 @@ public abstract class AbstractKDocHighlightingTest extends AbstractHighlightingT
     @Override
     protected void setUp() {
         super.setUp();
-        myFixture.enableInspections(KDocUnresolvedReferenceInspection.class);
         myFixture.enableInspections(KDocMissingDocumentationInspection.class);
     }
 }

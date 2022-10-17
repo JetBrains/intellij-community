@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,7 +104,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     });
   }
 
-  private List<ScopeDescriptor> createScopes() {
+  protected List<ScopeDescriptor> createScopes() {
     DataContext context = createContext(myProject, myPsiContext);
     List<ScopeDescriptor> res = new ArrayList<>();
     ScopeChooserCombo.processScopes(
@@ -138,15 +137,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Override
   public boolean isShownInSeparateTab() {
     return true;
-  }
-
-  /** @deprecated override {@link #doGetActions(PersistentSearchEverywhereContributorFilter, ElementsChooser.StatisticsCollector, Runnable)} instead**/
-  @Deprecated(forRemoval = true)
-  @NotNull
-  protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String ignored,
-                                            @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
-                                            @NotNull Runnable onChanged) {
-    return doGetActions(filter, null, onChanged);
   }
 
   @NotNull

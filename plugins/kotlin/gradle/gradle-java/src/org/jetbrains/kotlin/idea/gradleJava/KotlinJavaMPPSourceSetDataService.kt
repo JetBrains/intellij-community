@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourceSetData, Void>() {
@@ -36,7 +37,8 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
             .groupBy { targetNode -> targetNode.data.archiveFile?.let { VfsUtil.getUrlForLibraryRoot(it) } }
         for (nodeToImport in toImport) {
             if (nodeToImport.kotlinSourceSetData?.sourceSetInfo != null) continue
-            val isTestSourceSet = nodeToImport.data.id.endsWith(":test")
+            @OptIn(UnsafeTestSourceSetHeuristicApi::class)
+            val isTestSourceSet = isTestSourceSet(nodeToImport)
             val moduleData = nodeToImport.data
             val module = modelsProvider.findIdeModule(moduleData) ?: continue
             val rootModel = modelsProvider.getModifiableRootModel(module)
@@ -59,7 +61,7 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
                 for (compilationNode in compilationNodes) {
                     val compilationModule = modelsProvider.findIdeModule(compilationNode.data) ?: continue
                     val compilationInfo = compilationNode.kotlinSourceSetData?.sourceSetInfo ?: continue
-                    if (!isTestSourceSet && compilationInfo.isTestModule) continue
+                    if (compilationInfo.isTestModule) continue
                     val compilationRootModel = modelsProvider.getModifiableRootModel(compilationModule)
                     addModuleDependencyIfNeeded(
                         rootModel,
@@ -79,5 +81,10 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
                 rootModel.removeOrderEntry(libraryEntry)
             }
         }
+    }
+
+    @UnsafeTestSourceSetHeuristicApi
+    private fun isTestSourceSet(node: DataNode<GradleSourceSetData>): Boolean {
+        return node.data.id.endsWith(":test") || node.data.id.endsWith(":unitTest") || node.data.id.endsWith(":androidTest")
     }
 }

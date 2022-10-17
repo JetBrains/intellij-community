@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 
+@Deprecated(forRemoval = true)
 public class UsageSerializable implements WorkingSetSerializable<UsageInfo, InvalidUsageNoteNode> {
   private static final String separator = "<>";
 

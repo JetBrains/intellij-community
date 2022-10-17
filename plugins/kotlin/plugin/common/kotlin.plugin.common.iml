@@ -9,6 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
-    <orderEntry type="module" module-name="kotlin.base.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.resources" />
   </component>
 </module>

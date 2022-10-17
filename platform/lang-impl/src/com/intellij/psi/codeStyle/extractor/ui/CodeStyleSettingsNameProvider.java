@@ -175,14 +175,14 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   public static @Nls String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
-    switch (settingsType) {
-      case BLANK_LINES_SETTINGS: return ApplicationBundle.message("title.blank.lines");
-      case SPACING_SETTINGS: return ApplicationBundle.message("title.spaces");
-      case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
-      case INDENT_SETTINGS: return ApplicationBundle.message("title.tabs.and.indents");
-      case LANGUAGE_SPECIFIC: return ApplicationBundle.message("code.style.title.lang.specific");
-      default: throw new IllegalArgumentException("Unknown settings type: " + settingsType);
-    }
+    return ApplicationBundle.message(switch (settingsType) {
+      case BLANK_LINES_SETTINGS -> "title.blank.lines";
+      case SPACING_SETTINGS -> "title.spaces";
+      case WRAPPING_AND_BRACES_SETTINGS -> "settings.code.style.tab.title.wrapping.and.braces";
+      case INDENT_SETTINGS -> "title.tabs.and.indents";
+      case LANGUAGE_SPECIFIC -> "code.style.title.lang.specific";
+      default -> throw new IllegalArgumentException("Unknown settings type: " + settingsType);
+    });
   }
 
   public void addSettings(LanguageCodeStyleSettingsProvider provider) {

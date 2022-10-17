@@ -27,10 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PropertyInspector extends JPanel{
   private final PropertyInspectorTable myInspectorTable;
   private final ComponentTree myComponentTree;

@@ -10,10 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A task that should be executed in IDE dumb mode, via {@link DumbService#queueTask(DumbModeTask)}.
- *
- * @author peter
  */
-public abstract class DumbModeTask implements Disposable {
+public abstract class DumbModeTask implements Disposable, MergeableQueueTask<DumbModeTask> {
   @Nullable
   private final Object myEquivalenceObject;
 
@@ -39,6 +37,11 @@ public abstract class DumbModeTask implements Disposable {
   public abstract void performInDumbMode(@NotNull ProgressIndicator indicator);
 
   @Override
+  public final void perform(@NotNull ProgressIndicator indicator) {
+    performInDumbMode(indicator);
+  }
+
+  @Override
   public void dispose() {
   }
 
@@ -49,6 +52,7 @@ public abstract class DumbModeTask implements Disposable {
    *         {@code this} - if you want to remove {@code taskFromQueue} from the queue and add current one;  <p>
    *         some other task - then it would be added to the queue, and {@code taskFromQueue} would be removed.
    */
+  @Override
   @Nullable
   public DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
     if (myEquivalenceObject != null && myEquivalenceObject.equals(taskFromQueue.myEquivalenceObject)) {

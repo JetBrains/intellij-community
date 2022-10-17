@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.model
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 
 interface TGroup {

@@ -88,7 +88,7 @@ public final class Namespace implements Serializable {
 
   private static final ConcurrentMap<String, ConcurrentMap<String, Namespace>>
     namespacemap = new ConcurrentHashMap
-    <String, ConcurrentMap<String, Namespace>>(512, 0.75f, 64);
+    <>(512, 0.75f, 64);
 
   /**
    * Define a <code>Namespace</code> for when <i>not</i> in a namespace
@@ -109,17 +109,17 @@ public final class Namespace implements Serializable {
     // pre-populate the map with the constant namespaces that would
     // otherwise fail validation
     final ConcurrentMap<String, Namespace> nmap =
-      new ConcurrentHashMap<String, Namespace>();
+      new ConcurrentHashMap<>();
     nmap.put(NO_NAMESPACE.getPrefix(), NO_NAMESPACE);
     namespacemap.put(NO_NAMESPACE.getURI(), nmap);
 
     final ConcurrentMap<String, Namespace> xmap =
-      new ConcurrentHashMap<String, Namespace>();
+      new ConcurrentHashMap<>();
     xmap.put(XML_NAMESPACE.getPrefix(), XML_NAMESPACE);
     namespacemap.put(XML_NAMESPACE.getURI(), xmap);
 
     final ConcurrentMap<String, Namespace> xnsmap =
-      new ConcurrentHashMap<String, Namespace>();
+      new ConcurrentHashMap<>();
     xnsmap.put(XMLNS_NAMESPACE.getPrefix(), XMLNS_NAMESPACE);
     namespacemap.put(XMLNS_NAMESPACE.getURI(), xnsmap);
   }
@@ -168,7 +168,7 @@ public final class Namespace implements Serializable {
         throw new IllegalNameException(uri, "Namespace URI", reason);
       }
 
-      urimap = new ConcurrentHashMap<String, Namespace>();
+      urimap = new ConcurrentHashMap<>();
       final ConcurrentMap<String, Namespace> xmap =
         namespacemap.putIfAbsent(uri, urimap);
 

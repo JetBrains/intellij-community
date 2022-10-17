@@ -1,7 +1,8 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
 package smartStepWithInlineClass
 
 @JvmInline
-value class InlineClass(val str: String) {
+value class InlineClass<T>(val str: T) {
     fun foo(f: () -> Unit) {
         f()
         // STEP_OVER: 1
@@ -39,7 +40,7 @@ value class InlineClass(val str: String) {
     }
 }
 
-fun foo(i: InlineClass, f: (InlineClass) -> Unit) {
+fun foo(i: InlineClass<*>, f: (InlineClass<*>) -> Unit) {
     f(i)
 }
 
@@ -47,7 +48,7 @@ fun foo(f: () -> Unit) {
     f()
 }
 
-fun bar(i: InlineClass) {
+fun bar(i: InlineClass<*>) {
     stopHere()
 }
 

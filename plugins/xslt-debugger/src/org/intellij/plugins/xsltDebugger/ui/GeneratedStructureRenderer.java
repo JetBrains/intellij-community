@@ -48,7 +48,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
       final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)o;
       final OutputEventQueue.NodeEvent.QName qname = event.getQName();
       switch (event.getType()) {
-        case OutputEventQueue.START_ELEMENT:
+        case OutputEventQueue.START_ELEMENT -> {
           setIcon(PlatformIcons.XML_TAG_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
           if (qname.myURI != null && qname.myURI.length() > 0) {
@@ -56,8 +56,8 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
             append(qname.myURI, SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
             append("}", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-          break;
-        case OutputEventQueue.ATTRIBUTE:
+        }
+        case OutputEventQueue.ATTRIBUTE -> {
           setIcon(PlatformIcons.ANNOTATION_TYPE_ICON);
           append(qname.getQName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
           if (qname.myURI != null && qname.myURI.length() > 0) {
@@ -66,28 +66,28 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
           append(" = \"", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           append(event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
           append("\"", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          break;
-        case OutputEventQueue.CHARACTERS:
+        }
+        case OutputEventQueue.CHARACTERS -> {
           append("#text ", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
           append(clipValue(event.getValue()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          break;
-        case OutputEventQueue.COMMENT:
+        }
+        case OutputEventQueue.COMMENT -> {
           setIcon(XsltDebuggerIcons.XmlComment);
           append("#comment ", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
           append(event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
-          break;
-        case OutputEventQueue.PI:
+        }
+        case OutputEventQueue.PI -> {
           append("#processing-instruction ", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
           append(qname.myLocalName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
           append(" " + event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
-          break;
-        case OutputEventQueue.TRACE_POINT:
+        }
+        case OutputEventQueue.TRACE_POINT -> {
           setIcon(AllIcons.Debugger.Db_set_breakpoint);
           append(XsltDebuggerBundle.message("tracepoint.at.line.0", event.getLineNumber()), SimpleTextAttributes.GRAY_ATTRIBUTES);
           if (event.getValue() != null) {
             append(" " + event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
           }
-          break;
+        }
       }
 
       if (node instanceof GeneratedStructureModel.StructureNode) {

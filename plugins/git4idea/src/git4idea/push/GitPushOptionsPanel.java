@@ -29,7 +29,6 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
       checkboxText += ": ";
     }
     myPushTags = new JBCheckBox(checkboxText);
-    myPushTags.setMnemonic('T');
     myPushTags.setSelected(defaultMode != null);
 
     myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());

@@ -86,7 +86,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
             checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())
           }
           lateinit var visualFormattingLayer: Cell<JBCheckBox>
-          val vFmtEnabledByRegistry = VisualFormattingLayerService.getInstance().enabledByRegistry
+          val vFmtEnabledByRegistry = VisualFormattingLayerService.getInstance().isEnabledByRegistry
           row {
             visualFormattingLayer = checkBox(cdVisualFormattingLayer)
           }.visible(vFmtEnabledByRegistry)
@@ -125,7 +125,7 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
     project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
   }
 
-  fun goToGlobalSettings(configurableID: String) {
+  private fun goToGlobalSettings(configurableID: String) {
     DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
       context?.let { dataContext ->
         Settings.KEY.getData(dataContext)?.let { settings ->

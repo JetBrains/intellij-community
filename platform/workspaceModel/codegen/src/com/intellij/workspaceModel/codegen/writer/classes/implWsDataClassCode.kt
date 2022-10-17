@@ -5,23 +5,18 @@ import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.utils.LinesBuilder
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.fqn7
-import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.allFields
-import com.intellij.workspaceModel.codegen.writer.hasSetter
-import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
  * - Soft links
@@ -33,8 +28,7 @@ val ObjClass<*>.javaDataName
 
 val ObjClass<*>.isEntityWithPersistentId: Boolean
   get() = superTypes.any { 
-    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName
-    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
+    it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {
@@ -69,24 +63,13 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
       // --- createEntity
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
-        line("val entity = $javaImplName()")
-        list(allFields.noRefs().noEntitySource().noPersistentId()) {
-          if (hasSetter) {
-            if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toSet()"
-            } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
-              "entity.$implFieldName = $name.toList()"
-            } else {
-              "entity.$implFieldName = $name"
-            }
-          } else {
-            "entity.$name = $name"
-          }
+        section("return getCached(snapshot)") {
+          line("val entity = $javaImplName(this)")
+          line("entity.entitySource = entitySource")
+          line("entity.snapshot = snapshot")
+          line("entity.id = createEntityId()")
+          line("entity")
         }
-        line("entity.entitySource = entitySource")
-        line("entity.snapshot = snapshot")
-        line("entity.id = createEntityId()")
-        line("return entity")
       }
 
       val collectionFields = allFields.noRefs().filter { it.valueType is ValueType.Collection<*, *> }
@@ -153,8 +136,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           optionalFields.forEach {
             line("this.${it.name} = this@$javaDataName.${it.name}")
           }
-          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
-            val parentType = it.type
+          allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
+            val parentType = it.valueType
             if (parentType is ValueType.Optional) {
               line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
             } else {
@@ -166,8 +149,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
       sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
         line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
-        allRefsFields.filterNot { it.type.getRefType().child }.forEach {
-          val parentType = it.type
+        allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
+          val parentType = it.valueType
           if (parentType !is ValueType.Optional) {
             line("res.add(${parentType.javaType}::class.java)")
           }
@@ -179,7 +162,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       val keyFields = allFields.filter { it.isKey }
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
@@ -193,7 +176,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       // --- equalsIgnoringEntitySource
       sectionNl("override fun equalsIgnoringEntitySource(other: Any?): Boolean") {
         line("if (other == null) return false")
-        line("if (this::class != other::class) return false")
+        line("if (this.javaClass != other.javaClass) return false")
 
         lineWrapped("other as $javaDataName")
 
@@ -226,7 +209,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line()
         section("override fun equalsByKey(other: Any?): Boolean") {
           line("if (other == null) return false")
-          line("if (this::class != other::class) return false")
+          line("if (this.javaClass != other.javaClass) return false")
 
           lineWrapped("other as $javaDataName")
 
@@ -254,7 +237,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 fun List<ObjProperty<*, *>>.noRefs(): List<ObjProperty<*, *>> = this.filterNot { it.valueType.isRefType() }
 fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entitySource" }
 fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
-fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
+fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is ValueType.Optional<*> }
 fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }
 
 private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
@@ -266,10 +249,10 @@ private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
   }.all{ it }
   linesBuilder.section("override fun collectClassUsagesData(collector: ${UsedClassesCollector::class.fqn})") {
     clazzes.forEach {
-      line("collector.add($it::class.java)")
+      line("collector.add(${it.toQualifiedName()}::class.java)")
     }
     objects.forEach {
-      line("collector.addObject($it::class.java)")
+      line("collector.addObject(${it.toQualifiedName()}::class.java)")
     }
     accessors.forEach {
       line(it)
@@ -299,15 +282,20 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     }
     is ValueType.Blob -> {
       val className = this.javaClassName
-      if ("VirtualFileUrl" !in className && "EntitySource" !in className && "PersistentEntityId" !in className) {
-        clazzes.add(className)
+      if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, PersistentEntityId::class.java.name)) {
+        accessors.add("this.$fieldName?.let { collector.addDataToInspect(it) }")
         return res
       }
-      if ("VirtualFileUrl" in className) {
+      if (className == VirtualFileUrl::class.java.name) {
         accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
         return false
       }
       return true
+    }
+    is ValueType.Enum -> {
+      val className = this.javaClassName
+      clazzes.add(className)
+      return res
     }
     is ValueType.DataClass -> {
       // Here we might filter PersistentIds and get them from the index, but in this case we would need to inspect their fields on the fly

@@ -28,41 +28,27 @@ public final class XmlElementsGroupImpl implements XmlElementsGroup {
 
   @Override
   public int getMinOccurs() {
-    switch (myParticle.getQuantifier()) {
-      case ONE_OR_MORE:
-      case REQUIRED:
-        return 1;
-      case ZERO_OR_MORE:
-      case OPTIONAL:
-        return 0;
-    }
-    throw new AssertionError(myParticle.getQuantifier());
+    return switch (myParticle.getQuantifier()) {
+      case ONE_OR_MORE, REQUIRED -> 1;
+      case ZERO_OR_MORE, OPTIONAL -> 0;
+    };
   }
 
   @Override
   public int getMaxOccurs() {
-    switch (myParticle.getQuantifier()) {
-      case ONE_OR_MORE:
-      case ZERO_OR_MORE:
-        return Integer.MAX_VALUE;
-      case OPTIONAL:
-      case REQUIRED:
-        return 1;
-    }
-    throw new AssertionError(myParticle.getQuantifier());
+    return switch (myParticle.getQuantifier()) {
+      case ONE_OR_MORE, ZERO_OR_MORE -> Integer.MAX_VALUE;
+      case OPTIONAL, REQUIRED -> 1;
+    };
   }
 
   @Override
   public Type getGroupType() {
-    switch (myParticle.getType()) {
-      case SEQUENCE:
-        return Type.SEQUENCE;
-      case CHOICE:
-        return Type.CHOICE;
-      case ELEMENT:
-        return Type.LEAF;
-    }
-    throw new AssertionError(myParticle.getType());
+    return switch (myParticle.getType()) {
+      case SEQUENCE -> Type.SEQUENCE;
+      case CHOICE -> Type.CHOICE;
+      case ELEMENT -> Type.LEAF;
+    };
   }
 
   @Override

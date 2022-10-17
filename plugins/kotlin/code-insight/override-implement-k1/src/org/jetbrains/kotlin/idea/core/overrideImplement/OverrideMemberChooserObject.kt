@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
@@ -117,8 +119,8 @@ fun OverrideMemberChooserObject.generateMember(
     val descriptor = immediateSuper
 
     val bodyType = when {
-        targetClass?.hasExpectModifier() == true -> NO_BODY
-        descriptor.extensionReceiverParameter != null && mode == MemberGenerateMode.OVERRIDE -> FROM_TEMPLATE
+        targetClass?.hasExpectModifier() == true -> NoBody
+        descriptor.extensionReceiverParameter != null && mode == MemberGenerateMode.OVERRIDE -> FromTemplate
         else -> bodyType
     }
 
@@ -205,7 +207,7 @@ private val OVERRIDE_RENDERER = withOptions {
     annotationFilter = {
         val annotations = it.type.constructor.declarationDescriptor?.annotations
         annotations != null && (annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ||
-                annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME))
+                annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME))
     }
     presentableUnresolvedTypes = true
     informativeErrorType = false
@@ -273,7 +275,7 @@ private fun generateProperty(
     val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
 
     val body =
-        if (bodyType != NO_BODY) {
+        if (bodyType != NoBody) {
             buildString {
                 append("\nget()")
                 append(" = ")
@@ -309,14 +311,14 @@ private fun generateFunction(
     val returnType = descriptor.returnType
     val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
 
-    val body = if (bodyType != NO_BODY) {
+    val body = if (bodyType != NoBody) {
         val delegation = generateUnsupportedOrSuperCall(project, descriptor, bodyType, !returnsNotUnit)
         val returnPrefix = if (returnsNotUnit && bodyType.requiresReturn) "return " else ""
         "{$returnPrefix$delegation\n}"
     } else ""
 
     val factory = KtPsiFactory(project)
-    val functionText = renderer.render(newDescriptor) + body
+    val functionText = "${renderer.render(newDescriptor)} $body"
     return when (descriptor) {
         is ClassConstructorDescriptor -> {
             if (descriptor.isPrimary) {
@@ -336,8 +338,8 @@ fun generateUnsupportedOrSuperCall(
     canBeEmpty: Boolean = true
 ): String {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
-        EMPTY_OR_TEMPLATE -> return ""
-        FROM_TEMPLATE -> {
+        EmptyOrTemplate -> return ""
+        FromTemplate -> {
             val templateKind = if (descriptor is FunctionDescriptor) TemplateKind.FUNCTION else TemplateKind.PROPERTY_INITIALIZER
             return getFunctionBodyTextFromTemplate(
                 project,
@@ -352,7 +354,7 @@ fun generateUnsupportedOrSuperCall(
                 append(bodyType.receiverName)
             } else {
                 append("super")
-                if (bodyType == QUALIFIED_SUPER) {
+                if (bodyType == QualifiedSuper) {
                     val superClassFqName = IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(
                         descriptor.containingDeclaration as ClassifierDescriptor
                     )

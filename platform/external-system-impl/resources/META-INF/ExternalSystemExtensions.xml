@@ -14,7 +14,7 @@
         implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl"/>
 
     <module.workingDirectoryProvider
-        implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
+      implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
                         serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
 
@@ -22,6 +22,9 @@
                          instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"/>
     <search.optionContributor
       implementation="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupSearchableContributor"/>
+
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager"
+                    serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl"/>
 
     <!--Auto-reload-->
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
@@ -136,6 +139,12 @@
     <listener class="com.intellij.openapi.externalSystem.service.project.ExternalSystemTrustedListener"
               topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$BulkFileListenerImpl"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
+    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$ModuleListenerImpl"
+              topic="com.intellij.openapi.project.ModuleListener"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners>
 </idea-plugin>
 

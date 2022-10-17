@@ -1,4 +1,4 @@
-// "Make 'f' return 'void'" "false"
+// "Make 'f()' return 'void'" "false"
 class a {
  void f(int i) {
    return ;

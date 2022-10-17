@@ -12,8 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.components.RendererModifier
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -86,8 +84,8 @@ fun KtAnalysisSession.generateMember(
     mode: MemberGenerateMode = MemberGenerateMode.OVERRIDE
 ): KtCallableDeclaration = with(ktClassMember) {
     val bodyType = when {
-        targetClass?.hasExpectModifier() == true -> BodyType.NO_BODY
-        symbol.isExtension && mode == MemberGenerateMode.OVERRIDE -> BodyType.FROM_TEMPLATE
+        targetClass?.hasExpectModifier() == true -> BodyType.NoBody
+        symbol.isExtension && mode == MemberGenerateMode.OVERRIDE -> BodyType.FromTemplate
         else -> bodyType
     }
 
@@ -155,7 +153,7 @@ private fun KtAnalysisSession.generateFunction(
     val returnType = symbol.returnType
     val returnsUnit = returnType.isUnit
 
-    val body = if (bodyType != BodyType.NO_BODY) {
+    val body = if (bodyType != BodyType.NoBody) {
         val delegation = generateUnsupportedOrSuperCall(project, symbol, bodyType, returnsUnit)
         val returnPrefix = if (!returnsUnit && bodyType.requiresReturn) "return " else ""
         "{$returnPrefix$delegation\n}"
@@ -178,7 +176,7 @@ private fun KtAnalysisSession.generateProperty(
     val returnsNotUnit = !returnType.isUnit
 
     val body =
-        if (bodyType != BodyType.NO_BODY) {
+        if (bodyType != BodyType.NoBody) {
             buildString {
                 append("\nget()")
                 append(" = ")
@@ -198,8 +196,8 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
     canBeEmpty: Boolean = true
 ): String where T : KtNamedSymbol, T : KtCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
-        BodyType.EMPTY_OR_TEMPLATE -> return ""
-        BodyType.FROM_TEMPLATE -> {
+        BodyType.EmptyOrTemplate -> return ""
+        BodyType.FromTemplate -> {
             val templateKind = when (symbol) {
                 is KtFunctionSymbol -> TemplateKind.FUNCTION
                 is KtPropertySymbol -> TemplateKind.PROPERTY_INITIALIZER
@@ -218,7 +216,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 append(bodyType.receiverName)
             } else {
                 append("super")
-                if (bodyType == BodyType.QUALIFIED_SUPER) {
+                if (bodyType == BodyType.QualifiedSuper) {
                     val superClassFqName = symbol.originalContainingClassForOverride?.name?.render()
                     superClassFqName?.let {
                         append("<").append(superClassFqName).append(">")

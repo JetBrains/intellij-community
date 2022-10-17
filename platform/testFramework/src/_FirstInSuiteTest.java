@@ -6,6 +6,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.testFramework.GlobalState;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
 import com.intellij.util.ExceptionUtil;
@@ -102,5 +103,9 @@ public class _FirstInSuiteTest extends TestCase {
     assertEquals(
       "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`",
       "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""));
+  }
+
+  public void testGlobalState() {
+    GlobalState.checkSystemStreams(); // Rather initialize than check.
   }
 }

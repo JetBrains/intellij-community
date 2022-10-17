@@ -29,9 +29,6 @@ import java.util.Map;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
 
-/**
- * @author peter
- */
 public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
@@ -153,7 +150,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
                                                                 ValueConstraint constraint, PsiParameter parameter) {
     PsiType type = parameter.getType();
     switch (constraint) {
-      case NULL_VALUE: {
+      case NULL_VALUE -> {
         if (type instanceof PsiPrimitiveType) {
           return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
                                             parameter.getName(), type.getPresentableText(), constraint);
@@ -171,7 +168,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         return null;
       }
-      case NOT_NULL_VALUE: {
+      case NOT_NULL_VALUE -> {
         if (type instanceof PsiPrimitiveType) {
           return JavaAnalysisBundle.message("inspection.contract.checker.primitive.parameter.nullability",
                                             parameter.getName(), type.getPresentableText(), constraint);
@@ -185,15 +182,16 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         return null;
       }
-      case TRUE_VALUE:
-      case FALSE_VALUE:
+      case TRUE_VALUE, FALSE_VALUE -> {
         if (!PsiType.BOOLEAN.equals(type) && !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
           return JavaAnalysisBundle.message("inspection.contract.checker.boolean.condition.for.nonboolean.parameter",
                                             parameter.getName(), type.getPresentableText());
         }
         return null;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
   }
 }

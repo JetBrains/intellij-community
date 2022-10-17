@@ -32,7 +32,6 @@ import javax.swing.*
 
 /**
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl) : AnchoredButton(), DataProvider {
   /**

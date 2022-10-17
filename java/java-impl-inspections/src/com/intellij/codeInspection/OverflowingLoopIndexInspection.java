@@ -45,14 +45,11 @@ public class OverflowingLoopIndexInspection extends AbstractBaseJavaLocalInspect
     VarLower;
 
     ConditionType inverted() {
-      switch (this) {
-        case VarGreater:
-          return VarLower;
-        case VarLower:
-          return VarGreater;
-        default:
-          return Unknown;
-      }
+      return switch (this) {
+        case VarGreater -> VarLower;
+        case VarLower -> VarGreater;
+        default -> Unknown;
+      };
     }
   }
 

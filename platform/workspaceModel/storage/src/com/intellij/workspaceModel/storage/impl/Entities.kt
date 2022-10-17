@@ -94,7 +94,7 @@ import kotlin.reflect.KClass
  */
 
 
-abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
+abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
   override lateinit var entitySource: EntitySource
     internal set
 
@@ -104,7 +104,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
 
   abstract fun connectionIdList(): List<ConnectionId>
 
-  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+  open fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {
     val mySnapshot = snapshot as AbstractEntityStorage
     return getReferences(mySnapshot, entityClass)
   }
@@ -183,7 +183,7 @@ data class EntityLink(
 val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T>, ModifiableReferableWorkspaceEntity {
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -195,9 +195,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
   val modifiable: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
   val changedProperty: MutableSet<String> = mutableSetOf()
 
-  override fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>,
-                                  isThisFieldChild: Boolean,
-                                  entities: List<WorkspaceEntity?>) {
+  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>) {
     val foundConnectionId = findConnectionId(entityClass, entities)
     if (foundConnectionId == null) return
 
@@ -309,15 +307,26 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     val someEntity = entity.filterNotNull().firstOrNull()
     return if (someEntity != null) {
       val firstClass = this.getEntityClass()
-      (someEntity as WorkspaceEntityBase).connectionIdList().single { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+      someEntity as WorkspaceEntityBase
+      (someEntity.connectionIdList().asSequence() + this.connectionIdList()).first {
+        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
+      }
     }
     else {
       val firstClass = this.getEntityClass()
-      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull { it.parentClass == firstClass.toClassId() && it.childClass == entityClass.java.toClassId() || it.childClass == firstClass.toClassId() && it.parentClass == entityClass.java.toClassId() }
+      entityLinks.keys.asSequence().map { it.connectionId }.singleOrNull {
+        isCorrectConnection(it, firstClass, entityClass.java) || isCorrectConnection(it, entityClass.java, firstClass)
+      }
     }
   }
 
-  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+  private fun isCorrectConnection(it: ConnectionId, parentClass: Class<out WorkspaceEntity>, childClass: Class<out WorkspaceEntity>): Boolean {
+    return it.parentClass == parentClass.toClassId() && it.childClass == childClass.toClassId() ||
+           it.parentClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(parentClass) &&
+           it.childClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(childClass)
+  }
+
+  override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {
     val myDiff = diff
     val entitiesFromDiff = if (myDiff != null) {
       getReferences(myDiff as AbstractEntityStorage, entityClass)
@@ -363,6 +372,8 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
   open fun applyToBuilder(builder: MutableEntityStorage) {
     throw NotImplementedError()
   }
+
+  open fun afterModification() { }
 
   fun processLinkedEntities(builder: MutableEntityStorage) {
     val parentKeysToRemove = ArrayList<EntityLink>()
@@ -433,8 +444,8 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
   }
 
   open fun getEntityData(): WorkspaceEntityData<T> {
-    val actualEntityData = (diff as MutableEntityStorageImpl).entityDataById(id)
-      ?: error("Requested entity data doesn't exist at entity family")
+    val actualEntityData = (diff as MutableEntityStorageImpl).entitiesByType.getEntityDataForModificationOrNull(id)
+      ?: error("Cannot find the data. Must probably this entity was already remove from builder.")
     @Suppress("UNCHECKED_CAST")
     return actualEntityData as WorkspaceEntityData<T>
   }
@@ -536,7 +547,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
       .onEach { it.isAccessible = true }
@@ -545,7 +556,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
 
   open fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     return ReflectionUtil.collectFields(this.javaClass)
       .filterNot { it.name == WorkspaceEntityData<*>::id.name }
@@ -604,6 +615,15 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
   abstract class WithCalculablePersistentId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
     abstract fun persistentId(): PersistentEntityId<*>
   }
+
+  protected fun <T: WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
+    if (storage is EntityStorageSnapshotImpl) {
+      return storage.getCachedEntityById(createEntityId(), init) as T
+    }
+    else {
+      return init()
+    }
+  }
 }
 
 fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) {
@@ -629,6 +649,7 @@ class UsedClassesCollector(
   var sameForAllEntities: Boolean = false,
   var collection: MutableSet<Class<out Any>> = HashSet(),
   var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
+  var collectionToInspection: MutableSet<Any> = HashSet(),
 ) {
   fun add(clazz: Class<out Any>) {
     collection.add(clazz)
@@ -636,5 +657,9 @@ class UsedClassesCollector(
 
   fun addObject(clazz: Class<out Any>) {
     collectionObjects.add(clazz)
+  }
+
+  fun addDataToInspect(data: Any) {
+    collectionToInspection.add(data)
   }
 }

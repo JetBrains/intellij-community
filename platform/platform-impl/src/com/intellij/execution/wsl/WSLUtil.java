@@ -228,7 +228,7 @@ public final class WSLUtil {
    *
    * @deprecated remove after everyone migrates to the new prefix
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static void fixWslPrefix(@NotNull Sdk sdk) {
     if (sdk instanceof ProjectJdkImpl) {
       var path = sdk.getHomePath();

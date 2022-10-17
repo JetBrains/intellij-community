@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
-import kotlin.streams.toList
 
 interface JdkInstallRequest {
   val item: JdkItem
@@ -64,14 +63,12 @@ interface JdkInstallerListener {
    * Executed at the moment, when a download process for
    * a given [request] is started
    */
-  @JvmDefault
   fun onJdkDownloadStarted(request: JdkInstallRequest, project: Project?) { }
 
   /**
    * This event is executed when download process is finished,
    * for all possible outcomes, no matter it was a success or a failure
    */
-  @JvmDefault
   fun onJdkDownloadFinished(request: JdkInstallRequest, project: Project?) { }
 }
 
@@ -115,7 +112,7 @@ class JdkInstaller : JdkInstallerBase() {
     return defaultInstallDir()
   }
 
-  fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
+  private fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
     wslDistribution?.let { dist ->
       dist.userHome?.let { home ->
         return Paths.get(dist.getWindowsPath("$home/.jdks"))
@@ -373,7 +370,7 @@ abstract class JdkInstallerBase {
     }
   }
 
-  fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
+  private fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
     try {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
@@ -524,7 +521,7 @@ class JdkInstallerStateEntry : BaseState() {
   var url by string()
   var sha256 by string()
   var installDir by string()
-  var javaHomeDir by string()
+  private var javaHomeDir by string()
 
   fun copyForm(item: JdkItem, targetPath: Path) {
     fullText = item.fullPresentationText

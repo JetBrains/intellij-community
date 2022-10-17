@@ -86,21 +86,11 @@ public abstract class AttachOSHandler {
       LOG.debug("`uname -s` output: ", unameOutput);
       final String osString = unameOutput.getStdout().trim();
 
-      OSType osType;
-
-      //TODO [viuginick] handle remote windows
-      switch (osString) {
-        case "Linux":
-          osType = OSType.LINUX;
-          break;
-        case "Darwin":
-          osType = OSType.MACOSX;
-          break;
-        default:
-          osType = OSType.UNKNOWN;
-          break;
-      }
-      return osType;
+      return switch (osString) {
+        case "Linux" -> OSType.LINUX;
+        case "Darwin" -> OSType.MACOSX;
+        default -> OSType.UNKNOWN;
+      };
     }
     catch (ExecutionException ex) {
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.while.calculating.remote.operating.system"), ex);

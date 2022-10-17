@@ -8,11 +8,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
+import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
+import com.intellij.workspaceModel.ide.impl.UtilsKt;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ParentEntityDependent<ContentRootEntity, ModuleEntity>,
-                                                    IndexableEntityProvider.Existing<ContentRootEntity> {
+                                                    IndexableEntityProvider.ExistingEx<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {
@@ -35,6 +41,22 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @Override
+  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
+                                                                                    @NotNull EntityStorage storage,
+                                                                                    @NotNull Project project) {
+    ModuleEntity moduleEntity = entity.getModule();
+    ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
+    if (module == null) {
+      return null;
+    }
+    VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
+    if (root == null) return null;
+    List<VirtualFile> excludedFiles =
+      IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
+    return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles);
+  }
+
+  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
                                                                                                 @NotNull Project project) {
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getPersistentId(), entity.getUrl());
@@ -46,8 +68,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), newEntity.getUrl());
     }
-    List<VirtualFileUrl> newExcludedUrls = newEntity.getExcludedUrls();
-    List<VirtualFileUrl> oldExcludedUrls = oldEntity.getExcludedUrls();
+    List<VirtualFileUrl> newExcludedUrls = ContainerUtil.map(newEntity.getExcludedUrls(), o -> o.getUrl());
+    List<VirtualFileUrl> oldExcludedUrls = ContainerUtil.map(oldEntity.getExcludedUrls(), o -> o.getUrl());
     if (!oldExcludedUrls.equals(newExcludedUrls)) {
       List<VirtualFileUrl> roots = new ArrayList<>();
       for (VirtualFileUrl oldUrl : oldExcludedUrls) {

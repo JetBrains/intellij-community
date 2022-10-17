@@ -29,7 +29,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -43,7 +42,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -59,7 +57,6 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun getFoldersToExclude(context: FoldersContext): Stream<String> {
     return Stream.empty()
   }
@@ -70,15 +67,15 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project. Order of projects is not defined.
-   * [ModuleEntity]-es are already created and filled with folders and dependencies,
+   * Corresponding [ModuleEntity] is already created and filled with folders and dependencies,
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
+   * Other Modules are not accessible.
    *
    * * Called on a background thread.
    * * WriteActions are not allowed.
    * * Side-effects other than changing [ModuleEntity]-related entities are not allowed.
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun configureMavenProject(context: MutableMavenProjectContext) {
   }
 
@@ -92,7 +89,6 @@ interface MavenWorkspaceConfigurator {
    * * Side-effects other than changing [MutableEntityStorage] are not allowed
    */
   @RequiresBackgroundThread
-  @JvmDefault
   fun beforeModelApplied(context: MutableModelContext) {
   }
 
@@ -101,12 +97,13 @@ interface MavenWorkspaceConfigurator {
    * Implement this method in order to make modifications in components, which are not represented in the [com.intellij.workspaceModel.ide.WorkspaceModel],
    * but which should be kept in sync with it.
    *
+   * For slower/non-immediate configuration use [MavenAfterImportConfigurator]
+   *
    * * Called in WriteAction.
    * * Should be as fast as possible.
-   * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder]
+   * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
   @RequiresWriteLock
-  @JvmDefault
   fun afterModelApplied(context: AppliedModelContext) {
   }
 
@@ -116,8 +113,8 @@ interface MavenWorkspaceConfigurator {
   }
 
   /**
-   * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.MavenModuleType] for the list of possible module types.
-   * Configuration implementation should be careful when configuring each [Module], e.g. [org.jetbrains.idea.maven.importing.MavenModuleType.TEST_ONLY] should be configured for test sources only.
+   * Every Maven project is represented by one or several IJ [Module]s. See [org.jetbrains.idea.maven.importing.StandardMavenModuleType] for the list of possible module types.
+   * Configuration implementation should be careful when configuring each [Module] and distinguish between modules with code, pure main or test modules.
    *
    */
   interface MavenProjectWithModules<M> {
@@ -143,4 +140,23 @@ interface MavenWorkspaceConfigurator {
   interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
+}
+
+@ApiStatus.Experimental
+interface MavenAfterImportConfigurator {
+  /**
+   * Called in background after project import is finished.
+   * See also [org.jetbrains.idea.maven.project.MavenImportListener]
+   */
+  fun afterImport(context: Context) {
+  }
+
+  interface Context : UserDataHolder {
+    val project: Project
+    val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
+  }
+}
+
+fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
+  return this.changes.hasChanges()
 }

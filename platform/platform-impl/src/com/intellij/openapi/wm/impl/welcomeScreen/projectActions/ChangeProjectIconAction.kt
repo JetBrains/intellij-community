@@ -107,7 +107,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
 
 class ProjectIconUI(val projectPath: @SystemIndependent String) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
-  val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, false))
+  val iconLabel = JBLabel((RecentProjectsManager.getInstance() as RecentProjectsManagerBase).getProjectIcon(projectPath, true))
   var pathToIcon: VirtualFile? = null
   val removeIcon = createToolbar()
   var iconRemoved = false
@@ -116,7 +116,7 @@ class ProjectIconUI(val projectPath: @SystemIndependent String) {
     val removeIconAction = object : DumbAwareAction(AllIcons.Actions.GC) {
       override fun actionPerformed(e: AnActionEvent) {
         iconRemoved = true
-        iconLabel.icon = RecentProjectIconHelper.generateProjectIcon(projectPath)
+        iconLabel.icon = RecentProjectIconHelper.generateProjectIcon(projectPath, isProjectValid = true)
         pathToIcon = null
       }
 

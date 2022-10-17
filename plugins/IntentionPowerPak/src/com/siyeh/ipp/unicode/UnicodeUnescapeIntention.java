@@ -130,7 +130,7 @@ public class UnicodeUnescapeIntention extends Intention {
           break;
         }
       }
-      while (text.charAt(nextChar) == 'u'); // \uuuu0061 is a legal unicode escape
+      while (text.charAt(nextChar) == 'u'); // \uuuuFFFD is a legal unicode escape
       if (nextChar == i + 1 || nextChar + 3 >= length) {
         break;
       }

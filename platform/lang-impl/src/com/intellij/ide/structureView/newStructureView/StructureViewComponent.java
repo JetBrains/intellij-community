@@ -46,6 +46,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
@@ -227,7 +228,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeUtil.installActions(getTree());
 
-    new TreeSpeedSearch(getTree(), treePath -> {
+    new TreeSpeedSearch(getTree(), false, treePath -> {
       Object userObject = TreeUtil.getLastUserObject(treePath);
       return userObject != null ? FileStructurePopup.getSpeedSearchText(userObject) : null;
     });
@@ -270,16 +271,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return JBTreeTraverser.from(o -> o instanceof Group ? ((Group)o).getChildren() : null);
   }
 
-  private JBIterable<Object> getSelectedValues() {
-    return getSelectedValues(getTree());
+  @NotNull
+  public static JBIterable<Object> getSelectedValues(JTree tree) {
+    return getSelectedValues(JBIterable.of(tree.getSelectionPaths()).map(TreePath::getLastPathComponent));
   }
 
   @NotNull
-  public static JBIterable<Object> getSelectedValues(JTree tree) {
+  public static JBIterable<Object> getSelectedValues(@NotNull JBIterable<Object> selection) {
     return traverser()
-      .withRoots(JBIterable.of(tree.getSelectionPaths())
-                           .map(TreePath::getLastPathComponent)
-                           .filterMap(StructureViewComponent::unwrapValue))
+      .withRoots(selection.filterMap(StructureViewComponent::unwrapValue))
       .traverse();
   }
 
@@ -638,8 +638,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       getSettings().AUTOSCROLL_MODE = state;
     }
 
+    @RequiresEdt
     @Override
-    protected void scrollToSource(Component tree) {
+    protected void scrollToSource(@NotNull Component tree) {
       if (isDisposed()) return;
       myAutoscrollFeedback = true;
 
@@ -702,12 +703,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement element = getSelectedValues().filter(PsiElement.class).single();
-      return element != null && element.isValid() ? element : null;
-    }
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return PsiUtilCore.toPsiElementArray(getSelectedValues().filter(PsiElement.class).toList());
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
     }
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
@@ -721,24 +718,34 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
+      JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection), superProvider);
+    }
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return getHelpID();
+    }
+    return super.getData(dataId);
+  }
+
+  private static Object getSlowData(String dataId, JBIterable<Object> selection) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      PsiElement element = getSelectedValues(selection).filter(PsiElement.class).single();
+      return element != null && element.isValid() ? element : null;
+    }
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return PsiUtilCore.toPsiElementArray(getSelectedValues(selection).filter(PsiElement.class).toList());
+    }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      List<Object> list = JBIterable.of(getTree().getSelectionPaths())
-                                    .map(TreePath::getLastPathComponent)
-                                    .map(StructureViewComponent::unwrapNavigatable)
-                                    .toList();
+      List<Object> list = selection.map(StructureViewComponent::unwrapNavigatable).toList();
       Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
       }
     }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return getHelpID();
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    return super.getData(dataId);
+    return null;
   }
 
   @Override

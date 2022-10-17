@@ -61,4 +61,11 @@ public abstract class EditorColorsManager {
    */
   public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
   }
+
+  /**
+   * Unlike {@code SchemeManager.reload()} guarantees that the currently selected color scheme remains the same unless it is has been
+   * removed as a result of reload.
+   */
+  public void reloadKeepingActiveScheme() {
+  }
 }

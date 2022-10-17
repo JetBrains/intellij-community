@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen.
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class TabListAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MorePopupAware morePopupAware = e.getData(MorePopupAware.KEY);
+    MorePopupAware morePopupAware = getMorePopupAware(e);
     if (morePopupAware != null) {
       morePopupAware.showMorePopup();
     }
@@ -30,8 +31,7 @@ public class TabListAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    boolean available = isTabListAvailable(e) || e.getPlace() == ActionPlaces.TABS_MORE_TOOLBAR;
-    e.getPresentation().setEnabledAndVisible(available);
+    e.getPresentation().setEnabledAndVisible(isTabListAvailable(e));
   }
 
   @Override
@@ -40,7 +40,13 @@ public class TabListAction extends DumbAwareAction {
   }
 
   private static boolean isTabListAvailable(@NotNull AnActionEvent e) {
-    MorePopupAware morePopupAware = e.getData(MorePopupAware.KEY);
+    MorePopupAware morePopupAware = getMorePopupAware(e);
     return morePopupAware != null && morePopupAware.canShowMorePopup();
+  }
+
+  private static @Nullable MorePopupAware getMorePopupAware(@NotNull AnActionEvent e) {
+    return e.getPlace().equals(ActionPlaces.TOOLWINDOW_TITLE)
+      ? e.getData(MorePopupAware.KEY_TOOLWINDOW_TITLE)
+      : e.getData(MorePopupAware.KEY);
   }
 }

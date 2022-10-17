@@ -263,15 +263,6 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
   }
 
-  /**
-   * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static Collection<String> getAllBoxedTypeNames() {
-    return JvmPrimitiveTypeKind.getBoxedFqns();
-  }
-
   @Override
   public int hashCode() {
     return myKind == null ? 0 : myKind.hashCode();

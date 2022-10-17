@@ -38,6 +38,7 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
         get() = SdkScope(project, sdk)
 
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = emptySequence()
 
     override val platform: TargetPlatform
         // TODO(dsavvinov): provide proper target version

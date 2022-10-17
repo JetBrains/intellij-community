@@ -16,18 +16,20 @@
 
 package org.jetbrains.idea.packagesearch.http
 
+import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.castSafelyTo
-import com.intellij.util.io.HttpRequests
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.future.await
 import org.jetbrains.idea.reposearch.DependencySearchBundle
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 class HttpWrapper {
   private val logger = Logger.getInstance(HttpWrapper::class.java)
@@ -40,50 +42,59 @@ class HttpWrapper {
     headers: List<Pair<String, String>>,
     useCache: Boolean = false,
     verbose: Boolean = true
-  ): String = suspendCancellableCoroutine { cont ->
-    try {
-      val cacheKey = getCacheKey(url, acceptContentType, timeoutInSeconds, headers)
-      if (useCache) {
-        cache[cacheKey]?.let { cont.resume(it) }
-      }
-
-      val builder = HttpRequests.request(url)
-        .productNameAsUserAgent()
-        .accept(acceptContentType)
-        .connectTimeout(timeoutInSeconds * 1000)
-        .readTimeout(timeoutInSeconds * 1000)
-        .tuner { connection ->
-          headers.forEach {
-            connection.setRequestProperty(it.first, it.second)
-          }
-        }
-      builder.connect { request ->
-        val statusCode = request.connection.castSafelyTo<HttpURLConnection>()?.responseCode ?: -1
-        val responseText = request.connection.getInputStream().use { it.readBytes { cont.isCancelled }.toString(Charsets.UTF_8) }
-        if (cont.isCancelled) return@connect
-        if (statusCode != HttpURLConnection.HTTP_OK && verbose) {
-          logger.trace(
-            """
-            |
-            |<-- HTTP GET $url
-            |    Accept: $acceptContentType
-            |${headers.joinToString("\n") { "    ${it.first}: ${it.second}" }}
-            |
-            |--> RESPONSE HTTP $statusCode
-            |$responseText
-            |
-          """.trimMargin()
-          )
-        }
-
-        when {
-          responseText.isEmpty() -> cont.resumeWithException(EmptyBodyException())
-          else -> cont.resume(responseText).also { if (useCache) cache[cacheKey] = responseText }
-        }
-      }
+  ): String {
+    val cacheKey = getCacheKey(url, acceptContentType, timeoutInSeconds, headers)
+    if (useCache) {
+      cache[cacheKey]?.let { return it }
     }
-    catch (t: Throwable) {
-      cont.resumeWithException(t)
+
+    val request = HttpRequest.newBuilder()
+      .uri(URI(url))
+      .timeout(Duration.ofSeconds(timeoutInSeconds.toLong()))
+      .header("User-Agent", productNameAsUserAgent())
+      .header("Accept", acceptContentType)
+      .also { builder ->
+        headers.forEach { builder.header(it.first, it.second) }
+      }
+      .GET()
+      .build()
+
+    val client = HttpClient.newBuilder()
+        .executor(ProcessIOExecutorService.INSTANCE)
+        .build()
+    val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream()).await()
+    val responseText = response.body().use { it.readBytes().toString(Charsets.UTF_8) }
+
+    if (response.statusCode() != HttpURLConnection.HTTP_OK && verbose) {
+      logger.trace(
+        """
+          |
+          |<-- HTTP GET $url
+          |    Accept: $acceptContentType
+          |${headers.joinToString("\n") { "    ${it.first}: ${it.second}" }}
+          |
+          |--> RESPONSE HTTP ${response.statusCode()}
+          |$responseText
+          |
+        """.trimMargin()
+      )
+    }
+
+    when {
+      responseText.isEmpty() -> throw EmptyBodyException()
+      else -> return responseText.also { if (useCache) cache[cacheKey] = responseText }
+    }
+  }
+
+  private fun productNameAsUserAgent(): String {
+    val app = ApplicationManager.getApplication()
+    return if (app != null && !app.isDisposed) {
+      val productName = ApplicationNamesInfo.getInstance().fullProductName
+      val version = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
+      "$productName/$version"
+    }
+    else {
+      "IntelliJ"
     }
   }
 
@@ -93,24 +104,6 @@ class HttpWrapper {
     timeoutInSeconds: Int,
     headers: List<Pair<String, String>>
   ) = (listOf(url, acceptContentType, timeoutInSeconds) + headers.map { it.toString() }).joinToString(":")
-
-  private fun InputStream.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, cancellationRequested: () -> Boolean): Long {
-    var bytesCopied: Long = 0
-    val buffer = ByteArray(bufferSize)
-    var bytes = read(buffer)
-    while (bytes >= 0 && !cancellationRequested()) {
-      out.write(buffer, 0, bytes)
-      bytesCopied += bytes
-      bytes = read(buffer)
-    }
-    return bytesCopied
-  }
-
-  private fun InputStream.readBytes(cancellationRequested: () -> Boolean): ByteArray {
-    val buffer = ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, this.available()))
-    copyTo(buffer, cancellationRequested = cancellationRequested)
-    return buffer.toByteArray()
-  }
 }
 
 internal class EmptyBodyException : RuntimeException(

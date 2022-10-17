@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 final class SmartCastProvider {
 
   static boolean shouldSuggestCast(CompletionParameters parameters) {

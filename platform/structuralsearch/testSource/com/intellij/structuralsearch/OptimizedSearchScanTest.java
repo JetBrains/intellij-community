@@ -12,11 +12,11 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk17();
+    return IdeaTestUtil.getMockJdk11();
   }
 
   public void testClassByQName() {
-    doTest("A.f", "[in code:f][in code:A]");
+    doTest("A.f", "[in code:f]");
   }
 
   public void testOptionalMethodWithThrowsClause() {
@@ -46,7 +46,7 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   public void testLambda() {
-    doTest(":: in plan", "'_Q::x", "[in code:::][in code:x]");
+    doTest(":: in plan", "'_Q::x", "[in code:x][in code:::]");
     doTest("-> in plan", "() -> {}", "[in code:->]");
   }
 
@@ -66,10 +66,11 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
   public void testDescendants() {
     doTest("classes outside search scope should also be added to descendants plan",
            "class '_A:*List {}",
-           "[in code:AbstractList|in code:AbstractSequentialList|in code:ArrayList|" +
-           "in code:CheckedList|in code:CheckedRandomAccessList|in code:CopiesList|in code:EmptyList|in code:List|" +
-           "in code:SingletonList|in code:SubList|in code:SynchronizedList|in code:SynchronizedRandomAccessList|" +
-           "in code:UnmodifiableList|in code:UnmodifiableRandomAccessList]" +
+           "[in code:AbstractImmutableList|in code:AbstractList|in code:AbstractSequentialList|in code:ArrayList|in code:AsList" +
+           "|in code:COWSubList|in code:CheckedList|in code:CheckedRandomAccessList|in code:CopiesList|in code:CopyOnWriteArrayList" +
+           "|in code:EmptyList|in code:LinkedList|in code:List|in code:List12|in code:ListN|in code:RandomAccessSubList" +
+           "|in code:SingletonList|in code:Stack|in code:SubList|in code:SynchronizedList|in code:SynchronizedRandomAccessList" +
+           "|in code:UnmodifiableList|in code:UnmodifiableRandomAccessList|in code:Vector]" +
            "[in code:class|in code:enum|in code:interface|in code:record]");
 
     doTest("non-existing class name should be added to plan", "enum '_E:*Zyxwvuts {}", "[in code:Zyxwvuts][in code:enum]");
@@ -107,8 +108,16 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
    doTest("\"asd fasdf\\\\n\"", "[in literals:fasdf][in literals:asd]");
  }
 
+ public void testFullyQualifiedMethodName() {
+    doTest("pkg.Tmp3.id()", "[in code:id]");
+ }
+
  public void testClassObjectAccessExpression() {
-    doTest("ArrayUtil.toObjectArray($var$, $class$.class)", "[in code:toObjectArray][in code:ArrayUtil][in code:class]");
+    doTest("ArrayUtil.toObjectArray($var$, $class$.class)", "[in code:toObjectArray][in code:class]");
+ }
+
+ public void testStaticCall() {
+    doTest("java.util.List.of($x$)", "[in code:of][in code:List][in code:util][in code:java]");
  }
 
   private void doTest(String query, String plan) {

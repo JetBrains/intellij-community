@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -16,6 +16,16 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
 
   public StructuralSearchInspectionToolWrapper(@NotNull Collection<@NotNull Configuration> configurations) {
     super(new StructuralSearchFakeInspection(configurations));
+  }
+
+  public int hashCode() {
+    return myTool.getShortName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj.getClass() == StructuralSearchInspectionToolWrapper.class &&
+           ((StructuralSearchInspectionToolWrapper)obj).myTool.getShortName().equals(myTool.getShortName());
   }
 
   @NotNull

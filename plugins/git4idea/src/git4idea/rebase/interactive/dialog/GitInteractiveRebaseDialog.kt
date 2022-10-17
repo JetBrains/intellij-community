@@ -188,6 +188,10 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       throw UnsupportedOperationException()
     }

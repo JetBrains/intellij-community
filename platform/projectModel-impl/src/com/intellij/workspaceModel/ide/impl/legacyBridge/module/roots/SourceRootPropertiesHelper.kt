@@ -149,7 +149,7 @@ object SourceRootPropertiesHelper {
     JpsElementFactory.getInstance().createModuleSourceRoot(url, rootType as JpsModuleSourceRootType<JpsElement>, rootProperties))
   }
 
-  internal fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
+  private fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
     val elementFactory = JpsElementFactory.getInstance()
 
     val customSourceRoot = entity.customSourceRootProperties

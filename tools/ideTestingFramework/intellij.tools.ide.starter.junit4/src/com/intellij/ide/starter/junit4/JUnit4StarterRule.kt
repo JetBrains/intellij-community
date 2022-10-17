@@ -28,7 +28,7 @@ open class JUnit4StarterRule(
 
   override lateinit var testContext: IDETestContext
 
-  protected lateinit var testDescription: Description
+  private lateinit var testDescription: Description
 
   override fun apply(base: Statement, description: Description): Statement {
     testDescription = description
@@ -69,9 +69,8 @@ open class JUnit4StarterRule(
    */
   override fun after() {
     StarterListener.unsubscribe()
-
-    super.after()
     close()
+    super.after()
   }
 }
 

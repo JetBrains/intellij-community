@@ -111,114 +111,135 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testSingleStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                        "\n" +
-                        "re.search('<caret>.*bar',\n" +
-                        "          'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>.*bar',
+                                   'foobar')
+                         """,
                        ".*bar");
   }
 
   // PY-11057
   public void testAdjacentStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                        "\n" +
-                        "re.search('<caret>.*()'\n" +
-                        "          'abc',\n" +
-                        "          'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>.*()'
+                                   'abc',
+                                   'foo')
+                         """,
                        ".*()abc");
   }
 
   public void testParenthesizedStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search((('<caret>foo')), 'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search((('<caret>foo')), 'foobar')
+                         """,
                        "foo");
   }
 
   public void testConcatStringRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')\n",
+    doTestInjectedText("""
+                         import re
+
+                         re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')
+                         """,
                        "(.*bar)baz");
   }
 
   public void testConcatStringWithValuesRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*(' + x + ')' + y, 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(x, y):
+                             re.search('<caret>.*(' + x + ')' + y, 'foo')
+                         """,
                        ".*(missing_value)missing_value");
   }
 
   public void testPercentFormattingRegexpAutoInjection() {
-    doTestInjectedText("import re \n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*%s-%d' % (x, y), 'foo')\n",
+    doTestInjectedText("""
+                         import re\s
+
+                         def f(x, y):
+                             re.search('<caret>.*%s-%d' % (x, y), 'foo')
+                         """,
                        ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingRegexpAutoInjection() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(x, y):\n" +
-                       "    re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(x, y):
+                             re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')
+                         """,
                        ".*missing_value-missing_value");
   }
 
   public void testNewStyleFormattingEndsWithConstant() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "def f(**kwargs):" +
-                       "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
+    doTestInjectedText("""
+                         import re
+
+                         def f(**kwargs):    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')
+                         """,
                        "(foomissing_valuebaz$)");
   }
 
   // PY-21493
   public void testFStringSingleStringRegexpFragmentFirst() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'{42}.<caret>*{42}', 'foo')", "missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'{42}.<caret>*{42}', 'foo')""", "missing_value.*missing_value");
   }
 
   // PY-21493
   public void testFStringSingleStringRegexpFirstFragmentInMiddle() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42}.*{42}', 'foo')", ".*missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42}.*{42}', 'foo')""", ".*missing_value.*missing_value");
   }
 
   // PY-21493
   public void testFStringMultiStringRegexp() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42}'\n" +
-                       "          r'.*{42}.*'\n" +
-                       "          rf'{42}.*', 'foo')", ".*missing_value.*{42}.*missing_value.*");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42}'
+                                   r'.*{42}.*'
+                                   rf'{42}.*', 'foo')""", ".*missing_value.*{42}.*missing_value.*");
   }
 
   // PY-21493
   public void testFStringSingleStringIncompleteFragment() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42.*', 'foo')", ".*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42.*', 'foo')""", ".*missing_value");
   }
 
   // PY-21493
   public void testFStringSingleStringNestedFragments() {
-    doTestInjectedText("import re\n" +
-                       "\n" +
-                       "re.search(rf'<caret>.*{42:{42}}.*{42}', 'foo')", ".*missing_value.*missing_value");
+    doTestInjectedText("""
+                         import re
+
+                         re.search(rf'<caret>.*{42:{42}}.*{42}', 'foo')""", ".*missing_value.*missing_value");
   }
 
   // PY-18881
   public void testVerboseSyntaxWithShortFlag() {
     final PsiElement element =
-      doTestInjectedText("import re\n" +
-                         "\n" +
-                         "re.search(\"\"\"\n" +
-                         ".* # <caret>comment\n" +
-                         "\"\"\", re.I | re.M | re.X)",
+      doTestInjectedText("""
+                           import re
+
+                           re.search(""\"
+                           .* # <caret>comment
+                           ""\", re.I | re.M | re.X)""",
                          "\n.* # comment\n");
     assertEquals(PythonVerboseRegexpLanguage.INSTANCE, element.getLanguage());
   }

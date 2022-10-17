@@ -210,11 +210,12 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDocCommentPrecededByLineComment() {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
-                                                                                                                      "////////////////////////////////////////\n" +
-                                                                                                                      "/** */\n" +
-                                                                                                                                 "/////////////////////////////////////////////////\n" +
-                                                                                                                                                                                       "class Usage {\n" +
-                                                                                                                                                                                                         "}");
+                                                                                                      """
+                                                                                                        ////////////////////////////////////////
+                                                                                                        /** */
+                                                                                                        /////////////////////////////////////////////////
+                                                                                                        class Usage {
+                                                                                                        }""");
     final PsiClass psiClass = file.getClasses()[0];
     assertNotNull(psiClass.getDocComment());
   }

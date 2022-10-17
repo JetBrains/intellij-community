@@ -10,10 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.elementType
+import com.intellij.psi.util.*
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
@@ -45,7 +42,14 @@ class MarkdownHeader: MarkdownHeaderImpl {
    * ```markdown
    * # Some header text -> #some-header-text
    * ```
-   * Exception: multiple headers with same text won't be adjusted with it's occurence number.
+   *
+   * Will always return unqiue anchor even if there are mutliple headers with the same text.
+   * Example file:
+   * ```markdown
+   * # Some header -> #some-header
+   *
+   * # Some header -> #some-header-1
+   * ```
    */
   val anchorText: String?
     get() = obtainAnchorText(this)
@@ -137,7 +141,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
   }
 
-  private fun buildAnchorText(includeStartingHash: Boolean = false): String? {
+  private fun buildRawAnchorText(includeStartingHash: Boolean = false): String? {
     val contentHolder = findContentHolder() ?: return null
     val children = contentHolder.children().filter { !it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     val text = buildString {
@@ -173,12 +177,43 @@ class MarkdownHeader: MarkdownHeaderImpl {
   }
 
   companion object {
-    internal val garbageRegex = Regex("[^\\w\\- ]")
-    internal val additionalSymbolsRegex = Regex("[^-_a-z0-9\\s]")
+    internal val garbageRegex = Regex("[^\\p{IsAlphabetic}\\d\\- ]")
+    internal val additionalSymbolsRegex = Regex("[^\\-_ \\p{IsAlphabetic}\\d]")
+
+    private fun buildUniqueAnchorText(header: MarkdownHeader): String? {
+      val anchorText = obtainRawAnchorText(header) ?: return null
+      val number = calculateUniqueNumber(header, anchorText)
+      return createUniqueAnchorText(anchorText, number)
+    }
+
+    private fun calculateUniqueNumber(header: MarkdownHeader, rawAnchorText: String): Int {
+      val file = header.containingFile
+      val headers = CachedValuesManager.getCachedValue(file) {
+        CachedValueProvider.Result.create(SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>(),
+                                          PsiModificationTracker.MODIFICATION_COUNT)
+      }
+      val sameHeaders = headers.filter { obtainRawAnchorText(it) == rawAnchorText }
+      return sameHeaders.takeWhile { it != header }.count()
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createUniqueAnchorText(rawAnchorText: String, occurenceNumber: Int): String {
+      return when (occurenceNumber) {
+        0 -> rawAnchorText
+        else -> "$rawAnchorText-$occurenceNumber"
+      }
+    }
 
     fun obtainAnchorText(header: MarkdownHeader): String? {
       return CachedValuesManager.getCachedValue(header) {
-        CachedValueProvider.Result.create(header.buildAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
+        CachedValueProvider.Result.create(buildUniqueAnchorText(header), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+    }
+
+    private fun obtainRawAnchorText(header: MarkdownHeader): String? {
+      return CachedValuesManager.getCachedValue(header) {
+        CachedValueProvider.Result.create(header.buildRawAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
       }
     }
   }

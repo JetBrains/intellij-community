@@ -18,8 +18,8 @@ interface MainEntityToParent : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : MainEntityToParent, ModifiableWorkspaceEntity<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
-    override var child: AttachedEntityToParent?
     override var entitySource: EntitySource
+    override var child: AttachedEntityToParent?
     override var x: String
   }
 
@@ -47,8 +47,8 @@ interface AttachedEntityToParent : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : AttachedEntityToParent, ModifiableWorkspaceEntity<AttachedEntityToParent>, ObjBuilder<AttachedEntityToParent> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
   }
 
   companion object : Type<AttachedEntityToParent, Builder>() {

@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
+open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -27,21 +27,19 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _data: TestData? = null
+  override val version: Int get() = dataSource.version
   override val data: TestData
-    get() = _data!!
+    get() = dataSource.data
 
-  override var anotherVersion: Int = super<DefaultFieldEntity>.anotherVersion
+  override var anotherVersion: Int = dataSource.anotherVersion
 
-  override var description: String = super<DefaultFieldEntity>.description
+  override var description: String = dataSource.description
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
+  class Builder(var result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
     constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,6 +57,9 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -68,7 +69,7 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field DefaultFieldEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isDataInitialized()) {
         error("Field DefaultFieldEntity#data should be initialized")
@@ -82,23 +83,15 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultFieldEntity
-      this.version = dataSource.version
-      this.entitySource = dataSource.entitySource
-      this.data = dataSource.data
-      this.anotherVersion = dataSource.anotherVersion
-      this.description = dataSource.description
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
+      if (this.description != dataSource.description) this.description = dataSource.description
       if (parents != null) {
       }
     }
 
-
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -107,6 +100,14 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var data: TestData
@@ -161,15 +162,13 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): DefaultFieldEntity {
-    val entity = DefaultFieldEntityImpl()
-    entity.version = version
-    entity._data = data
-    entity.anotherVersion = anotherVersion
-    entity.description = description
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = DefaultFieldEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -196,12 +195,12 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as DefaultFieldEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.data != other.data) return false
     if (this.anotherVersion != other.anotherVersion) return false
     if (this.description != other.description) return false
@@ -210,7 +209,7 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as DefaultFieldEntityData
 

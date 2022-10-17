@@ -1,29 +1,26 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -31,16 +28,14 @@ import java.util.Map;
  * @author db
  */
 public class TypeEvaluator {
-  private static final Logger LOG = Logger.getInstance(TypeEvaluator.class);
-
   private final HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>> myTypeMap;
   private final TypeMigrationRules myRules;
   private final TypeMigrationLabeler myLabeler;
-  private final ProjectFileIndex myProjectFileIndex;
+  private final SearchScope myScope;
 
-  public TypeEvaluator(LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types,
-                       TypeMigrationLabeler labeler,
-                       Project project) {
+  public TypeEvaluator(@Nullable LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types,
+                       @Nullable TypeMigrationLabeler labeler,
+                       @NotNull Project project) {
     myLabeler = labeler;
     myRules = labeler == null ? new TypeMigrationRules(project) : labeler.getRules();
     myTypeMap = new HashMap<>();
@@ -55,7 +50,9 @@ public class TypeEvaluator {
       }
     }
 
-    myProjectFileIndex =  ProjectRootManager.getInstance(project).getFileIndex();
+    myScope = myRules == null
+              ? GlobalSearchScopes.projectProductionScope(project).union(GlobalSearchScopes.projectTestScope(project))
+              : myRules.getSearchScope();
   }
 
   public boolean setType(final TypeMigrationUsageInfo usageInfo, @NotNull PsiType type) {
@@ -96,7 +93,7 @@ public class TypeEvaluator {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
     VirtualFile file = psiFile.getVirtualFile();
-    if (file == null || !myProjectFileIndex.isInContent(file)) {
+    if (file == null || !myScope.contains(file)) {
       return TypeMigrationLabeler.getElementType(element);
     }
 
@@ -172,46 +169,29 @@ public class TypeEvaluator {
       final PsiType thenType = evaluateType(thenExpression);
       final PsiType elseType = evaluateType(elseExpression);
 
-      switch ((thenType == null ? 0 : 1) + (elseType == null ? 0 : 2)) {
-        case 0:
-          return expr.getType();
-
-        case 1:
-          return thenType;
-
-        case 2:
-          return elseType;
-
-        case 3:
+      return switch ((thenType == null ? 0 : 1) + (elseType == null ? 0 : 2)) {
+        case 0 -> expr.getType();
+        case 1 -> thenType;
+        case 2 -> elseType;
+        case 3 -> {
           if (TypeConversionUtil.areTypesConvertible(thenType, elseType)) {
-            return thenType;
+            yield thenType;
           }
           else if (TypeConversionUtil.areTypesConvertible(elseType, thenType)) {
-            return elseType;
-          } else {
-            switch ((thenType.equals(thenExpression.getType()) ? 0 : 1) + (elseType.equals(elseExpression.getType()) ? 0 : 2)) {
-              case 0:
-                return expr.getType();
-
-              case 1:
-                return thenType;
-
-              case 2:
-                return elseType;
-
-              case 3:
-                return expr.getType();
-
-              default:
-                LOG.error("Must not happen.");
-                return null;
-            }
+            yield elseType;
           }
-
-        default:
-          LOG.error("Must not happen.");
-      }
-
+          else {
+            yield switch ((thenType.equals(thenExpression.getType()) ? 0 : 1) + (elseType.equals(elseExpression.getType()) ? 0 : 2)) {
+              case 0 -> expr.getType();
+              case 1 -> thenType;
+              case 2 -> elseType;
+              case 3 -> expr.getType();
+              default -> throw new AssertionError();
+            };
+          }
+        }
+        default -> throw new AssertionError();
+      };
     }
     else if (expr instanceof PsiNewExpression) {
       final PsiExpression qualifier = ((PsiNewExpression)expr).getQualifier();
@@ -346,8 +326,6 @@ public class TypeEvaluator {
   }
 
   public String getReport() {
-    final StringBuilder buffer = new StringBuilder();
-
     final String[] t = new String[myTypeMap.size()];
     int k = 0;
 
@@ -368,6 +346,7 @@ public class TypeEvaluator {
 
     Arrays.sort(t);
 
+    final StringBuilder buffer = new StringBuilder();
     for (String aT : t) {
       buffer.append(aT);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -59,7 +59,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
-  private final boolean myIsCodeFragmentEvaluationSupported;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -91,7 +90,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
-    myIsCodeFragmentEvaluationSupported = isCodeFragmentEvaluationSupported;
     setModal(false);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
@@ -119,6 +117,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();
@@ -136,10 +139,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myTreePanel.getTree().expandNodesOnLoad(XDebuggerEvaluationDialog::isFirstChild);
 
     EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
-    if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
+    if (mode == EvaluationMode.CODE_FRAGMENT && !isCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
     }
-    if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
+    if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && isCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.CODE_FRAGMENT;
     }
     setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));

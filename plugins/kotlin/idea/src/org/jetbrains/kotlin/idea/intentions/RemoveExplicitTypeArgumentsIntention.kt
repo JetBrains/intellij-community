@@ -7,12 +7,15 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
+import org.jetbrains.kotlin.diagnostics.Errors.INFERRED_INTO_DECLARED_UPPER_BOUNDS
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.builtIns
@@ -100,9 +103,11 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
                 }
             }
 
-            return args.size == newArgs.size && args.values.zip(newArgs.values).all { (argType, newArgType) ->
-                equalTypes(argType, newArgType)
-            }
+            return newBindingContext.diagnostics.none { it.factory == INFERRED_INTO_DECLARED_UPPER_BOUNDS } &&
+                    args.size == newArgs.size &&
+                    args.values.zip(newArgs.values).all { (argType, newArgType) ->
+                        equalTypes(argType, newArgType)
+                    }
         }
 
         private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {

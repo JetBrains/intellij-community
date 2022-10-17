@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceEntityBase() {
+open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
@@ -47,10 +47,8 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val mainParent: TreeMultiparentRootEntity?
     get() = snapshot.extractOneToManyParent(MAINPARENT_CONNECTION_ID, this)
@@ -65,7 +63,7 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
     return connections
   }
 
-  class Builder(val result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
+  class Builder(var result: TreeMultiparentLeafEntityData?) : ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity>(), TreeMultiparentLeafEntity.Builder {
     constructor() : this(TreeMultiparentLeafEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -83,6 +81,9 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -91,11 +92,11 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field TreeMultiparentLeafEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field TreeMultiparentLeafEntity#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -117,22 +118,20 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeMultiparentLeafEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
-        this.mainParent = parents.filterIsInstance<TreeMultiparentRootEntity>().singleOrNull()
-        this.leafParent = parents.filterIsInstance<TreeMultiparentLeafEntity>().singleOrNull()
+        val mainParentNew = parents.filterIsInstance<TreeMultiparentRootEntity?>().singleOrNull()
+        if ((mainParentNew == null && this.mainParent != null) || (mainParentNew != null && this.mainParent == null) || (mainParentNew != null && this.mainParent != null && (this.mainParent as WorkspaceEntityBase).id != (mainParentNew as WorkspaceEntityBase).id)) {
+          this.mainParent = mainParentNew
+        }
+        val leafParentNew = parents.filterIsInstance<TreeMultiparentLeafEntity?>().singleOrNull()
+        if ((leafParentNew == null && this.leafParent != null) || (leafParentNew != null && this.leafParent == null) || (leafParentNew != null && this.leafParent != null && (this.leafParent as WorkspaceEntityBase).id != (leafParentNew as WorkspaceEntityBase).id)) {
+          this.leafParent = leafParentNew
+        }
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -141,6 +140,14 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var mainParent: TreeMultiparentRootEntity?
@@ -242,6 +249,12 @@ open class TreeMultiparentLeafEntityImpl : TreeMultiparentLeafEntity, WorkspaceE
         if (_diff != null) {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
               _diff.addEntity(item_value)
             }
           }
@@ -283,12 +296,13 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): TreeMultiparentLeafEntity {
-    val entity = TreeMultiparentLeafEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = TreeMultiparentLeafEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -315,18 +329,18 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeMultiparentLeafEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as TreeMultiparentLeafEntityData
 

@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.util.io.sizeOrNull
 import java.io.IOException
 import java.nio.file.Path
@@ -81,6 +80,10 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
   }
 
+  // TODO Breaks encapsulation. Instead, targetPortBinding should contain hosts to connect to.
+  fun getWslIpAddress(): String =
+    distribution.wslIp
+
   private fun getWslPort(localPort: Int): Int {
     proxies[localPort]?.wslIngressPort?.let {
       return it
@@ -91,28 +94,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     }
   }
 
-  private fun toLinuxPath(localPath: String): String? {
-    val linuxPath = distribution.getWslPath(localPath)
-    if (linuxPath != null) {
-      return linuxPath
-    }
-    return convertUncPathToLinux(localPath)
-  }
-
-  private fun convertUncPathToLinux(localPath: String): String? {
-    val root: String = WslConstants.UNC_PREFIX + distribution.msId
-    val winLocalPath = FileUtil.toSystemDependentName(localPath)
-    if (winLocalPath.startsWith(root)) {
-      val linuxPath = winLocalPath.substring(root.length)
-      if (linuxPath.isEmpty()) {
-        return "/"
-      }
-      if (linuxPath.startsWith("\\")) {
-        return FileUtil.toSystemIndependentName(linuxPath)
-      }
-    }
-    return null
-  }
+  private fun toLinuxPath(localPath: String): String? = distribution.getWslPath(localPath)
 
   private val TargetPath.remoteRoot: String
     get() = when (this) {

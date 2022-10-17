@@ -40,9 +40,6 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
 public abstract class CompletionPhase implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 

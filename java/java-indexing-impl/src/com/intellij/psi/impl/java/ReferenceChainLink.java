@@ -26,9 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class ReferenceChainLink {
   final String referenceName;
   final boolean isCall;
@@ -140,7 +137,8 @@ public class ReferenceChainLink {
     expensive.add(this);
   }
 
-  public List<? extends PsiMember> getSymbolMembers(Set<? extends PsiClass> qualifiers) {
+  @NotNull
+  List<? extends PsiMember> getSymbolMembers(@NotNull Set<? extends PsiClass> qualifiers) {
     return isCall ? ApproximateResolver.getPossibleMethods(qualifiers, referenceName, argCount)
                   : ApproximateResolver.getPossibleNonMethods(qualifiers, referenceName);
   }

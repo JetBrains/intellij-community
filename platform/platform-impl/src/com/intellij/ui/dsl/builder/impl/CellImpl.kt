@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.Disposable
@@ -17,7 +17,6 @@ import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.ItemSelectable
 import javax.swing.JComponent
@@ -60,6 +59,11 @@ internal class CellImpl<T : JComponent>(
 
   override fun verticalAlign(verticalAlign: VerticalAlign): CellImpl<T> {
     super.verticalAlign(verticalAlign)
+    return this
+  }
+
+  override fun align(align: Align): CellImpl<T> {
+    super.align(align)
     return this
   }
 
@@ -167,7 +171,7 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  @Deprecated("Use overloaded method")
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
     return bind(componentGet, componentSet, MutableProperty(binding.get, binding.set))
   }
@@ -234,10 +238,6 @@ internal class CellImpl<T : JComponent>(
     val origin = component.origin
     dialogPanelConfig.validationsOnApply.getOrPut(origin) { SmartList() }
       .addAll(validations.map { it.forComponentIfNeeded(origin) })
-
-    // Fallback in case if no validation requestors is defined
-    guessAndInstallValidationRequestor()
-
     return this
   }
 
@@ -245,9 +245,11 @@ internal class CellImpl<T : JComponent>(
     return validationOnApply(*validations.map2Array { it(component) })
   }
 
-  override fun errorOnApply(message: String, condition: (T) -> Boolean): CellImpl<T> {
+  override fun addValidationRule(message: String, condition: (T) -> Boolean): Cell<T> {
     return validationOnApply { if (condition(it)) error(message) else null }
   }
+
+  override fun errorOnApply(message: String, condition: (T) -> Boolean) = addValidationRule(message, condition)
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
@@ -327,12 +329,4 @@ internal class CellImpl<T : JComponent>(
     private fun DialogValidation.forComponentIfNeeded(component: JComponent) =
       transformResult { if (this.component == null) forComponent(component) else this }
   }
-}
-
-private const val HTML = "<html>"
-
-@Deprecated("Not needed in the future")
-@ApiStatus.ScheduledForRemoval
-internal fun removeHtml(text: @Nls String): @Nls String {
-  return if (text.startsWith(HTML, ignoreCase = true)) text.substring(HTML.length) else text
 }

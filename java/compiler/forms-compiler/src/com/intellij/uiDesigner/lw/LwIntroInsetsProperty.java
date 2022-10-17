@@ -3,9 +3,6 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class LwIntroInsetsProperty extends LwIntrospectedProperty{
   LwIntroInsetsProperty(final String name){
     super(name, "java.awt.Insets");

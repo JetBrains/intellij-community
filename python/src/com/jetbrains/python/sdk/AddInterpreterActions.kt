@@ -74,7 +74,7 @@ private class AddInterpreterOnTargetAction(private val project: Project,
   }
 }
 
-class AddInterpreterAction(val project: Project, val module: Module, val currentSdk: Sdk?)
+class AddInterpreterAction(val project: Project, val module: Module, private val currentSdk: Sdk?)
   : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.add.interpreter")) {
 
   override fun actionPerformed(e: AnActionEvent) {

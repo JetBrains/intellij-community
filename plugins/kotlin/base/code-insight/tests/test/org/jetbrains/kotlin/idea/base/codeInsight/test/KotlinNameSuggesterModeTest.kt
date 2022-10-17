@@ -4,13 +4,18 @@ package org.jetbrains.kotlin.idea.base.codeInsight.test
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
-class KotlinNameSuggesterModeTest : KotlinLightCodeInsightFixtureTestCase() {
+class KotlinNameSuggesterModeTest : NewLightKotlinCodeInsightFixtureTestCase() {
+    override val pluginKind: KotlinPluginKind
+        get() = KotlinPluginKind.FIR_PLUGIN
+
     fun testCamel() = test("Foo.Bar.Baz", Case.CAMEL, "baz", "barBaz", "fooBarBaz")
     fun testPascal() = test("Foo.Bar.Baz", Case.PASCAL, "Baz", "BarBaz", "FooBarBaz")
     fun testSnake() = test("Foo.Bar.Baz", Case.SNAKE, "baz", "bar_baz", "foo_bar_baz")
@@ -43,4 +48,6 @@ class KotlinNameSuggesterModeTest : KotlinLightCodeInsightFixtureTestCase() {
         val actualNames = KotlinNameSuggester(case).suggestClassNames(classId).toList().sorted()
         TestCase.assertEquals(names.sorted(), actualNames)
     }
+
+    override fun getTestDataPath() = KotlinRoot.PATH.toString()
 }

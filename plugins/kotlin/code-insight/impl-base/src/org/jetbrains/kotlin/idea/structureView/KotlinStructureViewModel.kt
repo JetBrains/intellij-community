@@ -10,8 +10,9 @@ import com.intellij.ide.util.treeView.smartTree.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
-import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.idea.KotlinCodeInsightBundle
+import com.intellij.ui.IconManager
+import com.intellij.ui.PlatformIcons
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
@@ -63,7 +64,11 @@ object PublicElementsFilter : Filter {
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinCodeInsightBundle.message("show.non.public"), null, PlatformIcons.PRIVATE_ICON)
+        return ActionPresentationData(
+            KotlinCodeInsightBundle.message("show.non.public"),
+            null,
+            IconManager.getInstance().getPlatformIcon(PlatformIcons.Private)
+        )
     }
 
     override fun getName() = ID
@@ -81,7 +86,7 @@ object PropertiesFilter : Filter {
     }
 
     override fun getPresentation(): ActionPresentation {
-        return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, PlatformIcons.PROPERTY_ICON)
+        return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property))
     }
 
     override fun getName() = ID

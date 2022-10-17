@@ -47,6 +47,8 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.io.Ksuid
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
@@ -322,6 +324,86 @@ class DynamicPluginsTest {
     }
     finally {
       Disposer.dispose(plugin1Disposable)
+    }
+  }
+
+  @Test
+  fun loadModuleClassloader() {
+    val fooJar = "foo.jar"
+    val barJar = "bar.jar"
+
+    val pluginsPath = directoryContent {
+      zip(fooJar) {
+        dir("META-INF") {
+          file(
+            name = "plugin.xml",
+            text = """<idea-plugin package="foo">
+                     |  <id>foo</id>
+                     |  <content>
+                     |    <module name="foo.bar"/>
+                     |  </content>
+                     |</idea-plugin>""".trimIndent(),
+          )
+        }
+        file(
+          name = "foo.bar.xml",
+          text = """<idea-plugin package="foo.bar">
+                   |  <dependencies>
+                   |    <plugin id="bar"/>
+                   |  </dependencies>
+                   |</idea-plugin>""".trimIndent(),
+        )
+        classFile("foo.Foo") {}
+        classFile("foo.bar.BarImpl") {}
+      }
+      zip(barJar) {
+        dir("META-INF") {
+          file(
+            name = "plugin.xml",
+            text = """<idea-plugin> <!-- no package prefix -->
+                     |  <id>bar</id>
+                     |  <content>
+                     |    <module name="bar.foo"/>
+                     |  </content>
+                     |</idea-plugin>""".trimIndent(),
+          )
+        }
+        file(
+          name = "bar.foo.xml",
+          text = """<idea-plugin package="bar.foo">
+                   |  <dependencies>
+                   |    <plugin id="foo"/>
+                   |  </dependencies>
+                   |</idea-plugin>""".trimIndent(),
+        )
+        classFile("bar.Bar") {}
+        classFile("bar.foo.FooImpl") {}
+      }
+    }.generateInTempDir()
+
+    fun forNameInModuleClassloader(className: String, moduleName: String): Class<*>? {
+      return findEnabledModuleByName(moduleName)?.classLoader?.let {
+        Class.forName(className, true, it)
+      }
+    }
+
+    val barDescriptor = loadDescriptorInTest(pluginsPath.resolve(barJar))
+    try {
+      assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
+
+      val fooDescriptor = loadDescriptorInTest(pluginsPath.resolve(fooJar))
+      try {
+        assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
+
+        assertThat(forNameInModuleClassloader("bar.foo.FooImpl", "bar.foo")).isNotNull
+        assertThat(forNameInModuleClassloader("foo.bar.BarImpl", "foo.bar")).isNotNull
+      }
+      finally {
+        unloadAndUninstallPlugin(fooDescriptor)
+      }
+    }
+    finally {
+      unloadAndUninstallPlugin(barDescriptor)
     }
   }
 

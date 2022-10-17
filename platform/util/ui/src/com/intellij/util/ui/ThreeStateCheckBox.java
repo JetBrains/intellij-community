@@ -6,6 +6,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -75,19 +76,11 @@ public class ThreeStateCheckBox extends JCheckBox {
 
   @NotNull
   public static State nextState(@NotNull State state, boolean thirdStateEnabled) {
-    switch (state) {
-      case SELECTED:
-        return State.NOT_SELECTED;
-      case NOT_SELECTED:
-        if (thirdStateEnabled) {
-          return State.DONT_CARE;
-        }
-        else {
-          return State.SELECTED;
-        }
-      default:
-        return State.SELECTED;
-    }
+    return switch (state) {
+      case SELECTED -> State.NOT_SELECTED;
+      case NOT_SELECTED -> thirdStateEnabled ? State.DONT_CARE : State.SELECTED;
+      case DONT_CARE -> State.SELECTED;
+    };
   }
 
   public boolean isThirdStateEnabled() {
@@ -209,16 +202,12 @@ public class ThreeStateCheckBox extends JCheckBox {
     }
 
     private @Nls String addStateDescription(@Nls String name) {
-      switch(getState()) {
-        case SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.checked"));
-        case NOT_SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.not.checked"));
-        case DONT_CARE:
-          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.partially.checked"));
-        default:
-          return name;
-      }
+      String key = switch (getState()) {
+        case SELECTED -> "accessible.checkbox.name.checked";
+        case NOT_SELECTED -> "accessible.checkbox.name.not.checked";
+        case DONT_CARE -> "accessible.checkbox.name.partially.checked";
+      };
+      return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message(key));
     }
   }
 }

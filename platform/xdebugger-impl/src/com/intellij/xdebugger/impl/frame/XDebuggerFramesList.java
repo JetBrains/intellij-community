@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -30,6 +31,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBScalableIcon;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -325,7 +327,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       else {
         setBackground(UIUtil.getListSelectionBackground(hasFocus));
-        setForeground(UIUtil.getListSelectionForeground(hasFocus));
+        setForeground(NamedColorUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();
       }
 
@@ -337,7 +339,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       {
         setIcon(myPopFrameIcon);
         if (iconHovered && selected) {
-          myPopFrameIcon.setBackground(ColorUtil.withAlpha(UIUtil.getListSelectionForeground(true), 0.2));
+          myPopFrameIcon.setBackground(ColorUtil.withAlpha(NamedColorUtil.getListSelectionForeground(true), 0.2));
         } else {
           myPopFrameIcon.setBackground(null);
         }
@@ -616,7 +618,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
   }
 
-  private static class XDebuggerPopFrameIcon extends JBScalableIcon {
+  private static class XDebuggerPopFrameIcon extends JBScalableIcon implements ReplaceableIcon {
 
     private final @NotNull Icon myIcon;
     private final @Nullable Icon mySelectedIcon;
@@ -630,6 +632,16 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       mySelectedIcon = selectedIcon;
       myIconWidth = width;
       myIconHeight = height;
+    }
+
+    @Override
+    public @NotNull XDebuggerPopFrameIcon replaceBy(@NotNull IconReplacer replacer) {
+      XDebuggerPopFrameIcon icon = new XDebuggerPopFrameIcon(replacer.replaceIcon(myIcon),
+                                                             replacer.replaceIcon(mySelectedIcon),
+                                                             myIconWidth,
+                                                             myIconHeight);
+      icon.isSelected = isSelected;
+      return icon;
     }
 
     private @Nullable Color getBackground() {

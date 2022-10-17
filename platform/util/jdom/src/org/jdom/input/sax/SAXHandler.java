@@ -112,7 +112,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
    * Temporary holder for namespaces that have been declared with
    * startPrefixMapping, but are not yet available on the element
    */
-  private final List<Namespace> declaredNamespaces = new ArrayList<Namespace>(
+  private final List<Namespace> declaredNamespaces = new ArrayList<>(
     32);
 
   /**
@@ -128,7 +128,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
   /**
    * The external entities defined in this document
    */
-  private final Map<String, String[]> externalEntities = new HashMap<String, String[]>();
+  private final Map<String, String[]> externalEntities = new HashMap<>();
 
   /**
    * <code>Document</code> object being built - must be cleared on reset()
@@ -653,7 +653,7 @@ public class SAXHandler extends DefaultHandler implements LexicalHandler, DeclHa
         // is an attribute definition that has form="qualified".
         // <xs:attribute name="attname" form="qualified" ... />
         // or the schema sets attributeFormDefault="qualified"
-        final HashMap<String, Namespace> tmpmap = new HashMap<String, Namespace>();
+        final HashMap<String, Namespace> tmpmap = new HashMap<>();
         for (final Namespace nss : element.getNamespacesInScope()) {
           if (nss.getPrefix().length() > 0
               && nss.getURI().equals(attURI)) {

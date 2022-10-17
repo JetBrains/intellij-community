@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -67,7 +68,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     AbstractButton button = (AbstractButton)c;
-    AbstractButtonLayout layout = new AbstractButtonLayout(button, removeInsetsBeforeLayout(button), getDefaultIcon());
+    AbstractButtonLayout layout = createLayout(button, button.getSize());
 
     layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
     paintFocus(button, g, layout.textRect);
@@ -90,23 +91,25 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     }
   }
 
+  @Override
+  public int getBaseline(JComponent c, int width, int height) {
+    AbstractButtonLayout layout = createLayout(c, new Dimension(width, height));
+    return layout.getBaseline();
+  }
+
   protected int getMnemonicIndex(AbstractButton b) {
     return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension dimension = computeOurPreferredSize(c);
-    return dimension != null ? dimension : super.getPreferredSize(c);
+    AbstractButtonLayout layout = createLayout(c, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+    return layout.getPreferredSize();
   }
 
   @Override
   public Dimension getMaximumSize(JComponent c) {
     return getPreferredSize(c);
-  }
-
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return DarculaCheckBoxUI.computeCheckboxPreferredSize(c, getDefaultIcon());
   }
 
   @Override
@@ -115,5 +118,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
+  }
+
+  private @NotNull AbstractButtonLayout createLayout(JComponent c, Dimension size) {
+    AbstractButton button = (AbstractButton)c;
+    return new AbstractButtonLayout(button, size, removeInsetsBeforeLayout(button), getDefaultIcon());
   }
 }

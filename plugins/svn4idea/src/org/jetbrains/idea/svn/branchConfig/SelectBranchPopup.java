@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,14 +214,14 @@ public final class SelectBranchPopup {
       myUrlLabel.setBorder(JBUI.Borders.empty(1));
       myDateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       myDateLabel.setBorder(JBUI.Borders.empty(1));
-      myDateLabel.setForeground(UIUtil.getInactiveTextColor());
+      myDateLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     }
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (isSelected || cellHasFocus) {
         setBackground(UIUtil.getListSelectionBackground(true));
-        Color selectedForegroundColor = UIUtil.getListSelectionForeground(true);
+        Color selectedForegroundColor = NamedColorUtil.getListSelectionForeground(true);
         myUrlLabel.setForeground(selectedForegroundColor);
         myDateLabel.setForeground(selectedForegroundColor);
         setForeground(selectedForegroundColor);
@@ -229,7 +230,7 @@ public final class SelectBranchPopup {
         setBackground(UIUtil.getListBackground());
         Color foregroundColor = UIUtil.getListForeground();
         myUrlLabel.setForeground(foregroundColor);
-        myDateLabel.setForeground(UIUtil.getInactiveTextColor());
+        myDateLabel.setForeground(NamedColorUtil.getInactiveTextColor());
         setForeground(foregroundColor);
       }
       if (value instanceof String) {

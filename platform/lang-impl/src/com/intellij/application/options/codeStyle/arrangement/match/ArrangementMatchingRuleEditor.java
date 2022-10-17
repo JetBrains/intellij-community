@@ -119,13 +119,13 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       component.setListener(this);
       uiComponent = component.getUiComponent();
       switch (role) {
-        case LABEL:
+        case LABEL -> {
           panel = addRowIfNecessary(panel);
           add(uiComponent, labelConstraints);
           myLabelWidth = Math.max(myLabelWidth, uiComponent.getPreferredSize().width);
           prevRole = null;
-          break;
-        case TEXT_FIELD:
+        }
+        case TEXT_FIELD -> {
           panel = addRowIfNecessary(panel);
 
           ArrangementUiComponent textLabel = ArrangementUiUtil.buildUiComponent(
@@ -144,8 +144,8 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           if (myDefaultFocusRequestor == null) {
             myDefaultFocusRequestor = uiComponent;
           }
-          break;
-        default:
+        }
+        default -> {
           if (role == StdArrangementTokenUiRole.COMBO_BOX) {
             prevTokens.add(token.getToken());
             prevRole = role;
@@ -154,6 +154,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
           panel.add(uiComponent);
           myComponents.put(token.getToken(), component);
+        }
       }
     }
 

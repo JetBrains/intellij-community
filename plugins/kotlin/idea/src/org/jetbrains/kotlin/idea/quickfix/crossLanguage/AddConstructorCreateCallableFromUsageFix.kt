@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.Abstrac
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -49,12 +50,15 @@ class AddConstructorCreateCallableFromUsageFix(
                 ParameterInfo(TypeInfo(ktType, Variance.IN_VARIANCE), listOf(name))
             }
             val needPrimary = !targetKtClass.hasExplicitPrimaryConstructor()
+            val ktFactory = KtPsiFactory(targetKtClass)
+            val annotations = request.annotations.map { ktFactory.createAnnotationEntry("@${it.qualifiedName}") }
             val constructorInfo = ConstructorInfo(
                 parameterInfos,
                 targetKtClass,
                 isPrimary = needPrimary,
                 modifierList = modifierList,
-                withBody = true
+                withBody = true,
+                annotations = annotations
             )
             constructorInfo
         }

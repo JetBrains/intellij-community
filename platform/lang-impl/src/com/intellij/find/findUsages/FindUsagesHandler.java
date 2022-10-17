@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * @author peter
  * @see FindUsagesHandlerFactory
  */
 public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements FindUsagesHandlerUi {

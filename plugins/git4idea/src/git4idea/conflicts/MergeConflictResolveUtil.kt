@@ -140,7 +140,7 @@ object MergeConflictResolveUtil {
 
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
       val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
-      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
+      val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
       panel.setText(GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress"))
       panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) { UIUtil.toFront(wrapper.window) }
       panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) { wrapper.close() }

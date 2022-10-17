@@ -30,8 +30,6 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -112,10 +110,10 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     }
   }
 
-  // when running very long tasks (e.g. during stress/perf tests) CoreProgressManager might decide to de-prioritize background processes,
-  // defeating the whole purpose. Do not let him do that.
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    // when running very long tasks (e.g. during stress/perf tests) CoreProgressManager might decide to de-prioritize background processes,
+    // defeating the whole purpose. Do not let him do that.
     ((CoreProgressManager)ProgressManager.getInstance()).<Void, Throwable>suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
       super.runTestRunnable(testRunnable);
       return null;
@@ -375,14 +373,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
     final List<IntentionAction> quickFixActions = new ArrayList<>();
     for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          IntentionAction action = pair.first.getAction();
-          if (!actions.contains(action) && action.isAvailable(file.getProject(), editor, file)) {
-            quickFixActions.add(action);
-          }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        IntentionAction action = descriptor.getAction();
+        if (!actions.contains(action) && action.isAvailable(file.getProject(), editor, file)) {
+          quickFixActions.add(action);
         }
-      }
+        return null;
+      });
     }
     return ContainerUtil.concat(actions, quickFixActions);
   }

@@ -46,4 +46,11 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
   public void unregister(@NotNull Condition<? super IntentionAction> condition) {
     myInfo.unregisterQuickFix(condition);
   }
+
+  @Override
+  public String toString() {
+    return "QuickFixActionRegistrarImpl{" +
+           "myInfo=" + myInfo +
+           '}';
+  }
 }

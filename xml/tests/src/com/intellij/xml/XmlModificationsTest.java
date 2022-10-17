@@ -41,26 +41,27 @@ public class XmlModificationsTest extends LightPlatformTestCase {
 
   public void testExceptionMessage() {
     XmlFile file =
-      (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText(XMLLanguage.INSTANCE, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                                                                                                 "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
-                                                                                                 "package=\"com.example.amirsh.myapplication\">\n" +
-                                                                                                 "<application\n" +
-                                                                                                 "android:allowBackup=\"true\"\n" +
-                                                                                                 "android:icon=\"@mipmap/ic_launcher\"\n" +
-                                                                                                 "android:label=\"@string/app_name\"\n" +
-                                                                                                 "android:roundIcon=\"@mipmap/ic_launcher_round\"\n" +
-                                                                                                 "android:supportsRtl=\"true\"\n" +
-                                                                                                 "android:theme=\"@style/AppTheme\">\n" +
-                                                                                                 "<activity android:name=\".MainActivity\">\n" +
-                                                                                                 "<intent-filter>\n" +
-                                                                                                 "<action android:name=\"android.intent.action.MAIN\"/>\n" +
-                                                                                                 "\n" +
-                                                                                                 "<category android:name=\"android.intent.category.LAUNCHER\"/>\n" +
-                                                                                                 "</intent-filter>\n" +
-                                                                                                 "</activity>\n" +
-                                                                                                 "</application>\n" +
-                                                                                                 "\n" +
-                                                                                                 "</manifest>");
+      (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText(XMLLanguage.INSTANCE, """
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.example.amirsh.myapplication">
+        <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+        <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+
+        <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
+        </activity>
+        </application>
+
+        </manifest>""");
     XmlTag subtag = createTag("<b/>");
     try {
       file.getRootTag().addSubTag(subtag, true);

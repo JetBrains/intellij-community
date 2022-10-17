@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +25,7 @@ import java.util.*;
 
 public final class CommandMerger {
   private final UndoManagerImpl myManager;
+  private final UndoManagerImpl.ClientState myState;
   private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myForcedGlobal;
   private boolean myTransparent;
@@ -40,12 +41,14 @@ public final class CommandMerger {
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  CommandMerger(@NotNull UndoManagerImpl manager) {
-    myManager = manager;
+  CommandMerger(@NotNull UndoManagerImpl.ClientState state) {
+    myManager = state.myManager;
+    myState = state;
   }
 
-  CommandMerger(@NotNull UndoManagerImpl manager, boolean isTransparent) {
-    myManager = manager;
+  CommandMerger(@NotNull UndoManagerImpl.ClientState state, boolean isTransparent) {
+    myManager = state.myManager;
+    myState = state;
     myTransparent = isTransparent;
   }
 
@@ -87,7 +90,7 @@ public final class CommandMerger {
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
-      myManager.compact();
+      myManager.compact(myState);
     }
     merge(nextCommandToMerge);
 
@@ -188,7 +191,7 @@ public final class CommandMerger {
   }
 
   void flushCurrentCommand() {
-    flushCurrentCommand(myManager.nextCommandTimestamp(), myManager.getUndoStacksHolder());
+    flushCurrentCommand(myState.nextCommandTimestamp(), myState.myUndoStacksHolder);
   }
 
   void flushCurrentCommand(int commandTimestamp, @NotNull UndoRedoStacksHolder stacksHolder) {
@@ -229,7 +232,7 @@ public final class CommandMerger {
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
-    myManager.getRedoStacksHolder().clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
+    myState.myRedoStacksHolder.clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
@@ -311,7 +314,7 @@ public final class CommandMerger {
   @Nullable
   private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
     if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
-    return isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
+    return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }
 
   UndoConfirmationPolicy getUndoConfirmationPolicy() {

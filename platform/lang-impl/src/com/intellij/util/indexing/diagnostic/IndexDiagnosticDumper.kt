@@ -27,6 +27,7 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.bufferedWriter
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
@@ -36,6 +37,11 @@ import kotlin.streams.asSequence
 private const val DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY = "intellij.indexes.diagnostics.limit.of.files"
 
 class IndexDiagnosticDumper : Disposable {
+  private val indexingHistoryListenerPublisher = ApplicationManager
+    .getApplication()
+    .messageBus
+    .syncPublisher(ProjectIndexingHistoryListener.TOPIC)
+
   companion object {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
@@ -158,7 +164,8 @@ class IndexDiagnosticDumper : Disposable {
     val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
       projectIndexingHistoryListenerEpName.extensionList
     }
-    for (listener in listeners) {
+
+    for (listener in listeners.asSequence() + indexingHistoryListenerPublisher) {
       try {
         listener.block()
       }
@@ -186,15 +193,17 @@ class IndexDiagnosticDumper : Disposable {
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
       IndexDiagnosticDumperUtils.writeValue(diagnosticJson, jsonIndexDiagnostic)
-      diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
+      diagnosticHtml.bufferedWriter().use {
+        jsonIndexDiagnostic.generateHtml(it)
+      }
 
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
       val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
       val sharedIndexEvents = SharedIndexDiagnostic.readEvents(projectIndexingHistory.project)
       val changedFilesPushedEvents = ChangedFilesPushedDiagnostic.readEvents(projectIndexingHistory.project)
-      indexDiagnosticDirectory.resolve("report.html").write(
-        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
-      )
+      indexDiagnosticDirectory.resolve("report.html").bufferedWriter().use {
+        createAggregateHtml(it, projectIndexingHistory.project.name, survivedDiagnostics, sharedIndexEvents, changedFilesPushedEvents)
+      }
     }
     catch (e: Exception) {
       LOG.warn("Failed to dump index diagnostic", e)

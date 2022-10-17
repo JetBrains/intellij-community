@@ -18,7 +18,6 @@ package com.intellij.ui.treeStructure;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * @author peter
  * IBM Rational Software Functional Tester used to test Fabrique requires that every node has
  * public String getText()
  * method to provide a string representation for a node. We delegate it to toString()

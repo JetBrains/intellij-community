@@ -1,17 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,12 +27,12 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
-import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
@@ -40,14 +41,16 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -62,6 +65,7 @@ import kotlin.properties.Delegates
 
 internal abstract class GHCloneDialogExtensionComponentBase(
   private val project: Project,
+  private val modalityState: ModalityState,
   private val authenticationManager: GithubAuthenticationManager,
   private val executorManager: GithubApiRequestExecutorManager
 ) : VcsCloneDialogExtensionComponent() {
@@ -69,6 +73,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val LOG = GithubUtil.LOG
 
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
+
+  private val cs = disposingMainScope() + modalityState.asContextElement()
 
   // UI
   private val wrapper: Wrapper = Wrapper()
@@ -130,46 +136,33 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
-    val indicatorsProvider = ProgressIndicatorsProvider()
-
     @Suppress("LeakingThis")
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
-    Disposer.register(parentDisposable, indicatorsProvider)
 
+    val accountDetailsProvider = GHAccountsDetailsProvider(cs, authenticationManager.accountManager)
 
-    val accountDetailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
-      try {
-        executorManager.getExecutor(it)
-      }
-      catch (e: Exception) {
-        null
-      }
-    }
-
-    val accountsPanel = CompactAccountsPanelFactory(accountListModel, accountDetailsLoader)
-      .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
+    val accountsPanel = CompactAccountsPanelFactory(accountListModel)
+      .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
       row {
         cell(searchField.textEditor)
           .resizableColumn()
-          .verticalAlign(VerticalAlign.FILL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
         cell(JSeparator(JSeparator.VERTICAL))
-          .verticalAlign(VerticalAlign.FILL)
+          .align(AlignY.FILL)
         cell(accountsPanel)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(AlignY.FILL)
       }
       row {
         scrollCell(repositoryList)
           .resizableColumn()
-          .verticalAlign(VerticalAlign.FILL)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
       row(GithubBundle.message("clone.dialog.directory.field")) {
         cell(directoryField)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnApply {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
           }
@@ -371,23 +364,29 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun createAccountsModel(): ListModel<GithubAccount> {
-    val model = CollectionListModel(authenticationManager.getAccounts().filter(::isAccountHandled))
-    authenticationManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        val oldList = old.filter(::isAccountHandled)
-        val newList = new.filter(::isAccountHandled)
-        val delta = CollectionDelta(oldList, newList)
-        model.add(delta.newItems.toList())
-        for (account in delta.removedItems) {
-          model.remove(account)
+    val accountsState = authenticationManager.accountManager.accountsState
+    val model = CollectionListModel(accountsState.value.keys.filter(::isAccountHandled))
+    cs.launch(Dispatchers.Main.immediate) {
+      val prev = accountsState.value.filterKeys(::isAccountHandled)
+      accountsState.collect {
+        val new = it.filterKeys(::isAccountHandled)
+
+        new.forEach { (acc, token) ->
+          if (!prev.containsKey(acc)) {
+            model.add(acc)
+          }
+          else if (prev[acc] != token) {
+            model.contentsChanged(acc)
+          }
+        }
+
+        prev.forEach { (acc, _) ->
+          if (!new.containsKey(acc)) {
+            model.remove(acc)
+          }
         }
       }
-
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        if (!isAccountHandled(account)) return
-        model.contentsChanged(account)
-      }
-    })
+    }
     return model
   }
 

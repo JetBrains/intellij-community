@@ -66,10 +66,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
         module: Module
     ) = buildList<BuildSystemIR> {
         +GradleOnlyPluginByNameIR(reader.createAndroidPlugin(module).pluginName, priority = 1)
-
-        if (reader { AndroidPlugin.addAndroidExtensionPlugin.settingValue }) {
-            +GradleOnlyPluginByNameIR("kotlin-android-extensions", priority = 3)
-        }
     }
 
     fun Reader.createAndroidPlugin(module: Module): AndroidGradlePlugin
@@ -118,7 +114,6 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
     }
 
     object DEPENDENCIES {
-        const val KOTLIN_ANDROID_EXTENSIONS_NAME = "kotlin-android-extensions"
         val MATERIAL = ArtifactBasedLibraryDependencyIR(
             MavenArtifact(DefaultRepository.GOOGLE, "com.google.android.material", "material"),
             version = Versions.ANDROID.ANDROID_MATERIAL,
@@ -131,7 +126,7 @@ interface AndroidModuleConfigurator : ModuleConfigurator,
             +DefaultRepository.GRADLE_PLUGIN_PORTAL
             +DefaultRepository.GOOGLE
             +DefaultRepository.JCENTER
-            +kotlinVersion.repository
+            +kotlinVersion.repositories
         }
     }
 }

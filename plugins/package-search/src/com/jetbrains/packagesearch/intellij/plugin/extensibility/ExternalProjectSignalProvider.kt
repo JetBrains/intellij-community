@@ -19,6 +19,7 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.util.messageBusFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.trySend
 import kotlinx.coroutines.flow.Flow
 
 class ExternalProjectSignalProvider : FlowModuleChangesSignalProvider {
@@ -27,7 +28,7 @@ class ExternalProjectSignalProvider : FlowModuleChangesSignalProvider {
         project.messageBusFlow(ProjectDataImportListener.TOPIC) {
             object: ProjectDataImportListener {
                 override fun onImportFinished(projectPath: String?) {
-                    trySend(Unit)
+                    trySend()
                 }
             }
         }

@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -54,6 +54,11 @@ class RefreshRootsLibraryAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Library library = getLibrary();
     e.getPresentation().setEnabledAndVisible(library != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Nullable

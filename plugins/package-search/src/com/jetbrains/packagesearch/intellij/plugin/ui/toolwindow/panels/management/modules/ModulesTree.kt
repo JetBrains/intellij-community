@@ -26,7 +26,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -121,12 +121,12 @@ internal class ModulesTree(
         if (treeModel == model) return
         setPaintBusy(true)
         val wasEmpty = model.root == null || model.getChildCount(model.root) == 0
-        val lastSelected = selectionPath?.lastPathComponent?.castSafelyTo<DefaultMutableTreeNode>()
-            ?.userObject?.castSafelyTo<TargetModules>()
+        val lastSelected = selectionPath?.lastPathComponent?.asSafely<DefaultMutableTreeNode>()
+            ?.userObject?.asSafely<TargetModules>()
         // Swapping model resets the selection — but, we set the right selection just afterwards
         model = treeModel
         if (wasEmpty) TreeUtil.expandAll(this)
-        selectionPath = lastSelected?.let { model.root.castSafelyTo<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
+        selectionPath = lastSelected?.let { model.root.asSafely<DefaultMutableTreeNode>()?.findPathWithData(it) } ?: TreePath(model.root)
         updateUI()
         setPaintBusy(false)
     }
@@ -185,10 +185,10 @@ private operator fun TreeModel.contains(treeNode: DefaultMutableTreeNode) =
     treeNode in treeNodesSequence().map { it.userObject }
 
 fun TreeModel.treeNodesSequence() = sequence {
-    val queue = mutableListOf(root.castSafelyTo<DefaultMutableTreeNode>() ?: return@sequence)
+    val queue = mutableListOf(root.asSafely<DefaultMutableTreeNode>() ?: return@sequence)
     while (queue.isNotEmpty()) {
         val next = queue.removeAt(0)
         yield(next)
-        queue.addAll(next.children().toList().mapNotNull { it.castSafelyTo<DefaultMutableTreeNode>() })
+        queue.addAll(next.children().toList().mapNotNull { it.asSafely<DefaultMutableTreeNode>() })
     }
 }

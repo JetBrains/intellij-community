@@ -62,7 +62,6 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
     ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
-    ProjectPluginTracker pluginTracker = DynamicPluginEnabler.findPluginTracker(project, pluginEnabler);
 
     for (DependencyOnPlugin dependency : dependencies) {
       PluginId pluginId = PluginId.getId(dependency.getPluginId());
@@ -74,8 +73,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       }
 
       String pluginName = descriptor.getName();
-      if (pluginEnabler.isDisabled(pluginId) ||
-          pluginTracker != null && pluginTracker.isDisabled(pluginId)) {
+      if (pluginEnabler.isDisabled(pluginId)) {
         boolean canEnableWithoutRestart = Registry.is("ide.plugins.load.automatically") &&
                                           DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
         if (canEnableWithoutRestart) {

@@ -34,6 +34,28 @@ import static org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCom
  */
 public final class MavenDependencyCompletionUtil {
 
+  public static boolean isPlugin(@NotNull MavenDomShortArtifactCoordinates dependency) {
+    return dependency instanceof MavenDomPlugin;
+  }
+
+  public static MavenDomPlugin findManagedPlugin(MavenDomProjectModel domModel, Project project,
+                                                 @NotNull final String groupId, @NotNull final String artifactId) {
+
+    final Ref<MavenDomPlugin> ref = new Ref<>();
+
+    MavenDomProjectProcessorUtils.processPluginsInPluginManagement(domModel, plugin -> {
+      if (groupId.equals(plugin.getGroupId().getStringValue())
+          && artifactId.equals(plugin.getArtifactId().getStringValue())
+          && null != plugin.getVersion().getStringValue()) {
+        ref.set(plugin);
+        return true;
+      }
+      return false;
+    }, project);
+
+    return ref.get();
+  }
+
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
                                                          @NotNull final String groupId, @NotNull final String artifactId) {
 

@@ -17,7 +17,7 @@ import java.util.Date
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceEntityBase() {
+open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -27,16 +27,14 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
 
   }
 
-  @JvmField
-  var _date: Date? = null
   override val date: Date
-    get() = _date!!
+    get() = dataSource.date
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity>(), UnknownPropertyTypeEntity.Builder {
+  class Builder(var result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity>(), UnknownPropertyTypeEntity.Builder {
     constructor() : this(UnknownPropertyTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -54,6 +52,9 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -62,11 +63,11 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDateInitialized()) {
         error("Field UnknownPropertyTypeEntity#date should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field UnknownPropertyTypeEntity#entitySource should be initialized")
       }
     }
 
@@ -77,21 +78,12 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as UnknownPropertyTypeEntity
-      this.date = dataSource.date
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.date != dataSource.date) this.date = dataSource.date
       if (parents != null) {
       }
     }
 
-
-    override var date: Date
-      get() = getEntityData().date
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().date = value
-        changedProperty.add("date")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +91,15 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var date: Date
+      get() = getEntityData().date
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().date = value
+        changedProperty.add("date")
 
       }
 
@@ -125,12 +126,13 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun createEntity(snapshot: EntityStorage): UnknownPropertyTypeEntity {
-    val entity = UnknownPropertyTypeEntityImpl()
-    entity._date = date
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = UnknownPropertyTypeEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -155,18 +157,18 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as UnknownPropertyTypeEntityData
 
-    if (this.date != other.date) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.date != other.date) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as UnknownPropertyTypeEntityData
 
@@ -187,7 +189,7 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(Date::class.java)
+    this.date?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }

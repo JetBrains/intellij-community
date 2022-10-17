@@ -26,11 +26,12 @@ import java.util.List;
 
 public class HtmlDocumentationTest extends BasePlatformTestCase {
   public void testQuickDocumentationHtml5Tag() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<bo<caret>dy onload=\"\">\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <bo<caret>dy onload="">
+             </body>
+             </html>""",
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
            "<p>The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents the content of",
@@ -38,12 +39,13 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
   }
 
   public void testQuickDocumentationHtml5TagDialog() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body onload=\"\">\n" +
-           "<dia<caret>log></dialog\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body onload="">
+             <dia<caret>log></dialog
+             </body>
+             </html>""",
            "<div class='definition'><pre>dialog</pre></div>\n<div class='content'>" +
            "<p>The <strong><code>&lt;dialog&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents a dialog box",
@@ -51,78 +53,84 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
   }
 
   public void testQuickDocumentationHtml5Attr() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body on<caret>load=\"\">\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body on<caret>load="">
+             </body>
+             </html>""",
            "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
   }
 
   public void testQuickDocumentationHtml5Svg() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body>\n" +
-           "<sv<caret>g>\n" +
-           "</svg>\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body>
+             <sv<caret>g>
+             </svg>
+             </body>
+             </html>""",
            "<div class='definition'><pre>svg</pre></div>\n<div class='content'>" +
            "<p>The <code>svg</code> element is a container that defines a new coordinate system and",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/svg"));
   }
 
   public void testQuickDocumentationHtml5SvgImage() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body>\n" +
-           "<svg>\n" +
-           "<ima<caret>ge>\n" +
-           "</image>\n" +
-           "</svg>\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body>
+             <svg>
+             <ima<caret>ge>
+             </image>
+             </svg>
+             </body>
+             </html>""",
            "<div class='definition'><pre>image</pre></div>\n<div class='content'>" +
            "<p><span class=\"seoSummary\">The <strong><code>&lt;image&gt;</code></strong> SVG element includes images inside SVG documents.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/svg/element/image"));
   }
 
   public void testQuickDocumentationHtml5Math() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body>\n" +
-           "<ma<caret>th>\n" +
-           "</math>\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body>
+             <ma<caret>th>
+             </math>
+             </body>
+             </html>""",
            "<div class='definition'><pre>math</pre></div>\n<div class='content'>" +
            "<p class=\"summary\">The top-level element in MathML is <code>&lt;math&gt;</code>.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/math"));
   }
 
   public void testQuickDocumentationHtml5MathMrow() {
-    doTest("<!DOCTYPE html>\n" +
-           "<html>\n" +
-           "<body>\n" +
-           "<math>\n" +
-           "<mr<caret>ow>\n" +
-           "</mrow>\n" +
-           "</math>\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE html>
+             <html>
+             <body>
+             <math>
+             <mr<caret>ow>
+             </mrow>
+             </math>
+             </body>
+             </html>""",
            "<div class='definition'><pre>mrow</pre></div>\n<div class='content'>" +
            "<p class=\"summary\">The MathML <code>&lt;mrow&gt;</code> element is used to group sub-expressions",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/mathml/element/mrow"));
   }
 
   public void testQuickDocumentationHtml4Tag() {
-    doTest("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
-           "   \"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-           "<html>\n" +
-           "<bo<caret>dy onload=\"\">\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/html4/loose.dtd">
+             <html>
+             <bo<caret>dy onload="">
+             </body>
+             </html>""",
            "<div class='definition'><pre>body</pre></div>\n<div class='content'>" +
            "<p>The <strong><code>&lt;body&gt;</code></strong> <a href=\"https://developer.mozilla.org/en-us/docs/Web/HTML\">HTML</a> " +
            "element represents the content of an HTML document.",
@@ -130,12 +138,13 @@ public class HtmlDocumentationTest extends BasePlatformTestCase {
   }
 
   public void testQuickDocumentationHtml4Attr() {
-    doTest("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
-           "   \"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-           "<html>\n" +
-           "<body on<caret>load=\"\">\n" +
-           "</body>\n" +
-           "</html>",
+    doTest("""
+             <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/html4/loose.dtd">
+             <html>
+             <body on<caret>load="">
+             </body>
+             </html>""",
            "<div class='definition'><pre>onload</pre></div>\n<div class='content'>Function to call when the document has finished loading.",
            Collections.singletonList("https://developer.mozilla.org/en-us/docs/web/html/element/body#attr-onload"));
   }

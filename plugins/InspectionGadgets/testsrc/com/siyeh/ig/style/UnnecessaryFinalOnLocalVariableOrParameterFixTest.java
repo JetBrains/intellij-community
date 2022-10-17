@@ -16,49 +16,65 @@ public class UnnecessaryFinalOnLocalVariableOrParameterFixTest extends IGQuickFi
 
   public void testRemoveFinalOnParameter() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "public int foo(final/**/ int number) {\n" +
-                 "  return number + 10;\n" +
-                 "}\n",
-                 "public int foo(int number) {\n" +
-                 "  return number + 10;\n" +
-                 "}\n"
+                 """
+                   public int foo(final/**/ int number) {
+                     return number + 10;
+                   }
+                   """,
+                 """
+                   public int foo(int number) {
+                     return number + 10;
+                   }
+                   """
     );
   }
 
   public void testRemoveFinalOnLocalVariable() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "public int foo(int number) {\n" +
-                 "  final/**/ int localNumber = number * 2;\n" +
-                 "  return localNumber + 10;\n" +
-                 "}\n",
-                 "public int foo(int number) {\n" +
-                 "  int localNumber = number * 2;\n" +
-                 "  return localNumber + 10;\n" +
-                 "}\n"
+                 """
+                   public int foo(int number) {
+                     final/**/ int localNumber = number * 2;
+                     return localNumber + 10;
+                   }
+                   """,
+                 """
+                   public int foo(int number) {
+                     int localNumber = number * 2;
+                     return localNumber + 10;
+                   }
+                   """
     );
   }
 
   public void testRemoveFinalOnParameterUsedInLambda() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "public java.util.function.Function foo(final/**/ int number) {\n" +
-                 "  return (int i) -> number + i;\n" +
-                 "}\n",
-                 "public java.util.function.Function foo(int number) {\n" +
-                 "  return (int i) -> number + i;\n" +
-                 "}\n"
+                 """
+                   public java.util.function.Function foo(final/**/ int number) {
+                     return (int i) -> number + i;
+                   }
+                   """,
+                 """
+                   public java.util.function.Function foo(int number) {
+                     return (int i) -> number + i;
+                   }
+                   """
     );
   }
 
   public void testRemoveFinalOnLocalVariableUsedInLambda() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "public java.util.function.Function foo(int number) {\n" +
-                 "  final/**/ int localNumber = number * 2;\n" +
-                 "  return (int i) -> localNumber + i;\n" +
-                 "}\n",
-                 "public java.util.function.Function foo(int number) {\n" +
-                 "  int localNumber = number * 2;\n" +
-                 "  return (int i) -> localNumber + i;\n" +
-                 "}\n"
+                 """
+                   public java.util.function.Function foo(int number) {
+                     final/**/ int localNumber = number * 2;
+                     return (int i) -> localNumber + i;
+                   }
+                   """,
+                 """
+                   public java.util.function.Function foo(int number) {
+                     int localNumber = number * 2;
+                     return (int i) -> localNumber + i;
+                   }
+                   """
     );
   }
 }

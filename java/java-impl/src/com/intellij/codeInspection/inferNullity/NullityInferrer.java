@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
@@ -382,10 +383,10 @@ public class NullityInferrer {
 
     private boolean processParameter(PsiParameter parameter, PsiReferenceExpression expr, PsiElement parent) {
       if (PsiUtil.isAccessedForWriting(expr)) return true;
-      if (parent instanceof PsiBinaryExpression) {   //todo check if comparison operation
+      if (parent instanceof PsiBinaryExpression binOp) {
         PsiExpression opposite = null;
-        final PsiExpression lOperand = ((PsiBinaryExpression)parent).getLOperand();
-        final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+        final PsiExpression lOperand = binOp.getLOperand();
+        final PsiExpression rOperand = binOp.getROperand();
         if (lOperand == expr) {
           opposite = rOperand;
         }
@@ -393,8 +394,7 @@ public class NullityInferrer {
           opposite = lOperand;
         }
         if (opposite != null && opposite.getType() == PsiType.NULL) {
-          if (parent.getParent() instanceof PsiAssertStatement &&
-              ((PsiBinaryExpression)parent).getOperationTokenType() == JavaTokenType.NE) {
+          if (DfaPsiUtil.isAssertionEffectively(binOp, binOp.getOperationTokenType() == JavaTokenType.NE)) {
             registerNotNullAnnotation(parameter);
             return true;
           }

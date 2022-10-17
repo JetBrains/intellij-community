@@ -133,54 +133,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   @Override
   public void update(@Nullable Runnable finishUpdate) {
     mySuppressInfoRef.set(null);
-
-    if (getUpdateAlarm().isDisposed()) return;
-    VirtualFile file = getSelectedFile();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      scheduleComponentUpdate(file, finishUpdate);
-    }
-    else {
-      ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
-        .expireWith(getUpdateAlarm())
-        .withDocumentsCommitted(myProject)
-        .coalesceBy(this, file)
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-  }
-
-  private void scheduleComponentUpdate(VirtualFile file, @Nullable Runnable finishUpdate) {
-    WidgetState state = getWidgetState(file);
-    getUpdateAlarm().cancelAllRequests();
-    getUpdateAlarm().addRequest(() -> {
-      if (state == WidgetState.NO_CHANGE) {
-        return;
-      }
-
-      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-        getComponent().setVisible(true);
-        return;
-      }
-
-      if (state == WidgetState.HIDDEN) {
-        getComponent().setVisible(false);
-        return;
-      }
-      if (isDisposed()) return;
-
-      getComponent().setVisible(true);
-      actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
-      getComponent().setEnabled(actionEnabled);
-      updateComponent(state);
-
-      if (myStatusBar != null && !getComponent().isValid()) {
-        myStatusBar.updateWidget(ID());
-      }
-
-      if (finishUpdate != null) {
-        finishUpdate.run();
-      }
-      afterVisibleUpdate(state);
-    }, 200, ModalityState.any());
+    super.update(finishUpdate);
   }
 
   private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {
@@ -296,16 +249,19 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
-        case DOWNLOADING_NOT_STARTED:
+        case DOWNLOADING_NOT_STARTED -> {
           addDownloadingUpdateListener(info);
           return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
                                    true);
-        case DOWNLOADING_IN_PROGRESS:
+        }
+        case DOWNLOADING_IN_PROGRESS -> {
           addDownloadingUpdateListener(info);
           return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
                                    JsonBundle.message("schema.widget.download.in.progress.label"), false);
-        case ERROR_OCCURRED:
+        }
+        case ERROR_OCCURRED -> {
           return getDownloadErrorState(info.getErrorMessage());
+        }
       }
     }
 

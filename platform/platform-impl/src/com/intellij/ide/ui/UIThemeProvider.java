@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.util.function.Function;
 
 /**
- * Extension point for adding UI themes
+ * Extension point for adding UI themes.
  * <br/>
- * Read more about <a href=https://plugins.jetbrains.com/docs/intellij/themes.html>theme developing</a>
+ * Read more about <a href=https://plugins.jetbrains.com/docs/intellij/theme-structure.html>themes development</a>.
  *
  * @author Konstantin Bulenkov
  */

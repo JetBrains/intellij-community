@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
@@ -56,6 +57,14 @@ class KotlinNameSuggester(
             }
 
             val DEFAULT = EscapingRules()
+
+            val NONE = EscapingRules(
+                escapeKotlinHardKeywords = false,
+                escapeKotlinSoftKeywords = false,
+                escapeJavaHardKeywords = false,
+                escapeJavaSoftKeywords = false,
+                escaper = { listOf(it) }
+            )
         }
 
         fun shouldEscape(name: String): Boolean {
@@ -168,14 +177,18 @@ class KotlinNameSuggester(
 
             suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
                 val classId = getClassId(type) ?: return
-                suggestClassNames(classId).map(preprocessor).forEach { registerCompoundName(it) }
+
+                KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
+                    .suggestClassNames(classId)
+                    .map(preprocessor)
+                    .forEach { registerCompoundName(it) }
             }
 
             if (type is KtNonErrorClassType) {
                 val elementType = getIterableElementType(type)
 
                 if (elementType != null) {
-                    registerClassNames(elementType) { it + "s" }
+                    registerClassNames(elementType) { Strings.pluralize(it) }
                     return@sequence
                 }
 
@@ -186,7 +199,7 @@ class KotlinNameSuggester(
                     val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
                     if (primitiveElementType != null) {
                         val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        registerCompoundName(primitiveName + "s")
+                        registerCompoundName(Strings.pluralize(primitiveName))
                         return@sequence
                     }
 
@@ -343,7 +356,7 @@ class KotlinNameSuggester(
          * Returns a name sequence from given names, appending numeric suffixes.
          * Example: [foo, bar] -> [foo, bar, foo2, bar2, ...]
          */
-        fun enumerate(names: List<String>): Sequence<String> {
+        private fun enumerate(names: List<String>): Sequence<String> {
             return sequence {
                 yieldAll(names)
 

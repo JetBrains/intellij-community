@@ -46,7 +46,7 @@ object PublicIdeDownloader : IdeDownloader {
         if (SystemInfo.OS_ARCH == "aarch64") possibleBuild.downloads.macM1!!.link // macM1
         else possibleBuild.downloads.mac!!.link
       }
-      OsType.Windows -> possibleBuild.downloads.windows!!.link
+      OsType.Windows -> possibleBuild.downloads.windowsZip!!.link
       else -> throw RuntimeException("Unsupported OS ${SystemInfo.getOsType()}")
     }
 

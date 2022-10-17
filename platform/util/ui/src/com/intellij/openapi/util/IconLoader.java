@@ -6,17 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.Gray;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.icons.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.*;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.RetinaImage;
-import com.intellij.util.SVGLoader;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
@@ -102,9 +96,10 @@ public final class IconLoader {
     return null;
   }
 
+  /** @param size the size before system scaling (without JBUIScale.scale) */
   @ApiStatus.Internal
-  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, float size) {
-    if (icon.getIconWidth() == size) {
+  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, int size) {
+    if (icon.getIconWidth() == JBUIScale.scale(size)) {
       return icon;
     }
 
@@ -113,11 +108,11 @@ public final class IconLoader {
       cachedIcon = ((RetrievableIcon)cachedIcon).retrieveIcon();
     }
     if (cachedIcon instanceof CachedImageIcon) {
-      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, (int)size, (int)size);
+      Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, size, size);
       if (version != null) return version;
     }
 
-    return icon.scale(size / icon.getIconWidth());
+    return icon.scale(JBUIScale.scale(1.0f) * size / icon.getIconWidth());
   }
 
   @TestOnly
@@ -266,17 +261,17 @@ public final class IconLoader {
     }
 
     @Override
-    public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
+    public @Nullable Image loadImage(@NotNull LoadIconParameters parameters) {
       // do not use cache
       int flags = ImageLoader.ALLOW_FLOAT_SCALING;
-      if (isDark) {
+      if (parameters.isDark) {
         flags |= ImageLoader.USE_DARK;
       }
       ClassLoader classLoader = classLoaderRef.get();
       if (classLoader == null) {
         return null;
       }
-      return ImageLoader.loadImage(path, filters, null, classLoader, flags, scaleContext, !path.endsWith(".svg"));
+      return ImageLoader.loadImage(path, parameters, null, classLoader, flags, !path.endsWith(".svg"));
     }
 
     @Override
@@ -481,13 +476,14 @@ public final class IconLoader {
       }
       else {
         if (ctx == null) ctx = ScaleContext.create();
-        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-          .getDefaultScreenDevice().getDefaultConfiguration()
-          .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
-                                 PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
-                                 Transparency.TRANSLUCENT);
         if (StartupUiUtil.isJreHiDPI(ctx)) {
-          image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
+          image = new JBHiDPIScaledImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE, PaintUtil.RoundingMode.ROUND);
+        } else {
+          image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+            .getDefaultScreenDevice().getDefaultConfiguration()
+            .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
+                                   PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
+                                   Transparency.TRANSLUCENT);
         }
       }
       Graphics2D g = image.createGraphics();
@@ -531,19 +527,41 @@ public final class IconLoader {
     };
   }
 
-  private static @Nullable ImageIcon checkIcon(@NotNull Image image, @NotNull CachedImageIcon cii) {
+  private static @Nullable ImageIcon createScaledIcon(@NotNull Image image, @NotNull CachedImageIcon cii, float scale) {
     // image wasn't loaded or broken
     if (image.getHeight(null) < 1) {
       return null;
     }
 
-    ImageIcon icon = new JBImageIcon(image);
+    ImageIcon icon = new ScaledResultIcon(image, cii, scale);
     if (!isGoodSize(icon)) {
       // # 22481
       LOG.error("Invalid icon: " + cii);
       return CachedImageIcon.EMPTY_ICON;
     }
     return icon;
+  }
+
+  private static class ScaledResultIcon extends JBImageIcon implements ReplaceableIcon {
+    private final CachedImageIcon myOriginal;
+    private final float myScale;
+
+    ScaledResultIcon(@NotNull Image image, CachedImageIcon original, float scale) {
+      super(image);
+      myOriginal = original;
+      myScale = scale;
+    }
+
+    @Override
+    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
+      Icon originalReplaced = replacer.replaceIcon(myOriginal);
+      if (originalReplaced instanceof ScalableIcon) {
+        return ((ScalableIcon)originalReplaced).scale(myScale);
+      } else {
+        LOG.error("The result after replacing cannot be scaled: " + originalReplaced);
+        return this;
+      }
+    }
   }
 
   public static boolean isGoodSize(final @NotNull Icon icon) {
@@ -570,9 +588,6 @@ public final class IconLoader {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
-    if (icon instanceof RetrievableIcon) {
-      icon = getOrigin((RetrievableIcon)icon);
-    }
 
     return iconToDisabledIcon.computeIfAbsent(icon, existingIcon -> {
       return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
@@ -580,11 +595,79 @@ public final class IconLoader {
   }
 
   /**
+   * Creates new icon with the color patching applied.
+   */
+  public static @NotNull Icon colorPatchedIcon(@NotNull Icon icon, @NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
+    return replaceCachedImageIcons(icon, (imageIcon) -> {
+      return patchColorsInCacheImageIcon(imageIcon, colorPatcher, null);
+    });
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static Icon patchColorsInCacheImageIcon(@NotNull CachedImageIcon imageIcon,
+                                                 @NotNull SVGLoader.@NotNull SvgElementColorPatcherProvider colorPatcher,
+                                                 @Nullable("when not overridden") Boolean isDark) {
+    if (isDark != null) {
+      Icon variant = imageIcon.getDarkIcon(isDark);
+      if (variant instanceof CachedImageIcon) {
+        imageIcon = (CachedImageIcon)variant;
+      }
+    }
+    return imageIcon.createWithPatcher(colorPatcher);
+  }
+
+  /**
+   * Creates new icon with the low-level CachedImageIcon changing
+   */
+  @ApiStatus.Internal
+  public static @NotNull Icon replaceCachedImageIcons(@NotNull Icon icon,@NotNull Function<CachedImageIcon, Icon> cachedImageIconReplacer) {
+    IconReplacer replacer = new IconReplacer() {
+      @Override
+      @Contract("null -> null; !null -> !null")
+      public Icon replaceIcon(Icon icon) {
+        if (icon == null) {
+          return null;
+        }
+
+        if (icon instanceof DummyIcon) {
+          return icon;
+        }
+
+        if (icon instanceof EmptyIcon) {
+          return icon;
+        }
+
+        if (icon instanceof LazyIcon) {
+          return replaceIcon(((LazyIcon)icon).getOrComputeIcon());
+        }
+
+        if (icon instanceof ReplaceableIcon) {
+          return ((ReplaceableIcon)icon).replaceBy(this);
+        }
+
+        if (!isGoodSize(icon)) {
+          LOG.error(icon);
+          return CachedImageIcon.EMPTY_ICON;
+        }
+
+        if (icon instanceof CachedImageIcon) {
+          return cachedImageIconReplacer.apply((CachedImageIcon)icon);
+        }
+        else {
+          return icon;
+        }
+      }
+    };
+    return replacer.replaceIcon(icon);
+  }
+
+  /**
    * Creates new icon with the filter applied.
    */
   public static @NotNull Icon filterIcon(@NotNull Icon icon,
                                          @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                         @Nullable Component ancestor) {
+                                         @SuppressWarnings("unused") @Nullable Component ancestor) {
     if (icon instanceof LazyIcon) {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
@@ -598,6 +681,13 @@ public final class IconLoader {
       return ((CachedImageIcon)icon).createWithFilter(filterSupplier);
     }
 
+    return new FilteredIcon(icon, filterSupplier);
+  }
+
+  @NotNull
+  static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
+                                        @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
+                                        @NotNull Component ancestor) {
     double scale;
     ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
     if (ctxSupport == null) {
@@ -614,7 +704,7 @@ public final class IconLoader {
     graphics.setColor(Gray.TRANSPARENT);
     graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
     graphics.scale(scale, scale);
-    icon.paintIcon(LabelHolder.fakeComponent, graphics, 0, 0);
+    icon.paintIcon(ancestor, graphics, 0, 0);
 
     graphics.dispose();
 
@@ -645,6 +735,12 @@ public final class IconLoader {
       @Override
       public int getIconWidth() {
         return icon.getIconWidth();
+      }
+
+      @NotNull
+      @Override
+      public Icon replaceBy(@NotNull IconReplacer replacer) {
+        return getTransparentIcon(replacer.replaceIcon(icon), alpha);
       }
 
       @Override
@@ -727,6 +823,9 @@ public final class IconLoader {
 
     private volatile CachedImageIcon darkVariant;
 
+    private final @Nullable SVGLoader.SvgElementColorPatcherProvider myColorPatcher;
+    private final boolean myUseStroke;
+
     private final Object lock = new Object();
     // ImageIcon (if small icon) or SoftReference<ImageIcon> (if large icon)
     private volatile @Nullable Object realIcon;
@@ -742,11 +841,22 @@ public final class IconLoader {
                            @Nullable ImageDataLoader resolver,
                            @Nullable Boolean darkOverridden,
                            @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
+      this(originalPath, resolver, darkOverridden, localFilterSupplier, null, false);
+    }
+
+    protected CachedImageIcon(@Nullable String originalPath,
+                              @Nullable ImageDataLoader resolver,
+                              @Nullable Boolean darkOverridden,
+                              @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier,
+                              @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher,
+                              boolean useStroke) {
       this.originalPath = originalPath;
       this.resolver = resolver;
       originalResolver = resolver;
       isDarkOverridden = darkOverridden;
       this.localFilterSupplier = localFilterSupplier;
+      this.myColorPatcher = colorPatcher;
+      myUseStroke = useStroke;
 
       // For instance, ShadowPainter updates the context from outside.
       getScaleContext().addUpdateListener(() -> realIcon = null);
@@ -769,23 +879,7 @@ public final class IconLoader {
     public final void paintIcon(Component c, Graphics g, int x, int y) {
       Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
       ScaleContext scaleContext = ScaleContext.create(g2d);
-      if (SVGLoader.isColorRedefinitionContext()) {
-        ImageIcon result = null;
-        synchronized (lock) {
-          ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
-          if (icon != null) {
-            result = icon;
-          }
-        }
-        if (result == null) {
-          result = EMPTY_ICON;
-        }
-        result.paintIcon(c, g, x, y);
-        scaledIconCache.clear();
-      }
-      else {
-        getRealIcon(scaleContext).paintIcon(c, g, x, y);
-      }
+      getRealIcon(scaleContext).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -864,12 +958,7 @@ public final class IconLoader {
 
         ImageIcon icon = scaledIconCache.getOrScaleIcon(1.0f);
         if (icon != null) {
-          if (!SVGLoader.isColorRedefinitionContext()) {
-            this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
-          }
-          else {
-            scaledIconCache.clear();
-          }
+          this.realIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
           return icon;
         }
       }
@@ -905,13 +994,13 @@ public final class IconLoader {
         return EMPTY_ICON;
       }
 
-      CachedImageIcon result = darkVariant;
+      CachedImageIcon result = isDark ? darkVariant : null;
       if (result == null) {
         synchronized (lock) {
-          result = darkVariant;
+          if (isDark) result = darkVariant;
           if (result == null) {
-            result = new CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier);
-            darkVariant = result;
+            result = new CachedImageIcon(originalPath, resolver, isDark, localFilterSupplier, myColorPatcher, myUseStroke);
+            if (isDark) darkVariant = result;
           }
         }
       }
@@ -932,7 +1021,7 @@ public final class IconLoader {
 
     @Override
     public final @NotNull CachedImageIcon copy() {
-      CachedImageIcon result = new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier);
+      CachedImageIcon result = new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, myColorPatcher, myUseStroke);
       result.pathTransformModCount = pathTransformModCount;
       return result;
     }
@@ -942,7 +1031,23 @@ public final class IconLoader {
       if (resolver == null) {
         return EMPTY_ICON;
       }
-      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier);
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, filterSupplier, myColorPatcher, myUseStroke);
+    }
+
+    private @NotNull Icon createWithPatcher(@NotNull SVGLoader.SvgElementColorPatcherProvider colorPatcher) {
+      ImageDataLoader resolver = this.resolver;
+      if (resolver == null) {
+        return EMPTY_ICON;
+      }
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, colorPatcher, myUseStroke);
+    }
+
+    public @NotNull Icon createStrokeIcon() {
+      ImageDataLoader resolver = this.resolver;
+      if (resolver == null) {
+        return EMPTY_ICON;
+      }
+      return new CachedImageIcon(originalPath, resolver, isDarkOverridden, localFilterSupplier, myColorPatcher, true);
     }
 
     private boolean isDark() {
@@ -975,7 +1080,8 @@ public final class IconLoader {
         return null;
       }
 
-      Image image = resolver.loadImage(getFilters(), scaleContext, isDark);
+      SVGLoader.SvgElementColorPatcherProvider colorPatcher = myColorPatcher != null ? myColorPatcher : SVGLoader.getColorPatcherProvider();
+      Image image = resolver.loadImage(new LoadIconParameters(getFilters(), scaleContext, isDark, colorPatcher, myUseStroke));
       if (start != -1) {
         IconLoadMeasurer.findIconLoad.end(start);
       }
@@ -1011,6 +1117,14 @@ public final class IconLoader {
         return true;
       }
     }
+
+    public int getImageFlags() {
+      ImageDataLoader resolver = this.resolver;
+      if (resolver == null) {
+        return 0;
+      }
+      return resolver.getFlags();
+    }
   }
 
   private static final class ScaledIconCache {
@@ -1040,7 +1154,7 @@ public final class IconLoader {
 
       long cacheKey = key(scaleContext);
       ImageIcon icon = SoftReference.dereference(cache.get(cacheKey));
-      if (icon != null && !SVGLoader.isColorRedefinitionContext()) {
+      if (icon != null) {
         return icon;
       }
 
@@ -1049,7 +1163,7 @@ public final class IconLoader {
         return null;
       }
 
-      icon = checkIcon(image, host);
+      icon = createScaledIcon(image, host, scale);
       if (icon != null && !ImageLoader.ImageCache.isIconTooLargeForCache(icon)) {
         cache.put(cacheKey, new SoftReference<>(icon));
       }
@@ -1127,6 +1241,12 @@ public final class IconLoader {
 
   public static @NotNull Icon createLazy(@NotNull Supplier<? extends @NotNull Icon> producer) {
     return new LazyIcon() {
+      @NotNull
+      @Override
+      public Icon replaceBy(@NotNull IconReplacer replacer) {
+        return createLazy(() -> replacer.replaceIcon(producer.get()));
+      }
+
       @Override
       protected @NotNull Icon compute() {
         return producer.get();
@@ -1183,7 +1303,7 @@ public final class IconLoader {
         }
         catch (Throwable e) {
           LOG.error("Cannot compute icon", e);
-          icon = IconManager.getInstance().getStubIcon();
+          icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub);
         }
 
         myIcon = icon;
@@ -1245,14 +1365,5 @@ public final class IconLoader {
     else {
       return null;
     }
-  }
-
-  private static final class LabelHolder {
-    /**
-     * To get disabled icon with paint it into the image. Some icons require
-     * not null component to paint.
-     */
-    private static final JComponent fakeComponent = new JComponent() {
-    };
   }
 }

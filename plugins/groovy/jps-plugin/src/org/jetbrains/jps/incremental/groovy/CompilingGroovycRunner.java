@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, ModuleBuildTarget> {
   CompilingGroovycRunner(boolean forStubs) {
     super(forStubs);

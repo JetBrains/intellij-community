@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 public class LombokConfigParserDefinition implements ParserDefinition {
 
   private static class LombokConfigParserTokenSets {
-    private static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
     private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);
   }
 
@@ -29,12 +28,6 @@ public class LombokConfigParserDefinition implements ParserDefinition {
   @Override
   public Lexer createLexer(Project project) {
     return new LombokConfigLexerAdapter();
-  }
-
-  @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
-    return LombokConfigParserTokenSets.WHITE_SPACES;
   }
 
   @Override

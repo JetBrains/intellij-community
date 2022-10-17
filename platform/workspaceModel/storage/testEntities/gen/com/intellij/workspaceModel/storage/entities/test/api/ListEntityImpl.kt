@@ -21,7 +21,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
+open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,16 +31,14 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: List<String>? = null
   override val data: List<String>
-    get() = _data!!
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
+  class Builder(var result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
     constructor() : this(ListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,6 +56,9 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -66,11 +67,11 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field ListEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ListEntity#entitySource should be initialized")
       }
     }
 
@@ -78,15 +79,31 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    override fun afterModification() {
+      val collection_data = getEntityData().data
+      if (collection_data is MutableWorkspaceList<*>) {
+        collection_data.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListEntity
-      this.data = dataSource.data.toMutableList()
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data.toMutableList()
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     private val dataUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -96,22 +113,18 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
       get() {
         val collection_data = getEntityData().data
         if (collection_data !is MutableWorkspaceList) return collection_data
-        collection_data.setModificationUpdateAction(dataUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_data.setModificationUpdateAction(dataUpdater)
+        }
+        else {
+          collection_data.cleanModificationUpdateAction()
+        }
         return collection_data
       }
       set(value) {
         checkModificationAllowed()
         getEntityData().data = value
         dataUpdater.invoke(value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ListEntityData = result ?: super.getEntityData() as ListEntityData
@@ -137,12 +150,13 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): ListEntity {
-    val entity = ListEntityImpl()
-    entity._data = data.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ListEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): ListEntityData {
@@ -174,18 +188,18 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ListEntityData
 

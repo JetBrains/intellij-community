@@ -44,10 +44,14 @@ fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementNam
   addContent(element)
 }
 
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Use Element.getAttributeBooleanValue", ReplaceWith("getAttributeBooleanValue(name))"))
 fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))
 
+@Suppress("DEPRECATION")
 private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()
 
+@Suppress("DEPRECATION")
 private fun getSpecialSaxBuilder(): SAXBuilder {
   val reference = cachedSpecialSaxBuilder.get()
   var saxBuilder = SoftReference.dereference(reference)

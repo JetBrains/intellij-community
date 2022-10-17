@@ -36,6 +36,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,7 @@ class ClassPatternsPanel extends JPanel {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (value instanceof String && ((String)value).isEmpty()) {
           setText(JavaBundle.message("table.cell.constructors"));
-          setForeground(UIUtil.getInactiveTextColor());
+          setForeground(NamedColorUtil.getInactiveTextColor());
         }
         else if (value instanceof String) {
           setText((String)value);

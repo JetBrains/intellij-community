@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.FrameBoundsConverter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -30,8 +29,8 @@ public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static @NotNull Runnable scheduleShow(@NotNull Activity parentActivity) {
-    Activity frameActivity = parentActivity.startChild("splash as project frame initialization");
+  public static @NotNull Runnable scheduleShow(@NotNull ApplicationInfoEx appInfo) {
+    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization");
     try {
       Runnable task = createFrameIfPossible();
       if (task != null) {
@@ -47,7 +46,6 @@ public final class SplashManager {
     }
 
     // must be out of activity measurement
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = StartUpMeasurer.startActivity("splash initialization");
     SPLASH_WINDOW = new Splash(appInfo);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.comparison
 
@@ -18,7 +18,7 @@ abstract class AbstractFE1UastCommentsTest : AbstractKotlinUastTest(), UastComme
 
     fun doTest(filePath: String) {
         testDataDir = File(filePath).parentFile
-        val testName = filePath.substring(filePath.lastIndexOf('/') + 1).removeSuffix(".kt")
+        val testName = filePath.substring(filePath.lastIndexOf(File.separatorChar) + 1).removeSuffix(".kt")
         val virtualFile = getVirtualFile(testName)
 
         val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")

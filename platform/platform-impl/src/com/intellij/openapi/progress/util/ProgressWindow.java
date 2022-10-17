@@ -176,16 +176,21 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
   }
 
-  final void enterModality() {
-    if (isModalEntity() && !myModalityEntered) {
-      LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
-      myModalityEntered = true;
+  final void executeInModalContext(@NotNull Runnable modalAction) {
+    if (!isModalEntity()) {
+      modalAction.run();
+      return;
     }
-  }
 
-  final void exitModality() {
-    if (isModalEntity() && myModalityEntered) {
-      myModalityEntered = false;
+    if (myModalityEntered) {
+      throw new IllegalStateException("Modality already entered: " + getModalityState());
+    }
+    LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
+    myModalityEntered = true;
+    try {
+      modalAction.run();
+    }
+    finally {
       LaterInvocator.leaveModal(this);
     }
   }
@@ -199,28 +204,25 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
-    enterModality();
-    init.run();
-
     try {
-      app.runUnlockingIntendedWrite(() -> {
-        initializeOnEdtIfNeeded();
-        // guarantee AWT event after the future is done will be pumped and loop exited
-        stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
-            if (isCancellationEvent(event)) {
-              cancel();
-              return true;
-            }
-            return false;
-          });
-        }
-        return null;
+      executeInModalContext(() -> {
+        init.run();
+        app.runUnlockingIntendedWrite(() -> {
+          initializeOnEdtIfNeeded();
+          // guarantee AWT event after the future is done will be pumped and loop exited
+          stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
+          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+            IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
+              if (isCancellationEvent(event)) {
+                cancel();
+              }
+            });
+          }
+          return null;
+        });
       });
     }
     finally {
-      exitModality();
       // make sure focus returns to the original component (at least requested to do so)
       // before other code is executed after showing modal progress
       myDialog.hideImmediately();

@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ModalityUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class AddExtLibraryDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
@@ -27,11 +28,11 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final String myQualifiedClassName;
 
-  AddExtLibraryDependencyFix(PsiReference reference,
-                                    Module currentModule,
-                                    ExternalLibraryDescriptor descriptor,
-                                    DependencyScope scope,
-                                    String qName) {
+  AddExtLibraryDependencyFix(@NotNull PsiReference reference,
+                             @NotNull Module currentModule,
+                             @NotNull ExternalLibraryDescriptor descriptor,
+                             @NotNull DependencyScope scope,
+                             @Nullable String qName) {
     super(reference);
     myCurrentModule = currentModule;
     myLibraryDescriptor = descriptor;

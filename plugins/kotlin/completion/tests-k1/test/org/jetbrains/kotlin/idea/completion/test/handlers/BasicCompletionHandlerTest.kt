@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.completion.handlers
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

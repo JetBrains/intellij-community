@@ -60,6 +60,9 @@ public final class StartUpMeasurer {
   @ApiStatus.Internal
   public static final Map<String, Object2LongOpenHashMap<String>> pluginCostMap = new ConcurrentHashMap<>();
 
+  @ApiStatus.Internal
+  public volatile static Activity appInitPreparationActivity;
+
   public static long getCurrentTime() {
     return System.nanoTime();
   }

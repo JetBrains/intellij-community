@@ -369,27 +369,14 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
 
   @Override
   public boolean shouldProcess(@NotNull DeclarationKind kind) {
-    switch (kind) {
-      case CLASS:
-        return myFilter.isClassAcceptable(PsiClass.class);
-
-      case FIELD:
-        return myFilter.isClassAcceptable(PsiField.class);
-
-      case METHOD:
-        return myFilter.isClassAcceptable(PsiMethod.class);
-
-      case PACKAGE:
-        return myFilter.isClassAcceptable(PsiPackage.class);
-
-      case VARIABLE:
-        return myFilter.isClassAcceptable(PsiVariable.class);
-
-      case ENUM_CONST:
-        return myFilter.isClassAcceptable(PsiEnumConstant.class);
-    }
-
-    return false;
+    return switch (kind) {
+      case CLASS -> myFilter.isClassAcceptable(PsiClass.class);
+      case FIELD -> myFilter.isClassAcceptable(PsiField.class);
+      case METHOD -> myFilter.isClassAcceptable(PsiMethod.class);
+      case PACKAGE -> myFilter.isClassAcceptable(PsiPackage.class);
+      case VARIABLE -> myFilter.isClassAcceptable(PsiVariable.class);
+      case ENUM_CONST -> myFilter.isClassAcceptable(PsiEnumConstant.class);
+    };
   }
 
   @Override

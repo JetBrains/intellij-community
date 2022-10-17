@@ -23,31 +23,33 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testSplitDeclarationAssignment() {
-    doMemberTest("void foo() {\n" +
-                 "     RuntimeException exception = null;\n" +
-                 "     try {\n" +
-                 "         new java.io.FileInputStream(\"asdf\");\n" +
-                 "     } catch (java.io.FileNotFoundException e) {\n" +
-                 "         exception = new RuntimeException();\n" +
-                 "         exception./*Unnecessary 'Throwable.initCause()' call*/initCause/**/(e);\n" +
-                 "     } catch (RuntimeException e) {\n" +
-                 "         exception = e;\n" +
-                 "     }\n" +
-                 "     throw exception;\n" +
-                 "}");
+    doMemberTest("""
+                   void foo() {
+                        RuntimeException exception = null;
+                        try {
+                            new java.io.FileInputStream("asdf");
+                        } catch (java.io.FileNotFoundException e) {
+                            exception = new RuntimeException();
+                            exception./*Unnecessary 'Throwable.initCause()' call*/initCause/**/(e);
+                        } catch (RuntimeException e) {
+                            exception = e;
+                        }
+                        throw exception;
+                   }""");
   }
 
   public void testReassigned() {
-    doMemberTest("void foo() {\n" +
-                 "    try {\n" +
-                 "        new java.io.FileInputStream(\"asdf\");\n" +
-                 "    } catch (java.io.FileNotFoundException e) {\n" +
-                 "        RuntimeException exception = new RuntimeException();\n" +
-                 "        e = null;\n" +
-                 "        exception.initCause(e);\n" +
-                 "        throw exception;\n" +
-                 "    }\n" +
-                 "}");
+    doMemberTest("""
+                   void foo() {
+                       try {
+                           new java.io.FileInputStream("asdf");
+                       } catch (java.io.FileNotFoundException e) {
+                           RuntimeException exception = new RuntimeException();
+                           e = null;
+                           exception.initCause(e);
+                           throw exception;
+                       }
+                   }""");
   }
 
   public void testIncompatibleType() {
@@ -72,14 +74,10 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
 
   @SuppressWarnings("ThrowableNotThrown")
   public void testNotAccessible() {
-    doTest("import java.util.*;" +
-           "class X {" +
-           "  static void z() {" +
-           "    RuntimeException cause = new RuntimeException();\n" +
-           "    MissingResourceException e = new MissingResourceException(\"asdf\", \"asdf\", \"asdf\");\n" +
-           "    e.initCause(cause);" +
-           "  }" +
-           "}");
+    doTest("""
+             import java.util.*;class X {  static void z() {    RuntimeException cause = new RuntimeException();
+                 MissingResourceException e = new MissingResourceException("asdf", "asdf", "asdf");
+                 e.initCause(cause);  }}""");
   }
 
   @Nullable

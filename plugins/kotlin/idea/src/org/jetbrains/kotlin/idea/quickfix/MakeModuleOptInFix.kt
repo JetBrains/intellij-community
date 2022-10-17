@@ -12,8 +12,10 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
@@ -83,7 +85,7 @@ open class MakeModuleOptInFix(
                 module,
                 OptInNames.REQUIRES_OPT_IN_FQ_NAME.takeIf {
                     module.toDescriptor()?.annotationExists(it) == true
-                } ?: OptInNames.OLD_EXPERIMENTAL_FQ_NAME
+                } ?: FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
             )
         }
     }

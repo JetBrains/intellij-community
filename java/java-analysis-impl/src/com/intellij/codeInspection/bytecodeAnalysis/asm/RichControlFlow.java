@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 /**
  * @author lambdamix
@@ -27,17 +27,17 @@ public final class RichControlFlow {
     }
     int size = controlFlow.transitions.length;
     boolean[] loopEnters = dfsTree.loopEnters;
-    TIntHashSet[] cycleIncoming = new TIntHashSet[size];
+    IntOpenHashSet[] cycleIncoming = new IntOpenHashSet[size];
     // really this may be array, since dfs already ensures no duplicates
-    TIntArrayList[] nonCycleIncoming = new TIntArrayList[size];
+    IntArrayList[] nonCycleIncoming = new IntArrayList[size];
     int[] collapsedTo = new int[size];
     int[] queue = new int[size];
     int top;
     for (int i = 0; i < size; i++) {
       if (loopEnters[i]) {
-        cycleIncoming[i] = new TIntHashSet();
+        cycleIncoming[i] = new IntOpenHashSet();
       }
-      nonCycleIncoming[i] = new TIntArrayList();
+      nonCycleIncoming[i] = new IntArrayList();
       collapsedTo[i] = i;
     }
 
@@ -53,20 +53,20 @@ public final class RichControlFlow {
     for (int w = size - 1; w >= 0 ; w--) {
       top = 0;
       // NB - it is modified later!
-      TIntHashSet p = cycleIncoming[w];
+      IntOpenHashSet p = cycleIncoming[w];
       if (p == null) {
         continue;
       }
-      TIntIterator it = p.iterator();
+      IntIterator it = p.iterator();
       while (it.hasNext()) {
-        queue[top++] = it.next();
+        queue[top++] = it.nextInt();
       }
 
       while (top > 0) {
         int x = queue[--top];
-        TIntArrayList incoming = nonCycleIncoming[x];
+        IntList incoming = nonCycleIncoming[x];
         for (int i = 0; i < incoming.size(); i++) {
-          int y1 = collapsedTo[incoming.getQuick(i)];
+          int y1 = collapsedTo[incoming.getInt(i)];
           if (!dfsTree.isDescendant(y1, w)) {
             return false;
           }

@@ -113,6 +113,6 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return ProjectDescriptorWithStdlibSources.INSTANCE;
+        return ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources();
     }
 }

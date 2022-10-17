@@ -26,7 +26,7 @@ class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiEleme
   override val linkDestination: MarkdownLinkDestination?
     get() = link?.children()?.filterIsInstance<MarkdownLinkDestination>()?.firstOrNull()
 
-  val linkTitle: PsiElement?
+  private val linkTitle: PsiElement?
     get() = link?.children()?.find { it.hasType(MarkdownElementTypes.LINK_TITLE) }
 
   fun collectLinkDescriptionText(): String? {

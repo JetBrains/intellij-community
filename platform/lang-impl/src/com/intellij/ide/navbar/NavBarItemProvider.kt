@@ -9,9 +9,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 /**
  * Extension point to fill navigation bar data structure. Connects an item with its parent and children.
  *
- * To find the current focused element provide a DataRule for <code>NAVBAR_ITEM_KEY</code>
- *
- * @see com.intellij.ide.navbar.NavBarItem.NAVBAR_ITEM_KEY
+ * To find the current focused element provide a [data rule][com.intellij.ide.impl.dataRules.GetDataRule] for [NavBarItem.NAVBAR_ITEM_KEY].
  */
 interface NavBarItemProvider {
 
@@ -25,7 +23,6 @@ interface NavBarItemProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun findParent(item: NavBarItem): NavBarItem? = null
 
   /**
@@ -33,7 +30,6 @@ interface NavBarItemProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  @JvmDefault
   fun iterateChildren(item: NavBarItem): Iterable<NavBarItem> = emptyList()
 
 }

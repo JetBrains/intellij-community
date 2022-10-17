@@ -91,12 +91,13 @@ public class ClsResolveTest {
   public void resolveIntoMutantJar() {
     myFixture.configureByText(
       "test.java",
-      "class test {{\n" +
-      "  mutant1.aB.m1();\n" +
-      "  mutant1.ab.m2();\n" +
-      "  MUTANT2.C.m3();\n" +
-      "  mutant2.D.m4();\n" +
-      "}}");
+      """
+        class test {{
+          mutant1.aB.m1();
+          mutant1.ab.m2();
+          MUTANT2.C.m3();
+          mutant2.D.m4();
+        }}""");
     myFixture.checkHighlighting();
   }
 }

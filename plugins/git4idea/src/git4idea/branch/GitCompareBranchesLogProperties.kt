@@ -23,7 +23,7 @@ abstract class GitCompareBranchesLogProperties(project: Project) :
     var SHOW_DIFF_PREVIEW = false
   }
 
-  var commonState = MyState()
+  private var commonState = MyState()
 
   override fun getState(): MyState {
     return commonState

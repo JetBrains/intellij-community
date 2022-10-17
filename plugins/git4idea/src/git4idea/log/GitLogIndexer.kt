@@ -16,8 +16,7 @@ import git4idea.history.GitCommitRequirements.DiffInMergeCommits
 import git4idea.history.GitCommitRequirements.DiffRenameLimit
 import git4idea.history.GitCompressedDetailsCollector
 import git4idea.history.GitLogUtil
-import git4idea.log.GitLogProvider.isRepositoryReady
-import git4idea.log.GitLogProvider.shouldIncludeRootChanges
+import git4idea.log.GitLogProvider.*
 import git4idea.repo.GitRepositoryManager
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
@@ -27,11 +26,8 @@ class GitLogIndexer(private val project: Project,
   @Throws(VcsException::class)
   override fun readAllFullDetails(root: VirtualFile, encoder: VcsLogIndexer.PathsEncoder,
                                   commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
-    if (!isRepositoryReady(repositoryManager, root)) {
-      return
-    }
-
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Value(RENAME_LIMIT),
+    val repository = getRepository(repositoryManager, root) ?: return
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetails(commitConsumer, requirements, true,
                                                                           *ArrayUtil.toStringArray(GitLogUtil.LOG_ALL))
@@ -42,11 +38,8 @@ class GitLogIndexer(private val project: Project,
                                hashes: List<String>,
                                encoder: VcsLogIndexer.PathsEncoder,
                                commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
-    if (!isRepositoryReady(repositoryManager, root)) {
-      return
-    }
-
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.Value(RENAME_LIMIT),
+    val repository = getRepository(repositoryManager, root) ?: return
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repository), DiffRenameLimit.Value(RENAME_LIMIT),
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
     GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
   }

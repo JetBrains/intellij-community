@@ -96,14 +96,14 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
   }
 
-  suspend fun initUi() {
+  suspend fun initUi(reopeningEditorsJob: Job) {
     try {
       val ref = initFuture.await()
       val tasks = ref.get()
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       ref.set(null)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        createAndLayoutToolWindows(manager, tasks ?: return@withContext)
+        createAndLayoutToolWindows(manager, tasks ?: return@withContext, reopeningEditorsJob)
         while (true) {
           (pendingTasks.poll() ?: break).run()
         }
@@ -122,21 +122,17 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
   }
 
   // must be executed in EDT
-  private fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl, tasks: List<RegisterToolWindowTask>) {
-    @Suppress("TestOnlyProblems")
-    manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+  private suspend fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl, tasks: List<RegisterToolWindowTask>, reopeningEditorsJob: Job) {
 
-    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
-    // 1. read action is required to read facet list (might cause a deadlock)
-    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
-    val list = addExtraTasks(tasks, project)
-    runActivity("toolwindow creating") {
-      val entries = ArrayList<String>(list.size)
-      for (task in list) {
+    fun registerToolWindows(registerTasks: List<RegisterToolWindowTask>, shouldRegister: (String) -> Boolean): Boolean {
+      val entries = ArrayList<String>(registerTasks.size)
+      registerTasks.forEach { task ->
         try {
           val paneId = manager.getLayout().getInfo(task.id)?.safeToolWindowPaneId ?: WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-          val toolWindowPane = manager.getToolWindowPane(paneId)
-          entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
+          if (shouldRegister(paneId)) {
+            val toolWindowPane = manager.getToolWindowPane(paneId)
+            entries.add(manager.registerToolWindow(task, toolWindowPane.buttonManager).id)
+          }
         }
         catch (e: ProcessCanceledException) {
           throw e
@@ -148,15 +144,39 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries, manager)
 
+      return entries.size == registerTasks.size
+    }
+
+    @Suppress("TestOnlyProblems")
+    manager.setLayoutOnInit(pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout"))
+
+    // FacetDependentToolWindowManager - strictly speaking, computeExtraToolWindowBeans should be executed not in EDT, but for now it is not safe because:
+    // 1. read action is required to read facet list (might cause a deadlock)
+    // 2. delay between collection and adding ProjectWideFacetListener (should we introduce a new method in RegisterToolWindowTaskProvider to add listeners?)
+    val list = addExtraTasks(tasks, project)
+    val hasSecondaryFrameToolWindows = runActivity("toolwindow creating") {
+      // Register all tool windows for the default tool window pane. If there are any tool windows for other panes, we'll register them
+      // after the reopening editors job has created the panes
+      val registeredAll = registerToolWindows(list) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+
       manager.getToolWindowPanes().forEach {
         it.buttonManager.initMoreButton()
         it.buttonManager.revalidateNotEmptyStripes()
         it.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(it.paneId))
       }
+
+      return@runActivity !registeredAll
     }
     service<ToolWindowManagerImpl.ToolWindowManagerAppLevelHelper>()
 
     registerEpListeners(manager)
+
+    if (hasSecondaryFrameToolWindows) {
+      reopeningEditorsJob.join()
+      runActivity("secondary frames toolwindow creation") {
+        registerToolWindows(list) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
+      }
+    }
   }
 }
 

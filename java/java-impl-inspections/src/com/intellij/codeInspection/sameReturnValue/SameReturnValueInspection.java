@@ -5,16 +5,21 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UMethod;
 
 public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager, @NotNull GlobalInspectionContext globalContext,
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
+                                                           @NotNull AnalysisScope scope,
+                                                           @NotNull InspectionManager manager,
+                                                           @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
@@ -24,6 +29,12 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
       String returnValue = refMethod.getReturnValueIfSame();
       if (returnValue != null) {
+        final UMethod method = (UMethod)refMethod.getUastElement();
+        final PsiType returnType = method.getReturnType();
+        if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
+          return null;
+        }
+
         final String message;
         if (refMethod.getDerivedReferences().isEmpty()) {
           message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor", returnValue);
@@ -33,14 +44,13 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
           message = JavaAnalysisBundle.message("inspection.same.return.value.problem.descriptor2", returnValue);
         }
 
-        final UDeclaration decl = refMethod.getUastElement();
-        if (decl != null) {
-          UElement anchor = decl.getUastAnchor();
-          if (anchor != null) {
-            PsiElement psiAnchor = anchor.getSourcePsi();
-            if (psiAnchor != null) {
-              return new ProblemDescriptor[] {manager.createProblemDescriptor(psiAnchor, message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
-            }
+        UElement anchor = method.getUastAnchor();
+        if (anchor != null) {
+          PsiElement psiAnchor = anchor.getSourcePsi();
+          if (psiAnchor != null) {
+            return new ProblemDescriptor[] {
+              manager.createProblemDescriptor(psiAnchor, message, false, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+            };
           }
         }
       }
@@ -51,8 +61,9 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull RefManager manager,
+                                                @NotNull GlobalJavaInspectionContext globalContext,
+                                                @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {

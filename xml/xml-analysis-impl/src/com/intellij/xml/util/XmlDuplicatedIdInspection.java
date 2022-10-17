@@ -38,7 +38,7 @@ public class XmlDuplicatedIdInspection extends XmlSuppressableInspectionTool imp
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(final XmlAttributeValue value) {
+      public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
         if (value.getTextRange().isEmpty()) {
           return;
         }

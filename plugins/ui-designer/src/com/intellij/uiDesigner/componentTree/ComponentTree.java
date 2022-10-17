@@ -58,10 +58,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentTree extends Tree implements DataProvider {
   private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 

@@ -208,8 +208,8 @@ class WizardStatsService : CounterUsagesCollector() {
         )
 
 
-        val settingIdField = EventFields.String("setting_id", settings.allowedIds)
-        val settingValueField = EventFields.String("setting_value", settings.possibleValues)
+        private val settingIdField = EventFields.String("setting_id", settings.allowedIds)
+        private val settingValueField = EventFields.String("setting_value", settings.possibleValues)
 
         // Event fields
         val groupField = EventFields.String("group", allowedWizardsGroups)
@@ -220,12 +220,12 @@ class WizardStatsService : CounterUsagesCollector() {
         val modulesRemovedField = EventFields.Int("modules_removed")
         val moduleTemplateChangedField = EventFields.Int("module_template_changed")
 
-        val moduleTemplateField = EventFields.String("module_template", allowedModuleTemplates)
-        val sessionIdField = EventFields.Int("session_id")
+        private val moduleTemplateField = EventFields.String("module_template", allowedModuleTemplates)
+        private val sessionIdField = EventFields.Int("session_id")
 
         val modulesListField = StringListEventField.ValidatedByAllowedValues("project_modules_list", allowedModuleTypes)
 
-        val moduleTypeField = EventFields.String("module_type", allowedModuleTypes)
+        private val moduleTypeField = EventFields.String("module_type", allowedModuleTypes)
 
         private val pluginInfoField = EventFields.PluginInfo.with(getPluginInfoById(KotlinIdePlugin.id))
 

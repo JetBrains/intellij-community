@@ -40,6 +40,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected static final int STEP_X_PADDING = 2;
 
   private final WizardPopup myParent;
+  private boolean alignByParentBounds = true;
 
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
@@ -186,7 +187,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     LOG.assertTrue (!isDisposed());
     Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
 
-    if (getParent() != null) {
+    if (getParent() != null && alignByParentBounds) {
       final Rectangle parentBounds = getParent().getBounds();
       parentBounds.x += STEP_X_PADDING;
       parentBounds.width -= STEP_X_PADDING * 2;
@@ -341,6 +342,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   public WizardPopup getParent() {
     return myParent;
+  }
+
+  public void setAlignByParentBounds(boolean alignByParentBounds) {
+    this.alignByParentBounds = alignByParentBounds;
+  }
+
+  public boolean isAlignByParentBounds() {
+    return alignByParentBounds;
   }
 
   public PopupStep getStep() {

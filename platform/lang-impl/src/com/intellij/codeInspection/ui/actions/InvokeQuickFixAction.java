@@ -25,8 +25,7 @@ public class InvokeQuickFixAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final ActionGroup fixes = (ActionGroup)ActionManager.getInstance().getAction("QuickFixes");
-    e.getPresentation().setEnabled(fixes.getChildren(e).length > 0);
+    e.getPresentation().setEnabled(myView.areFixesAvailable());
   }
 
   @Override

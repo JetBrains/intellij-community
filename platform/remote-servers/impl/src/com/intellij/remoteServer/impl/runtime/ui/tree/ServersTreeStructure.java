@@ -209,14 +209,11 @@ public final class ServersTreeStructure {
 
     @Nullable
     private static Icon getStatusIcon(final ConnectionStatus status) {
-      switch (status) {
-        case CONNECTED:
-          return RemoteServersIcons.ResumeScaled;
-        case DISCONNECTED:
-          return RemoteServersIcons.SuspendScaled;
-        default:
-          return null;
-      }
+      return switch (status) {
+        case CONNECTED -> RemoteServersIcons.ResumeScaled;
+        case DISCONNECTED -> RemoteServersIcons.SuspendScaled;
+        default -> null;
+      };
     }
   }
 

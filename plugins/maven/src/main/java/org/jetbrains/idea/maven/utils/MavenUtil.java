@@ -19,6 +19,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -131,8 +132,6 @@ public class MavenUtil {
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
-
-  public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
@@ -911,7 +910,7 @@ public class MavenUtil {
   }
 
   @NotNull
-  private static File makeLocalRepositoryFile(MavenId id,
+  public static File makeLocalRepositoryFile(MavenId id,
                                               File localRepository,
                                               @NotNull String extension,
                                               @Nullable String classifier) {
@@ -1173,10 +1172,6 @@ public class MavenUtil {
     }
 
     return res;
-  }
-
-  public static boolean newModelEnabled(Project project) {
-    return Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY, false);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project) {
@@ -1587,10 +1582,13 @@ public class MavenUtil {
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
 
-    String baseDir = EMPTY;
+    String baseDir = project.getBasePath();
     List<MavenProject> projects = projectsManager.getRootProjects();
     if (!projects.isEmpty()) {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+    if (null == baseDir) {
+      baseDir = EMPTY;
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);
@@ -1607,6 +1605,9 @@ public class MavenUtil {
     return repositories;
   }
 
+  public static boolean isMavenizedModule(@NotNull Module m) {
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+  }
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
   }

@@ -94,7 +94,7 @@ public class MavenIndices implements Disposable {
       indicesInit = true;
 
       closeIndices(getOldIndices(localDiff, remoteDiff));
-      updateDependencySearchProviders(project);
+      clearDependencySearchCache(project);
     }
     catch (AlreadyDisposedException | IncorrectOperationException e) {
       myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
@@ -269,9 +269,9 @@ public class MavenIndices implements Disposable {
     return createMavenIndex(propertyHolder, context);
   }
 
-  private static void updateDependencySearchProviders(@NotNull Project project) {
+  private static void clearDependencySearchCache(@NotNull Project project) {
     try {
-      DependencySearchService.getInstance(project).updateProviders();
+      DependencySearchService.getInstance(project).clearCache();
     }
     catch (AlreadyDisposedException ignored) {}
   }
@@ -280,7 +280,7 @@ public class MavenIndices implements Disposable {
   private static MavenIndex createMavenIndex(@NotNull MavenIndexUtils.IndexPropertyHolder propertyHolder,
                                              @NotNull RepositoryDiffContext context) {
     try {
-      return new MavenIndex(context.indexer, propertyHolder, context.listener);
+      return new MavenIndex(context.indexer, propertyHolder);
     }
     catch (Exception e) {
       FileUtil.delete(propertyHolder.dir);

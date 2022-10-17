@@ -19,9 +19,6 @@ import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.DelegatePsiTarget;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiMetaDataTarget extends DelegatePsiTarget implements PomRenameableTarget<PsiMetaDataTarget> {
   private final PsiMetaData myMetaData;
 

@@ -22,7 +22,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(), CustomHeaderTitle {
+internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
   companion object {
     fun createInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
 

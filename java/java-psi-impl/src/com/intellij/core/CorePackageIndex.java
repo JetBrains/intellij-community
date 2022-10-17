@@ -17,10 +17,12 @@ package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,5 +64,15 @@ public class CorePackageIndex extends PackageIndex {
 
   public void addToClasspath(VirtualFile root) {
     myClasspath.add(root);
+  }
+
+  @Override
+  public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
+    for (VirtualFile root : roots()) {
+      if (VfsUtilCore.isAncestor(root, dir, false)) {
+        return VfsUtilCore.getRelativePath(dir, root, '.');
+      }
+    }
+    return null;
   }
 }

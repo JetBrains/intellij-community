@@ -19,7 +19,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
+open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -29,16 +29,14 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _x: String? = null
   override val x: String
-    get() = _x!!
+    get() = dataSource.x
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity>(), MainEntity.Builder {
+  class Builder(var result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity>(), MainEntity.Builder {
     constructor() : this(MainEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,6 +54,9 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -64,11 +65,11 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntity#x should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntity#entitySource should be initialized")
       }
     }
 
@@ -79,20 +80,12 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntity
-      this.x = dataSource.x
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.x != dataSource.x) this.x = dataSource.x
       if (parents != null) {
       }
     }
 
-
-    override var x: String
-      get() = getEntityData().x
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().x = value
-        changedProperty.add("x")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -101,6 +94,14 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
       }
 
     override fun getEntityData(): MainEntityData = result ?: super.getEntityData() as MainEntityData
@@ -126,12 +127,13 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): MainEntity {
-    val entity = MainEntityImpl()
-    entity._x = x
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = MainEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -156,18 +158,18 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityData
 
-    if (this.x != other.x) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.x != other.x) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as MainEntityData
 

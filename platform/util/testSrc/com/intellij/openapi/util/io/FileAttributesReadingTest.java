@@ -2,8 +2,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.win32.FileInfo;
-import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
@@ -20,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.DosFileAttributeView;
-import java.util.Arrays;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,9 +94,6 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
-    if (SystemInfo.isWindows) {
-      assertDirectoriesEqual(file);
-    }
 
     String target = resolveSymLink(file);
     assertEquals(file.getPath(), target);
@@ -121,9 +115,6 @@ public abstract class FileAttributesReadingTest {
     FileAttributes attributes = getAttributes(file);
     assertEquals(file + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.getType());
     assertFalse(file + " " + attributes, attributes.isSymLink());
-    if (SystemInfo.isWindows) {
-      assertDirectoriesEqual(file);
-    }
   }
 
   @Test
@@ -376,7 +367,7 @@ public abstract class FileAttributesReadingTest {
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file +" is not there", file.exists());
 
-    FileAttributes attributes = getAttributes(file, false);
+    FileAttributes attributes = getAttributes(file);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
     assertFalse(attributes.isSymLink());
     assertTrue(attributes.isHidden());
@@ -392,9 +383,6 @@ public abstract class FileAttributesReadingTest {
     Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(file);
-    if (SystemInfo.isWindows) {
-      assertDirectoriesEqual(file.getParentFile());
-    }
 
     String target = resolveSymLink(file);
     assertEquals(file.getPath(), target);
@@ -433,7 +421,6 @@ public abstract class FileAttributesReadingTest {
       FileAttributes attributes = getAttributes(substRoot);
       assertEquals(substRoot + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.getType());
       assertFalse(substRoot + " " + attributes, attributes.isSymLink());
-      assertDirectoriesEqual(substRoot);
 
       File[] children = substRoot.listFiles();
       assertNotNull(children);
@@ -451,7 +438,7 @@ public abstract class FileAttributesReadingTest {
     File link = new File(tempDir.getRoot(), "link");
     Files.createLink(link.toPath(), target.toPath());
 
-    FileAttributes attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWindows);
+    FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -466,7 +453,7 @@ public abstract class FileAttributesReadingTest {
       assertEquals(myTestData.length, bytes.length);
     }
 
-    attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWindows);
+    attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -519,36 +506,6 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void permissionsCloning() {
-    assumeUnix();
-
-    File donor = tempDir.newFile("donor");
-    File recipient = tempDir.newFile("recipient");
-    assertTrue(donor.setWritable(true, true));
-    assertTrue(donor.setExecutable(true, true));
-    assertTrue(recipient.setWritable(false, false));
-    assertTrue(recipient.setExecutable(false, false));
-    assertNotEquals(donor.canWrite(), recipient.canWrite());
-    assertNotEquals(donor.canExecute(), recipient.canExecute());
-
-    assertTrue(clonePermissions(donor.getPath(), recipient.getPath(), true));
-    assertNotEquals(donor.canWrite(), recipient.canWrite());
-    assertEquals(donor.canExecute(), recipient.canExecute());
-
-    assertTrue(clonePermissions(donor.getPath(), recipient.getPath(), false));
-    assertEquals(donor.canWrite(), recipient.canWrite());
-    assertEquals(donor.canExecute(), recipient.canExecute());
-  }
-
-  static boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) {
-    try {
-      return FileSystemUtil.computeMediator().clonePermissions(source, target, execOnly);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-  @Test
   public void unicodeName() throws IOException {
     String name = getUnicodeName();
     assumeTrue("Unicode names not supported", name != null);
@@ -575,29 +532,9 @@ public abstract class FileAttributesReadingTest {
   }
 
   private static @NotNull FileAttributes getAttributes(@NotNull File file) {
-    return getAttributes(file, true);
-  }
-
-  private static @NotNull FileAttributes getAttributes(@NotNull File file, boolean checkList) {
     String path = file.getPath();
     FileAttributes attributes = getAttributes(path);
     assertNotNull(path + ", exists=" + file.exists(), attributes);
-
-    if (SystemInfo.isWindows && checkList) {
-      String parent = file.getParent();
-      if (parent != null) {
-        FileInfo[] children = IdeaWin32.getInstance().listChildren(parent);
-        assertNotNull(children);
-        for (FileInfo info : children) {
-          if (file.getName().equals(info.getName())) {
-            assertEquals(attributes, info.toFileAttributes());
-            return attributes;
-          }
-        }
-        fail(file + " not listed");
-      }
-    }
-
     return attributes;
   }
 
@@ -619,16 +556,6 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
-  }
-
-  private static void assertDirectoriesEqual(File dir) {
-    String[] list1 = dir.list();
-    assertNotNull(list1);
-    FileInfo[] list2 = IdeaWin32.getInstance().listChildren(dir.getPath());
-    assertNotNull(list2);
-    if (list1.length + 2 != list2.length) {
-      assertEquals(Arrays.toString(list1), Arrays.toString(list2));
-    }
   }
 
   private static String getMediatorName() {

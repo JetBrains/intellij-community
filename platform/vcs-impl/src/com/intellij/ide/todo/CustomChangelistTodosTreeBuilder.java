@@ -30,7 +30,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
 
   private final Set<PsiFile> myIncludedFiles;
-  @Nullable private final Set<String> myIncludedChangeListsIds;
+  private final @Nullable Set<String> myIncludedChangeListsIds;
 
   public CustomChangelistTodosTreeBuilder(@NotNull JTree tree,
                                           @NotNull Project project,
@@ -49,8 +49,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return myPsiTodoSearchHelper;
   }
 
-  @NotNull
-  private static Set<PsiFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
+  private static @NotNull Set<PsiFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
     HashSet<PsiFile> files = new HashSet<>();
     for (TodoItem item : todoItems) {
       files.add(item.getFile());
@@ -58,8 +57,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return files;
   }
 
-  @Nullable
-  private static Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull Collection<Change> changes) {
+  private static @Nullable Set<String> collectIncludedChangeListsIds(@NotNull Project project, @NotNull Collection<Change> changes) {
     if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return null;
 
     HashSet<String> ids = new HashSet<>();
@@ -192,9 +190,8 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
-  @NotNull
   @Override
-  protected TodoTreeStructure createTreeStructure() {
+  protected @NotNull TodoTreeStructure createTreeStructure() {
     return new CustomChangelistTodoTreeStructure(myProject, myPsiTodoSearchHelper);
   }
 

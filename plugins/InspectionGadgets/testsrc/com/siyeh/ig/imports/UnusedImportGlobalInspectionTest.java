@@ -75,34 +75,38 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   public void testExactStaticImport() {
-    doTest("package a;\n" +
-           "import static java.lang.Math.abs;\n" +
-           "/*Unused import 'import static java.lang.Math.max;'*/import static java.lang.Math.max;/**/\n" +
-           "class Main {{\n" +
-           "  abs(1);\n" +
-           "}}");
+    doTest("""
+             package a;
+             import static java.lang.Math.abs;
+             /*Unused import 'import static java.lang.Math.max;'*/import static java.lang.Math.max;/**/
+             class Main {{
+               abs(1);
+             }}""");
   }
 
   
   public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
-    myFixture.addClass("package a; public class A {\n" +
-                       " public static void foo(Object o) {}\n" +
-                       " public static void foo(String s) {}\n" +
-                       "}");
-    doTest("import static a.A.foo;\n" +
-           "class Test {\n" +
-           "     {\n" +
-           "          foo(<error descr=\"Cannot resolve method 'unresolvedMethodCall()'\">unresolvedMethodCall</error>());\n" +
-           "     }\n" +
-           "}");
+    myFixture.addClass("""
+                         package a; public class A {
+                          public static void foo(Object o) {}
+                          public static void foo(String s) {}
+                         }""");
+    doTest("""
+             import static a.A.foo;
+             class Test {
+                  {
+                       foo(<error descr="Cannot resolve method 'unresolvedMethodCall()'">unresolvedMethodCall</error>());
+                  }
+             }""");
   }
 
   
   public void testNoHighlightingInInvalidCode() {
     myFixture.configureByText("a.java",
-                              "import<EOLError></EOLError>\n" +
-                              "import java.util.*<error> </error><error>Math.max;</error>\n" +
-                              "class Main {}");
+                              """
+                                import<EOLError></EOLError>
+                                import java.util.*<error> </error><error>Math.max;</error>
+                                class Main {}""");
     myFixture.testHighlighting(true, false, false);
   }
 
@@ -115,17 +119,18 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package a;" +
                        "public class FooBar {" +
                        "}");
-    doTest("package b;\n" +
-           "import a.*;\n" +
-           "import a.FooBar;\n" +
-           "import static a.Parent.*;\n" +
-           "class Main {\n" +
-           "    public static void main() {\n" +
-           "        Parent parent = new Parent();\n" +
-           "        int i = FOOBAR;\n" +
-           "        FooBar foobar = new FooBar();\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             package b;
+             import a.*;
+             import a.FooBar;
+             import static a.Parent.*;
+             class Main {
+                 public static void main() {
+                     Parent parent = new Parent();
+                     int i = FOOBAR;
+                     FooBar foobar = new FooBar();
+                 }
+             }""");
   }
 
   public void testStaticImportOnDemandConflict2() {
@@ -137,17 +142,18 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package a;" +
                        "public class FooBar {" +
                        "}");
-    doTest("package b;\n" +
-           "import a.*;\n" +
-           "import static a.Parent.*;\n" +
-           "import static a.Parent.FooBar;\n" +
-           "class Main {\n" +
-           "    public static void main() {\n" +
-           "        Parent parent = new Parent();\n" +
-           "        int i = FOOBAR;\n" +
-           "        FooBar foobar = new FooBar();\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             package b;
+             import a.*;
+             import static a.Parent.*;
+             import static a.Parent.FooBar;
+             class Main {
+                 public static void main() {
+                     Parent parent = new Parent();
+                     int i = FOOBAR;
+                     FooBar foobar = new FooBar();
+                 }
+             }""");
   }
 
   public void testInherited() {
@@ -158,13 +164,14 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     myFixture.addClass("package a;" +
                        "public class Parent extends GrandParent {" +
                        "}");
-    doTest("package b;\n" +
-           "import static a.Parent.*;\n" +
-           "class Main {\n" +
-           "    public static void main() {\n" +
-           "        int i = FOOBAR;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             package b;
+             import static a.Parent.*;
+             class Main {
+                 public static void main() {
+                     int i = FOOBAR;
+                 }
+             }""");
   }
 
   public void testNoWarning() {
@@ -202,17 +209,18 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
 
   public void testNoWarn() {
     myFixture.addClass("package java.awt; public class List extends Component {}");
-    doTest("import javax.swing.*;\n" +
-           "import java.awt.*;\n" +
-           "import java.util.*;\n" +
-           "import java.util.List;\n" +
-           "\n" +
-           "class ImportTest extends Component {\n" +
-           "\n" +
-           "  Collection<String> c;\n" +
-           "  List<Integer> l;\n" +
-           "  JComponent jc;\n" +
-           "}");
+    doTest("""
+             import javax.swing.*;
+             import java.awt.*;
+             import java.util.*;
+             import java.util.List;
+
+             class ImportTest extends Component {
+
+               Collection<String> c;
+               List<Integer> l;
+               JComponent jc;
+             }""");
   }
 
   public void testOrderIsNotImportant() {

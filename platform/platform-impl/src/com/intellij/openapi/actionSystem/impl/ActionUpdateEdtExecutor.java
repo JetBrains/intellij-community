@@ -75,7 +75,7 @@ public final class ActionUpdateEdtExecutor {
         prevTraces = nextTraces;
         int prevSize = prevTraces.size();
         if (prevSize < MAX_TRACES && elapsed > (prevSize + 1) * TRACE_DELTA_MS) {
-          Throwable throwable = new Throwable("EDT-" + elapsed + "-ms");
+          Throwable throwable = new Throwable("EDT-trace-at-" + elapsed + "-ms");
           throwable.setStackTrace(EDT.getEventDispatchThread().getStackTrace());
           nextTraces = prevTraces.prepend(throwable);
         }
@@ -91,9 +91,9 @@ public final class ActionUpdateEdtExecutor {
     return result.get().first;
   }
 
-  private static final int MAX_TRACES = 3;
+  private static final int MAX_TRACES = 5;
   private static final int TRACE_DELTA_MS = 100;
-  private static final Throwable EMPTY_THROWABLE = new Throwable("EDT-unknown-ms");
+  private static final Throwable EMPTY_THROWABLE = new Throwable("EDT-trace-unknown");
   static final AtomicReference<FList<Throwable>> ourEDTExecTraces = new AtomicReference<>();
   static {
     EMPTY_THROWABLE.setStackTrace(new StackTraceElement[0]);

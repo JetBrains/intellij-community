@@ -22,8 +22,8 @@ interface VFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUEntity, ModifiableWorkspaceEntity<VFUEntity>, ObjBuilder<VFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl
   }
 
@@ -57,8 +57,8 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUWithTwoPropertiesEntity, ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity>, ObjBuilder<VFUWithTwoPropertiesEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl
     override var secondFileProperty: VirtualFileUrl
   }
@@ -95,8 +95,8 @@ interface NullableVFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : NullableVFUEntity, ModifiableWorkspaceEntity<NullableVFUEntity>, ObjBuilder<NullableVFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl?
   }
 
@@ -125,8 +125,8 @@ interface ListVFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ListVFUEntity, ModifiableWorkspaceEntity<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: MutableList<VirtualFileUrl>
   }
 
@@ -159,8 +159,8 @@ interface SetVFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SetVFUEntity, ModifiableWorkspaceEntity<SetVFUEntity>, ObjBuilder<SetVFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: MutableSet<VirtualFileUrl>
   }
 

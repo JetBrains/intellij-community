@@ -80,8 +80,8 @@ public class EqualsAndHashCodeToStringHandler {
     }
   }
 
-  public Collection<MemberInfo> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
-                                             boolean filterTransient, String includeAnnotationProperty) {
+  public static Collection<MemberInfo> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
+                                                    boolean filterTransient, String includeAnnotationProperty) {
     final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
     final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
 
@@ -176,11 +176,11 @@ public class EqualsAndHashCodeToStringHandler {
     return result;
   }
 
-  private int calcMemberRank(@NotNull PsiAnnotation includeAnnotation) {
+  private static int calcMemberRank(@NotNull PsiAnnotation includeAnnotation) {
     return PsiAnnotationUtil.getIntAnnotationValue(includeAnnotation, TO_STRING_RANK_ANNOTATION_PARAMETER, 0);
   }
 
-  public String getMemberAccessorName(@NotNull MemberInfo memberInfo, boolean doNotUseGetters, @NotNull PsiClass psiClass) {
+  public static String getMemberAccessorName(@NotNull MemberInfo memberInfo, boolean doNotUseGetters, @NotNull PsiClass psiClass) {
     final String memberAccessor;
     if (null == memberInfo.getMethod()) {
       memberAccessor = buildAttributeNameString(doNotUseGetters, memberInfo.getField(), psiClass);
@@ -190,7 +190,7 @@ public class EqualsAndHashCodeToStringHandler {
     return memberAccessor;
   }
 
-  private String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
+  private static String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
     final String fieldName = classField.getName();
     if (doNotUseGetters) {
       return fieldName;
@@ -210,7 +210,7 @@ public class EqualsAndHashCodeToStringHandler {
     }
   }
 
-  private Collection<String> makeSet(@NotNull Collection<String> exclude) {
+  private static Collection<String> makeSet(@NotNull Collection<String> exclude) {
     if (exclude.isEmpty()) {
       return Collections.emptySet();
     } else {

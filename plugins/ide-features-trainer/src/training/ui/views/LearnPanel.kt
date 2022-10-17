@@ -205,7 +205,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
           langSupport.onboardingFeedbackData = null
         }
 
-        if (langSupport != null && isLearningProject(project, langSupport)) {
+        if (langSupport != null && isLearningProject(project, langSupport.primaryLanguage)) {
           CloseProjectWindowHelper().windowClosing(project)
         } else {
           LearningUiManager.resetModulesView()

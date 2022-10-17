@@ -9,6 +9,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
@@ -21,7 +22,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.opentelemetry.TraceManager;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
@@ -108,7 +109,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private long myInspectionStartedTimestamp;
   private Span runToolsSpan;
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolPresentation> myPresentationMap = new ConcurrentHashMap<>();
-  private boolean forceInspectAllScope;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
@@ -155,7 +155,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(getProject());
     ToolWindow toolWindow = toolWindowManager.getToolWindow(ProblemsView.ID);
     if (toolWindow == null) { // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
-      //noinspection deprecation
       toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
     }
     if (toolWindow != null) toolWindow.activate(null);
@@ -190,14 +189,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   public InspectionResultsView getView() {
     return myView;
-  }
-
-  public boolean isForceInspectAllScope() {
-    return forceInspectAllScope;
-  }
-
-  public void setForceInspectAllScope(boolean forceInspectAllScope) {
-    this.forceInspectAllScope = forceInspectAllScope;
   }
 
   private static void resolveElementRecursively(@NotNull InspectionToolResultExporter presentation, @NotNull RefEntity refElement) {
@@ -236,7 +227,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
     //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
@@ -390,7 +381,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         catch (ProcessCanceledException e) {
           progressIndicator.checkCanceled();
           // PCE may be thrown from inside wrapper when write action started.
-          // Go on with the write and then resume processing the rest of the queue.
+          // Go on with the write action and then resume processing the rest of the queue.
           assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
             : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
           assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
@@ -483,11 +474,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       try {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
           InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
-                                     progressIndicator,
-                                     (wrapper, descriptor) -> true);
+                                     progressIndicator, PairProcessor.alwaysTrue());
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-          LocalInspectionToolWrapper toolWrapper = entry.getKey();
           List<ProblemDescriptor> descriptors = entry.getValue();
+          if (descriptors.isEmpty()) continue;
+          final ProblemDescriptor firstDescriptor = descriptors.get(0);
+          LocalInspectionToolWrapper toolWrapper =
+            firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
+            ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+            : entry.getKey();
           InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
           BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
         }
@@ -548,8 +543,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
-            if (!forceInspectAllScope &&
-                (ProjectUtil.isProjectOrWorkspaceFile(file) || !ReadAction.compute(() -> fileIndex.isInContent(file) || ScratchUtil.isScratch(file)))) return true;
+            if (ProjectUtil.isProjectOrWorkspaceFile(file)
+                || !ReadAction.compute(() -> fileIndex.isInContent(file) || ScratchUtil.isScratch(file))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
               if (project.isDisposed()) throw new ProcessCanceledException();
@@ -617,6 +612,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections, "Must not run under read action, too unresponsive");
+
+    if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
+      return;
+    }
+
     buildRefGraphIfNeeded(globalTools);
 
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
@@ -1081,8 +1081,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                 ApplicationManager.getApplication().runReadAction(() -> {
                    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
                      InspectionEngine.inspectEx(lTools, file, restrictRange, restrictRange, false, true, true,
-                                                myProgressIndicator,
-                                                (wrapper, descriptor) -> true);
+                                                myProgressIndicator, (__, ___) -> true);
                   for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
                     LocalInspectionToolWrapper toolWrapper = entry.getKey();
                     List<ProblemDescriptor> descriptors = entry.getValue();

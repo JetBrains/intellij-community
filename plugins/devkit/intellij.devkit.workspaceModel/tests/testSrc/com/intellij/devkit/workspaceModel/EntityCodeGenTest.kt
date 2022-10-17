@@ -50,6 +50,10 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testVirtualFileUrls() {
+    doTest()
+  }
+
   fun testUnknownPropertyType() {
     doTest(keepUnknownFields = true)
   }

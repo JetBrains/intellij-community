@@ -33,21 +33,21 @@
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinOptimizeImportsRefactoringHelper"/>
 
     <refactoring.moveHandler
-            id="kotlin.moveFilesOrDirectories"
+            id="kotlin.moveMethod"
             order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveFilesOrDirectoriesHandler"/>
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodHandler"/>
     <refactoring.moveHandler
             id="kotlin.moveTopLevelDeclarations"
-            order="first,before kotlin.moveFilesOrDirectories"
+            order="first, after kotlin.moveMethod"
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler"/>
     <refactoring.moveHandler
             id="kotlinAwareJavaMoveClassesOrPackagesHandler"
-            order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMoveClassesOrPackagesHandler"/>
+            order="first, after kotlin.moveTopLevelDeclarations"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMovePackagesHandler"/>
     <refactoring.moveHandler
-            id="kotlin.moveMethod"
-            order="first,before kotlin.moveTopLevelDeclarations"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveMethod.MoveKotlinMethodHandler"/>
+            id="kotlin.moveFilesOrDirectories"
+            order="first, after kotlinAwareJavaMoveClassesOrPackagesHandler"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveFilesOrDirectoriesHandler"/>
 
     <refactoring.moveDirectoryWithClassesHelper
             implementation="org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories.KotlinMoveDirectoryWithClassesHelper"
@@ -97,11 +97,6 @@
             id="kotlinProcessor"
             implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
             order="before javaProcessor"/>
-
-    <refactoring.safeDelete.JavaSafeDeleteDelegate
-            id="kotlinJavaSafeDeleteDelegate"
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinJavaSafeDeleteDelegate"/>
 
     <refactoring.pullUpHelperFactory
             language="kotlin"

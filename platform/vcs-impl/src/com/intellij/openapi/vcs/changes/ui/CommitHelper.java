@@ -13,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * @deprecated use Committer directly
  */
@@ -22,7 +20,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class CommitHelper {
   private final @Nls @NotNull String myActionName;
   private final boolean myForceSyncCommit;
-  @NotNull private final AbstractCommitter myCommitter;
+  @NotNull private final VcsCommitter myCommitter;
 
   public CommitHelper(@NotNull Project project,
                       @NotNull ChangeList changeList,
@@ -41,10 +39,15 @@ public class CommitHelper {
     // for compatibility with external plugins
     CommitContext commitContext =
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
-    myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName);
+    myCommitter = SingleChangeListCommitter.create(project, commitState, commitContext, actionName);
 
-    myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
-    myCommitter.addResultHandler(notNull(resultHandler, new ShowNotificationCommitResultHandler(myCommitter)));
+    myCommitter.addResultHandler(new CheckinHandlersNotifier(myCommitter, handlers));
+    if (resultHandler != null) {
+      myCommitter.addResultHandler(new CommitResultHandlerNotifier(myCommitter, resultHandler));
+    }
+    else {
+      myCommitter.addResultHandler(new ShowNotificationCommitResultHandler(myCommitter));
+    }
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.

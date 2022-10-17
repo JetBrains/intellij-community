@@ -24,10 +24,14 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
-import com.intellij.util.ui.*
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
@@ -126,7 +130,7 @@ abstract class ToolWindowHeader internal constructor(
       true
     ) {
       override fun getDataContext(): DataContext {
-        val content = toolWindow.contentManagerIfCreated?.selectedContent
+        val content = contentUi.contentManager.selectedContent
         val target = content?.preferredFocusableComponent ?: content?.component ?: this
         if (targetComponent != target) targetComponent = target
         return super.getDataContext()
@@ -143,7 +147,11 @@ abstract class ToolWindowHeader internal constructor(
     }
     component.isOpaque = false
 
-    val toolbarPanel = JPanel(HorizontalLayout(0, SwingConstants.CENTER))
+    val toolbarPanel = object : JPanel(HorizontalLayout(0, SwingConstants.CENTER)) {
+      override fun getPreferredSize(): Dimension {
+        return if (toolWindow.toolWindowManager.isNewUi) toolbar.component.preferredSize else super.getPreferredSize()
+      }
+    }
     toolbarPanel.isOpaque = false
     toolbarPanel.add(component)
 
@@ -275,16 +283,12 @@ abstract class ToolWindowHeader internal constructor(
     toolbar.updateActionsImmediately()
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
-  }
-
   override fun paintComponent(g: Graphics) {
+    g as Graphics2D
     val r = bounds
-    val g2d = g as Graphics2D
-    val clip = g2d.clip
+    val clip = g.clip
     val type = toolWindow.type
-    val image: Image?
+    val image: Image
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
     val isNewUi = toolWindow.toolWindowManager.isNewUi
     val height = r.height
@@ -303,25 +307,30 @@ abstract class ToolWindowHeader internal constructor(
     if (isActive) {
       activeImage = when {
         activeImage != null && Arrays.equals(activeImageFlags, imageFlags) -> activeImage
-        else -> drawToBuffer(g2d, !isNewUi, height, drawTopLine, drawBottomLine)
+        else -> drawToBuffer(g, !isNewUi, height, drawTopLine, drawBottomLine)
       }
       activeImageFlags = imageFlags
-      image = activeImage
+      image = activeImage!!
     }
     else {
       inactiveImage = when {
         inactiveImage != null && Arrays.equals(inactiveImageFlags, imageFlags) -> inactiveImage
-        else -> drawToBuffer(g2d, false, height, drawTopLine, drawBottomLine)
+        else -> drawToBuffer(g, false, height, drawTopLine, drawBottomLine)
       }
       inactiveImageFlags = imageFlags
-      image = inactiveImage
+      image = inactiveImage!!
+    }
+
+    var effectiveBufferWidth = BUFFER_IMAGE_WIDTH
+    if (PaintUtil.isFractionalScale(g.transform)) {
+      effectiveBufferWidth-- // this is a simple alternative to using 'alignTxToInt' for each step.
     }
 
     val clipBounds = clip.bounds
     var x = clipBounds.x
     while (x < clipBounds.x + clipBounds.width) {
-      StartupUiUtil.drawImage(g, image!!, x, 0, null)
-      x += 150
+      StartupUiUtil.drawImage(g, image, x, 0, null)
+      x += effectiveBufferWidth
     }
   }
 
@@ -411,8 +420,10 @@ abstract class ToolWindowHeader internal constructor(
   }
 }
 
+private const val BUFFER_IMAGE_WIDTH = 150
+
 private fun drawToBuffer(g2d: Graphics2D, active: Boolean, height: Int, drawTopLine: Boolean, drawBottomLine: Boolean): BufferedImage {
-  val width = 150
+  val width = BUFFER_IMAGE_WIDTH
   val image = ImageUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB)
   val g = image.createGraphics()
   UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)

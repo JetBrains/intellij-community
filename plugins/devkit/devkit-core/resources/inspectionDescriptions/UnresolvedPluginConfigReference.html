@@ -1,6 +1,8 @@
 <html>
 <body>
 Reports unresolved references to plugin configuration elements.
+
+<h4>Extensions</h4>
 <p>
   Referencing extension with an unknown <code>id</code> might result in errors at runtime.
 </p>
@@ -9,9 +11,21 @@ Reports unresolved references to plugin configuration elements.
 <ul>
   <li><code>com.intellij.advancedSetting</code> in resource bundle <code>advanced.setting.*</code> key</li>
   <li><code>com.intellij.experimentalFeature</code> in <code>Experiments.isFeatureEnabled()/setFeatureEnabled()</code></li>
-  <li><code>com.intellij.notificationGroup</code> in <code>Notification</code> constructor and <code>NotificationGroupManager.getNotificationGroup()</code></li>
+  <li><code>com.intellij.notificationGroup</code> in <code>Notification</code> constructor and <code>NotificationGroupManager.getNotificationGroup()</code>
+  </li>
   <li><code>com.intellij.registryKey</code> in <code>Registry</code> methods <code>key</code> parameter</li>
   <li><code>com.intellij.toolWindow</code> in resource bundle <code>toolwindow.stripe.*</code> key</li>
 </ul>
+
+<h4>Extension Point</h4>
+<p>
+  Extension point name referencing its corresponding <code>&lt;extensionPoint></code> declaration in <code>plugin.xml</code>.
+<ul>
+  <li><code>com.intellij.openapi.extensions.ExtensionPointName</code> constructor and <code>create()</code></li>
+  <li><code>com.intellij.openapi.extensions.ProjectExtensionPointName</code> constructor</li>
+  <li><code>com.intellij.openapi.util.KeyedExtensionCollector</code> and inheritors constructor</li>
+</ul>
+</p>
+
 </body>
 </html>

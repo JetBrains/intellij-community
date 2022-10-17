@@ -152,6 +152,18 @@ public final class Presentation implements Cloneable {
     }
   }
 
+  /**
+   * DO NOT USE as <code>presentation1.setText(presentation2.getText())</code>,
+   * this will skip mnemonic and might break for texts with <code>'_'</code> or <code>'&'</code> symbols.
+   * <p>
+   * Use <code>presentation1.setTextWithMnemonic(presentation2.getTextWithPossibleMnemonic())</code>
+   * or  <code>presentation1.setText(presentation2.getTextWithMnemonic())</code> to copy text between two presentations.
+   * Use <code>presentation1.setText(presentation2.getText(), false)</code> to copy text without mnemonic.
+   * <p>
+   * This applies to AnAction constructors.
+   *
+   * @return Text without mnemonic.
+   */
   public @ActionText String getText() {
     return getText(false);
   }
@@ -406,7 +418,7 @@ public final class Presentation implements Cloneable {
    * because menus and shortcut processing use different defaults,
    * so values from template presentations are silently ignored.
    */
-  boolean isTemplate() {
+  public boolean isTemplate() {
     return BitUtil.isSet(myFlags, IS_TEMPLATE);
   }
 

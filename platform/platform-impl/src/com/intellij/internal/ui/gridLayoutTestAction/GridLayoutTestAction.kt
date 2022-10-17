@@ -302,7 +302,7 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     return result
   }
 
-  fun fillGridByLabels(
+  private fun fillGridByLabels(
     container: JComponent,
     grid: Grid,
     width: Int,
@@ -319,7 +319,7 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     }
   }
 
-  fun fillGridByCompoundLabels(
+  private fun fillGridByCompoundLabels(
     container: JComponent,
     grid: Grid
   ) {
@@ -359,7 +359,7 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     return JLabel("<html>$text<br>${constraintsToHtmlString(constraints)}")
   }
 
-  fun constraintsToHtmlString(constraints: Constraints): String {
+  private fun constraintsToHtmlString(constraints: Constraints): String {
     var result = "x = ${constraints.x}, y = ${constraints.y}<br>" +
                  "width = ${constraints.width}, height = ${constraints.height}<br>" +
                  "hAlign = ${constraints.horizontalAlign}, vAlign = ${constraints.verticalAlign}<br>"

@@ -4,8 +4,6 @@ package org.jetbrains.yaml.inspections;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +44,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
 
               holder.registerProblem(duplicatedKey.getKey(),
                                      YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", entry.getKey()),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveDuplicatedKeyQuickFix(duplicatedKey));
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveDuplicatedKeyQuickFix());
             });
           }
         }
@@ -55,12 +53,6 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
   }
 
   private static class RemoveDuplicatedKeyQuickFix implements LocalQuickFix {
-    private final SmartPsiElementPointer<YAMLKeyValue> myKeyValueHolder;
-
-    RemoveDuplicatedKeyQuickFix(@NotNull final YAMLKeyValue keyValue) {
-      myKeyValueHolder = SmartPointerManager.getInstance(keyValue.getProject()).createSmartPsiElementPointer(keyValue);
-    }
-
     @Nls
     @NotNull
     @Override
@@ -70,7 +62,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      YAMLKeyValue keyVal = myKeyValueHolder.getElement();
+      YAMLKeyValue keyVal = (YAMLKeyValue)descriptor.getPsiElement().getParent();
       if (keyVal == null || keyVal.getParentMapping() == null) {
         return;
       }

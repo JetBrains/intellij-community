@@ -140,7 +140,7 @@ interface Pizza {
 }: Pizza
 UTypeReferenceExpression (name = Pizza.Ingredient) -> USimpleNameReferenceExpression (identifier = Ingredient) -> Kotlin_Light_Class:/** Ingredient of [Pizza] */
     interface Ingredient: Ingredient
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> FUN: mutableSetOf
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> FUN: mutableSetOf
 UComment -> USimpleNameReferenceExpression (identifier = ingredient) -> VALUE_PARAMETER: ingredient
 UComment -> USimpleNameReferenceExpression (identifier = ingredients) -> PROPERTY: ingredients
 UComment -> USimpleNameReferenceExpression (identifier = P) -> TYPE_PARAMETER: P

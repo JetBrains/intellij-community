@@ -85,5 +85,4 @@ class PythonTabCompletionLesson
     }
   }
 
-  override val suitableTips = listOf("TabInLookups")
 }

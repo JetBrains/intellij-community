@@ -47,6 +47,7 @@ dependencies {
   testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit4:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 

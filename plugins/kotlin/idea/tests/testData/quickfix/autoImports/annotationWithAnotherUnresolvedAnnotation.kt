@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'Language'" "true"
 // ERROR: No value passed for parameter 'value'
 // ERROR: Property must be initialized
 // ERROR: Unresolved reference: Language33

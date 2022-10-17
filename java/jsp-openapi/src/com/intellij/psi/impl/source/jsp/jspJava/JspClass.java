@@ -18,9 +18,6 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.jsp.JspFile;
 
-/**
- * @author peter
- */
 public interface JspClass extends PsiSyntheticClass {
   JspHolderMethod getHolderMethod();
 

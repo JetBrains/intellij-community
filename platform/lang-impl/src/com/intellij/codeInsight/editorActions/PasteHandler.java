@@ -9,16 +9,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.EditorCopyPasteHelper.CopyPasteOptions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
 import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
+import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl.CopyPasteOptionsTransferableData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,26 +72,16 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (transferable == null) return;
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-
-    final Document document = editor.getDocument();
-    if (!EditorModificationUtil.requestWriting(editor)) {
-      return;
-    }
+    if (!EditorModificationUtil.requestWriting(editor)) return;
 
     DataContext context = dataId -> {
       return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
     };
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, null, context);
-      }
-      return;
-    }
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
+    final Document document = editor.getDocument();
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);
       }
@@ -206,10 +201,25 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
+    CopyPasteOptions copyPasteOptions = CopyPasteOptionsTransferableData.valueFromTransferable(content);
+    boolean isInsertingEntireLineAboveCaret = copyPasteOptions.isCopiedFromEmptySelection() &&
+                                              !selectionModel.hasSelection();
+    List<CaretState> caretStateToRestore = null;
+    if (isInsertingEntireLineAboveCaret) {
+      // Make CopyPastePreProcessors see the caret at the real insertion offset.
+      caretStateToRestore = caretModel.getCaretsAndSelections();
+      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, caretOffset);
+      caretModel.moveToOffset(lineStartOffset);
+    }
+
     RawText rawText = RawText.fromTransferable(content);
     String newText = text;
     for (CopyPastePreProcessor preProcessor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
+    }
+
+    if (caretStateToRestore != null) {
+      caretModel.setCaretsAndSelections(caretStateToRestore);
     }
 
     final boolean pastedTextWasChanged = !text.equals(newText);
@@ -221,24 +231,14 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     final String _text = text;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      EditorModificationUtilEx.insertStringAtCaret(editor, _text, false, true);
+    final TextRange pastedRange = ApplicationManager.getApplication().runWriteAction((Computable<TextRange>)() -> {
       if (!project.isDisposed()) {
         ((UndoManagerImpl)UndoManager.getInstance(project)).addDocumentAsAffected(editor.getDocument());
       }
+      return isInsertingEntireLineAboveCaret ? EditorCopyPasteHelperImpl.insertEntireLineAboveCaret(editor, _text)
+                                             : EditorCopyPasteHelperImpl.insertStringAtCaret(editor, _text);
     });
-
-    int length = text.length();
-    int offset = caretModel.getOffset() - length;
-    if (offset < 0) {
-      length += offset;
-      offset = 0;
-    }
-    final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
-
-    caretModel.moveToOffset(bounds.getEndOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    selectionModel.removeSelection();
+    final RangeMarker bounds = document.createRangeMarker(pastedRange);
 
     // `skipIndentation` is additionally used as marker for changed pasted test
     // Any value, except `null` is a signal that the text was transformed.
@@ -268,10 +268,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
 
     if (bounds.isValid()) {
-      caretModel.moveToOffset(bounds.getEndOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      selectionModel.removeSelection();
+      if (!isInsertingEntireLineAboveCaret) {
+        caretModel.moveToOffset(bounds.getEndOffset());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
     }
+    // Don't dispose the 'bounds' RangeMarker because the processors
+    // from 'extraData' may use it later, for instance, in an invokeLater() block.
   }
 }

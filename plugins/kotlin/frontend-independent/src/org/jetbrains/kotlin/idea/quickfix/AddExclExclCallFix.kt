@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-class AddExclExclCallFix(psiElement: PsiElement, val fixImplicitReceiver: Boolean = false) : ExclExclCallFix(psiElement),
-    LowPriorityAction {
+class AddExclExclCallFix(psiElement: PsiElement, private val fixImplicitReceiver: Boolean = false) : ExclExclCallFix(psiElement),
+                                                                                                     LowPriorityAction {
 
     override fun getText() = KotlinBundle.message("fix.introduce.non.null.assertion")
 

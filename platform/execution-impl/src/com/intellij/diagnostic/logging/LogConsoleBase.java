@@ -335,6 +335,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Toggleable.setSelected(e.getPresentation(), state);
     }

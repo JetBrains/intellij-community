@@ -7,7 +7,8 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration;
-import org.jetbrains.kotlin.asJava.classes.KotlinK1LightClassFactory;
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport;
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
@@ -21,7 +22,7 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 
     public void testEqualsForExplicitDeclaration() {
@@ -47,8 +48,9 @@ public class LightClassEqualsTest extends KotlinLightCodeInsightFixtureTestCase 
     static void doTestEquals(@Nullable KtClassOrObject origin) {
         assertNotNull(origin);
 
-        PsiClass lightClass1 = KotlinK1LightClassFactory.Companion.createClassNoCache(origin);
-        PsiClass lightClass2 = KotlinK1LightClassFactory.Companion.createClassNoCache(origin);
+        KotlinAsJavaSupportBase<?> javaSupport = (KotlinAsJavaSupportBase<?>) KotlinAsJavaSupport.getInstance(origin.getProject());
+        PsiClass lightClass1 = javaSupport.createLightClass(origin).getValue();
+        PsiClass lightClass2 = javaSupport.createLightClass(origin).getValue();
         assertNotNull(lightClass1);
         assertNotNull(lightClass2);
 

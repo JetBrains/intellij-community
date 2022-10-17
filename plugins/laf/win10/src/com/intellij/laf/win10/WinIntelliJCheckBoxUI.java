@@ -32,11 +32,6 @@ public final class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return null;
-  }
-
-  @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {

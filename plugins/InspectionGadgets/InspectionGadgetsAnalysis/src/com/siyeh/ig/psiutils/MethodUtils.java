@@ -317,9 +317,6 @@ public final class MethodUtils {
       return true;
     }
     final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length == 0) {
-      return true;
-    }
     for (PsiStatement statement : statements) {
       ProgressManager.checkCanceled();
       if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MakeVarEffectivelyFinalFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -29,6 +30,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -664,14 +666,18 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new OptimizeImportsFix(onTheFly);
+  public IntentionAction createOptimizeImportsFix(final boolean onTheFly, boolean isInContent) {
+    return new OptimizeImportsFix(onTheFly, isInContent);
   }
 
   private static final class OptimizeImportsFix implements IntentionAction {
     private final boolean myOnTheFly;
+    private final boolean myInContent;
 
-    private OptimizeImportsFix(boolean onTheFly) {myOnTheFly = onTheFly;}
+    private OptimizeImportsFix(boolean onTheFly, boolean isInContent) {
+      myOnTheFly = onTheFly;
+      myInContent = isInContent;
+    }
 
     @NotNull
     @Override
@@ -687,7 +693,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return (!myOnTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
+      return (!myOnTheFly || timeToOptimizeImports(file, myInContent)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
     }
 
     @Override
@@ -858,19 +864,20 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     return AddAnnotationAttributeNameFix.createFixes(pair);
   }
 
-  private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
+  private static boolean timeToOptimizeImports(@NotNull PsiFile file, boolean isInContent) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!CodeInsightWorkspaceSettings.getInstance(file.getProject()).isOptimizeImportsOnTheFly()) {
       return false;
     }
 
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject());
-    // dont optimize out imports in JSP since it can be included in other JSP
+    // don't optimize out imports in JSP since it can be included in other JSP
     if (!codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof ServerPageFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     boolean errors = containsErrorsPreventingOptimize(file);
 
-    return !errors && DaemonListeners.canChangeFileSilently(file);
+    return !errors && DaemonListeners.canChangeFileSilently(file, isInContent);
   }
 
   private static boolean containsErrorsPreventingOptimize(@NotNull PsiFile file) {
@@ -1172,5 +1179,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     public @NotNull String getText() {
       return myMessage;
     }
+  }
+
+  @Override
+  public @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction() {
+    return new SplitSwitchBranchWithSeveralCaseValuesAction();
+  }
+
+  @Override
+  public @Nullable IntentionAction createMakeVariableEffectivelyFinalFix(@NotNull PsiVariable variable) {
+    return MakeVarEffectivelyFinalFix.createFix(variable);
   }
 }

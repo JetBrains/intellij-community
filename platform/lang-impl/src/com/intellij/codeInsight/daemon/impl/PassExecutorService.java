@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -6,9 +6,11 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -17,6 +19,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +32,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
@@ -101,7 +105,7 @@ final class PassExecutorService implements Disposable {
                     @NotNull List<? extends DaemonCodeAnalyzerImpl.FileEditorInfo> fileEditorInfos,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) return;
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     Map<FileEditor, List<TextEditorHighlightingPass>> documentBoundPasses = new HashMap<>();
     Map<FileEditor, List<EditorBoundHighlightingPass>> editorBoundPasses = new HashMap<>();
@@ -397,7 +401,9 @@ final class PassExecutorService implements Disposable {
             }
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-              myPass.collectInformation(myUpdateProgress);
+              try(AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
+                myPass.collectInformation(myUpdateProgress);
+              }
             }
           }
           catch (ProcessCanceledException e) {
@@ -463,7 +469,7 @@ final class PassExecutorService implements Disposable {
         log(updateProgress, pass, " is canceled during apply, sorry");
         return;
       }
-      try {
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
         if (UIUtil.isShowing(fileEditor.getComponent())) {
           pass.applyInformationToEditor();
           repaintErrorStripeAndIcon(fileEditor);
@@ -506,7 +512,9 @@ final class PassExecutorService implements Disposable {
 
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
-      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(((TextEditor)fileEditor).getEditor(), myProject);
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(editor, myProject,
+                                                              PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
     }
   }
 
@@ -516,13 +524,8 @@ final class PassExecutorService implements Disposable {
 
   @NotNull
   List<HighlightingPass> getAllSubmittedPasses() {
-    List<HighlightingPass> result = new ArrayList<>(mySubmittedPasses.size());
-    for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
-      if (!scheduledPass.myUpdateProgress.isCanceled()) {
-        result.add(scheduledPass.myPass);
-      }
-    }
-    return result;
+    return ContainerUtil.mapNotNull(mySubmittedPasses.keySet(),
+                                    scheduledPass -> scheduledPass.myUpdateProgress.isCanceled() ? null : scheduledPass.myPass);
   }
 
   private static void sortById(@NotNull List<? extends TextEditorHighlightingPass> result) {

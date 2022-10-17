@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -161,6 +162,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   private MdnSymbolDocumentation getDocumentation(PsiElement element, PsiElement originalElement) {
     XmlTag tagContext = findTagContext(originalElement);
+    if (tagContext != null && !(tagContext instanceof HtmlTag)) return null;
     MdnSymbolDocumentation result = getHtmlMdnDocumentation(element, tagContext);
     if (result == null && tagContext == null) {
       PsiElement declaration =

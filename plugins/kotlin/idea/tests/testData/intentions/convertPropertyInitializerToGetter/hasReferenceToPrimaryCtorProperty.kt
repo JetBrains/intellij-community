@@ -1,0 +1,3 @@
+class C(val i: Int, val j: Int) {
+    val x = i + j<caret>
+}

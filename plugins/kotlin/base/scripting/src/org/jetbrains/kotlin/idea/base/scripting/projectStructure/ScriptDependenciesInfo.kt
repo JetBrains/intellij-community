@@ -3,24 +3,27 @@ package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getScriptDependenciesClassFilesScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?
@@ -31,6 +34,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
         get() = KotlinBaseScriptingBundle.message("script.dependencies")
 
     override fun dependencies(): List<IdeaModuleInfo> = listOfNotNull(this, sdk?.let { SdkInfo(project, it) })
+    override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = sequenceOfNotNull(sdk?.let { SdkInfo(project, it) })
 
     // NOTE: intentionally not taking corresponding script info into account
     // otherwise there is no way to implement getModuleInfo
@@ -70,8 +74,9 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
         override val contentScope: GlobalSearchScope
             get() {
                 // TODO: this is not very efficient because KotlinSourceFilterScope already checks if the files are in scripts classpath
+                val scriptKtFile = PsiManager.getInstance(project).findFile(scriptFile) as KtFile
                 return KotlinSourceFilterScope.libraryClasses(
-                    ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(scriptFile), project
+                    getScriptDependenciesClassFilesScope(project, scriptKtFile), project
                 )
             }
     }
@@ -85,9 +90,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
 
         override val contentScope: GlobalSearchScope
             get() {
-                return KotlinSourceFilterScope.libraryClasses(
-                    ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope(), project
-                )
+                return KotlinSourceFilterScope.libraryClasses(getAllScriptsDependenciesClassFilesScope(project), project)
             }
 
         companion object {
@@ -96,7 +99,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
 
             private fun gradleApiPresentInModule(moduleInfo: IdeaModuleInfo) =
                 moduleInfo is JvmLibraryInfo &&
-                        moduleInfo.library.safeAs<LibraryEx>()?.isDisposed != true &&
+                        !moduleInfo.isDisposed &&
                         moduleInfo.getLibraryRoots().any {
                             // TODO: it's ugly ugly hack as Script (Gradle) SDK has to be provided in case of providing script dependencies.
                             //  So far the indication of usages of  script dependencies by module is `gradleApi`

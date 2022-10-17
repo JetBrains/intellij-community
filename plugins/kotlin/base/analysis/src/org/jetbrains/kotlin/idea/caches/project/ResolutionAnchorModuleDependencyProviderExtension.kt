@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -23,6 +24,7 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
         processAdditionalDependencyModules(module, CommonProcessors.CollectProcessor(modules))
         return modules
     }
+
     /**
      * Consider modules M1, M2, M3, library L1 resolving via Resolution anchor M2, other libraries L2, L3 with the following dependencies:
      * M2 depends on M1
@@ -39,17 +41,19 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
         if (!project.useLibraryToSourceAnalysis) return
 
         val resolutionAnchorDependencies = HashSet<ModuleSourceInfo>()
+        val libraryInfoCache = LibraryInfoCache.getInstance(project)
+        val anchorCacheService = ResolutionAnchorCacheService.getInstance(project)
         ModuleRootManager.getInstance(module).orderEntries().recursively().forEachLibrary { library ->
-            getIdeaModelInfosCache(project).getLibraryInfosForLibrary(library).flatMapTo(resolutionAnchorDependencies) { libraryInfo ->
+            libraryInfoCache[library].flatMapTo(resolutionAnchorDependencies) { libraryInfo ->
                 checkCanceled()
-                ResolutionAnchorCacheService.getInstance(project).getDependencyResolutionAnchors(libraryInfo)
+                anchorCacheService.getDependencyResolutionAnchors(libraryInfo)
             }
+
             true
         }
 
         for (anchorModule in resolutionAnchorDependencies) {
-            ModuleRootManager.getInstance(anchorModule.module).orderEntries().recursively()
-                .forEachModule(processor)
+            ModuleRootManager.getInstance(anchorModule.module).orderEntries().recursively().forEachModule(processor)
         }
     }
 }

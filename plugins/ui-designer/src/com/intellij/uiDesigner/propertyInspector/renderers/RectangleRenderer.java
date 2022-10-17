@@ -5,10 +5,6 @@ import com.intellij.openapi.util.NlsSafe;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RectangleRenderer extends LabelPropertyRenderer<Rectangle> {
   private final StringBuffer myBuffer;
 

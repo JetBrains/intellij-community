@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.liveTemplates;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyLiveTemplatesExpandingTest extends PyTestCase {
 
@@ -68,5 +69,19 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
   // PY-43889
   public void testMainTopLevel() {
     doMultiFileTest();
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
   }
 }

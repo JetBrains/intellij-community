@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -33,11 +33,11 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     VcsLogUiEx logUi = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX);
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
 
-    VcsLog log = logUi.getVcsLog();
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, logUi.getDataPack().getRefs(), visibleRoots,
-                                                      hash -> log.jumpToReference(hash),
-                                                      reference -> log.jumpToCommit(reference.getCommitHash(), reference.getRoot()),
+                                                      hash -> VcsLogNavigationUtil.jumpToRefOrHash(logUi, hash, false, true),
+                                                      reference -> VcsLogNavigationUtil.jumpToCommit(logUi, reference.getCommitHash(),
+                                                                                                     reference.getRoot(), false, true),
                                                       logManager.getColorManager(),
                                                       new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());

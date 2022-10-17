@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
@@ -72,7 +73,8 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal val myModel = ApplicationNotificationModel()
 
     fun addNotification(project: Project?, notification: Notification) {
-      if (ActionCenter.isEnabled() && notification.canShowFor(project)) {
+      if (ActionCenter.isEnabled() && notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(
+          notification.groupId).isShouldLog) {
         myModel.addNotification(project, notification)
       }
     }
@@ -410,9 +412,9 @@ private fun JComponent.mediumFontFunction() {
 }
 
 private fun JComponent.smallFontFunction() {
-  font = JBFont.small()
+  font = JBFont.smallOrNewUiMedium()
   val f: (JComponent) -> Unit = {
-    it.font = JBFont.small()
+    it.font = JBFont.smallOrNewUiMedium()
   }
   putClientProperty(NotificationGroupComponent.FONT_KEY, f)
 }
@@ -478,7 +480,7 @@ private class SearchController(private val mainContent: NotificationContent,
 private class NotificationGroupComponent(private val myMainContent: NotificationContent,
                                          private val mySuggestionType: Boolean,
                                          private val myProject: Project) :
-  JPanel(BorderLayout()), NullableComponent {
+  JBPanel<NotificationGroupComponent>(BorderLayout()), NullableComponent {
 
   companion object {
     const val FONT_KEY = "FontFunction"
@@ -762,7 +764,8 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 private class NotificationComponent(val project: Project,
                                     notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
+                                    val singleSelectionHandler: SingleTextSelectionHandler) :
+  JBPanel<NotificationComponent>() {
 
   companion object {
     val BG_COLOR: Color

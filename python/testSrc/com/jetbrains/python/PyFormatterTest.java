@@ -299,30 +299,32 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testPsiFormatting() { // IDEA-69724
     String initial =
-      "def method_name(\n" +
-      "   desired_impulse_response,\n" +
-      " desired_response_parameters,\n" +
-      " inverse_filter_length, \n" +
-      " observed_impulse_response):\n" +
-      " # Extract from here to ...\n" +
-      "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
-      "return desired,                o";
+      """
+        def method_name(
+           desired_impulse_response,
+         desired_response_parameters,
+         inverse_filter_length,\s
+         observed_impulse_response):
+         # Extract from here to ...
+           desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}
+        return desired,                o""";
 
     final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.getLatest(), initial);
     final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
 
     String expected =
-      "def method_name(\n" +
-      "        desired_impulse_response,\n" +
-      "        desired_response_parameters,\n" +
-      "        inverse_filter_length,\n" +
-      "        observed_impulse_response):\n" +
-      "    # Extract from here to ...\n" +
-      "    desired_impulse_response = {'dirac, '\n" +
-      "    gaussian\n" +
-      "    ', logistic_derivative'}\n" +
-      "    return desired, o\n" +
-      "";
+      """
+        def method_name(
+                desired_impulse_response,
+                desired_response_parameters,
+                inverse_filter_length,
+                observed_impulse_response):
+            # Extract from here to ...
+            desired_impulse_response = {'dirac, '
+            gaussian
+            ', logistic_derivative'}
+            return desired, o
+        """;
     assertEquals(expected, reformatted.getText());
   }
 
@@ -1257,6 +1259,36 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testMultiLineCallChainSplitByBackslashes() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForMultilineBinaryExpressionInReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForMultilineBinaryExpressionInYieldStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForPartlyParenthesizedMultiLineReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInReturnStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInAssignmentStatement() {
+    doTest();
+  }
+
+  // PY-24792
+  public void testNoAlignmentForSplitByBackslashesTupleInYieldStatement() {
     doTest();
   }
 }

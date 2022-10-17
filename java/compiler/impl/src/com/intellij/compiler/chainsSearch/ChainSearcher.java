@@ -5,7 +5,8 @@ import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.util.containers.IntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
@@ -162,7 +163,7 @@ public final class ChainSearcher {
       return;
     }
     boolean doAdd = true;
-    IntStack indicesToRemove = new IntStack();
+    IntStack indicesToRemove = new IntArrayList();
     for (int i = 0; i < result.size(); i++) {
       OperationChain chain = result.get(i);
       OperationChain.CompareResult r = OperationChain.compare(chain, newChain);
@@ -178,8 +179,8 @@ public final class ChainSearcher {
           break;
       }
     }
-    while (!indicesToRemove.empty()) {
-      result.remove(indicesToRemove.pop());
+    while (!indicesToRemove.isEmpty()) {
+      result.remove(indicesToRemove.popInt());
     }
     if (doAdd) {
       result.add(newChain);

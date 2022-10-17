@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.util.Collections;
 
 public final class FileTypeIndexImpl
-        extends ScalarIndexExtension<FileType>
-        implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
-  private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", true);
+  extends ScalarIndexExtension<FileType>
+  implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
+  private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", false);
+  private static final boolean USE_MAPPED_INDEX = SystemProperties.getBooleanProperty("use.mapped.file.type.index", true);
+
   @NotNull
   @Override
   public ID<FileType, Void> getName() {
@@ -24,7 +26,7 @@ public final class FileTypeIndexImpl
   @NotNull
   @Override
   public DataIndexer<FileType, Void, FileContent> getIndexer() {
-    if (USE_LOG_INDEX) {
+    if (USE_LOG_INDEX || USE_MAPPED_INDEX) {
       throw new UnsupportedOperationException();
     }
     return in -> Collections.singletonMap(in.getFileType(), null);
@@ -49,13 +51,15 @@ public final class FileTypeIndexImpl
 
   @Override
   public int getVersion() {
-    return 3 + (USE_LOG_INDEX ? 0xFF : 0);
+    return USE_MAPPED_INDEX ? 0x1000 : 3 + (USE_LOG_INDEX ? 0xFF : 0);
   }
 
   @Override
   public @NotNull UpdatableIndex<FileType, Void, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                                                                                            @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
     throws StorageException, IOException {
-    return USE_LOG_INDEX ? new LogFileTypeIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
+    return USE_MAPPED_INDEX ? new MappedFileTypeIndex(extension) :
+           USE_LOG_INDEX ? new LogFileTypeIndex(extension) :
+           new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
 }

@@ -3,18 +3,14 @@ package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -65,6 +61,7 @@ public enum PythonHelper implements HelperPackage {
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
+  DJANGO_PROJECT_CREATOR("pycharm", "_jb_django_project_creator"),
   MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
 
   APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
@@ -166,6 +163,7 @@ public enum PythonHelper implements HelperPackage {
       final Map<String, String> env = cmd.getEnvironment();
       addToPythonPath(env);
       PythonEnvUtil.resetHomePathChanges(sdkPath, env);
+      PySdkUtil.configureCharset(cmd);
       return cmd;
     }
 
@@ -238,7 +236,7 @@ public enum PythonHelper implements HelperPackage {
     @NotNull
     private final String myPythonPath;
 
-    private HelperDependency(@NotNull String pythonPath) {myPythonPath = pythonPath;}
+    private HelperDependency(@NotNull String pythonPath) { myPythonPath = pythonPath; }
 
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
@@ -307,18 +305,4 @@ public enum PythonHelper implements HelperPackage {
   public GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
     return myModule.newCommandLine(pythonSdk, parameters);
   }
-
-  @Nullable
-  public static Module guessModule(@NotNull PsiElement element) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) {
-      Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
-      if (modules.length != 1) {
-        return null;
-      }
-      module = modules[0];
-    }
-    return module;
-  }
-
 }

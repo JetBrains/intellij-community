@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -8,10 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ex.*;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -30,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static java.util.Collections.emptyList;
 
 public final class VcsFacadeImpl extends VcsFacade {
 
@@ -56,31 +57,25 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public boolean hasChanges(@NotNull VirtualFile file,
-                                       @NotNull Project project) {
+                            @NotNull Project project) {
     final Collection<Change> changes = ChangeListManager.getInstance(project).getChangesIn(file);
     for (Change change : changes) {
-      if (change.getType() == Change.Type.NEW || change.getType() == Change.Type.MODIFICATION) {
-        return true;
-      }
+      if (change.getType() == Change.Type.DELETED) continue;
+      return true;
     }
     return false;
   }
 
   @Override
+  @NotNull
   public Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
-    return VcsUtil.isFileUnderVcs(psiFile.getProject(), VcsUtil.getFilePath(psiFile.getVirtualFile()));
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(psiFile.getProject());
+    return vcsManager.getVcsFor(psiFile.getVirtualFile()) != null;
   }
 
   @Override
   public @NotNull Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
     return VcsUtil.getVcsIgnoreFileNames(project);
-  }
-
-  @Override
-  @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
-    ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
 
   @Override
@@ -90,15 +85,16 @@ public final class VcsFacadeImpl extends VcsFacade {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
 
-    ChangedRangesInfo cachedChangedTextHelper = getCachedChangedLines(project, document);
-    if (cachedChangedTextHelper != null) {
-      return cachedChangedTextHelper;
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    List<? extends Range> trackerRanges = tracker != null ? tracker.getRanges() : null;
+    if (trackerRanges != null) {
+      return getChangedRangesInfo(document, trackerRanges);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       CharSequence testContent = file.getUserData(TEST_REVISION_CONTENT);
       if (testContent != null) {
-        return calculateChangedRangesInfo(document, testContent);
+        return getChangedRangesInfo(document, computeRanges(document, testContent));
       }
     }
 
@@ -111,13 +107,16 @@ public final class VcsFacadeImpl extends VcsFacade {
       return new ChangedRangesInfo(ContainerUtil.newArrayList(fileRange), null);
     }
 
-    String contentFromVcs = getRevisionedContentFrom(change);
-    return contentFromVcs != null ? calculateChangedRangesInfo(document, contentFromVcs) : null;
+    String contentFromVcs = getRevisionedContentFrom(change.getBeforeRevision());
+    if (contentFromVcs == null) {
+      return null;
+    }
+    return getChangedRangesInfo(document, computeRanges(document, contentFromVcs));
   }
 
   @Override
   public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project,
-                                                                   @NotNull List<? extends PsiDirectory> dirs) {
+                                                        @NotNull List<? extends PsiDirectory> dirs) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     Collection<Change> changes = new ArrayList<>();
 
@@ -129,102 +128,133 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
-  private static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
-    Function<Change, PsiFile> changeToPsiFileMapper = new Function<>() {
-      private final PsiManager myPsiManager = PsiManager.getInstance(project);
-
-      @Override
-      public PsiFile fun(Change change) {
-        VirtualFile vFile = change.getVirtualFile();
-        return vFile != null ? myPsiManager.findFile(vFile) : null;
-      }
-    };
-
-    return ContainerUtil.mapNotNull(changes, changeToPsiFileMapper);
+  private static List<PsiFile> getChangedFiles(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
+    PsiManager psiManager = PsiManager.getInstance(project);
+    return ContainerUtil.mapNotNull(changes, change -> {
+      VirtualFile vFile = change.getVirtualFile();
+      return vFile != null ? psiManager.findFile(vFile) : null;
+    });
   }
 
   @NotNull
-  public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
-                                                           Change @NotNull [] changes,
-                                                           @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
-    List<T> result = new SmartList<>();
-    for (Change change : changes) {
-      if (change.getType() == Change.Type.DELETED) continue;
-      if (!(change.getAfterRevision() instanceof CurrentContentRevision)) continue;
+  public <T extends PsiElement> List<T> getLocalChangedElements(@NotNull Project project,
+                                                                @NotNull Change change,
+                                                                @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {
+    if (change.getType() == Change.Type.DELETED) return emptyList();
+    if (!(change.getAfterRevision() instanceof CurrentContentRevision)) return emptyList();
 
-      VirtualFile file = ((CurrentContentRevision)change.getAfterRevision()).getVirtualFile();
-      if (file == null) continue;
+    VirtualFile file = ((CurrentContentRevision)change.getAfterRevision()).getVirtualFile();
+    if (file == null) return emptyList();
 
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document == null) continue;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return emptyList();
 
-      List<T> apply = elementsConvertor.fun(file);
-      List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
-      if (ContainerUtil.isEmpty(elements)) continue;
+    List<T> apply = elementExtractor.fun(file);
+    List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
+    if (ContainerUtil.isEmpty(elements)) return emptyList();
 
-      BitSet changedLines = getChangedLines(project, document, change);
-      if (changedLines != null) {
-        for (T element : elements) {
-          if (isElementChanged(element, document, changedLines)) {
-            result.add(element);
-          }
-        }
-      }
-      else {
-        result.addAll(elements);
-      }
-    }
-    return result;
+    if (change.getType() == Change.Type.NEW) return elements;
+
+    List<? extends Range> ranges = getChangedRangesFromLineStatusTracker(project, document, change);
+    if (ranges == null) ranges = getChangedRangesFromBeforeRevision(document, change);
+    if (ranges == null) return elements; // assume the whole file is changed
+
+    BitSet changedLines = createChangedLinesBitSet(ranges);
+    return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
+  }
+
+  @NotNull
+  public <T extends PsiElement> List<T> getPostCommitChangedElements(@NotNull Project project,
+                                                                     @NotNull Change change,
+                                                                     @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {
+    if (change.getType() == Change.Type.DELETED) return emptyList();
+
+    VirtualFile file = ChangesUtil.getFilePath(change).getVirtualFile();
+    if (file == null) return emptyList();
+
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return emptyList();
+
+    List<T> apply = elementExtractor.fun(file);
+    List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
+    if (ContainerUtil.isEmpty(elements)) return emptyList();
+
+    if (change.getType() == Change.Type.NEW) return elements;
+
+    List<? extends Range> ranges = getChangedRangesForPostCommit(document, change);
+    if (ranges == null) return elements; // assume the whole file is changed
+
+    BitSet changedLines = createChangedLinesBitSet(ranges);
+    return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
   }
 
   @Nullable
-  private static BitSet getChangedLines(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
-    if (change.getType() == Change.Type.NEW) return null;
+  private static List<? extends Range> getChangedRangesFromLineStatusTracker(@NotNull Project project,
+                                                                             @NotNull Document document,
+                                                                             @NotNull Change change) {
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker == null) return null;
 
-    List<? extends Range> ranges = getChangedRanges(project, document, change);
-    if (ranges == null) return null;
+    if (change instanceof ChangeListChange &&
+        tracker instanceof PartialLocalLineStatusTracker) {
+      String changeListId = ((ChangeListChange)change).getChangeListId();
+      List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+      if (ranges == null) return null;
 
+      return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
+    }
+    else {
+      return tracker.getRanges();
+    }
+  }
+
+  @Nullable
+  private static List<Range> getChangedRangesFromBeforeRevision(@NotNull Document document, @NotNull Change change) {
+    String contentFromVcs = getRevisionedContentFrom(change.getBeforeRevision());
+    if (contentFromVcs == null) return null;
+
+    return computeRanges(document, contentFromVcs);
+  }
+
+  @Nullable
+  private static List<Range> getChangedRangesForPostCommit(@NotNull Document document,
+                                                           @NotNull Change change) {
+    String conventBefore = getRevisionedContentFrom(change.getBeforeRevision());
+    if (conventBefore == null) return null;
+
+    String contentAfter = getRevisionedContentFrom(change.getAfterRevision());
+    if (contentAfter == null) return null;
+
+    CharSequence beforeText = fixLineSeparators(conventBefore);
+    CharSequence afterText = fixLineSeparators(contentAfter);
+    CharSequence localText = document.getImmutableCharSequence();
+
+    LineOffsets beforeLineOffsets = LineOffsetsUtil.create(beforeText);
+    LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterText);
+    LineOffsets localLineOffsets = LineOffsetsUtil.create(document);
+
+    FairDiffIterable committedLines = RangesBuilder.compareLines(beforeText, afterText, beforeLineOffsets, afterLineOffsets);
+    FairDiffIterable localLines = RangesBuilder.compareLines(afterText, localText, afterLineOffsets, localLineOffsets);
+
+    ChangedRangesShifter builder = new ChangedRangesShifter();
+    List<com.intellij.diff.util.Range> ranges = builder.execute(committedLines, localLines);
+
+    return ContainerUtil.map(ranges, it -> new Range(it.start2, it.end2, it.start1, it.end1, null));
+  }
+
+  @NotNull
+  private static BitSet createChangedLinesBitSet(@NotNull List<? extends Range> ranges) {
     BitSet changedLines = new BitSet();
     for (Range range : ranges) {
-      if (!range.hasLines()) {
-        if (range.hasVcsLines()) {
-          changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
-        }
+      if (range.hasLines()) {
+        changedLines.set(range.getLine1(), range.getLine2());
       }
       else {
-        changedLines.set(range.getLine1(), range.getLine2());
+        // mark unchanged lines around deleted lines as modified
+        changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
       }
     }
     return changedLines;
-  }
-
-  @Nullable
-  private static List<? extends Range> getChangedRanges(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
-    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
-      if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
-        String changeListId = ((ChangeListChange)change).getChangeListId();
-        List<LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
-        if (ranges != null) {
-          return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
-        }
-        else {
-          return null;
-        }
-      }
-      else {
-        return tracker.getRanges();
-      }
-    }
-    else {
-      String contentFromVcs = getRevisionedContentFrom(change);
-      if (contentFromVcs != null) {
-        return getRanges(document, contentFromVcs);
-      }
-      else {
-        return null;
-      }
-    }
   }
 
   private static boolean isElementChanged(@NotNull PsiElement element, @NotNull Document document, @NotNull BitSet changedLines) {
@@ -238,47 +268,35 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Nullable
-  private static String getRevisionedContentFrom(@NotNull Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    if (revision == null) {
+  private static String getRevisionedContentFrom(@Nullable ContentRevision contentRevision) {
+    if (contentRevision == null) {
       return null;
     }
 
     try {
-      return revision.getContent();
+      return contentRevision.getContent();
     }
     catch (VcsException e) {
-      LOG.warn("Can't get content for: " + change.getVirtualFile(), e);
+      LOG.warn("Can't get content for: " + contentRevision, e);
       return null;
     }
   }
 
-  @Nullable
-  private static ChangedRangesInfo getCachedChangedLines(@NotNull Project project, @NotNull Document document) {
-    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
-    if (tracker != null) {
-      List<? extends Range> ranges = tracker.getRanges();
-      if (ranges != null) {
-        return getChangedTextRanges(document, ranges);
-      }
-    }
-    return null;
+  @NotNull
+  private static List<Range> computeRanges(@NotNull Document document,
+                                           @NotNull CharSequence contentFromVcs) {
+    return RangesBuilder.createRanges(document.getImmutableCharSequence(),
+                                      fixLineSeparators(contentFromVcs));
   }
 
   @NotNull
-  private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    return getChangedTextRanges(document, getRanges(document, contentFromVcs));
-  }
-
-  @NotNull
-  private static List<Range> getRanges(@NotNull Document document,
-                                       @NotNull CharSequence contentFromVcs) {
-    return RangesBuilder.createRanges(document.getImmutableCharSequence(), StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
+  private static CharSequence fixLineSeparators(@NotNull CharSequence contentFromVcs) {
+    return StringUtilRt.convertLineSeparators(contentFromVcs, "\n");
   }
 
   @Override
   public int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    List<Range> changedRanges = getRanges(document, contentFromVcs);
+    List<Range> changedRanges = computeRanges(document, contentFromVcs);
     int linesChanges = 0;
     for (Range range : changedRanges) {
       int inserted = range.getLine2() - range.getLine1();
@@ -289,7 +307,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
-  private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
+  private static ChangedRangesInfo getChangedRangesInfo(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
     final List<TextRange> ranges = new ArrayList<>();
     final List<TextRange> insertedRanges = new ArrayList<>();
 
@@ -314,14 +332,11 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public boolean isChangeNotTrackedForFile(@NotNull Project project, @NotNull PsiFile file) {
-    boolean isUnderVcs = VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file.getVirtualFile()));
-    if (!isUnderVcs) return true;
-
-    if (ChangeListManager.getInstance(project).isUnversioned(file.getVirtualFile())) {
-      return true;
+    if (isFileUnderVcs(file)) {
+      FileStatus status = ChangeListManager.getInstance(project).getStatus(file.getVirtualFile());
+      return status == FileStatus.UNKNOWN || status == FileStatus.IGNORED;
     }
-
-    return false;
+    return true;
   }
 
   @Override
@@ -350,5 +365,4 @@ public final class VcsFacadeImpl extends VcsFacade {
     }).toList();
     return new SimpleChangesBrowser(project, changes);
   }
-
 }

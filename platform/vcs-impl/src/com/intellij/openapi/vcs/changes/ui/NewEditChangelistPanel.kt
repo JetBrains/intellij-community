@@ -17,8 +17,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBDimension
@@ -72,7 +70,7 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
     row(VcsBundle.message("edit.changelist.name")) {
       cell(nameComponent.myComponent)
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .applyToComponent {
           putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(3))
         }
@@ -80,13 +78,12 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
 
     row {
       label(VcsBundle.message("edit.changelist.description"))
-        .verticalAlign(VerticalAlign.TOP)
+        .align(AlignY.TOP)
         .gap(RightGap.SMALL)
 
       cell(descriptionTextArea)
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
     }.resizableRow()
       .layout(RowLayout.PARENT_GRID)
       .bottomGap(BottomGap.SMALL)

@@ -283,9 +283,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
     super.dispose();
+    // remove this object from the Disposer hierarchy manually here because this method could be called from Swing when it e.g., hides the popup and calls Window.dispose()
+    Disposer.dispose(this);
     DialogWrapper.cleanupRootPane(rootPane);
     DialogWrapper.cleanupWindowListeners(this);
-    Disposer.dispose(this);
   }
 
   public void close() {

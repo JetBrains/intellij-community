@@ -92,7 +92,8 @@ public final class ConfigImportHelper {
   private static final Set<String> SESSION_FILES = Set.of(PORT_FILE,
                                                           PORT_LOCK_FILE,
                                                           TOKEN_FILE,
-                                                          USER_WEB_TOKEN);
+                                                          USER_WEB_TOKEN,
+                                                          BundledPluginsState.BUNDLED_PLUGINS_FILENAME);
 
   private ConfigImportHelper() { }
 
@@ -873,8 +874,7 @@ public final class ConfigImportHelper {
       options.importSettings.processPluginsToMigrate(newConfigDir,
                                                      oldConfigDir,
                                                      pluginsToMigrate,
-                                                     pluginsToDownload,
-                                                     pluginIdMap);
+                                                     pluginsToDownload);
     }
 
     pluginsToMigrate.removeIf(hasPendingUpdate);
@@ -1054,11 +1054,12 @@ public final class ConfigImportHelper {
         if (!Files.exists(keymapOptionFile)) {
           try {
             Files.createDirectories(keymapOptionFile.getParent());
-            Files.writeString(keymapOptionFile, ("<application>\n" +
-                                                 "  <component name=\"KeymapManager\">\n" +
-                                                 "    <active_keymap name=\"Mac OS X\" />\n" +
-                                                 "  </component>\n" +
-                                                 "</application>"));
+            Files.writeString(keymapOptionFile, ("""
+                                                   <application>
+                                                     <component name="KeymapManager">
+                                                       <active_keymap name="Mac OS X" />
+                                                     </component>
+                                                   </application>"""));
           }
           catch (IOException e) {
             log.error("Cannot set keymap", e);

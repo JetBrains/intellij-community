@@ -54,6 +54,10 @@ public class HighlightInfoHolder {
     return myErrorCount != 0;
   }
 
+  /**
+   * @deprecated Use {@link #add(HighlightInfo)} instead, as soon as HighlightInfo is ready, to reduce the latency between generating the highlight info and showing it onscreen
+   */
+  @Deprecated
   public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
     boolean added = false;
     for (HighlightInfo highlightInfo : highlightInfos) {

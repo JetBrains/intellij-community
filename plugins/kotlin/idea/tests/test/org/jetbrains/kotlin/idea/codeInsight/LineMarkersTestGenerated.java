@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -60,6 +60,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("Class.kt")
         public void testClass() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Class.kt");
+        }
+
+        @TestMetadata("ClassAndProperties.kt")
+        public void testClassAndProperties() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ClassAndProperties.kt");
         }
 
         @TestMetadata("ClassObjectInStaticNestedClass.kt")

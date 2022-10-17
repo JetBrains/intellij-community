@@ -137,6 +137,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       @NotNull
       @Override
       public String getSubIndexerVersion(@NotNull StubBuilderType type) {
+        mySerializationManager.initSerializers();
         return type.getVersion();
       }
 
@@ -298,7 +299,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @NotNull
   @Override
   public DataExternalizer<SerializedStubTree> getValueExternalizer() {
-    ensureSerializationManagerInitialized(mySerializationManager);
     return new SerializedStubTreeDataExternalizer(mySerializationManager, myStubIndexesExternalizer);
   }
 
@@ -381,30 +381,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       StorageException exception = new StorageException("NameStorage for stubs serialization has been corrupted");
       mySerializationManager.repairNameStorage(exception);
       throw exception;
-    }
-  }
-
-  private static void ensureSerializationManagerInitialized(@NotNull SerializationManagerEx serializationManager) {
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      instantiateElementTypesFromFields();
-      StubIndexEx.initExtensions();
-      serializationManager.initSerializers();
-    });
-  }
-
-  private static void instantiateElementTypesFromFields() {
-    // load stub serializers before usage
-    FileTypeRegistry.getInstance().getRegisteredFileTypes();
-    getExtensions(BinaryFileStubBuilders.INSTANCE, builder -> {});
-    getExtensions(LanguageParserDefinitions.INSTANCE, ParserDefinition::getFileNodeType);
-  }
-
-  private static <T> void getExtensions(@NotNull KeyedExtensionCollector<T, ?> collector, @NotNull Consumer<? super T> consumer) {
-    ExtensionPointImpl<KeyedLazyInstance<T>> point = (ExtensionPointImpl<KeyedLazyInstance<T>>)collector.getPoint();
-    if (point != null) {
-      for (KeyedLazyInstance<T> instance : point) {
-        consumer.accept(instance.getInstance());
-      }
     }
   }
 }

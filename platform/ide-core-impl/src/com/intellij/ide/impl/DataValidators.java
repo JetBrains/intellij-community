@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.Application;
@@ -68,8 +69,7 @@ public abstract class DataValidators {
     if (data instanceof PsiElement && !(data instanceof FakePsiElement) &&
         EDT.isCurrentThreadEdt() &&
         SlowOperations.isInsideActivity(SlowOperations.FORCE_ASSERT)) {
-      LOG.error(data.getClass().getName() + " is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
-                "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER");
+      reportPsiElementOnEdt(dataId, source);
     }
     try {
       for (Validator<Object> validator : validators) {
@@ -77,17 +77,29 @@ public abstract class DataValidators {
       }
     }
     catch (ClassCastException ex) {
-      LOG.error("Object of incorrect type provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")", ex);
+      reportObjectOfIncorrectType(dataId, source, ex);
       return false;
     }
     return true;
+  }
+
+  private static void reportPsiElementOnEdt(@NotNull String dataId, @NotNull Object source) {
+    LOG.error(PluginException.createByClass(
+      "PSI element is provided on EDT by " + source.getClass().getName() + ".getData(\"" + dataId + "\"). " +
+      "Please move that to a BGT data provider using PlatformCoreDataKeys.BGT_DATA_PROVIDER", null, source.getClass()));
+  }
+
+  private static void reportObjectOfIncorrectType(@NotNull String dataId, @NotNull Object source, @NotNull ClassCastException ex) {
+    LOG.error(PluginException.createByClass(
+      "Object of incorrect type provided by " + source.getClass().getName() +
+      ".getData(\"" + dataId + "\")", ex, source.getClass()));
   }
 
   private static final Map<String, Validator<?>[]> ourValidators = new ConcurrentHashMap<>();
 
   static {
     Application app = ApplicationManager.getApplication();
-    ExtensionPoint<KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
+    ExtensionPoint<@NotNull KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
       .getExtensionPointIfRegistered(EP_NAME.getName());
     if (dataRuleEP != null) {
       dataRuleEP.addChangeListener(() -> ourValidators.clear(), app);

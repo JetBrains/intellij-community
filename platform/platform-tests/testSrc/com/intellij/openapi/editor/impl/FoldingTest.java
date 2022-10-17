@@ -435,29 +435,32 @@ public class FoldingTest extends AbstractEditorTest {
   }
 
   public void testExpandRegionDoesNotImpactOutsideCaret() {
-    initText("(\n" +
-             "  foo [\n" +
-             "    bar<caret>\n" +
-             "  ]\n" +
-             ")");
+    initText("""
+               (
+                 foo [
+                   bar<caret>
+                 ]
+               )""");
     foldOccurrences("(?s)\\(.*\\)", "...");
     foldOccurrences("(?s)\\[.*\\]", "...");
-    checkResultByText("<caret>(\n" +
-                      "  foo [\n" +
-                      "    bar\n" +
-                      "  ]\n" +
-                      ")");
+    checkResultByText("""
+                        <caret>(
+                          foo [
+                            bar
+                          ]
+                        )""");
 
     getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("foo"));
     verifyFoldingState("[FoldRegion -(0:23), placeholder='...', FoldRegion +(8:21), placeholder='...']");
 
     executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
 
-    checkResultByText("(\n" +
-                      "  <caret>foo [\n" +
-                      "    bar\n" +
-                      "  ]\n" +
-                      ")");
+    checkResultByText("""
+                        (
+                          <caret>foo [
+                            bar
+                          ]
+                        )""");
   }
 
   public void testDisposalListenerMethodCalledOnExplicitRemoval() {

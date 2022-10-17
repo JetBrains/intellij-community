@@ -124,18 +124,13 @@ public class ConvertColorRepresentationIntentionAction extends BaseColorIntentio
       return null;
     }
 
-    switch (parameters.length) {
-      default:
-        return null;
-      case 1:
-        return createArguments(arguments[0]);
-      case 2:
-        return createArguments(arguments[0], arguments[1]);
-      case 3:
-        return createArguments(arguments[0], arguments[1], arguments[2]);
-      case 4:
-        return createArguments(arguments[0], arguments[1], arguments[2], arguments[3]);
-    }
+    return switch (parameters.length) {
+      default -> null;
+      case 1 -> createArguments(arguments[0]);
+      case 2 -> createArguments(arguments[0], arguments[1]);
+      case 3 -> createArguments(arguments[0], arguments[1], arguments[2]);
+      case 4 -> createArguments(arguments[0], arguments[1], arguments[2], arguments[3]);
+    };
   }
 
   private static String @Nullable [] createArguments(@NotNull PsiExpression rgbExpression) {

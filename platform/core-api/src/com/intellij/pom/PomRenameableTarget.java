@@ -17,9 +17,6 @@ package com.intellij.pom;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public interface PomRenameableTarget<T> extends PomNamedTarget{
 
   boolean isWritable();

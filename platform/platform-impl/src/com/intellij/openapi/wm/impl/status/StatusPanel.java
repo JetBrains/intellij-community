@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.notification.EventLog;
+import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,7 +15,6 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -36,9 +36,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * @author peter
- */
 class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
   private @NlsSafe @Nullable String myTimeText;
@@ -169,9 +166,9 @@ class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = getActiveProject();
-    Trinity<Notification, @NlsContexts.StatusBarText String, Long> statusMessage = EventLog.getStatusMessage(project);
+    LogModel.@Nullable StatusMessage statusMessage = EventLog.getStatusMessage(project);
     Alarm alarm = getAlarm();
-    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
+    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.notification() : null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
@@ -183,9 +180,9 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           assert statusMessage != null;
-          String text = statusMessage.second;
-          if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+          String text = statusMessage.text();
+          if (myDirty || System.currentTimeMillis() - statusMessage.stamp() >= DateFormatUtil.MINUTE) {
+            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.stamp())) + ")";
             text += myTimeText;
           }
           else {

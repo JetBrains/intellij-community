@@ -71,7 +71,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myStartTime = startTime;
   }
 
-  public DefaultBuildDescriptor(@Nullable @NotNull BuildDescriptor descriptor) {
+  public DefaultBuildDescriptor(@NotNull BuildDescriptor descriptor) {
     this(descriptor.getId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
     if (descriptor instanceof DefaultBuildDescriptor) {
       DefaultBuildDescriptor defaultBuildDescriptor = (DefaultBuildDescriptor)descriptor;

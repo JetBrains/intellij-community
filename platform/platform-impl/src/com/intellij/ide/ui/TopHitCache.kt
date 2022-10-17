@@ -72,7 +72,7 @@ class ProjectTopHitCache(project: Project) : TopHitCache() {
   }
 
   init {
-    OptionsTopHitProvider.PROJECT_LEVEL_EP.addExtensionPointListener(object : ExtensionPointListener<ProjectLevelProvider?> {
+    OptionsTopHitProvider.PROJECT_LEVEL_EP.addExtensionPointListener(object : ExtensionPointListener<ProjectLevelProvider> {
       override fun extensionRemoved(extension: ProjectLevelProvider, pluginDescriptor: PluginDescriptor) {
         invalidateCachedOptions(extension.javaClass)
       }

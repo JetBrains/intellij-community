@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -52,11 +51,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
   private final Map<ContractFailureProblem, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<DfaAnchor, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
   private final Map<PsiExpression, ThreeState> myNegativeArraySizes = new HashMap<>();
+  private final Map<PsiElement, StateInfo> myStreamConsumed = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
@@ -65,6 +64,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
+  private final Map<DfaAnchor, ThreeState> myConstantInstanceOf = new HashMap<>();
   private final boolean myStrictMode;
 
   private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
@@ -118,10 +118,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
 
   private static boolean isAssignmentToDefaultValueInConstructor(DfaValue target, PsiExpression rExpression) {
-    if (!(target instanceof DfaVariableValue)) return false;
-    DfaVariableValue var = (DfaVariableValue)target;
-    PsiField field = tryCast(var.getPsiVariable(), PsiField.class);
-    if (field == null || var.getQualifier() == null || !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
+    if (!(target instanceof DfaVariableValue var)) return false;
+    if (!(var.getPsiVariable() instanceof PsiField field)) return false;
+    if (var.getQualifier() == null || !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
       return false;
     }
 
@@ -145,11 +144,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   // Reporting of floating zero is skipped, because this produces false-positives on the code like
   // if(x == -0.0) x = 0.0;
   private static boolean isFloatingZero(Object value) {
-    if (value instanceof Double) {
-      return ((Double)value).doubleValue() == 0.0;
+    if (value instanceof Double dValue) {
+      return dValue == 0.0;
     }
-    if (value instanceof Float) {
-      return ((Float)value).floatValue() == 0.0f;
+    if (value instanceof Float fValue) {
+      return fValue == 0.0f;
     }
     return false;
   }
@@ -172,15 +171,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   Map<PsiElement, ThreeState> getOfNullableCalls() {
     return myOfNullableCalls;
-  }
-
-  Map<PsiExpression, ConstantResult> getConstantExpressions() {
-    return EntryStream.of(myConstantExpressions).selectKeys(JavaExpressionAnchor.class)
-      .mapKeys(JavaExpressionAnchor::getExpression).toMap();
-  }
-
-  Map<DfaAnchor, ConstantResult> getConstantExpressionChunks() {
-    return myConstantExpressions;
   }
 
   Map<PsiCaseLabelElement, ThreeState> getSwitchLabelsReachability() {
@@ -208,6 +198,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     return StreamEx.ofKeys(myNegativeArraySizes, ThreeState.YES::equals);
   }
 
+  EntryStream<PsiElement, Boolean> streamConsumed() {
+    return EntryStream.of(myStreamConsumed).filterValues(StateInfo::shouldReport).mapToValue(
+      (element, info) -> info.alwaysFails());
+  }
+
   StreamEx<PsiCallExpression> alwaysFailingCalls() {
     return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).select(PsiCallExpression.class).distinct();
   }
@@ -218,7 +213,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   }
   
   StreamEx<DfaAnchor> redundantInstanceOfs() {
-    return StreamEx.of(myPotentiallyRedundantInstanceOf).filter(anchor -> myConstantExpressions.get(anchor) == ConstantResult.UNKNOWN);
+    return StreamEx.of(myPotentiallyRedundantInstanceOf).filter(anchor -> myConstantInstanceOf.get(anchor) == ThreeState.UNSURE);
   }
 
   @Override
@@ -227,30 +222,38 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                          @NotNull DfaAnchor anchor,
                          @NotNull DfaMemoryState state) {
     JavaDfaListener.super.beforePush(args, value, anchor, state);
-    if (anchor instanceof JavaExpressionAnchor) {
-      PsiExpression expression = ((JavaExpressionAnchor)anchor).getExpression();
+    if (anchor instanceof JavaExpressionAnchor expressionAnchor) {
+      PsiExpression expression = expressionAnchor.getExpression();
       if (expression instanceof PsiLiteralExpression) return;
-      if (expression instanceof PsiMethodCallExpression && USELESS_SAME_ARGUMENTS.matches(expression)) {
-        checkUselessCall(args, value, state, ((PsiMethodCallExpression)expression).getMethodExpression());
+      if (expression instanceof PsiMethodCallExpression call && USELESS_SAME_ARGUMENTS.test(call)) {
+        checkUselessCall(args, value, state, call.getMethodExpression());
       }
     }
-    if (anchor instanceof JavaMethodReferenceReturnAnchor) {
-      PsiMethodReferenceExpression methodRef = ((JavaMethodReferenceReturnAnchor)anchor).getMethodReferenceExpression();
+    if (anchor instanceof JavaMethodReferenceReturnAnchor returnAnchor) {
+      PsiMethodReferenceExpression methodRef = returnAnchor.getMethodReferenceExpression();
       if (USELESS_SAME_ARGUMENTS.methodReferenceMatches(methodRef)) {
         checkUselessCall(args, value, state, methodRef);
       }
     }
-    if (anchor instanceof JavaSwitchLabelTakenAnchor) {
+    if (anchor instanceof JavaSwitchLabelTakenAnchor labelTakenAnchor) {
       DfType type = state.getDfType(value);
-      mySwitchLabelsReachability.merge(((JavaSwitchLabelTakenAnchor)anchor).getLabelElement(),
-                                       type.equals(DfTypes.TRUE) ? ThreeState.YES :
-                                       type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE, ThreeState::merge);
+      mySwitchLabelsReachability.merge(labelTakenAnchor.getLabelElement(), fromDfType(type), ThreeState::merge);
       return;
     }
-    if (myPotentiallyRedundantInstanceOf.contains(anchor) && isUsefulInstanceof(args, value, state)) {
-      myPotentiallyRedundantInstanceOf.remove(anchor);
+    if (myPotentiallyRedundantInstanceOf.contains(anchor)) {
+      if (isUsefulInstanceof(args, value, state)) {
+        myPotentiallyRedundantInstanceOf.remove(anchor);
+      }
+      else {
+        myConstantInstanceOf.merge(anchor, fromDfType(state.getDfType(value)), ThreeState::merge);
+      }
     }
-    myConstantExpressions.compute(anchor, (c, curState) -> ConstantResult.mergeValue(curState, state, value));
+  }
+
+  @NotNull
+  private static ThreeState fromDfType(DfType type) {
+    return type.equals(DfTypes.TRUE) ? ThreeState.YES :
+           type.equals(DfTypes.FALSE) ? ThreeState.NO : ThreeState.UNSURE;
   }
 
   private static boolean isUsefulInstanceof(@NotNull DfaValue @NotNull [] args,
@@ -292,16 +295,13 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
         throw new IllegalStateException("Non-physical expression is passed");
       }
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
-        processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
-      }
+    if (expression instanceof PsiMethodCallExpression call && OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
+      processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiTypeCastExpression) {
+    if (parent instanceof PsiTypeCastExpression cast) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
-      myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::join);
+      myRealOperandTypes.merge(cast, fact, TypeConstraint::join);
     }
   }
 
@@ -313,11 +313,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (context instanceof PsiMethod || context instanceof PsiLambdaExpression) {
       myAlwaysReturnsNotNull = myAlwaysReturnsNotNull && !state.getDfType(value).isSuperType(DfTypes.NULL);
     }
-    else if (context instanceof PsiMethodReferenceExpression) {
-      var methodRef = (PsiMethodReferenceExpression)context;
-      if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
-        processOfNullableResult(value, state, methodRef.getReferenceNameElement());
-      }
+    else if (context instanceof PsiMethodReferenceExpression methodRef &&
+             OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+      processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
   }
 
@@ -341,40 +339,41 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
                           @NotNull DfaValue value,
                           @NotNull ThreeState failed,
                           @NotNull DfaMemoryState state) {
-    if (problem instanceof MutabilityProblem && failed == ThreeState.YES) {
-      reportMutabilityViolation(((MutabilityProblem)problem).isReceiver(), ((MutabilityProblem)problem).getAnchor());
+    if (problem instanceof MutabilityProblem mutabilityProblem && failed == ThreeState.YES) {
+      reportMutabilityViolation(mutabilityProblem.isReceiver(), mutabilityProblem.getAnchor());
     }
-    else if (problem instanceof NegativeArraySizeProblem) {
-      myNegativeArraySizes.merge(((NegativeArraySizeProblem)problem).getAnchor(), failed, ThreeState::merge);
+    else if (problem instanceof NegativeArraySizeProblem arraySizeProblem) {
+      myNegativeArraySizes.merge(arraySizeProblem.getAnchor(), failed, ThreeState::merge);
     }
-    else if (problem instanceof ArrayIndexProblem) {
-      myOutOfBoundsArrayAccesses.merge(((ArrayIndexProblem)problem).getAnchor(), failed, ThreeState::merge);
+    else if (problem instanceof ArrayIndexProblem indexProblem) {
+      myOutOfBoundsArrayAccesses.merge(indexProblem.getAnchor(), failed, ThreeState::merge);
     }
-    else if (problem instanceof ClassCastProblem) {
-      myClassCastProblems.computeIfAbsent(((ClassCastProblem)problem).getAnchor(), e -> new StateInfo())
+    else if (problem instanceof ClassCastProblem castProblem) {
+      myClassCastProblems.computeIfAbsent(castProblem.getAnchor(), e -> new StateInfo())
         .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
-    else if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
-      myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(),
-                               Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
+    else if (problem instanceof ArrayStoreProblem storeProblem && failed == ThreeState.YES) {
+      myArrayStoreProblems.put(storeProblem.getAnchor(), Pair.create(storeProblem.getFromType(), storeProblem.getToType()));
     }
-    else if (problem instanceof ContractFailureProblem) {
-      ContractFailureProblem contractFailure = (ContractFailureProblem)problem;
-      PsiCallExpression call = tryCast(contractFailure.getAnchor(), PsiCallExpression.class);
-      if (call != null) {
+    else if (problem instanceof ContractFailureProblem contractFailure) {
+      if (contractFailure.getAnchor() instanceof PsiCallExpression call) {
         Boolean isFailing = myFailingCalls.get(problem);
         if (isFailing != null || !hasTrivialFailContract(call)) {
           myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
         }
       }
     }
-    else if (problem instanceof NullabilityProblemKind.NullabilityProblem) {
+    else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> nullabilityProblem) {
       DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
       boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
       boolean unknown = myStrictMode && nullability == DfaNullability.UNKNOWN;
       ThreeState ok = notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
-      StateInfo info = myStateInfos.computeIfAbsent((NullabilityProblemKind.NullabilityProblem<?>)problem, k -> new StateInfo());
+      StateInfo info = myStateInfos.computeIfAbsent(nullabilityProblem, k -> new StateInfo());
       info.update(state, ok);
+    }
+    else if (problem instanceof ConsumedStreamProblem consumedStreamProblem) {
+      myStreamConsumed.computeIfAbsent(consumedStreamProblem.getAnchor(), e -> new StateInfo())
+        .update(state, ThreeState.fromBoolean(failed != ThreeState.YES));
     }
   }
 
@@ -390,10 +389,11 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
     if (receiver) {
-      if (anchor instanceof PsiMethodReferenceExpression) {
-        anchor = ((PsiMethodReferenceExpression)anchor).getReferenceNameElement();
-      } else if (anchor instanceof PsiMethodCallExpression) {
-        anchor = ((PsiMethodCallExpression)anchor).getMethodExpression().getReferenceNameElement();
+      if (anchor instanceof PsiMethodReferenceExpression methodRef) {
+        anchor = methodRef.getReferenceNameElement();
+      }
+      else if (anchor instanceof PsiMethodCallExpression call) {
+        anchor = call.getMethodExpression().getReferenceNameElement();
       }
       if (anchor != null) {
         myReceiverMutabilityViolation.add(anchor);
@@ -436,24 +436,14 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     }
   }
 
-  static class ArgResultEquality {
-    final boolean argsEqual;
-    final boolean firstArgEqualToResult;
-    final boolean secondArgEqualToResult;
-
-    ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
-      this.argsEqual = argsEqual;
-      this.firstArgEqualToResult = firstArgEqualToResult;
-      this.secondArgEqualToResult = secondArgEqualToResult;
-    }
-
+  record ArgResultEquality(boolean argsEqual, boolean firstArgEqualToResult, boolean secondArgEqualToResult) {
     ArgResultEquality merge(ArgResultEquality other) {
-      return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
-                                   secondArgEqualToResult && other.secondArgEqualToResult);
-    }
+        return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
+                                     secondArgEqualToResult && other.secondArgEqualToResult);
+      }
 
-    boolean hasEquality() {
-      return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
+      boolean hasEquality() {
+        return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
+      }
     }
-  }
 }

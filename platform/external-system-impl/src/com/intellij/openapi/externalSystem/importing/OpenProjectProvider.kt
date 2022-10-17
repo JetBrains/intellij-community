@@ -3,9 +3,8 @@ package com.intellij.openapi.externalSystem.importing
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@Deprecated("Useless abstraction")
 interface OpenProjectProvider {
   fun canOpenProject(file: VirtualFile): Boolean
 

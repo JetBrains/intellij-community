@@ -10,16 +10,22 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
+import kotlin.coroutines.coroutineContext
 
 internal class TestCoroutineProgressAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
+    try {
+      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+        awaitCancellation()
+      }
+    }
+    catch (ignored: CancellationException) {
+
+    }
+
     val project = e.project ?: return
     object : DialogWrapper(project, false, IdeModalityType.MODELESS) {
 
@@ -49,6 +55,22 @@ internal class TestCoroutineProgressAction : AnAction() {
           }
           button("Non-Cancellable Modal Progress") {
             cs.nonCancellableModalProgress(project)
+          }
+        }
+        row {
+          button("Cancellable Synchronous Modal Progress") {
+            runBlockingModal(project, "Cancellable synchronous modal progress") {
+              doStuff()
+            }
+          }
+          button("Non-Cancellable Synchronous Modal Progress") {
+            runBlockingModal(
+              ModalTaskOwner.project(project),
+              "Non-cancellable synchronous modal progress",
+              TaskCancellation.nonCancellable(),
+            ) {
+              doStuff()
+            }
           }
         }
       }
@@ -95,7 +117,7 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   private suspend fun doStuff() {
-    val sink = progressSink()
+    val sink = coroutineContext.progressSink
     val total = 100
     sink?.text("Indeterminate stage")
     delay(2000)

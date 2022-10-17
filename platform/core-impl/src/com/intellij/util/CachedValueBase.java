@@ -28,7 +28,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @NotNull
-  private Data<T> computeData(Computable<? extends CachedValueProvider.Result<T>> doCompute) {
+  private Data<T> computeData(@NotNull Computable<? extends CachedValueProvider.Result<T>> doCompute) {
     CachedValueProvider.Result<T> result;
     CachedValueProfiler.ValueTracker tracker;
     if (CachedValueProfiler.isProfiling()) {
@@ -45,7 +45,7 @@ public abstract class CachedValueBase<T> {
       return new Data<>(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, ArrayUtil.EMPTY_LONG_ARRAY, null);
     }
     T value = result.getValue();
-    Object[] inferredDependencies = normalizeDependencies(result);
+    Object[] inferredDependencies = normalizeDependencies(value, result.getDependencyItems());
     long[] inferredTimeStamps = new long[inferredDependencies.length];
     for (int i = 0; i < inferredDependencies.length; i++) {
       inferredTimeStamps[i] = getTimeStamp(inferredDependencies[i]);
@@ -68,13 +68,17 @@ public abstract class CachedValueBase<T> {
     myData = data == null ? null : new SoftReference<>(data);
   }
 
-  protected Object @NotNull [] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
-    Object[] items = result.getDependencyItems();
-    T value = result.getValue();
-    Object[] rawDependencies = myTrackValue && value != null ? ArrayUtil.append(items, value) : items;
-
-    List<Object> flattened = new NotNullList<>(rawDependencies.length);
-    collectDependencies(flattened, rawDependencies);
+  protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
+    List<Object> flattened = new NotNullList<>(dependencyItems.length+1);
+    collectDependencies(dependencyItems, flattened);
+    if (myTrackValue && value != null) {
+      if (value instanceof Object[]) {
+        collectDependencies((Object[])value, flattened);
+      }
+      else {
+        flattened.add(value);
+      }
+    }
     return ArrayUtil.toObjectArray(flattened);
   }
 
@@ -124,11 +128,11 @@ public abstract class CachedValueBase<T> {
     return timeStamp < 0 || timeStamp != oldTimeStamp;
   }
 
-  private static void collectDependencies(@NotNull List<Object> resultingDeps, Object @NotNull [] dependencies) {
+  private static void collectDependencies(Object @NotNull [] dependencies, @NotNull List<? super Object> resultingDeps) {
     for (Object dependency : dependencies) {
       if (dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
-        collectDependencies(resultingDeps, (Object[])dependency);
+        collectDependencies((Object[])dependency, resultingDeps);
       }
       else {
         resultingDeps.add(dependency);
@@ -174,6 +178,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(@NotNull Project project);
 
+  @NotNull
   public abstract Object getValueProvider();
 
   protected static final class Data<T> implements Getter<T> {

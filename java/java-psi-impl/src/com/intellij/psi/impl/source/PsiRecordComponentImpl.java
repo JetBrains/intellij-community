@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -14,16 +14,15 @@ import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
 
-public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
-
+public final class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponentStub> implements PsiRecordComponent {
   private volatile Reference<PsiType> myCachedType;
 
   public PsiRecordComponentImpl(@NotNull PsiRecordComponentStub stub) {
@@ -153,9 +152,9 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   }
 
   @Override
-  protected @Nullable Icon getElementIcon(int flags) {
+  protected @NotNull Icon getElementIcon(int flags) {
     return IconManager.getInstance()
-      .createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+      .createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
   }
 
   @Override

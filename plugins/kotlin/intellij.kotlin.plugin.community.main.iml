@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
     <orderEntry type="module" module-name="kotlin.base.klib" exported="" />
     <orderEntry type="module" module-name="kotlin.base.highlighting" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.line-markers" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.jps" exported="" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" exported="" />
@@ -53,6 +52,11 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.line-markers-k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />
@@ -88,6 +92,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.migration" exported="" />
@@ -114,6 +119,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
@@ -144,6 +150,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates-k2" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" exported="" />
@@ -176,5 +183,8 @@
     <orderEntry type="library" scope="RUNTIME" name="javaslang" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
+    <orderEntry type="module" module-name="kotlin.search" exported="" />
+    <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
   </component>
 </module>

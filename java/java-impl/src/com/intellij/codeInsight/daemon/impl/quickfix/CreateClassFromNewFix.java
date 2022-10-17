@@ -57,8 +57,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
     if (classReference == null) return IntentionPreviewInfo.EMPTY;
-    PsiClass aClass = getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName());
+    PsiClass aClass = (PsiClass)file.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
     setupClassFromNewExpression(aClass, element);
+    setupGenericParameters(aClass, classReference);
     CodeStyleManager.getInstance(project).reformat(aClass);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
   }

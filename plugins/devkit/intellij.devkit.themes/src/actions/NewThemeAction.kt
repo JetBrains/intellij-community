@@ -15,8 +15,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
@@ -25,7 +29,6 @@ import org.jetbrains.idea.devkit.themes.DevKitThemesBundle
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
-import javax.swing.JComponent
 
 //TODO better undo support
 class NewThemeAction : AnAction() {
@@ -41,11 +44,24 @@ class NewThemeAction : AnAction() {
 
     val module = e.getRequiredData(PlatformCoreDataKeys.MODULE)
     val project = module.project
-    val dialog = NewThemeDialog(project)
-    dialog.show()
+    lateinit var name: Cell<JBTextField>
+    lateinit var isDark: Cell<JBCheckBox>
+    val panel = panel {
+      row(DevKitThemesBundle.message("new.theme.dialog.name.text.field.text")) {
+        name = textField()
+          .focused()
+          .columns(30)
+          .addValidationRule(DevKitThemesBundle.message("new.theme.dialog.name.empty")) { name.component.text.isBlank() }
+      }
+      row("") {
+        isDark = checkBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text")).applyToComponent { isSelected = true }
+      }
+    }
 
+    val dialog = dialog(DevKitThemesBundle.message("new.theme.dialog.title"), project = project, panel = panel)
+    dialog.show()
     if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      val file = createThemeJson(dialog.name.text, dialog.isDark.isSelected, project, dir, module)
+      val file = createThemeJson(name.component.text, isDark.component.isSelected, project, dir, module)
       view.selectElement(file)
       FileEditorManager.getInstance(project).openFile(file.virtualFile, true)
       registerTheme(dir, file, module)
@@ -119,31 +135,4 @@ class NewThemeAction : AnAction() {
   }
 
   private fun getRandomId() = UUID.randomUUID().toString()
-
-
-  class NewThemeDialog(project: Project) : DialogWrapper(project) {
-    val name = JBTextField()
-    val isDark = CheckBox(DevKitThemesBundle.message("new.theme.dialog.is.dark.checkbox.text"), true)
-
-    init {
-      title = DevKitThemesBundle.message("new.theme.dialog.title")
-      init()
-    }
-
-    override fun createCenterPanel(): JComponent {
-      return panel {
-        row(DevKitThemesBundle.message("new.theme.dialog.name.text.field.text")) {
-          cell {
-            name(growPolicy = GrowPolicy.MEDIUM_TEXT)
-              .focused()
-              //TODO max name length, maybe some other restrictions?
-              .withErrorOnApplyIf(DevKitThemesBundle.message("new.theme.dialog.name.empty")) { it.text.isBlank() }
-          }
-        }
-        row("") {
-          cell { isDark() }
-        }
-      }
-    }
-  }
 }

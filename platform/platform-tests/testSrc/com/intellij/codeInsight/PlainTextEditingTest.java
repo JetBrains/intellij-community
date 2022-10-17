@@ -88,9 +88,10 @@ public class PlainTextEditingTest extends EditingTestBase {
     // Inspired by IDEA-63313
 
     String text =
-      "class Test {\n" +
-      "    String my1FieldWithLongName;\n" +
-      "}";
+      """
+        class Test {
+            String my1FieldWithLongName;
+        }""";
 
     init(text, PlainTextFileType.INSTANCE);
 
@@ -142,24 +143,26 @@ public class PlainTextEditingTest extends EditingTestBase {
   public void testNewLineAboveCurrentAction() {
     // Inspired by IDEA-69728
     String initial =
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        String s =\n" +
-      "            \"test <caret>string\";\n" +
-      "    }\n" +
-      "}";
+      """
+        class Test {
+            public void test() {
+                String s =
+                    "test <caret>string";
+            }
+        }""";
 
     init(initial, PlainTextFileType.INSTANCE);
     executeAction("EditorStartNewLineBefore");
 
     String expected =
-      "class Test {\n" +
-      "    public void test() {\n" +
-      "        String s =\n" +
-      "\n" +
-      "            \"test string\";\n" +
-      "    }\n" +
-      "}";
+      """
+        class Test {
+            public void test() {
+                String s =
+
+                    "test string";
+            }
+        }""";
 
     checkResultByText(expected);
   }

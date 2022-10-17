@@ -117,7 +117,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
     int initialSize = quickfixes.size();
     for (XmlAttributeDescriptor attr : descriptors) {
-      if (EditDistance.optimalAlignment(name, attr.getName(), false) <= 1) {
+      if (EditDistance.optimalAlignment(name, attr.getName(), false, 1) <= 1) {
         quickfixes.add(new RenameAttributeFix(attr));
       }
       if (quickfixes.size() >= initialSize + 3) break;

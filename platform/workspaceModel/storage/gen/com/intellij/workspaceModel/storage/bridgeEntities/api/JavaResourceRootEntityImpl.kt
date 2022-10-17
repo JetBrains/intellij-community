@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityBase() {
+open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData) : JavaResourceRootEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
@@ -42,17 +42,15 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
   override val sourceRoot: SourceRootEntity
     get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override var generated: Boolean = false
-  @JvmField
-  var _relativeOutputPath: String? = null
+  override val generated: Boolean get() = dataSource.generated
   override val relativeOutputPath: String
-    get() = _relativeOutputPath!!
+    get() = dataSource.relativeOutputPath
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: JavaResourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootEntity>(), JavaResourceRootEntity.Builder {
+  class Builder(var result: JavaResourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootEntity>(), JavaResourceRootEntity.Builder {
     constructor() : this(JavaResourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -70,6 +68,9 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -78,6 +79,9 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
           error("Field JavaResourceRootEntity#sourceRoot should be initialized")
@@ -87,9 +91,6 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
           error("Field JavaResourceRootEntity#sourceRoot should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field JavaResourceRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isRelativeOutputPathInitialized()) {
         error("Field JavaResourceRootEntity#relativeOutputPath should be initialized")
@@ -103,14 +104,26 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as JavaResourceRootEntity
-      this.entitySource = dataSource.entitySource
-      this.generated = dataSource.generated
-      this.relativeOutputPath = dataSource.relativeOutputPath
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.generated != dataSource.generated) this.generated = dataSource.generated
+      if (this.relativeOutputPath != dataSource.relativeOutputPath) this.relativeOutputPath = dataSource.relativeOutputPath
       if (parents != null) {
-        this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
+        val sourceRootNew = parents.filterIsInstance<SourceRootEntity>().single()
+        if ((this.sourceRoot as WorkspaceEntityBase).id != (sourceRootNew as WorkspaceEntityBase).id) {
+          this.sourceRoot = sourceRootNew
+        }
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var sourceRoot: SourceRootEntity
       get() {
@@ -149,15 +162,6 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var generated: Boolean
@@ -201,13 +205,13 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
   }
 
   override fun createEntity(snapshot: EntityStorage): JavaResourceRootEntity {
-    val entity = JavaResourceRootEntityImpl()
-    entity.generated = generated
-    entity._relativeOutputPath = relativeOutputPath
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = JavaResourceRootEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -234,7 +238,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaResourceRootEntityData
 
@@ -246,7 +250,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as JavaResourceRootEntityData
 

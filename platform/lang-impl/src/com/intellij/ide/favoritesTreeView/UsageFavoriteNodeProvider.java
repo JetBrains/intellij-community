@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@Deprecated(forRemoval = true)
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private static final Map<String, TreeSet<WorkingSetSerializable>> ourSerializables = new HashMap<>();
   private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = Comparator.comparing(VirtualFile::getPath);

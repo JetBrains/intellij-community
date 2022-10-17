@@ -16,7 +16,7 @@ class PydevConsoleRunnerUtilTest {
     val dummyEnvironment = DummyTargetEnvironment(dummyRequest)
 
     val pythonPath = mutableListOf(constant("/home/foo/bar's baz"))
-    val workingDir = "/home/foo/bar\\qux"
+    val workingDir = constant("/home/foo/bar\\qux")
 
     val consoleStartCommand = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND
 

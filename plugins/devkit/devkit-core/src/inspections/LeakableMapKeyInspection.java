@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -169,8 +168,6 @@ public final class LeakableMapKeyInspection extends DevKitUastInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       assert isJavaTypeElement(element);
-
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
       PsiTypeElement stringTypeElement = PsiElementFactory.getInstance(project)
         .createTypeElementFromText(myText, element.getContext());

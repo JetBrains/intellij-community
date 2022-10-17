@@ -20,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -202,31 +205,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     assertSame(expectedToBeLogged, error);
   }
 
-  public void testPumpEventsForHierarchyMustExitOnIsCancelEventCondition() {
-    assert SwingUtilities.isEventDispatchThread();
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    CompletableFuture<Object> future = new CompletableFuture<>();
-    TestTimeOut cancelEventTime = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
-    JLabel component = new JLabel();
-    long start = System.currentTimeMillis();
-    ideEventQueue.pumpEventsForHierarchy(component, future, event -> {
-      if (cancelEventTime.isTimedOut()) {
-        ideEventQueue.postEvent(new TextEvent(component, -239){
-          @Override
-          public String paramString() {
-            return "my";
-          }
-        });
-      }
-      // post InvocationEvent to give getNextEvent work to do
-      SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return "my".equals(event.paramString());
-    });
-    long elapsedMs = System.currentTimeMillis() - start;
-    // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment
-    assertTrue(String.valueOf(elapsedMs), cancelEventTime.isTimedOut());
-  }
-
   public void testPumpEventsForHierarchyMustExitOnIsFutureDoneCondition() {
     assert SwingUtilities.isEventDispatchThread();
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
@@ -240,7 +218,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       }
       // post InvocationEvent to give getNextEvent work to do
       SwingUtilities.invokeLater(EmptyRunnable.getInstance());
-      return false;
     });
     long elapsedMs = System.currentTimeMillis() - start;
     // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment

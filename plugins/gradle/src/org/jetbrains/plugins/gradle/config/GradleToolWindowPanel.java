@@ -10,7 +10,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
@@ -94,7 +94,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     myContent.add(scrollPane, CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
     builder.setBackgroundColor(payloadControl.getBackground());
-    builder.setForegroundColor(UIUtil.getInactiveTextColor());
+    builder.setForegroundColor(NamedColorUtil.getInactiveTextColor());
     builder.setFont(payloadControl.getFont());
     builder.setText(GradleBundle.message("gradle.toolwindow.text.no.linked.project"));
     final JComponent noLinkedProjectControl = builder.build();

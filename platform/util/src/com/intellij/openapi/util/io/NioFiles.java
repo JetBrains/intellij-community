@@ -76,6 +76,18 @@ public final class NioFiles {
   }
 
   /**
+   * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
+   */
+  public static boolean isWritable(@NotNull Path path) {
+    try {
+      return Files.isWritable(path);
+    }
+    catch (SecurityException e) {
+      return false;
+    }
+  }
+
+  /**
    * On DOS-like file systems, sets the RO attribute to the corresponding value.
    * On POSIX file systems, deletes all write permissions when {@code value} is {@code true} or
    * adds the "owner-write" one otherwise.
@@ -134,7 +146,7 @@ public final class NioFiles {
    * See {@link #deleteRecursively(Path, Consumer)}.
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, null);
+    FileUtilRt.deleteRecursively(fileOrDirectory, null);
   }
 
   /**
@@ -146,7 +158,7 @@ public final class NioFiles {
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
    * usually it's enough to overcome intermittent file lock on Windows.</p>
    */
-  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
-    FileUtilRt.deleteRecursivelyNIO(fileOrDirectory, o -> callback.accept((Path)o));
+  public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<Path> callback) throws IOException {
+    FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
   }
 }

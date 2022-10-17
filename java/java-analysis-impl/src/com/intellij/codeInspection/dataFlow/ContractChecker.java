@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* @author peter
-*/
 final class ContractChecker {
   private static class ContractCheckListener implements JavaDfaListener {
     private final PsiMethod myMethod;

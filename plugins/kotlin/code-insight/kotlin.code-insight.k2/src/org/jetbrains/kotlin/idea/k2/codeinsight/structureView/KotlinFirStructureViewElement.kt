@@ -22,24 +22,27 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class KotlinFirStructureViewElement(
-  val nElement: NavigatablePsiElement,
+  override val element: NavigatablePsiElement,
   ktElement : KtElement,
   private val isInherited: Boolean = false
-) : PsiTreeElementBase<NavigatablePsiElement>(nElement), AbstractKotlinStructureViewElement, Queryable {
+) : PsiTreeElementBase<NavigatablePsiElement>(element), AbstractKotlinStructureViewElement, Queryable {
 
     private var kotlinPresentation
             by AssignableLazyProperty {
-                KotlinFirStructureElementPresentation(isInherited, element, ktElement, countDescriptor())
+                KotlinFirStructureElementPresentation(isInherited, element, ktElement, createSymbolAndThen { it.createPointer() })
             }
 
-    var visibility
+    private var visibility
             by AssignableLazyProperty {
                 analyze(ktElement) {
-                    Visibility(countDescriptor()?.restoreSymbol())
+                    Visibility(createSymbolAndThen { it })
                 }
             }
-        private set
 
+    /**
+     * @param element        represents node element, can be in current file or from super class (e.g. java)
+     * @param inheritElement represents element in the current kotlin file
+     */
     constructor(element: NavigatablePsiElement, inheritElement: KtElement, descriptor: KtSymbolPointer<*>, isInherited: Boolean) : this(element, inheritElement, isInherited) {
         if (element !is KtElement) {
             // Avoid storing descriptor in fields
@@ -55,8 +58,6 @@ class KotlinFirStructureViewElement(
         get() = visibility.accessLevel
     override val isPublic: Boolean
         get() = visibility.isPublic
-    override val element: NavigatablePsiElement
-        get() = nElement
 
     override fun getPresentation(): ItemPresentation = kotlinPresentation
     override fun getLocationString(): String? = kotlinPresentation.locationString
@@ -82,7 +83,7 @@ class KotlinFirStructureViewElement(
             else -> emptyList()
         }
 
-        return children.map { KotlinFirStructureViewElement(it, it, false) }
+        return children.map { KotlinFirStructureViewElement(it, it, isInherited = false) }
     }
 
     private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {
@@ -101,7 +102,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun countDescriptor(): KtSymbolPointer<*>? {
+    private fun <T> createSymbolAndThen(modifier : (KtSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
@@ -110,7 +111,7 @@ class KotlinFirStructureViewElement(
             else -> runReadAction {
               if (!DumbService.isDumb(element.getProject())) {
                 analyze(element) {
-                  element.getSymbol().createPointer()
+                  modifier.invoke(element.getSymbol())
                 } 
               }
               else null
@@ -118,8 +119,8 @@ class KotlinFirStructureViewElement(
         }
     }
 
-    class Visibility(descriptor: KtSymbol?) {
-        private val visibility = (descriptor as? KtSymbolWithVisibility)?.visibility
+    class Visibility(symbol: KtSymbol?) {
+        private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KtSymbolWithVisibility)?.visibility
 
         val isPublic: Boolean
             get() = visibility == Visibilities.Public
@@ -147,6 +148,8 @@ private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWri
 }
 
 fun KtClassOrObject.getStructureDeclarations() =
-    (primaryConstructor?.let { listOf(it) } ?: emptyList()) +
-            primaryConstructorParameters.filter { it.hasValOrVar() } +
-            declarations
+    buildList {
+        primaryConstructor?.let { add(it) }
+        primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
+        addAll(declarations)
+    }

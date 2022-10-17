@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+/**
+ * Common simple predicates to deduplicate lambdas/method references
+ */
 public class Predicates {
   @Contract(pure = true)
   public static <T> @NotNull Predicate<T> alwaysTrue() {

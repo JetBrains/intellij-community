@@ -18,9 +18,6 @@ import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
 
-/**
- * @author peter
- */
 class PsiEventConsistencyTest : BasePlatformTestCase() {
 
   fun `test replacing child after changing its subtree`() {

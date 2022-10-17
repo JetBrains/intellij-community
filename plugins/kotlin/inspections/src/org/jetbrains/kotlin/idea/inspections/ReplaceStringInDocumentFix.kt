@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 
+@Suppress("ActionIsNotPreviewFriendly")
 class ReplaceStringInDocumentFix(element: PsiElement, private val oldString: String, private val newString: String) : LocalQuickFix {
     private val elementRef = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element)
 

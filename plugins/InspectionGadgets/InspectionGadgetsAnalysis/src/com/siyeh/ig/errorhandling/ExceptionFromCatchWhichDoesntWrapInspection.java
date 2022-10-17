@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,9 +141,20 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
       }
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (!parameter.equals(target)) {
-        if (target instanceof PsiLocalVariable) {
-          final PsiLocalVariable variable = (PsiLocalVariable)target;
+      if (parameter.equals(target)) {
+        if (!ignoreGetMessage) {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiReferenceExpression) {
+            final PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiMethodCallExpression) {
+              return;
+            }
+          }
+        }
+        argumentsContainCatchParameter = true;
+      }
+      else {
+        if (target instanceof PsiLocalVariable variable) {
           final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope(), false);
           query.forEach(reference -> {
             final PsiElement element = reference.getElement();
@@ -168,18 +179,17 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
             initializer.accept(this);
           }
         }
-        return;
-      }
-      if (!ignoreGetMessage) {
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof PsiMethodCallExpression) {
+        else if (target instanceof PsiPatternVariable) {
+          final PsiElement pattern = target.getParent();
+          if (!(pattern instanceof PsiTypeTestPattern)) {
             return;
+          }
+          final PsiElement parent = pattern.getParent();
+          if (parent instanceof PsiInstanceOfExpression instanceOfExpression) {
+            instanceOfExpression.getOperand().accept(this);
           }
         }
       }
-      argumentsContainCatchParameter = true;
     }
 
     boolean usesParameter() {

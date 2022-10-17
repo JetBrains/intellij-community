@@ -7,6 +7,7 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SideBorder
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.ListTableModel
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -31,7 +32,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(model: ListTableModel<T>,
     val column = columnModel.getColumn(1)
     column.maxWidth = 100
     column.resizable = false
-    border = SideBorder(UIUtil.getBoundsColor(), SideBorder.BOTTOM)
+    border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
     rowHeight = 20
 
     initCrossNavigation(service, tablesView)
@@ -180,7 +181,7 @@ fun headerPanel(label: JLabel, component: JComponent?) = object : JPanel() {
   init {
     background = UIUtil.getControlColor()
     layout = BorderLayout()
-    border = BorderFactory.createCompoundBorder(SideBorder(UIUtil.getBoundsColor(), SideBorder.BOTTOM), EmptyBorder(0, 5, 0, 5))
+    border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), EmptyBorder(0, 5, 0, 5))
     preferredSize = Dimension(preferredSize.width, 25)
     minimumSize = Dimension(minimumSize.width, 25)
     maximumSize = Dimension(maximumSize.width, 25)

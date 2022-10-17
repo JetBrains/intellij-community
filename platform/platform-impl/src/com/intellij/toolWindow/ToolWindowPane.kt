@@ -50,9 +50,6 @@ private val LOG = logger<ToolWindowPane>()
 /**
  * This panel contains all tool stripes and JLayeredPane at the center area. All tool windows are
  * located inside this layered pane.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 class ToolWindowPane internal constructor(frame: JFrame,
                                           parentDisposable: Disposable,

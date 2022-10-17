@@ -13,7 +13,7 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     override val isFirUastPlugin: Boolean = false
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     fun testResolveStringFromUast() {
         checkResolveStringFromUast(myFixture, project)
@@ -95,6 +95,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkListIterator(myFixture)
     }
 
+    fun testStringJVM() {
+        checkStringJVM(myFixture)
+    }
+
     fun testArgumentMappingDefaultValue() {
         checkArgumentMappingDefaultValue(myFixture)
     }
@@ -149,6 +153,14 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveKotlinPropertyAccessor() {
         checkResolveKotlinPropertyAccessor(myFixture)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        checkResolveToSubstituteOverride(myFixture)
+    }
+
+    fun testResolveEnumEntrySuperType() {
+        checkResolveEnumEntrySuperType(myFixture)
     }
 
 }

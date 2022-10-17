@@ -34,7 +34,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
-import com.intellij.util.animation.ShowHideAnimator;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -69,6 +68,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
   public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
+  public static final String SUPPRESS_FAST_TRACK = "ActionToolbarImpl.suppressFastTrack";
+
+  /**
+   * Put {@code TRUE} into {@link #putClientProperty(Object, Object)} to mark that toolbar
+   * should not be hidden by {@link com.intellij.ide.actions.ToggleToolbarAction}.
+   */
+  public static final String IMPORTANT_TOOLBAR_KEY = "ActionToolbarImpl.importantToolbar";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -321,8 +327,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public @NotNull ShowHideAnimator getAlphaAnimator() {
-    return myAlphaContext.getAnimator();
+  public @NotNull AlphaAnimationContext getAlphaContext() {
+    return myAlphaContext;
   }
 
   @Override
@@ -531,8 +537,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
     if (component instanceof ActionButton) {
       ((ActionButton)component).setLook(look);
+      component.setBorder(getActionButtonBorder());
     }
-    component.setBorder(getActionButtonBorder());
     tweakActionComponentUI(component);
     ToolbarActionTracker.followToolbarComponent(presentation, component, getComponent());
   }
@@ -1279,8 +1285,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImplFastTrack(@NotNull ActionUpdater updater) {
-    String failedKey = "ActionToolbarImpl.fastTrackFailed";
-    if (!(myVisibleActions.isEmpty() && getComponentCount() == 1 && getClientProperty(failedKey) == null)) {
+    boolean firstTime = myVisibleActions.isEmpty() &&
+                        getComponentCount() == 1 &&
+                        getClientProperty(SUPPRESS_FAST_TRACK) == null;
+    if (!firstTime) {
       return;
     }
     List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null);
@@ -1288,7 +1296,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       actionsUpdated(true, actions);
     }
     else {
-      putClientProperty(failedKey, true);
+      putClientProperty(SUPPRESS_FAST_TRACK, true);
     }
   }
 
@@ -1385,15 +1393,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (this instanceof PopupToolbar) return this;
     Component result = ObjectUtils.chooseNotNull(getParent(), this);
     Dimension availSize = result.getSize();
-    for (Component p = result.getParent(); p != null && !(p instanceof JRootPane); p = p.getParent()) {
-      Dimension pSize = p.getSize();
-      if (myOrientation == SwingConstants.HORIZONTAL && pSize.height - availSize.height > 8 ||
-          myOrientation == SwingConstants.VERTICAL && pSize.width - availSize.width > 8) {
-        if (availSize.width == 0 && availSize.height == 0) result = p;
+    for (Component cur = result.getParent(); cur != null; cur = cur.getParent()) {
+      if (cur instanceof JRootPane) break;
+      if (cur instanceof JLayeredPane && cur.getParent() instanceof JRootPane) break;
+      Dimension size = cur.getSize();
+      if (myOrientation == SwingConstants.HORIZONTAL && size.height - availSize.height > 8 ||
+          myOrientation == SwingConstants.VERTICAL && size.width - availSize.width > 8) {
+        if (availSize.width == 0 && availSize.height == 0) result = cur;
         break;
       }
-      result = p;
-      availSize = result.getSize();
+      result = cur;
+      availSize = cur.getSize();
     }
     return result;
   }

@@ -18,6 +18,7 @@ import com.intellij.ui.render.IconCompCompPanel
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -25,6 +26,7 @@ import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -156,7 +158,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
           is VcsCommitMetadata -> value.id.toShortString()
           else -> null
         }
-        foreground = if (!isSelected) UIUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
+        foreground = if (!isSelected) NamedColorUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
       }
       return panel
     }
@@ -192,9 +194,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
 
     if (hash != null && root != null) {
-      VcsLogContentUtil.runInMainLog(project) {
-        it.vcsLog.jumpToCommit(hash, root)
-      }
+      VcsLogContentUtil.runInMainLog(project) { it.jumpToCommit(hash, root, false, true) }
       return true
     }
     return false

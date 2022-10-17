@@ -3,10 +3,7 @@ package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -21,6 +18,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
@@ -38,10 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class CompareWithLocalDialog {
   @RequiresEdt
@@ -167,6 +163,7 @@ public class CompareWithLocalDialog {
       myLocalContent = localContent;
 
       hideViewerBorder();
+      myViewer.setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
     }
 
     @Override
@@ -176,10 +173,11 @@ public class CompareWithLocalDialog {
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
-      return ContainerUtil.append(
-        super.createToolbarActions(),
-        new MyGetVersionAction()
-      );
+      List<AnAction> actions = new ArrayList<>();
+      actions.add(new MyRefreshAction());
+      actions.addAll(super.createToolbarActions());
+      actions.add(new MyGetVersionAction());
+      return actions;
     }
 
     @NotNull
@@ -196,6 +194,12 @@ public class CompareWithLocalDialog {
     private MyGetVersionAction() {
       super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
             VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
+      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -224,7 +228,10 @@ public class CompareWithLocalDialog {
         return new MyFileContentProvider(change, browser.myLocalContent);
       });
       GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders,
-                             () -> changesPanel.reloadChanges());
+                             () -> {
+                               FileDocumentManager.getInstance().saveAllDocuments();
+                               changesPanel.reloadChanges();
+                             });
     }
 
     private static class MyFileContentProvider implements FileRevisionProvider {
@@ -251,6 +258,39 @@ public class CompareWithLocalDialog {
 
         return ChangesUtil.loadContentRevision(revision);
       }
+    }
+  }
+
+  private static class MyRefreshAction extends DumbAwareAction {
+    private MyRefreshAction() {
+      super(VcsBundle.messagePointer("action.name.refresh.compare.with.local.panel"),
+            VcsBundle.messagePointer("action.description.refresh.compare.with.local.panel"),
+            AllIcons.Actions.Refresh);
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getData(MyLoadingChangesPanel.DATA_KEY);
+      if (changesPanel == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      MyChangesBrowser browser = ObjectUtils.tryCast(changesPanel.getChangesBrowser(), MyChangesBrowser.class);
+      e.getPresentation().setEnabledAndVisible(browser != null && browser.myLocalContent != LocalContent.NONE);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
+      FileDocumentManager.getInstance().saveAllDocuments();
+      changesPanel.reloadChanges();
     }
   }
 

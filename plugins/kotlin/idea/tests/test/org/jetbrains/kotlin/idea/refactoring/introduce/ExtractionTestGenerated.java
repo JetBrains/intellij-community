@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -3236,6 +3236,26 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("lambdaArgument.kt")
             public void testLambdaArgument() throws Exception {
                 runTest("testData/refactoring/introduceParameter/lambdaArgument.kt");
+            }
+
+            @TestMetadata("lastParameterHasBlockComment.kt")
+            public void testLastParameterHasBlockComment() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lastParameterHasBlockComment.kt");
+            }
+
+            @TestMetadata("lastParameterHasBlockCommentAndTrailingComma.kt")
+            public void testLastParameterHasBlockCommentAndTrailingComma() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lastParameterHasBlockCommentAndTrailingComma.kt");
+            }
+
+            @TestMetadata("lastParameterHasEolComment.kt")
+            public void testLastParameterHasEolComment() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lastParameterHasEolComment.kt");
+            }
+
+            @TestMetadata("lastParameterHasEolCommentAndTrailingComma.kt")
+            public void testLastParameterHasEolCommentAndTrailingComma() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lastParameterHasEolCommentAndTrailingComma.kt");
             }
 
             @TestMetadata("partialSubstitution.kt")

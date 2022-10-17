@@ -21,7 +21,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
+open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase() {
 
   companion object {
 
@@ -31,31 +31,23 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _filePath: VirtualFileUrl? = null
   override val filePath: VirtualFileUrl?
-    get() = _filePath
+    get() = dataSource.filePath
 
-  @JvmField
-  var _directoryPath: VirtualFileUrl? = null
   override val directoryPath: VirtualFileUrl
-    get() = _directoryPath!!
+    get() = dataSource.directoryPath
 
-  @JvmField
-  var _notNullRoots: List<VirtualFileUrl>? = null
   override val notNullRoots: List<VirtualFileUrl>
-    get() = _notNullRoots!!
+    get() = dataSource.notNullRoots
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
+  class Builder(var result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
     constructor() : this(VFUEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -73,6 +65,9 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       index(this, "filePath", this.filePath)
       index(this, "directoryPath", this.directoryPath)
@@ -84,11 +79,11 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field VFUEntity2#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field VFUEntity2#entitySource should be initialized")
       }
       if (!getEntityData().isDirectoryPathInitialized()) {
         error("Field VFUEntity2#directoryPath should be initialized")
@@ -102,26 +97,25 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
       return connections
     }
 
+    override fun afterModification() {
+      val collection_notNullRoots = getEntityData().notNullRoots
+      if (collection_notNullRoots is MutableWorkspaceList<*>) {
+        collection_notNullRoots.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity2
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
-      this.filePath = dataSource.filePath
-      this.directoryPath = dataSource.directoryPath
-      this.notNullRoots = dataSource.notNullRoots.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.filePath != dataSource?.filePath) this.filePath = dataSource.filePath
+      if (this.directoryPath != dataSource.directoryPath) this.directoryPath = dataSource.directoryPath
+      if (this.notNullRoots != dataSource.notNullRoots) this.notNullRoots = dataSource.notNullRoots.toMutableList()
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -130,6 +124,14 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var filePath: VirtualFileUrl?
@@ -161,7 +163,12 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
       get() {
         val collection_notNullRoots = getEntityData().notNullRoots
         if (collection_notNullRoots !is MutableWorkspaceList) return collection_notNullRoots
-        collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_notNullRoots.setModificationUpdateAction(notNullRootsUpdater)
+        }
+        else {
+          collection_notNullRoots.cleanModificationUpdateAction()
+        }
         return collection_notNullRoots
       }
       set(value) {
@@ -198,15 +205,13 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): VFUEntity2 {
-    val entity = VFUEntity2Impl()
-    entity._data = data
-    entity._filePath = filePath
-    entity._directoryPath = directoryPath
-    entity._notNullRoots = notNullRoots.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = VFUEntity2Impl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): VFUEntity2Data {
@@ -239,12 +244,12 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUEntity2Data
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.filePath != other.filePath) return false
     if (this.directoryPath != other.directoryPath) return false
     if (this.notNullRoots != other.notNullRoots) return false
@@ -253,7 +258,7 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as VFUEntity2Data
 

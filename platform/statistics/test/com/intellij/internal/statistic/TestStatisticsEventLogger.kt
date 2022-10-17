@@ -20,6 +20,14 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
     return CompletableFuture.completedFuture(null)
   }
 
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        dataProvider: () -> Map<String, Any>?,
+                        isState: Boolean): CompletableFuture<Void> {
+    val data = dataProvider() ?: return CompletableFuture.completedFuture(null)
+    return logAsync(group, eventId, data, isState)
+  }
+
   override fun getActiveLogFile(): EventLogFile? = null
 
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
@@ -52,9 +54,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 
-/**
- * @author peter
- */
 class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
@@ -103,6 +102,15 @@ class LookupUi {
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
 
     myMenuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    DataManager.registerDataProvider(myMenuButton, dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myLookup.getProject();
+      }
+      if (CommonDataKeys.EDITOR.is(dataId)) {
+        return myLookup.getEditor();
+      }
+      return null;
+    });
 
     AnAction hintAction = new HintAction();
     myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),

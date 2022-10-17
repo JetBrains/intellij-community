@@ -59,10 +59,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.CommitModeManager;
-import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
+import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
@@ -396,7 +393,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void waitForUpdate() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    assert !ApplicationManager.getApplication().isReadAccessAllowed();
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(false, waiter::countDown);
     awaitWithCheckCanceled(waiter);
@@ -421,6 +418,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void scheduleUpdate() {
+    scheduleUpdateImpl();
+  }
+
+  public void scheduleUpdateImpl() {
     myUpdater.schedule();
   }
 
@@ -800,7 +801,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);
@@ -1038,6 +1039,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+    moveChangesTo(list, ContainerUtil.skipNulls(Arrays.asList(changes)));
+  }
+
+  @Override
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
@@ -1211,14 +1217,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   @Override
-  @Nullable
-  public AbstractVcs getVcsFor(@NotNull Change change) {
-    synchronized (myDataLock) {
-      return myWorker.getVcsFor(change);
-    }
-  }
-
-  @Override
   public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
     ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
   }
@@ -1253,8 +1251,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
-    SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName());
+    LocalChangesCommitter committer = SingleChangeListCommitter.create(myProject, commitState, new CommitContext(), changeList.getName());
 
     committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);
@@ -1320,10 +1317,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @Override
   public List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
-  }
-
-  @Override
-  public void addFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
   @Override

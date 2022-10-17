@@ -22,9 +22,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extends PsiDocCommentOwnerMemberChooserObject implements ClassMemberWithElement {
   private final T myPsiMember;
   private final SmartPsiElementPointer<T> myMemberPointer;

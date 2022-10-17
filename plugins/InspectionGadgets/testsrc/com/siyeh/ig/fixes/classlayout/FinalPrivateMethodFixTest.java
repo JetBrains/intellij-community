@@ -17,39 +17,47 @@ public class FinalPrivateMethodFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() {
     doMemberTest(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                 "private final/**/ boolean isPositive(int number) {\n" +
-                 "    return number > 0;\n" +
-                 "}",
-                 "private boolean isPositive(int number) {\n" +
-                 "    return number > 0;\n" +
-                 "}"
+                 """
+                   private final/**/ boolean isPositive(int number) {
+                       return number > 0;
+                   }""",
+                 """
+                   private boolean isPositive(int number) {
+                       return number > 0;
+                   }"""
     );
   }
 
   public void testDoNotFixOnPackageMethod() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                               "class X {\n" +
-                               "  final boolean isPositive(int number) {\n" +
-                               "    return number > 0;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   final boolean isPositive(int number) {
+                                     return number > 0;
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixOnProtectedMethod() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                               "class X {\n" +
-                               "  protected final boolean isPositive(int number) {\n" +
-                               "    return number > 0;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   protected final boolean isPositive(int number) {
+                                     return number > 0;
+                                   }
+                                 }
+                                 """);
   }
 
   public void testDoNotFixOnPublicMethod() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("remove.modifier.quickfix", "final"),
-                               "class X {\n" +
-                               "  public final boolean isPositive(int number) {\n" +
-                               "    return number > 0;\n" +
-                               "  }\n" +
-                               "}\n");
+                               """
+                                 class X {
+                                   public final boolean isPositive(int number) {
+                                     return number > 0;
+                                   }
+                                 }
+                                 """);
   }
 }

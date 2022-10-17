@@ -7,6 +7,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -35,14 +39,15 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
   @VisibleForTesting
   protected open fun messageBusConnection() = ApplicationManager.getApplication().messageBus.connect(this)
 
-  override val accounts: Set<A>
+  final override val accounts: Set<A>
     get() = persistentAccounts.accounts
+
+  private val _accountsState = MutableStateFlow(accounts.associateWith { findCredentials(it) })
+  override val accountsState: StateFlow<Map<A, Cred?>> = _accountsState.asStateFlow()
 
   init {
     messageBusConnection.subscribe(PasswordSafeSettings.TOPIC, object : PasswordSafeSettingsListener {
-      override fun credentialStoreCleared() = persistentAccounts.accounts.forEach { account ->
-        listeners.forEach { it.onAccountCredentialsChanged(account) }
-      }
+      override fun credentialStoreCleared() = notifyAllCredentialsChanged()
     })
   }
 
@@ -55,13 +60,13 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
     for ((account, credentials) in accountsWithCredentials) {
       if (credentials != null) {
         passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
-        if (currentSet.contains(account)) listeners.forEach { it.onAccountCredentialsChanged(account) }
+        if (currentSet.contains(account)) notifyCredentialsChanged(account)
       }
     }
     val added = accountsWithCredentials.keys - currentSet
     if (added.isNotEmpty() || removed.isNotEmpty()) {
       persistentAccounts.accounts = accountsWithCredentials.keys
-      listeners.forEach { it.onAccountListChanged(currentSet, accountsWithCredentials.keys) }
+      notifyAccountsChanged(currentSet, accountsWithCredentials.keys)
       LOG.debug("Account list changed to: ${persistentAccounts.accounts}")
     }
   }
@@ -80,10 +85,10 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
     passwordSafe.set(account.credentialAttributes(), account.credentials(credentials))
     LOG.debug((if (credentials == null) "Cleared" else "Updated") + " credentials for account: $account")
     if (!newAccount) {
-      listeners.forEach { it.onAccountCredentialsChanged(account) }
+      notifyCredentialsChanged(account)
     }
     else {
-      listeners.forEach { it.onAccountListChanged(currentSet, persistentAccounts.accounts) }
+      notifyAccountsChanged(currentSet, persistentAccounts.accounts)
     }
   }
 
@@ -94,8 +99,31 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
       persistentAccounts.accounts = newSet
       passwordSafe.set(account.credentialAttributes(), null)
       LOG.debug("Removed account: $account")
-      listeners.forEach { it.onAccountListChanged(currentSet, newSet) }
+      notifyAccountsChanged(currentSet, newSet)
     }
+  }
+
+  private fun notifyAccountsChanged(old: Set<A>, new: Set<A>) {
+    listeners.forEach { it.onAccountListChanged(old, new) }
+    _accountsState.value = new.associateWith { findCredentials(it) }
+  }
+
+  private fun notifyCredentialsChanged(account: A) {
+    listeners.forEach { it.onAccountCredentialsChanged(account) }
+    _accountsState.update {
+      val copy = it.toMutableMap()
+      copy[account] = findCredentials(account)
+      copy
+    }
+  }
+
+  private fun notifyAllCredentialsChanged() {
+    val newMap = mutableMapOf<A, Cred?>()
+    accounts.forEach { acc ->
+      newMap[acc] = findCredentials(acc)
+      listeners.forEach { it.onAccountCredentialsChanged(acc) }
+    }
+    _accountsState.value = newMap
   }
 
   override fun findCredentials(account: A): Cred? =
@@ -108,6 +136,7 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
   protected abstract fun serializeCredentials(credentials: Cred): String
   protected abstract fun deserializeCredentials(credentials: String): Cred
 
+  @Deprecated("replaced with stateFlow", ReplaceWith("accountsState"))
   override fun addListener(disposable: Disposable, listener: AccountsListener<A>) {
     listeners.add(listener)
     Disposer.register(disposable) {

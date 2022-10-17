@@ -29,6 +29,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T>
 
+  override fun align(align: Align): SegmentedButton<T>
+
   override fun resizableColumn(): SegmentedButton<T>
 
   override fun gap(rightGap: RightGap): SegmentedButton<T>

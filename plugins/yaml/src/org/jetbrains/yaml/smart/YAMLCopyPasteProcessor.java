@@ -86,6 +86,14 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     int endOffset = endOffsets[0];
+    // one step back from the end of line and from end of file
+    PsiElement endElement = file.findElementAt(endOffset - 1);
+    if (endElement != null) {
+      if (YAMLUtil.psiAreAtTheSameLine(element, endElement)) {
+        return null;
+      }
+    }
+
     if (borderParent.getTextRange().getEndOffset() < endOffset) {
       PsiElement nextElement = borderParent;
       while (true) {

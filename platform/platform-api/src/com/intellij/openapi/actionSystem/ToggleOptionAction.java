@@ -62,6 +62,11 @@ public class ToggleOptionAction extends ToggleAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public interface Option {
     /**
      * @return a string to override an action name

@@ -190,8 +190,9 @@
     },
     {
       "key": "ContextHelp.fontSizeOffset",
-      "description": "Font size offset for comments (usually gray description text under components)",
-      "since": "2022.1"
+      "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
+      "since": "2022.1",
+      "deprecated": true
     },
     {
       "key": "Counter.background",
@@ -1187,6 +1188,11 @@
       "description": "A color for inline buttons separator"
     },
     {
+      "key": "List.Button.separatorInset",
+      "since": "2022.3",
+      "description": "A top an bottom insets for inline buttons separator"
+    },
+    {
       "key": "List.Button.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for inline buttons in list popups"
@@ -1195,6 +1201,16 @@
       "key": "List.Line.hoverBackground",
       "since": "2022.3",
       "description": "Hover background for list item in list popups (when inline buttons are shown)"
+    },
+    {
+      "key": "List.Tag.background",
+      "since": "2022.3",
+      "description": "Background for tags in list items"
+    },
+    {
+      "key": "List.Tag.foreground",
+      "since": "2022.3",
+      "description": "Foreground for tags in list items"
     },
     {
       "key": "TabbedPane.tabSelectionArc",
@@ -1586,6 +1602,11 @@
       "since": "2022.2"
     },
     {
+      "key": "VersionControl.MarkerPopup.Toolbar.background",
+      "description": "Color of toolbar background in the Vcs Marker Popup",
+      "since": "2022.3"
+    },
+    {
       "key": "WelcomeScreen.background"
     },
     {
@@ -1738,12 +1759,22 @@
       "since": "2021.2"
     },
     {
+      "key": "TipOfTheDay.Image.borderColor",
+      "description": "Border color of the rounded illustrations in Tips of the Day dialog",
+      "since": "2022.3"
+    },
+    {
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"
     },
     {
       "key": "Tag.background"
+    },
+    {
+      "key": "MainToolbar.separatorColor",
+      "description": "Color of the Main Toolbar separators",
+      "since": "2022.3"
     }
   ]
 }

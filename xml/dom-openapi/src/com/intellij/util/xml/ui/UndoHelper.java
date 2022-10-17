@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class UndoHelper {
   private boolean myShowing;
   private final Set<Document> myCurrentDocuments = new HashSet<>();

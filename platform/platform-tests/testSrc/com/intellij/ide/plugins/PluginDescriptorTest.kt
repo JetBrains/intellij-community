@@ -10,7 +10,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
@@ -179,7 +181,7 @@ class PluginDescriptorTest {
   fun testStandaloneMetaInf() {
     val tempDir = directoryContent {
       dir("classes") {
-        file("Empty.class", "") // `com.intellij.util.io.java.classFile` requires dependency on `intellij.java.testFramework`
+        classFile("Empty") {}
       }
       dir("lib") {
         zip("empty.jar") {}
@@ -546,34 +548,48 @@ class PluginDescriptorTest {
 
     assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).hasSize(2)
 
-    PlatformTestUtil.withSystemProperty<Throwable>(
-      /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
-      /* value = */ "true",
-    ) {
+    withOnDemandEnabled {
       assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).isEmpty()
     }
   }
 
   @Test
-  fun testLoadEnabledOnDemandPlugin() {
+  fun testDisabledOnDemandPlugin() = withOnDemandEnabled {
     PluginBuilder()
       .noDepends()
       .id("foo")
       .onDemand()
       .build(pluginDirPath.resolve("foo"))
 
-    PlatformTestUtil.withSystemProperty<Throwable>(
-      /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
-      /* value = */ "true",
-    ) {
-      val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
-        .withEnabledOnDemandPlugins("foo")
-        .build()
-        .enabledPlugins
+    PluginBuilder()
+      .noDepends()
+      .id("bar")
+      .onDemand()
+      .pluginDependency("foo")
+      .build(pluginDirPath.resolve("bar"))
 
-      assertThat(enabledPlugins).hasSize(1)
-      assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("foo")
-    }
+    val pluginSet = PluginSetTestBuilder(pluginDirPath)
+      .withDisabledPlugins("foo")
+      .withEnabledOnDemandPlugins("bar")
+      .build()
+    assertThat(pluginSet.enabledPlugins).isEmpty()
+  }
+
+  @Test
+  fun testLoadEnabledOnDemandPlugin() = withOnDemandEnabled {
+    PluginBuilder()
+      .noDepends()
+      .id("foo")
+      .onDemand()
+      .build(pluginDirPath.resolve("foo"))
+
+    val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
+      .withEnabledOnDemandPlugins("foo")
+      .build()
+      .enabledPlugins
+
+    assertThat(enabledPlugins).hasSize(1)
+    assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("foo")
   }
 
   @Test
@@ -673,4 +689,15 @@ fun createFromDescriptor(path: Path,
                       isSub = false,
                       dataLoader = dataLoader)
   return result
+}
+
+private fun withOnDemandEnabled(runnable: ThrowableRunnable<Throwable>) {
+  val defaultValue = IdeaPluginDescriptorImpl.isOnDemandEnabled
+  IdeaPluginDescriptorImpl.isOnDemandEnabled = true
+  try {
+    runnable.run()
+  }
+  finally {
+    IdeaPluginDescriptorImpl.isOnDemandEnabled = defaultValue
+  }
 }

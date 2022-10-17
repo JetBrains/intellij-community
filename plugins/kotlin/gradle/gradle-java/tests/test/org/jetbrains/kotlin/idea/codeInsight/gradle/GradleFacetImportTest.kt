@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.util.io.FileUtil
 import junit.framework.TestCase
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -44,7 +45,6 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
-import kotlin.test.assertNotEquals
 
 fun KotlinGradleImportingTestCase.facetSettings(moduleName: String): KotlinFacetSettings {
     val facet = KotlinFacet.get(getModule(moduleName)) ?: error("Kotlin facet not found in module $moduleName")
@@ -71,7 +71,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
+                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
                 compilerSettings!!.additionalArguments
             )
         }
@@ -131,7 +131,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
+                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
                 compilerSettings!!.additionalArguments
             )
         }
@@ -534,7 +534,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
         importProject()
 
         with(facetSettings) {
-            assertEquals("-version", compilerSettings!!.additionalArguments)
+            assertEquals("", compilerSettings!!.additionalArguments)
             assertEquals(
                 listOf(
                     "plugin:org.jetbrains.kotlin.allopen:annotation=org.springframework.stereotype.Component",
@@ -556,7 +556,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         with(facetSettings) {
             assertEquals(
-                "-version",
+                "",
                 compilerSettings!!.additionalArguments
             )
             assertEquals(
@@ -637,7 +637,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
     @Test
     fun testJDKImport() {
-        val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"
+        val mockJdkPath = FileUtil.toSystemDependentName("${PathManager.getHomePath()}/community/java/mockJDK-1.8")
         runWriteActionAndWait {
           val jdk = JavaSdk.getInstance().createJdk("myJDK", mockJdkPath)
           runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }.addJdk(jdk)
@@ -651,7 +651,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             val moduleSDK = ModuleRootManager.getInstance(getModule("project.main")).sdk!!
             assertTrue(moduleSDK.sdkType is JavaSdk)
             assertEquals("myJDK", moduleSDK.name)
-            assertEquals(mockJdkPath, moduleSDK.homePath)
+            assertEquals(mockJdkPath, moduleSDK.homePath?.let(FileUtil::toSystemDependentName))
         } finally {
             runWriteActionAndWait {
               val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }

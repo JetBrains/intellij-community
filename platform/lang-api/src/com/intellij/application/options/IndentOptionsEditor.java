@@ -69,14 +69,6 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     add(myTabSizeLabel, myTabSizeField);
   }
 
-  /**
-   * @deprecated Use {@link #createIndentTextField(String, int, int, int)}
-   */
-  @Deprecated(forRemoval = true)
-  protected JTextField createIndentTextField() {
-    return createIndentTextField(null, Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
-  }
-
   protected IntegerField createIndentTextField(@Nullable String valueName, int minSize, int maxSize, int defaultValue) {
     IntegerField field = new IntegerField(valueName, minSize, maxSize);
     field.setDefaultValue(defaultValue);

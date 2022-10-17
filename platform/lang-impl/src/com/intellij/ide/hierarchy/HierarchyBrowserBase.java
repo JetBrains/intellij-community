@@ -18,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -101,21 +102,10 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
   @Nullable
-  protected DefaultMutableTreeNode getSelectedNode() {
-    JTree tree = getCurrentTree();
-    if (tree == null) return null;
-    TreePath path = tree.getSelectionPath();
-    if (path == null) return null;
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
-    return (DefaultMutableTreeNode)lastPathComponent;
-  }
-
-  @Nullable
-  protected final PsiElement getSelectedElement() {
-    DefaultMutableTreeNode node = getSelectedNode();
-    HierarchyNodeDescriptor descriptor = node != null ? getDescriptor(node) : null;
-    return descriptor != null ? getElementFromDescriptor(descriptor) : null;
+  protected final PsiElement getSelectedElement(@NotNull DataContext dataContext) {
+    Object element = ArrayUtil.getFirstElement(dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
+    if (!(element instanceof HierarchyNodeDescriptor)) return null;
+    return getElementFromDescriptor((HierarchyNodeDescriptor)element);
   }
 
   @Nullable
@@ -197,19 +187,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
 
-  private Navigatable @NotNull [] getNavigatables() {
-    HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
-    if (selectedDescriptors.length == 0) return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
-    List<Navigatable> result = new ArrayList<>();
-    for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
-      Navigatable navigatable = getNavigatable(descriptor);
-      if (navigatable != null) {
-        result.add(navigatable);
-      }
-    }
-    return result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-  }
-
   private Navigatable getNavigatable(@NotNull HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof Navigatable && descriptor.isValid()) {
       return (Navigatable)descriptor;
@@ -254,7 +231,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return JBIterable.of(selection).filterMap(this::getElementFromDescriptor).toArray(PsiElement.EMPTY_ARRAY);
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;;
+      HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
     }

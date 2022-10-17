@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -190,10 +191,22 @@ public abstract class CompilerManager {
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Use {@link #isUpToDateAsync(CompileScope)}
+   * Checks if compile scope given is up-to-date.
+   * If called from a non-EDT thread which is currently running under some progress, the method reuses the calling thread and executes under thread's ProgressIndicator.
+   * Otherwise, it spawns a new background thread with a new ProgressIndicator which performs the check. The calling thread will be still blocked waiting until the check is completed
+   * @param scope - a compilation scope to be checked
+   * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
    */
-  @Deprecated
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
+
+  /**
+   * Checks if compile scope given is up-to-date.
+   * This method reuses the calling thread and executes under the specified progress indicator
+   * @param scope - a compilation scope to be checked
+   * @param progress progress indicator to be used for reporting
+   * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
+   */
+  public abstract boolean isUpToDate(@NotNull CompileScope scope, @NotNull ProgressIndicator progress);
 
   /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.

@@ -2,7 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -86,6 +88,18 @@ public class JBFont extends Font {
   public static JBFont h3() { return label().biggerOn(3); }
   public static JBFont h4() { return label().biggerOn(1).asBold(); }
   public static JBFont regular() { return label(); }
-  public static JBFont medium() { return SystemInfo.isWindows ? label() : label().lessOn(1); }
-  public static JBFont small() { return SystemInfo.isWindows ? label() : label().lessOn(2); }
+  public static JBFont medium() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(1); }
+  public static JBFont small() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(2); }
+
+  /**
+   * In new UI {@link #small()} font should be used only in exceptional cases when the medium size won't fit at all.
+   * This is a temporary method for backward compatibility with old UI, which returns {@link #medium()} for new UI
+   * and {@link #small()} for old UI. Will be replaced by {@link #medium()} after full migration to new UI
+   */
+  @ApiStatus.Internal
+  public static JBFont smallOrNewUiMedium() { return Registry.is("ide.experimental.ui") ? medium() : small(); }
+
+  private static boolean mediumAndSmallFontsAsRegular() {
+    return SystemInfo.isWindows && !Registry.is("ide.experimental.ui");
+  }
 }

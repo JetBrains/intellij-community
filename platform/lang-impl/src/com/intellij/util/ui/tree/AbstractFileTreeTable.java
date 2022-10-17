@@ -233,61 +233,42 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     public String getColumnName(final int column) {
-      switch (column) {
-        case 0:
-          return LangBundle.message("column.name.file.directory");
-        case 1:
-          return myValueTitle;
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+      return switch (column) {
+        case 0 -> LangBundle.message("column.name.file.directory");
+        case 1 -> myValueTitle;
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
-    public Class getColumnClass(final int column) {
-      switch (column) {
-        case 0:
-          return TreeTableModel.class;
-        case 1:
-          return myValueClass;
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+    public Class<?> getColumnClass(final int column) {
+      return switch (column) {
+        case 0 -> TreeTableModel.class;
+        case 1 -> myValueClass;
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
     public Object getValueAt(final Object node, final int column) {
       Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-      if (userObject instanceof Project) {
-        switch (column) {
-          case 0:
-            return userObject;
-          case 1:
-            return myCurrentMapping.get(null);
-        }
-      }
-      VirtualFile file = (VirtualFile)userObject;
-      switch (column) {
-        case 0:
-          return file;
-        case 1:
-          return myCurrentMapping.get(file);
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+      return switch (column) {
+        case 0 -> userObject;
+        case 1 -> myCurrentMapping.get(userObject instanceof VirtualFile file ? file : null);
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
     public boolean isCellEditable(final Object node, final int column) {
-      switch (column) {
-        case 0:
-          return false;
-        case 1:
+      return switch (column) {
+        case 0 -> false;
+        case 1 -> {
           final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          return !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+          yield !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
+        }
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override

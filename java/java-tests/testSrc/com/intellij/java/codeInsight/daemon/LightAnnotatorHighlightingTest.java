@@ -87,7 +87,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           XmlAttribute attribute = tag.getAttribute("aaa", "");
           if (attribute != null) {
             holder.newAnnotation(HighlightSeverity.WARNING, "MyAnnotator").range(attribute).create();
@@ -96,7 +96,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         }
 
         @Override
-        public void visitXmlToken(XmlToken token) {
+        public void visitXmlToken(@NotNull XmlToken token) {
           if (token.getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF) {
             holder.newAnnotation(HighlightSeverity.WARNING, "ENTITY").range(token).create();
             iDidIt();
@@ -122,9 +122,11 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
-    String text = "class X {\n" +
-                  "  //XXX\n" +
-                  "}\n";
+    String text = """
+      class X {
+        //XXX
+      }
+      """;
     configureFromFileText("x.java", text);
     ((EditorImpl)getEditor()).getScrollPane().getViewport().setSize(1000, 1000);
     assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));

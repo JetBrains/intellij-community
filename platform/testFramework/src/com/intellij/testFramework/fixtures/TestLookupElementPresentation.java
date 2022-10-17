@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public final class TestLookupElementPresentation extends LookupElementPresentation {
   public static @NotNull TestLookupElementPresentation renderReal(@NotNull LookupElement e) {
     TestLookupElementPresentation p = new TestLookupElementPresentation();

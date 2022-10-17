@@ -25,8 +25,7 @@ public class ReplaceInheritanceWithDelegationFix extends RefactoringInspectionGa
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message(
-      "replace.inheritance.with.delegation.quickfix");
+    return InspectionGadgetsBundle.message("replace.inheritance.with.delegation.quickfix");
   }
 
   @NotNull

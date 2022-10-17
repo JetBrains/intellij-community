@@ -20,6 +20,8 @@ import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import java.awt.datatransfer.Transferable
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.name
@@ -69,10 +71,7 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
       val relativePaths = files.map { obtainRelativePath(it, currentDirectory) }
       return relativePaths.joinToString(separator = "\n") { path ->
         when (registry.getFileTypeByExtension(path.extension)) {
-          imageFileType, SvgFileType.INSTANCE -> ImageUtils.createMarkdownImageText(
-            description = path.name,
-            path = FileUtil.toSystemIndependentName(path.toString())
-          )
+          imageFileType, SvgFileType.INSTANCE -> createImageLink(path)
           else -> createFileLink(path)
         }
       }
@@ -85,8 +84,19 @@ internal class EditorFileDropHandler: CustomFileDropHandler() {
       return path.relativeTo(currentDirectory)
     }
 
+    private fun createUri(url: String): String {
+      return URLEncoder.encode(url, Charset.defaultCharset()).replace("+", "%20")
+    }
+
+    private fun createImageLink(file: Path): String {
+      return ImageUtils.createMarkdownImageText(
+        description = file.name,
+        path = createUri(FileUtil.toSystemIndependentName(file.toString()))
+      )
+    }
+
     private fun createFileLink(file: Path): String {
-      val independentPath = FileUtil.toSystemIndependentName(file.toString())
+      val independentPath = createUri(FileUtil.toSystemIndependentName (file.toString()))
       return "[${file.name}]($independentPath)"
     }
 

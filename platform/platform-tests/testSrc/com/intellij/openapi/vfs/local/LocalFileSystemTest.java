@@ -108,6 +108,14 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void findChildWithSpecialName() {
+    VirtualFile dir = requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
+    assertFalse(((VirtualDirectoryImpl)dir).allChildrenLoaded());    
+    assertNull(dir.findChild("."));
+    assertNull(dir.findChild(".."));
+  }
+
+  @Test
   public void testChildrenAccessedButNotCached() throws IOException {
     File dir = tempDir.newDirectory("xxx");
     ManagingFS managingFS = ManagingFS.getInstance();
@@ -720,7 +728,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
-      String stopAt = top.getName() + "/sub_2/file_2";
+      String stopAt = top.getName() + "/sub_2/sub_2";
       RefreshQueueImpl.setTestListener(file -> {
         if (file.getPath().endsWith(stopAt)) RefreshQueue.getInstance().cancelSession(session.getId());
       });

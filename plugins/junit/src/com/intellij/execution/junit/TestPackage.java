@@ -229,7 +229,7 @@ public class TestPackage extends TestObject {
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
     if (sourceScope == null || !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //check for junit 5
-      JUnitUtil.checkTestCase(sourceScope, project);
+      ReadAction.run(() -> JUnitUtil.checkTestCase(sourceScope, project));
     }
     createTempFiles(javaParameters);
 

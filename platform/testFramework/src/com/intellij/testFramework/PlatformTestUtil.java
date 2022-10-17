@@ -53,7 +53,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -305,7 +305,7 @@ public final class PlatformTestUtil {
     }
     else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
-      assert application.isDispatchThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
     }
   }
 
@@ -805,21 +805,18 @@ public final class PlatformTestUtil {
     return null;
   }
 
-  private static void assertJarFilesEqual(@NotNull File file1, @NotNull File file2) throws IOException {
-    File tempDir = null;
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
+    Path tempDir = Files.createTempDirectory("assert_jar_tmp_");
     try (JarFile jarFile1 = new JarFile(file1); JarFile jarFile2 = new JarFile(file2)) {
-      tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
-      File tempDirectory1 = new File(tempDir, "tmp1");
-      File tempDirectory2 = new File(tempDir, "tmp2");
-      FileUtilRt.createDirectory(tempDirectory1);
-      FileUtilRt.createDirectory(tempDirectory2);
+      Path tempDirectory1 = Files.createDirectory(tempDir.resolve("tmp1"));
+      Path tempDirectory2 = Files.createDirectory(tempDir.resolve("tmp2"));
 
       new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
       new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
 
-      VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+      VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory1);
       assertNotNull(tempDirectory1.toString(), dirAfter);
-      VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+      VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
       ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
@@ -828,9 +825,7 @@ public final class PlatformTestUtil {
       assertDirectoriesEqual(dirAfter, dirBefore);
     }
     finally {
-      if (tempDir != null) {
-        FileUtilRt.delete(tempDir);
-      }
+      NioFiles.deleteRecursively(tempDir);
     }
   }
 
@@ -1011,9 +1006,11 @@ public final class PlatformTestUtil {
   public static void setLongMeaninglessFileIncludeTemplateTemporarilyFor(@NotNull Project project, @NotNull Disposable parentDisposable) {
     FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(project);
     templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-    "/**\n" +
-    " * Created by ${USER} on ${DATE}.\n" +
-    " */\n", parentDisposable);
+                                                                        """
+                                                                          /**
+                                                                           * Created by ${USER} on ${DATE}.
+                                                                           */
+                                                                          """, parentDisposable);
   }
 
   /**
@@ -1074,7 +1071,7 @@ public final class PlatformTestUtil {
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
     waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
-                              processHandler::isProcessTerminated, 60);
+                              processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
     return result.first;
   }
 

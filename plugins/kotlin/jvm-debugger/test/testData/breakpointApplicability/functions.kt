@@ -27,7 +27,7 @@ fun foo6() = when (2 + 3) { /// M, L
 // Line breakpoint should not be displayed for lambda literal results
 fun foo7() = { println() } /// M, λ
 
-fun foo8() = (3 + 5).run { /// M, L
+fun foo8() = (3 + 5).run { /// *, L, M, λ
     println() /// L
 } /// L
 

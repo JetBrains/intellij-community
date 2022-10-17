@@ -4,38 +4,38 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.HashSet;
 import java.util.List;
 
-public abstract class MarkupSurroundTestBase extends LightPlatformCodeInsightTestCase {
+public abstract class MarkupSurroundTestBase extends BasePlatformTestCase {
   protected static final String BASE_PATH = "/codeInsight/surroundWith/";
 
   private List<InvokeTemplateAction> buildSurroundersForFileTypeWithGivenExtension() {
     return ContainerUtil.map(
       TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
-        TemplateActionContext.surrounding(getFile(), getEditor())),
-      template -> new InvokeTemplateAction(template, getEditor(), getProject(), new HashSet<>()));
+        TemplateActionContext.surrounding(myFixture.getFile(), myFixture.getEditor())),
+      template -> new InvokeTemplateAction(template, myFixture.getEditor(), getProject(), new HashSet<>()));
   }
 
   protected void doSurroundWithTagTest(String ext) {
     String baseName = getBaseName("tag");
-    configureByFile(baseName + "." + ext);
+    myFixture.configureByFile(baseName + "." + ext);
     List<InvokeTemplateAction> actions = buildSurroundersForFileTypeWithGivenExtension();
     actions.get(0).perform();
-    checkResultByFile(baseName + "_after." + ext);
+    myFixture.checkResultByFile(baseName + "_after." + ext);
   }
 
   protected void doSurroundWithCDataTest(String ext) {
     String baseName = getBaseName("");
-    configureByFile(baseName + "." + ext);
+    myFixture.configureByFile(baseName + "." + ext);
     buildSurroundersForFileTypeWithGivenExtension().get(1).perform();
-    checkResultByFile(baseName + "_after." + ext);
+    myFixture.checkResultByFile(baseName + "_after." + ext);
   }
 
-  private String getBaseName(String dir) {
+  protected String getBaseName(String dir) {
     String baseName = BASE_PATH;
     if (!dir.isEmpty()) baseName += dir + "/";
     baseName += getTestName(false);

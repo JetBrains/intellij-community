@@ -10,10 +10,14 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.memory.utils.InstanceJavaValue
+import com.intellij.debugger.memory.utils.InstanceValueDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import org.jetbrains.eval4j.ObjectValue
@@ -293,7 +297,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             return
         }
 
-        val markupMap = NodeDescriptorImpl.getMarkupMap(debugProcess) ?: return
+        val valueMarkers = DebuggerUtilsImpl.getValueMarkers(debugProcess)
 
         for ((name, localName) in labels) {
             val localVariable = evaluationContext.frameProxy!!.visibleVariableByName(localName)
@@ -302,7 +306,13 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             val localVariableValue = evaluationContext.frameProxy!!.getValue(localVariable) as? ObjectReference
             assert(localVariableValue != null) { "Local variable $localName should be an ObjectReference" }
 
-            markupMap[localVariableValue] = ValueMarkup(name, null, name)
+            // just need a wrapper XValue to pass into markValue
+            val instanceValue = InstanceJavaValue(
+                InstanceValueDescriptor(project, localVariableValue),
+                evaluationContext,
+                debugProcess.xdebugProcess?.nodeManager
+            )
+            XDebuggerTestUtil.markValue(valueMarkers, instanceValue, ValueMarkup(name, null, name))
         }
     }
 }

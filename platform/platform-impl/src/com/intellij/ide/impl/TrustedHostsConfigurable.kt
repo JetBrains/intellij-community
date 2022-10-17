@@ -15,68 +15,91 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.CellBuilder
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Component
 import javax.swing.JComponent
-import javax.swing.JPanel
 import kotlin.math.max
 
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
-  private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
+  @Deprecated("Replaced by EP_NAME")
+  @ScheduledForRemoval
+  private val EP_NAME_OLD = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
+
+  private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurableProvider>("com.intellij.trustedHostsConfigurableProvider")
 
   override fun createPanel(): DialogPanel {
-    return panel {
+    val deprecatedPanels = mutableListOf<DialogPanel>()
+    val result = panel {
       row {
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
       row {
         val trustedPathsSettings = service<TrustedPathsSettings>()
-        trustedLocationConfigurable(this,
-                                    getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
+        trustedLocationConfigurable(getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
                                     setValuesToSettings = { trustedPathsSettings.setTrustedPaths(it) },
                                     getNewValueFromUser = { getPathFromUser(it) })
+      }.resizableRow()
+
+      // Remove this loop with EP_NAME_OLD
+      for (additionalPanel in EP_NAME_OLD.extensionList) {
+        val panel = com.intellij.ui.layout.panel() {
+          row {
+            additionalPanel.getCellBuilder(this)
+          }
+        }
+        deprecatedPanels.add(panel)
+        row {
+          cell(panel)
+        }
       }
 
       for (additionalPanel in EP_NAME.extensionList) {
-        row {
-          additionalPanel.getCellBuilder(this)
-        }
+        additionalPanel.buildContent(this)
       }
     }
+    for (panel in deprecatedPanels) {
+      result.registerIntegratedPanel(panel)
+    }
+    return result
   }
 
-  private fun trustedLocationConfigurable(row: Row,
+  private fun Row.trustedLocationConfigurable(
                                           getValuesFromSettings: () -> List<String>,
                                           setValuesToSettings: (List<String>) -> Unit,
-                                          getNewValueFromUser: (Component) -> String?): CellBuilder<JPanel> {
-    return with(row) {
-      val model = CollectionListModel(getValuesFromSettings())
-      val list = JBList(model)
+                                          getNewValueFromUser: (Component) -> String?) {
+    val model = CollectionListModel(getValuesFromSettings())
+    val list = JBList(model)
 
-      val component = ToolbarDecorator.createDecorator(list)
-        .setAddAction {
-          val path = getNewValueFromUser(list)
-          if (path != null) {
-            val insertPosition = if (list.selectedIndex >= 0) list.selectedIndex else max(list.itemsCount - 1, 0)
-            model.add(insertPosition, path)
-          }
+    val component = ToolbarDecorator.createDecorator(list)
+      .setAddAction {
+        val path = getNewValueFromUser(list)
+        if (path != null) {
+          val insertPosition = if (list.selectedIndex >= 0) list.selectedIndex else max(list.itemsCount - 1, 0)
+          model.add(insertPosition, path)
         }
-        .setRemoveAction {
-          model.remove(list.selectedIndex)
-        }
-        .createPanel()
+      }
+      .setRemoveAction {
+        model.remove(list.selectedIndex)
+      }
+      .createPanel()
 
-      component(CCFlags.growX).onApply {
+    cell(component)
+      .align(Align.FILL)
+      .onApply {
         setValuesToSettings(model.items)
       }.onIsModified {
         getValuesFromSettings() != model.items
       }.onReset {
         model.replaceAll(getValuesFromSettings())
       }
-    }
   }
 
   private fun getPathFromUser(parent: Component): String? {
@@ -96,10 +119,17 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   }
 }
 
+@ApiStatus.Internal
+@Deprecated("Replace by TrustedHostsConfigurableProvider")
+@ScheduledForRemoval
+interface TrustedHostsConfigurablePanelProvider {
+  fun getCellBuilder(row: com.intellij.ui.layout.Row) : CellBuilder<JComponent>
+}
+
 /**
  * Provides additional components to the "Trusted Hosts" configurable in the application settings.
  */
 @ApiStatus.Internal
-interface TrustedHostsConfigurablePanelProvider {
-  fun getCellBuilder(row: Row) : CellBuilder<JComponent>
+interface TrustedHostsConfigurableProvider {
+  fun buildContent(panel: Panel)
 }

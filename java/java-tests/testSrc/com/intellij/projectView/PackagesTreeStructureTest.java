@@ -57,151 +57,160 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     }
 
     doTest(true, true,
-             "-Project\n" +
-                       " -Module\n" +
-                       "  -PsiPackage: com.package1\n" +
-                       "   Class1.java\n" +
-                       "   Class2.java\n" +
-                       "   Class4.java\n" +
-                       "   emptyClassFile.class\n" +
-                       "   Form1.form\n" +
-                       "   Form1.java\n" +
-                       "   Form2.form\n" +
-                       "  PsiPackage: empty\n" +
-                       "  -PsiPackage: java\n" +
-                       "   Class1.java\n" +
-                       "  -PsiPackage: javax.servlet\n" +
-                       "   Class1.java\n" +
-                       "  -Libraries\n" +
-                       "   -PsiPackage: java\n" +
-                       "    +PsiPackage: awt\n" +
-                       "    +PsiPackage: beans.beancontext\n" +
-                       "    +PsiPackage: io\n" +
-                       "    +PsiPackage: lang\n" +
-                       "    +PsiPackage: net\n" +
-                       "    +PsiPackage: rmi\n" +
-                       "    +PsiPackage: security\n" +
-                       "    +PsiPackage: sql\n" +
-                       "    +PsiPackage: util\n" +
-                       "   -PsiPackage: javax.swing\n" +
-                       "    +PsiPackage: table\n" +
-                       "    AbstractButton.class\n" +
-                       "    Icon.class\n" +
-                       "    JButton.class\n" +
-                       "    JComponent.class\n" +
-                       "    JDialog.class\n" +
-                       "    JFrame.class\n" +
-                       "    JLabel.class\n" +
-                       "    JPanel.class\n" +
-                       "    JScrollPane.class\n" +
-                       "    JTable.class\n" +
-                       "    SwingConstants.class\n" +
-                       "    SwingUtilities.class\n" +
-                       "   -PsiPackage: META-INF\n" +
-                       "    MANIFEST.MF\n" +
-                       "    MANIFEST.MF\n" +
-                       "   -PsiPackage: org\n" +
-                       "    +PsiPackage: intellij.lang.annotations\n" +
-                       "    +PsiPackage: jetbrains.annotations\n" +
-                       "   LICENSE\n" +
-                       ""
+           """
+             -Project
+              -Module
+               -PsiPackage: com.package1
+                Class1.java
+                Class2.java
+                Class4.java
+                emptyClassFile.class
+                Form1.form
+                Form1.java
+                Form2.form
+               PsiPackage: empty
+               -PsiPackage: java
+                Class1.java
+               -PsiPackage: javax.servlet
+                Class1.java
+               -Libraries
+                -PsiPackage: java
+                 +PsiPackage: awt
+                 +PsiPackage: beans.beancontext
+                 +PsiPackage: io
+                 +PsiPackage: lang
+                 +PsiPackage: net
+                 +PsiPackage: rmi
+                 +PsiPackage: security
+                 +PsiPackage: sql
+                 +PsiPackage: util
+                -PsiPackage: javax.swing
+                 +PsiPackage: table
+                 AbstractButton.class
+                 Icon.class
+                 JButton.class
+                 JComponent.class
+                 JDialog.class
+                 JFrame.class
+                 JLabel.class
+                 JPanel.class
+                 JScrollPane.class
+                 JTable.class
+                 SwingConstants.class
+                 SwingUtilities.class
+                -PsiPackage: META-INF
+                 MANIFEST.MF
+                 MANIFEST.MF
+                -PsiPackage: org
+                 +PsiPackage: intellij.lang.annotations
+                 +PsiPackage: jetbrains.annotations
+                LICENSE
+             """
       , 4);
 
     doTest(false, true,
-              "-Project\n" +
-                        " -PsiPackage: com.package1\n" +
-                        "  Class1.java\n" +
-                        "  Class2.java\n" +
-                        "  Class4.java\n" +
-                        "  emptyClassFile.class\n" +
-                        "  Form1.form\n" +
-                        "  Form1.java\n" +
-                        "  Form2.form\n" +
-                        " PsiPackage: empty\n" +
-                        " -PsiPackage: java\n" +
-                        "  Class1.java\n" +
-                        " -PsiPackage: javax.servlet\n" +
-                        "  Class1.java\n" +
-                        " -Libraries\n" +
-                        "  -PsiPackage: java\n" +
-                        "   +PsiPackage: awt\n" +
-                        "   +PsiPackage: beans.beancontext\n" +
-                        "   +PsiPackage: io\n" +
-                        "   +PsiPackage: lang\n" +
-                        "   +PsiPackage: net\n" +
-                        "   +PsiPackage: rmi\n" +
-                        "   +PsiPackage: security\n" +
-                        "   +PsiPackage: sql\n" +
-                        "   +PsiPackage: util\n" +
-                        "  -PsiPackage: javax.swing\n" +
-                        "   +PsiPackage: table\n" +
-                        "   AbstractButton.class\n" +
-                        "   Icon.class\n" +
-                        "   JButton.class\n" +
-                        "   JComponent.class\n" +
-                        "   JDialog.class\n" +
-                        "   JFrame.class\n" +
-                        "   JLabel.class\n" +
-                        "   JPanel.class\n" +
-                        "   JScrollPane.class\n" +
-                        "   JTable.class\n" +
-                        "   SwingConstants.class\n" +
-                        "   SwingUtilities.class\n" +
-                        "  -PsiPackage: META-INF\n" +
-                        "   MANIFEST.MF\n" +
-                        "   MANIFEST.MF\n" +
-                        "  -PsiPackage: org\n" +
-                        "   +PsiPackage: intellij.lang.annotations\n" +
-                        "   +PsiPackage: jetbrains.annotations\n" +
-                        "  LICENSE\n"
+           """
+             -Project
+              -PsiPackage: com.package1
+               Class1.java
+               Class2.java
+               Class4.java
+               emptyClassFile.class
+               Form1.form
+               Form1.java
+               Form2.form
+              PsiPackage: empty
+              -PsiPackage: java
+               Class1.java
+              -PsiPackage: javax.servlet
+               Class1.java
+              -Libraries
+               -PsiPackage: java
+                +PsiPackage: awt
+                +PsiPackage: beans.beancontext
+                +PsiPackage: io
+                +PsiPackage: lang
+                +PsiPackage: net
+                +PsiPackage: rmi
+                +PsiPackage: security
+                +PsiPackage: sql
+                +PsiPackage: util
+               -PsiPackage: javax.swing
+                +PsiPackage: table
+                AbstractButton.class
+                Icon.class
+                JButton.class
+                JComponent.class
+                JDialog.class
+                JFrame.class
+                JLabel.class
+                JPanel.class
+                JScrollPane.class
+                JTable.class
+                SwingConstants.class
+                SwingUtilities.class
+               -PsiPackage: META-INF
+                MANIFEST.MF
+                MANIFEST.MF
+               -PsiPackage: org
+                +PsiPackage: intellij.lang.annotations
+                +PsiPackage: jetbrains.annotations
+               LICENSE
+             """
       , 3);
 
     doTest(true, false,
-          "-Project\n" +
-                    " -Module\n" +
-                    "  -PsiPackage: com.package1\n" +
-                    "   Class1.java\n" +
-                    "   Class2.java\n" +
-                    "   Class4.java\n" +
-                    "   emptyClassFile.class\n" +
-                    "   Form1.form\n" +
-                    "   Form1.java\n" +
-                    "   Form2.form\n" +
-                    "  PsiPackage: empty\n" +
-                    "  -PsiPackage: java\n" +
-                    "   Class1.java\n" +
-                    "  -PsiPackage: javax.servlet\n" +
-                    "   Class1.java\n", 3);
+           """
+             -Project
+              -Module
+               -PsiPackage: com.package1
+                Class1.java
+                Class2.java
+                Class4.java
+                emptyClassFile.class
+                Form1.form
+                Form1.java
+                Form2.form
+               PsiPackage: empty
+               -PsiPackage: java
+                Class1.java
+               -PsiPackage: javax.servlet
+                Class1.java
+             """, 3);
 
-    doTest(false, false, true, true, "-Project\n" +
-                     " -PsiPackage: com.package1\n" +
-                     "  Class1.java\n" +
-                     "  Class2.java\n" +
-                     "  Class4.java\n" +
-                     "  emptyClassFile.class\n" +
-                     "  Form1.form\n" +
-                     "  Form1.java\n" +
-                     "  Form2.form\n" +
-                     " PsiPackage: empty\n" +
-                     " -PsiPackage: java\n" +
-                     "  Class1.java\n" +
-                     " -PsiPackage: j.servlet\n" +
-                     "  Class1.java\n", 3);
+    doTest(false, false, true, true, """
+      -Project
+       -PsiPackage: com.package1
+        Class1.java
+        Class2.java
+        Class4.java
+        emptyClassFile.class
+        Form1.form
+        Form1.java
+        Form2.form
+       PsiPackage: empty
+       -PsiPackage: java
+        Class1.java
+       -PsiPackage: j.servlet
+        Class1.java
+      """, 3);
 
-    doTest(false, false, "-Project\n" +
-                     " -PsiPackage: com.package1\n" +
-                     "  Class1.java\n" +
-                     "  Class2.java\n" +
-                     "  Class4.java\n" +
-                     "  emptyClassFile.class\n" +
-                     "  Form1.form\n" +
-                     "  Form1.java\n" +
-                     "  Form2.form\n" +
-                     " PsiPackage: empty\n" +
-                     " -PsiPackage: java\n" +
-                     "  Class1.java\n" +
-                     " -PsiPackage: javax.servlet\n" +
-                     "  Class1.java\n", 3);
+    doTest(false, false, """
+      -Project
+       -PsiPackage: com.package1
+        Class1.java
+        Class2.java
+        Class4.java
+        emptyClassFile.class
+        Form1.form
+        Form1.java
+        Form2.form
+       PsiPackage: empty
+       -PsiPackage: java
+        Class1.java
+       -PsiPackage: javax.servlet
+        Class1.java
+      """, 3);
   }
 
   private void doTest(final boolean showModules, final boolean showLibraryContents, @NonNls final String expected, final int levels) {

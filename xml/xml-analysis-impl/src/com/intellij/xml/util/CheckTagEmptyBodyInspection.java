@@ -31,7 +31,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final XmlTag tag) {
+      @Override public void visitXmlTag(final @NotNull XmlTag tag) {
         if (tag instanceof HtmlTag) {
           return;
         }

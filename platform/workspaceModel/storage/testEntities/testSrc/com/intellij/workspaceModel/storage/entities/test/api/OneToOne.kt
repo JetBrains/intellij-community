@@ -24,8 +24,8 @@ interface OoParentEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoParentEntity, ModifiableWorkspaceEntity<OoParentEntity>, ObjBuilder<OoParentEntity> {
-    override var parentProperty: String
     override var entitySource: EntitySource
+    override var parentProperty: String
     override var child: OoChildEntity?
     override var anotherChild: OoChildWithNullableParentEntity?
   }
@@ -68,8 +68,8 @@ interface OoChildEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoChildEntity, ModifiableWorkspaceEntity<OoChildEntity>, ObjBuilder<OoChildEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var parentEntity: OoParentEntity
   }
 
@@ -111,8 +111,8 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoChildWithNullableParentEntity, ModifiableWorkspaceEntity<OoChildWithNullableParentEntity>, ObjBuilder<OoChildWithNullableParentEntity> {
-    override var parentEntity: OoParentEntity?
     override var entitySource: EntitySource
+    override var parentEntity: OoParentEntity?
   }
 
   companion object : Type<OoChildWithNullableParentEntity, Builder>() {
@@ -164,8 +164,8 @@ interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoParentWithPidEntity, ModifiableWorkspaceEntity<OoParentWithPidEntity>, ObjBuilder<OoParentWithPidEntity> {
-    override var parentProperty: String
     override var entitySource: EntitySource
+    override var parentProperty: String
     override var childOne: OoChildForParentWithPidEntity?
     override var childThree: OoChildAlsoWithPidEntity?
   }
@@ -207,8 +207,8 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoChildForParentWithPidEntity, ModifiableWorkspaceEntity<OoChildForParentWithPidEntity>, ObjBuilder<OoChildForParentWithPidEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var parentEntity: OoParentWithPidEntity
   }
 
@@ -256,8 +256,8 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoChildAlsoWithPidEntity, ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity>, ObjBuilder<OoChildAlsoWithPidEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var parentEntity: OoParentWithPidEntity
   }
 
@@ -302,8 +302,8 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoParentWithoutPidEntity, ModifiableWorkspaceEntity<OoParentWithoutPidEntity>, ObjBuilder<OoParentWithoutPidEntity> {
-    override var parentProperty: String
     override var entitySource: EntitySource
+    override var parentProperty: String
     override var childOne: OoChildWithPidEntity?
   }
 
@@ -352,8 +352,8 @@ interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OoChildWithPidEntity, ModifiableWorkspaceEntity<OoChildWithPidEntity>, ObjBuilder<OoChildWithPidEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var parentEntity: OoParentWithoutPidEntity
   }
 

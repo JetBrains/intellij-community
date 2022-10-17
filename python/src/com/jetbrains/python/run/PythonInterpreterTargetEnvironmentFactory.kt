@@ -4,6 +4,7 @@ package com.jetbrains.python.run
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.dsl.builder.Panel
@@ -43,11 +44,15 @@ interface PythonInterpreterTargetEnvironmentFactory {
    */
   fun asTargetWithMappedLocalVfs(envConfig: TargetEnvironmentConfiguration): TargetWithMappedLocalVfs? = null
 
-
   /**
    * See [isPackageManagementSupported]
    */
   fun packageManagementSupported(evConfiguration: TargetEnvironmentConfiguration): Boolean? = null
+
+  /**
+   * For some modules target is obvious (like ``\\wsl$\``)
+   */
+  fun guessTargetConfigurationByModuleImpl(module: Module): TargetEnvironmentConfiguration? = null
 
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
@@ -56,16 +61,17 @@ interface PythonInterpreterTargetEnvironmentFactory {
     val EP_NAME = ExtensionPointName<PythonInterpreterTargetEnvironmentFactory>("Pythonid.interpreterTargetEnvironmentFactory")
 
     @JvmStatic
-    fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest? =
+    fun findPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest =
       when (sdk.sdkAdditionalData) {
         is PyTargetAwareAdditionalData, is PyRemoteSdkAdditionalDataBase ->
           EP_NAME.extensionList.firstNotNullOfOrNull { it.getPythonTargetInterpreter(sdk, project) }
-        else -> HelpersAwareLocalTargetEnvironmentRequest()
-      }
+        else -> null
+      } ?: HelpersAwareLocalTargetEnvironmentRequest()
 
     @JvmStatic
     fun findDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultSdkName(project, data, version) } ?: getFallbackSdkName(data, version)
+
 
     @JvmStatic
     fun findProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync? =
@@ -116,5 +122,8 @@ interface PythonInterpreterTargetEnvironmentFactory {
       ?.let { targetEnvironmentConfiguration ->
         EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
       }
+
+    fun guessTargetConfigurationByModule(module: Module): TargetEnvironmentConfiguration? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.guessTargetConfigurationByModuleImpl(module) }
   }
 }

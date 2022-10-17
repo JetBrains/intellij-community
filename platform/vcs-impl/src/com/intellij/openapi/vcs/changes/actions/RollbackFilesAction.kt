@@ -7,14 +7,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog
-import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitMode
+import com.intellij.vcs.commit.cleanActionText
 import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName
 
@@ -55,7 +54,7 @@ class RollbackFilesAction : DumbAwareAction() {
       val project = e.project ?: return false
       val title =
         if (CHANGES_VIEW_TOOLBAR == e.place) null
-        else message("error.cant.perform.operation.now", removeEllipsisSuffix(removeMnemonic(getRollbackOperationName(project))))
+        else message("error.cant.perform.operation.now", cleanActionText(getRollbackOperationName(project)))
 
       return !ChangeListManager.getInstance(project).isFreezedWithNotification(title)
     }

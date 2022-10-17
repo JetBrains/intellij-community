@@ -2,12 +2,17 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ExceptionUtil;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +50,8 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
    */
   private float myTemplateFontSize = DEFAULT_FONT_SIZE;
+
+  private static final Logger LOG = Logger.getInstance(FontPreferencesImpl.class);
 
   public void addChangeListener(@NotNull ChangeListener changeListener) {
     myEventDispatcher.addListener(changeListener);
@@ -108,9 +115,19 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   public void setSize(@NotNull String fontFamily, float size) {
+    logSizeChangeIfNeeded(size);
     myFontSizes.put(fontFamily, size);
     myTemplateFontSize = size;
     notifyStateChanged();
+  }
+
+  private void logSizeChangeIfNeeded(float size) {
+    if (!LOG.isDebugEnabled()) return;
+    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+    if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) return;
+
+    LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
+    LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
   /**

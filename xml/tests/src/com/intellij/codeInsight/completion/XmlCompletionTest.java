@@ -695,9 +695,10 @@ public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testDoNotProcessAnyInRestrictions() {
-    myFixture.configureByText("foo.xsd", "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
-                                         "    <<caret>\n" +
-                                         "</xs:schema>");
+    myFixture.configureByText("foo.xsd", """
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+          <<caret>
+      </xs:schema>""");
     myFixture.completeBasic();
     assertSameElements(myFixture.getLookupElementStrings(), "xs:annotation",
                                                             "xs:attribute",
@@ -783,9 +784,10 @@ public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testAttributeValueToken() {
-    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
-                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
-                                         "</schema>");
+    myFixture.configureByText("foo.xml", """
+      <schema xmlns="http://www.w3.org/2001/XMLSchema">
+          <element name="a" abstract=<caret>""/>
+      </schema>""");
     LookupElement[] elements = myFixture.completeBasic();
     assertEquals(0, elements.length);
   }

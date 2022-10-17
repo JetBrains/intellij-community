@@ -9,8 +9,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class RenameUselessCallFix(val newName: String) : LocalQuickFix {
+class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : LocalQuickFix {
     override fun getName() = KotlinBundle.message("rename.useless.call.fix.text", newName)
 
     override fun getFamilyName() = name
@@ -22,6 +23,7 @@ class RenameUselessCallFix(val newName: String) : LocalQuickFix {
             val calleeExpression = selectorCallExpression?.calleeExpression ?: return
             calleeExpression.replaced(factory.createExpression(newName))
             selectorCallExpression.renameGivenReturnLabels(factory, calleeExpression.text, newName)
+            if (invert) it.invert()
         }
     }
 
@@ -40,5 +42,11 @@ class RenameUselessCallFix(val newName: String) : LocalQuickFix {
                 )
             )
         }
+    }
+
+    private fun KtQualifiedExpression.invert() {
+        val parent = parent.safeAs<KtPrefixExpression>() ?: return
+        val baseExpression = parent.baseExpression ?: return
+        parent.replace(baseExpression)
     }
 }

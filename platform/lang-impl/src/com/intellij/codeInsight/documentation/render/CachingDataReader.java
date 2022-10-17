@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.openapi.Disposable;
@@ -6,13 +6,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,9 +84,12 @@ public final class CachingDataReader implements Disposable {
 
   @Override
   public void dispose() {
-    File folder = getCacheFolder();
-    if (folder.exists() && !FileUtilRt.delete(folder)) {
-      LOG.warn("Error deleting folder " + folder);
+    Path folder = getCacheFolder().toPath();
+    try {
+      NioFiles.deleteRecursively(folder);
+    }
+    catch (IOException e) {
+      LOG.warn("Error deleting folder " + folder, e);
     }
   }
 

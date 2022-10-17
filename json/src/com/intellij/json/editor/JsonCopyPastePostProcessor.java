@@ -35,23 +35,8 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   static class DumbData implements TextBlockTransferableData {
     private static final DataFlavor DATA_FLAVOR = new DataFlavor(JsonCopyPastePostProcessor.class, "class: JsonCopyPastePostProcessor");
     @Override
-    public DataFlavor getFlavor()  {
+    public @Nullable DataFlavor getFlavor()  {
       return  DATA_FLAVOR;
-    }
-
-    @Override
-    public int getOffsetCount() {
-      return 0;
-    }
-
-    @Override
-    public int getOffsets(int[] offsets, int index) {
-      return index;
-    }
-
-    @Override
-    public int setOffsets(int[] offsets, int index) {
-      return index;
     }
   }
 

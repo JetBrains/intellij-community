@@ -4,19 +4,20 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.core.CoreBundle;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.PersistentCharSequenceEnumerator;
-import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
-import com.intellij.util.io.storage.Storage;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
@@ -43,17 +43,21 @@ final class PersistentFSConnection {
   private final PersistentFSPaths myPersistentFSPaths;
 
   @NotNull
-  private final Storage myAttributes;
+  private final AbstractAttributesStorage myAttributesStorage;
   @NotNull
   private final RefCountingContentStorage myContents;
   @NotNull
   private final PersistentFSRecordsStorage myRecords;
   @Nullable
   private final ContentHashEnumerator myContentHashesEnumerator;
-  private final PersistentCharSequenceEnumerator myNames;
+  private final ScannableDataEnumeratorEx<String> myNames;
+  /**
+   * Enumerator for repeating strings used in attributes. Used to support
+   * {@link AttributeInputStream#readEnumeratedString()}
+   * {@link AttributeOutputStream#writeEnumeratedString(String)}
+   */
   private final @NotNull SimpleStringPersistentEnumerator myEnumeratedAttributes;
 
-  private final AtomicInteger myLocalModificationCount;
   private volatile boolean myDirty;
   /**
    * accessed under {@link #r}/{@link #w}
@@ -66,22 +70,27 @@ final class PersistentFSConnection {
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
-                         @NotNull PersistentCharSequenceEnumerator names,
-                         @NotNull Storage attributes,
+                         @NotNull ScannableDataEnumeratorEx<String> names,
+                         @NotNull AbstractAttributesStorage attributes,
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @NotNull IntList freeRecords,
-                         AtomicInteger localModificationCount,
                          boolean markDirty) throws IOException {
+    if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
+      //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
+      //    hence the runtime check here (and in methods below calling Forceable/Closeable methods).
+      //    This is needed only during transition period, while we're experimenting with plugging in
+      //    different names impls -- after we'll decide which impl is the best, explicit type could be specified here
+      throw new IllegalArgumentException("names(" + names + ") must implement Forceable & Closeable");
+    }
     myRecords = records;
     myNames = names;
-    myAttributes = attributes;
+    myAttributesStorage = attributes;
     myContents = contents;
     myContentHashesEnumerator = contentHashesEnumerator;
     myPersistentFSPaths = paths;
     myFreeRecords = freeRecords;
-    myLocalModificationCount = localModificationCount;
     myEnumeratedAttributes = enumeratedAttributes;
 
     if (markDirty) {
@@ -95,10 +104,11 @@ final class PersistentFSConnection {
 
         @Override
         public void run() {
-          if (lastModCount == myLocalModificationCount.get()) {
+          //TODO RC: use myDirty instead of myRecords.getGlobalModCount?
+          if (lastModCount == myRecords.getGlobalModCount()) {
             flush();
           }
-          lastModCount = myLocalModificationCount.get();
+          lastModCount = myRecords.getGlobalModCount();
         }
       });
     }
@@ -123,12 +133,12 @@ final class PersistentFSConnection {
   }
 
   @NotNull("Vfs must be initialized")
-  Storage getAttributes() {
-    return myAttributes;
+  AbstractAttributesStorage getAttributes() {
+    return myAttributesStorage;
   }
 
   @NotNull("Vfs must be initialized")
-  PersistentCharSequenceEnumerator getNames() {
+  ScannableDataEnumeratorEx<String> getNames() {
     return myNames;
   }
 
@@ -148,9 +158,12 @@ final class PersistentFSConnection {
     return myRecords.getTimestamp();
   }
 
+  /**
+   * @return id of record to re-use, or -1 if no records for reuse remain
+   */
   int reserveFreeRecord() {
     synchronized (myFreeRecords) {
-      return myFreeRecords.isEmpty() ? 0 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
+      return myFreeRecords.isEmpty() ? -1 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
     }
   }
 
@@ -179,11 +192,6 @@ final class PersistentFSConnection {
     return myRecords.getGlobalModCount();
   }
 
-  public int incGlobalModCount() throws IOException {
-    incLocalModCount();
-    return myRecords.incGlobalModCount();
-  }
-
   void markDirty() throws IOException {
     if (!myDirty) {
       myDirty = true;
@@ -191,23 +199,20 @@ final class PersistentFSConnection {
     }
   }
 
-  void incLocalModCount() throws IOException {
-    markDirty();
-    myLocalModificationCount.incrementAndGet();
-  }
-
-  int getLocalModificationCount() {
-    return myLocalModificationCount.get();
+  int getModificationCount() {
+    return myRecords.getGlobalModCount();
   }
 
   void doForce() throws IOException {
     // avoid NPE when close has already taken place
     if (myNames != null && myFlushingFuture != null) {
-      myNames.force();
-      myAttributes.force();
+      if (myNames instanceof Forceable) {
+        ((Forceable)myNames).force();
+      }
+      myAttributesStorage.force();
       myContents.force();
       if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
-      markClean();
+      markClean();      //TODO RC: shouldn't markClean() be _after_ myRecords.close()?
       myRecords.force();
     }
   }
@@ -226,7 +231,7 @@ final class PersistentFSConnection {
   }
 
   public boolean isDirty() {
-    return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
+    return myDirty || ((Forceable)myNames).isDirty() || myAttributesStorage.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
            myContentHashesEnumerator != null && myContentHashesEnumerator.isDirty();
   }
 
@@ -235,10 +240,10 @@ final class PersistentFSConnection {
       myFlushingFuture.cancel(false);
     }
 
-    markClean();
+    markClean(); //TODO RC: shouldn't markClean() be the last statement, after storages close?
     closeStorages(myRecords,
                   myNames,
-                  myAttributes,
+                  myAttributesStorage,
                   myContentHashesEnumerator,
                   myContents);
   }
@@ -248,22 +253,23 @@ final class PersistentFSConnection {
     return myPersistentFSPaths;
   }
 
-  public void incModCount(int fileId) throws IOException {
-    int count = incGlobalModCount();
-    getRecords().setModCount(fileId, count);
+  public void markRecordAsModified(int fileId) throws IOException {
+    getRecords().markRecordAsModified(fileId);
+    markDirty();
   }
 
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
-                            @Nullable PersistentCharSequenceEnumerator names,
-                            @Nullable Storage attributes,
+                            @Nullable ScannableDataEnumeratorEx<String> names,
+                            @Nullable AbstractAttributesStorage attributes,
                             @Nullable ContentHashEnumerator contentHashesEnumerator,
                             @Nullable RefCountingContentStorage contents) throws IOException {
-    if (names != null) {
-      names.close();
+    if (names instanceof Closeable) {//implies != null
+      ((Closeable)names).close();
     }
 
     if (attributes != null) {
-      Disposer.dispose(attributes);
+      attributes.close();
+      //Disposer.dispose(attributes);
     }
 
     if (contents != null) {

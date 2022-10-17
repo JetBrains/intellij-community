@@ -38,6 +38,11 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = LangDataKeys.RUN_CONTENT_DESCRIPTOR.getData(myDataContext);
     boolean visible = false;
@@ -73,6 +78,11 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     public boolean isSelected(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       return project != null && AutoTestManager.getInstance(project).getDelay() == myDelay;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

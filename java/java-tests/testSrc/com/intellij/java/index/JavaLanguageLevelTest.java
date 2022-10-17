@@ -27,12 +27,17 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
     assertNull(getIndexedStub(file));
 
     PsiTestUtil.addSourceContentToRoots(myFixture.getModule(), file.getParent());
-    LanguageLevel level2 = JavaLanguageLevelPusher.getPushedLanguageLevel(file);
+    try {
+      LanguageLevel level2 = JavaLanguageLevelPusher.getPushedLanguageLevel(file);
 
-    assertTrue(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
-    assertEquals(LanguageLevel.HIGHEST, level2);
-    assertTrue(JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file));
-    assertNotNull(getIndexedStub(file));
+      assertTrue(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
+      assertEquals(LanguageLevel.HIGHEST, level2);
+      assertTrue(JavaParserDefinition.JAVA_FILE.shouldBuildStubFor(file));
+      assertNotNull(getIndexedStub(file));
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(myFixture.getModule(), file.getParent());
+    }
   }
 
   private SerializedStubTree getIndexedStub(VirtualFile file) {

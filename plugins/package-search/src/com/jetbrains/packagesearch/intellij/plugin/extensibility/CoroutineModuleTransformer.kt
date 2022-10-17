@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.AreaInstance
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import kotlin.streams.toList
 
 /**
  * Extension point used to register [Module]s transformations to [ProjectModule]s using coroutines.
@@ -28,19 +27,16 @@ import kotlin.streams.toList
 interface CoroutineModuleTransformer {
 
     companion object {
+        private val extensionPointName = ExtensionPointName<CoroutineModuleTransformer>("com.intellij.packagesearch.coroutineModuleTransformer")
 
-        private val extensionPointName: ExtensionPointName<CoroutineModuleTransformer> =
-            ExtensionPointName.create("com.intellij.packagesearch.coroutineModuleTransformer")
-
-        internal fun extensions(areaInstance: AreaInstance) =
-            extensionPointName.extensions(areaInstance).toList()
+        internal fun extensions(areaInstance: AreaInstance) = extensionPointName.getExtensionList(areaInstance)
     }
 
     /**
      * IMPORTANT: This function is NOT invoked inside a read action.
      *
      * Transforms [nativeModules] in a [ProjectModule] module if possible, else returns an empty list.
-     * Its implementation should use the IntelliJ platform APIs for a given build system (eg.
+     * Its implementation should use the IntelliJ platform APIs for a given build system (e.g.
      * Gradle or Maven), detect if and which [nativeModules] are controlled by said build system
      * and transform them accordingly.
      *

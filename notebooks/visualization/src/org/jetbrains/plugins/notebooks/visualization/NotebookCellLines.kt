@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
 import java.util.*
@@ -49,41 +50,13 @@ interface NotebookCellLines {
 
   interface IntervalListener : EventListener {
     /**
-     * Called when document is changed.
-     *
-     * Intervals that were just shifted are included neither [oldIntervals], nor in [newIntervals].
-     *
-     * Intervals in the lists are valid only until the document changes. Check their validity
-     * when postponing handling of intervals.
-     *
-     * If document is changed, but intervals aren’t changed, both [oldIntervals] and [newIntervals] are empty,
-     * and the [modificationStamp] stamp doesn’t change.
-     *
-     * [oldAffectedIntervals] and [oldAffectedIntervals] are same as event.oldFragment and event.newFragment
-     * [oldAffectedIntervals] are intervals containing oldFragment and same with [newAffectedIntervals]
-     *
-     * If existing line is edited, [oldAffectedIntervals] and/or [newAffectedIntervals] contain interval with the line,
-     * but [oldIntervals] and  [newIntervals] are empty.
-     *
-     * Both [oldAffectedIntervals] and [newAffectedIntervals] are necessary to distinguish last cell line removing and whole cell removing.
-     * "#%%\n 1 \n\n#%%\n 2" -> "#%%\n 1 \n": [oldAffectedIntervals] contains second cell, [newAffectedIntervals] are empty
-     *            ^^^^^^^^^
-     * "#%%\n 1 \n text"     -> "#%%\n 1 \n": [oldAffectedIntervals] contain cell, [newAffectedIntervals] are empty
-     *            ^^^^^
-     * "#%%\n 1  text \n#%%\n 2" -> "#%% 1 \n#%%\n new": [oldAffectedIntervals] contain all cells,
-     *           ^^^^^^^^^^^^^^            ^^^^^^^^^^^
-     * [newAffectedIntervals] contain only second cell, because range of inserted text related to second cell only
-     *
-     * It is guaranteed that:
-     * * Ordinals from every list defines an arithmetical progression where
-     *   every next element has ordinal of the previous element incremented by one.
-     * * If oldIntervals and newIntervals lists are not empty, the first elements of both lists has the same ordinal.
-     * * Both lists don't contain any interval that has been only shifted, shrank or enlarged.
-     *
-     * See `NotebookCellLinesTest` for examples of calls for various changes.
+     * Called each time when document is changed, even if intervals are the same.
+     * Contains DocumentEvent and additional information about intervals.
+     * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
      */
-    fun segmentChanged(oldIntervals: List<Interval>, oldAffectedIntervals: List<Interval>,
-                       newIntervals: List<Interval>, newAffectedIntervals: List<Interval>)
+    fun documentChanged(event: NotebookCellLinesEvent)
+
+    fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {}
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>
@@ -95,11 +68,17 @@ interface NotebookCellLines {
   val modificationStamp: Long
 
   companion object {
+    fun get(document: Document): NotebookCellLines =
+      NotebookCellLinesProvider.get(document)?.create(document)
+      ?: error("Can't get NotebookCellLinesProvider for document ${document}")
+
+    fun hasSupport(document: Document): Boolean =
+      NotebookCellLinesProvider.get(document) != null
+
     fun get(editor: Editor): NotebookCellLines =
-      editor.notebookCellLinesProvider?.create(editor.document)
-      ?: error("Can't get for $editor with document ${editor.document}")
+      get(editor.document)
 
     fun hasSupport(editor: Editor): Boolean =
-      editor.notebookCellLinesProvider != null
+      hasSupport(editor.document)
   }
 }

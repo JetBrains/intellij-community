@@ -256,10 +256,20 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
-        "separatorColor": "Grey2",
+        "separatorColor": "#FFFFFF33",
+        "separatorInset": 4,
         "hoverBackground": "Blue3",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey3",
+        "foreground": "Grey8"
       }
+    },
+
+    "MainMenu": {
+      "selectionForeground": "Grey12",
+      "selectionBackground": "Grey3"
     },
 
     "MemoryIndicator": {
@@ -494,10 +504,14 @@
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "pressedBackground": "Grey3"
       },
-      "background": "Grey2"
+      "Button": {
+        "buttonInsets": "0,0,0,0"
+      },
+      "background": "Grey2",
+      "separatorColor": "Grey1"
     },
 
     "Tree": {
@@ -532,7 +546,38 @@
 
     "EditorPane.splitBorder": "Grey3",
 
-    "WelcomeScreen.Details.background": "Grey1"
+    "WelcomeScreen.Details.background": "Grey1",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "Grey3"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "Grey5"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#1c2433",
+        "hoverBackground": "#2c3341",
+        "PackageTag": {
+          "background": "#2e3643",
+          "foreground": "Grey12",
+          "hoverBackground": "#3d4350",
+          "selectedBackground": "Blue4",
+          "selectedForeground": "Grey12"
+        }
+      },
+      "PackageTag": {
+        "background": "Grey4",
+        "foreground": "Grey9",
+        "hoverBackground": "#4a4c4e",
+        "selectedBackground": "Grey4",
+        "selectedForeground": "Grey9"
+      },
+      "PackageTagSelected.background": "Blue4",
+      "PackageTagSelected.foreground": "Grey10"
+    }
   },
 
   "icons": {

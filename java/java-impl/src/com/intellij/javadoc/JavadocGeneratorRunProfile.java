@@ -293,7 +293,8 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
             writer.println("-classpath");
             writer.println(StringUtil.wrapWithDoubleQuote(path));
 
-            if (!sourceRoots.isEmpty()) {
+            if (!sourceRoots.isEmpty() && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_18)) {
+              //is needed for javadoc snippets only
               String sourcePath = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
               writer.println("--source-path");
               writer.println(StringUtil.wrapWithDoubleQuote(sourcePath));

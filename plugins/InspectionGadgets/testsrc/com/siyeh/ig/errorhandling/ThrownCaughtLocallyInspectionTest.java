@@ -26,24 +26,21 @@ public class ThrownCaughtLocallyInspectionTest extends LightJavaInspectionTestCa
   }
   
   public void testLambdaOrAnonymous() {
-    doTest("class C {\n" +
-           "private Object bar() {\n" +
-           "        try{\n" +
-           "            Runnable runnable = () -> {\n" +
-           "                throw new RuntimeException();\n" +
-           "            };\n" +
-           "" +
-           "            Runnable runnableLambda = ()-> {\n" +
-           "" +
-           "                    throw new RuntimeException();\n" +
-           "    " +
-           "            };\n" +
-           "        }\n" +
-           "        catch (RuntimeException e){\n" +
-           "            throw new RuntimeException(e);\n" +
-           "        }\n" +
-           "        return null;\n" +
-           "    }" +
-           "}");
+    doTest("""
+             class C {
+             private Object bar() {
+                     try{
+                         Runnable runnable = () -> {
+                             throw new RuntimeException();
+                         };
+                         Runnable runnableLambda = ()-> {
+                                 throw new RuntimeException();
+                             };
+                     }
+                     catch (RuntimeException e){
+                         throw new RuntimeException(e);
+                     }
+                     return null;
+                 }}""");
   }
 }

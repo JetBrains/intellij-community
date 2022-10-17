@@ -52,7 +52,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
   @NotNull
   @Override
   public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       NexusModel.RepositorySearchResults repos = gson.fromJson(
         HttpRequests.request(toUrl(url, "repositories"))
@@ -83,7 +83,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
   @NotNull
   @Override
   public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template) throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
 

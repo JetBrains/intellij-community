@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.extractor
 
 import com.intellij.openapi.util.io.FileUtil
@@ -33,6 +33,7 @@ object AgentExtractor {
   enum class AgentLibraryType(val prefix: String, val suffix: String) {
     WINDOWS32("", "32.dll"),
     WINDOWS64("", ".dll"),
+    WINDOWS_ARM64("", "64a.dll"),
     LINUX_X64("lib", ".so"),
     LINUX_AARCH64("lib", "_aarch64.so"),
     MACOS("lib", ".dylib")

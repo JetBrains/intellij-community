@@ -2,7 +2,7 @@
 
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;

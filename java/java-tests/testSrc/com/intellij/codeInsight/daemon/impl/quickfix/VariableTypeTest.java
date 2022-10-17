@@ -14,28 +14,31 @@ public class VariableTypeTest extends LightQuickFixParameterizedTestCase {
 
   public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {
     public void testSameFile() {
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  int x = <caret>\"xyz\";\n" +
-                                             "}\n" +
-                                             "}");
+      myFixture.configureByText("Test.java", """
+        class Test {
+        void test() {
+          int x = <caret>"xyz";
+        }
+        }""");
       IntentionAction action = myFixture.findSingleIntention("Change variable 'x' type to 'String'");
       assertNotNull(action);
       String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
-      assertEquals("class Test {\n" +
-                   "void test() {\n" +
-                   "  String x = \"xyz\";\n" +
-                   "}\n" +
-                   "}", text);
+      assertEquals("""
+                     class Test {
+                     void test() {
+                       String x = "xyz";
+                     }
+                     }""", text);
     }
 
     public void testAnotherFile() {
       myFixture.addClass("class Another {static int X = 123;}");
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  Another.X = <caret>\"xyz\";\n" +
-                                             "}\n" +
-                                             "}");
+      myFixture.configureByText("Test.java", """
+        class Test {
+        void test() {
+          Another.X = <caret>"xyz";
+        }
+        }""");
       IntentionAction action = myFixture.findSingleIntention("Change field 'X' type to 'String'");
       assertNotNull(action);
       String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
@@ -44,11 +47,12 @@ public class VariableTypeTest extends LightQuickFixParameterizedTestCase {
 
     public void testAnotherFileNoInitializer() {
       myFixture.addClass("class Another {static int X;}");
-      myFixture.configureByText("Test.java", "class Test {\n" +
-                                             "void test() {\n" +
-                                             "  Another.X = <caret>\"xyz\";\n" +
-                                             "}\n" +
-                                             "}");
+      myFixture.configureByText("Test.java", """
+        class Test {
+        void test() {
+          Another.X = <caret>"xyz";
+        }
+        }""");
       IntentionAction action = myFixture.findSingleIntention("Change field 'X' type to 'String'");
       assertNotNull(action);
       String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());

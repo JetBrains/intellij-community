@@ -81,7 +81,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     myCompositeFilterWrapper = new CompositeFilterWrapper(project, console, this);
     myProject = project;
     addHyperlinkFilter(line -> runFilters(project, line));
-    setName("terminal");
     Disposer.register(parent, this);
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
       @Override
@@ -183,10 +182,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
     myTerminalTitle.change(terminalTitleState -> {
-      //noinspection HardCodedStringLiteral
-      terminalTitleState.setDefaultTitle(getSessionName());
+      if (terminalTitleState.getDefaultTitle() == null) {
+        terminalTitleState.setDefaultTitle(getDefaultSessionName());
+      }
       return null;
     });
+  }
+
+  public @Nls @Nullable String getDefaultSessionName() {
+    TtyConnector connector = getTtyConnector();
+    return connector != null ? connector.getName() : null; //NON-NLS
   }
 
   @Override

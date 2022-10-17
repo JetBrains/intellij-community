@@ -107,8 +107,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public void updateIndex(MavenIndexId mavenIndexId, MavenServerSettings settings,
-                          final MavenServerProgressIndicator indicator, MavenToken token)
+  public void updateIndex(MavenIndexId mavenIndexId, final MavenServerProgressIndicator indicator, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
     try {
@@ -127,7 +126,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
           }
         }
         else {
-          final Maven3ServerEmbedder embedder = createEmbedder(settings);
+          final Maven3ServerEmbedder embedder = createEmbedder(new MavenServerSettings());
 
           MavenExecutionRequest r = embedder.createRequest(null, null, null, null);
 
@@ -315,7 +314,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
+  public Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     Set<MavenArchetype> result = new HashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);

@@ -45,7 +45,7 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, withJavaDefaults, params);
   }
 
-  private boolean isForceConstructor(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean isForceConstructor(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "force", false);
   }
 

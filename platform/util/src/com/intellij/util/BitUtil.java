@@ -67,8 +67,4 @@ public final class BitUtil {
   private static String invalidMaskError(long mask) {
     return "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
-
-  public static boolean isPowerOfTwo(int i) {
-    return (i & (i - 1)) == 0;
-  }
 }

@@ -18,8 +18,10 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 internal enum class FileAddStatus {
@@ -45,7 +47,7 @@ internal sealed class ProjectIndexableFilesFilterHolder {
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
-  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentFactoryMap.createMap { IncrementalProjectIndexableFilesFilter() }
+  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentHashMap()
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
@@ -56,22 +58,26 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
-    if (!UnindexedFilesUpdater.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+    if (!UnindexedFilesScanner.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
       return null
     }
-    return myProjectFilters[project]
+    return getFilter(project)
   }
 
   override fun entireProjectUpdateStarted(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    myProjectFilters[project]?.memoizeAndResetFileIds()
+    getFilter(project)?.memoizeAndResetFileIds()
   }
 
   override fun entireProjectUpdateFinished(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    myProjectFilters[project]?.resetPreviousFileIds()
+    getFilter(project)?.resetPreviousFileIds()
+  }
+
+  private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
+    if (it.isDisposed) null else IncrementalProjectIndexableFilesFilter()
   }
 
   override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
@@ -88,7 +94,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun addFileId(fileId: Int, project: Project): FileAddStatus {
-    return myProjectFilters.get(project)!!.ensureFileIdPresent(fileId) { true }
+    return myProjectFilters[project]?.ensureFileIdPresent(fileId) { true } ?: FileAddStatus.SKIPPED
   }
 
   override fun removeFile(fileId: Int) {

@@ -195,67 +195,16 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     }
 
     val progressIndicator = lookupProvider.progressIndicator ?: ProgressIndicatorBase()
-    submitProgressStarted(task, taskNotificationListener, progressIndicator)
+    submitProgressStarted(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.is.being.resolved"))
     ProgressIndicatorListener.whenProgressFractionChanged(progressIndicator) {
-      submitProgressStatus(task, taskNotificationListener, progressIndicator)
+      submitProgressStatus(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.is.being.resolved"))
     }
     whenTaskCanceled(task) { progressIndicator.cancel() }
     val result = lookupProvider.blockingGetSdk()
-    submitProgressFinished(task, taskNotificationListener, progressIndicator)
+    submitProgressFinished(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.has.been.resolved"))
     return result
   }
 
-  private fun whenTaskCanceled(task: ExternalSystemTask, callback: () -> Unit) {
-    val wrappedCallback = ConcurrencyUtil.once(callback)
-    val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    val notificationListener = object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onCancel(id: ExternalSystemTaskId) {
-        wrappedCallback.run()
-      }
-    }
-    progressManager.addNotificationListener(task.id, notificationListener)
-    if (task.state == CANCELED || task.state == CANCELING) {
-      wrappedCallback.run()
-    }
-  }
-
-  private fun submitProgressStarted(
-    task: ExternalSystemTask,
-    taskNotificationListener: ExternalSystemTaskNotificationListener,
-    progressIndicator: ProgressIndicator
-  ) {
-    val message = progressIndicator.text ?: GradleBundle.message("gradle.jvm.is.being.resolved")
-    val buildEvent = StartEventImpl(progressIndicator, task.id, currentTimeMillis(), message)
-    val notificationEvent = ExternalSystemBuildEvent(task.id, buildEvent)
-    taskNotificationListener.onStatusChange(notificationEvent)
-  }
-
-  private fun submitProgressFinished(
-    task: ExternalSystemTask,
-    taskNotificationListener: ExternalSystemTaskNotificationListener,
-    progressIndicator: ProgressIndicator
-  ) {
-    val result = when {
-      progressIndicator.isCanceled -> SkippedResultImpl()
-      else -> SuccessResultImpl()
-    }
-    val message = progressIndicator.text ?: GradleBundle.message("gradle.jvm.has.been.resolved")
-    val buildEvent = FinishEventImpl(progressIndicator, task.id, currentTimeMillis(), message, result)
-    val notificationEvent = ExternalSystemBuildEvent(task.id, buildEvent)
-    taskNotificationListener.onStatusChange(notificationEvent)
-  }
-
-  private fun submitProgressStatus(
-    task: ExternalSystemTask,
-    taskNotificationListener: ExternalSystemTaskNotificationListener,
-    progressIndicator: ProgressIndicator
-  ) {
-    val progress = (progressIndicator.fraction * 100).toLong()
-    val message = progressIndicator.text ?: GradleBundle.message("gradle.jvm.is.being.resolved")
-    val buildEvent = ProgressBuildEventImpl(progressIndicator, task.id, currentTimeMillis(), message, 100, progress, "%")
-    val notificationEvent = ExternalSystemBuildEvent(task.id, buildEvent)
-    taskNotificationListener.onStatusChange(notificationEvent)
-  }
 
   private fun findGradleJar(files: Array<File?>?): File? {
     if (files == null) return null

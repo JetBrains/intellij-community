@@ -15,7 +15,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 
-class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {
+class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {
   private val virtualFilePointersList = mutableSetOf<VirtualFilePointer>()
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 

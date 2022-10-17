@@ -2,10 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +34,13 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     init();
   }
 
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
   private void init() {
-    UIUtil.addUndoRedoActions(this);
+    SwingUndoUtil.addUndoRedoActions(this);
     myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
@@ -59,7 +61,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   public void setText(String t) {
     if (Objects.equals(t, getText())) return;
     super.setText(t);
-    UIUtil.resetUndoRedoActions(this);
+    SwingUndoUtil.resetUndoRedoActions(this);
   }
 
   @Override

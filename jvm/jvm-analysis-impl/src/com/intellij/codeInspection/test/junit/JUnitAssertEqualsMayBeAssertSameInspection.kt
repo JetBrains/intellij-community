@@ -3,10 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.testFrameworks.UAssertHint
@@ -15,13 +12,17 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnitAssertEqualsMayBeAssertSameInspection : AbstractBaseUastLocalInspectionTool(), CleanupLocalInspectionTool {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
       holder.file.language,
       JUnitAssertEqualsMayBeAssertSameVisitor(holder),
       arrayOf(UCallExpression::class.java),
       directOnly = true
     )
+  }
 }
 
 private class JUnitAssertEqualsMayBeAssertSameVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {

@@ -2,3 +2,5 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes
 
 interface QuickFixFactory
+
+interface UnresolvedReferenceQuickFixFactory: QuickFixFactory

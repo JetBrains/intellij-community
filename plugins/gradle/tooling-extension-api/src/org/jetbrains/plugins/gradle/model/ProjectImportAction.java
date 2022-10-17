@@ -111,12 +111,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myParallelModelsFetch = Boolean.getBoolean(IDEA_MODELS_PARALLEL_FETCH);
     }
     if (!System.getProperties().containsKey(IDEA_BACKGROUND_CONVERT) || Boolean.getBoolean(IDEA_BACKGROUND_CONVERT)) {
-      myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
-        @Override
-        public Thread newThread(@NotNull Runnable runnable) {
-          return new Thread(runnable, "idea-tooling-model-converter");
-        }
-      });
+      myConverterExecutor =  Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     }
     configureAdditionalTypes(controller);
     final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
@@ -715,6 +710,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @Override
     public Object convert(Object object) {
       return object;
+    }
+  }
+
+  private static final class SimpleThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(@NotNull Runnable runnable) {
+      return new Thread(runnable, "idea-tooling-model-converter");
     }
   }
 }

@@ -9,36 +9,27 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
-
-import java.util.Objects;
+import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
+import org.jetbrains.plugins.textmate.language.TextMateBlockCommentPair;
+import org.jetbrains.plugins.textmate.language.TextMateCommentPrefixes;
+import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateCommentProvider implements MultipleLangCommentProvider, Commenter {
   @Nullable
   @Override
   public Commenter getLineCommenter(PsiFile file, Editor editor, Language lineStartLanguage, Language lineEndLanguage) {
-    TextMateCommentPair lineCommentPair = null;
-    TextMateCommentPair blockCommentPair = null;
-    int index = 1;
-    while (blockCommentPair == null || lineCommentPair == null) {
-      String variableSuffix = index > 1 ? "_" + index : "";
-      TextMateShellVariable start = TextMateService.getInstance().getVariable(Constants.COMMENT_START_VARIABLE + variableSuffix, (EditorEx)editor);
-      TextMateShellVariable end = TextMateService.getInstance().getVariable(Constants.COMMENT_END_VARIABLE + variableSuffix, (EditorEx)editor);
-      index++;
-
-      if (start == null) break;
-      if ((end == null || !end.scopeName.equals(start.scopeName)) && lineCommentPair == null) {
-        lineCommentPair = new TextMateCommentPair(index, start.value, null);
-      }
-      if ((end != null && end.scopeName.equals(start.scopeName)) && blockCommentPair == null) {
-        blockCommentPair = new TextMateCommentPair(index, start.value, end.value);
-      }
+    final TextMateScope actualScope = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
+    if (actualScope == null) {
+      return null;
     }
 
-    return lineCommentPair != null || blockCommentPair != null ? new MyCommenter(lineCommentPair, blockCommentPair) : null;
+    ShellVariablesRegistry registry = TextMateService.getInstance().getShellVariableRegistry();
+    final TextMateCommentPrefixes prefixes = PreferencesReadUtil.readCommentPrefixes(registry, actualScope);
+
+    return (prefixes.getBlockCommentPair() != null || prefixes.getLineCommentPrefix() != null) ? new MyCommenter(prefixes) : null;
   }
 
   @Override
@@ -78,31 +69,32 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
 
   private static final class MyCommenter implements Commenter {
     @Nullable
-    private final TextMateCommentPair myLineCommentPair;
-    @Nullable
-    private final TextMateCommentPair myBlockCommentPair;
+    final String myLinePrefix;
 
-    private MyCommenter(@Nullable TextMateCommentPair lineCommentPair, @Nullable TextMateCommentPair blockCommentPair) {
-      myLineCommentPair = lineCommentPair;
-      myBlockCommentPair = blockCommentPair;
+    @Nullable
+    final TextMateBlockCommentPair myBlockPrefixes;
+
+    private MyCommenter(@NotNull TextMateCommentPrefixes prefixes) {
+      myLinePrefix = prefixes.getLineCommentPrefix();
+      myBlockPrefixes = prefixes.getBlockCommentPair();
     }
 
     @Nullable
     @Override
     public String getLineCommentPrefix() {
-      return myLineCommentPair != null ? myLineCommentPair.startComment : null;
+      return myLinePrefix;
     }
 
     @Nullable
     @Override
     public String getBlockCommentPrefix() {
-      return myBlockCommentPair != null ? myBlockCommentPair.startComment : null;
+      return myBlockPrefixes != null ? myBlockPrefixes.getPrefix() : null;
     }
 
     @Nullable
     @Override
     public String getBlockCommentSuffix() {
-      return myBlockCommentPair != null ? myBlockCommentPair.endComment : null;
+      return myBlockPrefixes != null ? myBlockPrefixes.getSuffix() : null;
     }
 
     @Nullable
@@ -115,52 +107,6 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
     @Override
     public String getCommentedBlockCommentSuffix() {
       return null;
-    }
-  }
-
-
-  public static class TextMateCommentPair implements Comparable<TextMateCommentPair> {
-    private final int myIndex;
-    @NotNull public final String startComment;
-    @Nullable public final String endComment;
-
-    public TextMateCommentPair(int index, @NotNull String startComment, @Nullable String endComment) {
-      myIndex = index;
-      this.startComment = startComment;
-      this.endComment = endComment;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TextMateCommentPair pair = (TextMateCommentPair)o;
-
-      if (!Objects.equals(endComment, pair.endComment)) return false;
-      if (!startComment.equals(pair.startComment)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = startComment.hashCode();
-      result = 31 * result + (endComment != null ? endComment.hashCode() : 0);
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "TextMateCommentPair{" +
-             "startComment='" + startComment + '\'' +
-             ", endComment='" + endComment + '\'' +
-             '}';
-    }
-
-    @Override
-    public int compareTo(TextMateCommentPair o) {
-      return myIndex - o.myIndex;
     }
   }
 }

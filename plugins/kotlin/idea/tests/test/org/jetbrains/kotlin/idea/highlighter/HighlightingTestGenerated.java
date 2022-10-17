@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -177,6 +177,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/DefinitelyNonNullableType.kt");
         }
 
+        @TestMetadata("DelegateFunctionMissing.kt")
+        public void testDelegateFunctionMissing() throws Exception {
+            runTest("testData/highlighter/DelegateFunctionMissing.kt");
+        }
+
         @TestMetadata("DelegatingCtor.kt")
         public void testDelegatingCtor() throws Exception {
             runTest("testData/highlighter/DelegatingCtor.kt");
@@ -280,6 +285,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("Todo.kt")
         public void testTodo() throws Exception {
             runTest("testData/highlighter/Todo.kt");
+        }
+
+        @TestMetadata("TooManyArguments.kt")
+        public void testTooManyArguments() throws Exception {
+            runTest("testData/highlighter/TooManyArguments.kt");
         }
 
         @TestMetadata("TopLevelDestructuring.kt")

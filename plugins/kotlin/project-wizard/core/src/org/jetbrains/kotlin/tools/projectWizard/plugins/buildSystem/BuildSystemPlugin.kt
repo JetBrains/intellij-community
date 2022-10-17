@@ -88,8 +88,8 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
                         }
                     }
                     val repositoriesToAdd = dependenciesOfModule.mapNotNull { dependency ->
-                        dependency.artifact.safeAs<MavenArtifact>()?.repository?.let(::RepositoryIR)
-                    }
+                        dependency.artifact.safeAs<MavenArtifact>()?.repositories?.map(::RepositoryIR)
+                    }.flatten()
                     buildFile.withIrs(repositoriesToAdd).asSuccess()
                 }
             }

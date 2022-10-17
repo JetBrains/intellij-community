@@ -68,7 +68,7 @@ abstract class TargetEnvironmentWizardStepKt(@NlsContexts.DialogTitle title: Str
     return result
   }
 
-  protected fun createTopPanel(): JComponent {
+  private fun createTopPanel(): JComponent {
     return JPanel(HorizontalLayout(ICON_GAP)).also {
       val insets = TargetEnvironmentWizard.defaultDialogInsets()
       it.border = JBUI.Borders.merge(JBUI.Borders.emptyTop(LARGE_VGAP),

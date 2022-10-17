@@ -68,7 +68,7 @@ public class FrameworksTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, path -> {
+    new TreeSpeedSearch(this, false, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof FrameworkSupportNodeBase) {
         return ((FrameworkSupportNodeBase<?>)node).getTitle();

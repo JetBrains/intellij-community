@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
-import com.intellij.openapi.extensions.ExtensionPointAndAreaListener;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +23,7 @@ public final class ActionPlaceHolder {
       registerCustomPlaces(extension.places);
     }
 
-    EP_NAME.addExtensionPointListener(new ExtensionPointAndAreaListener<>() {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ActionCustomPlaceAllowlist extension, @NotNull PluginDescriptor pluginDescriptor) {
         registerCustomPlaces(extension.places);

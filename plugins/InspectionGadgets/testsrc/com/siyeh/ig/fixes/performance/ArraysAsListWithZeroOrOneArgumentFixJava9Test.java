@@ -16,27 +16,31 @@ public class ArraysAsListWithZeroOrOneArgumentFixJava9Test extends IGQuickFixesT
 
   public void testZeroArguments() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Object o = Arrays.asList/**/();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Object o = List.of();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Object o = Arrays.asList/**/();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Object o = List.of();
+             }}""");
   }
 
   @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "List.of()"),
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = Arrays.<String>/**/asList().spliterator();\n" +
-           "}}",
-           "import java.util.*;\n" +
-           "class X {{\n" +
-           "    Spliterator<String> it = List.<String>of().spliterator();\n" +
-           "}}");
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = Arrays.<String>/**/asList().spliterator();
+             }}""",
+           """
+             import java.util.*;
+             class X {{
+                 Spliterator<String> it = List.<String>of().spliterator();
+             }}""");
   }
 
   public void testOneArgument() {

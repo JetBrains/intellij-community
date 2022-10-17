@@ -63,7 +63,7 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
     }
   }
 
-  private BuilderHandler getHandler() {
+  private static BuilderHandler getHandler() {
     return new BuilderHandler();
   }
 }

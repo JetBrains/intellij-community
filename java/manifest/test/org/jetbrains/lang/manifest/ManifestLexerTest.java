@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
+@SuppressWarnings("UnnecessaryStringEscape")
 public class ManifestLexerTest {
   @Test
   public void testSpaces() {
@@ -46,176 +47,193 @@ public class ManifestLexerTest {
   public void testRandomText() {
     doTest("some text\nsome more text",
 
-           "HEADER_NAME_TOKEN ('some text')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('some more text')");
+           """
+             HEADER_NAME_TOKEN ('some text')
+             NEWLINE_TOKEN ('\n')
+             HEADER_NAME_TOKEN ('some more text')""");
   }
 
   @Test
   public void testValid() {
     doTest("Name: Value",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value')""");
   }
 
   @Test
   public void testInvalidSpaceBeforeColon() {
     doTest("Name : Value",
 
-           "HEADER_NAME_TOKEN ('Name ')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')");
+           """
+             HEADER_NAME_TOKEN ('Name ')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value')""");
   }
 
   @Test
   public void testMissingSpaceAfterColon() {
     doTest("Name:Value",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             HEADER_VALUE_PART_TOKEN ('Value')""");
   }
 
   @Test
   public void testTwoHeaders() {
     doTest("Name: Value\nName2: Value2",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('Name2')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value2')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value')
+             NEWLINE_TOKEN ('\n')
+             HEADER_NAME_TOKEN ('Name2')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value2')""");
   }
 
   @Test
   public void testContinuation() {
     doTest("Name: Value\n Value2",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value2')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value')
+             NEWLINE_TOKEN ('\n')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value2')""");
   }
 
   @Test
   public void testSection() {
     doTest("Name: Value\n\nName2: Value2",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "SECTION_END_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('Name2')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value2')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value')
+             NEWLINE_TOKEN ('\n')
+             SECTION_END_TOKEN ('\n')
+             HEADER_NAME_TOKEN ('Name2')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value2')""");
   }
 
   @Test
   public void testNoIgnoredSpaces() {
     doTest("Name: Value \n   Value2",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('Value ')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('  Value2')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('Value ')
+             NEWLINE_TOKEN ('\n')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('  Value2')""");
   }
 
   @Test
   public void testSpecialCharacters() {
     doTest("Name: ;:=,\"",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "SEMICOLON_TOKEN (';')\n" +
-           "COLON_TOKEN (':')\n" +
-           "EQUALS_TOKEN ('=')\n" +
-           "COMMA_TOKEN (',')\n" +
-           "QUOTE_TOKEN ('\"')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             SEMICOLON_TOKEN (';')
+             COLON_TOKEN (':')
+             EQUALS_TOKEN ('=')
+             COMMA_TOKEN (',')
+             QUOTE_TOKEN ('"')""");
   }
 
   @Test
   public void testErrorEndsAtNewline() {
     doTest("Name \n value",
 
-           "HEADER_NAME_TOKEN ('Name ')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('value')");
+           """
+             HEADER_NAME_TOKEN ('Name ')
+             NEWLINE_TOKEN ('\n')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('value')""");
   }
 
   @Test
   public void testNewlineBetweenSpecialChars() {
     doTest("Name: ab;dir:\n =value\n",
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('ab')\n" +
-           "SEMICOLON_TOKEN (';')\n" +
-           "HEADER_VALUE_PART_TOKEN ('dir')\n" +
-           "COLON_TOKEN (':')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "EQUALS_TOKEN ('=')\n" +
-           "HEADER_VALUE_PART_TOKEN ('value')\n" +
-           "NEWLINE_TOKEN ('\n')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('ab')
+             SEMICOLON_TOKEN (';')
+             HEADER_VALUE_PART_TOKEN ('dir')
+             COLON_TOKEN (':')
+             NEWLINE_TOKEN ('\n')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             EQUALS_TOKEN ('=')
+             HEADER_VALUE_PART_TOKEN ('value')
+             NEWLINE_TOKEN ('\n')""");
   }
 
   @Test
   public void testBadHeaderStart() {
-    doTest("Name: ab;dir:\n" +
-           "=value;a:=b\n",
+    doTest("""
+             Name: ab;dir:
+             =value;a:=b
+             """,
 
-           "HEADER_NAME_TOKEN ('Name')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('ab')\n" +
-           "SEMICOLON_TOKEN (';')\n" +
-           "HEADER_VALUE_PART_TOKEN ('dir')\n" +
-           "COLON_TOKEN (':')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('=value;a')\n" +
-           "COLON_TOKEN (':')\n" +
-           "EQUALS_TOKEN ('=')\n" +
-           "HEADER_VALUE_PART_TOKEN ('b')\n" +
-           "NEWLINE_TOKEN ('\n')");
+           """
+             HEADER_NAME_TOKEN ('Name')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('ab')
+             SEMICOLON_TOKEN (';')
+             HEADER_VALUE_PART_TOKEN ('dir')
+             COLON_TOKEN (':')
+             NEWLINE_TOKEN ('\n')
+             HEADER_NAME_TOKEN ('=value;a')
+             COLON_TOKEN (':')
+             EQUALS_TOKEN ('=')
+             HEADER_VALUE_PART_TOKEN ('b')
+             NEWLINE_TOKEN ('\n')""");
   }
 
   @Test
   public void testBadValueSplit() {
-    doTest("Export-Package: org.osgi.framework.start\n" +
-           "level;uses:=\"org.osgi.framework\"\n",
+    doTest("""
+             Export-Package: org.osgi.framework.start
+             level;uses:="org.osgi.framework"
+             """,
 
-           "HEADER_NAME_TOKEN ('Export-Package')\n" +
-           "COLON_TOKEN (':')\n" +
-           "SIGNIFICANT_SPACE_TOKEN (' ')\n" +
-           "HEADER_VALUE_PART_TOKEN ('org.osgi.framework.start')\n" +
-           "NEWLINE_TOKEN ('\n')\n" +
-           "HEADER_NAME_TOKEN ('level;uses')\n" +
-           "COLON_TOKEN (':')\n" +
-           "EQUALS_TOKEN ('=')\n" +
-           "QUOTE_TOKEN ('\"')\n" +
-           "HEADER_VALUE_PART_TOKEN ('org.osgi.framework')\n" +
-           "QUOTE_TOKEN ('\"')\n" +
-           "NEWLINE_TOKEN ('\n')");
+           """
+             HEADER_NAME_TOKEN ('Export-Package')
+             COLON_TOKEN (':')
+             SIGNIFICANT_SPACE_TOKEN (' ')
+             HEADER_VALUE_PART_TOKEN ('org.osgi.framework.start')
+             NEWLINE_TOKEN ('\n')
+             HEADER_NAME_TOKEN ('level;uses')
+             COLON_TOKEN (':')
+             EQUALS_TOKEN ('=')
+             QUOTE_TOKEN ('"')
+             HEADER_VALUE_PART_TOKEN ('org.osgi.framework')
+             QUOTE_TOKEN ('"')
+             NEWLINE_TOKEN ('\n')""");
   }
 
   private static void doTest(String text, String expected) {

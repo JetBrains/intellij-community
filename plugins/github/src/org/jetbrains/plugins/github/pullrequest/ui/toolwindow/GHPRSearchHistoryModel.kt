@@ -6,6 +6,12 @@ import com.intellij.collaboration.ui.codereview.list.search.PersistingReviewList
 internal class GHPRSearchHistoryModel(private val persistentHistoryComponent: GHPRListPersistentSearchHistory)
   : PersistingReviewListSearchHistoryModel<GHPRListSearchValue>() {
 
+  override var lastFilter: GHPRListSearchValue?
+    get() = persistentHistoryComponent.lastFilter
+    set(value) {
+      persistentHistoryComponent.lastFilter = value
+    }
+
   override var persistentHistory: List<GHPRListSearchValue>
     get() = persistentHistoryComponent.history
     set(value) {

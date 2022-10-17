@@ -157,14 +157,16 @@ public final class AsyncTreeModelTest {
   }
 
   private static final String MUTABLE_CHILDREN
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "     +'greek'\n" +
-      "        'alpha'\n" +
-      "        'beta'\n" +
-      "        'gamma'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+         +'greek'
+            'alpha'
+            'beta'
+            'gamma'
+    """;
 
   @Test
   public void testChildren() {
@@ -194,28 +196,34 @@ public final class AsyncTreeModelTest {
   }
 
   private static final String CHILDREN
-    = "      'color'\n" +
-      "      'digit'\n" +
-      "      'greek'\n";
+    = """
+          'color'
+          'digit'
+          'greek'
+    """;
   private static final String CHILDREN_COLOR
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "      'digit'\n" +
-      "      'greek'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+          'digit'
+          'greek'
+    """;
   private static final String CHILDREN_COLOR_GREEK
-    = "     +'color'\n" +
-      "        'red'\n" +
-      "        'green'\n" +
-      "        'blue'\n" +
-      "      'digit'\n" +
-      "     +'greek'\n" +
-      "        'alpha'\n" +
-      "        'beta'\n" +
-      "        'gamma'\n" +
-      "        'delta'\n" +
-      "        'epsilon'\n";
+    = """
+         +'color'
+            'red'
+            'green'
+            'blue'
+          'digit'
+         +'greek'
+            'alpha'
+            'beta'
+            'gamma'
+            'delta'
+            'epsilon'
+    """;
 
   @Test
   public void testChildrenResolve() {

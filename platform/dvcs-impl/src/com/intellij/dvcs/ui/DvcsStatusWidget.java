@@ -1,16 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +19,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +37,10 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @NotNull private final String myVcsName;
 
-  @Nullable private @Nls String myText;
-  @Nullable private @NlsContexts.Tooltip String myTooltip;
-  @Nullable private Icon myIcon;
+  @Nullable private volatile @Nls String myText;
+  @Nullable private volatile @NlsContexts.Tooltip String myTooltip;
+  @Nullable private volatile Icon myIcon;
+  private final Alarm myUpdateBackgroundAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
     super(project);
@@ -55,7 +60,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
    * @see com.intellij.dvcs.DvcsUtil#guessWidgetRepository
    */
   @Nullable
-  protected abstract T guessCurrentRepository(@NotNull Project project);
+  @CalledInAny
+  protected abstract T guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
 
   @Nls
   @NotNull
@@ -69,8 +75,20 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected abstract boolean isMultiRoot(@NotNull Project project);
 
+  /**
+   * @deprecated use {@link #getWidgetPopup(Project, Repository)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated(forRemoval = true)
   @NotNull
-  protected abstract ListPopup getPopup(@NotNull Project project, @NotNull T repository);
+  protected ListPopup getPopup(@NotNull Project project, @NotNull T repository) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull T repository) {
+    return null;
+  }
 
   protected abstract void rememberRecentRoot(@NotNull String path);
 
@@ -88,19 +106,19 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Override
   public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     LOG.debug("selection changed");
-    update();
+    updateLater();
   }
 
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     LOG.debug("file opened");
-    update();
+    updateLater();
   }
 
   @Override
   public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     LOG.debug("file closed");
-    update();
+    updateLater();
   }
 
   @RequiresEdt
@@ -125,12 +143,17 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   @Override
   public ListPopup getPopupStep() {
+    return null;
+  }
+
+  @Override
+  public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
     Project project = getProject();
-    T repository = guessCurrentRepository(project);
+    T repository = guessCurrentRepository(project, DvcsUtil.getSelectedFile(myProject));
     if (repository == null) return null;
 
-    return getPopup(project, repository);
+    return getWidgetPopup(project, repository);
   }
 
   @Nullable
@@ -140,37 +163,52 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return null;
   }
 
-  protected void updateLater() {
-    Project project = getProject();
-    if (isDisposed()) return;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      LOG.debug("update after repository change");
-      update();
-    }, project.getDisposed());
-  }
-
-  @RequiresEdt
-  private void update() {
+  private void clearStatus() {
     myText = null;
     myTooltip = null;
     myIcon = null;
+  }
 
-    if (isDisposed()) return;
-    Project project = getProject();
-    T repository = guessCurrentRepository(project);
-    if (repository == null) return;
-    myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
-    myTooltip = getToolTip(repository);
-    myIcon = getIcon(repository);
-    if (myStatusBar != null) {
-      myStatusBar.updateWidget(ID());
-    }
-    rememberRecentRoot(repository.getRoot().getPath());
+  protected void updateLater() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (isDisposed()) return;
+
+      VirtualFile selectedFile = DvcsUtil.getSelectedFile(myProject);
+      myUpdateBackgroundAlarm.cancelAllRequests();
+      myUpdateBackgroundAlarm.addRequest(() -> {
+        if (isDisposed()) {
+          clearStatus();
+          return;
+        }
+
+        T repository;
+        try {
+          Project project = getProject();
+          repository = guessCurrentRepository(project, selectedFile);
+          if (repository == null) {
+            clearStatus();
+            return;
+          }
+        } catch (Throwable t) {
+          LOG.error(t);
+          clearStatus();
+          return;
+        }
+
+        myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
+        myTooltip = getToolTip(repository);
+        myIcon = getIcon(repository);
+        if (myStatusBar != null) {
+          myStatusBar.updateWidget(ID());
+        }
+
+        rememberRecentRoot(repository.getRoot().getPath());
+      }, 10);
+    });
   }
 
   @NlsContexts.Tooltip
   @Nullable
-  @RequiresEdt
   protected String getToolTip(@Nullable T repository) {
     if (repository == null) return null;
     String message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", myVcsName, getFullBranchName(repository));

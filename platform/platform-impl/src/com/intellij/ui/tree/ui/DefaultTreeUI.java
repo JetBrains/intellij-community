@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -33,6 +34,8 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -49,8 +52,8 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 public class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
-  @ApiStatus.Internal
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
+  public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER = Key.create("allows to filter single child nodes which should not be auto-expanded");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -139,6 +142,11 @@ public class DefaultTreeUI extends BasicTreeUI {
   private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
     Boolean allowed = ClientProperty.get(tree, AUTO_EXPAND_ALLOWED);
     return allowed != null ? allowed : tree.isShowing();
+  }
+
+  private static boolean isAutoExpandAllowed(@NotNull JTree tree, @NotNull Object node) {
+    Function<Object, Boolean> filter = ClientProperty.get(tree, AUTO_EXPAND_FILTER);
+    return filter == null || !filter.apply(node);
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -277,6 +285,18 @@ public class DefaultTreeUI extends BasicTreeUI {
             }
             if (selectedControl && !dark && !isDark(background)) selectedControl = false;
           }
+
+          Predicate<TreePath> separatorAbovePredicate = ClientProperty.get(c, RenderingUtil.SEPARATOR_ABOVE_PREDICATE);
+
+          if (separatorAbovePredicate != null && separatorAbovePredicate.test(path)) {
+            Rectangle rowBounds = getPathBounds(tree, path);
+            if (rowBounds != null) {
+              int offset = JBUI.scale(SeparatorWithText.DEFAULT_H_GAP);
+              paintHorizontalLine(g, paintBounds.x + offset, rowBounds.y,
+                                  paintBounds.x + paintBounds.width - offset, rowBounds.y);
+            }
+          }
+
           int offset = painter.getRendererOffset(control, depth, leaf);
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selectedControl);
           // TODO: editingComponent, editingRow ???
@@ -325,6 +345,20 @@ public class DefaultTreeUI extends BasicTreeUI {
       painting.set(false);
       removeCachedRenderers();
     }
+  }
+
+  private static void paintHorizontalLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
+    Color usedColor = g.getColor();
+    g.setColor(JBUI.CurrentTheme.Popup.separatorColor());
+    if (g instanceof Graphics2D g2) {
+      LinePainter2D.paint(g2, x1, y1, x2, y2,
+                          LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    else {
+      g.drawLine(x1, y1, x2, y2);
+    }
+
+    g.setColor(usedColor);
   }
 
   // BasicTreeUI
@@ -556,7 +590,10 @@ public class DefaultTreeUI extends BasicTreeUI {
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
             if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              Object node = row.getLastPathComponent();
+              if (isAutoExpandAllowed(tree, node)) {
+                ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              }
               return; // this code is intended to auto-expand a single child node
             }
           }

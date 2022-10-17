@@ -1,7 +1,9 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.deft.api.annotations.Default
+import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 
 interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
   val version: Int
@@ -24,7 +26,7 @@ sealed class SealedClassWithLinks {
   
   sealed class Many() : SealedClassWithLinks() {
     data class Ordered(val list: List<SimpleId>) : Many()
-    data class Unordered(val set: List<SimpleId>) : Many()
+    data class Unordered(val set: Set<SimpleId>) : Many()
   }
   
 }

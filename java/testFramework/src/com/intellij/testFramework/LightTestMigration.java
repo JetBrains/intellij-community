@@ -147,23 +147,24 @@ class LightTestMigration {
         .map(name -> "new " + name + "()").collect(Collectors.joining(", "));
     String year = Year.now().toString();
     String classTemplate = MessageFormat.format(
-      "// Copyright 2000-{6} JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.\n" +
-      "package {0};\n\n" +
-      "{1}" +
-      "\n" +
-      "public class {2} extends LightCodeInsightFixtureTestCase '{'\n" +
-      "  @Override\n" +
-      "  protected String getBasePath() '{'\n" +
-      "    return {3};\n" +
-      "  '}'\n" +
-      "\n" +
-      "  private void doTest() '{'\n" +
-      "    myFixture.enableInspections({4});\n" +
-      "    myFixture.testHighlighting(getTestName(false) + \".java\");\n" +
-      "  '}'\n" +
-      "\n" +
-      "{5}" +
-      "'}'\n",
+      """
+        // Copyright 2000-{6} JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+        package {0};
+
+        {1}
+        public class {2} extends LightCodeInsightFixtureTestCase '{'
+          @Override
+          protected String getBasePath() '{'
+            return {3};
+          '}'
+
+          private void doTest() '{'
+            myFixture.enableInspections({4});
+            myFixture.testHighlighting(getTestName(false) + ".java");
+          '}'
+
+        {5}'}'
+        """,
       myTestClass.getPackage().getName(), imports, myTestClass.getSimpleName(), pathSpec, inspections, testMethods, year);
     System.out.println("Class template: (" + myTestClass.getSimpleName() + ".java)");
     System.out.println("==============================");

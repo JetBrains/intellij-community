@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
-/**
-* @author peter
-*/
 class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceElement> {
   static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new JavaClassNameInsertHandler();
 

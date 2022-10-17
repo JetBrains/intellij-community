@@ -256,11 +256,12 @@ public class PyEvaluatorTest extends PyTestCase {
   }
 
   public void testMultiResolve() {
-    final PyExpression expression = parseText("if condition:\n" +
-                                              "    a = 1\n" +
-                                              "else:\n" +
-                                              "    a = 3\n" +
-                                              "expr = a < 2");
+    final PyExpression expression = parseText("""
+                                                if condition:
+                                                    a = 1
+                                                else:
+                                                    a = 3
+                                                expr = a < 2""");
     assertNull(new PyEvaluator().evaluate(expression));
   }
 

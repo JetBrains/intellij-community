@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
@@ -20,7 +21,7 @@ import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEntityBase() {
+open class SimplePersistentIdEntityImpl(val dataSource: SimplePersistentIdEntityData) : SimplePersistentIdEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -30,27 +31,21 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _name: String? = null
+  override val version: Int get() = dataSource.version
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  @JvmField
-  var _related: SimpleId? = null
   override val related: SimpleId
-    get() = _related!!
+    get() = dataSource.related
 
-  @JvmField
-  var _sealedClassWithLinks: SealedClassWithLinks? = null
   override val sealedClassWithLinks: SealedClassWithLinks
-    get() = _sealedClassWithLinks!!
+    get() = dataSource.sealedClassWithLinks
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SimplePersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SimplePersistentIdEntity>(), SimplePersistentIdEntity.Builder {
+  class Builder(var result: SimplePersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SimplePersistentIdEntity>(), SimplePersistentIdEntity.Builder {
     constructor() : this(SimplePersistentIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +63,9 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -77,7 +75,7 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimplePersistentIdEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNameInitialized()) {
         error("Field SimplePersistentIdEntity#name should be initialized")
@@ -97,23 +95,15 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimplePersistentIdEntity
-      this.version = dataSource.version
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.related = dataSource.related
-      this.sealedClassWithLinks = dataSource.sealedClassWithLinks
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.related != dataSource.related) this.related = dataSource.related
+      if (this.sealedClassWithLinks != dataSource.sealedClassWithLinks) this.sealedClassWithLinks = dataSource.sealedClassWithLinks
       if (parents != null) {
       }
     }
 
-
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -122,6 +112,14 @@ open class SimplePersistentIdEntityImpl : SimplePersistentIdEntity, WorkspaceEnt
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var name: String
@@ -171,11 +169,6 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     result.add(related)
     val _sealedClassWithLinks = sealedClassWithLinks
     when (_sealedClassWithLinks) {
-      is SealedClassWithLinks.Nothing -> {
-      }
-      is SealedClassWithLinks.Single -> {
-        result.add(_sealedClassWithLinks.id)
-      }
       is SealedClassWithLinks.Many -> {
         val __sealedClassWithLinks = _sealedClassWithLinks
         when (__sealedClassWithLinks) {
@@ -190,6 +183,11 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
             }
           }
         }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        result.add(_sealedClassWithLinks.id)
       }
     }
     return result
@@ -199,11 +197,6 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     index.index(this, related)
     val _sealedClassWithLinks = sealedClassWithLinks
     when (_sealedClassWithLinks) {
-      is SealedClassWithLinks.Nothing -> {
-      }
-      is SealedClassWithLinks.Single -> {
-        index.index(this, _sealedClassWithLinks.id)
-      }
       is SealedClassWithLinks.Many -> {
         val __sealedClassWithLinks = _sealedClassWithLinks
         when (__sealedClassWithLinks) {
@@ -218,6 +211,11 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
             }
           }
         }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        index.index(this, _sealedClassWithLinks.id)
       }
     }
   }
@@ -231,14 +229,6 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     }
     val _sealedClassWithLinks = sealedClassWithLinks
     when (_sealedClassWithLinks) {
-      is SealedClassWithLinks.Nothing -> {
-      }
-      is SealedClassWithLinks.Single -> {
-        val removedItem__sealedClassWithLinks_id = mutablePreviousSet.remove(_sealedClassWithLinks.id)
-        if (!removedItem__sealedClassWithLinks_id) {
-          index.index(this, _sealedClassWithLinks.id)
-        }
-      }
       is SealedClassWithLinks.Many -> {
         val __sealedClassWithLinks = _sealedClassWithLinks
         when (__sealedClassWithLinks) {
@@ -258,6 +248,14 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
               }
             }
           }
+        }
+      }
+      is SealedClassWithLinks.Nothing -> {
+      }
+      is SealedClassWithLinks.Single -> {
+        val removedItem__sealedClassWithLinks_id = mutablePreviousSet.remove(_sealedClassWithLinks.id)
+        if (!removedItem__sealedClassWithLinks_id) {
+          index.index(this, _sealedClassWithLinks.id)
         }
       }
     }
@@ -280,23 +278,6 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
     }
     val _sealedClassWithLinks = sealedClassWithLinks
     val res_sealedClassWithLinks = when (_sealedClassWithLinks) {
-      is SealedClassWithLinks.Nothing -> {
-        _sealedClassWithLinks
-      }
-      is SealedClassWithLinks.Single -> {
-        val _sealedClassWithLinks_id_data = if (_sealedClassWithLinks.id == oldLink) {
-          changed = true
-          newLink as SimpleId
-        }
-        else {
-          null
-        }
-        var _sealedClassWithLinks_data = _sealedClassWithLinks
-        if (_sealedClassWithLinks_id_data != null) {
-          _sealedClassWithLinks_data = _sealedClassWithLinks_data.copy(id = _sealedClassWithLinks_id_data)
-        }
-        _sealedClassWithLinks_data
-      }
       is SealedClassWithLinks.Many -> {
         val __sealedClassWithLinks = _sealedClassWithLinks
         val res__sealedClassWithLinks = when (__sealedClassWithLinks) {
@@ -347,6 +328,23 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
         }
         res__sealedClassWithLinks
       }
+      is SealedClassWithLinks.Nothing -> {
+        _sealedClassWithLinks
+      }
+      is SealedClassWithLinks.Single -> {
+        val _sealedClassWithLinks_id_data = if (_sealedClassWithLinks.id == oldLink) {
+          changed = true
+          newLink as SimpleId
+        }
+        else {
+          null
+        }
+        var _sealedClassWithLinks_data = _sealedClassWithLinks
+        if (_sealedClassWithLinks_id_data != null) {
+          _sealedClassWithLinks_data = _sealedClassWithLinks_data.copy(id = _sealedClassWithLinks_id_data)
+        }
+        _sealedClassWithLinks_data
+      }
     }
     if (res_sealedClassWithLinks != null) {
       sealedClassWithLinks = res_sealedClassWithLinks
@@ -367,15 +365,13 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
   }
 
   override fun createEntity(snapshot: EntityStorage): SimplePersistentIdEntity {
-    val entity = SimplePersistentIdEntityImpl()
-    entity.version = version
-    entity._name = name
-    entity._related = related
-    entity._sealedClassWithLinks = sealedClassWithLinks
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SimplePersistentIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -404,12 +400,12 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimplePersistentIdEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.name != other.name) return false
     if (this.related != other.related) return false
     if (this.sealedClassWithLinks != other.sealedClassWithLinks) return false
@@ -418,7 +414,7 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimplePersistentIdEntityData
 
@@ -449,11 +445,11 @@ class SimplePersistentIdEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
     collector.add(SimpleId::class.java)
-    collector.add(SealedClassWithLinks.Many.Ordered::class.java)
-    collector.add(SealedClassWithLinks.Many::class.java)
     collector.add(SealedClassWithLinks.Many.Unordered::class.java)
-    collector.add(SealedClassWithLinks::class.java)
+    collector.add(SealedClassWithLinks.Many::class.java)
     collector.add(SealedClassWithLinks.Single::class.java)
+    collector.add(SealedClassWithLinks::class.java)
+    collector.add(SealedClassWithLinks.Many.Ordered::class.java)
     collector.addObject(SealedClassWithLinks.Nothing::class.java)
     this.sealedClassWithLinks?.let { collector.add(it::class.java) }
     collector.sameForAllEntities = true

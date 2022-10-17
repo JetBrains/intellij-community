@@ -67,9 +67,10 @@ public class RegExpColorsPage implements ColorSettingsPage {
   @NotNull
   public String getDemoText() {
     return
-      "^[\\w\\.-]+@([\\w\\-]+|\\.)+[A-Z0-9]{2,4}(?x)\n" +
-      "\\x0g\\#\\p{Alpha}\\1(?#comment)\n" +
-      ".*\\Q...\\E$# end-of-line comment";
+      """
+        ^[\\w\\.-]+@([\\w\\-]+|\\.)+[A-Z0-9]{2,4}(?x)
+        \\x0g\\#\\p{Alpha}\\1(?#comment)
+        .*\\Q...\\E$# end-of-line comment""";
 
   }
 

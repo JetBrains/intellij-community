@@ -60,7 +60,7 @@ internal class OverrideKeywordHandler(
         return if (isConstructorParameter) {
             allMembers.mapNotNull { member ->
                 if (member.memberInfo.isProperty) {
-                    member.copy(bodyType = BodyType.FROM_TEMPLATE, preferConstructorParameter = true)
+                    member.copy(bodyType = BodyType.FromTemplate, preferConstructorParameter = true)
                 } else null
             }
         } else allMembers.toList()

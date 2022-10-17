@@ -10,9 +10,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
 
-/**
- * @author peter
- */
 public class CreateModuleTest extends HeavyPlatformTestCase {
   private static final String RENAMED_MODULE_NAME = "renamed";
   private ModuleManager myModuleManager;

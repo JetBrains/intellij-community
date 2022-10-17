@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -38,7 +38,7 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Function = load("icons/com/jetbrains/python/function.svg", 110870692, 0);
     /** 16x16 */ public static final @NotNull Icon Jython = load("icons/com/jetbrains/python/jython.svg", 880261780, 0);
     /** 16x16 */ public static final @NotNull Icon Pypy = load("icons/com/jetbrains/python/pypy.svg", 115514957, 0);
-    /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python/python.svg", -1025668048, 0);
+    /** 16x16 */ public static final @NotNull Icon Python = load("icons/com/jetbrains/python/python.svg", -1025668048, 8);
     /** 16x16 */ public static final @NotNull Icon PythonClosed = load("icons/com/jetbrains/python/pythonClosed.svg", 1160630474, 0);
     /** 16x16 */ public static final @NotNull Icon PythonConsole = load("icons/com/jetbrains/python/pythonConsole.svg", 673082074, 0);
     /** 13x13 */ public static final @NotNull Icon PythonConsoleToolWindow = load("icons/com/jetbrains/python/pythonConsoleToolWindow.svg", 1207475759, 2);

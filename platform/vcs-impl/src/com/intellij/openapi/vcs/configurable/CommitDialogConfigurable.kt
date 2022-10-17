@@ -9,12 +9,12 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getDefaultCommitActionName
 import com.intellij.vcs.commit.CommitModeManager
-import com.intellij.vcs.commit.getDefaultCommitActionName
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel
 import org.jetbrains.annotations.NonNls
 
@@ -43,20 +43,20 @@ class CommitDialogConfigurable(private val project: Project)
           val panel = CommitMessageInspectionsPanel(project)
           Disposer.register(disposable, panel)
           cell(panel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .onApply { panel.apply() }
             .onReset { panel.reset() }
             .onIsModified { panel.isModified }
         }.resizableRow()
       }
 
-      val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName())
+      val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
       group(VcsBundle.message("border.standard.checkin.options.group", actionName)) {
         val panel = CommitOptionsConfigurable(project)
         Disposer.register(disposable, panel)
         row {
           cell(panel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .onApply { panel.apply() }
             .onReset { panel.reset() }
             .onIsModified { panel.isModified }

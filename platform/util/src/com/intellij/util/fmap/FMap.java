@@ -8,13 +8,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * An immutable map optimized for storing few entries with relatively rare updates.
  * To construct a map, start with {@link FMap#empty()} and call {@link #plus} and {@link #minus},
- * or use {@link #of} or {@link #from}.
+ * or use {@link #of}
  * <p>
  * This map was adapted from {@link com.intellij.util.keyFMap.KeyFMap}.
  *
@@ -27,7 +26,7 @@ import java.util.Map;
   childrenArray = "toMap().entrySet().toArray()"
 )
 @ApiStatus.NonExtendable
-public interface FMap<@NotNull K, @NotNull V> {
+public interface FMap<K, V> {
 
   /**
    * @return an empty {@code FMap}. No additional instances of empty {@code FMap} should be created as they are indistinguishable
@@ -40,41 +39,16 @@ public interface FMap<@NotNull K, @NotNull V> {
   /**
    * @return an {@code FMap} with a single key-value entry
    */
-  static <@NotNull K, @NotNull V> @NotNull FMap<K, V> of(K key, V value) {
+  static <K, V> @NotNull FMap<K, V> of(@NotNull K key, @NotNull V value) {
     return new OneKeyFMap<>(key, value);
   }
 
   /**
    * @return an {@code FMap} with a two key-value entries
    */
-  static <@NotNull K, @NotNull V> @NotNull FMap<K, V> of(K key1, V value1, K key2, V value2) {
+  static <K, V> @NotNull FMap<K, V> of(@NotNull K key1, @NotNull V value1, @NotNull K key2, @NotNull V value2) {
     assert !key1.equals(key2);
     return new TwoKeysFMap<>(key1, value1, key2, value2);
-  }
-
-  /**
-   * @return an {@code FMap} containing entries from the specified {@code map}
-   */
-  static <@NotNull K, @NotNull V> @NotNull FMap<K, V> from(@NotNull Map<K, V> map) {
-    if (map.isEmpty()) {
-      return empty();
-    }
-    else if (map.size() == 1) {
-      Map.Entry<K, V> entry = map.entrySet().iterator().next();
-      return of(entry.getKey(), entry.getValue());
-    }
-    else if (map.size() == 2) {
-      Iterator<Map.Entry<K, V>> iterator = map.entrySet().iterator();
-      Map.Entry<K, V> entry1 = iterator.next();
-      Map.Entry<K, V> entry2 = iterator.next();
-      return of(entry1.getKey(), entry1.getValue(), entry2.getKey(), entry2.getValue());
-    }
-    else if (map.size() <= ArrayBackedFMap.ARRAY_THRESHOLD) {
-      return new ArrayBackedFMap<>(map);
-    }
-    else {
-      return new MapBackedFMap<>(new HashMap<>(map));
-    }
   }
 
   /**

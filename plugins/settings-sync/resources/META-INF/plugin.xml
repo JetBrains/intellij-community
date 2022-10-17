@@ -1,4 +1,4 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <name>Settings Sync</name>
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>
@@ -11,6 +11,8 @@
   <content>
     <module name="intellij.settingsSync.git"/>
   </content>
+
+  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
@@ -38,6 +40,8 @@
     <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
+
+    <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
   </extensions>
 
   <applicationListeners>
@@ -51,7 +55,6 @@
 
   <actions>
     <group id="SettingsSync">
-      <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
       <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
               icon="AllIcons.General.Settings"/>

@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
+open class XChildChildEntityImpl(val dataSource: XChildChildEntityData) : XChildChildEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENT1_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java,
@@ -48,7 +48,7 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
+  class Builder(var result: XChildChildEntityData?) : ModifiableWorkspaceEntityBase<XChildChildEntity>(), XChildChildEntity.Builder {
     constructor() : this(XChildChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +66,9 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -74,6 +77,9 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT1_CONNECTION_ID, this) == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
@@ -83,9 +89,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field XChildChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT2_CONNECTION_ID, this) == null) {
@@ -106,13 +109,28 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildChildEntity
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (parents != null) {
-        this.parent1 = parents.filterIsInstance<XParentEntity>().single()
-        this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+        val parent1New = parents.filterIsInstance<XParentEntity>().single()
+        if ((this.parent1 as WorkspaceEntityBase).id != (parent1New as WorkspaceEntityBase).id) {
+          this.parent1 = parent1New
+        }
+        val parent2New = parents.filterIsInstance<XChildEntity>().single()
+        if ((this.parent2 as WorkspaceEntityBase).id != (parent2New as WorkspaceEntityBase).id) {
+          this.parent2 = parent2New
+        }
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parent1: XParentEntity
       get() {
@@ -151,15 +169,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] = value
         }
         changedProperty.add("parent1")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parent2: XChildEntity
@@ -222,11 +231,13 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): XChildChildEntity {
-    val entity = XChildChildEntityImpl()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = XChildChildEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -255,7 +266,7 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as XChildChildEntityData
 
@@ -265,7 +276,7 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as XChildChildEntityData
 

@@ -756,27 +756,29 @@ public class SrcRepositoryUseTest extends JavaPsiTestCase {
     PsiJavaFile psiFile = (PsiJavaFile) myPsiManager.findFile(vFile);
     psiFile.getClasses();
 
-    rewriteFileExternally(vFile, "import a . b;\n" +
-                                 "import c.*;\n" +
-                                 "import\n" +
-                                 "\n" +
-                                 "class MyClass1{\n" +
-                                 "  {\n" +
-                                 "    class Local{\n" +
-                                 "      public void foo(){\n" +
-                                 "        new Runnable(){\n" +
-                                 "          public void run(){\n" +
-                                 "            new Throwable(){\n" +
-                                 "            };\n" +
-                                 "          };\n" +
-                                 "        }\n" +
-                                 "      }\n" +
-                                 "    };\n" +
-                                 "  }\n" +
-                                 "}\n" +
-                                 "\n" +
-                                 "class Class2{\n" +
-                                 "}\n");
+    rewriteFileExternally(vFile, """
+      import a . b;
+      import c.*;
+      import
+
+      class MyClass1{
+        {
+          class Local{
+            public void foo(){
+              new Runnable(){
+                public void run(){
+                  new Throwable(){
+                  };
+                };
+              }
+            }
+          };
+        }
+      }
+
+      class Class2{
+      }
+      """);
 
     PsiClass myClass = myJavaFacade.findClass("MyClass1", GlobalSearchScope.allScope(myProject));
     myClass.getChildren();

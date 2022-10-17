@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -19,17 +20,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
@@ -39,12 +32,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 typealias LibraryDependencyCandidatesAndSdkInfos = Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>>
@@ -58,12 +50,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private val moduleDependenciesCache = ModuleDependenciesCache()
 
-    private val libraryUsageIndex = LibraryUsageIndex2()
-
     init {
         Disposer.register(this, cache)
         Disposer.register(this, moduleDependenciesCache)
-        Disposer.register(this, libraryUsageIndex)
     }
 
     override fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies = cache[library]
@@ -79,7 +68,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         else
             DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
         val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
-        return LibraryDependencies(libraries, sdks.toList())
+        return LibraryDependencies(libraryInfo, libraries, sdks.toList())
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
@@ -88,11 +77,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         val sdks = LinkedHashSet<SdkInfo>()
 
         val modulesLibraryIsUsedIn =
-            if (!isFineGrainedCacheInvalidationEnabled) {
-                getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
-            } else {
-                libraryUsageIndex.getModulesLibraryIsUsedIn(libraryInfo)
-            }
+            getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
 
         for (module in modulesLibraryIsUsedIn) {
             checkCanceled()
@@ -119,6 +104,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             } ?: true
         }
 
+        val infoCache = LibraryInfoCache.getInstance(project)
         ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(object : RootPolicy<Unit>() {
             override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
                 processedModules.add(moduleSourceOrderEntry.ownerModule)
@@ -126,14 +112,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 checkCanceled()
-                libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
-                    libraries += LibraryInfoCache.getInstance(project)[it].mapNotNull { libraryInfo ->
-                        LibraryDependencyCandidate.fromLibraryOrNull(
-                            project,
-                            libraryInfo.library
-                        )
-                    }
-                }
+                val libraryEx = libraryOrderEntry.library.safeAs<LibraryEx>()?.takeUnless { it.isDisposed } ?: return
+                val candidate = LibraryDependencyCandidate.fromLibraryOrNull(infoCache[libraryEx]) ?: return
+                libraries += candidate
             }
 
             override fun visitJdkOrderEntry(jdkOrderEntry: JdkOrderEntry, value: Unit) {
@@ -160,7 +141,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     * the inability to get real dependencies from IDEA model. So moving stdlib with all dependencies
     * down is a questionable option.
     */
-    private fun filterForBuiltins(libraryInfo: LibraryInfo, dependencyLibraries: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    private fun filterForBuiltins(
+        libraryInfo: LibraryInfo,
+        dependencyLibraries: Set<LibraryDependencyCandidate>
+    ): Set<LibraryDependencyCandidate> {
         return if (!IdeBuiltInsLoadingState.isFromClassLoader && libraryInfo.isCoreKotlinLibrary(project)) {
             dependencyLibraries.filterTo(mutableSetOf()) { dep ->
                 dep.libraries.any { it.isCoreKotlinLibrary(project) }
@@ -170,20 +154,23 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
     }
 
-    private fun getLibraryUsageIndex(): LibraryUsageIndex {
-        return CachedValuesManager.getManager(project).getCachedValue(project) {
-            CachedValueProvider.Result(LibraryUsageIndex(), ProjectRootModificationTracker.getInstance(project))
+    private fun getLibraryUsageIndex(): LibraryUsageIndex =
+        CachedValuesManager.getManager(project).getCachedValue(project) {
+            CachedValueProvider.Result(
+                LibraryUsageIndex(),
+                ModuleModificationTracker.getInstance(project),
+                LibraryModificationTracker.getInstance(project)
+            )
         }!!
-    }
 
     private inner class LibraryDependenciesInnerCache :
         SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
-        OutdatedLibraryInfoListener,
+        LibraryInfoListener,
         ModuleRootListener,
         ProjectJdkTable.Listener {
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
@@ -212,6 +199,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
             invalidateEntries(
@@ -225,13 +214,13 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private inner class ModuleDependenciesCache :
         SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
         ProjectJdkTable.Listener,
-        OutdatedLibraryInfoListener,
+        LibraryInfoListener,
         ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, ModelChangeListener())
-            connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            connection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
+            connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
@@ -256,6 +245,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
+            if (event.isCausedByWorkspaceModelChangesOnly) return
+
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()
 
@@ -271,9 +262,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 get() = ModuleEntity::class.java
 
             override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                entity.findModule(storage) ?:
-                // TODO: workaround to bypass bug with new modules not present in storageAfter
-                WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(entity)
+                entity.findModule(storage)
 
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidateKeys(outdated) { _, _ -> false }
@@ -292,177 +281,26 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
     }
 
-    private data class Change<T>(val old: List<T>, val new: List<T>)
-
-    private inner class LibraryUsageIndex2:
-        SynchronizedFineGrainedEntityCache<LibraryWrapper, Set<Module>>(project, cleanOnLowMemory = true),
-        WorkspaceModelChangeListener {
-
-        init {
-            val initialMap = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
-            for (module in ModuleManager.getInstance(project).modules) {
-                initialMap.populateLibraries(module)
-            }
-            putAll(initialMap)
-        }
-
-        private fun MutableMap<LibraryWrapper, MutableSet<Module>>.populateLibraries(module: Module) {
-            for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                if (entry is LibraryOrderEntry) {
-                    entry.library?.let { library ->
-                        val modules = getOrPut(library.wrap()) { hashSetOf() }
-                        modules += module
-                    }
-                }
-            }
-        }
-
-        override fun subscribe() {
-            val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
-        }
-
-        override fun calculate(key: LibraryWrapper): Set<Module> {
-            // it should not happen - keep it as last resort fallback
-            val libraryEx = key.library
-            val modules = mutableSetOf<Module>()
-            for (module in ModuleManager.getInstance(project).modules) {
-                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                    if (entry is LibraryOrderEntry && entry.library == libraryEx) {
-                        modules += module
-                    }
-                }
-            }
-            return modules
-        }
-
-        override fun checkKeyValidity(key: LibraryWrapper) {
-            key.checkValidity()
-        }
-
-        override fun checkValueValidity(value: Set<Module>) {
-            value.forEach(Module::checkValidity)
-        }
-
-        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence {
-            val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            val libraryWrapper = libraryInfo.library.wrap()
-            val modulesLibraryIsUsedIn = get(libraryWrapper)
-            for (module in modulesLibraryIsUsedIn) {
-                checkCanceled()
-                val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
-                if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
-                    yield(module)
-                }
-            }
-        }
-
-        override fun changed(event: VersionedStorageChange) {
-            val storageBefore = event.storageBefore
-            val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val libraryChanges = event.getChanges(LibraryEntity::class.java)
-            if (moduleChanges.isEmpty() && libraryChanges.isEmpty()) {
-                return
-            }
-
-            val modulesChange = modulesChange(moduleChanges, storageBefore, storageAfter)
-            val librariesChange = librariesChange(libraryChanges, storageBefore, storageAfter)
-
-            val modulesFromNewLibs = libraryChanges.mapNotNull { change ->
-                val newEntity = newEntity(change) ?: return@mapNotNull null
-                val referrers = storageAfter.referrers(newEntity.persistentId, ModuleEntity::class.java)
-                referrers.mapNotNull { storageAfter.findModuleByEntity(it) ?:
-                    // TODO: workaround to bypass bug with new modules not present in storageAfter
-                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
-                }
-            }.flatMapTo(hashSetOf()) { it }
-
-            val modulesToInvalidate = modulesChange.old.toHashSet() + modulesFromNewLibs
-            val librariesToInvalidate = librariesChange.old.toHashSet()
-
-            invalidateEntries(
-                { libraryWrapper, modules -> libraryWrapper.library in librariesToInvalidate || modules.any { it in modulesToInvalidate } }
-            )
-
-            val newValues = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
-            val modulesToUpdate = modulesChange.new + modulesFromNewLibs
-            modulesToUpdate.forEach { newValues.populateLibraries(it) }
-            putAll(newValues)
-        }
-
-        private fun <T: WorkspaceEntity> oldEntity(change: EntityChange<T>) =
-            when (change) {
-                is EntityChange.Added -> null
-                is EntityChange.Removed -> change.entity
-                is EntityChange.Replaced -> change.oldEntity
-            }
-
-        private fun <T: WorkspaceEntity> newEntity(change: EntityChange<T>) =
-            when (change) {
-                is EntityChange.Added -> change.entity
-                is EntityChange.Removed -> null
-                is EntityChange.Replaced -> change.newEntity
-            }
-
-        private fun modulesChange(
-            moduleChanges: List<EntityChange<ModuleEntity>>,
-            storageBefore: EntityStorage,
-            storageAfter: EntityStorage
-        ): Change<Module> {
-            val oldModules = mutableListOf<Module>()
-            val newModules = mutableListOf<Module>()
-            for (change in moduleChanges) {
-                oldEntity(change)?.let { oldModules.addIfNotNull(storageBefore.findModuleByEntity(it)) }
-                newEntity(change)?.let {
-                    val moduleBridge = storageAfter.findModuleByEntity(it) ?:
-                        // TODO: workaround to bypass bug with new modules not present in storageAfter
-                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
-                    newModules.addIfNotNull(moduleBridge)
-                }
-            }
-            return Change(oldModules, newModules)
-        }
-
-        private fun librariesChange(
-            moduleChanges: List<EntityChange<LibraryEntity>>,
-            storageBefore: EntityStorage,
-            storageAfter: EntityStorage
-        ): Change<Library> {
-            val oldLibraries = mutableListOf<Library>()
-            val newLibraries = mutableListOf<Library>()
-            for (change in moduleChanges) {
-                oldEntity(change)?.let { oldLibraries.addIfNotNull(it.findLibraryBridge(storageBefore)) }
-                newEntity(change)?.let {
-                    val libraryBridge = it.findLibraryBridge(storageAfter) ?:
-                        // TODO: workaround to bypass bug with new modules not present in storageAfter
-                        it.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
-                    newLibraries.addIfNotNull(libraryBridge)
-                }
-            }
-            return Change(oldLibraries, newLibraries)
-        }
-    }
-
     private inner class LibraryUsageIndex {
-        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
-
-        init {
+        private val modulesLibraryIsUsedIn: MultiMap<Library, Module> = runReadAction {
+            val map: MultiMap<Library, Module> = MultiMap.createSet()
+            val libraryCache = LibraryInfoCache.getInstance(project)
             for (module in ModuleManager.getInstance(project).modules) {
+                checkCanceled()
                 for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                    if (entry is LibraryOrderEntry) {
-                        val library = entry.library
-                        if (library != null) {
-                            modulesLibraryIsUsedIn.putValue(library.wrap(), module)
-                        }
-                    }
+                    if (entry !is LibraryOrderEntry) continue
+                    val library = entry.library ?: continue
+                    val keyLibrary = libraryCache.deduplicatedLibrary(library)
+                    map.putValue(keyLibrary, module)
                 }
             }
+
+            map
         }
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
             val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            for (module in modulesLibraryIsUsedIn[libraryInfo.library.wrap()]) {
+            for (module in modulesLibraryIsUsedIn[libraryInfo.library]) {
                 val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
                 if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
                     yield(module)
@@ -470,5 +308,4 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
-
 }

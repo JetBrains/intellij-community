@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 interface CommitWorkflowHandler {
   val amendCommitHandler: AmendCommitHandler
+  val commitAuthorTracker: CommitAuthorTracker? get() = null
 
   /**
    * @see CommitExecutor.getId
@@ -19,12 +20,13 @@ interface CommitWorkflowHandler {
 }
 
 sealed class CommitChecksResult {
-  class Passed(val toCommit: Boolean) : CommitChecksResult()
+  object Passed : CommitChecksResult()
+  class OnlyChecks(val checksPassed: Boolean) : CommitChecksResult()
   class Failed(val toCloseWindow: Boolean = false) : CommitChecksResult()
   object Cancelled : CommitChecksResult()
   object ExecutionError : CommitChecksResult()
 
-  val shouldCommit: Boolean get() = this is Passed && toCommit
+  val shouldCommit: Boolean get() = this is Passed
   val shouldCloseWindow: Boolean get() = this is Failed && toCloseWindow
 }
 

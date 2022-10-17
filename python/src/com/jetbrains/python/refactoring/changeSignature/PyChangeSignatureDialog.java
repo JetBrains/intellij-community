@@ -380,14 +380,12 @@ public class PyChangeSignatureDialog extends
             return new JBTableRow() {
               @Override
               public Object getValueAt(int column) {
-                switch (column) {
-                  case 0:
-                    return myNameEditor.getText().trim();
-                  case 1:
-                    return new Pair<>(item.defaultValueCodeFragment,
-                                      ((PyParameterTableModelItem)item).isDefaultInSignature());
-                }
-                return null;
+                return switch (column) {
+                  case 0 -> myNameEditor.getText().trim();
+                  case 1 -> new Pair<>(item.defaultValueCodeFragment,
+                                       ((PyParameterTableModelItem)item).isDefaultInSignature());
+                  default -> null;
+                };
               }
             };
           }

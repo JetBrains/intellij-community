@@ -3,8 +3,8 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.junit.Assert;
@@ -46,6 +46,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
   @Test
   public void testIndexedArchetypes() throws Exception {
+
     myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
     File archetypes = myIndicesFixture.getRepositoryHelper().getTestData("archetypes");
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(archetypes.getPath());
@@ -88,11 +89,12 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   }
 
   private void assertArchetypeExists(String archetypeId) {
-    Set<MavenArchetype> achetypes = myIndicesFixture.getIndicesManager().getArchetypes();
+    Set<MavenArchetype> achetypes = myIndicesFixture.getArchetypeManager().getArchetypes();
     List<String> actualNames = new ArrayList<>();
     for (MavenArchetype each : achetypes) {
-      actualNames.add(each.groupId + ":" + each.artifactId + ":" + each.version);
+      actualNames.add(each.groupId + ":" + each.artifactId);
     }
-    assertTrue(actualNames.toString(), actualNames.contains(archetypeId));
+    MavenId id = new MavenId(archetypeId);
+    assertTrue(actualNames.toString(), actualNames.contains(id.getGroupId() + ":" + id.getArtifactId()));
   }
 }

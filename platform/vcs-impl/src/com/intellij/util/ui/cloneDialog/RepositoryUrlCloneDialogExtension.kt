@@ -32,7 +32,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   override fun getTooltip(): String {
     return CheckoutProvider.EXTENSION_POINT_NAME.extensions
       .map { it.vcsName }
-      .joinToString { it.replace("_", "") }
+      .joinToString { UIUtil.removeMnemonic(it) }
   }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
@@ -61,7 +61,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
       val northPanel = panel {
         row(VcsBundle.message("vcs.common.labels.version.control")) {
-          comboBox = comboBox(providers.asList(), SimpleListCellRenderer.create("") { it.vcsName.removePrefix("_") })
+          comboBox = comboBox(providers.asList(), SimpleListCellRenderer.create("") { UIUtil.removeMnemonic(it.vcsName) })
             .applyToComponent {
               selectedItem = null
             }
@@ -106,6 +106,6 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
     override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
-    private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
+    internal fun getCurrentVcsComponent(): VcsCloneComponent? = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
 }

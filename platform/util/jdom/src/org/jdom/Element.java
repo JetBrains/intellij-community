@@ -58,6 +58,7 @@ import org.jdom.filter.AbstractFilter;
 import org.jdom.filter.Filter;
 import org.jdom.filter2.ElementFilter;
 import org.jdom.filter2.Filters;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -369,7 +370,7 @@ public class Element extends Content implements Parent, Serializable {
    */
   public void addNamespaceDeclaration(Namespace additionalNamespace) {
     if (additionalNamespaces == null) {
-      additionalNamespaces = new ArrayList<Namespace>();
+      additionalNamespaces = new ArrayList<>();
     }
     else {
       for (Namespace ns : additionalNamespaces) {
@@ -387,23 +388,6 @@ public class Element extends Content implements Parent, Serializable {
     }
 
     additionalNamespaces.add(additionalNamespace);
-  }
-
-  /**
-   * Removes an additional namespace declarations from this element. This
-   * should <i>not</i> be used to remove the declaration for this element
-   * itself; that should be handled in the construction of the element.
-   * Instead, this is for removing namespace declarations on the element not
-   * relating directly to itself. If the declaration is not present, this
-   * method does nothing.
-   *
-   * @param additionalNamespace namespace to remove. A null Namespace does nothing.
-   */
-  public void removeNamespaceDeclaration(final Namespace additionalNamespace) {
-    if (additionalNamespaces == null) {
-      return;
-    }
-    additionalNamespaces.remove(additionalNamespace);
   }
 
   /**
@@ -673,7 +657,7 @@ public class Element extends Content implements Parent, Serializable {
    */
   @Override
   public List<Content> removeContent() {
-    List<Content> old = new ArrayList<Content>(content);
+    List<Content> old = new ArrayList<>(content);
     content.clear();
     return old;
   }
@@ -685,7 +669,7 @@ public class Element extends Content implements Parent, Serializable {
    * @return list of the old children detached from this parent
    */
   public <F extends Content> List<F> removeContent(Filter<F> filter) {
-    List<F> old = new ArrayList<F>();
+    List<F> old = new ArrayList<>();
     Iterator<F> iter = content.getView(AbstractFilter.toFilter2(filter)).iterator();
     while (iter.hasNext()) {
       F child = iter.next();
@@ -868,7 +852,7 @@ public class Element extends Content implements Parent, Serializable {
   @Override
   public List<Content> cloneContent() {
     final int size = getContentSize();
-    final List<Content> list = new ArrayList<Content>(size);
+    final List<Content> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       final Content child = getContent(i);
       list.add(child.clone());
@@ -1016,7 +1000,7 @@ public class Element extends Content implements Parent, Serializable {
    * </p>
    *
    * @param name name of the attribute to return
-   * @param ns      <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
+   * @param ns   <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return attribute for the element
    */
   public Attribute getAttribute(final String name, final Namespace ns) {
@@ -1037,10 +1021,11 @@ public class Element extends Content implements Parent, Serializable {
    * @return the named attribute's value, or null if no such attribute
    */
   public String getAttributeValue(final String name) {
-    if (attributes == null) {
-      return null;
-    }
-    return getAttributeValue(name, Namespace.NO_NAMESPACE);
+    return attributes == null ? null : getAttributeValue(name, Namespace.NO_NAMESPACE, null);
+  }
+
+  public boolean getAttributeBooleanValue(@NotNull String name) {
+    return attributes != null && Boolean.parseBoolean(getAttributeValue(name, Namespace.NO_NAMESPACE, null));
   }
 
   /**
@@ -1051,14 +1036,11 @@ public class Element extends Content implements Parent, Serializable {
    * </p>
    *
    * @param name name of the attribute whose value to be returned
-   * @param def     a default value to return if the attribute does not exist
+   * @param def  a default value to return if the attribute does not exist
    * @return the named attribute's value, or the default if no such attribute
    */
-  public String getAttributeValue(final String name, final String def) {
-    if (attributes == null) {
-      return def;
-    }
-    return getAttributeValue(name, Namespace.NO_NAMESPACE, def);
+  public String getAttributeValue(String name, String def) {
+    return attributes == null ? def : getAttributeValue(name, Namespace.NO_NAMESPACE, def);
   }
 
   /**
@@ -1069,13 +1051,10 @@ public class Element extends Content implements Parent, Serializable {
    * </p>
    *
    * @param name name of the attribute whose value is to be returned
-   * @param ns      <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
+   * @param ns   <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return the named attribute's value, or null if no such attribute
    */
-  public String getAttributeValue(final String name, final Namespace ns) {
-    if (attributes == null) {
-      return null;
-    }
+  public String getAttributeValue(String name, Namespace ns) {
     return getAttributeValue(name, ns, null);
   }
 
@@ -1086,21 +1065,14 @@ public class Element extends Content implements Parent, Serializable {
    * such attribute.
    * </p>
    *
-   * @param name name of the attribute whose value is to be returned
-   * @param ns      <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
-   * @param def     a default value to return if the attribute does not exist
+   * @param name        name of the attribute whose value is to be returned
+   * @param ns          <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
+   * @param defaultValue a default value to return if the attribute does not exist
    * @return the named attribute's value, or the default if no such attribute
    */
-  public String getAttributeValue(final String name, final Namespace ns, final String def) {
-    if (attributes == null) {
-      return def;
-    }
-    final Attribute attribute = getAttributeList().get(name, ns);
-    if (attribute == null) {
-      return def;
-    }
-
-    return attribute.getValue();
+  public String getAttributeValue(String name, Namespace ns, String defaultValue) {
+    Attribute attribute = attributes == null ? null : getAttributeList().get(name, ns);
+    return attribute == null ? defaultValue : attribute.getValue();
   }
 
   /**
@@ -1250,7 +1222,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   public void sortChildren(Comparator<? super Element> comparator) {
-    Collections.sort(content.getView(Filters.element()), comparator);
+    content.getView(Filters.element()).sort(comparator);
   }
 
   /**
@@ -1261,7 +1233,7 @@ public class Element extends Content implements Parent, Serializable {
    * </p>
    *
    * @param name name of attribute to remove
-   * @param ns      namespace URI of attribute to remove. A null implies Namespace.NO_NAMESPACE.
+   * @param ns   namespace URI of attribute to remove. A null implies Namespace.NO_NAMESPACE.
    * @return whether the attribute was removed
    */
   public boolean removeAttribute(final String name, final Namespace ns) {
@@ -1341,7 +1313,7 @@ public class Element extends Content implements Parent, Serializable {
 
     // Cloning additional namespaces
     if (additionalNamespaces != null) {
-      element.additionalNamespaces = new ArrayList<Namespace>(additionalNamespaces);
+      element.additionalNamespaces = new ArrayList<>(additionalNamespaces);
     }
 
     // Cloning content
@@ -1370,11 +1342,11 @@ public class Element extends Content implements Parent, Serializable {
   @SuppressWarnings("unused")
   @Deprecated
   public <F extends Content> Iterator<F> getDescendants(final Filter<F> filter) {
-    return new FilterIterator<F>(new DescendantIterator(this), AbstractFilter.toFilter2(filter));
+    return new FilterIterator<>(new DescendantIterator(this), AbstractFilter.toFilter2(filter));
   }
 
   public <F extends Content> Iterator<F> getDescendants(final org.jdom.filter2.Filter<F> filter) {
-    return new FilterIterator<F>(new DescendantIterator(this), filter);
+    return new FilterIterator<>(new DescendantIterator(this), filter);
   }
 
   /**
@@ -1591,7 +1563,6 @@ public class Element extends Content implements Parent, Serializable {
    *
    * @see NamespaceAware
    */
-  @Override
   public List<Namespace> getNamespacesInScope() {
     // The assumption here is that all namespaces are valid,
     // that there are no namespace collisions on this element
@@ -1600,7 +1571,7 @@ public class Element extends Content implements Parent, Serializable {
     // It does not make reference to this Element instance's other
     // getNamespace*() methods
 
-    TreeMap<String, Namespace> namespaces = new TreeMap<String, Namespace>();
+    TreeMap<String, Namespace> namespaces = new TreeMap<>();
     namespaces.put(Namespace.XML_NAMESPACE.getPrefix(), Namespace.XML_NAMESPACE);
     namespaces.put(getNamespacePrefix(), getNamespace());
     if (additionalNamespaces != null) {
@@ -1634,7 +1605,7 @@ public class Element extends Content implements Parent, Serializable {
       namespaces.put(Namespace.NO_NAMESPACE.getPrefix(), Namespace.NO_NAMESPACE);
     }
 
-    ArrayList<Namespace> al = new ArrayList<Namespace>(namespaces.size());
+    ArrayList<Namespace> al = new ArrayList<>(namespaces.size());
     al.add(getNamespace());
     namespaces.remove(getNamespacePrefix());
     al.addAll(namespaces.values());
@@ -1642,28 +1613,24 @@ public class Element extends Content implements Parent, Serializable {
     return Collections.unmodifiableList(al);
   }
 
-  @Override
+  // used externally
+  @SuppressWarnings("unused")
   public List<Namespace> getNamespacesIntroduced() {
     if (getParentElement() == null) {
       // we introduce everything... except Namespace.XML_NAMESPACE
-      List<Namespace> ret = new ArrayList<Namespace>(getNamespacesInScope());
-      for (Iterator<Namespace> it = ret.iterator(); it.hasNext(); ) {
-        Namespace ns = it.next();
-        if (ns == Namespace.XML_NAMESPACE || ns == Namespace.NO_NAMESPACE) {
-          it.remove();
-        }
-      }
+      List<Namespace> ret = new ArrayList<>(getNamespacesInScope());
+      ret.removeIf(ns -> ns == Namespace.XML_NAMESPACE || ns == Namespace.NO_NAMESPACE);
       return Collections.unmodifiableList(ret);
     }
 
     // OK, the things we introduce are the prefixes we have in scope that
     // are *not* in our parent's scope.
-    HashMap<String, Namespace> parents = new HashMap<String, Namespace>();
+    HashMap<String, Namespace> parents = new HashMap<>();
     for (Namespace ns : getParentElement().getNamespacesInScope()) {
       parents.put(ns.getPrefix(), ns);
     }
 
-    ArrayList<Namespace> al = new ArrayList<Namespace>();
+    ArrayList<Namespace> al = new ArrayList<>();
     for (Namespace ns : getNamespacesInScope()) {
       if (!parents.containsKey(ns.getPrefix()) || ns != parents.get(ns.getPrefix())) {
         // introduced
@@ -1682,9 +1649,12 @@ public class Element extends Content implements Parent, Serializable {
   @Override
   public void canContainContent(Content child, int index, boolean replace) throws IllegalAddException {
     if (child instanceof DocType) {
-      throw new IllegalAddException(
-        "A DocType is not allowed except at the document level");
+      throw new IllegalAddException("A DocType is not allowed except at the document level");
     }
+  }
+
+  public boolean isEmpty() {
+    return !hasAttributes() && getContent().isEmpty();
   }
 
   /**
@@ -1719,8 +1689,8 @@ public class Element extends Content implements Parent, Serializable {
     if (hasAdditionalNamespaces()) {
       final int ans = additionalNamespaces.size();
       out.writeInt(ans);
-      for (int i = 0; i < ans; i++) {
-        out.writeObject(additionalNamespaces.get(i));
+      for (Namespace additionalNamespace : additionalNamespaces) {
+        out.writeObject(additionalNamespace);
       }
     }
     else {
@@ -1729,8 +1699,8 @@ public class Element extends Content implements Parent, Serializable {
     if (hasAttributes()) {
       final int ans = attributes.size();
       out.writeInt(ans);
-      for (int i = 0; i < ans; i++) {
-        out.writeObject(attributes.get(i));
+      for (Attribute attribute : attributes) {
+        out.writeObject(attribute);
       }
     }
     else {
@@ -1739,32 +1709,32 @@ public class Element extends Content implements Parent, Serializable {
 
     final int cs = content.size();
     out.writeInt(cs);
-    for (int i = 0; i < cs; i++) {
-      out.writeObject(content.get(i));
+    for (Content value : content) {
+      out.writeObject(value);
     }
   }
 
-    private void readObject(final ObjectInputStream in)
-      throws IOException, ClassNotFoundException {
+  private void readObject(final ObjectInputStream in)
+    throws IOException, ClassNotFoundException {
 
-      in.defaultReadObject();
+    in.defaultReadObject();
 
-      content = new ContentList(this);
+    content = new ContentList(this);
 
-      int nss = in.readInt();
+    int nss = in.readInt();
 
-      while (--nss >= 0) {
-        addNamespaceDeclaration((Namespace)in.readObject());
-      }
-
-      int ats = in.readInt();
-      while (--ats >= 0) {
-        setAttribute((Attribute)in.readObject());
-      }
-
-      int cs = in.readInt();
-      while (--cs >= 0) {
-        addContent((Content)in.readObject());
-      }
+    while (--nss >= 0) {
+      addNamespaceDeclaration((Namespace)in.readObject());
     }
+
+    int ats = in.readInt();
+    while (--ats >= 0) {
+      setAttribute((Attribute)in.readObject());
+    }
+
+    int cs = in.readInt();
+    while (--cs >= 0) {
+      addContent((Content)in.readObject());
+    }
+  }
 }

@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
@@ -96,7 +95,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
       return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;
     }
 
-    PsiClass anInterface = StreamEx.of(aClass.getInterfaces())
+    PsiClass anInterface = Arrays.stream(aClass.getInterfaces())
       .filter(c -> !CommonClassNames.JAVA_LANG_OBJECT.equals(c.getQualifiedName()))
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())

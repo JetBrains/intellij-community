@@ -15,8 +15,11 @@
  */
 package com.intellij.psi.impl.source.html.dtd;
 
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.html.HtmlEnumeratedReferenceSet;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -133,5 +136,14 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
 
   public boolean isCaseSensitive() {
     return myCaseSensitive;
+  }
+
+  @Override
+  public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
+    if (element != null && element.getContainingFile() instanceof HtmlCompatibleFile)
+      return new HtmlEnumeratedReferenceSet(element, this).getPsiReferences();
+    else
+      //noinspection unchecked
+      return super.getValueReferences(element, text);
   }
 }

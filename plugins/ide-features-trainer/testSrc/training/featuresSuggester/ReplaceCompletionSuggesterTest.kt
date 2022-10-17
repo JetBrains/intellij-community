@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester
 
+import com.intellij.testFramework.TestIndexingModeSupporter
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 
-abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest() {
+abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSupporter {
+  private var indexingModeValue = IndexingMode.SMART
   override val testingSuggesterId = "Completion with replace"
 
   abstract fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`()
@@ -25,5 +28,28 @@ abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest() {
   protected fun CodeInsightTestFixture.deleteAndTypeDot() {
     deleteSymbolAtCaret()
     typeAndCommit(".")
+  }
+
+  override fun setIndexingMode(mode: IndexingMode) {
+    indexingModeValue = mode
+  }
+
+  override fun getIndexingMode(): IndexingMode = indexingModeValue
+
+  override fun setUp() {
+    super.setUp()
+    indexingModeValue.setUpTest(myFixture.project, myFixture.testRootDisposable)
+  }
+
+  override fun tearDown() {
+    try {
+      indexingModeValue.tearDownTest(myFixture.project)
+    }
+    catch (e: Exception) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 }

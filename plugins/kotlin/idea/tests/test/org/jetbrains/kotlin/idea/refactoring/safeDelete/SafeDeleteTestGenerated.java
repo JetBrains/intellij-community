@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -167,11 +167,6 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("nestedObject2.kt")
         public void testNestedObject2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject2.kt");
-        }
-
-        @TestMetadata("nestedObject3.kt")
-        public void testNestedObject3() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject3.kt");
         }
 
         @TestMetadata("noUsages.kt")

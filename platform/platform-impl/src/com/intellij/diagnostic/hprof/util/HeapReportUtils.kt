@@ -22,7 +22,7 @@ object HeapReportUtils {
   private val SI_PREFIXES = charArrayOf('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y') // Kilo, Mega, Giga, Peta, etc.
   const val STRING_PADDING_FOR_COUNT = 5
   const val STRING_PADDING_FOR_SIZE = STRING_PADDING_FOR_COUNT + 1
-  const val SECTION_HEADER_SIZE = 50
+  private const val SECTION_HEADER_SIZE = 50
 
   fun toShortStringAsCount(count: Long): String {
     return toShortString(count)

@@ -60,7 +60,9 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  private boolean validateFinalModifier(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private static boolean validateFinalModifier(@NotNull PsiAnnotation psiAnnotation,
+                                               @NotNull PsiField psiField,
+                                               @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL) && null != LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.setter.for.this.field.setters"),
@@ -70,12 +72,12 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return result;
   }
 
-  private boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
 
-  private boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.setter.for.this.field.it"));
@@ -90,7 +92,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  public PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  public static PsiMethod createSetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
     final String fieldName = psiField.getName();
     final PsiType psiFieldType = psiField.getType();
     final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SETTER);
@@ -102,7 +104,8 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
       .withParameter(fieldName, psiFieldType)
-      .withNavigationElement(psiField);
+      .withNavigationElement(psiField)
+      .withContract("mutates=\"this\"");
     if (StringUtil.isNotEmpty(methodModifier)) {
       methodBuilder.withModifier(methodModifier);
     }
@@ -132,11 +135,11 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @NotNull
-  private String createCodeBlockText(@NotNull PsiField psiField,
-                                     @NotNull PsiClass psiClass,
-                                     PsiType returnType,
-                                     boolean isStatic,
-                                     PsiParameter methodParameter) {
+  private static String createCodeBlockText(@NotNull PsiField psiField,
+                                            @NotNull PsiClass psiClass,
+                                            PsiType returnType,
+                                            boolean isStatic,
+                                            PsiParameter methodParameter) {
     final String blockText;
     final String thisOrClass = isStatic ? psiClass.getName() : "this";
     blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
@@ -149,7 +152,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return codeBlockText;
   }
 
-  private PsiType getReturnType(@NotNull PsiField psiField) {
+  private static PsiType getReturnType(@NotNull PsiField psiField) {
     PsiType result = PsiType.VOID;
     if (!psiField.hasModifierProperty(PsiModifier.STATIC) && AccessorsInfo.build(psiField).isChain()) {
       final PsiClass fieldClass = psiField.getContainingClass();

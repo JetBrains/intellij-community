@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.ex.ToolLanguageUtil;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -19,11 +19,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Set;
+
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean extension;
   private String fullFamilyName;
-  private @IntentionFamilyName String familyName;
+
+  private volatile Set<String> applicableToLanguages;  // lazy initialized
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     this.extension = extension;
@@ -44,11 +48,32 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
   @Override
   public @NotNull String getFamilyName() {
-    String result = familyName;
-    if (result == null) {
-      familyName = result = getDelegate().getFamilyName();
+    return getDelegate().getFamilyName();
+  }
+
+  public boolean isApplicable(Collection<String> fileLanguageIds) {
+    String language = extension.language;
+    if (language == null
+        || "any".equals(language)
+        || language.isBlank()) {
+      return true;
     }
-    return result;
+
+    Set<String> languages = applicableToLanguages;
+    if (languages == null) {
+      applicableToLanguages = languages = getLanguageWithDialects(language);
+    }
+
+    if (languages.isEmpty()) return true;
+
+    for (String fileLanguage : fileLanguageIds) {
+      if (languages.contains(fileLanguage)) return true;
+    }
+    return false;
+  }
+
+  private static @NotNull Set<String> getLanguageWithDialects(@NotNull String langId) {
+    return ToolLanguageUtil.getAllMatchingLanguages(langId, true);
   }
 
   @Override

@@ -22,8 +22,8 @@ interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleTestEntity, ModifiableWorkspaceEntity<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var contentRoots: List<ContentRootTestEntity>
     override var facets: List<FacetTestEntity>
   }
@@ -53,8 +53,8 @@ interface ContentRootTestEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ContentRootTestEntity, ModifiableWorkspaceEntity<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
-    override var module: ModuleTestEntity
     override var entitySource: EntitySource
+    override var module: ModuleTestEntity
     override var sourceRootOrder: SourceRootTestOrderEntity?
     override var sourceRoots: List<SourceRootTestEntity>
   }
@@ -82,8 +82,8 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootTestOrderEntity, ModifiableWorkspaceEntity<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
@@ -112,8 +112,8 @@ interface SourceRootTestEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootTestEntity, ModifiableWorkspaceEntity<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
@@ -155,8 +155,8 @@ interface FacetTestEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FacetTestEntity, ModifiableWorkspaceEntity<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var moreData: String
     override var module: ModuleTestEntity
   }

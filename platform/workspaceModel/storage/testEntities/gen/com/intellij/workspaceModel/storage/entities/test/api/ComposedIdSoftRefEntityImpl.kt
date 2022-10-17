@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntityBase() {
+open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,21 +34,17 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
-  @JvmField
-  var _link: NameId? = null
   override val link: NameId
-    get() = _link!!
+    get() = dataSource.link
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>(), ComposedIdSoftRefEntity.Builder {
+  class Builder(var result: ComposedIdSoftRefEntityData?) : ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity>(), ComposedIdSoftRefEntity.Builder {
     constructor() : this(ComposedIdSoftRefEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,6 +62,9 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -74,11 +73,11 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isMyNameInitialized()) {
         error("Field ComposedIdSoftRefEntity#myName should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ComposedIdSoftRefEntity#entitySource should be initialized")
       }
       if (!getEntityData().isLinkInitialized()) {
         error("Field ComposedIdSoftRefEntity#link should be initialized")
@@ -92,21 +91,13 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ComposedIdSoftRefEntity
-      this.myName = dataSource.myName
-      this.entitySource = dataSource.entitySource
-      this.link = dataSource.link
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.link != dataSource.link) this.link = dataSource.link
       if (parents != null) {
       }
     }
 
-
-    override var myName: String
-      get() = getEntityData().myName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -115,6 +106,14 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
       }
 
     override var link: NameId
@@ -188,13 +187,13 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   }
 
   override fun createEntity(snapshot: EntityStorage): ComposedIdSoftRefEntity {
-    val entity = ComposedIdSoftRefEntityImpl()
-    entity._myName = myName
-    entity._link = link
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ComposedIdSoftRefEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -223,19 +222,19 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ComposedIdSoftRefEntityData
 
-    if (this.myName != other.myName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
     if (this.link != other.link) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ComposedIdSoftRefEntityData
 

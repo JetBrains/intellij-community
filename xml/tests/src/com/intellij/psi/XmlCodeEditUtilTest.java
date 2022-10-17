@@ -24,24 +24,38 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
   public void testXHTML() {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
       .createFileFromText("a.xhtml", XHtmlFileType.INSTANCE,
-                          "<a>\n" + "    <b/>\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "\n" + "</a>");
+                          """
+                            <a>
+                                <b/>
+
+
+
+
+
+
+
+
+
+
+                            </a>""");
 
     XmlTag rootTag = file.getDocument().getRootTag();
     XmlTag finalRootTag = rootTag;
     WriteCommandAction.runWriteCommandAction(null, () -> finalRootTag.getSubTags()[0].delete());
 
-    assertEquals("<a>\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "\n" +
-                 "</a>",
+    assertEquals("""
+                   <a>
+
+
+
+
+
+
+
+
+
+
+                   </a>""",
                  file.getText());
 
     file = (XmlFile)PsiFileFactory.getInstance(getProject())
@@ -57,14 +71,16 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
 
   public void testAddLayoutSubTag() {
     XmlTag tag = XmlElementFactory.getInstance(getProject())
-      .createTagFromText("<fabrique-element element=\"wpd\" name=\"Index\">\n" +
-                         "    <wpd/>\n" +
-                         "</fabrique-element>");
+      .createTagFromText("""
+                           <fabrique-element element="wpd" name="Index">
+                               <wpd/>
+                           </fabrique-element>""");
 
     tag.add(tag.createChildTag("layout", "",
-                               "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                               "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0  Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n" +
-                               "<fabrique:inheritorLayout/>", false));
+                               """
+                                 <?xml version="1.0" encoding="UTF-8"?>
+                                 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0  Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+                                 <fabrique:inheritorLayout/>""", false));
   }
 
   public void testAddTag() {
@@ -123,37 +139,38 @@ public class XmlCodeEditUtilTest extends LightJavaCodeInsightTestCase {
   public void testDeleteTable() {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.xhtml",
                                                                                         XHtmlFileType.INSTANCE,
-                                                                                        "<html>\n" +
-                                                                                        "<body xmlns:fabrique=\"https://www.jetbrains.com/schemas/fabrique/page-template\"><p>\n" +
-                                                                                        " ujhgjhgjhg<table style=\"width: 82px; height: 84px\"><tr><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>\n" +
-                                                                                        " jhgjhgjhgjhgjhg</p>\n" +
-                                                                                        "</body>\n" +
-                                                                                        "</html>");
+                                                                                        """
+                                                                                          <html>
+                                                                                          <body xmlns:fabrique="https://www.jetbrains.com/schemas/fabrique/page-template"><p>
+                                                                                           ujhgjhgjhg<table style="width: 82px; height: 84px"><tr><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></table>
+                                                                                           jhgjhgjhgjhgjhg</p>
+                                                                                          </body>
+                                                                                          </html>""");
     XmlTag html = file.getDocument().getRootTag();
     XmlTag table = html.findFirstSubTag("body").findFirstSubTag("p").findFirstSubTag("table");
     assertEquals("table", table.getName());
 
     WriteCommandAction.runWriteCommandAction(null, () -> table.delete());
 
-    assertEquals("<html>\n" +
-                 "<body xmlns:fabrique=\"https://www.jetbrains.com/schemas/fabrique/page-template\"><p>\n" +
-                 " ujhgjhgjhg\n" +
-                 " jhgjhgjhgjhgjhg</p>\n" +
-                 "</body>\n" +
-                 "</html>", file.getText());
+    assertEquals("""
+                   <html>
+                   <body xmlns:fabrique="https://www.jetbrains.com/schemas/fabrique/page-template"><p>
+                    ujhgjhgjhg
+                    jhgjhgjhgjhgjhg</p>
+                   </body>
+                   </html>""", file.getText());
   }
 
   public void testReplaceTag() {
-    String html = "<html>\n" +
-                  "<head />\n" +
-                  "<body xmlns:fabrique=\"https://www.jetbrains.com/schemas/fabrique/page-template\">\n"
+    String html = """
+      <html>
+      <head />
+      <body xmlns:fabrique="https://www.jetbrains.com/schemas/fabrique/page-template">
+          <div style="border: 1px solid green; margin: 2px; padding: 2px;"><p><span style="color: red"><span
+                  style="font-size: 15pt">12345678</span></span></p></div>
 
-                  +
-                  "    <div style=\"border: 1px solid green; margin: 2px; padding: 2px;\"><p><span style=\"color: red\"><span\n" +
-                  "            style=\"font-size: 15pt\">12345678</span></span></p></div>\n" +
-                  "\n" +
-                  "</body>\n" +
-                  "</html>";
+      </body>
+      </html>""";
 
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.xhtml", XHtmlFileType.INSTANCE, html);
     XmlTag body = file.getDocument().getRootTag().findFirstSubTag("body");

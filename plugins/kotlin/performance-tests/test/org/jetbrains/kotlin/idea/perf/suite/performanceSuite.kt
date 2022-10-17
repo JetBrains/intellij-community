@@ -136,7 +136,11 @@ class PerformanceSuite {
             }
 
             fixture("src/HelloMain.kt").use { fixture ->
-                fixture.highlight().firstOrNull { it.severity == HighlightSeverity.WARNING }
+                fixture.highlight()
+                    .also {
+                        fixture.checkNoErrors(it)
+                    }
+                    .firstOrNull { it.severity == HighlightSeverity.WARNING }
                     ?: error("`[UNUSED_PARAMETER] Parameter 'args' is never used` has to be highlighted")
             }
         }
@@ -167,6 +171,13 @@ class PerformanceSuite {
         }
 
         fun Fixture.highlight() = highlight(psiFile)
+
+        fun Fixture.checkNoErrors(highlightInfos: List<HighlightInfo>?) {
+            val errorHighlightInfos = highlightInfos?.filter { it.severity == HighlightSeverity.ERROR }
+            check(errorHighlightInfos?.isNotEmpty() != true) {
+                "No ERRORs are expected in ${this.fileName}: $errorHighlightInfos"
+            }
+        }
 
         fun highlight(editorFile: PsiFile?, toIgnore: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY) =
             editorFile?.highlightFile(toIgnore) ?: error("editor isn't ready for highlight")
@@ -237,7 +248,7 @@ class PerformanceSuite {
         }
 
         fun measureHighlight(fixture: Fixture, vararg name: String): List<List<HighlightInfo>?> {
-            return measure(combineNameWithSimpleFileName("highlighting", fixture, *name)) {
+            return measure<List<HighlightInfo>?>(combineNameWithSimpleFileName("highlighting", fixture, *name)) {
                 before = {
                     fixture.openInEditor()
                 }
@@ -248,7 +259,7 @@ class PerformanceSuite {
                     fixture.close()
                     project.cleanupCaches()
                 }
-            }
+            }.onEach { fixture.checkNoErrors(it) }
         }
 
         fun typeAndMeasureAutoCompletion(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndAutoCompletionMeasurementScope.() -> Unit): List<String?> {
@@ -321,7 +332,7 @@ class PerformanceSuite {
 
                 dispatchAllInvocationEvents()
                 with(DumbService.getInstance(project)) {
-                    queueTask(UnindexedFilesUpdater(project))
+                    UnindexedFilesUpdater(project).queue()
                     completeJustSubmittedTasks()
                 }
                 dispatchAllInvocationEvents()

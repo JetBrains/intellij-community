@@ -57,12 +57,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
       final int elementStart = getTextRange().getStartOffset();
-      final List<TextRange> ranges = StreamEx.of(getStringElements())
-        .map(node -> {
+      final List<TextRange> ranges = ContainerUtil.map(getStringElements(), node -> {
           final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
           return node.getContentRange().shiftRight(nodeRelativeOffset);
-        })
-        .toList();
+        });
       myValueTextRanges = result = ranges;
     }
     return result;

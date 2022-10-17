@@ -17,11 +17,12 @@ public class SerialAnnotationUsedOnWrongMemberInspectionTest extends LightJavaIn
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package java.io;\n" +
-      "import java.lang.annotation.*;\n" +
-      "@Target({ElementType.METHOD, ElementType.FIELD})\n" +
-      "@Retention(RetentionPolicy.SOURCE)\n" +
-      "public @interface Serial  {}"
+      """
+package java.io;
+import java.lang.annotation.*;
+@Target({ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface Serial  {}"""
     };
   }
 

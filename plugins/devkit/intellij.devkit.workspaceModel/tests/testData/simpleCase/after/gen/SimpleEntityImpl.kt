@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
+open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -26,19 +26,17 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
   }
 
-  override var version: Int = 0
-  @JvmField
-  var _name: String? = null
+  override val version: Int get() = dataSource.version
   override val name: String
-    get() = _name!!
+    get() = dataSource.name
 
-  override var isSimple: Boolean = false
+  override val isSimple: Boolean get() = dataSource.isSimple
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity>(), SimpleEntity.Builder {
+  class Builder(var result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity>(), SimpleEntity.Builder {
     constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -56,6 +54,9 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -65,7 +66,7 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimpleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNameInitialized()) {
         error("Field SimpleEntity#name should be initialized")
@@ -79,22 +80,14 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleEntity
-      this.version = dataSource.version
-      this.entitySource = dataSource.entitySource
-      this.name = dataSource.name
-      this.isSimple = dataSource.isSimple
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.name != dataSource.name) this.name = dataSource.name
+      if (this.isSimple != dataSource.isSimple) this.isSimple = dataSource.isSimple
       if (parents != null) {
       }
     }
 
-
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -103,6 +96,14 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var name: String
@@ -148,14 +149,13 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SimpleEntity {
-    val entity = SimpleEntityImpl()
-    entity.version = version
-    entity._name = name
-    entity.isSimple = isSimple
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SimpleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -180,12 +180,12 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.name != other.name) return false
     if (this.isSimple != other.isSimple) return false
     return true
@@ -193,7 +193,7 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SimpleEntityData
 

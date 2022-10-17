@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Urls
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -173,7 +173,7 @@ object KotlinExternalDocUrlsProvider {
     private fun getContainingLightClassForKtDeclaration(declaration: KtDeclaration): PsiClass? {
         return when {
             declaration is KtFunction && declaration.isLocal -> null
-            else -> declaration.toUElementOfType<UMethod>()?.uastParent?.javaPsi?.castSafelyTo<PsiClass>()
+            else -> declaration.toUElementOfType<UMethod>()?.uastParent?.javaPsi?.asSafely<PsiClass>()
         }
     }
 }

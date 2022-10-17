@@ -173,7 +173,7 @@ public class AccessorsInfo {
     return fieldName;
   }
 
-  private boolean canPrefixApply(String fieldName, String prefix) {
+  private static boolean canPrefixApply(String fieldName, String prefix) {
     final int prefixLength = prefix.length();
     // we can use digits and upper case letters after a prefix, but not lower case letters
     return prefixLength == 0 ||
@@ -181,7 +181,7 @@ public class AccessorsInfo {
         (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || !Character.isLowerCase(fieldName.charAt(prefixLength)));
   }
 
-  private String decapitalizeLikeLombok(String name) {
+  private static String decapitalizeLikeLombok(String name) {
     if (name == null || name.isEmpty()) {
       return name;
     }

@@ -125,7 +125,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(__ -> performEditMetaData(button));
 
-    final JList<Configuration> list = new JBList<>(model);
+    final JList<Configuration> list = new JBList<>(model) {
+      @Override
+      protected String itemToText(int index, Configuration value) {
+        return ConfigurationUtil.toXml(value);
+      }
+    };
     list.setCellRenderer(new ConfigurationCellRenderer());
     final JPanel listPanel = ToolbarDecorator.createDecorator(list)
       .setAddAction(b -> performAdd(list, b))
@@ -252,7 +257,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
     dialog.loadConfiguration(configuration);
-    dialog.setUseLastConfiguration(true);
     if (!dialog.showAndGet()) return;
     final Configuration newConfiguration = dialog.getConfiguration();
     if (configuration.getOrder() == 0) {

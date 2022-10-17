@@ -490,11 +490,12 @@ public abstract class HgUtil {
   }
 
   @Nullable
-  @RequiresEdt
-  public static HgRepository guessWidgetRepository(@NotNull Project project) {
+  @CalledInAny
+  public static HgRepository guessWidgetRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
     return DvcsUtil.guessWidgetRepository(project,
                                           HgUtil.getRepositoryManager(project),
-                                          HgProjectSettings.getInstance(project).getRecentRootPath());
+                                          HgProjectSettings.getInstance(project).getRecentRootPath(),
+                                          selectedFile);
   }
 
   @Nullable

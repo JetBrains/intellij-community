@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -125,6 +126,11 @@ public class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
                                                   "inspections.unregistered.named.color.fix.navigate.theme.metadata.file.popup.title"))
                 .showInBestPositionFor(context);
             });
+        }
+
+        @Override
+        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+          return IntentionPreviewInfo.EMPTY;
         }
       });
   }

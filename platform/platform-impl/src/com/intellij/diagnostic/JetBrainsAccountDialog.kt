@@ -9,9 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.io.encodeUrlQueryParameter
 import com.intellij.util.text.nullize
 import java.awt.Component
@@ -36,20 +35,20 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
     }
     row(DiagnosticBundle.message("error.report.auth.user")) {
       cell(userField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
     row(DiagnosticBundle.message("error.report.auth.pass")) {
       cell(passwordField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
-    row(EMPTY_LABEL) {
+    row("") {
       rememberCheckBox = checkBox(UIBundle.message("auth.remember.cb"))
         .applyToComponent { isSelected = remember }
         .component
       link(DiagnosticBundle.message("error.report.auth.restore")) {
         val userName = userField.text.trim().encodeUrlQueryParameter()
         BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=$userName")
-      }.horizontalAlign(HorizontalAlign.RIGHT)
+      }.align(AlignX.RIGHT)
     }
     row {
       text(DiagnosticBundle.message("error.report.auth.enlist"))

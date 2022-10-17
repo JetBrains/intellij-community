@@ -4,6 +4,7 @@ package com.intellij;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
+import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -256,7 +257,7 @@ public class TestAll implements Test {
 
     // to make it easier to reproduce order-dependent failures locally
     System.out.println("------");
-    System.out.println("Running tests:");
+    System.out.println("Running tests classes:");
     for (Class<?> aClass : classes) {
       System.out.println(aClass.getName());
     }
@@ -285,6 +286,18 @@ public class TestAll implements Test {
         ((Closeable)testListener).close();
       }
       catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if (TestCaseLoader.IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+      try {
+        var nastradamusClient = new NastradamusClient();
+        var testRunRequest = nastradamusClient.collectTestRunResults();
+        nastradamusClient.sendTestRunResults(testRunRequest);
+      }
+      catch (Exception e) {
+        System.err.println("Unexpected error happened during sending test results to Nastradamus");
         e.printStackTrace();
       }
     }
@@ -317,7 +330,7 @@ public class TestAll implements Test {
     if (recorderClassName != null) {
       try {
         Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder) recorderClass.newInstance();
+        myTestRecorder = (TestRecorder)recorderClass.newInstance();
       }
       catch (Exception e) {
         System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
@@ -431,7 +444,7 @@ public class TestAll implements Test {
         }
 
         @Nullable
-        private Method findTestMethod(final TestCase testCase) {
+        private static Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };

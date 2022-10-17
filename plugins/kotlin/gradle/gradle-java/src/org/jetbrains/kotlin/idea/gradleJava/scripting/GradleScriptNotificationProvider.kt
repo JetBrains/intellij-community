@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -34,14 +33,14 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile,
-    ): Function<in FileEditor, out JComponent?> {
+    ): Function<in FileEditor, out JComponent?>? {
         if (!isGradleKotlinScript(file) || !file.isKotlinFileType()) {
-            return CONST_NULL
+            return null
         }
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
         val rootsManager = GradleBuildRootsManager.getInstance(project)
-        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return CONST_NULL
+        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return null
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {
@@ -69,7 +68,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                     val actions = standaloneScriptActions[file]
                     if (actions == null) null
                     else {
-                        object : EditorNotificationPanel(fileEditor) {
+                        object : EditorNotificationPanel(fileEditor, Status.Info) {
                             val contextHelp = KotlinIdeaGradleBundle.message("notification.gradle.legacy.firstLoad.info")
 
                             init {
@@ -95,7 +94,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                         }
                     }
                 }
-                legacyOutside -> EditorNotificationPanel(fileEditor).apply {
+                legacyOutside -> EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text(KotlinIdeaGradleBundle.message("notification.gradle.legacy.outsideProject"))
                     createActionLabel(KotlinIdeaGradleBundle.message("notification.notEvaluatedInLastImport.addAsStandaloneAction")) {
                         rootsManager.updateStandaloneScripts {
@@ -104,13 +103,13 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                     }
                     contextHelp(KotlinIdeaGradleBundle.message("notification.gradle.legacy.outsideProject.addToStandaloneHelp"))
                 }
-                outsideAnything -> EditorNotificationPanel(fileEditor).apply {
+                outsideAnything -> EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text(KotlinIdeaGradleBundle.message("notification.outsideAnything.text"))
                     createActionLabel(KotlinIdeaGradleBundle.message("notification.outsideAnything.linkAction")) {
                         linkProject(project, scriptUnderRoot)
                     }
                 }
-                wasNotImportedAfterCreation -> EditorNotificationPanel(fileEditor).apply {
+                wasNotImportedAfterCreation -> EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text(configurationsAreMissingRequestNeeded())
                     createActionLabel(getConfigurationsActionText()) {
                         val root = scriptUnderRoot.nearest
@@ -121,7 +120,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                     val help = configurationsAreMissingRequestNeededHelp()
                     contextHelp(help)
                 }
-                notEvaluatedInLastImport -> EditorNotificationPanel(fileEditor).apply {
+                notEvaluatedInLastImport -> EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text(configurationsAreMissingAfterRequest())
 
                     // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
@@ -135,7 +134,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
 
                     contextHelp(KotlinIdeaGradleBundle.message("notification.notEvaluatedInLastImport.info"))
                 }
-                standalone, standaloneLegacy -> EditorNotificationPanel(fileEditor).apply {
+                standalone, standaloneLegacy -> EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
                     val actions = standaloneScriptActions[file]
                     if (actions != null) {
                         text(

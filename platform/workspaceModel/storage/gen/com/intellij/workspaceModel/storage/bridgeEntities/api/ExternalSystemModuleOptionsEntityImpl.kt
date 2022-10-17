@@ -26,7 +26,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase() {
+open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemModuleOptionsEntityData) : ExternalSystemModuleOptionsEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
@@ -42,46 +42,32 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  @JvmField
-  var _externalSystem: String? = null
   override val externalSystem: String?
-    get() = _externalSystem
+    get() = dataSource.externalSystem
 
-  @JvmField
-  var _externalSystemModuleVersion: String? = null
   override val externalSystemModuleVersion: String?
-    get() = _externalSystemModuleVersion
+    get() = dataSource.externalSystemModuleVersion
 
-  @JvmField
-  var _linkedProjectPath: String? = null
   override val linkedProjectPath: String?
-    get() = _linkedProjectPath
+    get() = dataSource.linkedProjectPath
 
-  @JvmField
-  var _linkedProjectId: String? = null
   override val linkedProjectId: String?
-    get() = _linkedProjectId
+    get() = dataSource.linkedProjectId
 
-  @JvmField
-  var _rootProjectPath: String? = null
   override val rootProjectPath: String?
-    get() = _rootProjectPath
+    get() = dataSource.rootProjectPath
 
-  @JvmField
-  var _externalSystemModuleGroup: String? = null
   override val externalSystemModuleGroup: String?
-    get() = _externalSystemModuleGroup
+    get() = dataSource.externalSystemModuleGroup
 
-  @JvmField
-  var _externalSystemModuleType: String? = null
   override val externalSystemModuleType: String?
-    get() = _externalSystemModuleType
+    get() = dataSource.externalSystemModuleType
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
+  class Builder(var result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
     constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -99,6 +85,9 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -107,6 +96,9 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ExternalSystemModuleOptionsEntity#module should be initialized")
@@ -117,9 +109,6 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
           error("Field ExternalSystemModuleOptionsEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ExternalSystemModuleOptionsEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -129,19 +118,31 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExternalSystemModuleOptionsEntity
-      this.entitySource = dataSource.entitySource
-      this.externalSystem = dataSource.externalSystem
-      this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
-      this.linkedProjectPath = dataSource.linkedProjectPath
-      this.linkedProjectId = dataSource.linkedProjectId
-      this.rootProjectPath = dataSource.rootProjectPath
-      this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
-      this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystem != dataSource?.externalSystem) this.externalSystem = dataSource.externalSystem
+      if (this.externalSystemModuleVersion != dataSource?.externalSystemModuleVersion) this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      if (this.linkedProjectPath != dataSource?.linkedProjectPath) this.linkedProjectPath = dataSource.linkedProjectPath
+      if (this.linkedProjectId != dataSource?.linkedProjectId) this.linkedProjectId = dataSource.linkedProjectId
+      if (this.rootProjectPath != dataSource?.rootProjectPath) this.rootProjectPath = dataSource.rootProjectPath
+      if (this.externalSystemModuleGroup != dataSource?.externalSystemModuleGroup) this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      if (this.externalSystemModuleType != dataSource?.externalSystemModuleType) this.externalSystemModuleType = dataSource.externalSystemModuleType
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -176,15 +177,6 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var externalSystem: String?
@@ -273,18 +265,13 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   }
 
   override fun createEntity(snapshot: EntityStorage): ExternalSystemModuleOptionsEntity {
-    val entity = ExternalSystemModuleOptionsEntityImpl()
-    entity._externalSystem = externalSystem
-    entity._externalSystemModuleVersion = externalSystemModuleVersion
-    entity._linkedProjectPath = linkedProjectPath
-    entity._linkedProjectId = linkedProjectId
-    entity._rootProjectPath = rootProjectPath
-    entity._externalSystemModuleGroup = externalSystemModuleGroup
-    entity._externalSystemModuleType = externalSystemModuleType
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = ExternalSystemModuleOptionsEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -318,7 +305,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExternalSystemModuleOptionsEntityData
 
@@ -335,7 +322,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as ExternalSystemModuleOptionsEntityData
 

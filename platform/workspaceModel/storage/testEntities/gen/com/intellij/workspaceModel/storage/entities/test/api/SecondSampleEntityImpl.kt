@@ -17,13 +17,14 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
+open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : SecondSampleEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,13 +34,13 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
 
   }
 
-  override var intProperty: Int = 0
+  override val intProperty: Int get() = dataSource.intProperty
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
+  class Builder(var result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
     constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -57,6 +58,9 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -66,7 +70,7 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SecondSampleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -77,20 +81,12 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondSampleEntity
-      this.intProperty = dataSource.intProperty
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.intProperty != dataSource.intProperty) this.intProperty = dataSource.intProperty
       if (parents != null) {
       }
     }
 
-
-    override var intProperty: Int
-      get() = getEntityData().intProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().intProperty = value
-        changedProperty.add("intProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +95,14 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var intProperty: Int
+      get() = getEntityData().intProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().intProperty = value
+        changedProperty.add("intProperty")
       }
 
     override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
@@ -123,12 +127,13 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): SecondSampleEntity {
-    val entity = SecondSampleEntityImpl()
-    entity.intProperty = intProperty
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = SecondSampleEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -153,18 +158,18 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondSampleEntityData
 
-    if (this.intProperty != other.intProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.intProperty != other.intProperty) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as SecondSampleEntityData
 

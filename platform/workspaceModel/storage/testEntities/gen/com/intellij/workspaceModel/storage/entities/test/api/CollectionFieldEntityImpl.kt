@@ -23,7 +23,7 @@ import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBase() {
+open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,21 +33,17 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
   }
 
-  @JvmField
-  var _versions: Set<Int>? = null
   override val versions: Set<Int>
-    get() = _versions!!
+    get() = dataSource.versions
 
-  @JvmField
-  var _names: List<String>? = null
   override val names: List<String>
-    get() = _names!!
+    get() = dataSource.names
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
+  class Builder(var result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
     constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -65,6 +61,9 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -73,11 +72,11 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isVersionsInitialized()) {
         error("Field CollectionFieldEntity#versions should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CollectionFieldEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNamesInitialized()) {
         error("Field CollectionFieldEntity#names should be initialized")
@@ -88,33 +87,27 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
       return connections
     }
 
+    override fun afterModification() {
+      val collection_versions = getEntityData().versions
+      if (collection_versions is MutableWorkspaceSet<*>) {
+        collection_versions.cleanModificationUpdateAction()
+      }
+      val collection_names = getEntityData().names
+      if (collection_names is MutableWorkspaceList<*>) {
+        collection_names.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
-      this.versions = dataSource.versions.toMutableSet()
-      this.entitySource = dataSource.entitySource
-      this.names = dataSource.names.toMutableList()
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.versions != dataSource.versions) this.versions = dataSource.versions.toMutableSet()
+      if (this.names != dataSource.names) this.names = dataSource.names.toMutableList()
       if (parents != null) {
       }
     }
 
-
-    private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
-
-      changedProperty.add("versions")
-    }
-    override var versions: MutableSet<Int>
-      get() {
-        val collection_versions = getEntityData().versions
-        if (collection_versions !is MutableWorkspaceSet) return collection_versions
-        collection_versions.setModificationUpdateAction(versionsUpdater)
-        return collection_versions
-      }
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().versions = value
-        versionsUpdater.invoke(value)
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -125,6 +118,28 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
       }
 
+    private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
+
+      changedProperty.add("versions")
+    }
+    override var versions: MutableSet<Int>
+      get() {
+        val collection_versions = getEntityData().versions
+        if (collection_versions !is MutableWorkspaceSet) return collection_versions
+        if (diff == null || modifiable.get()) {
+          collection_versions.setModificationUpdateAction(versionsUpdater)
+        }
+        else {
+          collection_versions.cleanModificationUpdateAction()
+        }
+        return collection_versions
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().versions = value
+        versionsUpdater.invoke(value)
+      }
+
     private val namesUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("names")
@@ -133,7 +148,12 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
       get() {
         val collection_names = getEntityData().names
         if (collection_names !is MutableWorkspaceList) return collection_names
-        collection_names.setModificationUpdateAction(namesUpdater)
+        if (diff == null || modifiable.get()) {
+          collection_names.setModificationUpdateAction(namesUpdater)
+        }
+        else {
+          collection_names.cleanModificationUpdateAction()
+        }
         return collection_names
       }
       set(value) {
@@ -167,13 +187,13 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   }
 
   override fun createEntity(snapshot: EntityStorage): CollectionFieldEntity {
-    val entity = CollectionFieldEntityImpl()
-    entity._versions = versions.toSet()
-    entity._names = names.toList()
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = CollectionFieldEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun clone(): CollectionFieldEntityData {
@@ -206,19 +226,19 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CollectionFieldEntityData
 
-    if (this.versions != other.versions) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.versions != other.versions) return false
     if (this.names != other.names) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as CollectionFieldEntityData
 

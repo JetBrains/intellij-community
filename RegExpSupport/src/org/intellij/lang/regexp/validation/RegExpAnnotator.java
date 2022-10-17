@@ -308,7 +308,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         .create();
       return;
     }
-    if (!groupRef.isPcreNumberedGroupRef() && groupRef.getGroupName() == null) {
+    if (groupRef.getGroupName() == null) {
       return;
     }
     final RegExpGroup group = groupRef.resolve();
@@ -317,13 +317,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (node != null) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.named.group.reference")).range(node)
         .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
-      }
-      else {
-        final ASTNode number = groupRef.getNode().findChildByType(RegExpTT.NUMBER);
-        if (number != null) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.numbered.group.reference")).range(number)
-            .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
-        }
       }
     }
     else if (PsiTreeUtil.isAncestor(group, groupRef, true)) {

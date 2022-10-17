@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
@@ -13,15 +16,14 @@ import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Adjustable
 import java.awt.BorderLayout
-import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -88,21 +90,31 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
   private inner class QuickFilterButtonFactory {
 
     fun create(viewScope: CoroutineScope, quickFilters: List<Q>): JComponent {
-      val button = InlineIconButton(Companion.FILTER_ICON.originalIcon).apply {
-        border = JBUI.Borders.empty(3)
-      }.also {
-        it.actionListener = ActionListener { _ ->
-          showQuickFiltersPopup(it, quickFilters)
-        }
+      val toolbar = ActionManager.getInstance().createActionToolbar(
+        "Review.FilterToolbar",
+        DefaultActionGroup(FilterPopupMenuAction(quickFilters)),
+        true
+      ).apply {
+        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        component.isOpaque = false
+        component.border = null
+        targetComponent = null
+
+        addListener(object : ActionToolbarListener {
+          override fun actionsUpdated() = UIUtil.forEachComponentInHierarchy(component) {
+            if (it is ActionButton) {
+              it.setFocusable(true)
+            }
+          }
+        }, viewScope.nestedDisposable())
       }
 
       viewScope.launch {
         vm.searchState.collect {
-          button.icon = if (it.filterCount == 0) Companion.FILTER_ICON.originalIcon else Companion.FILTER_ICON.getLiveIndicatorIcon(true)
+          toolbar.updateActionsImmediately()
         }
       }
-
-      return button
+      return toolbar.component
     }
 
     private fun showQuickFiltersPopup(parentComponent: JComponent, quickFilters: List<Q>) {
@@ -118,6 +130,20 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                 false)
         .showUnderneathOf(parentComponent)
+    }
+
+    private inner class FilterPopupMenuAction(private val quickFilters: List<Q>)
+      : AnActionButton(CollaborationToolsBundle.message("review.list.filter.quick.title")),
+        DumbAware {
+      override fun updateButton(e: AnActionEvent) {
+        e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
+      }
+
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+      override fun actionPerformed(e: AnActionEvent) {
+        showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)
+      }
     }
 
     private inner class QuickFilterAction(name: @Nls String, private val search: S)

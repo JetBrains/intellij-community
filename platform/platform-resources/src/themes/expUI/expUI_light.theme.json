@@ -263,9 +263,14 @@
       "rowHeight": "24",
       "border": "4,0,4,0",
       "Button": {
-        "separatorColor": "Grey13",
+        "separatorColor": "#FFFFFFB3",
+        "separatorInset": 4,
         "hoverBackground": "Blue12",
         "leftRightInset": 8
+      },
+      "Tag": {
+        "background": "Grey11",
+        "foreground": "Grey4"
       }
     },
 
@@ -291,9 +296,10 @@
     "MenuItem.background": "Grey13",
 
     "MainMenu": {
+      "background": "Grey2",
       "foreground": "Grey11",
       "selectionForeground": "Grey11",
-      "selectionBackground": "Grey1"
+      "selectionBackground": "Grey3"
     },
 
     "MemoryIndicator": {
@@ -513,18 +519,22 @@
     "MainToolbar": {
       "background": "Grey2",
       "inactiveBackground": "Grey3",
+      "separatorColor": "Grey4",
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "foreground": "Grey11",
-        "borderInsets": "3,8,3,4",
+        "borderInsets": "3,12,3,6",
         "background": "Grey2",
-        "hoverBackground": "Grey1",
-        "pressedBackground": "Grey1"
+        "hoverBackground": "Grey3",
+        "pressedBackground": "Grey3"
+      },
+      "Button": {
+        "buttonInsets": "0,0,0,0"
       }
     },
 
@@ -565,7 +575,38 @@
       }
     },
 
-    "WelcomeScreen.Details.background": "Grey13"
+    "WelcomeScreen.Details.background": "Grey13",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "Grey11"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "Grey10"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#e8eefa",
+        "hoverBackground": "#dbe1ec",
+        "PackageTag": {
+          "background": "#d5dbe6",
+          "foreground": "Grey1",
+          "hoverBackground": "#c9cfd9",
+          "selectedBackground": "Blue11",
+          "selectedForeground": "Grey1"
+        }
+      },
+      "PackageTag": {
+        "background": "Grey10",
+        "foreground": "Grey5",
+        "hoverBackground": "Grey12",
+        "selectedBackground": "Blue10",
+        "selectedForeground": "Grey13"
+      },
+      "PackageTagSelected.background": "Blue10",
+      "PackageTagSelected.foreground": "Grey13"
+    }
   },
 
   "icons": {

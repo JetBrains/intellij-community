@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class MapBackedFMap<K, V> implements FMap<K, V> {
 
   private final @NotNull Map<K, V> myMap;
 

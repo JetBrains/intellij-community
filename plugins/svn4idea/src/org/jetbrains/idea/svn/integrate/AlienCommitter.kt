@@ -4,22 +4,19 @@ package org.jetbrains.idea.svn.integrate
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.vcs.commit.AbstractCommitter
+import com.intellij.vcs.commit.VcsCommitter
+import com.intellij.vcs.commit.vetoDocumentSaving
 
 class AlienCommitter(
   private val vcs: AbstractVcs,
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext
-) : AbstractCommitter(vcs.project, changes, commitMessage, commitContext) {
+) : VcsCommitter(vcs.project, changes, commitMessage, commitContext, false) {
 
-  override fun commit() = commit(vcs, changes)
-
-  override fun afterCommit() = Unit
-
-  override fun onSuccess() = Unit
-
-  override fun onFailure() = Unit
-
-  override fun onFinish() = Unit
+  override fun commit() {
+    vetoDocumentSaving(project, changes) {
+      vcsCommit(vcs, changes)
+    }
+  }
 }

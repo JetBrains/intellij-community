@@ -9,9 +9,6 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class MockProblemDescriptor extends ProblemDescriptorImpl {
   public MockProblemDescriptor(@NotNull PsiElement psiElement,
                                String descriptionTemplate,

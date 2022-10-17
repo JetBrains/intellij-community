@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -65,7 +65,6 @@ public final class Registry  {
 
   public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
 
@@ -83,7 +82,7 @@ public final class Registry  {
 
   public static int intValue(@NonNls @NotNull String key, int defaultValue) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
       return defaultValue;
     }
 

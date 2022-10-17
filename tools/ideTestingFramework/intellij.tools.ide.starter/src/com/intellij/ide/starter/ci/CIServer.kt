@@ -14,4 +14,8 @@ interface CIServer {
                       artifactName: String = source.fileName.toString())
 
   fun reportTestFailure(testName: String, message: String, details: String)
+
+  fun ignoreTestFailure(testName: String, message: String, details: String)
+
+  fun checkIfShouldBeIgnored(message: String): Boolean
 }

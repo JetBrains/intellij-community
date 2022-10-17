@@ -26,9 +26,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @author peter
- */
 public class PackagePrefixIndex {
   private static final Object LOCK = new Object();
   private MultiMap<String, Module> myMap;
@@ -36,7 +33,7 @@ public class PackagePrefixIndex {
 
   public PackagePrefixIndex(Project project) {
     myProject = project;
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.getMessageBus().connect(), new WorkspaceModelChangeListener() {
+    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
       public void changed(@NotNull VersionedStorageChange event) {
         MultiMap<String, Module> map;

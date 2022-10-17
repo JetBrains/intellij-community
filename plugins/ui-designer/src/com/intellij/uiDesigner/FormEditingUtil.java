@@ -3,12 +3,11 @@ package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -46,10 +45,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class FormEditingUtil {
   private FormEditingUtil() {
   }
@@ -585,18 +580,9 @@ public final class FormEditingUtil {
     }
   }
 
-  @Nullable
-  public static GuiEditor getActiveEditor(@NotNull DataContext context) {
-    Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null || project.isDisposed()) {
-      return null;
-    }
-    for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
-      if (editor instanceof UIFormEditor) {
-        return ((UIFormEditor)editor).getEditor();
-      }
-    }
-    return null;
+  public static @Nullable GuiEditor getActiveEditor(@NotNull DataContext context) {
+    FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(context);
+    return fileEditor instanceof UIFormEditor ? ((UIFormEditor)fileEditor).getEditor() : null;
   }
 
   /**

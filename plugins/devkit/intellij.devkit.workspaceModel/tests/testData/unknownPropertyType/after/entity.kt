@@ -15,8 +15,8 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : UnknownPropertyTypeEntity, ModifiableWorkspaceEntity<UnknownPropertyTypeEntity>, ObjBuilder<UnknownPropertyTypeEntity> {
-    override var date: Date
     override var entitySource: EntitySource
+    override var date: Date
   }
 
   companion object : Type<UnknownPropertyTypeEntity, Builder>() {

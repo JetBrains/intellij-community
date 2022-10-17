@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'FunctionReference'" "true"
 // WITH_STDLIB
 // ACTION: Compiler warning 'UNUSED_EXPRESSION' options
 // ACTION: Create annotation 'FunctionReference'
@@ -9,7 +9,7 @@
 // ACTION: Create object 'FunctionReference'
 // ACTION: Create parameter 'FunctionReference'
 // ACTION: Create property 'FunctionReference'
-// ACTION: Import
+// ACTION: Import class 'FunctionReference'
 // ACTION: Introduce local variable
 // ACTION: Rename reference
 

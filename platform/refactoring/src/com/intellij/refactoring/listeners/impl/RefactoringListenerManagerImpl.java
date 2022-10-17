@@ -27,11 +27,6 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
     myListenerProviders.add(provider);
   }
 
-  @Override
-  public void removeListenerProvider(RefactoringElementListenerProvider provider) {
-    myListenerProviders.remove(provider);
-  }
-
   public RefactoringTransaction startTransaction() {
     List<RefactoringElementListenerProvider> providers = new ArrayList<>(myListenerProviders);
     Collections.addAll(providers, RefactoringElementListenerProvider.EP_NAME.getExtensions(myProject));

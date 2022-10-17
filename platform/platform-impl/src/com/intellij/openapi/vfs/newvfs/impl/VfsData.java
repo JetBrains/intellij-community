@@ -51,19 +51,23 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
  * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
  *
- * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
+ * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
- *
- * @author peter
  */
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
+  public static final boolean isIsIndexedFlagDisabled;
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
   private static final short NULL_INDEXING_STAMP = 0;
   private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+
+  static {
+    String property = System.getProperty("disable.virtual.file.system.entry.is.file.indexed");
+    isIsIndexedFlagDisabled = !"false".equals(property);
+  }
 
   @ApiStatus.Internal
   static void markAllFilesAsUnindexed() {
@@ -242,10 +246,16 @@ public final class VfsData {
     }
 
     boolean isIndexed(int fileId) {
+      if (isIsIndexedFlagDisabled) {
+        return false;
+      }
       return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
     }
 
     void setIndexed(int fileId, boolean indexed) {
+      if (isIsIndexedFlagDisabled) {
+        return;
+      }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
       int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
       myIntArray.set(getOffset(fileId) * 3 + 2, stamp);

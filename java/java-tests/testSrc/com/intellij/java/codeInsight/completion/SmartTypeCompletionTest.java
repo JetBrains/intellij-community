@@ -1154,27 +1154,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testBreakLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) break <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) break foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break foo;<caret>
+        }}""");
   }
 
   public void testContinueLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) continue <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) continue foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue foo;<caret>
+        }}""");
   }
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
@@ -1480,18 +1484,19 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.ForStandardLibrary
   public void testSuggestExceptionTypes() {
-    myFixture.configureByText("Test.java", "import java.io.*;\n" +
-                                          "\n" +
-                                          "class X {\n" +
-                                          "  void test() {\n" +
-                                          "    try {\n" +
-                                          "      new FileInputStream(\"/etc/passwd\");\n" +
-                                          "    }\n" +
-                                          "    catch(<caret>)\n" +
-                                          "  }\n" +
-                                          "}\n" +
-                                          "class MyException extends FileNotFoundException {}\n" +
-                                          "class My2Exception extends MyException {}");
+    myFixture.configureByText("Test.java", """
+      import java.io.*;
+
+      class X {
+        void test() {
+          try {
+            new FileInputStream("/etc/passwd");
+          }
+          catch(<caret>)
+        }
+      }
+      class MyException extends FileNotFoundException {}
+      class My2Exception extends MyException {}""");
     myFixture.complete(CompletionType.SMART);
     myFixture.assertPreferredCompletionItems(0, "FileNotFoundException", "IOException", "Exception", "Throwable",
                                              "MyException", "My2Exception",

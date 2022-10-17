@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -175,6 +176,13 @@ public final class GitBranchUtil {
   @Nls
   @NotNull
   public static String getDisplayableBranchText(@NotNull GitRepository repository) {
+    return getDisplayableBranchText(repository, Function.identity());
+  }
+
+  @Nls
+  @NotNull
+  public static String getDisplayableBranchText(@NotNull GitRepository repository,
+                                                @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
     GitRepository.State state = repository.getState();
     if (state == GitRepository.State.DETACHED) {
       String currentRevision = repository.getCurrentRevision();
@@ -188,7 +196,7 @@ public final class GitBranchUtil {
     }
 
     GitBranch branch = repository.getCurrentBranch();
-    String branchName = (branch == null ? "" : branch.getName());
+    String branchName = (branch == null ? "" : branchNameTruncator.apply(branch.getName()));
 
     if (state == GitRepository.State.MERGING) {
       return GitBundle.message("git.status.bar.widget.text.merge", branchName);
@@ -235,9 +243,15 @@ public final class GitBranchUtil {
   }
 
   @Nullable
-  public static GitRepository guessWidgetRepository(@NotNull Project project) {
+  public static GitRepository guessWidgetRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath());
+    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath(), selectedFile);
+  }
+
+  @Nullable
+  public static GitRepository guessWidgetRepository(@NotNull Project project, @NotNull DataContext dataContext) {
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath(), dataContext);
   }
 
   @NotNull

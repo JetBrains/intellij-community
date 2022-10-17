@@ -41,6 +41,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitUpdateExecutionProcess;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,8 @@ import static java.util.Arrays.asList;
 import static one.util.streamex.StreamEx.of;
 
 public class GitBranchPopupActions {
+
+  public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
   private static final int BRANCH_NAME_LENGHT_DELTA = 4;
@@ -93,7 +96,7 @@ public class GitBranchPopupActions {
     }
 
     if (ExperimentalUI.isNewUI()) {
-      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
+      ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP);
       topActions.addAll(actionGroup);
       topActions.addSeparator();
     }
@@ -173,17 +176,7 @@ public class GitBranchPopupActions {
   private static AnAction createRepositoryRebaseAction(@NotNull AnAction rebaseAction, @NotNull GitRepository repository) {
     if (!(rebaseAction instanceof GitOngoingOperationAction)) return null;
     GitOngoingOperationAction ongoingAction = (GitOngoingOperationAction)rebaseAction;
-    DumbAwareAction repositoryAction = new DumbAwareAction() {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(ongoingAction.isEnabled(repository));
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ongoingAction.performInBackground(repository);
-      }
-    };
+    DumbAwareAction repositoryAction = new MyOngoindOperationAnAction(ongoingAction, repository);
     repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());
     return repositoryAction;
   }
@@ -373,6 +366,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.checkout"));
     }
@@ -534,6 +532,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         disableActionIfAnyRepositoryIsFresh(e, myRepositories, GitBundle.message("action.not.possible.in.fresh.repo.push"));
       }
@@ -567,6 +570,11 @@ public class GitBranchPopupActions {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         rename(myProject, myRepositories, myCurrentBranchName);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -879,6 +887,11 @@ public class GitBranchPopupActions {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!GitProtectedBranchesKt.isRemoteBranchProtected(myRepositories, myBranchName));
       }
@@ -908,6 +921,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
     }
@@ -932,6 +950,11 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -972,6 +995,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       String description = GitBundle.message("branches.show.commits.in",
                                              getSelectedBranchFullPresentation(myBranchName),
@@ -1006,6 +1034,11 @@ public class GitBranchPopupActions {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
       String description =
@@ -1029,6 +1062,11 @@ public class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       myLocalBranch = localBranch;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1070,6 +1108,11 @@ public class GitBranchPopupActions {
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1117,6 +1160,11 @@ public class GitBranchPopupActions {
       myBranchName = branchName;
       myBranchNameList = Collections.singletonList(branchName);
       myHasIncoming = hasIncoming;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -1207,6 +1255,31 @@ public class GitBranchPopupActions {
     @Override
     public @Nullable String getInfoText() {
       return KeymapUtil.getPreferredShortcutText(getDelegate().getShortcutSet().getShortcuts());
+    }
+  }
+
+  private static class MyOngoindOperationAnAction extends DumbAwareAction {
+    private final @NotNull GitOngoingOperationAction myOngoingAction;
+    private final @NotNull GitRepository myRepository;
+
+    MyOngoindOperationAnAction(@NotNull GitOngoingOperationAction ongoingAction, @NotNull GitRepository repository) {
+      myOngoingAction = ongoingAction;
+      myRepository = repository;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myOngoingAction.isEnabled(myRepository));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myOngoingAction.performInBackground(myRepository);
     }
   }
 }

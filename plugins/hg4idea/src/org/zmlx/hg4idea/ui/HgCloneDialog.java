@@ -15,7 +15,10 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 /**
  * A dialog for the mercurial clone options
+ * @deprecated deprecated in favour of {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog}
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated(forRemoval = true)
 public class HgCloneDialog extends CloneDvcsDialog {
 
   public HgCloneDialog(@NotNull Project project) {

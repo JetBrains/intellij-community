@@ -8,6 +8,6 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractKotlinStdLibInJavaCompletionTest : KotlinFixtureCompletionBaseTestCase() {
     override fun getPlatform() = JvmPlatforms.unspecifiedJvmPlatform
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     override fun defaultCompletionType() = CompletionType.BASIC
 }

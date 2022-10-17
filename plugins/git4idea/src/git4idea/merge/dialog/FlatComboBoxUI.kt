@@ -2,13 +2,11 @@
 package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.ComponentWithEmptyText
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.*
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Insets
@@ -58,6 +56,10 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getOuterShape(r: Rectangle, bw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      val tunedBw = if (UIUtil.isUnderDefaultMacTheme()) macOsBw.float else bw
+      return super.getOuterShape(r, tunedBw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left.toFloat(),
                              outerInsets.top.toFloat(),
                              r.width - outerInsets.left.toFloat() - outerInsets.right.toFloat(),
@@ -65,6 +67,10 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   }
 
   override fun getInnerShape(r: Rectangle, bw: Float, lw: Float, arc: Float): RectangularShape {
+    if (hasFocus) {
+      val tunedBw = if (UIUtil.isUnderDefaultMacTheme()) macOsBw.float else bw
+      return super.getInnerShape(r, tunedBw, lw, arc)
+    }
     return Rectangle2D.Float(outerInsets.left + lw * border.left,
                              outerInsets.top + lw,
                              r.width - (outerInsets.left + lw * border.left) - (outerInsets.right + lw * border.right),
@@ -96,4 +102,9 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
       }
     }
   }
+
+  // DarculaUIUtil.BW in case of native MacOS theme is 4 (defined in macintellijlaf.theme.json -> Component.focusWidth
+  // Outline focus width in case of MacOS theme is 3 (hardcoded int com.intellij.ide.ui.laf.darcula.DarculaUIUtil.doPaint)
+  // Compensation border of FlatComboBoxUI is 0, not 1 as in Darcula and MacOs, so we need to align it
+  private val macOsBw: JBValue.Float = JBValue.Float(BW.unscaled - DEFAULT_BORDER_COMPENSATION)
 }

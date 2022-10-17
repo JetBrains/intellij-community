@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -318,6 +318,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/delegateExtensionSet.test");
             }
 
+            @TestMetadata("delegateGetValueFunction.before.Main.kt")
+            public void testDelegateGetValueFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateGetValueFunction.before.Main.kt");
+            }
+
             @TestMetadata("delegateNoOperator.test")
             public void testDelegateNoOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/delegateNoOperator.test");
@@ -346,6 +351,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("extensionFunctionImportImplicitReceiver.before.Main.kt")
             public void testExtensionFunctionImportImplicitReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
+            public void testExtensionFunctionWithGenericImport() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
             }
 
             @TestMetadata("extensionPreferDeprecatedSinceApplicable.test")
@@ -411,6 +421,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("importAliasPropertyAlreadyExists.before.Main.kt")
             public void testImportAliasPropertyAlreadyExists() throws Exception {
                 runTest("testData/quickfix/autoImports/importAliasPropertyAlreadyExists.before.Main.kt");
+            }
+
+            @TestMetadata("importClass.before.Main.kt")
+            public void testImportClass() throws Exception {
+                runTest("testData/quickfix/autoImports/importClass.before.Main.kt");
+            }
+
+            @TestMetadata("importDelegateFunctions.before.Main.kt")
+            public void testImportDelegateFunctions() throws Exception {
+                runTest("testData/quickfix/autoImports/importDelegateFunctions.before.Main.kt");
             }
 
             @TestMetadata("importFromRoot.before.Main.kt")

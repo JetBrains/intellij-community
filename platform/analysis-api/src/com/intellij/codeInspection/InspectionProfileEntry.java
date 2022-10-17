@@ -200,14 +200,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       return suppressors;
     }
     int size = elementLanguageSuppressors.size();
-    switch (size) {
-      case 0:
-        return Collections.emptySet();
-      case 1:
-        return Collections.singleton(elementLanguageSuppressors.get(0));
-      default:
-        return new HashSet<>(elementLanguageSuppressors);
-    }
+    return switch (size) {
+      case 0 -> Collections.emptySet();
+      case 1 -> Collections.singleton(elementLanguageSuppressors.get(0));
+      default -> new HashSet<>(elementLanguageSuppressors);
+    };
   }
 
   public void cleanup(@NotNull Project project) {

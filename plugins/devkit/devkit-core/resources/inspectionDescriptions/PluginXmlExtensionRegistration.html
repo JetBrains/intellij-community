@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports problems with extension registration in <code>plugin.xml</code>.
+<p>
+  The following problems are reported:
+<ul>
+  <li>Missing <code>language</code> declaration.
+    If the extension does not target a specific language, use quick fix to create an
+    explicit declaration for "any language".
+  </li>
+  <li>Inspections: missing attributes</li>
+  <li>Services: redundant <code>serviceInterface</code> declaration</li>
+  <li><code>com.intellij.stubElementTypeHolder</code> without <code>externalIdPrefix</code>, see <a
+    href='https://plugins.jetbrains.com/docs/intellij/stub-indexes.html?from=?from=DevkitPluginXmlInspectionDescription'>Stub Indexes</a>
+  </li>
+</ul>
+</p>
+<p><small>New in 2022.3</small>
+</body>
+</html>

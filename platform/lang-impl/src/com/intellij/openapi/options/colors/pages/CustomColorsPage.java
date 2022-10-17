@@ -77,19 +77,21 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
 
   @Override
   public @NotNull String getDemoText() {
-    return "# Line comment\n"
-           + "aKeyword1 variable = 123;\n"
-           + "anotherKeyword1 someString = \"SomeString\";\n"
-           + "aKeyword2 variable = 123;\n"
-           + "anotherKeyword2 someString = \"SomeString\";\n"
-           + "aKeyword3 variable = 123;\n"
-           + "anotherKeyword3 someString = \"SomeString\";\n"
-           + "aKeyword4 variable = 123;\n"
-           + "anotherKeyword4 someString = \"SomeString \\n\\x  \\& \\g \";\n"
-           + "/* \n"
-           + " * Block comment\n"
-           + " */\n"
-           + "\n";
+    return """
+      # Line comment
+      aKeyword1 variable = 123;
+      anotherKeyword1 someString = "SomeString";
+      aKeyword2 variable = 123;
+      anotherKeyword2 someString = "SomeString";
+      aKeyword3 variable = 123;
+      anotherKeyword3 someString = "SomeString";
+      aKeyword4 variable = 123;
+      anotherKeyword4 someString = "SomeString \\n\\x  \\& \\g ";
+      /*\s
+       * Block comment
+       */
+
+      """;
   }
 
   @Override

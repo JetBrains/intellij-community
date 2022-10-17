@@ -58,16 +58,16 @@ public final class AppMode {
     return isRemoteDevHost;
   }
 
-  public static void setFlags(String @NotNull [] args) {
+  public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isHeadless || (args.length > 0 && isGuiCommand(args[0]));
+    isCommandLine = isHeadless || (args.size() > 0 && isGuiCommand(args.get(0)));
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = args.length > 0 && (CWM_HOST_COMMAND.equals(args[0]) || CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]));
+    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -83,7 +83,7 @@ public final class AppMode {
     return "diff".equals(arg) || "merge".equals(arg);
   }
 
-  private static boolean isFileAfterOptions(String @NotNull [] args) {
+  private static boolean isFileAfterOptions(@NotNull List<String> args) {
     for (String arg : args) {
       // If not an option
       if (!arg.startsWith("-")) {
@@ -109,23 +109,39 @@ public final class AppMode {
     isLightEdit = false;
   }
 
-  private static boolean isHeadless(String[] args) {
+  private static boolean isHeadless(List<String> args) {
     if (Boolean.getBoolean(AWT_HEADLESS)) {
       return true;
     }
 
-    if (args.length == 0) {
+    if (args.size() == 0) {
       return false;
     }
 
-    String firstArg = args[0];
+    String firstArg = args.get(0);
 
     @SuppressWarnings("SpellCheckingInspection")
     List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
+      "ant", "duplocate", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
       "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
       "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit");
+      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
+  @ApiStatus.Internal
+  public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
+    String result = System.getProperty("dev.build.dir");
+    if (result == null) {
+      return platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
+    }
+    else {
+      return result;
+    }
   }
 }

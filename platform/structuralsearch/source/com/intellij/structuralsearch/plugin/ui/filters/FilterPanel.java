@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
@@ -24,6 +24,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
@@ -101,11 +102,9 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       .disableUpDownActions()
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .setAddAction(button -> {
-        final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
-        showAddFilterPopup(button.getContextComponent(), point);
+        showAddFilterPopup(button.getContextComponent(), button.getPreferredPopupPoint());
       })
-      .setAddActionUpdater(e -> isValid() && myFilters.stream().anyMatch(f -> f.isAvailable()))
+      .setAddActionUpdater(e -> isValid() && ContainerUtil.exists(myFilters, f -> f.isAvailable()))
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();

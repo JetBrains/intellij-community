@@ -11,9 +11,6 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class UsageViewTypeLocation extends ElementDescriptionLocation {
   private UsageViewTypeLocation() {
   }

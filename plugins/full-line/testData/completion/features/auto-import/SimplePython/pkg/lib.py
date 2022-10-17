@@ -1,0 +1,2 @@
+class MyCustomLib:
+    pass

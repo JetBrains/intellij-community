@@ -18,12 +18,15 @@ package org.jetbrains.idea.maven.dom.references;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+
+import static com.intellij.psi.impl.source.resolve.reference.impl.CachingReference.getManipulator;
 
 public abstract class MavenPsiReference implements PsiReference {
   protected final @NotNull Project myProject;
@@ -34,7 +37,7 @@ public abstract class MavenPsiReference implements PsiReference {
 
   protected final @NotNull PsiElement myElement;
   protected final @NotNull String myText;
-  protected final @NotNull TextRange myRange;
+  protected @NotNull TextRange myRange;
 
   public MavenPsiReference(@NotNull PsiElement element, @NotNull String text, @NotNull TextRange range) {
     myProject = element.getProject();
@@ -73,7 +76,11 @@ public abstract class MavenPsiReference implements PsiReference {
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    return null;
+    ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
+    TextRange rangeInElement = getRangeInElement();
+    PsiElement element = manipulator.handleContentChange(getElement(), rangeInElement, newElementName);
+    myRange = new TextRange(rangeInElement.getStartOffset(), rangeInElement.getStartOffset() + newElementName.length());
+    return element;
   }
 
   @Override

@@ -42,6 +42,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -187,7 +190,8 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val resolvedDependenciesMap = resolvedDependenciesMapJob.await()
 
     val dependencies: List<ResolvedUnifiedDependency> = declaredDependencies.map {
-        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it]) }
+        ResolvedUnifiedDependency(it.unifiedDependency, resolvedDependenciesMap[it.unifiedDependency.key], dependenciesLocationMap[it])
+    }
 
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(

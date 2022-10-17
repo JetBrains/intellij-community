@@ -3,7 +3,10 @@ package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   /**
@@ -28,14 +31,14 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F5",                       "Graph.RouteEdges", "CopyElement", "PoBrowserRefresh"},
       {"F7",                       "NextDiff", "StepInto"},
       {"F12",                      "JumpToLastWindow","PoToggleSelection"},
-      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add",
+      {"INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomCollectionControl.Add",
                                    "XDebugger.NewWatch"},
       {"SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview", "SplitChooser.SplitCenter", "CollapsiblePanel-toggle"},
       {"SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EditorTab", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow"},
       {"alt DOWN",                 "MethodDown", "ShowContent", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
-      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
+      {"alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue", "JupyterNotebookRunCellInsertBelowCommandModeAction"},
       {"alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
       {"alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
       {"alt J",                    "SelectNextOccurrence", "JupyterNotebookMoveCellDownCommandModeAction"},
@@ -142,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},

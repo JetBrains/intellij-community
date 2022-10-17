@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
@@ -118,12 +115,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
           targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
           if (targetType != null && innerType.getAnnotations().length > 0) {
             PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
-            targetType = targetType.annotate(new TypeAnnotationProvider() {
-              @Override
-              public PsiAnnotation @NotNull [] getAnnotations() {
-                return ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations);
-              }
-            });
+            targetType = targetType.annotate(() -> ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations));
           }
         }
         else {

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -691,7 +692,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       return;
     }
     UISettings settings = UISettings.getInstance();
-    if (settings.getPresentationMode()) editor.setFontSize(settings.getPresentationModeFontSize());
+    if (settings.getPresentationMode()) {
+      editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
+      editor.setFontSize(settings.getPresentationModeFontSize());
+    }
   }
 
   protected boolean shouldHaveBorder() {

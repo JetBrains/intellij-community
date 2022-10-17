@@ -9,9 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -48,8 +46,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreMethodsOfDeprecated,
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
-                                     boolean forRemoval,
-                                     @NotNull ProblemHighlightType highlightType) {
+                                     boolean forRemoval) {
     if (PsiImplUtil.isDeprecated(element)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
         return;
@@ -60,7 +57,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
         PsiClass containingClass = element instanceof PsiMember ? ((PsiMember)element).getContainingClass() : null;
         if (containingClass != null) {
           checkDeprecated(containingClass, elementToHighlight, rangeInElement, ignoreInsideDeprecated, ignoreImportStatements,
-                          false, ignoreInSameOutermostClass, holder, forRemoval, highlightType);
+                          false, ignoreInSameOutermostClass, holder, forRemoval);
         }
       }
       return;
@@ -77,7 +74,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 
-    holder.registerProblem(elementToHighlight, getDescription(description, forRemoval, highlightType), highlightType, rangeInElement,
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement,
                            replacementQuickFix);
   }
 
@@ -153,16 +150,6 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
   static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
     panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"), "IGNORE_IN_SAME_OUTERMOST_CLASS");
-  }
-
-  protected static @InspectionMessage String getDescription(@NotNull @InspectionMessage String description, boolean forRemoval, ProblemHighlightType highlightType) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ProblemHighlightType defaultType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL : ProblemHighlightType.LIKE_DEPRECATED;
-      if (highlightType != defaultType) {
-        return description + "(" + highlightType + ")";
-      }
-    }
-    return description;
   }
 
   private static PsiField findReplacementInJavaDoc(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {

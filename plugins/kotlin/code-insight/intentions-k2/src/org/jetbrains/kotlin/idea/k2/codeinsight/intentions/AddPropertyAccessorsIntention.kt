@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import org.jetbrains.kotlin.analysis.api.annotations.containsAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
@@ -44,7 +44,7 @@ internal abstract class AbstractAddAccessorIntention(private val addGetter: Bool
 
     override fun getInputProvider(): KotlinApplicatorInputProvider<KtProperty, KotlinApplicatorInput.Empty> = inputProvider { ktProperty ->
         val symbol = ktProperty.getVariableSymbol() as? KtPropertySymbol ?: return@inputProvider null
-        if (symbol.containsAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
+        if (symbol.hasAnnotation(JVM_FIELD_CLASS_ID)) return@inputProvider null
 
         KotlinApplicatorInput.Empty
     }

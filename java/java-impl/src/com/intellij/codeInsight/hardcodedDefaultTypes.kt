@@ -21,9 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.MultiMap
 
-/**
- * @author peter
- */
 private data class MethodArgument(val methodName: String, val paramIndex: Int)
 
 private interface DefaultTypeProvider {

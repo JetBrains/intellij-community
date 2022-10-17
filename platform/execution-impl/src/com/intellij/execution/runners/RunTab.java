@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class RunTab implements DataProvider, Disposable {
   /**
@@ -156,6 +153,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
     @Nullable
     private final ActionGroup myActionGroup;
+    private final Map<TabInfo, Content> myTabInfoContentMap = new LinkedHashMap<>();
     private boolean myMoveToolbar = false;
 
     public RunTabSupplier(@Nullable ActionGroup group) {
@@ -190,6 +188,10 @@ public abstract class RunTab implements DataProvider, Disposable {
           e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
         }
 
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
         @Override
         public boolean isDumbAware() {
           return true;
@@ -233,6 +235,17 @@ public abstract class RunTab implements DataProvider, Disposable {
         return;
       }
       context.getContentManager().removeContent(content[0], context.isToDisposeRemovedContent());
+    }
+
+    @Override
+    public void addSubContent(@NotNull TabInfo tabInfo, @NotNull Content content) {
+      myTabInfoContentMap.put(tabInfo, content);
+    }
+
+    @NotNull
+    @Override
+    public Collection<Content> getSubContents() {
+      return myTabInfoContentMap.values();
     }
 
     public boolean isMoveToolbar() {

@@ -217,26 +217,26 @@ public final class PopupPositionManager {
 
       for (Position position : traversalPolicy) {
         switch (position) {
-          case TOP:
+          case TOP -> {
             r = positionAbove(d);
             boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
                                                        myScreenRect.width, getYForTopPositioning() - myScreenRect.y - myGap)));
-            break;
-          case BOTTOM:
+          }
+          case BOTTOM -> {
             r = positionUnder(d);
             boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
                                                        myScreenRect.width, myScreenRect.height)));
-            break;
-          case LEFT:
+          }
+          case LEFT -> {
             r = positionLeft(d);
             boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - myGap,
                                                        myScreenRect.height)));
-            break;
-          case RIGHT:
+          }
+          case RIGHT -> {
             r = positionRight(d);
             boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
                                                        myScreenRect.width, myScreenRect.height)));
-            break;
+          }
         }
         if (myScreenRect.contains(r)) {
           popupRect = r;

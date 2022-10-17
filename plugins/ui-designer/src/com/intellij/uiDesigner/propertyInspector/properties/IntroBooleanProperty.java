@@ -10,10 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroBooleanProperty extends IntrospectedProperty<Boolean> {
   private BooleanRenderer myRenderer;
   private BooleanEditor myEditor;

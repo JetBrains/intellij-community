@@ -897,11 +897,12 @@ public class GeneratedParserUtilBase {
       parser = parser_;
     }
 
+    @NotNull
     public Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
     }
 
-    @Nullable
+    @NotNull
     public List<PsiBuilderImpl.ProductionMarker> getProductions() {
       return ((PsiBuilderImpl)myDelegate).getProductions();
     }

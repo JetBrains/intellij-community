@@ -552,6 +552,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             myAdditionalJarsForModuleFork.put(packageModule, parameters);
           }
         }
+
+        String disabledCondition = ReadAction.nonBlocking(() -> {
+          if (DumbService.isDumb(project)) {
+            return null;
+          }
+          return DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
+        }).executeSynchronously();
+
+        if (disabledCondition != null) {
+          javaParameters.getVMParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
+        }
+        
         return null;
       };
       if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -560,15 +572,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
       else {
         downloader.compute();
-      }
-      String disabledCondition = ReadAction.nonBlocking(() -> {
-        if (DumbService.isDumb(project)) {
-          return null;
-        }
-        return DisabledConditionUtil.getDisabledConditionValue(myConfiguration);
-      }).executeSynchronously();
-      if (disabledCondition != null) {
-        javaParameters.getVMParametersList().add("-Djunit.jupiter.conditions.deactivate=" + disabledCondition);
       }
     }
   }

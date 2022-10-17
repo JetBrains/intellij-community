@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.DynamicBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -56,17 +57,20 @@ public class Menu extends MenuItem {
     if (replacements == null) return;
 
     Set<String> keySet = replacements.getResourceBundle().keySet();
-    if (keySet.isEmpty()) return;
 
-    String replace[] = new String[keySet.size()*2];
-    int c = 0;
+    ArrayList<String> replace = new ArrayList<>(keySet.size() * 2);
     for (String title: keySet) {
-      replace[c] = title;
-      replace[c + 1] = replacements.getMessage(title);
-      c += 2;
+      replace.add(title);
+      replace.add(replacements.getMessage(title));
     }
 
-    nativeRenameAppMenuItems(replace);
+    //macOS 13.0 Ventura uses Settings instead of Preferences. See IDEA-300314
+    if (SystemInfo.isMacOSVentura) {
+      replace.add("Prefer.*");
+      replace.add("Settings...");
+    }
+
+    nativeRenameAppMenuItems(ArrayUtil.toStringArray(replace));
   }
 
   public void setOnOpen(Runnable fillMenuProcedure, Component component) {

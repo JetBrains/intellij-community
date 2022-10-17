@@ -287,10 +287,11 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
     String moduleName = "___" + artifactId;
 
     createProjectSubFile(moduleName + "/src/main/java/Foo.java",
-                         "/**\n" +
-                         " * some doc\n" +
-                         " */\n" +
-                         "public class Foo { }");
+                         """
+                           /**
+                            * some doc
+                            */
+                           public class Foo { }""");
 
     VirtualFile m = createModulePom(moduleName,
                                     "<groupId>" + groupId + "</groupId>" +

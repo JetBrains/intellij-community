@@ -140,8 +140,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     void cancelled(@NotNull IntentionListStep step) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (myListPopup.getListStep() == step && !myDisposed) {
-        // Root canceled. Create new popup. This one cannot be reused.
-        recreateMyPopup(this, step);
+        Disposer.dispose(myHint);
       }
     }
 
@@ -414,6 +413,18 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   public void hide() {
     myDisposed = true;
     Disposer.dispose(this);
+  }
+
+  /**
+   * Hides this component if it is visible and bound to the supplied editor
+   *
+   * @param editor editor to check against
+   * @return true if hidden successfully; false if it's not displayed already, or bound to another editor
+   */
+  public boolean hideIfDisplayedForEditor(@NotNull Editor editor) {
+    if (isDisposed() || !isVisible() || editor != myEditor) return false;
+    hide();
+    return true;
   }
 
   private void onMouseExit(boolean small) {

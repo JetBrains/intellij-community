@@ -1,5 +1,5 @@
 // FILE: bar/Foo.before.java
-// "Import static method 'foo.Bar.getTestValue'" "true"
+// "Import static method 'foo.Bar.getTestValue()'" "true"
 // ERROR: Unresolved reference: getTestValue
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
@@ -26,7 +26,7 @@ class Bar {
 }
 
 // FILE: bar/Foo.after.java
-// "Import static method 'foo.Bar.getTestValue'" "true"
+// "Import static method 'foo.Bar.getTestValue()'" "true"
 // ERROR: Unresolved reference: getTestValue
 // ACTION: Create method 'foobar'
 // WITH_STDLIB

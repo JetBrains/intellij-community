@@ -353,16 +353,11 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       myTabSize = -1;
       setFontRenderContext(null);
     }
-    switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
-      case LTR:
-        myBidiFlags = Bidi.DIRECTION_LEFT_TO_RIGHT;
-        break;
-      case RTL:
-        myBidiFlags = Bidi.DIRECTION_RIGHT_TO_LEFT;
-        break;
-      default:
-        myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
-    }
+    myBidiFlags = switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
+      case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
+      case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
+      default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
+    };
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();

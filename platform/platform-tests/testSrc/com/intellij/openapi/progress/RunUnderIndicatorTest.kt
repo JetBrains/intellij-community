@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.ModalityStateEx
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -16,9 +19,16 @@ class RunUnderIndicatorTest : CancellationTest() {
     assertNull(Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
 
-    runUnderIndicator {
-      assertNull(Cancellation.currentJob())
-      assertNotNull(ProgressManager.getGlobalProgressIndicator())
+    val modality = ModalityStateEx()
+
+    withContext(modality.asContextElement()) {
+      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      runUnderIndicator {
+        assertNull(Cancellation.currentJob())
+        assertNotNull(ProgressManager.getGlobalProgressIndicator())
+        assertSame(modality, ModalityState.defaultModalityState())
+      }
+      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
     }
 
     assertNull(Cancellation.currentJob())
@@ -64,16 +74,16 @@ class RunUnderIndicatorTest : CancellationTest() {
       var details: String? = null
       var fraction: Double? = null
 
-      override fun text(text: String) {
-        this.text = text
-      }
-
-      override fun details(details: String) {
-        this.details = details
-      }
-
-      override fun fraction(fraction: Double) {
-        this.fraction = fraction
+      override fun update(text: String?, details: String?, fraction: Double?) {
+        if (text != null) {
+          this.text = text
+        }
+        if (details != null) {
+          this.details = details
+        }
+        if (fraction != null) {
+          this.fraction = fraction
+        }
       }
     }
 

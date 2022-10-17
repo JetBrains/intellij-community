@@ -15,10 +15,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -37,7 +34,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -54,25 +50,26 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
+
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
 
-  protected Project myProject;
-  private final TodoPanelSettings mySettings;
+  protected final @NotNull Project myProject;
+  private final @NotNull TodoPanelSettings mySettings;
   private final boolean myCurrentFileMode;
-  private final Content myContent;
+  private final @NotNull Content myContent;
 
-  private final Tree myTree;
-  private final TreeExpander myTreeExpander;
-  private final MyOccurenceNavigator myOccurenceNavigator;
-  protected final TodoTreeBuilder myTodoTreeBuilder;
+  private final @NotNull Tree myTree;
+  private final @NotNull TreeExpander myTreeExpander;
+  private final @NotNull MyOccurenceNavigator myOccurenceNavigator;
+  private final @NotNull TodoTreeBuilder myTodoTreeBuilder;
+
   private MyVisibilityWatcher myVisibilityWatcher;
-  private UsagePreviewPanel myUsagePreviewPanel;
+  private final @NotNull UsagePreviewPanel myUsagePreviewPanel;
   private MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
+
+  private final TodoPanelCoroutineHelper myCoroutineHelper = new TodoPanelCoroutineHelper(this);
 
   public static final DataKey<TodoPanel> TODO_PANEL_DATA_KEY = DataKey.create("TodoPanel");
 
@@ -80,7 +77,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  TodoPanel(Project project, TodoPanelSettings settings, boolean currentFileMode, Content content) {
+  TodoPanel(@NotNull Project project,
+            @NotNull TodoPanelSettings settings,
+            boolean currentFileMode,
+            @NotNull Content content) {
     super(false, true);
 
     myProject = project;
@@ -92,8 +92,16 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myTree = new Tree(model);
     myTreeExpander = new DefaultTreeExpander(myTree);
     myOccurenceNavigator = new MyOccurenceNavigator();
+
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject,
+                                                FindInProjectUtil.setupViewPresentation(false, new FindModel()));
+    Disposer.register(this, myUsagePreviewPanel);
+
     initUI();
+
     myTodoTreeBuilder = setupTreeStructure();
+    Disposer.register(this, myTodoTreeBuilder);
+
     updateTodoFilter();
     myTodoTreeBuilder.setShowPackages(mySettings.arePackagesShown);
     myTodoTreeBuilder.setShowModules(mySettings.areModulesShown);
@@ -103,11 +111,13 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myVisibilityWatcher.install(this);
   }
 
-  private TodoTreeBuilder setupTreeStructure() {
+  private @NotNull TodoTreeBuilder setupTreeStructure() {
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
-    Disposer.register(this, todoTreeBuilder);
+
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel<TodoTreeStructure> structureTreeModel = new StructureTreeModel<>(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR, myProject);
+    StructureTreeModel<? extends TodoTreeStructure> structureTreeModel = new StructureTreeModel<>(structure,
+                                                                                                  TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR,
+                                                                                                  myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
     asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));
@@ -119,8 +129,16 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return todoTreeBuilder;
   }
 
-  protected Tree getTree() {
+  protected final @NotNull Tree getTree() {
     return myTree;
+  }
+
+  protected final @NotNull TodoTreeBuilder getTreeBuilder() {
+    return myTodoTreeBuilder;
+  }
+
+  protected final @NotNull UsagePreviewPanel getUsagePreviewPanel() {
+    return myUsagePreviewPanel;
   }
 
   private class MyExpandListener extends TreeModelAdapter {
@@ -148,8 +166,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       }
     }
   }
-  
-  protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, Project project);
+
+  protected abstract TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                       @NotNull Project project);
 
   private void initUI() {
     myTree.setShowsRootHandles(true);
@@ -169,20 +188,14 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
     PopupHandler.installPopupMenu(myTree, group, ActionPlaces.TODO_VIEW_POPUP);
 
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject, FindInProjectUtil.setupViewPresentation(false, new FindModel()));
-    Disposer.register(this, myUsagePreviewPanel);
     myUsagePreviewPanel.setVisible(mySettings.showPreview);
 
     setContent(createCenterComponent());
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
-      public void valueChanged(final TreeSelectionEvent e) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myUsagePreviewPanel.isVisible()) {
-            updatePreviewPanel();
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      public void valueChanged(@NotNull TreeSelectionEvent e) {
+        myCoroutineHelper.schedulePreviewPanelLayoutUpdate();
       }
     });
 
@@ -230,57 +243,12 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return splitter;
   }
 
-  private void updatePreviewPanel() {
-    if (myProject == null || myProject.isDisposed()) return;
-    List<UsageInfo> infos = new ArrayList<>();
-    final TreePath path = myTree.getSelectionPath();
-    if (path != null) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor) {
-        Object element = ((NodeDescriptor<?>)userObject).getElement();
-        TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
-        if (pointer != null) {
-          final SmartTodoItemPointer value = pointer.getValue();
-          final Document document = value.getDocument();
-          final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-          final RangeMarker rangeMarker = value.getRangeMarker();
-          if (psiFile != null) {
-            infos.add(new UsageInfo(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
-            for (RangeMarker additionalMarker: value.getAdditionalRangeMarkers()) {
-              if (additionalMarker.isValid()) {
-                infos.add(new UsageInfo(psiFile, additionalMarker.getStartOffset(), additionalMarker.getEndOffset()));
-              }
-            }
-          }
-        }
-      }
-    }
-    myUsagePreviewPanel.updateLayout(infos.isEmpty() ? null : infos);
-  }
-
   @Override
   public void dispose() {
     if (myVisibilityWatcher != null) {
       myVisibilityWatcher.deinstall(this);
       myVisibilityWatcher = null;
     }
-    myProject = null;
-  }
-
-  void rebuildCache() {
-    myTodoTreeBuilder.rebuildCache();
-  }
-
-  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
-    myTodoTreeBuilder.rebuildCache(files);
-  }
-
-  /**
-   * Immediately updates tree.
-   */
-  void updateTree() {
-    myTodoTreeBuilder.updateTree();
   }
 
   /**
@@ -340,7 +308,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return PsiUtilCore.getVirtualFile(file);
     }
     else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement selectedElement = myProject != null ? TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor) : null;
+      PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor);
       if (selectedElement != null) return selectedElement;
       return TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
     }
@@ -362,6 +330,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOccurenceNavigator.getActionUpdateThread();
   }
 
   @Override
@@ -678,13 +651,12 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
     }
+
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.showPreview = state;
       myUsagePreviewPanel.setVisible(state);
-      if (state) {
-        updatePreviewPanel();
-      }
+      myCoroutineHelper.schedulePreviewPanelLayoutUpdate();
     }
   }
 }

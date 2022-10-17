@@ -18,8 +18,8 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentWithNullsOppositeMultiple, ModifiableWorkspaceEntity<ParentWithNullsOppositeMultiple>, ObjBuilder<ParentWithNullsOppositeMultiple> {
-    override var parentData: String
     override var entitySource: EntitySource
+    override var parentData: String
   }
 
   companion object : Type<ParentWithNullsOppositeMultiple, Builder>() {
@@ -55,8 +55,8 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildWithNullsOppositeMultiple, ModifiableWorkspaceEntity<ChildWithNullsOppositeMultiple>, ObjBuilder<ChildWithNullsOppositeMultiple> {
-    override var childData: String
     override var entitySource: EntitySource
+    override var childData: String
     override var parentEntity: ParentWithNullsOppositeMultiple?
   }
 

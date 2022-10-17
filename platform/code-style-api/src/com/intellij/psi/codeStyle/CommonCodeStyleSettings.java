@@ -1189,12 +1189,4 @@ public class CommonCodeStyleSettings {
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
   }
-
-  /**
-   * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
-   */
-  @Deprecated(forRemoval = true)
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
-  }
 }

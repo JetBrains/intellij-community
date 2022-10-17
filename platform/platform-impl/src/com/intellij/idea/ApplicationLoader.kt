@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -26,14 +27,12 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -42,8 +41,6 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.asDeferred
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -66,15 +63,15 @@ fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
+private suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+  val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, setBaseLaFJob) = initAppActivity.runChild("app waiting") {
+  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job>
+    appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
 
   initAppActivity.runChild("app component registration") {
@@ -89,10 +86,15 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
-    launch {
-      setBaseLaFJob.join()
+    // LaF must be initialized before app init because icons maybe requested and as result,
+    // scale must be already initialized (especially important for Linux)
+    runActivity("init laf waiting") {
+      initLafJob?.join()
+    }
 
-      val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
+    // executed in main thread
+    launch {
+      val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
@@ -106,7 +108,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     withContext(Dispatchers.Default) {
       val args = processProgramArguments(rawArgs)
 
-      val deferredStarter = initAppActivity.runChild("app starter creation") {
+      val deferredStarter = runActivity("app starter creation") {
         createAppStarterAsync(args)
       }
 
@@ -132,7 +134,7 @@ private suspend fun initApplicationImpl(args: List<String>,
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
         val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
-        withContext(SwingDispatcher) {
+        withContext(RawSwingDispatcher) {
           placeOnEventQueueActivity.end()
           loadComponentInEdtTask()
         }
@@ -323,8 +325,8 @@ private fun addActivateAndWindowsCliListeners() {
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
     ApplicationManager.getApplication().coroutineScope.async {
-      handleExternalCommand(args, currentDirectory).future.asDeferred().await()
-    }.asCompletableFuture()
+      handleExternalCommand(args, currentDirectory).future.await()
+    }
   }
 
   EXTERNAL_LISTENER = BiFunction { currentDirectory, args ->
@@ -332,46 +334,40 @@ private fun addActivateAndWindowsCliListeners() {
     if (args.isEmpty()) {
       return@BiFunction 0
     }
-    val result = runBlocking { handleExternalCommand(args.asList(), currentDirectory) }
-    CliResult.unmap(result.future, AppExitCodes.ACTIVATE_ERROR).exitCode
+    runBlocking(Dispatchers.Default) {
+      val result = handleExternalCommand(args.asList(), currentDirectory)
+      try {
+        result.future.await().exitCode
+      }
+      catch (e: Exception) {
+        AppExitCodes.ACTIVATE_ERROR
+      }
+    }
   }
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CliResult.error(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      addExternalInstanceListener { CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down"))) }
       EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
 }
 
 private suspend fun handleExternalCommand(args: List<String>, currentDirectory: String?): CommandLineProcessorResult {
-  val result = if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
-    CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
+  if (args.isNotEmpty() && args[0].contains(URLUtil.SCHEME_SEPARATOR)) {
+    val result = CommandLineProcessorResult(project = null, result = CommandLineProcessor.processProtocolCommand(args[0]))
+    withContext(Dispatchers.EDT) {
+      if (!result.showErrorIfFailed()) {
+        CommandLineProcessor.findVisibleFrame()?.let { frame ->
+          AppIcon.getInstance().requestFocus(frame)
+        }
+      }
+    }
+    return result
   }
   else {
-    CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+    return CommandLineProcessor.processExternalCommandLine(args, currentDirectory, focusApp = true)
   }
-
-  // not a part of handleExternalCommand invocation - invokeLater
-  ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
-    if (result.showErrorIfFailed()) {
-      return@launch
-    }
-
-    val windowManager = WindowManager.getInstance()
-    if (result.project == null) {
-      windowManager.findVisibleFrame()?.let { frame ->
-        frame.toFront()
-        DialogEarthquakeShaker.shake(frame)
-      }
-    }
-    else {
-      windowManager.getIdeFrame(result.project)?.let {
-        AppIcon.getInstance().requestFocus(it)
-      }
-    }
-  }
-  return result
 }
 
 fun findStarter(key: String): ApplicationStarter? {
@@ -437,7 +433,6 @@ private fun processProgramArguments(args: List<String>): List<String> {
   return arguments
 }
 
-
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {
     launch {
@@ -447,10 +442,10 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
 }
 
 @Internal
-internal inline fun <T> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
+internal inline fun <T : Any> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
   val app = ApplicationManager.getApplication()
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  for (adapter in extensionArea.getExtensionPoint<T>(name).getSortedAdapters()) {
+  for (adapter in extensionArea.getExtensionPoint<T>(name).sortedAdapters) {
     val extension: T = try {
       adapter.createInstance(app) ?: continue
     }

@@ -21,7 +21,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -33,14 +33,17 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.ObjectUtils
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.WorkspaceEventRescanningInfo
+import com.intellij.util.indexing.IndexableFilesIndex
+import com.intellij.util.indexing.roots.IndexableFilesIndexImpl
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<ProjectRootManagerComponent>()
@@ -126,6 +129,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   private fun registerListeners() {
     val connection = myProject.messageBus.connect(this)
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      @Deprecated("Deprecated in Java")
       override fun projectOpened(project: Project) {
         if (project === myProject) {
           addRootsToWatch()
@@ -215,6 +219,10 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     isFiringEvent = true
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
+      if (IndexableFilesIndex.shouldBeUsed()) {
+        IndexableFilesIndexImpl.getInstanceImpl(myProject).beforeRootsChanged()
+      }
+      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
     }
     finally {
@@ -226,21 +234,14 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     isFiringEvent = true
     try {
       (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
+      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).resetCustomContributors()
 
-      var isFromWorkspaceOnly = ThreeState.UNSURE
-      for (info in indexingInfos) {
-        if (info is WorkspaceEventRescanningInfo && info.isFromWorkspaceModelEvent) {
-          if (isFromWorkspaceOnly == ThreeState.UNSURE) {
-            isFromWorkspaceOnly = ThreeState.YES
-          }
-        }
-        else {
-          isFromWorkspaceOnly = ThreeState.NO
-          break
-        }
+      val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
+      if (IndexableFilesIndex.shouldBeUsed()) {
+        IndexableFilesIndexImpl.getInstanceImpl(myProject).afterRootsChanged(fileTypes, indexingInfos, isFromWorkspaceOnly)
       }
       myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES))
+        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }
     finally {
       isFiringEvent = false
@@ -257,9 +258,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     val flatPaths = CollectionFactory.createFilePathSet()
     val store = myProject.stateStore
     val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName.toString()) {
-      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()))
-      flatPaths.add(FileUtil.toSystemIndependentName(store.workspacePath.toString()))
+    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+      flatPaths.add(projectFilePath.systemIndependentPath)
+      flatPaths.add(store.workspacePath.systemIndependentPath)
     }
     for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
       val toWatch = extension.getRootsToWatch(myProject)
@@ -273,11 +274,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
         for (path in toWatch) {
-          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path))
+          recursivePathsToWatch.add(FileUtilRt.toSystemIndependentName(path))
         }
       }
     }
-    val excludedUrls = CollectionFactory.createSmallMemoryFootprintSet<String>()
+    val excludedUrls = HashSet<String>()
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
     for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       excludedUrls.addAll(excludePolicy.excludeUrlsForProject)
@@ -302,8 +303,10 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       val rootManager = ModuleRootManager.getInstance(module)
       urls.addAll(rootManager.contentRootUrls)
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
-        for (type in OrderRootType.getAllTypes()) {
-          urls.addAll(entry.getUrls(type))
+        if (entry is LibraryOrSdkOrderEntry) {
+          for (type in OrderRootType.getAllTypes()) {
+            urls.addAll(entry.getRootUrls(type))
+          }
         }
         true
       }
@@ -345,6 +348,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   override fun dispose() {}
+
+  @TestOnly
+  fun disposeVirtualFilePointersAfterTest() {
+    Disposer.dispose(rootPointersDisposable)
+  }
 
   private inner class AppListener : ApplicationListener {
     override fun beforeWriteActionStart(action: Any) {

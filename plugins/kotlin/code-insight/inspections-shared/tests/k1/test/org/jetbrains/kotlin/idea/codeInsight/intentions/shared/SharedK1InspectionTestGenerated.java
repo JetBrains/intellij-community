@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -17,21 +17,130 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-shared/tests/k1")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/inspections")
 public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1InspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inspections/dataClassPrivateConstructor")
-    public abstract static class DataClassPrivateConstructor extends AbstractSharedK1InspectionTest {
+    @TestMetadata("../testData/inspections")
+    public abstract static class Inspections extends AbstractSharedK1InspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../testData/inspections/dataClassPrivateConstructor/inspectionData")
-        public static class InspectionData extends AbstractSharedK1InspectionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("../testData/inspections/dataClassPrivateConstructor")
+        public abstract static class DataClassPrivateConstructor extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/dataClassPrivateConstructor/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("inspections.test")
-            public void testInspections_test() throws Exception {
-                runTest("../testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/redundantSemicolon")
+        public abstract static class RedundantSemicolon extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/redundantSemicolon/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/redundantSemicolon/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/removeSetterParameterType")
+        public abstract static class RemoveSetterParameterType extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/removeSetterParameterType/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/removeSetterParameterType/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/trailingCommaOff")
+        public abstract static class TrailingCommaOff extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/trailingCommaOff/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/trailingCommaOff/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/trailingCommaOn")
+        public abstract static class TrailingCommaOn extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/trailingCommaOn/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/trailingCommaOn/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/wrapUnaryOperator")
+        public abstract static class WrapUnaryOperator extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/wrapUnaryOperator/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/wrapUnaryOperator/inspectionData/inspections.test");
+                }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal")
+    public abstract static class InspectionsLocal extends AbstractSharedK1InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
+        public abstract static class SimplifyNegatedBinaryExpression extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
+                }
             }
         }
     }

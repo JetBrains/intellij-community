@@ -14,15 +14,15 @@ public interface InspectionApplicationFactory {
   @NotNull
   String id();
 
-  InspectionApplicationBase getApplication(@NotNull List<String> args);
+  InspectionApplicationBase getApplication(@NotNull List<String> args) throws InspectionApplicationException;
 
   @NotNull
-  static InspectionApplicationBase getApplication(@NotNull String id, @NotNull List<String> args) {
+  static InspectionApplicationBase getApplication(@NotNull String id, @NotNull List<String> args) throws InspectionApplicationException {
     for (InspectionApplicationFactory extension : EP_NAME.getExtensions()) {
       if (extension.id().equals(id)) {
         return extension.getApplication(args);
       }
     }
-    throw new IllegalArgumentException("There is no loaded inspect engine with id= '" + id + "'. Please check loaded plugin list.");
+    throw new InspectionApplicationException("There is no loaded inspect engine with id= '" + id + "'. Please check loaded plugin list.");
   }
 }

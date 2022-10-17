@@ -45,7 +45,7 @@ public final class IdeaWin32 {
   }
 
   private static boolean loadBundledLibrary() throws IOException {
-    String name = CpuArch.isIntel64() ? "IdeaWin64" : "IdeaWin32";
+    String name = CpuArch.isArm64() ? "IdeaWin64a" : CpuArch.isIntel64() ? "IdeaWin64" : "IdeaWin32";
     URL bundled = IdeaWin32.class.getResource(name + ".dll");
     if (bundled == null) {
       return false;

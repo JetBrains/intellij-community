@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -22,16 +21,9 @@ import javax.swing.*;
  * Exact list of tasks should be specified for every run configuration (or template) by user in dedicated UI.
  */
 
-public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
+public abstract class BeforeRunTaskProvider<@NotNull T extends BeforeRunTask<?>> {
   public static final ProjectExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
-
-  /**
-   * @deprecated Use {@link #EP_NAME}
-   */
-  @Deprecated(forRemoval = true)
-  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EXTENSION_POINT_NAME =
-    new ExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
 
   public abstract Key<T> getId();
 

@@ -1,24 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.pme.launcher;
 
-import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.Imaging;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class LauncherGeneratorMain {
   public static void main(String[] args) {
-    if (args.length != 5) {
-      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <output>");
+    if (args.length != 6) {
+      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <path to ico> <output>");
       System.exit(1);
     }
 
@@ -51,27 +52,11 @@ public class LauncherGeneratorMain {
     }
 
     Element appInfoRoot = appInfo.getRootElement();
-    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
-    if (splashUrl.startsWith("/")) {
-      splashUrl = splashUrl.substring(1);
-    }
-    InputStream splashStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(splashUrl);
-    if (splashStream == null) {
-      System.err.println("Splash screen image file file " + splashUrl + " not found");
-      System.exit(5);
-    }
 
-    ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
-    try {
-      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
-      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
+    String icoUrl = args[4];
+    if (icoUrl == null || icoUrl.isBlank()) {
+      icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     }
-    catch (Exception e) {
-      System.err.println("Error converting splash screen to BMP: " + e.getMessage());
-      System.exit(6);
-    }
-
-    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
     if (icoUrl == null) {
       System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
@@ -94,12 +79,8 @@ public class LauncherGeneratorMain {
 
     Properties properties = new Properties();
     try {
-      FileInputStream fis = new FileInputStream(args[3]);
-      try {
+      try (FileInputStream fis = new FileInputStream(args[3])) {
         properties.load(fis);
-      }
-      finally {
-        fis.close();
       }
     }
     catch (IOException e) {
@@ -122,34 +103,43 @@ public class LauncherGeneratorMain {
     int minorVersion = Integer.parseInt(matcher.group(1));
     int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
     String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
+    String buildDate = getChild(appInfoRoot, "build").getAttributeValue("date");
     String versionString = majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
 
-    int year = new GregorianCalendar().get(Calendar.YEAR);
 
-    LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
+    String copyrightStart = getChild(appInfoRoot, "company").getAttributeValue("copyrightStart");
+    if (copyrightStart == null) {
+      copyrightStart = "2000";
+    }
+    String copyrightEnd = buildDate.substring(0, 4);
+
+    File out = new File(args[5]);
+    LauncherGenerator generator = new LauncherGenerator(template, out);
     try {
       generator.load();
 
       for (Map.Entry<Object, Object> pair : properties.entrySet()) {
-        String key = (String) pair.getKey();
+        String key = (String)pair.getKey();
         Integer id = resourceIDs.get(key);
         if (id == null) {
-          System.err.println("Invalid stringtable ID found: " + key);
+          //noinspection SpellCheckingInspection
+          System.err.println("Invalid STRINGTABLE ID, missing in '" + args[2] + "': " + key);
           System.exit(9);
         }
-        generator.setResourceString(id, (String) pair.getValue());
+        generator.setResourceString(id, (String)pair.getValue());
       }
 
-      generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
+      //noinspection SpellCheckingInspection
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
-      generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
+      generator.setVersionInfoString("CompanyName", companyName);
+      generator.setVersionInfoString("LegalCopyright", "Copyright (C) " + copyrightStart + "-" + copyrightEnd + " " + companyName);
       generator.setVersionInfoString("ProductName", productFullName);
       generator.setVersionInfoString("FileVersion", versionString);
       generator.setVersionInfoString("FileDescription", productFullName);
       generator.setVersionInfoString("ProductVersion", versionString);
-      generator.setVersionInfoString("InternalName", productShortName.toLowerCase() + ".exe");
-      generator.setVersionInfoString("OriginalFilename", productShortName.toLowerCase() + ".exe");
+      generator.setVersionInfoString("InternalName", out.getName());
+      generator.setVersionInfoString("OriginalFilename", out.getName());
       generator.setVersionNumber(majorVersion, minorVersion, bugfixVersion);
 
       generator.generate();
@@ -164,11 +154,10 @@ public class LauncherGeneratorMain {
   }
 
   private static Map<String, Integer> loadResourceIDs(String arg) throws IOException {
-    Map<String, Integer> result = new HashMap<String, Integer>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(arg)));
-    Pattern pattern = Pattern.compile("#define (\\w+)\\s+(\\d+)");
-    try {
-      while(true) {
+    Map<String, Integer> result = new HashMap<>();
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(arg), StandardCharsets.UTF_8))) {
+      Pattern pattern = Pattern.compile("#define (\\w+)\\s+(\\d+)");
+      while (true) {
         String line = reader.readLine();
         if (line == null) break;
         Matcher m = pattern.matcher(line);
@@ -176,9 +165,6 @@ public class LauncherGeneratorMain {
           result.put(m.group(1), Integer.parseInt(m.group(2)));
         }
       }
-    }
-    finally {
-      reader.close();
     }
     return result;
   }

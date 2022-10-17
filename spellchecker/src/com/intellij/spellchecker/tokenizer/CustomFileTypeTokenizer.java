@@ -24,9 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   private final SyntaxTable mySyntaxTable;
 

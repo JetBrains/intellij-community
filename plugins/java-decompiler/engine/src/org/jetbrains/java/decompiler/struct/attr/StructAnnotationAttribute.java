@@ -64,54 +64,32 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
     int tag = data.readUnsignedByte();
 
     switch (tag) {
-      case 'e': // enum constant
+      case 'e' -> { // enum constant
         String className = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         String constName = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         FieldDescriptor descr = FieldDescriptor.parseDescriptor(className);
         return new FieldExprent(constName, descr.type.getValue(), true, null, descr, null);
-
-      case 'c': // class
+      }
+      case 'c' -> { // class
         String descriptor = pool.getPrimitiveConstant(data.readUnsignedShort()).getString();
         VarType type = FieldDescriptor.parseDescriptor(descriptor).type;
 
-        String value;
-        switch (type.getType()) {
-          case CodeConstants.TYPE_OBJECT:
-            value = type.getValue();
-            break;
-          case CodeConstants.TYPE_BYTE:
-            value = byte.class.getName();
-            break;
-          case CodeConstants.TYPE_CHAR:
-            value = char.class.getName();
-            break;
-          case CodeConstants.TYPE_DOUBLE:
-            value = double.class.getName();
-            break;
-          case CodeConstants.TYPE_FLOAT:
-            value = float.class.getName();
-            break;
-          case CodeConstants.TYPE_INT:
-            value = int.class.getName();
-            break;
-          case CodeConstants.TYPE_LONG:
-            value = long.class.getName();
-            break;
-          case CodeConstants.TYPE_SHORT:
-            value = short.class.getName();
-            break;
-          case CodeConstants.TYPE_BOOLEAN:
-            value = boolean.class.getName();
-            break;
-          case CodeConstants.TYPE_VOID:
-            value = void.class.getName();
-            break;
-          default:
-            throw new RuntimeException("invalid class type: " + type.getType());
-        }
+        String value = switch (type.getType()) {
+          case CodeConstants.TYPE_OBJECT -> type.getValue();
+          case CodeConstants.TYPE_BYTE -> byte.class.getName();
+          case CodeConstants.TYPE_CHAR -> char.class.getName();
+          case CodeConstants.TYPE_DOUBLE -> double.class.getName();
+          case CodeConstants.TYPE_FLOAT -> float.class.getName();
+          case CodeConstants.TYPE_INT -> int.class.getName();
+          case CodeConstants.TYPE_LONG -> long.class.getName();
+          case CodeConstants.TYPE_SHORT -> short.class.getName();
+          case CodeConstants.TYPE_BOOLEAN -> boolean.class.getName();
+          case CodeConstants.TYPE_VOID -> void.class.getName();
+          default -> throw new RuntimeException("invalid class type: " + type.getType());
+        };
         return new ConstExprent(VarType.VARTYPE_CLASS, value, null);
-
-      case '[': // array
+      }
+      case '[' -> { // array
         List<Exprent> elements = Collections.emptyList();
         int len = data.readUnsignedShort();
         if (len > 0) {
@@ -134,34 +112,25 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
         newExpr.setDirectArrayInit(true);
         newExpr.setLstArrayElements(elements);
         return newExpr;
-
-      case '@': // annotation
+      }
+      case '@' -> { // annotation
         return parseAnnotation(data, pool);
-
-      default:
+      }
+      default -> {
         PrimitiveConstant cn = pool.getPrimitiveConstant(data.readUnsignedShort());
-        switch (tag) {
-          case 'B':
-            return new ConstExprent(VarType.VARTYPE_BYTE, cn.value, null);
-          case 'C':
-            return new ConstExprent(VarType.VARTYPE_CHAR, cn.value, null);
-          case 'D':
-            return new ConstExprent(VarType.VARTYPE_DOUBLE, cn.value, null);
-          case 'F':
-            return new ConstExprent(VarType.VARTYPE_FLOAT, cn.value, null);
-          case 'I':
-            return new ConstExprent(VarType.VARTYPE_INT, cn.value, null);
-          case 'J':
-            return new ConstExprent(VarType.VARTYPE_LONG, cn.value, null);
-          case 'S':
-            return new ConstExprent(VarType.VARTYPE_SHORT, cn.value, null);
-          case 'Z':
-            return new ConstExprent(VarType.VARTYPE_BOOLEAN, cn.value, null);
-          case 's':
-            return new ConstExprent(VarType.VARTYPE_STRING, cn.value, null);
-          default:
-            throw new RuntimeException("invalid element type!");
-        }
+        return switch (tag) {
+          case 'B' -> new ConstExprent(VarType.VARTYPE_BYTE, cn.value, null);
+          case 'C' -> new ConstExprent(VarType.VARTYPE_CHAR, cn.value, null);
+          case 'D' -> new ConstExprent(VarType.VARTYPE_DOUBLE, cn.value, null);
+          case 'F' -> new ConstExprent(VarType.VARTYPE_FLOAT, cn.value, null);
+          case 'I' -> new ConstExprent(VarType.VARTYPE_INT, cn.value, null);
+          case 'J' -> new ConstExprent(VarType.VARTYPE_LONG, cn.value, null);
+          case 'S' -> new ConstExprent(VarType.VARTYPE_SHORT, cn.value, null);
+          case 'Z' -> new ConstExprent(VarType.VARTYPE_BOOLEAN, cn.value, null);
+          case 's' -> new ConstExprent(VarType.VARTYPE_STRING, cn.value, null);
+          default -> throw new RuntimeException("invalid element type!");
+        };
+      }
     }
   }
 

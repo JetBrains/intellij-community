@@ -1,25 +1,24 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
-use crate::{err_from_string, errors};
-use crate::errors::{LauncherError, Result};
+use anyhow::{bail, Context, Result};
 
 #[cfg(target_os = "linux")] use {
-    std::thread::sleep
+    std::thread::sleep,
+    std::time::Duration
 };
 
 #[cfg(target_os = "macos")] use {
-    core_foundation::base::{CFRelease, CFTypeRef, kCFAllocatorDefault, TCFTypeRef},
-    core_foundation::date::{CFAbsoluteTime, CFTimeInterval},
+    core_foundation::base::{CFRelease, kCFAllocatorDefault, TCFTypeRef},
     core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate, CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished},
 };
 
 #[cfg(target_os = "windows")] use {
-    crate::utils::canonical_non_unc,
-    crate::utils::PathExt,
+    utils::{canonical_non_unc, PathExt},
     std::env
 };
 
@@ -64,7 +63,9 @@ pub fn run_jvm_and_event_loop(java_home: &Path, vm_options: Vec<String>, args: V
 
 unsafe fn intellij_main_thread(java_home: &Path, vm_options: Vec<String>, args: Vec<String>) -> Result<()> {
     debug!("Preparing JNI env");
-    let jni_env = prepare_jni_env(&java_home, vm_options)?;
+    let jni_env = unsafe {
+        prepare_jni_env(&java_home, vm_options)?
+    };
 
     debug!("Calling main");
     call_intellij_main(jni_env, args)
@@ -79,13 +80,19 @@ unsafe fn prepare_jni_env(
     debug!("libjvm resolved as {libjvm_path:?}");
 
     debug!("Loading libjvm");
-    let libjvm = load_libjvm(libjvm_path)?;
+    let libjvm = unsafe {
+        load_libjvm(libjvm_path)?
+    };
     debug!("libjvm loaded");
 
     debug!("Getting JNI_CreateJavaVM symbol from libjvm");
     let create_jvm_call:
-        libloading::Symbol<unsafe extern fn(*mut *mut jni_sys::JavaVM, *mut *mut c_void, *mut c_void) -> jni_sys::jint>
-        = libjvm.get(b"JNI_CreateJavaVM")?;
+        libloading::Symbol<
+            '_,
+            unsafe extern "C" fn(*mut *mut jni_sys::JavaVM, *mut *mut c_void, *mut c_void) -> jni_sys::jint>
+        = unsafe {
+            libjvm.get(b"JNI_CreateJavaVM")?
+        };
     debug!("Got JNI_CreateJavaVM symbol from libjvm");
 
     let mut java_vm: *mut jni_sys::JavaVM = std::ptr::null_mut();
@@ -94,21 +101,34 @@ unsafe fn prepare_jni_env(
     debug!("Constructed VM init args");
 
     debug!("Creating VM");
-    let create_jvm_result = create_jvm_call(
-        &mut java_vm as *mut *mut jni_sys::JavaVM,
-        &mut jni_env as *mut *mut jni_sys::JNIEnv as *mut *mut c_void,
-        &args as *const jni_sys::JavaVMInitArgs as *mut c_void);
+    let create_jvm_result = unsafe {
+        create_jvm_call(
+            &mut java_vm as *mut *mut jni_sys::JavaVM,
+            &mut jni_env as *mut *mut jni_sys::JNIEnv as *mut *mut c_void,
+            &args as *const jni_sys::JavaVMInitArgs as *mut c_void)
+    };
     debug!("Create VM result={create_jvm_result}");
 
-    errors::JniError::check_result(create_jvm_result)?;
+    match create_jvm_result {
+        jni_sys::JNI_OK => { }
+        jni_sys::JNI_ERR => bail!("JNI_ERR: unknown error"),
+        jni_sys::JNI_EDETACHED => bail!("JNI_EDETACHED: thread is not attached to JVM"),
+        jni_sys::JNI_EVERSION => bail!("JNI_EVERSION: wrong JNI version"),
+        jni_sys::JNI_ENOMEM => bail!("JNI_ENOMEM: no enought memory"),
+        jni_sys::JNI_EEXIST => bail!("JNI_EEXIST: JVM already exists"),
+        jni_sys::JNI_EINVAL => bail!("JNI_EINVAL? invalid arguments"),
+        i => bail!("Other: {i}"),
+    }
 
-    let jni_env = jni::JNIEnv::from_raw(jni_env)?;
+    let jni_env = unsafe {
+        jni::JNIEnv::from_raw(jni_env)?
+    };
     debug!("Got JNI env");
 
     Ok(jni_env)
 }
 
-pub fn call_intellij_main(jni_env: jni::JNIEnv, args: Vec<String>) -> Result<()> {
+pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result<()> {
     let main_args = jni_env.new_object_array(
         args.len() as jni_sys::jsize,
         "java/lang/String",
@@ -122,16 +142,18 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv, args: Vec<String>) -> Result<()>
 
     let method_call_args = vec![JValue::from(main_args)];
 
-    debug!("Calling IntelliJ main");
+    let args_string = args.join(", ");
+    debug!("Calling IntelliJ main, args: {args_string}");
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
             match e {
                 Error::JavaException => {
                     jni_env.exception_describe()?;
+                    Err(e)
                 }
-                _ => { return Err(LauncherError::JniRsError(e)) }
-            }
+                _ => Err(e)
+            }?;
         }
     };
 
@@ -152,21 +174,17 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
     // using UNC for libjvm leads to crash when trying to resolve jimage
     // classloader.cpp:   guarantee(name != NULL, "jimage file name is null");
-    let load_path = canonical_non_unc(&libjvm_path)?;
+    let load_path = canonical_non_unc(&libjvm_path).context("Failed to get canonical path for libjvm from {libjvm_path:?}")?;
     debug!("Loading libvjm by path {load_path:?}");
 
-    match libloading::Library::new(load_path) {
-        Ok(l) => { Ok(l)}
-        Err(e) => { Err(LauncherError::LibloadingError(e))}
+    unsafe {
+        libloading::Library::new(load_path).context("Failed to load libjvm by path {load_path:?}")
     }
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    match libloading::Library::new(libjvm_path.as_os_str()) {
-        Ok(l) => { Ok(l)}
-        Err(e) => { Err(LauncherError::LibloadingError(e))}
-    }
+    unsafe { libloading::Library::new(libjvm_path.as_os_str()) }.context("Failed to load libjvm")
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs> {
@@ -193,8 +211,7 @@ fn get_libjvm(java_home: &Path) -> Result<PathBuf> {
 
     let libjvm = get_libjvm_path(java_home);
     if !libjvm.exists() {
-        let message = format!("libvjm not found at path {libjvm:?}");
-        return err_from_string(message);
+        bail!("libvjm not found at path {libjvm:?}");
     }
     debug!("Found libjvm at {libjvm:?}");
 
@@ -258,25 +275,31 @@ unsafe fn run_event_loop() -> Result<()> {
 
     extern "C" fn timer_empty(_timer: CFRunLoopTimerRef, _info: *mut c_void) {}
 
-    let timer = CFRunLoopTimerCreate(
-        kCFAllocatorDefault,
-        FOREVER,
-        0.0 as CFTimeInterval,
-        0,
-        0,
-        timer_empty,
-        std::ptr::null_mut()
-    );
+    let timer = unsafe {
+        CFRunLoopTimerCreate(
+            kCFAllocatorDefault,
+            FOREVER,
+            0.0,
+            0,
+            0,
+            timer_empty,
+            std::ptr::null_mut()
+        )
+    };
 
-    CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
-    CFRelease(timer.as_void_ptr());
+    unsafe {
+        CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
+        CFRelease(timer.as_void_ptr());
+    }
 
     loop {
-        let result = CFRunLoopRunInMode(
+        let result = unsafe {
+            CFRunLoopRunInMode(
             kCFRunLoopDefaultMode,
             FOREVER,
-            0 as core_foundation::base::Boolean
-        );
+            0
+            )
+        };
 
         if result == kCFRunLoopRunFinished {
             info!("Core foundation loop has exited");

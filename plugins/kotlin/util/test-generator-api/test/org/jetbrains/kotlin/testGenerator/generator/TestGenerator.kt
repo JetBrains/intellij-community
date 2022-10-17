@@ -3,26 +3,18 @@ package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import java.io.File
 import java.nio.file.Files
 import java.util.*
 
 object TestGenerator {
-    private val commonImports = importsListOf(
-        TestDataPath::class,
-        JUnit3RunnerWithInners::class,
-        KotlinTestUtils::class,
-        TestMetadata::class,
-        TestRoot::class,
-        RunWith::class
-    )
-
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
         for (group in workspace.groups) {
             for (suite in group.suites) {
@@ -82,16 +74,29 @@ object TestGenerator {
     private fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
 
     private fun getImports(suite: TSuite, group: TGroup): List<String> {
-        val imports = (commonImports + suite.imports).toMutableList()
+        val imports = mutableListOf<String>()
+
+        imports += TestDataPath::class.java.canonicalName
+        imports += JUnit3RunnerWithInners::class.java.canonicalName
+
+        if (suite.models.any { it.passTestDataPath }) {
+            imports += KotlinTestUtils::class.java.canonicalName
+        }
+
+        imports += TestMetadata::class.java.canonicalName
+        imports += TestRoot::class.java.canonicalName
+        imports += RunWith::class.java.canonicalName
+
+        imports.addAll(suite.imports)
 
         if (suite.models.any { it.targetBackend != TargetBackend.ANY }) {
-            imports += importsListOf(TargetBackend::class)
+            imports += TargetBackend::class.java.canonicalName
         }
 
         val superPackageName = suite.abstractTestClass.`package`.name
         val selfPackageName = suite.generatedClassName.substringBeforeLast('.')
         if (superPackageName != selfPackageName) {
-            imports += importsListOf(suite.abstractTestClass.kotlin)
+            imports += suite.abstractTestClass.kotlin.java.canonicalName
         }
 
         if (group.isCompilerTestData) {

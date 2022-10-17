@@ -22,7 +22,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 import kotlin.math.roundToInt
 
-internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
+internal class MenuFrameHeader(frame: JFrame, private val headerTitle: CustomHeaderTitle, private val myIdeMenu: IdeMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 

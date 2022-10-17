@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
@@ -46,9 +45,7 @@ internal class ModuleBridgeImpl(
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      val busConnection = project.messageBus.connect(this)
-
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
             if (it.entity.persistentId != moduleEntityId) return@forEach
@@ -58,7 +55,7 @@ internal class ModuleBridgeImpl(
             val currentStore = entityStorage.current
             val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(entityStorage.current.resolve(moduleEntityId) != null) {
+            assert(moduleEntityId in entityStorage.current) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
               // As it made in ArtifactBridge
               "Cannot resolve module $moduleEntityId. Current store: $currentStore"
@@ -130,7 +127,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStorage.current.findModuleEntity(this)
+    val moduleEntity = this.findModuleEntity(entityStorage.current)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -164,7 +161,7 @@ internal class ModuleBridgeImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStorage.current.findModuleEntity(this)
+      val entity = this.findModuleEntity(entityStorage.current)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }
@@ -174,7 +171,7 @@ internal class ModuleBridgeImpl(
       if (getOptionValue(key) != value) {
         WriteAction.runAndWait<RuntimeException> {
           WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-            val entity = builder.findModuleEntity(this)
+            val entity = this.findModuleEntity(builder)
             if (entity != null) {
               updateOptionInEntity(builder, entity)
             }

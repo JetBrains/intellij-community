@@ -25,7 +25,7 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
   UnknownSdkEditorPanel(@NotNull Project project,
                         @NotNull FileEditor fileEditor,
                         @NotNull UnknownSdkFix fix) {
-    super(fileEditor);
+    super(fileEditor, Status.Warning);
     myFix = fix;
     myAction = myFix.getSuggestedFixAction();
 

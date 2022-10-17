@@ -17,10 +17,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
-import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubUtil
 import javax.swing.JComponent
 
@@ -32,11 +30,12 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getAccounts(): Collection<GithubAccount> = GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHECloneDialogExtensionComponent(project)
+    GHECloneDialogExtensionComponent(project, modalityState)
 }
 
-private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
+private class GHECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
+  modalityState,
   GithubAuthenticationManager.getInstance(),
   GithubApiRequestExecutorManager.getInstance()
 ) {

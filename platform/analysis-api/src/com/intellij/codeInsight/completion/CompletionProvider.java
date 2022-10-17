@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
  * Provides completion items.
  * <p>
  * Register via {@link CompletionContributor#extend(CompletionType, ElementPattern, CompletionProvider)}.
- *
- * @author peter
  */
 public abstract class CompletionProvider<V extends CompletionParameters> {
 

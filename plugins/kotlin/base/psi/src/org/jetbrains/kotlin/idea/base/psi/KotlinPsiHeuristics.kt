@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.name.Name
@@ -243,6 +244,65 @@ object KotlinPsiHeuristics {
         val name = declaration.name ?: return false
         if (!OperatorConventions.isConventionName(Name.identifier(name))) {
             return false
+        }
+
+        return true
+    }
+
+    /**
+     * Performs simple PSI-only type equivalence check. Might be useful for preliminary checks.
+     * Only `KtUserType` types are checked. Nullability is not supported.
+     *
+     * Examples:
+     * - `typeMatches("kotlin.Array", "String")`
+     * - `typeMatches("MutableMap", "Key", "out Value")`
+     */
+    fun typeMatches(typeReference: KtTypeReference, name: ClassId, vararg args: ClassId): Boolean {
+        val typeElement = typeReference.typeElement ?: return false
+        return typeMatches(typeElement, name, *args)
+    }
+
+    private fun typeMatches(typeElement: KtTypeElement, name: ClassId, vararg args: ClassId): Boolean {
+        fun checkName(typeElement: KtUserType, expectedName: ClassId): Boolean {
+            val actualChunks = generateSequence(typeElement) { it.qualifier }
+                .map { it.referencedName }
+                .toList().asReversed()
+
+            val expectedChunks = sequenceOf(expectedName.packageFqName, expectedName.relativeClassName)
+                .flatMap { it.pathSegments() }
+                .map { it.asString() }
+                .toList()
+
+            // 'kotlin.Unit' should match 'Unit', yet not 'foo.kotlin.Unit'
+            return expectedChunks.size >= actualChunks.size
+                    && expectedChunks.subList(expectedChunks.size - actualChunks.size, expectedChunks.size) == actualChunks
+        }
+
+        if (typeElement is KtNullableType) {
+            val innerType = typeElement.innerType
+            return innerType != null && typeMatches(innerType, name, *args)
+        }
+
+        if (typeElement is KtUserType) {
+            if (!checkName(typeElement, name)) {
+                return false
+            }
+
+            val typeArguments = typeElement.typeArguments
+            if (args.size != typeArguments.size) {
+                return false
+            }
+
+            for ((index, typeArgument) in typeArguments.withIndex()) {
+                if (typeArgument.projectionKind == KtProjectionKind.STAR) {
+                    return false
+                }
+
+                val argTypeElement = typeArgument.typeReference?.typeElement
+                if (argTypeElement == null || !typeMatches(argTypeElement, args[index])) {
+                    return false
+                }
+            }
         }
 
         return true

@@ -141,7 +141,7 @@ public abstract class InspectionRVContentProvider {
     Map<String, FixAndOccurrences> result = new LinkedHashMap<>();
     for (CommonProblemDescriptor d : selectedDescriptors) {
       QuickFix<?>[] fixes = d.getFixes();
-      if (fixes == null || fixes.length == 0) continue;
+      if (fixes == null) continue;
       for (QuickFix<?> fix : fixes) {
         String familyName = fix.getFamilyName();
         FixAndOccurrences fixAndOccurrences = result.get(familyName);

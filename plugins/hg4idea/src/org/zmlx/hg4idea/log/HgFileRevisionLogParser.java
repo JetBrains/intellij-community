@@ -157,12 +157,8 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
     for (int i = 0; i < len; ++i) {
       char c = str.charAt(i);
       switch (c) {
-        case '(':
-          depth++;
-          break;
-        case ')':
-          depth--;
-          break;
+        case '(' -> depth++;
+        case ')' -> depth--;
       }
       if (depth == 0) {
         return i + 1;

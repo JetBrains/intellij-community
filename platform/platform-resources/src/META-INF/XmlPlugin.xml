@@ -451,6 +451,10 @@
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HtmlCompatible" shortName="HtmlWrongAttributeValue" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="html.inspections.wrong.attribute.value"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlWrongAttributeValueInspection"/>
     <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
@@ -489,68 +493,87 @@
                         overrides="true"/>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.actions.XmlSplitTagAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.xml.util.CollapseTagIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
+      <categoryKey>xml.category</categoryKey>
+      <bundleName>messages.XmlBundle</bundleName>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.XmlChangeAttributeValueIntentionFix</className>
+    </intentionAction>
+    <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveTagAndPromoteChildrenIntentionAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.CDataToTextIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.TextToCDataIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.RearrangeAttributesIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <categoryKey>xml.category</categoryKey>
       <bundleName>messages.XmlBundle</bundleName>
       <className>com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction</className>
@@ -620,5 +643,48 @@
 
     <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
+
+
+    <multiHostInjector implementation="com.intellij.html.webSymbols.WebSymbolsHtmlTextInjector"
+                       order="before JSConfigurationInjector, after TemporaryPlacesInjector"
+                       id="WebSymbolsHtmlText"/>
+
+    <webSymbols.highlightInLanguage language="HtmlCompatible"/>
+
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
+                                      toolShortName="HtmlUnknownAttribute"/>
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
+                                      toolShortName="HtmlUnknownTag"/>
+
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
+                                      toolShortName="HtmlDeprecatedAttribute"/>
+    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
+                                      toolShortName="HtmlDeprecatedTag"/>
+
+    <webSymbols.registryExtension
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension"/>
+    <webSymbols.codeCompletionItemCustomizer
+      id="html"
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension$HtmlSymbolsCodeCompletionItemCustomizer"/>
+    <xml.attributeDescriptorsProvider
+      implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
+    <xml.elementDescriptorProvider
+      implementation="com.intellij.html.webSymbols.elements.WebSymbolElementDescriptorsProvider"/>
+    <completion.contributor language="HtmlCompatible"
+                            implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
+
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
+    <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
+                      order="before html, after react"/>
   </extensions>
 </idea-plugin>

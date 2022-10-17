@@ -7,7 +7,6 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.text.nullize
 import java.util.function.Supplier
 
@@ -47,9 +46,9 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
       targetVolumeContributions[volumeDescriptor] = it
       val component = it.createComponent()
       it.resetFrom(volumeDescriptor)
-      row(EMPTY_LABEL) {
+      row("") {
         cell(component)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }
     }
   }
@@ -57,12 +56,12 @@ abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeCo
   protected fun Row.browsableTextField(@NlsContexts.DialogTitle title: String, property: MutableProperty<String>): Cell<*> =
     if (targetType is BrowsableTargetEnvironmentType) {
       textFieldWithBrowseTargetButton(targetType, targetProvider, project, title, property)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
     else {
       textField()
         .bindText(property)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
     }
 
   private fun TargetSpecificVolumeContributionUI.resetFrom(volume: VolumeDescriptor) {

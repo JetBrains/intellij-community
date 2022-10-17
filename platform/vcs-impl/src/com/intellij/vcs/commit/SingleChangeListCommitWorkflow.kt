@@ -28,8 +28,7 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 @Nls
 internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
 
-@Nls
-internal fun CommitExecutor.getPresentableText() = removeMnemonic(actionText).removeEllipsisSuffix()
+internal fun cleanActionText(text: @Nls String): @Nls String = removeMnemonic(text).removeEllipsisSuffix()
 
 class SingleChangeListCommitWorkflow(
   project: Project,
@@ -52,7 +51,7 @@ class SingleChangeListCommitWorkflow(
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
-      DefaultNameChangeListCleaner(project, commitState).use { doCommit(commitState) }
+      doCommit(sessionInfo)
     }
     else {
       doCommitCustom(sessionInfo)
@@ -61,33 +60,31 @@ class SingleChangeListCommitWorkflow(
 
   override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  private fun doCommit(commitState: ChangeListCommitState) {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE) {
-      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
-    }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
-
-      runCommit(DIALOG_TITLE, false)
+    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, DIALOG_TITLE)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+    else {
+      committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    }
+
+    committer.runCommit(DIALOG_TITLE, false)
   }
 
   private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
     sessionInfo as CommitSessionInfo.Custom
-    val cleaner = DefaultNameChangeListCleaner(project, commitState)
 
-    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(CommitResultHandler { cleaner.clean() })
-      addResultHandler(getCommitCustomEventDispatcher())
-      resultHandler?.let { addResultHandler(it) }
-      addResultHandler(getEndExecutionHandler())
-
-      runCommit(sessionInfo.executor.actionText)
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }
 
@@ -101,19 +98,19 @@ abstract class CommitChangeListDialogWorkflow(
   internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
   lateinit var commitState: ChangeListCommitState
+
+  override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
+    super.addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(DefaultNameChangeListCleaner(project, commitState))
+  }
 }
 
-class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
+private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) : CommitterResultHandler {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
   private val listName = commitState.changeList.name
 
-  fun use(block: () -> Unit) {
-    block()
-    clean()
-  }
-
-  fun clean() {
+  override fun onSuccess() {
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
       ChangeListManager.getInstance(project).editComment(listName, "")
     }

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.TextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.util.ui.UIUtil
@@ -74,6 +75,16 @@ open class StyledTextPane : JTextPane(), Disposable {
         redraw()
       }
     })
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    redraw()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    invokeLater { redraw() }
   }
 
   open fun redraw() {

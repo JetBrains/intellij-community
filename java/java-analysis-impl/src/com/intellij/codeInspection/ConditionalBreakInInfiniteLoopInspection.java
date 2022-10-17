@@ -178,7 +178,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
     @Nullable
     private static PsiExpression extractBreakCondition(@Nullable PsiIfStatement ifStatement,
                                                        @NotNull PsiLoopStatement loopStatement,
-                                                       Ref<@NotNull Boolean> isBreakInThen) {
+                                                       Ref<? super @NotNull Boolean> isBreakInThen) {
       if (ifStatement == null) return null;
       if (ControlFlowUtils.statementBreaksLoop(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()), loopStatement)) {
         if (hasVariableNameConflict(loopStatement, ifStatement, ifStatement.getElseBranch())) return null;

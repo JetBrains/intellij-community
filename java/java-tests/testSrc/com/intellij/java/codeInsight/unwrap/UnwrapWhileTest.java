@@ -11,27 +11,35 @@ public class UnwrapWhileTest extends UnwrapTestCase {
   }
 
   public void testWhileWithBlock() {
-    assertUnwrapped("while(true) {\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      while(true) {
+                          Sys<caret>tem.gc();
+                      }
+                      """,
 
                     "Sys<caret>tem.gc();\n");
   }
 
   public void testDoWhile() {
-    assertUnwrapped("do {\n" +
-                    "    Sys<caret>tem.gc();\n" +
-                    "} while(true);\n",
+    assertUnwrapped("""
+                      do {
+                          Sys<caret>tem.gc();
+                      } while(true);
+                      """,
 
                     "Sys<caret>tem.gc();\n");
   }
 
   public void testEmptyWhile() {
-    assertUnwrapped("{\n" +
-                    "    while<caret>(true);\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                          while<caret>(true);
+                      }
+                      """,
 
-                    "{\n" +
-                    "<caret>}\n");
+                    """
+                      {
+                      <caret>}
+                      """);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,8 +15,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +28,6 @@ import java.util.stream.Collector;
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
- * @author peter
- */
 final class StreamConversion {
 
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
@@ -244,7 +241,7 @@ final class StreamConversion {
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(myTypeText);
-      presentation.setIcon(PlatformIcons.METHOD_ICON);
+      presentation.setIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method));
     }
 
     @Override

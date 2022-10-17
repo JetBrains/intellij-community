@@ -41,7 +41,7 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
   }
 
   private ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, @NotNull VirtualFile file, @NotNull FileEditor fileEditor, LocalChangeList changeList) {
-    super(fileEditor);
+    super(fileEditor, EditorNotificationPanel.Status.Warning);
 
     myTracker = tracker;
     myFile = file;

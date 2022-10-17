@@ -18,8 +18,8 @@ interface ParentSingleAbEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentSingleAbEntity, ModifiableWorkspaceEntity<ParentSingleAbEntity>, ObjBuilder<ParentSingleAbEntity> {
-    override var child: ChildSingleAbstractBaseEntity?
     override var entitySource: EntitySource
+    override var child: ChildSingleAbstractBaseEntity?
   }
 
   companion object : Type<ParentSingleAbEntity, Builder>() {
@@ -48,8 +48,8 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : ChildSingleAbstractBaseEntity> : ChildSingleAbstractBaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
-    override var commonData: String
     override var entitySource: EntitySource
+    override var commonData: String
     override var parentEntity: ParentSingleAbEntity
   }
 
@@ -74,10 +74,10 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSingleFirstEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleFirstEntity>, ModifiableWorkspaceEntity<ChildSingleFirstEntity>, ObjBuilder<ChildSingleFirstEntity> {
+    override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentSingleAbEntity
     override var firstData: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ChildSingleFirstEntity, Builder>(ChildSingleAbstractBaseEntity) {
@@ -109,10 +109,10 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSingleSecondEntity, ChildSingleAbstractBaseEntity.Builder<ChildSingleSecondEntity>, ModifiableWorkspaceEntity<ChildSingleSecondEntity>, ObjBuilder<ChildSingleSecondEntity> {
+    override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentSingleAbEntity
     override var secondData: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ChildSingleSecondEntity, Builder>(ChildSingleAbstractBaseEntity) {

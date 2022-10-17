@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.fir.uast;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -16,6 +16,11 @@ import org.junit.runner.RunWith;
 public class FirUastCommentsTest extends AbstractFirUastCommentsTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("commentsOnDataClass.kt")
+    public void testCommentsOnDataClass() throws Exception {
+        runTest("testData/declaration/commentsOnDataClass.kt");
     }
 
     @TestMetadata("commentsOnProperties.kt")

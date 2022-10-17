@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 
-/**
- * @author peter
- */
 public class PointcutContextFilter implements ContextFilter {
   private final DslPointcut<? super GroovyClassDescriptor, ?> myPointcut;
 

@@ -174,7 +174,7 @@ fun <C : JLabel> C.bind(property: ObservableProperty<@NlsContexts.Label String>)
   }
 }
 
-fun <C : JCheckBox> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
+fun <C : JToggleButton> C.bind(property: ObservableMutableProperty<Boolean>): C = apply {
   isSelected = property.get()
   val mutex = AtomicBoolean()
   property.afterChange {

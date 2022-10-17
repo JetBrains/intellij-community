@@ -38,39 +38,43 @@ public class AlphaUnsortedInspectionTest extends BasePlatformTestCase {
   }
 
   public void testFix() {
-    myFixture.configureByText("p.properties", "a=\n" +
-                                              "c=\n" +
-                                              "b=\\r\\n\\\n" +
-                                              "f");
+    myFixture.configureByText("p.properties", """
+      a=
+      c=
+      b=\\r\\n\\
+      f""");
     myFixture.enableInspections(new AlphaUnsortedPropertiesFileInspection());
     final IntentionAction intention = myFixture.getAvailableIntention("Sort resource bundle files", "p.properties");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("a=\n" +
-                          "b=\\r\\n\\\n" +
-                          "f\n" +
-                          "c=");
+    myFixture.checkResult("""
+                            a=
+                            b=\\r\\n\\
+                            f
+                            c=""");
   }
 
   public void testFixComments() {
-    myFixture.configureByText("p.properties", "a=a\n" +
-                                              "d=d\n" +
-                                              "# some comment on \"e\"\n" +
-                                              "# this is multiline comment\n" +
-                                              "e=e\n" +
-                                              "b=b\n" +
-                                              "c=b");
+    myFixture.configureByText("p.properties", """
+      a=a
+      d=d
+      # some comment on "e"
+      # this is multiline comment
+      e=e
+      b=b
+      c=b""");
     myFixture.enableInspections(new AlphaUnsortedPropertiesFileInspection());
     final IntentionAction intention = myFixture.getAvailableIntention("Sort resource bundle files", "p.properties");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("a=a\n" +
-                          "b=b\n" +
-                          "c=b\n" +
-                          "d=d\n" +
-                          "# some comment on \"e\"\n" +
-                          "# this is multiline comment\n" +
-                          "e=e");
+    myFixture.checkResult("""
+                            a=a
+                            b=b
+                            c=b
+                            d=d
+                            # some comment on "e"
+                            # this is multiline comment
+                            e=e""");
   }
 
   private void doTest() {

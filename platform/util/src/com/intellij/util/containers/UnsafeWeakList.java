@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -24,6 +25,7 @@ import java.util.function.Predicate;
  * or size-based methods (like size()) are dangerous, misleading, error-inducing and are not supported.
  * Instead, please use {@link #add(T)} and {@link #iterator()}.
  */
+@Debug.Renderer(text = "\"size = \" + myList.size()", childrenArray = "toStrongList().toArray()", hasChildren = "!isEmpty()")
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
   protected final List<MyReference<T>> myList;
   private final ReferenceQueue<T> myQueue = new ReferenceQueue<>();

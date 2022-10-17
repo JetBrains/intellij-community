@@ -10,9 +10,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class PrefixMatcher {
   public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
   protected final String myPrefix;

@@ -17,8 +17,9 @@ public class XmlPredefinedConfigurationsTest extends PredefinedConfigurationsTes
     final Configuration[] templates = new XmlStructuralSearchProfile().getPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));
     doTest(configurationMap.remove(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol")),
-           "<html>\n" +
-           "  <ul><li>one</li></ul><li>two</li><li>three</li>\n" +
-           "</html>", HtmlFileType.INSTANCE, "<li>two</li>", "<li>three</li>");
+           """
+             <html>
+               <ul><li>one</li></ul><li>two</li><li>three</li>
+             </html>""", HtmlFileType.INSTANCE, "<li>two</li>", "<li>three</li>");
   }
 }

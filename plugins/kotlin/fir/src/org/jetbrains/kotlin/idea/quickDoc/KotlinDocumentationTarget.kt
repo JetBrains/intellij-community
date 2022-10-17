@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class KotlinDocumentationTarget(val element: PsiElement, val originalElement: PsiElement?) : DocumentationTarget {
+internal class KotlinDocumentationTarget(val element: PsiElement, private val originalElement: PsiElement?) : DocumentationTarget {
     override fun createPointer(): Pointer<out DocumentationTarget> {
         val elementPtr = element.createSmartPointer()
         val originalElementPtr = originalElement?.createSmartPointer()
@@ -47,7 +47,9 @@ internal class KotlinDocumentationTarget(val element: PsiElement, val originalEl
         }
     }
 
-    override val presentation: TargetPresentation get() = targetPresentation(element)
+    override fun presentation(): TargetPresentation {
+        return targetPresentation(element)
+    }
 
     override fun computeDocumentationHint(): String? {
         return computeLocalDocumentation(element, originalElement, true)

@@ -84,7 +84,7 @@ final class GitChangesCollector {
       final FilePath oldFilepath = change.getOrigPath();
 
       switch (xStatus) {
-        case ' ':
+        case ' ' -> {
           if (yStatus == 'M') {
             reportModified(filepath);
           }
@@ -106,9 +106,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'M':
+        }
+        case 'M' -> {
           if (yStatus == 'M') {
             bothModifiedPaths.add(filepath); // schedule 'git diff HEAD' command to detect staged changes, that were reverted
           }
@@ -121,10 +120,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'C':
-        case 'A':
+        }
+        case 'C', 'A' -> {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportAdded(filepath);
           }
@@ -140,9 +137,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'D':
+        }
+        case 'D' -> {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath);
           }
@@ -165,9 +161,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'U':
+        }
+        case 'U' -> {
           if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
             reportConflict(filepath);
           }
@@ -180,9 +175,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'R':
+        }
+        case 'R' -> {
           if (yStatus == 'D') {
             reportDeleted(oldFilepath);
           }
@@ -192,9 +186,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        case 'T':
+        }
+        case 'T' -> {
           if (yStatus == ' ' || yStatus == 'M') {
             reportTypeChanged(filepath);
           }
@@ -207,10 +200,8 @@ final class GitChangesCollector {
           else {
             throwStatus(xStatus, yStatus);
           }
-          break;
-
-        default:
-          throwStatus(xStatus, yStatus);
+        }
+        default -> throwStatus(xStatus, yStatus);
       }
     }
 

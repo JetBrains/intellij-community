@@ -38,15 +38,17 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
-    String appClass = "package my;\n" +
-                      "import java.util.Arrays;\n" +
-                      "\n" +
-                      "public class App {\n" +
-                      "    public static void main(String[] args) {\n" +
-                      "        System.out.println(\"Class-Path: \" + System.getProperty(\"java.class.path\"));\n" +
-                      "        System.out.println(\"Passed arguments: \" + Arrays.toString(args));\n" +
-                      "    }\n" +
-                      "}\n";
+    String appClass = """
+      package my;
+      import java.util.Arrays;
+
+      public class App {
+          public static void main(String[] args) {
+              System.out.println("Class-Path: " + System.getProperty("java.class.path"));
+              System.out.println("Passed arguments: " + Arrays.toString(args));
+          }
+      }
+      """;
     createProjectSubFile("src/main/java/my/App.java", appClass);
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
@@ -100,35 +102,37 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   public void testJavaModuleRunConfiguration() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")
-    String appClass = "package my;\n" +
-                      "import java.io.BufferedReader;\n" +
-                      "import java.io.IOException;\n" +
-                      "import java.io.InputStream;\n" +
-                      "import java.io.InputStreamReader;\n" +
-                      "import java.nio.charset.StandardCharsets;\n" +
-                      "\n" +
-                      "\n" +
-                      "public class App {\n" +
-                      "    public static void main(String[] args) throws IOException {\n" +
-                      "      String fileContent = new App().readFile();\n" +
-                      "      System.out.println(\"File Content: \" + fileContent" +
-                      ");\n" +
-                      "    }\n" +
-                      "    \n" +
-                      "    public String readFile() throws IOException {\n" +
-                      "      try (InputStream is =\n" +
-                      "             getClass().getClassLoader().getResourceAsStream(\"file.txt\")) {\n" +
-                      "  if (is == null) return null;\n" +
-                      "        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));\n" +
-                      "        return bufferedReader.readLine();\n" +
-                      "      }\n" +
-                      "    }\n" +
-                      "}\n";
+    String appClass = """
+      package my;
+      import java.io.BufferedReader;
+      import java.io.IOException;
+      import java.io.InputStream;
+      import java.io.InputStreamReader;
+      import java.nio.charset.StandardCharsets;
+
+
+      public class App {
+          public static void main(String[] args) throws IOException {
+            String fileContent = new App().readFile();
+            System.out.println("File Content: " + fileContent);
+          }
+         \s
+          public String readFile() throws IOException {
+            try (InputStream is =
+                   getClass().getClassLoader().getResourceAsStream("file.txt")) {
+        if (is == null) return null;
+              BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+              return bufferedReader.readLine();
+            }
+          }
+      }
+      """;
     createProjectSubFile("src/main/java/my/App.java", appClass);
     @Language("Java")
-    final String module = "module my {\n" +
-                           " exports my;\n" +
-                           "}";
+    final String module = """
+      module my {
+       exports my;
+      }""";
     createProjectSubFile("src/main/java/module-info.java", module);
     createProjectSubFile("src/main/resources/file.txt", "content\n");
 

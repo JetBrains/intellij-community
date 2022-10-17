@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
@@ -50,6 +52,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -76,13 +79,13 @@ interface RunConfigurationTemplateProvider {
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    const val CONFIGURATION = "configuration"
-    const val NAME_ATTR = "name"
+    const val CONFIGURATION: String = "configuration"
+    const val NAME_ATTR: String = "name"
 
-    internal val LOG = logger<RunManagerImpl>()
+    internal val LOG: Logger = logger<RunManagerImpl>()
 
     @JvmStatic
-    fun getInstanceImpl(project: Project) = getInstance(project) as RunManagerImpl
+    fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
 
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
       return environment.runnerAndConfigurationSettings?.let { canRunConfiguration(it, environment.executor) } ?: false
@@ -169,7 +172,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   })
 
-  internal val schemeManagerIprProvider = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider: SchemeManagerIprProvider? = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
@@ -212,7 +215,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   init {
     val messageBusConnection = project.messageBus.connect()
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
+    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() || event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
           clearSelectedConfigurationIcon()
@@ -444,7 +447,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             selectedConfigurationId = newId
           }
 
-          listManager.updateConfigurationId(it, newId)
+ //         listManager.updateConfigurationId(it, newId)
         }
       }
 
@@ -738,7 +741,19 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  protected open fun addExtensionPointListeners() {
+  @VisibleForTesting
+  protected open fun onFirstLoadingStarted() {
+    SyntheticConfigurationTypeProvider.EP_NAME.point.addExtensionPointListener(
+      object : ExtensionPointListener<SyntheticConfigurationTypeProvider> {
+
+        override fun extensionAdded(extension: SyntheticConfigurationTypeProvider, pluginDescriptor: PluginDescriptor) {
+          extension.configurationTypes
+        }
+      }, true, this)
+  }
+
+  @VisibleForTesting
+  protected open fun onFirstLoadingFinished() {
     if (ProjectManagerImpl.isLight(project)) {
       return
     }
@@ -777,25 +792,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun noStateLoaded() {
-    val first = isFirstLoadState.getAndSet(false)
+    val isFirstLoadState = isFirstLoadState.getAndSet(false)
+    if (isFirstLoadState) {
+      onFirstLoadingStarted()
+    }
+
     loadSharedRunConfigurations()
     runConfigurationFirstLoaded()
-    eventPublisher.stateLoaded(this, first)
+    eventPublisher.stateLoaded(this, isFirstLoadState)
 
-    if (first) {
-      addExtensionPointListeners()
+    if (isFirstLoadState) {
+      onFirstLoadingFinished()
     }
   }
 
   override fun loadState(parentNode: Element) {
     config.migrateToAdvancedSettings()
-    val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
+    val oldSelectedConfigurationId = if (!isFirstLoadState) selectedConfigurationId else null
     if (isFirstLoadState) {
-      oldSelectedConfigurationId = null
+      onFirstLoadingStarted()
     }
     else {
-      oldSelectedConfigurationId = selectedConfigurationId
       clear(false)
     }
 
@@ -858,14 +876,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     runConfigurationFirstLoaded()
     fireBeforeRunTasksUpdated()
 
-    if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+    if (oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected(selectedConfiguration)
     }
 
     eventPublisher.stateLoaded(this, isFirstLoadState)
 
     if (isFirstLoadState) {
-      addExtensionPointListeners()
+      onFirstLoadingFinished()
     }
   }
 
@@ -1021,8 +1039,10 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
-                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(ownTasks = result ?: emptyList(),
+                                                                     templateTasks = getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true,
+                                                                     isDisableTemplateTasks = false)
         return
       }
     }
@@ -1030,23 +1050,25 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     configuration.beforeRunTasks = result ?: emptyList()
   }
 
-  @JvmOverloads
   fun getFactory(
     typeId: String?,
     factoryId: String?,
     checkUnknown: Boolean = false,
   ): ConfigurationFactory {
-    return idToType.value[typeId]?.let { getFactory(it, factoryId) }
-           ?: UnknownConfigurationType.getInstance().also {
-             if (checkUnknown && typeId != null) {
-               UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
-                 CONFIGURATION_TYPE_FEATURE_ID,
-                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
-                 typeId,
-                 null
-               )
-             }
-           }
+    var factory = idToType.value.get(typeId)?.let { getFactory(it, factoryId) }
+    if (factory != null) {
+      return factory
+    }
+
+    factory = UnknownConfigurationType.getInstance()
+    if (checkUnknown && typeId != null) {
+      UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(UnknownFeature(
+        CONFIGURATION_TYPE_FEATURE_ID,
+        ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
+        typeId,
+      ))
+    }
+    return factory
   }
 
   fun getFactory(type: ConfigurationType, factoryId: String?): ConfigurationFactory? {

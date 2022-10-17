@@ -32,6 +32,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
@@ -94,7 +95,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val (changedSources, builder) = loadAndReportErrors { serializers.reloadFromChangedFiles(changes, fileContentReader, it) }
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", changedSources)
-    if (changedSources.isEmpty() && builder.isEmpty()) return
+    if (changedSources.isEmpty() && !builder.hasChanges()) return
 
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
@@ -174,7 +175,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         }
       }
     })
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach { change ->
@@ -185,7 +186,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  suspend fun loadProjectToEmptyStorage(project: Project): Pair<EntityStorage, List<EntitySource>>? {
+  suspend fun loadProjectToEmptyStorage(project: Project): Pair<MutableEntityStorage, List<EntitySource>>? {
     val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     activity = startActivity("project files loading", ActivityCategory.DEFAULT)
@@ -198,7 +199,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
-      return builder.toSnapshot() to sourcesToUpdate
+      return builder to sourcesToUpdate
     }
     else {
       childActivity?.end()

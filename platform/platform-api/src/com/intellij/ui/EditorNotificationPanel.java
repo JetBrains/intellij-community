@@ -75,6 +75,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     this(null, backgroundColor);
   }
 
+  public EditorNotificationPanel(@Nullable Color backgroundColor, @NotNull Status status) {
+    this((FileEditor)null, backgroundColor, null, status);
+  }
+
   public EditorNotificationPanel(@Nullable FileEditor fileEditor,
                                  @Nullable Color backgroundColor) {
     this(fileEditor, backgroundColor, null);
@@ -82,6 +86,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey) {
     this((FileEditor)null, null, backgroundColorKey);
+  }
+
+  public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey, @NotNull Status status) {
+    this((FileEditor)null, null, backgroundColorKey, status);
   }
 
   /**
@@ -147,6 +155,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public EditorNotificationPanel(@NotNull Status status) {
     this((Editor)null, null, null, status);
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor, @NotNull Status status) {
+    this(fileEditor, null, null, status);
   }
 
   public EditorNotificationPanel(@Nullable FileEditor fileEditor,

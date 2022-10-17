@@ -10,9 +10,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author peter
- */
 public class SmartCompletionTemplateItem extends LiveTemplateLookupElementImpl implements TypedLookupItem {
   private final PsiElement myContext;
 

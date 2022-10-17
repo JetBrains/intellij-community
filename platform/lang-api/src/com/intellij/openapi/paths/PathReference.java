@@ -69,9 +69,9 @@ public class PathReference {
   public static String trimPath(final String url) {
     for (int i = 0; i < url.length(); i++) {
       switch (url.charAt(i)) {
-        case '?':
-        case '#':
+        case '?', '#' -> {
           return url.substring(0, i);
+        }
       }
     }
     return url;

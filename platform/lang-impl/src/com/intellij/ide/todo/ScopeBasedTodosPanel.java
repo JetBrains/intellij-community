@@ -25,6 +25,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,12 +33,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
+
   private static final @NonNls String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosPanel(final Project project, TodoPanelSettings settings, Content content){
-    super(project,settings,false,content);
+  public ScopeBasedTodosPanel(@NotNull Project project,
+                              @NotNull TodoPanelSettings settings,
+                              @NotNull Content content) {
+    super(project, settings, false, content);
+
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myScopes.getChildComponent().addActionListener(new ActionListener() {
       @Override
@@ -80,7 +85,8 @@ public class ScopeBasedTodosPanel extends TodoPanel {
   }
 
   @Override
-  protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+  protected @NotNull TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
+                                                       @NotNull Project project) {
     ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, project, myScopes);
     builder.init();
     return builder;

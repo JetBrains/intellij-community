@@ -14,7 +14,7 @@ interface NewProjectWizardLanguageData : NewProjectWizardBaseData {
   companion object {
     val KEY = Key.create<NewProjectWizardLanguageData>(NewProjectWizardLanguageData::class.java.name)
 
-    val NewProjectWizardStep.languageData get() = data.getUserData(KEY)!!
+    private val NewProjectWizardStep.languageData get() = data.getUserData(KEY)!!
 
     val NewProjectWizardStep.languageProperty get() = languageData.languageProperty
     val NewProjectWizardStep.language get() = languageData.language

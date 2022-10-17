@@ -33,6 +33,8 @@ private class ConvertMemberToExtensionFix(element: KtNamedFunction) : KotlinQuic
 
     override fun getFamilyName() = text
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         element?.also { ConvertMemberToExtensionIntention.convert(it) }
     }

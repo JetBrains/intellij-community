@@ -23,10 +23,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
-import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubUtil
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -38,11 +36,12 @@ class GHCloneDialogExtension : BaseCloneDialogExtension() {
   override fun getAccounts(): Collection<GithubAccount> = GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHCloneDialogExtensionComponent(project)
+    GHCloneDialogExtensionComponent(project, modalityState)
 }
 
-private class GHCloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
+private class GHCloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
   project,
+  modalityState,
   GithubAuthenticationManager.getInstance(),
   GithubApiRequestExecutorManager.getInstance()
 ) {

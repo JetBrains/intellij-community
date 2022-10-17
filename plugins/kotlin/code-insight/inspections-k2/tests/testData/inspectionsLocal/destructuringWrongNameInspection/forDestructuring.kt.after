@@ -1,0 +1,8 @@
+// WITH_STDLIB
+data class Foo(val a: String, val b: Int)
+
+fun bar(f: Foo) {
+    for ((r, b) in listOf(Foo("1", 2)) {
+
+    }
+}

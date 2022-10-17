@@ -67,7 +67,7 @@ fun GeneralCommandLine.setupPythonConsoleScriptInServerMode(sdkAdditionalData: S
   initializePydevConsoleScriptGroup((sdkAdditionalData as? PythonSdkAdditionalData)?.flavor).appendServerModeParameters(port)
 }
 
-private fun GeneralCommandLine.initializePydevConsoleScriptGroup(pythonSdkFlavor: PythonSdkFlavor?): ParamsGroup {
+private fun GeneralCommandLine.initializePydevConsoleScriptGroup(pythonSdkFlavor: PythonSdkFlavor<*>?): ParamsGroup {
   val group: ParamsGroup = parametersList.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT)?.apply { parametersList.clearAll() }
                            ?: parametersList.addParamsGroup(PythonCommandLineState.GROUP_SCRIPT)
 

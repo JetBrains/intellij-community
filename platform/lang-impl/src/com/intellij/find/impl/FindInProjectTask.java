@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramTextSearchService;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
@@ -74,9 +76,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author peter
- */
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 
@@ -202,9 +201,15 @@ final class FindInProjectTask {
     StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
                               new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
 
-    return virtualFile -> processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
-                                                         usagesBeingProcessed, reportedFirst, searcher,
-                                                         virtualFile);
+    ClientId currentClientId = ClientId.getCurrent();
+
+    return virtualFile -> {
+      try (AccessToken ignored = ClientId.withClientId(currentClientId)) {
+        return processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
+                                              usagesBeingProcessed, reportedFirst, searcher,
+                                              virtualFile);
+      }
+    };
   }
 
   private boolean processFindInFilesUsagesInFile(@NotNull FindUsagesProcessPresentation processPresentation,

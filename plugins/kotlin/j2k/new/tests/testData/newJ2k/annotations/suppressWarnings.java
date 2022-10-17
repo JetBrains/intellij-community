@@ -11,4 +11,7 @@ public class A {
     @SuppressWarnings("unused")
     public void a(@SuppressWarnings("ALL") int i) {
     }
+
+    @SuppressWarnings("HardCodedStringLiteral")
+    public String s = "hello";
 }

@@ -83,8 +83,8 @@ class KotlinFacetEditorGeneralTab(
         lateinit var targetPlatformLabel: JLabel //JTextField?
         var targetPlatformsCurrentlySelected: TargetPlatform? = null
         private lateinit var projectSettingsLink: HoverHyperlinkLabel
-        lateinit var targetPlatformFacetLabel: JLabel
-        lateinit var useProjectSettingsWarningLabel: JLabel
+        private lateinit var targetPlatformFacetLabel: JLabel
+        private lateinit var useProjectSettingsWarningLabel: JLabel
 
         @Volatile
         private var isInTargetPlatformChangeAction = false

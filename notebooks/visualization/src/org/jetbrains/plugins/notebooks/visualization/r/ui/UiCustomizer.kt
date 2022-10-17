@@ -27,7 +27,6 @@ interface UiCustomizer {
 
   fun buildInlayProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Editor): JComponent?
 
-  @JvmDefault
   val isResizeOutputToPreviewHeight: Boolean
     get() = true
 

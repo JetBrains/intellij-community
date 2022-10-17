@@ -174,7 +174,7 @@ internal class MavenWrapperSupport {
 
 
   companion object {
-    val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
+    private val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
       val wrapperProperties = getWrapperProperties(baseDir) ?: return null

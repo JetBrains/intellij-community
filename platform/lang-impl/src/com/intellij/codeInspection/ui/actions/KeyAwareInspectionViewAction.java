@@ -140,19 +140,20 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       final PsiElement context;
       final AnalysisScope scope;
       switch (files.size()) {
-        case 0:
+        case 0 -> {
           context = null;
           scope = view.getScope();
-          break;
-        case 1:
+        }
+        case 1 -> {
           final PsiFile theFile = ContainerUtil.getFirstItem(files);
           LOG.assertTrue(theFile != null);
           context = theFile;
           scope = new AnalysisScope(theFile);
-          break;
-        default:
+        }
+        default -> {
           context = null;
           scope = new AnalysisScope(view.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
+        }
       }
 
       RunInspectionIntention.selectScopeAndRunInspection(Objects.requireNonNull(getToolWrapper(e)).getShortName(), scope, useModule ? module : null, context, view.getProject());

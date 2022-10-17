@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.CodeStyleBundle;
@@ -171,9 +171,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myDocument = document;
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
-      myInitialModificationStamp = document.getModificationStamp();
       myQuickFormat = quickFormat;
       FileDocumentManager.getInstance().saveDocument(myDocument);
+      myInitialModificationStamp = document.getModificationStamp();
     }
 
     @Override

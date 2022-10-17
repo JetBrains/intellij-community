@@ -6,9 +6,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class PrattParsingUtil {
   private PrattParsingUtil() {
   }

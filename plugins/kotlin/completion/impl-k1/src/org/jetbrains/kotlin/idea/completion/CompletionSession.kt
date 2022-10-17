@@ -102,7 +102,7 @@ abstract class CompletionSession(
     }
 
     protected val bindingContext = CompletionBindingContextProvider.getInstance(project).getBindingContext(position, resolutionFacade)
-    protected val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
+    private val inDescriptor = position.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
 
     private val kotlinIdentifierStartPattern = StandardPatterns.character().javaIdentifierStart().andNot(singleCharPattern('$'))
     private val kotlinIdentifierPartPattern = StandardPatterns.character().javaIdentifierPart().andNot(singleCharPattern('$'))
@@ -304,7 +304,7 @@ abstract class CompletionSession(
 
         sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, PreferLessParametersWeigher)
 
-        sorter = sorter.weighBefore("prefix", KotlinUnwantedLookupElementWeigher)
+        sorter = sorter.weighBefore("prefix", K1SoftDeprecationWeigher)
 
         sorter = if (expectedInfos.all { it.fuzzyType?.type?.isUnit() == true }) {
             sorter.weighBefore("prefix", PreferDslMembers)
@@ -315,7 +315,7 @@ abstract class CompletionSession(
         return sorter
     }
 
-    protected fun calcContextForStatisticsInfo(): String? {
+    private fun calcContextForStatisticsInfo(): String? {
         if (expectedInfos.isEmpty()) return null
 
         var context = expectedInfos

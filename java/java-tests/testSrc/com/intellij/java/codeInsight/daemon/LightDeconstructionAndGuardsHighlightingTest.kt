@@ -20,6 +20,10 @@ class LightDeconstructionAndGuardsHighlightingTest : LightJavaCodeInsightFixture
     doTest()
   }
 
+  fun testImplicitType() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

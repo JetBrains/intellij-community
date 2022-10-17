@@ -70,15 +70,12 @@ public class GrKindWeigher extends CompletionWeigher {
     final PsiElement parent = position.getParent();
     final PsiElement qualifier = parent instanceof GrReferenceElement ? ((GrReferenceElement<?>)parent).getQualifier() : null;
     if (qualifier == null) {
-      if (o instanceof NamedArgumentDescriptor) {
-        switch (((NamedArgumentDescriptor)o).getPriority()) {
-          case ALWAYS_ON_TOP:
-            return NotQualifiedKind.onTop;
-          case AS_LOCAL_VARIABLE:
-            return NotQualifiedKind.local;
-          default:
-            return NotQualifiedKind.unknown;
-        }
+      if (o instanceof NamedArgumentDescriptor descriptor) {
+        return switch (descriptor.getPriority()) {
+          case ALWAYS_ON_TOP -> NotQualifiedKind.onTop;
+          case AS_LOCAL_VARIABLE -> NotQualifiedKind.local;
+          default -> NotQualifiedKind.unknown;
+        };
       }
       if (o instanceof PsiVariable && !(o instanceof PsiField)) {
         return NotQualifiedKind.local;
@@ -91,27 +88,27 @@ public class GrKindWeigher extends CompletionWeigher {
 
       if (isPriorityKeyword(o)) return NotQualifiedKind.local;
       if (isLightElement(o)) return NotQualifiedKind.unknown;
-      if (o instanceof PsiClass) {
-        if (((PsiClass)o).isAnnotationType() && GrMainCompletionProvider.AFTER_AT.accepts(position)) {
+      if (o instanceof PsiClass cls) {
+        if (cls.isAnnotationType() && GrMainCompletionProvider.AFTER_AT.accepts(position)) {
           final GrAnnotation annotation = PsiTreeUtil.getParentOfType(position, GrAnnotation.class);
           if (annotation != null) {
             PsiElement annoParent = annotation.getParent();
             PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
             PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
-            if (AnnotationTargetUtil.findAnnotationTarget((PsiClass)o, elementTypeFields) != null) {
+            if (AnnotationTargetUtil.findAnnotationTarget(cls, elementTypeFields) != null) {
               return NotQualifiedKind.restrictedClass;
             }
           }
         }
         if (GrMainCompletionProvider.IN_CATCH_TYPE.accepts(position) &&
-            InheritanceUtil.isInheritor((PsiClass)o, CommonClassNames.JAVA_LANG_THROWABLE)) {
+            InheritanceUtil.isInheritor(cls, CommonClassNames.JAVA_LANG_THROWABLE)) {
           return NotQualifiedKind.restrictedClass;
         }
       }
-      if (o instanceof PsiMember) {
-        final PsiClass containingClass = ((PsiMember)o).getContainingClass();
-        if (isAccessor((PsiMember)o)) return NotQualifiedKind.accessor;
-        if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
+      if (o instanceof PsiMember member) {
+        final PsiClass containingClass = member.getContainingClass();
+        if (isAccessor(member)) return NotQualifiedKind.accessor;
+        if (o instanceof PsiClass cls && cls.getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
         if (o instanceof PsiClass) return NotQualifiedKind.innerClass;
         if (PsiTreeUtil.isContextAncestor(containingClass, position, false)) return NotQualifiedKind.currentClassMember;
         return NotQualifiedKind.member;
@@ -137,7 +134,6 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static boolean isPriorityKeyword(Object o) {
-    //noinspection SuspiciousMethodCalls
     return PRIORITY_KEYWORDS.contains(o);
   }
 

@@ -151,16 +151,16 @@ class AddFile(private val pathString: String) : PathEditBase(encodePath(pathStri
   }
 }
 
-class AddLoadedFile(path: String, private val content: ByteArray, private val size: Int = content.size, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(
+class AddLoadedFile(path: String, private val content: ByteArray, private val lastModified: Long = System.currentTimeMillis()) : PathEditBase(
     encodePath(path)) {
   override fun apply(entry: DirCacheEntry, repository: Repository) {
     entry.fileMode = FileMode.REGULAR_FILE
-    entry.length = size
+    entry.length = content.size
     entry.lastModified = lastModified
 
     val inserter = repository.newObjectInserter()
     inserter.use {
-      entry.setObjectId(it.insert(Constants.OBJ_BLOB, content, 0, size))
+      entry.setObjectId(it.insert(Constants.OBJ_BLOB, content))
       it.flush()
     }
   }
@@ -228,9 +228,9 @@ fun Repository.deleteAllFiles(deletedSet: MutableSet<String>? = null, fromWorkin
   }
 }
 
-fun Repository.writePath(path: String, bytes: ByteArray, size: Int = bytes.size) {
-  edit(AddLoadedFile(path, bytes, size))
-  FileUtil.writeToFile(File(workTree, path), bytes, 0, size)
+fun Repository.writePath(path: String, bytes: ByteArray) {
+  edit(AddLoadedFile(path, bytes))
+  FileUtil.writeToFile(File(workTree, path), bytes)
 }
 
 fun Repository.deletePath(path: String, isFile: Boolean = true, fromWorkingTree: Boolean = true) {

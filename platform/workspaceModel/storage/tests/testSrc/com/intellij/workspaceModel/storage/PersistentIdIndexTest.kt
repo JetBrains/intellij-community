@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.entities.test.api.PersistentIdEntityImpl
 import com.intellij.workspaceModel.storage.entities.test.addPersistentIdEntity
+import com.intellij.workspaceModel.storage.entities.test.api.PersistentIdEntityImpl
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert
 import org.junit.Test
@@ -67,7 +67,7 @@ class PersistentIdIndexTest {
     val diff = createBuilderFrom(builder.toSnapshot())
     Assert.assertEquals(entity.id, diff.indexes.persistentIdIndex.getIdsByEntry(persistentId))
 
-    diff.removeEntity(entity)
+    diff.removeEntity(entity.from(diff))
     Assert.assertEquals(entity.id, builder.indexes.persistentIdIndex.getIdsByEntry(persistentId))
     Assert.assertNull(diff.indexes.persistentIdIndex.getIdsByEntry(persistentId))
 
@@ -88,7 +88,7 @@ class PersistentIdIndexTest {
     val diff = createBuilderFrom(builder.toSnapshot())
     Assert.assertEquals(entity.id, diff.indexes.persistentIdIndex.getIdsByEntry(persistentId))
 
-    val newEntity = diff.modifyEntity(entity) {
+    val newEntity = diff.modifyEntity(entity.from(diff)) {
       data = newName
     }
     val newPersistentId = diff.indexes.persistentIdIndex.getEntryById((newEntity as PersistentIdEntityImpl).id)

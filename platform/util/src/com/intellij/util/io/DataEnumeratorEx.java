@@ -4,6 +4,9 @@ package com.intellij.util.io;
 import java.io.IOException;
 
 public interface DataEnumeratorEx<Data> extends DataEnumerator<Data> {
+  /**
+   * id=0 used as NULL (i.e. absent) value
+   */
   int NULL_ID = 0;
 
   int tryEnumerate(Data name) throws IOException;

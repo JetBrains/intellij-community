@@ -56,7 +56,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     if (!show) return
 
     if (!::popup.isInitialized || popup.isDisposed) {
-      component = IntentionPreviewComponent(project)
+      component = IntentionPreviewComponent(originalPopup ?: project)
 
       component.multiPanel.select(LOADING_PREVIEW, true)
 
@@ -118,7 +118,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         editorsToRelease.addAll(editors)
         select(index, editors)
       }
-      is IntentionPreviewInfo.Html -> {
+      is Html -> {
         select(index, html = result)
       }
       else -> {
@@ -154,14 +154,14 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun cancel(): Boolean {
-    editorsToRelease.forEach { EditorFactory.getInstance().releaseEditor(it) }
+    editorsToRelease.forEach { editor -> EditorFactory.getInstance().releaseEditor(editor) }
     editorsToRelease.clear()
     component.removeAll()
     show = false
     return true
   }
 
-  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: IntentionPreviewInfo.Html? = null) {
+  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: Html? = null) {
     justActivated = false
     popupWindow?.isVisible = true
     component.stopLoading()

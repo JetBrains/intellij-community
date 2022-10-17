@@ -109,15 +109,7 @@ public class PinyinMatcherDataTest {
     }
   }
 
-  private static final class Mapping {
-    private final int codePoint;
-    private final long chars;
-
-    Mapping(int codePoint, long chars) {
-      this.codePoint = codePoint;
-      this.chars = chars;
-    }
-
+  private record Mapping(int codePoint, long chars) {
     String charString() {
       return BitSet.valueOf(new long[]{chars}).stream().mapToObj(bit -> Character.toString((char)(bit + 'a')))
         .collect(Collectors.joining());
@@ -139,16 +131,15 @@ public class PinyinMatcherDataTest {
       if (codePoint > 0xA000) return null;
       String[] readings;
       switch (parts[1]) {
-        case "kMandarin":
-          readings = new String[]{parts[2]};
-          break;
-        case "kHanyuPinyin":
+        case "kMandarin" -> readings = new String[]{parts[2]};
+        case "kHanyuPinyin" -> {
           int colonPos = parts[2].indexOf(':');
           if (colonPos == -1) return null;
           readings = parts[2].substring(colonPos + 1).split(",");
-          break;
-        default:
+        }
+        default -> {
           return null;
+        }
       }
       long encoded = 0;
       for (String reading : readings) {

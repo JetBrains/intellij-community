@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.annotations.Abstract
 import kotlin.reflect.KClass
@@ -141,42 +142,6 @@ interface EntitySource {
 interface DummyParentEntitySource : EntitySource
 
 /**
- * Base interface for entities which may need to find all entities referring to them.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ReferableWorkspaceEntity : WorkspaceEntity {
-  /**
-   * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
-   */
-  fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-@Abstract
-interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
-  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>)
-}
-
-/**
- * Returns all entities of type [R] which [property] refers to this entity.
- */
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : ReferableWorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): Sequence<R> {
-  return referrers(R::class.java, property.name)
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity> E.referrersx(property: KProperty1<R, E?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-@Deprecated("Old interface for the extension fields calculation. Entities should be regenerated.")
-inline fun <E : WorkspaceEntity, reified R : WorkspaceEntity, reified X : List<E>> E.referrersy(property: KProperty1<R, X?>): List<R> {
-  return (this as ReferableWorkspaceEntity).referrers(R::class.java, property.name).toList()
-}
-
-/**
  * Represents a reference to an entity inside of [WorkspaceEntity].
  *
  * The reference can be obtained via [EntityStorage.createReference].
@@ -216,6 +181,7 @@ interface EntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.
@@ -245,8 +211,16 @@ interface EntityStorageSnapshot : EntityStorage {
  * reading its state after modifications.
  */
 interface MutableEntityStorage : EntityStorage {
+  @Deprecated("The name may be misleading, use !hasChanges() instead", ReplaceWith("!hasChanges()"))
   fun isEmpty(): Boolean
-  fun <T : WorkspaceEntity> addEntity(entity: T)
+
+  /**
+   * Returns `true` if there are changes recorded in this storage after its creation. Note, that this method may return `true` if these
+   * changes actually don't modify the resulting set of entities, you may use [hasSameEntities] to perform more sophisticated check.
+   */
+  fun hasChanges(): Boolean
+  
+  infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
@@ -265,12 +239,22 @@ interface MutableEntityStorage : EntityStorage {
   fun addDiff(diff: MutableEntityStorage)
 
   /**
+   * Returns `true` if this instance contains entities with the same properties as [original] storage it was created from. 
+   * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
+   * with the same properties was added.
+   */
+  fun hasSameEntities(original: EntityStorage): Boolean
+
+  /**
    * Please see [EntityStorage.getExternalMapping] for naming conventions
    */
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
   fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
 
   val modificationCount: Long
+
+  @ApiStatus.Internal
+  fun setUseNewRbs(value: Boolean)
 
   companion object {
     @JvmStatic
@@ -314,3 +298,14 @@ sealed class EntityChange<T : WorkspaceEntity> {
 open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
 class NotGeneratedMethodRuntimeException(val methodName: String)
   : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")
+
+
+// Internal tools, not sure if we can open them
+
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T: WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
+}

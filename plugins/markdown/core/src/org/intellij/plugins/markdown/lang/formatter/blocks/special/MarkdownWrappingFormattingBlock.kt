@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.lang.psi.util.children
  *
  * Allows wrapping paragraphs around right margin. So, it kind of emulates reflow formatting for paragraphs.
  */
-internal class MarkdownWrappingFormattingBlock(
+internal open class MarkdownWrappingFormattingBlock(
   settings: CodeStyleSettings,
   spacing: SpacingBuilder,
   node: ASTNode,
@@ -28,45 +28,51 @@ internal class MarkdownWrappingFormattingBlock(
     get() = node.text.count { it == '\n' }
 
   override fun buildChildren(): List<Block> {
-    val customSettings = obtainCustomSettings()
-    val wrapType = when {
-      customSettings.WRAP_TEXT_IF_LONG -> WrapType.NORMAL
-      else -> WrapType.NONE
-    }
-    val wrapping = Wrap.createWrap(wrapType, false)
     val filtered = MarkdownBlocks.filterFromWhitespaces(node.children())
+    val childWrap = createWrapForChildren()
     val result = ArrayList<Block>()
     for (node in filtered) {
       when (node.elementType) {
-        MarkdownTokenTypes.TEXT -> processTextElement(result, node, wrapping)
+        MarkdownTokenTypes.TEXT -> processTextElement(result, node, childWrap, wrapFirstElement = true)
         else -> result.add(MarkdownBlocks.create(node, settings, spacing) { alignment })
       }
     }
     return result
   }
 
-  private fun processTextElement(result: MutableCollection<Block>, node: ASTNode, wrapping: Wrap) {
+  private fun createWrapForChildren(): Wrap? {
+    val wrapType = when {
+      obtainCustomSettings().WRAP_TEXT_IF_LONG -> WrapType.NORMAL
+      else -> WrapType.NONE
+    }
+    return Wrap.createWrap(wrapType, false)
+  }
+
+  protected open fun processTextElement(result: MutableCollection<Block>, node: ASTNode, wrapping: Wrap?, wrapFirstElement: Boolean) {
     val text = node.text
     val shift = node.textRange.startOffset
     val splits = splitTextForWrapping(text)
-    for (split in splits) {
+    val noneWrapping = Wrap.createWrap(WrapType.NONE, false)
+    for ((index, split) in splits.withIndex()) {
       // If there is a single split with punctuation character inside,
       // it means that it is surrounded by a non-text elements,
       // whitespaces, or it was at the start or end of the text.
       // In all of those cases the punctuation shouldn't be wrapped at all.
       // (had to check more than one character for '...'-like punctuation)
       val isPunctuation = split.subSequence(text).all { it.isPunctuation() }
+      val isNonWrappingFirstElement = index == 0 && !wrapFirstElement
       val actualWrapping = when {
-        isPunctuation -> Wrap.createWrap(WrapType.NONE, false)
+        isPunctuation || isNonWrappingFirstElement -> noneWrapping
         else -> wrapping
       }
-      val block = MarkdownRangedFormattingBlock(node, split.shiftRight(shift), settings, spacing, alignment, actualWrapping)
+      val range = split.shiftRight(shift)
+      val block = MarkdownRangedFormattingBlock(node, range, settings, spacing, alignment, actualWrapping)
       result.add(block)
     }
   }
 
   companion object {
-    private fun splitTextForWrapping(text: String): Sequence<TextRange> {
+    internal fun splitTextForWrapping(text: String): Sequence<TextRange> {
       return sequence {
         var start = -1
         var length = -1

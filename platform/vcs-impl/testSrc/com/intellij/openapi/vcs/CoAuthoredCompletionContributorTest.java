@@ -18,18 +18,20 @@ public class CoAuthoredCompletionContributorTest extends LightPlatformCodeInsigh
   public void testCoAuthored() {
     configure("Test\n\nCo-<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("Test\n" +
-                          "\n" +
-                          "Co-authored-by: ");
+    myFixture.checkResult("""
+                            Test
+
+                            Co-authored-by:\s""");
   }
 
   @Test
   public void testSignedOff() {
     configure("Test\n\nSig<caret>");
     myFixture.completeBasic();
-    myFixture.checkResult("Test\n" +
-                          "\n" +
-                          "Signed-off-by: ");
+    myFixture.checkResult("""
+                            Test
+
+                            Signed-off-by:\s""");
   }
 
   @Test

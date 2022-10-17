@@ -2,7 +2,10 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -20,7 +23,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -32,7 +35,6 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Point
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
@@ -62,28 +64,8 @@ abstract class NonModalCommitPanel(
     component.isOpaque = false
   }
 
-
-
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
-    editorField.addSettingsProvider {
-      it.setBorder(emptyLeft(6))
-
-      val jbScrollPane = it.scrollPane as? JBScrollPane
-      jbScrollPane?.statusComponent = createToolbarWithHistoryAction(editorField).component
-    }
-  }
-
-  private fun createToolbarWithHistoryAction(target: JComponent): ActionToolbar {
-    val actions = ActionManager.getInstance().getAction("Vcs.MessageActionGroup") as ActionGroup
-
-    val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
-      targetComponent = this@NonModalCommitPanel
-      setReservePlaceAutoPopupIcon(false)
-      component.border = BorderFactory.createEmptyBorder()
-      component.isOpaque = false
-      targetComponent = target
-    }
-    return editorToolbar
+    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -92,7 +74,12 @@ abstract class NonModalCommitPanel(
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+  fun getDataFromProviders(dataId: String): Any? {
+    for (dataProvider in dataProviders) {
+      return dataProvider.getData(dataId) ?: continue
+    }
+    return null
+  }
 
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
@@ -122,7 +109,7 @@ abstract class NonModalCommitPanel(
     }
     centerPanel
       .addToCenter(commitMessage)
-      .addToBottom(JPanel(VerticalLayout(0)).apply {
+      .addToBottom(JBPanel<JBPanel<*>>(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
         bottomPanelBuilder()
       })
@@ -140,7 +127,7 @@ abstract class NonModalCommitPanel(
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
+    val commitOptionsPanel = CommitOptionsPanel(actionNameSupplier = { actionName }, nonFocusable = false).apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 

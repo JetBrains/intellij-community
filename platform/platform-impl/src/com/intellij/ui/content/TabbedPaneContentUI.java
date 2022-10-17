@@ -25,8 +25,6 @@ import java.util.List;
 
 /**
  * @author Eugene Belyaev
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";

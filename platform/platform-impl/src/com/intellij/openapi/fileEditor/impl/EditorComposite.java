@@ -1,14 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,13 +55,15 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite extends UserDataHolderBase implements Disposable {
+public class EditorComposite extends FileEditorComposite implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
    * File for which composite is created
    */
   private final @NotNull VirtualFile myFile;
+
+  private final @NotNull ClientId myClientId;
 
   private final @NotNull Project myProject;
   /**
@@ -74,11 +74,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * Whether the composite is opened as preview tab or not
    */
   private boolean myPreview;
-  /**
-   * This is initial timestamp of the file. It uses to implement
-   * "close non modified editors first" feature.
-   */
-  private final long myInitialFileTimeStamp;
   private TabbedPaneWrapper myTabbedPaneWrapper;
   private final @NotNull MyComponent myComponent;
   private final FocusWatcher myFocusWatcher;
@@ -105,12 +100,16 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
                   final @NotNull FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
+    myClientId = ClientId.getCurrent();
     myEditorsWithProviders.addAll(editorsWithProviders);
     for (FileEditorWithProvider editorWithProvider : myEditorsWithProviders) {
-      FileEditor.FILE_KEY.set(editorWithProvider.getFileEditor(), myFile);
+      FileEditor editor = editorWithProvider.getFileEditor();
+      FileEditor.FILE_KEY.set(editor, myFile);
+      if (!ClientId.isLocal(myClientId)) {
+        ClientFileEditorManager.assignClientId(editor, myClientId);
+      }
     }
     myFileEditorManager = fileEditorManager;
-    myInitialFileTimeStamp = myFile.getTimeStamp();
 
     myProject = fileEditorManager.getProject();
     Disposer.register(myProject, this);
@@ -176,8 +175,9 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     return getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
   }
 
+  @Override
   public @NotNull List<@NotNull FileEditorProvider> getAllProviders() {
-    return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getProvider());
+    return ContainerUtil.map(getAllEditorsWithProviders(), FileEditorWithProvider::getProvider);
   }
 
   private @NotNull TabbedPaneWrapper.AsJBTabs createTabbedPaneWrapper(MyComponent myComponent) {
@@ -236,6 +236,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     }
   }
 
+  @Override
   public boolean isPreview() {
     return myPreview;
   }
@@ -296,14 +297,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   }
 
   /**
-   * @return initial time stamp of the file (on moment of creation of
-   * the composite)
-   */
-  public long getInitialFileTimeStamp() {
-    return myInitialFileTimeStamp;
-  }
-
-  /**
    * @return editors which are opened in the composite. <b>Do not modify
    * this array</b>.
    * @deprecated use {@link #getAllEditors()}
@@ -313,12 +306,13 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     return getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @NotNull List<@NotNull FileEditor> getAllEditors() {
-    return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getFileEditor());
+    return ContainerUtil.map(getAllEditorsWithProviders(), FileEditorWithProvider::getFileEditor);
   }
 
   public @NotNull List<@NotNull FileEditorWithProvider> getAllEditorsWithProviders() {
-    return Collections.unmodifiableList(new SmartList<>(myEditorsWithProviders));
+    return List.copyOf(myEditorsWithProviders);
   }
 
   @NotNull
@@ -480,15 +474,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   }
 
   /**
-   * @deprecated use {@link #getSelectedWithProvider()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
-    FileEditorWithProvider info = getSelectedWithProvider();
-    return Pair.create(info.getFileEditor(), info.getProvider());
-  }
-
-  /**
    * @return component which represents set of file editors in the UI
    */
   public @NotNull JComponent getComponent() {
@@ -506,7 +491,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * @return {@code true} if the composite contains at least one modified myEditor
    */
   public boolean isModified() {
-    return ContainerUtil.exists(getAllEditors(), editor -> editor.isModified());
+    return ContainerUtil.exists(getAllEditors(), FileEditor::isModified);
   }
 
   /**
@@ -577,6 +562,11 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return new VirtualFile[]{myFile};
       }
+      if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+        EditorWindow window = FileEditorManagerEx.getInstanceEx(myProject).getCurrentWindow();
+        EditorComposite composite = window != null ? window.getSelectedComposite(true) : null;
+        return composite != null ? composite.getSelectedEditor() : null;
+      }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
         Object data = ((DataProvider)component).getData(dataId);
@@ -604,6 +594,9 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     myEditorsWithProviders.add(editorWithProvider);
 
     FileEditor.FILE_KEY.set(editor, myFile);
+    if (!ClientId.isLocal(myClientId)) {
+      ClientFileEditorManager.assignClientId(editor, myClientId);
+    }
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myComponent);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());
@@ -661,13 +654,13 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
     LOG.assertTrue(selectedProviderIndex != -1);
     final FileEditorProvider[] providers = getProviders();
-    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
+    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex], myPreview);
   }
 
   /**
    * A mapper for old API with arrays and pairs
    */
-  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorComposite composite) {
+  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable FileEditorComposite composite) {
     if (composite == null) return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
 
     FileEditor[] editors = composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);

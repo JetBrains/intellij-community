@@ -123,7 +123,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
       final int size = line.length() + 1;
       final int indentSize = getIndentSize(line, totalMinIndent);
 
-      ranges.add(TextRange.create(size - indentSize).shiftRight(startOffset + indentSize));
+      ranges.add(TextRange.create(0, size - indentSize).shiftRight(startOffset + indentSize));
       startOffset += size;
     }
 

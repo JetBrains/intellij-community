@@ -109,6 +109,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }
   public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
   public void testPackageInfo() { doTestPackageInfo(); }
+  public void testPackageWithoutPackageInfo() { doTestPackageInfo(); }
   public void testPackageHtml() { doTestPackageInfo(); }
   public void testSyntheticEnumValues() { doTestAtCaret(); }
   public void testVariableDoc() { doTestAtCaret(); }
@@ -132,9 +133,10 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testRepeatableAnnotations() {
     useJava8();
     assertEquals(
-      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"a\"</span><span style=\"\">)</span>&nbsp;\n" +
-      "<span style=\"color:#808000;\">@</span><a href=\"psi_element://R\"><code><span style=\"color:#808000;\">R</span></code></a><span style=\"\">(</span><span style=\"color:#008000;font-weight:bold;\">\"b\"</span><span style=\"\">)</span>&nbsp;\n" +
-      "<span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">repeatableAnnotations</span>",
+      """
+        <span style="color:#808000;">@</span><a href="psi_element://R"><code><span style="color:#808000;">R</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"a"</span><span style="">)</span>&nbsp;
+        <span style="color:#808000;">@</span><a href="psi_element://R"><code><span style="color:#808000;">R</span></code></a><span style="">(</span><span style="color:#008000;font-weight:bold;">"b"</span><span style="">)</span>&nbsp;
+        <span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">repeatableAnnotations</span>""",
       new JavaDocInfoGenerator(getProject(), getTestClass()).generateSignature(getTestClass()));
   }
 

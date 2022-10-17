@@ -154,15 +154,17 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-32864
   public void testIndentationOfTripleQuotedFStringContent() {
-    doTestEnter("if True:\n" +
-                "    s = f\"\"\"\n" +
-                "        SELECT<caret>\n" +
-                "\"\"\"",
-                "if True:\n" +
-                "    s = f\"\"\"\n" +
-                "        SELECT\n" +
-                "        <caret>\n" +
-                "\"\"\""
+    doTestEnter("""
+                  if True:
+                      s = f""\"
+                          SELECT<caret>
+                  ""\"""",
+                """
+                  if True:
+                      s = f""\"
+                          SELECT
+                          <caret>
+                  ""\""""
                 );
   }
 
@@ -221,8 +223,10 @@ public class PyEditingTest extends PyTestCase {
 
   public void testEnterInStringFormatting() {  // PY-7039
     doTestEnter("foo += \"fooba<caret>r\" % foo\n",
-                "foo += \"fooba\" \\\n" +
-                "       \"r\" % foo\n");
+                """
+                  foo += "fooba" \\
+                         "r" % foo
+                  """);
   }
 
   public void testEnterInStatement() {
@@ -238,7 +242,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInTuple() {
-    doTestEnter("for x in 'a', <caret>'b': pass", "for x in 'a', \\\n         'b': pass");
+    doTestEnter("for x in 'a', <caret>'b': pass", "for x in 'a', \\\n        'b': pass");
   }
 
   public void testEnterInCodeWithErrorElements() {
@@ -286,10 +290,11 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterStubInDocstring() {  // CR-PY-144
-    runWithDocStringFormat(DocStringFormat.PLAIN, () -> doTestEnter("def foo():\n  \"\"\"<caret>", "def foo():\n" +
-                                                                                               "  \"\"\"\n" +
-                                                                                               "  \n" +
-                                                                                               "  \"\"\""));
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> doTestEnter("def foo():\n  \"\"\"<caret>", """
+      def foo():
+        ""\"
+       \s
+        ""\""""));
   }
 
   // PY-18486
@@ -440,9 +445,10 @@ public class PyEditingTest extends PyTestCase {
   public void testEndOfStringInParenth() {
     doTestEnter("print (\"foo\"<caret>\n" +
                 "    \"bar\")",
-                "print (\"foo\"\n" +
-                "       \n" +
-                "    \"bar\")");
+                """
+                  print ("foo"
+                        \s
+                      "bar")""");
   }
 
   public void testSlashAfterSlash() {
@@ -454,17 +460,19 @@ public class PyEditingTest extends PyTestCase {
   public void testComprehensionInReturn() {
     doTestEnter("def dbl():\n" +
                 "    return (<caret>(a, a) for a in [])",
-                "def dbl():\n" +
-                "    return (\n" +
-                "        (a, a) for a in [])");
+                """
+                  def dbl():
+                      return (
+                          (a, a) for a in [])""");
   }
 
   public void testParenthesizedInIf() {
     doTestEnter("if isinstance(bz_value, list) and <caret>(isinstance(bz_value[0], str)):\n" +
                 "    pass",
-                "if isinstance(bz_value, list) and \\\n" +
-                "        (isinstance(bz_value[0], str)):\n" +
-                "    pass");
+                """
+                  if isinstance(bz_value, list) and \\
+                          (isinstance(bz_value[0], str)):
+                      pass""");
   }
 
   public void testEmptyStringInParenthesis() {
@@ -476,9 +484,10 @@ public class PyEditingTest extends PyTestCase {
   public void testEmptyStringInParenthesis2() {
     doTestEnter("a = (''\n" +
                 "     <caret>'')",
-                "a = (''\n" +
-                "     \n" +
-                "     '')");
+                """
+                  a = (''
+                      \s
+                       '')""");
   }
 
   public void testBracesInString() {
@@ -490,44 +499,49 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterAfterDefKeywordInFunction() {
     doTestEnter("def <caret>func():\n" +
                 "    pass",
-                "def \\\n" +
-                "        func():\n" +
-                "    pass");
+                """
+                  def \\
+                          func():
+                      pass""");
   }
 
   public void testEnterBeforeColonInFunction() {
     doTestEnter("def func()<caret>:\n" +
                 "    pass",
-                "def func()\\\n" +
-                "        :\n" +
-                "    pass");
+                """
+                  def func()\\
+                          :
+                      pass""");
   }
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() <caret>-> int:\n" +
                                                                "    pass",
-                "def func() \\\n" +
-                "        -> int:\n" +
-                "    pass"));
+                                                                   """
+                                                                     def func() \\
+                                                                             -> int:
+                                                                         pass"""));
   }
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -><caret> int:\n" +
                                                                "    pass",
-                "def func() ->\\\n" +
-                "        int:\n" +
-                "    pass"));
+                                                                   """
+                                                                     def func() ->\\
+                                                                             int:
+                                                                         pass"""));
   }
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -<caret>> int:\n" +
                                                                "    pass",
-                "def func() -\n" +
-                "> int:\n" +
-                "    pass"));
+                                                                   """
+                                                                     def func() -
+                                                                     > int:
+                                                                         pass"""));
   }
 
   private void doTestEnter(String before, final String after) {
@@ -541,36 +555,40 @@ public class PyEditingTest extends PyTestCase {
   public void testContinuationIndentForFunctionArguments() {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
     doTestEnter("func(<caret>)",
-                "func(\n" +
-                "        <caret>\n" +
-                ")");
+                """
+                  func(
+                          <caret>
+                  )""");
   }
 
   // PY-20909
   public void testContinuationIndentInEmptyListLiteral() {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
     doTestEnter("[<caret>]",
-                "[\n" +
-                "        <caret>\n" +
-                "]");
+                """
+                  [
+                          <caret>
+                  ]""");
   }
 
   // PY-20909
   public void testContinuationIndentInEmptyDictLiteral() {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
     doTestEnter("{<caret>}",
-                "{\n" +
-                "        <caret>\n" +
-                "}");
+                """
+                  {
+                          <caret>
+                  }""");
   }
 
   // PY-20909
   public void testContinuationIndentInEmptyTupleLiteral() {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
     doTestEnter("(<caret>)",
-                "(\n" +
-                "        <caret>\n" +
-                ")");
+                """
+                  (
+                          <caret>
+                  )""");
   }
 
   // PY-21840
@@ -703,9 +721,10 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterInStringInTupleWithoutParenthesis() {
     doTestEnter("def hello_world():\n" +
                 "    return bar, 'so<caret>me'",
-                "def hello_world():\n" +
-                "    return bar, 'so' \\\n" +
-                "                'me'");
+                """
+                  def hello_world():
+                      return bar, 'so' \\
+                                  'me'""");
   }
 
   // PY-27178
@@ -795,17 +814,19 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-31343
   public void testInsertingColonRightBeforeParametersClosingParenthesisAtMultipleCarets() {
-    doTestTyping("def alpha(foo<caret>):\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "def bravo(foo<caret>):\n" +
-                 "    pass",
+    doTestTyping("""
+                   def alpha(foo<caret>):
+                       pass
+
+                   def bravo(foo<caret>):
+                       pass""",
                  ":",
-                 "def alpha(foo:):\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "def bravo(foo:):\n" +
-                 "    pass");
+                 """
+                   def alpha(foo:):
+                       pass
+
+                   def bravo(foo:):
+                       pass""");
   }
 
   public void testOverTypingColon() {
@@ -899,110 +920,129 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-42200
   public void testParenthesizedWithItemsEnterBeforeExistingItem() {
-    doTestEnter("with (<caret>foo() as baz,\n" +
-                "      foo() as bar\n" +
-                "):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo() as baz,\n" +
-                "      foo() as bar\n" +
-                "):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (<caret>foo() as baz,
+                        foo() as bar
+                  ):
+                      pass""",
+                """
+                  with (
+                      foo() as baz,
+                        foo() as bar
+                  ):
+                      pass""");
 
-    doTestEnter("with (\n" +
-                "    foo() as baz,<caret>foo() as bar\n" +
-                "):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo() as baz,\n" +
-                "    foo() as bar\n" +
-                "):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (
+                      foo() as baz,<caret>foo() as bar
+                  ):
+                      pass""",
+                """
+                  with (
+                      foo() as baz,
+                      foo() as bar
+                  ):
+                      pass""");
 
     doTestEnter("with (foo() as baz,<caret>foo() as bar):\n" +
                 "    pass",
-                "with (foo() as baz,\n" +
-                "      foo() as bar):\n" +
-                "    pass");
+                """
+                  with (foo() as baz,
+                        foo() as bar):
+                      pass""");
   }
 
   // PY-42200
   public void testParenthesizedWithItemsEnterBeforeClosingParenthesis() {
-    doTestEnter("with (foo(), \n" +
-                "      foo()<caret>):\n" +
-                "     pass",
-                "with (foo(), \n" +
-                "      foo()\n" +
-                "      <caret>):\n" +
-                "     pass");
+    doTestEnter("""
+                  with (foo(),\s
+                        foo()<caret>):
+                       pass""",
+                """
+                  with (foo(),\s
+                        foo()
+                        <caret>):
+                       pass""");
 
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = false;
-    doTestEnter("with (\n" +
-                "    foo() as baz,\n" +
-                "    foo() as bar<caret>):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo() as baz,\n" +
-                "    foo() as bar\n" +
-                "):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (
+                      foo() as baz,
+                      foo() as bar<caret>):
+                      pass""",
+                """
+                  with (
+                      foo() as baz,
+                      foo() as bar
+                  ):
+                      pass""");
 
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
-    doTestEnter("with (\n" +
-                "    foo() as baz,\n" +
-                "    foo() as bar<caret>):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo() as baz,\n" +
-                "    foo() as bar\n" +
-                "    ):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (
+                      foo() as baz,
+                      foo() as bar<caret>):
+                      pass""",
+                """
+                  with (
+                      foo() as baz,
+                      foo() as bar
+                      ):
+                      pass""");
   }
 
   // PY-42200
   public void testParenthesizedWithItemsEnterBeforeNonExistingItem() {
-    doTestEnter("with (foo(),<caret>\n" +
-                "      bar()):\n" +
-                "    pass",
-                "with (foo(),\n" +
-                "      <caret>\n" +
-                "      bar()):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (foo(),<caret>
+                        bar()):
+                      pass""",
+                """
+                  with (foo(),
+                        <caret>
+                        bar()):
+                      pass""");
 
-    doTestEnter("with (\n" +
-                "    foo(),<caret>\n" +
-                "    bar()\n" +
-                "):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo(),\n" +
-                "    <caret>\n" +
-                "    bar()\n" +
-                "):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (
+                      foo(),<caret>
+                      bar()
+                  ):
+                      pass""",
+                """
+                  with (
+                      foo(),
+                      <caret>
+                      bar()
+                  ):
+                      pass""");
   }
 
   // PY-42200
   public void testParenthesizedWithItemsEnterBeforeComment() {
-    doTestEnter("with (\n" +
-                "    foo(),<caret># comment\n" +
-                "    bar()\n" +
-                "):\n" +
-                "    pass",
-                "with (\n" +
-                "    foo(),\n" +
-                "    <caret># comment\n" +
-                "    bar()\n" +
-                "):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (
+                      foo(),<caret># comment
+                      bar()
+                  ):
+                      pass""",
+                """
+                  with (
+                      foo(),
+                      <caret># comment
+                      bar()
+                  ):
+                      pass""");
 
-    doTestEnter("with (foo(),<caret># comment\n" +
-                "      bar()):\n" +
-                "    pass",
-                "with (foo(),\n" +
-                "      <caret># comment\n" +
-                "      bar()):\n" +
-                "    pass");
+    doTestEnter("""
+                  with (foo(),<caret># comment
+                        bar()):
+                      pass""",
+                """
+                  with (foo(),
+                        <caret># comment
+                        bar()):
+                      pass""");
   }
 
   // PY-42200

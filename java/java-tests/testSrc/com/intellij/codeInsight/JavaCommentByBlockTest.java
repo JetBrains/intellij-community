@@ -95,16 +95,18 @@ public class JavaCommentByBlockTest extends LightPlatformCodeInsightTestCase {
   }
 
   public void testSelectionContainsJavadoc() {
-    doTestForText("class C {\n" +
-                  "    <selection>int a;\n" +
-                  "    /** doc */\n" +
-                  "    int b;<caret></selection>\n" +
-                  "}",
-                  "class C {\n" +
-                  "    <selection>/*int a;\n" +
-                  "    *//** doc *//*\n" +
-                  "    int b;*/<caret></selection>\n" +
-                  "}");
+    doTestForText("""
+                    class C {
+                        <selection>int a;
+                        /** doc */
+                        int b;<caret></selection>
+                    }""",
+                  """
+                    class C {
+                        <selection>/*int a;
+                        *//** doc *//*
+                        int b;*/<caret></selection>
+                    }""");
   }
 
   private void doTestForText(String before, String after) {

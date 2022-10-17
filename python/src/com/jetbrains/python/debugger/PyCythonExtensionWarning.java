@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -30,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
@@ -171,13 +175,48 @@ public class PyCythonExtensionWarning {
             final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
                                    ? PyBundle.message("debugger.cython.extension.permission.denied")
                                    : PyBundle.message("debugger.cython.extension.non.zero.exit.code", exitCode, result.getStderr());
-            UIUtil.invokeLaterIfNeeded(() -> showErrorDialog(project, message));
+            UIUtil.invokeLaterIfNeeded(() -> showClearErrorMessage(message, project));
           }
         }
       });
     }
     catch (IOException | ExecutionException e) {
-      showErrorDialog(project, e.getMessage());
+      showClearErrorMessage(e.getMessage(), project);
     }
+  }
+
+  private static void showClearErrorMessage(@DialogMessage String errMessage, Project project) {
+    String suggestion = "";
+    if (errMessage.contains(PyBundle.message("debugger.cython.extension.python.h"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.python.h.not.found",
+                                    getInstallPythonCommand(project));
+    }
+    else if (errMessage.contains(PyBundle.message("debugger.cython.extension.gcc"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.gcc.failed");
+    }
+    else if(errMessage.contains(PyBundle.message("debugger.cython.extension.gcc.not.found"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.gcc.not.found.suggestion");
+    }
+    showErrorDialog(project, errMessage + suggestion);
+  }
+
+  private static String getInstallPythonCommand(Project project) {
+    String version = "";
+    int pythonStringLength = "Python ".length();
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
+      if (selectedConfiguration != null) {
+        RunConfiguration runConfiguration = selectedConfiguration.getConfiguration();
+        if (runConfiguration instanceof PythonRunConfiguration) {
+          Sdk pythonSdk = ((PythonRunConfiguration)runConfiguration ).getSdk();
+          if (pythonSdk != null) {
+            String versionString = pythonSdk.getVersionString();
+            if (versionString != null && versionString.length() > pythonStringLength) {
+              version = versionString.substring(pythonStringLength, versionString.lastIndexOf('.'));
+            }
+          }
+        }
+      }
+
+    return PyBundle.message("debugger.cython.extension.install.python.command", version);
   }
 }

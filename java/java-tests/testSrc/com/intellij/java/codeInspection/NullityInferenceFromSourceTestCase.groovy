@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.Nullability.*
-/**
- * @author peter
- */
 abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override

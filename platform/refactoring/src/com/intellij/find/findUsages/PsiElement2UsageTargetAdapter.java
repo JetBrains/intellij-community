@@ -11,6 +11,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -61,16 +62,6 @@ public class PsiElement2UsageTargetAdapter
 
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, boolean update) {
     this(element, new FindUsagesOptions(element.getProject()), update);
-  }
-
-  /**
-   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, FindUsagesOptions, boolean)} to avoid
-   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
-   *
-   */
-  @Deprecated(forRemoval = true)
-  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
-    this(element, options, true);
   }
 
   /**
@@ -175,7 +166,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * @deprecated use {@link #convert(PsiElement[], boolean)} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
   }
@@ -201,14 +192,21 @@ public class PsiElement2UsageTargetAdapter
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)this::getSlowData;
+    }
+    else if (UsageView.USAGE_SCOPE.is(dataId)) {
+      return myOptions.searchScope;
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId) {
     if (UsageView.USAGE_INFO_KEY.is(dataId)) {
       PsiElement element = getElement();
       if (element != null && element.getTextRange() != null) {
         return new UsageInfo(element);
       }
-    }
-    else if (UsageView.USAGE_SCOPE.is(dataId)) {
-      return myOptions.searchScope;
     }
     return null;
   }

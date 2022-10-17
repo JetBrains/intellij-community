@@ -181,7 +181,7 @@ abstract class FileSetCodeStyleProcessor(
   messageOutput: MessageOutput,
   isRecursive: Boolean,
   charset: Charset? = null,
-  val primaryCodeStyle: CodeStyleSettings? = null,
+  private val primaryCodeStyle: CodeStyleSettings? = null,
   val defaultCodeStyle: CodeStyleSettings? = null
 ) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
 

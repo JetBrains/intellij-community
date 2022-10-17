@@ -23,7 +23,7 @@ import org.jetbrains.deft.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceEntityBase() {
+open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistentIdData) : OneEntityWithPersistentId, WorkspaceEntityBase() {
 
   companion object {
 
@@ -33,16 +33,14 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
 
   }
 
-  @JvmField
-  var _myName: String? = null
   override val myName: String
-    get() = _myName!!
+    get() = dataSource.myName
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: OneEntityWithPersistentIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
+  class Builder(var result: OneEntityWithPersistentIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
     constructor() : this(OneEntityWithPersistentIdData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,6 +58,9 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -68,11 +69,11 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isMyNameInitialized()) {
         error("Field OneEntityWithPersistentId#myName should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OneEntityWithPersistentId#entitySource should be initialized")
       }
     }
 
@@ -83,20 +84,12 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OneEntityWithPersistentId
-      this.myName = dataSource.myName
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.myName != dataSource.myName) this.myName = dataSource.myName
       if (parents != null) {
       }
     }
 
-
-    override var myName: String
-      get() = getEntityData().myName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -105,6 +98,14 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
       }
 
     override fun getEntityData(): OneEntityWithPersistentIdData = result ?: super.getEntityData() as OneEntityWithPersistentIdData
@@ -130,12 +131,13 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
   }
 
   override fun createEntity(snapshot: EntityStorage): OneEntityWithPersistentId {
-    val entity = OneEntityWithPersistentIdImpl()
-    entity._myName = myName
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = OneEntityWithPersistentIdImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -164,18 +166,18 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OneEntityWithPersistentIdData
 
-    if (this.myName != other.myName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as OneEntityWithPersistentIdData
 

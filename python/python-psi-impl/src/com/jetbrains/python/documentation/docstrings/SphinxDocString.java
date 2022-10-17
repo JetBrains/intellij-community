@@ -40,12 +40,6 @@ public class SphinxDocString extends TagBasedDocString {
 
   @NotNull
   @Override
-  public List<String> getParameters() {
-    return toUniqueStrings(getParameterSubstrings());
-  }
-
-  @NotNull
-  @Override
   public List<String> getKeywordArguments() {
     return toUniqueStrings(getKeywordArgumentSubstrings());
   }
@@ -125,5 +119,11 @@ public class SphinxDocString extends TagBasedDocString {
   @Override
   public String getDescription() {
     return myDescription.replaceAll("\n", "<br/>");
+  }
+
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String attrName) {
+    return attrName != null ? concatTrimmedLines(getTagValue(VARIABLE_TAGS, attrName)) : null;
   }
 }

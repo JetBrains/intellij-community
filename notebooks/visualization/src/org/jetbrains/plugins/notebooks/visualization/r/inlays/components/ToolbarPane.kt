@@ -61,7 +61,7 @@ class ToolbarPane(val inlayOutput: InlayOutput) : JPanel(BorderLayout()) {
     }
   }
 
-  fun updateChildrenBounds() {
+  private fun updateChildrenBounds() {
     mainPanel?.setBounds(0, 0, width, height)
     val progressBarWidth = if (progressComponent != null) PROGRESS_BAR_DEFAULT_WIDTH else 0
     toolbarComponent?.setBounds(width - toolbarComponent!!.preferredSize.width, progressBarWidth, toolbarComponent!!.preferredSize.width,

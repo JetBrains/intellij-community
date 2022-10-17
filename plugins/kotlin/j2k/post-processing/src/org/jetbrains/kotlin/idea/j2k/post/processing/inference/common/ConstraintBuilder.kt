@@ -95,7 +95,7 @@ class ConstraintBuilder(
         )
     }
 
-    fun BoundType.isTheSameTypeAs(
+    private fun BoundType.isTheSameTypeAs(
       other: BoundType,
       priority: ConstraintPriority,
       ignoreTypeVariables: Set<TypeVariable> = emptySet()

@@ -3,6 +3,8 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
+import java.util.*
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
@@ -39,7 +42,7 @@ class RegistryPropertiesAnnotator : Annotator {
       return
     }
 
-    val groupName = propertyName.substringBefore('.').toLowerCase()
+    val groupName = propertyName.substringBefore('.').lowercase(Locale.getDefault())
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
         propertyName.startsWith("editor.config.")) {
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
@@ -57,6 +60,10 @@ class RegistryPropertiesAnnotator : Annotator {
 
   private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
     override fun startInWriteAction(): Boolean = false
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+      return IntentionPreviewInfo.EMPTY
+    }
 
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.show.ep.family.name")
 
@@ -102,7 +109,9 @@ class RegistryPropertiesAnnotator : Annotator {
       val descriptionProperty = propertiesFile.addPropertyAfter(myPropertyName + DESCRIPTION_SUFFIX, "Description", originalProperty)
 
       val valueNode = (descriptionProperty.psiElement as PropertyImpl).valueNode!!
-      PsiNavigateUtil.navigate(valueNode.psi)
+      if (!IntentionPreviewUtils.isPreviewElement(valueNode.psi) ) {
+        PsiNavigateUtil.navigate(valueNode.psi)
+      }
     }
 
     override fun startInWriteAction(): Boolean = true

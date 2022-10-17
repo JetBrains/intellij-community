@@ -170,7 +170,7 @@ public class Xsd2InstanceUtils {
         }
       }
 
-      @Override public void visitXmlAttribute(XmlAttribute xmlAttribute) {
+      @Override public void visitXmlAttribute(@NotNull XmlAttribute xmlAttribute) {
         boolean replaced = false;
 
         if (xmlAttribute.isNamespaceDeclaration()) {

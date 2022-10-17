@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -332,7 +332,8 @@ public final class ProgressRunner<R> {
           Logger.getInstance(ProgressRunner.class).warn("Can't go modal without BlockingProgressIndicator");
           modalityEntered.up();
         }
-      }).exceptionally(throwable -> {
+      });
+      blockingRunFuture.exceptionally(throwable -> {
         taskFuture.completeExceptionally(throwable);
         return null;
       });
@@ -345,11 +346,13 @@ public final class ProgressRunner<R> {
     }
 
     if (isSync) {
-      try {
-        resultFuture.get();
-      }
-      catch (Throwable ignore) {
-        // ignore possible exceptions, as they will be handled by the subsequent get/whenComplete calls.
+      // At first here was a blocking resultFuture.get() call,
+      // which lead to deadlocks when `BlockingProgressIndicator.startBlocking` already exited,
+      // and nobody was dispatching EDT events because the current thread (EDT) was blocked on this future,
+      // so instead of blocking, we assert that the future should be done at this point,
+      // otherwise, `startBlocking` should continue pumping the events to give cancelled tasks a chance to complete.
+      if (!resultFuture.isDone()) {
+        throw new IllegalStateException("Result future must be done at this point");
       }
     }
     return resultFuture;

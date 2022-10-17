@@ -445,15 +445,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     return CoreCodeStyleUtil.isSequentialProcessingAllowed();
   }
 
-  /**
-   * @deprecated Use {@link CoreCodeStyleUtil#setSequentialProcessingAllowed(boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void setSequentialProcessingAllowed(boolean allowed) {
-    CoreCodeStyleUtil.setSequentialProcessingAllowed(allowed);
-  }
-
-
   @Override
   public void performActionWithFormatterDisabled(final Runnable r) {
     performActionWithFormatterDisabled(() -> {

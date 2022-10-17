@@ -18,8 +18,8 @@ interface SelfLinkedEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
-    override var parentEntity: SelfLinkedEntity?
     override var entitySource: EntitySource
+    override var parentEntity: SelfLinkedEntity?
   }
 
   companion object : Type<SelfLinkedEntity, Builder>() {

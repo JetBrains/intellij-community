@@ -1,18 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +32,8 @@ import java.util.Objects;
 public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   private static final @NonNls String ID = "hg";
 
-  @NotNull private final HgVcs myVcs;
-  @NotNull private final HgProjectSettings myProjectSettings;
+  private final @NotNull HgVcs myVcs;
+  private final @NotNull HgProjectSettings myProjectSettings;
 
   public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project, vcs.getShortName());
@@ -53,16 +53,14 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     return new HgStatusWidget(myVcs, myProject, myProjectSettings);
   }
 
-  @Nullable
   @Override
-  @RequiresEdt
-  protected HgRepository guessCurrentRepository(@NotNull Project project) {
-    return HgUtil.guessWidgetRepository(project);
+  @CalledInAny
+  protected @Nullable HgRepository guessCurrentRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
+    return HgUtil.guessWidgetRepository(project, selectedFile);
   }
 
-  @NotNull
   @Override
-  protected String getFullBranchName(@NotNull HgRepository repository) {
+  protected @NotNull String getFullBranchName(@NotNull HgRepository repository) {
     return HgUtil.getDisplayableBranchOrBookmarkText(repository);
   }
 
@@ -71,11 +69,9 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     return HgUtil.getRepositoryManager(project).moreThanOneRoot();
   }
 
-  @NotNull
   @Override
-  protected ListPopup getPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
-      .asListPopup();
+  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
   }
 
   @Override
@@ -103,7 +99,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return HgBundle.message("hg4idea.status.bar.widget.name");
     }
 

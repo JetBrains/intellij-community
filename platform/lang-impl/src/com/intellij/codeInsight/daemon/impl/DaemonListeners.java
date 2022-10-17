@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetManagerListener;
@@ -33,7 +34,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -61,7 +61,6 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,7 +162,7 @@ public final class DaemonListeners implements Disposable {
         if (UIUtil.isShowing(editor.getContentComponent()) && worthBothering(editor.getDocument(), editor.getProject())) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-              IntentionsUI.getInstance(myProject).invalidate();
+              IntentionsUI.getInstance(myProject).invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
         }
@@ -185,7 +184,8 @@ public final class DaemonListeners implements Disposable {
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
       for (Editor editor : activeEditors) {
-        errorStripeUpdateManager.repaintErrorStripePanel(editor);
+        PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
       }
     });
 
@@ -209,7 +209,7 @@ public final class DaemonListeners implements Disposable {
           return;
         }
 
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor);
+        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(editor, file);
       }
 
       @Override
@@ -220,7 +220,7 @@ public final class DaemonListeners implements Disposable {
           UIUtil.invokeLaterIfNeeded(() -> {
             IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
             if (intentionUI != null) {
-              intentionUI.invalidate();
+              intentionUI.invalidateForEditor(event.getEditor());
             }
           });
         }
@@ -423,7 +423,16 @@ public final class DaemonListeners implements Disposable {
     LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
+  /**
+   * @return true if the {@code file} (which does or doesn't lie in this project content roots, depending on {@code isInContent})
+   * can be modified without user's explicit permission.
+   * By convention, permission is required for
+   * - never touched files,
+   * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
+   * - files in the middle of cut-n-paste operation.
+   */
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
     if (listeners == null) {
@@ -433,7 +442,16 @@ public final class DaemonListeners implements Disposable {
     if (listeners.cutOperationJustHappened) {
       return false;
     }
-    return CanISilentlyChange.thisFile(file);
+    return CanISilentlyChange.thisFile(file).canIReally(isInContent);
+  }
+
+  /**
+   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean)} instead
+   */
+  @Deprecated
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
+    PluginException.reportDeprecatedUsage("this method", "");
+    return canChangeFileSilently(file, true);
   }
 
   private class MyApplicationListener implements ApplicationListener {
@@ -482,7 +500,7 @@ public final class DaemonListeners implements Disposable {
       stopDaemon(false, "Command start");
     }
 
-    private Document extractDocumentFromCommand(@NotNull CommandEvent event) {
+    private static Document extractDocumentFromCommand(@NotNull CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
@@ -647,15 +665,18 @@ public final class DaemonListeners implements Disposable {
     }
 
     Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-    if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
-        IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
-        if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
-            intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
-                                                          pluginClassLoader) {
-          return true;
-        }
-      }
+    if (errorStripeTooltip instanceof HighlightInfo) {
+      IntentionAction quickFixFromPlugin =
+        ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
+          IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
+          if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
+              intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() ==
+                                                            pluginClassLoader) {
+            return intentionAction;
+          }
+          return null;
+        });
+      if (quickFixFromPlugin != null) return true;
     }
 
     LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);

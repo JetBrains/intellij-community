@@ -345,6 +345,11 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
         presentation.setEnabled(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class MergedToggleAction extends ToggleAction implements DumbAware {
@@ -368,6 +373,11 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myAction1.setSelected(e, state);
       myAction2.setSelected(e, state);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

@@ -7,7 +7,7 @@ data class ConverterSettings(
         var specifyLocalVariableTypeByDefault: Boolean,
         var specifyFieldTypeByDefault: Boolean,
         var openByDefault: Boolean,
-        var noInternalForMembersOfInternal: Boolean
+        var publicByDefault: Boolean
 ) {
 
     companion object {
@@ -16,7 +16,9 @@ data class ConverterSettings(
                 specifyLocalVariableTypeByDefault = false,
                 specifyFieldTypeByDefault = false,
                 openByDefault = false,
-                noInternalForMembersOfInternal = true
+                publicByDefault = false
         )
+
+        val publicByDefault: ConverterSettings = defaultSettings.copy(publicByDefault = true)
     }
 }

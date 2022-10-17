@@ -42,23 +42,14 @@ public class TaskActivationState {
 
   @NotNull
   public List<String> getTasks(@NotNull ExternalSystemTaskActivator.Phase phase) {
-    switch (phase) {
-      case AFTER_COMPILE:
-        return afterCompileTasks;
-      case BEFORE_COMPILE:
-        return beforeCompileTasks;
-      case AFTER_SYNC:
-        return afterSyncTasks;
-      case BEFORE_RUN:
-        return beforeRunTasks;
-      case BEFORE_SYNC:
-        return beforeSyncTasks;
-      case AFTER_REBUILD:
-        return afterRebuildTask;
-      case BEFORE_REBUILD:
-        return beforeRebuildTask;
-      default:
-        throw new IllegalArgumentException("Unknown task activation phase: " + phase);
-    }
+    return switch (phase) {
+      case AFTER_COMPILE -> afterCompileTasks;
+      case BEFORE_COMPILE -> beforeCompileTasks;
+      case AFTER_SYNC -> afterSyncTasks;
+      case BEFORE_RUN -> beforeRunTasks;
+      case BEFORE_SYNC -> beforeSyncTasks;
+      case AFTER_REBUILD -> afterRebuildTask;
+      case BEFORE_REBUILD -> beforeRebuildTask;
+    };
   }
 }

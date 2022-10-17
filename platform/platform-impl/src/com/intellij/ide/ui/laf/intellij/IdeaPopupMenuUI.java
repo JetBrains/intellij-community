@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.WindowRoundedCornersManager;
 import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
@@ -61,27 +60,20 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
 
   @Override
   public void paint(final Graphics g, final JComponent jcomponent) {
-    if (!isUnderPopup(jcomponent) || isRoundBorder()) {
-      Rectangle bounds = popupMenu.getBounds();
-      g.setColor(popupMenu.getBackground());
-      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    Rectangle bounds = popupMenu.getBounds();
+    g.setColor(popupMenu.getBackground());
+    g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    if (!isUnderPopup(jcomponent) || isRoundBorder() || SystemInfoRt.isWindows) {
       return;
     }
 
-    UISettings.setupAntialiasing(g);
-
-    Rectangle bounds = popupMenu.getBounds();
-    JBColor borderColor = JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51));
-    int delta = SystemInfoRt.isMac ? 0 : 1;
-
-    g.setColor(popupMenu.getBackground());
-    g.fillRect(0, 0, bounds.width - delta, bounds.height - delta);
-    g.setColor(borderColor);
-    g.drawRect(0, 0, bounds.width - delta, bounds.height - delta);
+    g.setColor(JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51)));
+    g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfoRt.isMac && ExperimentalUI.isNewUI();
+    return WindowRoundedCornersManager.isAvailable();
   }
 
   public static boolean hideEmptyIcon(Component c) {

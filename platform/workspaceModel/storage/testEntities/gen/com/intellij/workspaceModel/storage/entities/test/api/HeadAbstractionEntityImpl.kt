@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBase() {
+open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java,
@@ -37,10 +37,8 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
   override val child: CompositeBaseEntity?
     get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)
@@ -49,7 +47,7 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
     return connections
   }
 
-  class Builder(val result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity>(), HeadAbstractionEntity.Builder {
+  class Builder(var result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity>(), HeadAbstractionEntity.Builder {
     constructor() : this(HeadAbstractionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -67,6 +65,9 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -75,11 +76,11 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field HeadAbstractionEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field HeadAbstractionEntity#entitySource should be initialized")
       }
     }
 
@@ -90,20 +91,12 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as HeadAbstractionEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -112,6 +105,14 @@ open class HeadAbstractionEntityImpl : HeadAbstractionEntity, WorkspaceEntityBas
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var child: CompositeBaseEntity?
@@ -172,12 +173,13 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId
   }
 
   override fun createEntity(snapshot: EntityStorage): HeadAbstractionEntity {
-    val entity = HeadAbstractionEntityImpl()
-    entity._data = data
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = HeadAbstractionEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -206,18 +208,18 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculablePersistentId
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as HeadAbstractionEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as HeadAbstractionEntityData
 

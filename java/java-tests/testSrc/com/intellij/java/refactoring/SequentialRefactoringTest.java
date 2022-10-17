@@ -32,34 +32,35 @@ public class SequentialRefactoringTest extends LightJavaCodeInsightTestCase {
 
   public void testFormattingAfterInlineExtractMethod() throws PrepareFailedException {
     String text =
-      "public class BrokenAlignment {\n" +
-      "\n" +
-      "    public Object test() {\n" +
-      "        if (System.currentTimeMillis() > 1) {\n" +
-      "            if (System.currentTimeMillis() > 2) {\n" +
-      "                getData();\n" +
-      "            }\n" +
-      "        }\n" +
-      "        return \"hey\";\n" +
-      "    }\n" +
-      "\n" +
-      "    private void getData() {\n" +
-      "        String[] args = new String[]{};\n" +
-      "        String result = \"data: \";\n" +
-      "        int i = 0;\n" +
-      "        while (i < args.length) {\n" +
-      "            result += args[i];\n" +
-      "            if (i % 2 == 0) {\n" +
-      "                result += \", it's even!\";\n" +
-      "            } else {\n" +
-      "                System.out.println(\"It's odd :(\");\n" +
-      "                break;\n" +
-      "            }\n" +
-      "        }\n" +
-      "        int k = 1;\n" +
-      "    }\n" +
-      "\n" +
-      "}";
+      """
+        public class BrokenAlignment {
+
+            public Object test() {
+                if (System.currentTimeMillis() > 1) {
+                    if (System.currentTimeMillis() > 2) {
+                        getData();
+                    }
+                }
+                return "hey";
+            }
+
+            private void getData() {
+                String[] args = new String[]{};
+                String result = "data: ";
+                int i = 0;
+                while (i < args.length) {
+                    result += args[i];
+                    if (i % 2 == 0) {
+                        result += ", it's even!";
+                    } else {
+                        System.out.println("It's odd :(");
+                        break;
+                    }
+                }
+                int k = 1;
+            }
+
+        }""";
     configureFromFileText("test.java", text);
     
     // Perform inline.

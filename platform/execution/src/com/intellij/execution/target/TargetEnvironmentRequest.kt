@@ -58,7 +58,6 @@ interface TargetEnvironmentRequest {
    * I.e., neither `setOf(UploadRoot("/local", Persistent("/remote1")), UploadRoot("/local", Persistent("/remote2")))`,
    * nor `setOf(UploadRoot("/local1", Persistent("/remote")), UploadRoot("/local2", Persistent("/remote")))` can be resolved.
    */
-  @JvmDefault
   val uploadVolumes: MutableSet<TargetEnvironment.UploadRoot>
     get() = throw UnsupportedOperationException()
 
@@ -66,20 +65,16 @@ interface TargetEnvironmentRequest {
    * Set of required download roots.
    * Like for [uploadVolumes], both local and remote paths must be unique across all requests.
    */
-  @JvmDefault
   val downloadVolumes: MutableSet<TargetEnvironment.DownloadRoot>
     get() = throw UnsupportedOperationException()
 
   /** Values are local ports. */
-  @JvmDefault
   val targetPortBindings: MutableSet<TargetEnvironment.TargetPortBinding>
     get() = throw UnsupportedOperationException()
 
-  @JvmDefault
   val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding>
     get() = throw UnsupportedOperationException()
 
-  @JvmDefault
   fun duplicate(): TargetEnvironmentRequest = throw UnsupportedOperationException()
 
   var projectPathOnTarget: String
@@ -90,12 +85,12 @@ interface TargetEnvironmentRequest {
    */
   @Deprecated("Use uploadVolumes")
   val defaultVolume: Volume
+    get() = throw UnsupportedOperationException()
 
   /**
    * @return new, separate, upload-only volume at some unspecified remote location
    */
   @Deprecated("Use uploadVolumes")
-  @JvmDefault
   fun createTempVolume(): Volume {
     return createUploadRoot(null, true)
   }
@@ -107,10 +102,14 @@ interface TargetEnvironmentRequest {
    */
   @Deprecated("Use uploadVolumes")
   fun createUploadRoot(remoteRootPath: String?,
-                       temporary: Boolean): Volume
+                       temporary: Boolean): Volume {
+    throw UnsupportedOperationException()
+  }
 
   @Deprecated("Use downloadVolumes")
-  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume
+  fun createDownloadRoot(remoteRootPath: String?): DownloadableVolume {
+    throw UnsupportedOperationException()
+  }
 
   /**
    * Creates the requirement to open a port on the target environment.
@@ -122,7 +121,9 @@ interface TargetEnvironmentRequest {
    * that corresponds to the targetPort on target machine.
    */
   @Deprecated("Use targetPortBindings")
-  fun bindTargetPort(targetPort: Int): TargetValue<Int>
+  fun bindTargetPort(targetPort: Int): TargetValue<Int> {
+    throw UnsupportedOperationException()
+  }
 
   /**
    * Creates the requirement to make a service listening on the provided port
@@ -132,7 +133,9 @@ interface TargetEnvironmentRequest {
    * process should connect to, to access the local service.
    */
   @Deprecated("Use localPortBindings")
-  fun bindLocalPort(localPort: Int): TargetValue<HostPort>
+  fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
+    throw UnsupportedOperationException()
+  }
 
   @Deprecated("Use TargetEnvironment.UploadVolume")
   interface Volume {

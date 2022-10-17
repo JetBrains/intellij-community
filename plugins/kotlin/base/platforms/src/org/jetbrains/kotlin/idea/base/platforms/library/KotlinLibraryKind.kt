@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.platforms
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.base.platforms.library.KnownLibraryKindForIndex
-import org.jetbrains.kotlin.idea.base.platforms.library.getLibraryKindForJar
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
@@ -55,21 +53,5 @@ val PersistentLibraryKind<*>?.platform: TargetPlatform
         else -> JvmPlatforms.defaultJvmPlatform
     }
 
-fun detectLibraryKind(roots: Array<VirtualFile>): PersistentLibraryKind<*>? {
-    val jarFile = roots.firstOrNull() ?: return null
-    if (jarFile.fileSystem is JarFileSystem) {
-        // TODO: Detect library kind for Jar file using IdePlatformKindResolution.
-        when (jarFile.getLibraryKindForJar()) {
-            KnownLibraryKindForIndex.COMMON -> return KotlinCommonLibraryKind
-            KnownLibraryKindForIndex.JS -> return KotlinJavaScriptLibraryKind
-            KnownLibraryKindForIndex.UNKNOWN -> {
-                /* Continue detection of library kind via IdePlatformKindResolution. */
-            }
-        }
-    }
-
-    val matchingPlatformKind = IdePlatformKindProjectStructure.getLibraryPlatformKind(jarFile)
-        ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
-
-    return IdePlatformKindProjectStructure.getLibraryKind(matchingPlatformKind)
-}
+fun detectLibraryKind(library: Library, project: Project): PersistentLibraryKind<*>? =
+    project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library)

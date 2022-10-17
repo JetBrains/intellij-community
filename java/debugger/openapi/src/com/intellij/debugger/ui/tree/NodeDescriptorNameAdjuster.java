@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,6 +16,6 @@ public abstract class NodeDescriptorNameAdjuster {
   public abstract String fixName(String name, @NotNull NodeDescriptor descriptor);
 
   public static NodeDescriptorNameAdjuster findFor(@NotNull NodeDescriptor descriptor) {
-    return EP_NAME.getExtensionList().stream().filter(adjuster -> adjuster.isApplicable(descriptor)).findFirst().orElse(null);
+    return ContainerUtil.find(EP_NAME.getExtensionList(), adjuster -> adjuster.isApplicable(descriptor));
   }
 }

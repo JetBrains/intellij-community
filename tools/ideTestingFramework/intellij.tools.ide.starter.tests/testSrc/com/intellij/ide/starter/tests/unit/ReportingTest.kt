@@ -1,14 +1,25 @@
 package com.intellij.ide.starter.tests.unit
 
+import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.junit5.hyphenateWithClass
+import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.convertToHashCodeWithOnlyLetters
 import com.intellij.ide.starter.utils.formatSize
 import com.intellij.ide.starter.utils.generifyErrorMessage
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.kodein.di.direct
+import org.kodein.di.instance
+import org.mockito.Mock
+import org.mockito.Mockito
+import org.mockito.junit.jupiter.MockitoExtension
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -16,7 +27,7 @@ import java.util.stream.Stream
 import kotlin.io.path.div
 import kotlin.random.Random
 
-
+@ExtendWith(MockitoExtension::class)
 class ReportingTest {
 
   companion object {
@@ -70,5 +81,20 @@ class ReportingTest {
     val file2 = File((folder / "test2.txt").toString())
     file2.writeText("DE", Charset.defaultCharset())
     folder.getFileOrDirectoryPresentableSize().shouldBe("5 B")
+  }
+
+  @Mock
+  private lateinit var runContextMock: IDERunContext
+
+  @Test
+  fun `validate default error failure details generation`(testInfo: TestInfo) {
+    val testName = testInfo.hyphenateWithClass()
+    Mockito.doReturn(testName).`when`(runContextMock).contextName
+
+    val failureDetails = di.direct.instance<FailureDetailsOnCI>().getFailureDetails(runContext = runContextMock)
+    failureDetails.shouldBe("""
+      Test: $testName
+      You can find logs and other useful info in CI artifacts under the path $testName
+    """.trimIndent())
   }
 }

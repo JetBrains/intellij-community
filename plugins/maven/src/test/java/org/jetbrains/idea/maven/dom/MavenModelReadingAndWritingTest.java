@@ -46,14 +46,15 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
       formatAndSaveProjectPomDocument();
     }), null, null);
 
-    assertSameLines("<?xml version=\"1.0\"?>\r\n" +
-                    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
-                    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
-                    "    <modelVersion>4.0.0</modelVersion>\r\n" +
-                    "    <groupId>foo</groupId>\r\n" +
-                    "    <artifactId>bar</artifactId>\r\n" +
-                    "    <version>baz</version>\r\n" +
-                    "</project>",
+    assertSameLines("""
+                      <?xml version="1.0"?>\r
+                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\r
+                               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">\r
+                          <modelVersion>4.0.0</modelVersion>\r
+                          <groupId>foo</groupId>\r
+                          <artifactId>bar</artifactId>\r
+                          <version>baz</version>\r
+                      </project>""",
                     VfsUtil.loadText(myProjectPom));
   }
 
@@ -70,21 +71,22 @@ public class MavenModelReadingAndWritingTest extends MavenMultiVersionImportingT
       formatAndSaveProjectPomDocument();
     }), null, null);
 
-    assertSameLines("<?xml version=\"1.0\"?>\r\n" +
-                    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n" +
-                    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n" +
-                    "    <modelVersion>4.0.0</modelVersion>\r\n" +
-                    "    <groupId>test</groupId>\r\n" +
-                    "    <artifactId>project</artifactId>\r\n" +
-                    "    <version>1</version>\r\n" +
-                    "    <dependencies>\r\n" +
-                    "        <dependency>\r\n" +
-                    "            <groupId>group</groupId>\r\n" +
-                    "            <artifactId>artifact</artifactId>\r\n" +
-                    "            <version>version</version>\r\n" +
-                    "        </dependency>\r\n" +
-                    "    </dependencies>\r\n" +
-                    "</project>", VfsUtil.loadText(myProjectPom));
+    assertSameLines("""
+                      <?xml version="1.0"?>\r
+                      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\r
+                               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">\r
+                          <modelVersion>4.0.0</modelVersion>\r
+                          <groupId>test</groupId>\r
+                          <artifactId>project</artifactId>\r
+                          <version>1</version>\r
+                          <dependencies>\r
+                              <dependency>\r
+                                  <groupId>group</groupId>\r
+                                  <artifactId>artifact</artifactId>\r
+                                  <version>version</version>\r
+                              </dependency>\r
+                          </dependencies>\r
+                      </project>""", VfsUtil.loadText(myProjectPom));
   }
 
   private MavenDomProjectModel getDomModel() {

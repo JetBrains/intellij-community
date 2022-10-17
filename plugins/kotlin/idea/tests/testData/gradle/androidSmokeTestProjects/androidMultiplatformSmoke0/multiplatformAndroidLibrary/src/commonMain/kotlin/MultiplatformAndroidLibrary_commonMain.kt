@@ -5,6 +5,6 @@ object MultiplatformAndroidLibrary_commonMain {
         "path/to/file".toPath()
         MultiplatformAndroidJvmIosLibrary_commonMain.sayHello()
         MultiplatformAndroidJvmIosLibrary_androidAndJvmMain.sayHello()
-        //MultiplatformAndroidJvmIosLibrary_androidMain.sayHello() //unresolved; would be desirable
+        MultiplatformAndroidJvmIosLibrary_androidMain.sayHello()
     }
 }

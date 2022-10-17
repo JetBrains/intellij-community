@@ -30,7 +30,7 @@ data class IndexingMetrics(
   val totalNumberOfIndexingRuns: Int
     get() = jsonIndexDiagnostics.count { it.projectIndexingHistory.projectName.isNotEmpty() }
 
-  val totalUpdatingTime: Long
+  private val totalUpdatingTime: Long
     get() = jsonIndexDiagnostics.map { TimeUnit.NANOSECONDS.toMillis(it.projectIndexingHistory.times.totalUpdatingTime.nano) }.sum()
 
   val totalIndexingTime: Long
@@ -43,7 +43,7 @@ data class IndexingMetrics(
   val totalPushPropertiesTime: Long
     get() = jsonIndexDiagnostics.map { TimeUnit.NANOSECONDS.toMillis(it.projectIndexingHistory.times.pushPropertiesTime.nano) }.sum()
 
-  val suspendedTime: Long
+  private val suspendedTime: Long
     get() = jsonIndexDiagnostics.map { TimeUnit.NANOSECONDS.toMillis(it.projectIndexingHistory.times.totalSuspendedTime.nano) }.sum()
 
   val totalNumberOfIndexedFiles: Int

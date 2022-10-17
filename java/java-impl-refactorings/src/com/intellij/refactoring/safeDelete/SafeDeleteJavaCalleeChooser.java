@@ -108,8 +108,10 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
         }
       });
 
+      PsiFile containingFile = body.getContainingFile();
       return elementsToCheck
         .stream()
+        .filter(m -> m != containingFile)
         .filter(m -> !PsiTreeUtil.isAncestor(psiMember, m, true))
         .filter(m -> !(m instanceof PsiMember) || containingClass != null && containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
         .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)

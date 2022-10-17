@@ -2,9 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -45,8 +45,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.nonEditableBackground",
                                                                           JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41)));
 
+  protected static final int DEFAULT_BORDER_COMPENSATION = 1;
+
   private float myArc = COMPONENT_ARC.getFloat();
-  private Insets myBorderCompensation = JBUI.insets(1);
+  private Insets myBorderCompensation = JBUI.insets(DEFAULT_BORDER_COMPENSATION);
   private boolean myPaintArrowButton = true;
 
   public DarculaComboBoxUI() {}
@@ -239,6 +241,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    checkFocus();
     Container parent = c.getParent();
     if (parent != null && c.isOpaque()) {
       g.setColor(DarculaUIUtil.isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
@@ -465,7 +468,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
           }
 
-          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
+          if (comboBox.getClientProperty("JComboBox.noPaintBorder") != Boolean.TRUE) {
+            paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
+          }
         }
       }
       else {
@@ -722,13 +727,31 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
         @Override
         public Popup getPopup(JPopupMenu popup, int x, int y) {
+          PopupFactory factory = PopupFactory.getSharedInstance();
+          int oldType = -1;
+          boolean isRoundBorder = WindowRoundedCornersManager.isAvailable();
+          if (isRoundBorder) {
+            oldType = PopupUtil.getPopupType(factory);
+            if (oldType == 2) {
+              oldType = -1;
+            } else {
+              PopupUtil.setPopupType(factory, 2);
+            }
+          }
           Popup p = super.getPopup(popup, x, y);
-          if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+          if (oldType >= 0) {
+            PopupUtil.setPopupType(factory, oldType);
+          }
+          if (isRoundBorder) {
             Window window = ComponentUtil.getWindow(popup);
             if (window != null) {
-              JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
-              rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
-              popup.setBorder(null);
+              if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+                WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
+                popup.setBorder(null);
+              }
+              else {
+                WindowRoundedCornersManager.setRoundedCorners(window);
+              }
             }
           }
           return p;

@@ -22,15 +22,24 @@ public class BaselinePanel extends NonOpaquePanel {
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;
   private Component myProgressComponent;
+  private JComponent myProgressDisabledButton;
   private int myYOffset;
 
   private final JBValue myOffset = new JBValue.Float(8);
-  private final JBValue myBeforeButtonOffset = new JBValue.Float(40);
+  private final JBValue myBeforeButtonOffset;
   private final JBValue myButtonOffset = new JBValue.Float(6);
+  private boolean myLeftOrder;
 
   private EventHandler myEventHandler;
 
   public BaselinePanel() {
+    this(40, true);
+  }
+
+  public BaselinePanel(int beforeButtonOffset, boolean leftOrder) {
+    myBeforeButtonOffset = new JBValue.Float(beforeButtonOffset);
+    myLeftOrder = leftOrder;
+
     setBorder(JBUI.Borders.empty(5, 0, 6, 0));
 
     setLayout(new AbstractLayoutManager() {
@@ -57,8 +66,11 @@ public class BaselinePanel extends NonOpaquePanel {
             }
           }
         }
-        else {
+        else if (leftOrder || myProgressDisabledButton == null) {
           width += myOffset.get() + myProgressComponent.getPreferredSize().width;
+        }
+        else {
+          width = myProgressDisabledButton.getPreferredSize().width + myOffset.get() + myProgressComponent.getPreferredSize().width;
         }
 
         Insets insets = parent.getInsets();
@@ -92,6 +104,13 @@ public class BaselinePanel extends NonOpaquePanel {
         Dimension baseSize = myBaseComponent.getPreferredSize();
         int top = parent.getInsets().top;
         int y = top + myBaseComponent.getBaseline(baseSize.width, baseSize.height);
+
+
+        if (!leftOrder) {
+          layoutRightOrderContainer(parent, y);
+          return;
+        }
+
         int x = 0;
         int calcBaseWidth = calculateBaseWidth(parent);
 
@@ -120,6 +139,52 @@ public class BaselinePanel extends NonOpaquePanel {
           lastX -= size.width;
           setBaselineBounds(lastX, y - myYOffset, component, size);
           lastX -= myButtonOffset.get();
+        }
+      }
+
+      private void layoutRightOrderContainer(Container parent, int y) {
+        if (myProgressComponent != null) {
+          Dimension size = myProgressComponent.getPreferredSize();
+          if (myProgressDisabledButton == null) {
+            myProgressComponent.setBounds(0, (parent.getHeight() - size.height) / 2, parent.getWidth(), size.height);
+          }
+          else {
+            Dimension buttonSize = myProgressDisabledButton.getPreferredSize();
+            int x = 0;
+            setBaselineBounds(x, y, myProgressDisabledButton, buttonSize);
+            x += buttonSize.width + myOffset.get();
+            setBaselineBounds(x, y, myProgressComponent, size, parent.getWidth() - x, size.height);
+          }
+          return;
+        }
+
+        int x = 0;
+        boolean buttons = false;
+
+        for (Component component : myButtonComponents) {
+          if (!component.isVisible()) {
+            continue;
+          }
+
+          Dimension size = component.getPreferredSize();
+          setBaselineBounds(x, y, component, size);
+          x += size.width + myButtonOffset.get();
+          buttons = true;
+        }
+
+        int width = parent.getWidth();
+        if (buttons) {
+          x -= myButtonOffset.get();
+          x += myBeforeButtonOffset.get();
+          width -= x;
+        }
+
+        Dimension baseSize = myBaseComponent.getPreferredSize();
+        myBaseComponent.setBounds(x, parent.getInsets().top, width, baseSize.height);
+
+        if (myBaseComponent instanceof JLabel) {
+          JLabel label = (JLabel)myBaseComponent;
+          label.setToolTipText(width < baseSize.width ? label.getText() : null);
         }
       }
 
@@ -173,6 +238,10 @@ public class BaselinePanel extends NonOpaquePanel {
     }
   }
 
+  public void setProgressDisabledButton(@NotNull JComponent component) {
+    myProgressDisabledButton = component;
+  }
+
   public void setProgressComponent(@Nullable ListPluginComponent pluginComponent, @NotNull JComponent progressComponent) {
     assert myProgressComponent == null;
     myProgressComponent = progressComponent;
@@ -207,6 +276,14 @@ public class BaselinePanel extends NonOpaquePanel {
     if (value) {
       assert myButtonEnableStates != null && myButtonEnableStates.length == myButtonComponents.size();
 
+      if (!myLeftOrder) {
+        myBaseComponent.setVisible(true);
+      }
+
+      if (myProgressDisabledButton != null) {
+        myProgressDisabledButton.setEnabled(true);
+      }
+
       for (int i = 0, size = myButtonComponents.size(); i < size; i++) {
         myButtonComponents.get(i).setVisible(myButtonEnableStates[i]);
       }
@@ -216,10 +293,20 @@ public class BaselinePanel extends NonOpaquePanel {
       assert myButtonEnableStates == null;
       myButtonEnableStates = new boolean[myButtonComponents.size()];
 
+      if (!myLeftOrder) {
+        myBaseComponent.setVisible(false);
+      }
+
       for (int i = 0, size = myButtonComponents.size(); i < size; i++) {
         Component component = myButtonComponents.get(i);
-        myButtonEnableStates[i] = component.isVisible();
-        component.setVisible(false);
+        if (component == myProgressDisabledButton) {
+          myButtonEnableStates[i] = true;
+          component.setEnabled(false);
+        }
+        else {
+          myButtonEnableStates[i] = component.isVisible();
+          component.setVisible(false);
+        }
       }
     }
   }

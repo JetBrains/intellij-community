@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
@@ -445,6 +446,21 @@ object EventFields {
 
   @JvmField
   val DurationMs = LongEventField("duration_ms")
+
+  @JvmField
+  val Size = Int("size")
+
+  @JvmField
+  val IdeActivityIdField = object : PrimitiveEventField<StructuredIdeActivity>() {
+    override val name: String = "ide_activity_id"
+
+    override fun addData(fuData: FeatureUsageData, value: StructuredIdeActivity) {
+      fuData.addData(name, value.id)
+    }
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#integer}")
+  }
 
   @JvmField
   val TimeToShowMs = LongEventField("time_to_show")

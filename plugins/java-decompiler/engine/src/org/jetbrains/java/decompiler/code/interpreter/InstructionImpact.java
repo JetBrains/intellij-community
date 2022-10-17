@@ -381,37 +381,27 @@ public final class InstructionImpact {
       case CodeConstants.opc_ldc2_w:
         PooledConstant constant = pool.getConstant(instr.operand(0));
         switch (constant.type) {
-          case CodeConstants.CONSTANT_Integer:
-            stack.push(new VarType(CodeConstants.TYPE_INT));
-            break;
-          case CodeConstants.CONSTANT_Float:
-            stack.push(new VarType(CodeConstants.TYPE_FLOAT));
-            break;
-          case CodeConstants.CONSTANT_Long:
+          case CodeConstants.CONSTANT_Integer -> stack.push(new VarType(CodeConstants.TYPE_INT));
+          case CodeConstants.CONSTANT_Float -> stack.push(new VarType(CodeConstants.TYPE_FLOAT));
+          case CodeConstants.CONSTANT_Long -> {
             stack.push(new VarType(CodeConstants.TYPE_LONG));
             stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
-            break;
-          case CodeConstants.CONSTANT_Double:
+          }
+          case CodeConstants.CONSTANT_Double -> {
             stack.push(new VarType(CodeConstants.TYPE_DOUBLE));
             stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
-            break;
-          case CodeConstants.CONSTANT_String:
-            stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/String"));
-            break;
-          case CodeConstants.CONSTANT_Class:
-            stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class"));
-            break;
-          case CodeConstants.CONSTANT_MethodHandle:
-            stack.push(new VarType(((LinkConstant)constant).descriptor));
-            break;
-          case CodeConstants.CONSTANT_Dynamic:
+          }
+          case CodeConstants.CONSTANT_String -> stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/String"));
+          case CodeConstants.CONSTANT_Class -> stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class"));
+          case CodeConstants.CONSTANT_MethodHandle -> stack.push(new VarType(((LinkConstant)constant).descriptor));
+          case CodeConstants.CONSTANT_Dynamic -> {
             ck = pool.getLinkConstant(instr.operand(0));
             FieldDescriptor constDescriptor = FieldDescriptor.parseDescriptor(ck.descriptor);
             stack.push(constDescriptor.type);
             if (constDescriptor.type.getStackSize() == 2) {
               stack.push(new VarType(CodeConstants.TYPE_GROUP2EMPTY));
             }
-            break;
+          }
         }
         break;
       case CodeConstants.opc_aload:

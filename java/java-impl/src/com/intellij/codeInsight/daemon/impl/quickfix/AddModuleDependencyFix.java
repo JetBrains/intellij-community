@@ -36,15 +36,15 @@ import java.util.*;
  */
 class AddModuleDependencyFix extends OrderEntryFix {
   private final Module myCurrentModule;
-  private final Set<Module> myModules;
+  private final Set<? extends Module> myModules;
   private final DependencyScope myScope;
   private final boolean myExported;
   private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
-  AddModuleDependencyFix(PsiReference reference, Module currentModule, DependencyScope scope, List<? extends PsiClass> classes) {
+  AddModuleDependencyFix(@NotNull PsiReference reference, @NotNull Module currentModule, @NotNull DependencyScope scope, @NotNull List<? extends PsiClass> classes) {
     super(reference);
     myCurrentModule = currentModule;
-    myModules = new LinkedHashSet<>();
+    LinkedHashSet<Module> modules = new LinkedHashSet<>();
     myScope = scope;
     myExported = false;
     myClasses = ContainerUtil.map(classes, PointersKt::createSmartPointer);
@@ -55,29 +55,30 @@ class AddModuleDependencyFix extends OrderEntryFix {
       if (isAccessible(aClass, psiElement)) {
         Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
         if (classModule != null && classModule != currentModule && !dependsWithScope(rootManager, classModule, scope)) {
-          myModules.add(classModule);
+          modules.add(classModule);
         }
       }
     }
+    myModules = modules;
   }
 
-  private static boolean dependsWithScope(ModuleRootManager rootManager, Module classModule, DependencyScope scope) {
-    return ContainerUtil.exists(rootManager.getOrderEntries(), 
-                                entry -> entry instanceof ModuleOrderEntry && classModule.equals(((ModuleOrderEntry)entry).getModule()) &&
-                                         (scope == DependencyScope.TEST || scope == ((ModuleOrderEntry)entry).getScope()));
-  }
-
-  private static boolean isAccessible(PsiClass aClass, PsiElement refElement) {
-    return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
-  }
-
-  AddModuleDependencyFix(PsiJavaModuleReference reference, Module currentModule, Set<Module> modules, DependencyScope scope, boolean exported) {
+  AddModuleDependencyFix(@NotNull PsiJavaModuleReference reference, @NotNull Module currentModule, @NotNull Set<? extends Module> modules, @NotNull DependencyScope scope, boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
     myModules = modules;
     myScope = scope;
     myExported = exported;
     myClasses = Collections.emptyList();
+  }
+
+  private static boolean dependsWithScope(@NotNull ModuleRootManager rootManager, Module classModule, DependencyScope scope) {
+    return ContainerUtil.exists(rootManager.getOrderEntries(),
+                                entry -> entry instanceof ModuleOrderEntry && classModule.equals(((ModuleOrderEntry)entry).getModule()) &&
+                                         (scope == DependencyScope.TEST || scope == ((ModuleOrderEntry)entry).getScope()));
+  }
+
+  private static boolean isAccessible(PsiClass aClass, PsiElement refElement) {
+    return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
   }
 
   @Override
@@ -88,9 +89,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
       assert module != null;
       return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module", module.getName());
     }
-    else {
-      return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module.choose");
-    }
+    return QuickFixBundle.message("orderEntry.fix.add.dependency.on.module.choose");
   }
 
   @Override
@@ -120,7 +119,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((selectedValue) -> addDependencyOnModule(project, editor, selectedValue))
+        .setItemChosenCallback(selectedValue -> {
+          if (selectedValue != null) {
+            addDependencyOnModule(project, editor, selectedValue);
+          }
+        })
         .createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);
@@ -141,8 +144,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                          myCurrentModule.getName())));
   }
 
-  private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {
-    if (module == null) return;
+  private void addDependencyOnModule(@NotNull Project project, Editor editor, @NotNull Module module) {
     Couple<Module> circularModules = CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
@@ -163,7 +165,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
   }
 
-  private static boolean showCircularWarning(Project project, Couple<Module> circle, Module classModule) {
+  private static boolean showCircularWarning(@NotNull Project project, @NotNull Couple<Module> circle, @NotNull Module classModule) {
     String message = QuickFixBundle.message("orderEntry.fix.circular.dependency.warning",
                                             classModule.getName(), circle.getFirst().getName(), circle.getSecond().getName());
     String title = QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning");

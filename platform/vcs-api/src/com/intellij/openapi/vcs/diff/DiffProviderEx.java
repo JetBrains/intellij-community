@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class DiffProviderEx implements DiffProvider {
   public Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(@NotNull Iterable<? extends VirtualFile> files) {
     return getCurrentRevisions(files, this);

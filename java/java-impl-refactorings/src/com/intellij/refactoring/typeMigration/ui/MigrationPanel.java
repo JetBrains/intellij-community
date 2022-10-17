@@ -361,6 +361,11 @@ public final class MigrationPanel extends JPanel implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final TypeMigrationUsageInfo[] usages = getUsages(e);
       assert usages != null;

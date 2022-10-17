@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.code-insight.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native.tests" scope="RUNTIME" />
@@ -20,6 +19,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests" scope="RUNTIME" />
@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.live-templates.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" scope="RUNTIME" />
@@ -52,6 +51,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />

@@ -21,9 +21,6 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
 
-/**
- * @author peter
- */
 public class GdslType {
   public final PsiType psiType;
 

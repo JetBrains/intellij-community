@@ -205,9 +205,9 @@ open class CommonInjectedFileChangesHandler(
   protected fun failAndReport(@NonNls message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
     throw getReportException(message, e, exception)
 
-  protected fun getReportException(@NonNls message: String,
-                                   e: DocumentEvent?,
-                                   exception: Exception?): RuntimeExceptionWithAttachments =
+  private fun getReportException(@NonNls message: String,
+                                 e: DocumentEvent?,
+                                 exception: Exception?): RuntimeExceptionWithAttachments =
     RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +
                                     " myInjectedFile.isValid = ${myInjectedFile.isValid}, isValid = $isValid",
                                     *listOfNotNull(
@@ -221,7 +221,7 @@ open class CommonInjectedFileChangesHandler(
 
   protected fun String.esclbr(): String = StringUtil.escapeLineBreak(this)
 
-  protected val RangeMarker.debugText: String
+  private val RangeMarker.debugText: String
     get() = "$range'${
       try {
         document.getText(range)
@@ -240,9 +240,9 @@ open class CommonInjectedFileChangesHandler(
     return "${hostMarker.debugText}\t<-\t${fragmentMarker.debugText}"
   }
 
-  protected fun Iterable<MarkersMapping>.logMarkersRanges(): String = joinToString("\n", transform = ::markerString)
+  private fun Iterable<MarkersMapping>.logMarkersRanges(): String = joinToString("\n", transform = ::markerString)
 
-  protected fun String.substringVerbose(start: Int, cursor: Int): String = try {
+  private fun String.substringVerbose(start: Int, cursor: Int): String = try {
     substring(start, cursor)
   }
   catch (e: StringIndexOutOfBoundsException) {

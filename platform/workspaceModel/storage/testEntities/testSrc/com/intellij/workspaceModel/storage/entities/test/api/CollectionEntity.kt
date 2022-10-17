@@ -20,8 +20,8 @@ interface CollectionFieldEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : CollectionFieldEntity, ModifiableWorkspaceEntity<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
-    override var versions: MutableSet<Int>
     override var entitySource: EntitySource
+    override var versions: MutableSet<Int>
     override var names: MutableList<String>
   }
 

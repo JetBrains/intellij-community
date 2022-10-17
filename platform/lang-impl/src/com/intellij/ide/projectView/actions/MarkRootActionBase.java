@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -152,9 +151,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   private static Module findParentModule(@Nullable Project project, VirtualFile @NotNull [] files) {
     if (project == null) return null;
     Module result = null;
-    DirectoryIndex index = DirectoryIndex.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (VirtualFile file : files) {
-      Module module = index.getInfoForFile(file).getModule();
+      Module module = index.getModuleForFile(file, false);
       if (module == null) return null;
       if (result == null) {
         result = module;

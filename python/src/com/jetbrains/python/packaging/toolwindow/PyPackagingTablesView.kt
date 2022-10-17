@@ -132,7 +132,7 @@ class PyPackagingTablesView(private val service: PyPackagingToolWindowService, p
 
   private fun findTableForRepo(repository: PyPackageRepository) = repositories.find { it.name == repository.name }
 
-  fun addInstalled(newPackages: List<InstalledPackage>) {
+  private fun addInstalled(newPackages: List<InstalledPackage>) {
     installedPackages.table.addRows(newPackages)
     installedPackages.updateHeaderText(installedPackages.table.items.size)
   }

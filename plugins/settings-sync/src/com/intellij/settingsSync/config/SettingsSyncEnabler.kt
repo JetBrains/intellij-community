@@ -41,10 +41,11 @@ internal class SettingsSyncEnabler {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        updateResult = settingsSyncControls.remoteCommunicator.receiveUpdates()
-        if (updateResult is UpdateResult.Success) {
-          val snapshot = (updateResult as UpdateResult.Success).settingsSnapshot
-          settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot)))
+        val result = settingsSyncControls.remoteCommunicator.receiveUpdates()
+        updateResult = result
+        if (result is UpdateResult.Success) {
+          val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId)
+          settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }
 

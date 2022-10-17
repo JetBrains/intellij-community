@@ -54,6 +54,6 @@ public class CompoundVFileEvent {
 
   @Override
   public String toString() {
-    return "Compound " + myFileEvent;
+    return "Compound " + myFileEvent + "; induced: "+(myInducedEventsCalculated ? myInducedEvents : " (not yet calculated)");
   }
 }

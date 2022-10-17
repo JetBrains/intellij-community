@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
+import org.junit.Ignore
 import org.junit.internal.runners.JUnit38ClassRunner
+import org.junit.jupiter.api.Disabled
 import org.junit.runner.RunWith
 
 @Suppress("RedundantOverride") // overrides are for easier test debugging
@@ -20,6 +22,14 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
             ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
+    }
+
+    override fun testNoCallToAbstractSuper() {
+        super.testNoCallToAbstractSuper()
+    }
+
+    override fun testNoCallToAbstractSuper2() {
+        // KTIJ-23012
     }
 
     override fun testAndroidxNotNull() {
@@ -196,6 +206,14 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testNoAnyMembersInInterface() {
         super.testNoAnyMembersInInterface()
+    }
+
+    override fun testNoAnyMembersInValueClass() {
+        super.testNoAnyMembersInValueClass()
+    }
+
+    override fun testNoAnyMembersInValueClassWithGenerics() {
+        super.testNoAnyMembersInValueClassWithGenerics()
     }
 
     override fun testLocalClass() {

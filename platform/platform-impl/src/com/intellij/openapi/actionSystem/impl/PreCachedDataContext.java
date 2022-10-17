@@ -82,9 +82,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
       }
-      List<Component> components = ContainerUtil.reverse(
-        UIUtil.uiParents(component, false).takeWhile(o -> ourPrevMaps.get(o) == null).toList());
-      Component topParent = components.isEmpty() ? component : components.get(0).getParent();
+      List<Component> components = FList.createFromReversed(
+        JBIterable.generate(component, UIUtil::getParent).takeWhile(o -> ourPrevMaps.get(o) == null));
+      Component topParent = components.isEmpty() ? component : UIUtil.getParent(components.get(0));
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
       if (components.isEmpty()) {
@@ -168,9 +168,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
       });
       if (answer != null) {
+        map.put(dataId, answer);
         map.nullsByRules.clear(keyIndex);
         map.valueByRules.set(keyIndex);
-        map.put(dataId, answer);
+        reportValueProvidedByRules(dataId);
       }
       else {
         map.nullsByContextRules.set(keyIndex);
@@ -226,6 +227,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         map.put(dataId, answer);
         map.valueByRules.set(keyIndex);
+        reportValueProvidedByRules(dataId);
         break;
       }
     }
@@ -245,6 +247,13 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         LOG.warn(message);
       }
+    }
+  }
+
+  private static void reportValueProvidedByRules(@NotNull String dataId) {
+    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
+    if ("History".equals(dataId) || "treeExpanderHideActions".equals(dataId)) {
+      LOG.error("'" + dataId + "' is provided by a rule"); // EA-648179
     }
   }
 

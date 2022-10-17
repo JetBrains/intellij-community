@@ -4,28 +4,42 @@ package com.intellij.codeInspection.test.junit
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTypeParameter
+import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.UClass
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
-  override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
-    val javaClass = aClass.javaPsi
-    val anchor = aClass.uastAnchor?.sourcePsi ?: return emptyArray()
-    if (javaClass.isInterface || javaClass.isEnum || javaClass.isAnnotationType) return emptyArray()
-    if (javaClass.hasModifier(JvmModifier.ABSTRACT)) return emptyArray()
-    if (javaClass is PsiTypeParameter) return emptyArray()
-    if (TestUtils.isJUnitTestClass(javaClass)) { // JUnit 3
-      if (!javaClass.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
+class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTool() {
+  private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file)
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
+      holder.file.language,
+      JUnitUnconstructableTestCaseVisitor(holder),
+      arrayOf(UClass::class.java),
+      directOnly = true
+    )
+  }
+}
+
+private class JUnitUnconstructableTestCaseVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
+  override fun visitClass(node: UClass): Boolean {
+    val javaNode = node.javaPsi
+    if (javaNode.isInterface || javaNode.isEnum || javaNode.isAnnotationType) return true
+    if (javaNode.hasModifier(JvmModifier.ABSTRACT)) return true
+    if (javaNode is PsiTypeParameter) return true
+    if (TestUtils.isJUnitTestClass(javaNode)) { // JUnit 3
+      if (!javaNode.hasModifier(JvmModifier.PUBLIC) && !node.isAnonymousOrLocal()) {
         val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
-        return arrayOf(
-          manager.createProblemDescriptor(
-            anchor, message, isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
-        )
+        holder.registerUProblem(node, message)
+        return true
       }
-      val constructors = javaClass.constructors.toList()
+      val constructors = javaNode.constructors.toList()
       if (constructors.isNotEmpty()) {
         val compatibleConstr = constructors.firstOrNull {
           val parameters = it.parameterList.parameters
@@ -34,31 +48,26 @@ class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTo
         }
         if (compatibleConstr == null) {
           val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit3.descriptor")
-          return arrayOf(manager.createProblemDescriptor(
-            anchor, message, isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          ))
+          holder.registerUProblem(node, message)
+          return true
         }
       }
-    } else if (TestUtils.isJUnit4TestClass(javaClass, false)) { // JUnit 4
-      if (!javaClass.hasModifier(JvmModifier.PUBLIC) && !aClass.isAnonymousOrLocal()) {
+    } else if (TestUtils.isJUnit4TestClass(javaNode, false)) { // JUnit 4
+      if (!javaNode.hasModifier(JvmModifier.PUBLIC) && !node.isAnonymousOrLocal()) {
         val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.not.public.descriptor")
-        return arrayOf(
-          manager.createProblemDescriptor(
-            anchor, message, isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
-        )
+        holder.registerUProblem(node, message)
+        return true
       }
-      val constructors = javaClass.constructors.toList()
+      val constructors = javaNode.constructors.toList()
       if (constructors.isNotEmpty()) {
         val publicConstructors = constructors.filter { it.hasModifier(JvmModifier.PUBLIC) }
         if (publicConstructors.size != 1 || !publicConstructors.first().parameterList.isEmpty) {
           val message = JvmAnalysisBundle.message("jvm.inspections.unconstructable.test.case.junit4.descriptor")
-          return arrayOf(manager.createProblemDescriptor(
-            anchor, message, isOnTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          ))
+          holder.registerUProblem(node, message)
+          return true
         }
       }
     }
-    return emptyArray()
+    return true
   }
 }

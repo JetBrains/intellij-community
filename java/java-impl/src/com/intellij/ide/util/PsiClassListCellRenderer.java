@@ -2,8 +2,6 @@
 package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
 
 public class PsiClassListCellRenderer extends DelegatingPsiElementCellRenderer<PsiClass> {
 
@@ -21,14 +19,5 @@ public class PsiClassListCellRenderer extends DelegatingPsiElementCellRenderer<P
   @Override
   protected String getContainerText(PsiClass element, String name) {
     return super.getContainerText(element, name);
-  }
-
-  /**
-   * @deprecated use {@link PsiClassRenderingInfo#getContainerTextStatic}
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static String getContainerTextStatic(final PsiElement element) {
-    return PsiClassRenderingInfo.getContainerTextStatic(element);
   }
 }

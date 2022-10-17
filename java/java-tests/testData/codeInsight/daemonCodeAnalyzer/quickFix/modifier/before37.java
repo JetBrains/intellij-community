@@ -1,4 +1,4 @@
-// "Make 'a' not abstract" "true-preview"
+// "Make 'a()' not abstract" "true-preview"
 import java.io.*;
 
 abstract class A {

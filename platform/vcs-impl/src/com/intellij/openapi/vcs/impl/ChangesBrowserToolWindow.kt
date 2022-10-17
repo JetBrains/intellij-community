@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
@@ -16,7 +17,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.IconManager
 import com.intellij.ui.content.Content
 import javax.swing.Icon
 
@@ -69,7 +69,7 @@ object ChangesBrowserToolWindow {
   }
 
   private fun getIcon(): Icon? = when {
-    ExperimentalUI.isNewUI() -> IconManager.getInstance().getIcon("expui/toolwindow/changes.svg", AllIcons::class.java)
+    ExperimentalUI.isNewUI() -> IconLoader.getIcon("expui/toolwindow/changes.svg", AllIcons::class.java)
     else -> null
   }
 }

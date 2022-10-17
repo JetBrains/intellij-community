@@ -56,9 +56,7 @@ class ComposeAndroidTemplate : Template() {
         if (androidIR != null && androidIR is AndroidConfigIR) {
             androidIR.androidSdkVersion = "31"
         }
-        return irs.filterNot {
-            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
-        }
+        return irs
     }
 
 
@@ -137,8 +135,6 @@ class ComposeCommonAndroidTemplate : Template() {
         if (androidIR != null) {
             androidIR.androidSdkVersion = "31"
         }
-        return irs.filterNot {
-            it.safeAs<GradleOnlyPluginByNameIR>()?.pluginId == AndroidModuleConfigurator.DEPENDENCIES.KOTLIN_ANDROID_EXTENSIONS_NAME
-        }
+        return irs
     }
 }

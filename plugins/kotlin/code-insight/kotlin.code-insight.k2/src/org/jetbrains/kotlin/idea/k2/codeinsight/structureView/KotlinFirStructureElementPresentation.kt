@@ -19,21 +19,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.idea.KotlinCodeInsightBundle
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
+
+private const val rightArrow = '\u2192'
 
 internal class KotlinFirStructureElementPresentation(
     private val isInherited: Boolean,
     navigatablePsiElement: NavigatablePsiElement,
     ktElement : KtElement,
-    descriptor: KtSymbolPointer<*>?
+    pointer: KtSymbolPointer<*>?
 ) : ColoredItemPresentation, LocationPresentation {
     private val attributesKey = getElementAttributesKey(isInherited, navigatablePsiElement)
-    private val elementText = getElementText(navigatablePsiElement, ktElement, descriptor)
-    private val locationString = getElementLocationString(isInherited, ktElement, descriptor)
-    private val icon = getElementIcon(navigatablePsiElement, ktElement, descriptor)
+    private val elementText = getElementText(navigatablePsiElement, ktElement, pointer)
+    private val locationString = getElementLocationString(isInherited, ktElement, pointer)
+    private val icon = getElementIcon(navigatablePsiElement, ktElement, pointer)
 
     override fun getTextAttributesKey() = attributesKey
 
@@ -63,14 +65,14 @@ internal class KotlinFirStructureElementPresentation(
         return null
     }
 
-    private fun getElementIcon(navigatablePsiElement: NavigatablePsiElement, ktElement: KtElement, descriptor: KtSymbolPointer<*>?): Icon? {
+    private fun getElementIcon(navigatablePsiElement: NavigatablePsiElement, ktElement: KtElement, pointer: KtSymbolPointer<*>?): Icon? {
         if (navigatablePsiElement !is KtElement) {
             return navigatablePsiElement.getIcon(Iconable.ICON_FLAG_VISIBILITY)
         }
 
-        if (descriptor != null) {
+        if (pointer != null) {
             analyze(ktElement) {
-                descriptor.restoreSymbol()?.let {
+                pointer.restoreSymbol()?.let {
                     return getIconFor(it)
                 }
             }
@@ -82,14 +84,14 @@ internal class KotlinFirStructureElementPresentation(
         return PsiIconUtil.getProvidersIcon(navigatablePsiElement, Iconable.ICON_FLAG_VISIBILITY)
     }
 
-    private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, descriptor: KtSymbolPointer<*>?): String? {
+    private fun getElementText(navigatablePsiElement: NavigatablePsiElement, ktElement : KtElement, pointer: KtSymbolPointer<*>?): String? {
         if (navigatablePsiElement is KtObjectDeclaration && navigatablePsiElement.isObjectLiteral()) {
             return KotlinCodeInsightBundle.message("object.0", (navigatablePsiElement.getSuperTypeList()?.text?.let { " : $it" } ?: ""))
         }
 
-        if (descriptor != null) {
+        if (pointer != null) {
             analyze(ktElement) {
-                val symbol = descriptor.restoreSymbol()
+                val symbol = pointer.restoreSymbol()
                 if (symbol is KtDeclarationSymbol) {
                     return symbol.render(KtDeclarationRendererOptions(modifiers = emptySet(), renderDeclarationHeader = false, renderUnitReturnType = true, typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES))
                 }
@@ -108,19 +110,20 @@ internal class KotlinFirStructureElementPresentation(
         return null
     }
 
-    private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, descriptor: KtSymbolPointer<*>?): String? {
-        if (!isInherited || descriptor == null) return null
+    private fun getElementLocationString(isInherited: Boolean, ktElement: KtElement, pointer: KtSymbolPointer<*>?): String? {
+        if (!isInherited || pointer == null) return null
 
         analyze(ktElement) {
-            val symbol = descriptor.restoreSymbol()
+            val symbol = pointer.restoreSymbol()
             if (symbol is KtCallableSymbol && symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
-                val psi = symbol.psi?.parent
-                if (psi is PsiNamedElement) {
-                    psi.name?.let { 
+                val containerPsi = symbol.psi?.parent
+                if (containerPsi is PsiNamedElement) {
+                    containerPsi.name?.let { 
                         return withRightArrow(it)
                     }
                 }
             }
+
             val containingSymbol = symbol?.getContainingSymbol()
             
             if (ktElement is KtDeclaration && containingSymbol == ktElement.getSymbol()) {
@@ -135,7 +138,6 @@ internal class KotlinFirStructureElementPresentation(
     }
 
     private fun withRightArrow(str: String): String {
-        val rightArrow = '\u2192'
         return if (StartupUiUtil.getLabelFont().canDisplay(rightArrow)) rightArrow + str else "->$str"
     }
 }

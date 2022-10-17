@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
 import com.intellij.util.containers.catch
-import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Document
@@ -488,7 +487,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(
       if (renamed) {
         externalInfo!!.scheduleDelete(filesToDelete, "renamed")
       }
-      provider!!.write(providerPath, byteOut.internalBuffer, byteOut.size(), roamingType)
+      provider!!.write(providerPath, byteOut.toByteArray(), roamingType)
     }
 
     if (externalInfo == null) {

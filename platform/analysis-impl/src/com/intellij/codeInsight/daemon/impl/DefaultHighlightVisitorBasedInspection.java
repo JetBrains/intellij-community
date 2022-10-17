@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,6 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +120,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
     else {
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
-      HighlightingSessionImpl.createHighlightingSession(file, progress, null, ProperTextRange.create(file.getTextRange()), false);
+      HighlightingSessionImpl.createHighlightingSession(file, progress, null, ProperTextRange.create(file.getTextRange()), CanISilentlyChange.Result.UH_UH);
       ProgressManager.getInstance().runProcess(() -> file.accept(visitor), progress);
     }
     return visitor.result;
@@ -172,16 +176,32 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       });
     }
 
+    String fileName = file.getName();
     List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
     for (TextEditorHighlightingPass pass : gpasses) {
-      pass.doCollectInformation(progress);
-      List<HighlightInfo> infos = pass.getInfos();
-      for (HighlightInfo info : infos) {
-        if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
-          result.add(Pair.create(file, info));
+      runAndRecordSpan(() -> {
+        pass.doCollectInformation(progress);
+        List<HighlightInfo> infos = pass.getInfos();
+        for (HighlightInfo info : infos) {
+          if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
+            result.add(Pair.create(file, info));
+          }
         }
-      }
+      }, fileName, pass.getClass().getSimpleName());
     }
+
     return result;
+  }
+
+  private static void runAndRecordSpan(@NotNull Runnable runnable, @NotNull String fileName, @NotNull String spanName) {
+    Tracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
+    Span span = tracer.spanBuilder(spanName).startSpan();
+    span.setAttribute("file", fileName);
+    try (Scope ignored = span.makeCurrent()) {
+      runnable.run();
+    }
+    finally {
+      span.end();
+    }
   }
 }

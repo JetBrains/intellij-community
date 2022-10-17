@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -332,12 +333,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIManager.LookAndFeelInfo expectedLaf;
     if (systemIsDark) {
       expectedLaf = preferredDarkLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Dark");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultDarkLaf();
       }
     }
     else {
       expectedLaf = preferredLightLaf;
+      if (expectedLaf == null && ExperimentalUI.isNewUI()) {
+        expectedLaf = findLafByName("Light");
+      }
       if (expectedLaf == null) {
         expectedLaf = getDefaultLightLaf();
       }
@@ -367,6 +374,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void loadState(@NotNull Element element) {
+    UIManager.LookAndFeelInfo oldLaF = myCurrentLaf;
+
     myCurrentLaf = loadLafState(element, ELEMENT_LAF);
     if (myCurrentLaf == null) {
       myCurrentLaf = loadDefaultLaf();
@@ -378,6 +387,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (autodetect) {
       getOrCreateLafDetector();
+    }
+
+    if (!isFirstSetup && !myCurrentLaf.equals(oldLaF)) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, myCurrentLaf, true, true);
     }
   }
 
@@ -565,15 +578,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find OS X L&F: " + className);
     }
 
-    String appLafName = WelcomeWizardUtil.getDefaultLAF();
-    if (appLafName != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(appLafName);
-      if (laf != null) {
-        return laf;
-      }
-      LOG.error("Could not find app L&F: " + appLafName);
-    }
-
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == Boolean.TRUE) {
       for (UIManager.LookAndFeelInfo laf : lafList.getValue()) {
@@ -591,6 +595,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
+  }
+
+  private @Nullable UIManager.LookAndFeelInfo findLafByName(@NotNull String name) {
+    for (UIManager.LookAndFeelInfo laf : getInstalledLookAndFeels()) {
+      if (name.equals(laf.getName())) {
+        return laf;
+      }
+    }
+    return null;
   }
 
   private @Nullable UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
@@ -657,7 +670,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.clear();
     defaults.putAll(ourDefaults);
     if (!isFirstSetup) {
-      SVGLoader.setContextColorPatcher(null);
+      SVGLoader.setColorPatcherProvider(null);
       SVGLoader.setSelectionColorPatcherProvider(null);
     }
 
@@ -1056,7 +1069,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       storeOriginalFontDefaults(uiDefaults);
       float fontSize = uiSettings.getFontSize2D();
       StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, fontSize));
-      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(fontSize));
+      float userScaleFactor = useInterFont() ? fontSize / INTER_SIZE : JBUIScale.getFontScale(fontSize);
+      JBUIScale.setUserScaleFactor(userScaleFactor);
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
@@ -1071,7 +1085,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static boolean useInterFont() {
-    return ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm && Runtime.version().feature() >= 17;
+    return forceToUseInterFont() || ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm && Runtime.version().feature() >= 17;
+  }
+
+  private static boolean forceToUseInterFont() {
+    return RegistryManager.getInstance().is("ide.ui.font.force.use.inter.font");
   }
 
   private float getDefaultUserScaleFactor() {
@@ -1145,6 +1163,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     autodetect = value;
     if (autodetect) {
       detectAndSyncLaf();
+    }
+    else if (ExperimentalUI.isNewUI()) {
+      if ("Light".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredLightLaf) {
+        preferredLightLaf = null;
+      }
+      else if ("Dark".equals(myCurrentLaf.getName()) && myCurrentLaf == preferredDarkLaf) {
+        preferredDarkLaf = null;
+      }
     }
   }
 
@@ -1228,10 +1254,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             DialogWrapper.cleanupWindowListeners(window);
           }
         });
-        if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
+        if (IdeaPopupMenuUI.isUnderPopup(contents) && WindowRoundedCornersManager.isAvailable()) {
+          if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+            WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true));
+          }
+          else {
+            WindowRoundedCornersManager.setRoundedCorners(window);
+          }
           if (SystemInfoRt.isMac) {
-            rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
-
             JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
             contentPane.setOpaque(true);
             contentPane.setBackground(contents.getBackground());

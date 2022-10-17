@@ -144,12 +144,12 @@ public final class GdkMethodUtil {
     for (GrStatement statement : statements) {
       if (statement == lastParent) break;
 
-      final Trinity<PsiClassType, GrReferenceExpression, PsiClass> result = getMixinTypes(statement);
+      final MixinInfo result = getMixinTypes(statement);
 
       if (result != null) {
-        final PsiClassType subjectType = result.first;
-        final GrReferenceExpression qualifier = result.second;
-        final PsiClass mixin = result.third;
+        final PsiClassType subjectType = result.subjectType;
+        final GrReferenceExpression qualifier = result.ref;
+        final PsiClass mixin = result.mixin;
 
         for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
           if (!mixin.processDeclarations(new MixinMemberContributor.MixinProcessor(each, subjectType, qualifier), state, null, place)) {
@@ -256,10 +256,15 @@ public final class GdkMethodUtil {
   }
 
   /**
-   * @return (type[1] in which methods mixed, reference to type[1], type[2] to mixin)
+   * @param subjectType the type into which the methods are mixed in
+   * @param ref         reference to subjectType
+   * @param mixin       the type that is mixed into subjectType
    */
+  record MixinInfo(PsiClassType subjectType, GrReferenceExpression ref, PsiClass mixin) {
+  }
+
   @Nullable
-  private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
+  private static MixinInfo getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
 
     return CachedValuesManager.getCachedValue(statement, () -> {
@@ -272,8 +277,7 @@ public final class GdkMethodUtil {
       if (mix == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
       return CachedValueProvider.Result
-        .create(new Trinity<>(original.first, original.second, mix),
-                PsiModificationTracker.MODIFICATION_COUNT);
+        .create(new MixinInfo(original.first, original.second, mix), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 

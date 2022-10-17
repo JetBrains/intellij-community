@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.parcelize.ParcelizeSyntheticComponent
 import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
@@ -50,12 +51,12 @@ class ParcelizeUltraLightClassModifierExtension : ParcelizeExtensionBase, UltraL
         val parcelizeClass = tryGetParcelizeClass(declaration, descriptor) ?: return
         if (parcelizeClass.hasCreatorField()) return
 
-        val field = object: LightFieldBuilder("CREATOR", "android.os.Parcelable.Creator", containingDeclaration), KtLightField {
+        val creatorType = "android.os.Parcelable.Creator<${parcelizeClass.fqNameSafe.asString()}>"
+        val field = object: LightFieldBuilder("CREATOR", creatorType, containingDeclaration), KtLightField {
             override val kotlinOrigin: KtDeclaration? get() = null
             override val lightMemberOrigin: LightMemberOrigin? get() = null
             override fun computeConstantValue(visitedVars: MutableSet<PsiVariable>?): Any? = null
             override fun getContainingClass(): KtLightClass = containingDeclaration
-
         }.also {
             it.setModifiers("public", "static", "final")
         }

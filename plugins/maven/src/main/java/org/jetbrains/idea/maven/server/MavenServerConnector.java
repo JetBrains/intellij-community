@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
@@ -15,7 +17,10 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public abstract class MavenServerConnector implements @NotNull Disposable {
+public abstract class MavenServerConnector implements Disposable {
+
+  public static final Topic<MavenServerDownloadListener> DOWNLOAD_LISTENER_TOPIC =
+    new Topic<>(MavenServerDownloadListener.class.getSimpleName(), MavenServerDownloadListener.class);
   public static final Logger LOG = Logger.getInstance(MavenServerConnector.class);
 
   protected final Project myProject;
@@ -27,7 +32,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   protected final String myVmOptions;
 
-  public MavenServerConnector(@NotNull Project project,
+  public MavenServerConnector(@Nullable Project project, // to be removed in future
                               @NotNull MavenServerManager manager,
                               @NotNull Sdk jdk,
                               @NotNull String vmOptions,
@@ -95,11 +100,6 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
         return getServer().applyProfiles(model, targetBasedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken);
       });
   }
-
-
-  public abstract void addDownloadListener(MavenServerDownloadListener listener);
-
-  public abstract void removeDownloadListener(MavenServerDownloadListener listener);
 
   @ApiStatus.Internal
   abstract void stop(boolean wait);

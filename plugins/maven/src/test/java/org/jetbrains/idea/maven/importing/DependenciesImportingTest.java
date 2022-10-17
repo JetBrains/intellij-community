@@ -538,7 +538,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDependenciesInPerSourceTypeModule() {
-    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+    Assume.assumeTrue(isWorkspaceImport());
 
     createModulePom("m1",
                     "<groupId>test</groupId>" +
@@ -1506,51 +1506,6 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   }
 
   @Test
-  public void testDoNotResetCustomRootEntries() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertProjectLibraries("Maven: junit:junit:4.0");
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
-
-    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.CLASSES, "file://foo.classes");
-    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES, "file://foo.sources");
-    addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(), "file://foo.javadoc");
-    addLibraryRoot("Maven: junit:junit:4.0", OrderRootType.SOURCES,
-                   "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa");
-    addLibraryRoot("Maven: junit:junit:4.0", JavadocOrderRootType.getInstance(),
-                   "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb");
-
-    assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
-                                     "file://foo.sources",
-                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/",
-                                     "file://foo.javadoc",
-                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
-
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
-
-    assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/", "file://foo.classes"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/", "file://foo.sources",
-                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/aaa"),
-                       Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/", "file://foo.javadoc",
-                                     "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/bbb"));
-  }
-
-  @Test
   public void testDifferentSystemDependenciesWithSameId() {
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -2203,49 +2158,32 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     String repoPath = helper.getTestDataPath("local1");
     setRepositoryPath(repoPath);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+    createProjectPom("""
+                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><packaging>pom</packaging><modules>  <module>m</module></modules>     <dependencyManagement>
+                                <dependencies>
+                                     <dependency>
+                                        <artifactId>asm</artifactId>
+                                        <groupId>asm</groupId>
+                                        <version>[2.2.1]</version>
+                                        <scope>runtime</scope>
+                                    </dependency>
+                                    <dependency>
+                                        <artifactId>asm-attrs</artifactId>
+                                        <groupId>asm</groupId>
+                                        <version>[2.2.1]</version>
+                                        <scope>runtime</scope>
+                                    </dependency>
+                                </dependencies>
+                            </dependencyManagement>""");
 
-                     "<modules>" +
-                     "  <module>m</module>" +
-                     "</modules>" +
-
-                     "     <dependencyManagement>\n" +
-                     "         <dependencies>\n" +
-                     "              <dependency>\n" +
-                     "                 <artifactId>asm</artifactId>\n" +
-                     "                 <groupId>asm</groupId>\n" +
-                     "                 <version>[2.2.1]</version>\n" +
-                     "                 <scope>runtime</scope>\n" +
-                     "             </dependency>\n" +
-                     "             <dependency>\n" +
-                     "                 <artifactId>asm-attrs</artifactId>\n" +
-                     "                 <groupId>asm</groupId>\n" +
-                     "                 <version>[2.2.1]</version>\n" +
-                     "                 <scope>runtime</scope>\n" +
-                     "             </dependency>\n" +
-                     "         </dependencies>\n" +
-                     "     </dependencyManagement>");
-
-    createModulePom("m", "<groupId>test</groupId>" +
-                         "<artifactId>m</artifactId>" +
-                         "<version>1</version>" +
-                         "" +
-                         "    <parent>\n" +
-                         "        <groupId>test</groupId>\n" +
-                         "        <artifactId>project</artifactId>\n" +
-                         "        <version>1</version>\n" +
-                         "    </parent>" +
-
-                         "<dependencies>" +
-                         "  <dependency>" +
-                         "            <artifactId>asm-attrs</artifactId>\n" +
-                         "            <groupId>asm</groupId>\n" +
-                         "            <scope>test</scope>" +
-                         "  </dependency>" +
-                         "</dependencies>");
+    createModulePom("m", """
+      <groupId>test</groupId><artifactId>m</artifactId><version>1</version>    <parent>
+              <groupId>test</groupId>
+              <artifactId>project</artifactId>
+              <version>1</version>
+          </parent><dependencies>  <dependency>            <artifactId>asm-attrs</artifactId>
+                  <groupId>asm</groupId>
+                  <scope>test</scope>  </dependency></dependencies>""");
 
     importProject();
 
@@ -2595,12 +2533,13 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "    </dependencies>");
 
     var file = createProjectSubFile("m1/src/main/java/Foo.java",
-                                    "class Foo {\n" +
-                                    "  void foo() {\n" +
-                                    "    junit.framework.TestCase a = null;\n" +
-                                    "    junit.framework.<error>TestCase123</error> b = null;\n" +
-                                    "  }\n" +
-                                    "}");
+                                    """
+                                      class Foo {
+                                        void foo() {
+                                          junit.framework.TestCase a = null;
+                                          junit.framework.<error>TestCase123</error> b = null;
+                                        }
+                                      }""");
 
     var jarPath = PlatformTestUtil.getCommunityPath() + "/plugins/maven/src/test/data/local1/junit/junit/3.8.1/junit-3.8.1.jar";
 

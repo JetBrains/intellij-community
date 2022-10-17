@@ -54,7 +54,7 @@ public final class PsiTypeUtil {
   }
 
   @NotNull
-  public static PsiType createCollectionType(@NotNull PsiManager psiManager, final String collectionQualifiedName, @NotNull PsiType... psiTypes) {
+  public static PsiType createCollectionType(@NotNull PsiManager psiManager, final String collectionQualifiedName, PsiType @NotNull... psiTypes) {
     final Project project = psiManager.getProject();
     final GlobalSearchScope globalsearchscope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

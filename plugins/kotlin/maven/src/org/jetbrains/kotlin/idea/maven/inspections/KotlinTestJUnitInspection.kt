@@ -61,6 +61,7 @@ class KotlinTestJUnitInspection : DomElementsInspection<MavenDomProjectModel>(Ma
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class ReplaceToKotlinTest(val dependency: MavenDomDependency) : LocalQuickFix {
         override fun getName() = KotlinMavenBundle.message("fix.replace.to.kotlin.test.name")
         override fun getFamilyName() = name
@@ -72,6 +73,7 @@ class KotlinTestJUnitInspection : DomElementsInspection<MavenDomProjectModel>(Ma
         }
     }
 
+    @Suppress("ActionIsNotPreviewFriendly")
     private class RemoveKotlinTest(val dependency: MavenDomDependency) : LocalQuickFix {
         override fun getName() = KotlinMavenBundle.message("fix.remove.kotlin.test")
         override fun getFamilyName() = name

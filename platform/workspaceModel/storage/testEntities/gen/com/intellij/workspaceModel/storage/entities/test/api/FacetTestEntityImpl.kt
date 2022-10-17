@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
+open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
@@ -37,15 +37,11 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _data: String? = null
   override val data: String
-    get() = _data!!
+    get() = dataSource.data
 
-  @JvmField
-  var _moreData: String? = null
   override val moreData: String
-    get() = _moreData!!
+    get() = dataSource.moreData
 
   override val module: ModuleTestEntity
     get() = snapshot.extractOneToManyParent(MODULE_CONNECTION_ID, this)!!
@@ -54,7 +50,7 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
     return connections
   }
 
-  class Builder(val result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity>(), FacetTestEntity.Builder {
+  class Builder(var result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity>(), FacetTestEntity.Builder {
     constructor() : this(FacetTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,6 +68,9 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -80,11 +79,11 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field FacetTestEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetTestEntity#entitySource should be initialized")
       }
       if (!getEntityData().isMoreDataInitialized()) {
         error("Field FacetTestEntity#moreData should be initialized")
@@ -108,22 +107,17 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetTestEntity
-      this.data = dataSource.data
-      this.entitySource = dataSource.entitySource
-      this.moreData = dataSource.moreData
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.data != dataSource.data) this.data = dataSource.data
+      if (this.moreData != dataSource.moreData) this.moreData = dataSource.moreData
       if (parents != null) {
-        this.module = parents.filterIsInstance<ModuleTestEntity>().single()
+        val moduleNew = parents.filterIsInstance<ModuleTestEntity>().single()
+        if ((this.module as WorkspaceEntityBase).id != (moduleNew as WorkspaceEntityBase).id) {
+          this.module = moduleNew
+        }
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -132,6 +126,14 @@ open class FacetTestEntityImpl : FacetTestEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var moreData: String
@@ -206,13 +208,13 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
   }
 
   override fun createEntity(snapshot: EntityStorage): FacetTestEntity {
-    val entity = FacetTestEntityImpl()
-    entity._data = data
-    entity._moreData = moreData
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = FacetTestEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun persistentId(): PersistentEntityId<*> {
@@ -243,19 +245,19 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.moreData != other.moreData) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as FacetTestEntityData
 

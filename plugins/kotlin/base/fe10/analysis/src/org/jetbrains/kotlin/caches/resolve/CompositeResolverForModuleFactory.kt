@@ -188,7 +188,7 @@ class CompositeResolverForModuleFactory(
         return createPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
     }
 
-    fun createContainerForCompositePlatform(
+    private fun createContainerForCompositePlatform(
         moduleContext: ModuleContext,
         moduleContentScope: GlobalSearchScope,
         languageVersionSettings: LanguageVersionSettings,

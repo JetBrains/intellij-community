@@ -106,36 +106,36 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       private Problem getProblem(@Nullable Token token, @Nullable Token prev, @Nullable Token next) {
         if (token == null) return null;
         switch (token.character) {
-          case 'Y':
+          case 'Y' -> {
             if (!hasNeighbor("w", prev, next)) {
               return new Problem(token, "week year", "year");
             }
-            break;
-          case 'M':
+          }
+          case 'M' -> {
             if (hasNeighbor("HhKk", prev, next) && !hasNeighbor("yd", prev, next)) {
               return new Problem(token, "month", "minute");
             }
-            break;
-          case 'm':
+          }
+          case 'm' -> {
             if (hasNeighbor("yd", prev, next) && !hasNeighbor("HhKk", prev, next)) {
               return new Problem(token, "minute", "month");
             }
-            break;
-          case 'D':
+          }
+          case 'D' -> {
             if (hasNeighbor("ML", prev, next)) {
               return new Problem(token, "day of year", "day of month");
             }
-            break;
-          case 'S':
+          }
+          case 'S' -> {
             if (hasNeighbor("m", prev, next)) {
               return new Problem(token, "milliseconds", "seconds");
             }
-            break;
+          }
         }
         return null;
       }
 
-      private boolean hasNeighbor(@NotNull @NonNls String neighbors, @Nullable Token prev, @Nullable Token next) {
+      private static boolean hasNeighbor(@NotNull @NonNls String neighbors, @Nullable Token prev, @Nullable Token next) {
         return prev != null && neighbors.indexOf(prev.character) >= 0 ||
                next != null && neighbors.indexOf(next.character) >= 0;
       }

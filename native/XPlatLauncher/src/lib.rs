@@ -1,29 +1,36 @@
-// #![deny(bad_style,
-// const_err,
-// dead_code,
-// improper_ctypes,
-// non_shorthand_field_patterns,
-// no_mangle_generic_items,
-// overflowing_literals,
-// path_statements,
-// patterns_in_fns_without_body,
-// private_in_public,
-// unconditional_recursion,
-// unused,
-// unused_allocation,
-// unused_comparisons,
-// unused_parens,
-// while_true,
-// missing_debug_implementations,
-// trivial_numeric_casts,
-// unused_extern_crates,
-// unused_import_braces,
-// unused_qualifications,
-// unused_results)]
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+#![warn(
+absolute_paths_not_starting_with_crate,
+elided_lifetimes_in_paths,
+explicit_outlives_requirements,
+keyword_idents,
+macro_use_extern_crate,
+meta_variable_misuse,
+missing_abi,
+missing_copy_implementations,
+missing_debug_implementations,
+non_ascii_idents,
+noop_method_call,
+pointer_structural_match,
+rust_2021_incompatible_closure_captures,
+rust_2021_incompatible_or_patterns,
+rust_2021_prefixes_incompatible_syntax,
+rust_2021_prelude_collisions,
+single_use_lifetimes,
+trivial_numeric_casts,
+unsafe_op_in_unsafe_fn,
+unstable_features,
+unused_crate_dependencies,
+unused_extern_crates,
+unused_import_braces,
+unused_lifetimes,
+unused_macro_rules,
+unused_qualifications,
+unused_results,
+variant_size_differences
+)]
 
-mod errors;
 mod java;
-mod utils;
 mod remote_dev;
 mod default;
 
@@ -35,13 +42,22 @@ use log::{debug, error, LevelFilter};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
-use crate::errors::{err_from_string, LauncherError, Result};
+use anyhow::{bail, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
-use crate::utils::canonical_non_unc;
 
 pub fn main_lib() {
+    let show_error_ui = match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+        Ok(_) => false,
+        Err(_) => {
+            let cmd_args: Vec<String> = env::args().collect();
+            let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+
+            !is_remote_dev
+        }
+    };
+
     let main_result = main_impl();
-    unwrap_with_human_readable_error(main_result);
+    unwrap_with_human_readable_error(main_result, show_error_ui);
 }
 
 fn main_impl() -> Result<()> {
@@ -103,9 +119,23 @@ pub struct ProductInfo {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
+    pub os: String,
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>
+}
+
+impl ProductInfo {
+    pub fn get_current_platform_launch_field(&self) -> Result<&ProductInfoLaunchField> {
+        let current_os = env::consts::OS;
+        let os_specific_launch_field =
+            self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
+
+        match os_specific_launch_field {
+            None => bail!("Could not find current os {current_os} launch element in product-info.json 'launch' field"),
+            Some(x) => Ok(x),
+        }
+    }
 }
 
 trait LaunchConfiguration {
@@ -118,15 +148,19 @@ trait LaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf>;
 }
 
+pub fn is_remote_dev(cmd_args: &[String]) -> bool {
+    // 0 arg is binary itself
+    cmd_args.len() > 1 && cmd_args[1] == "--remote-dev"
+}
+
 fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     let cmd_args: Vec<String> = env::args().collect();
-
-    // 0 arg is binary itself
-    let is_remote_dev = cmd_args.len() > 1 && cmd_args[1] == "--remote-dev";
+    
+    let is_remote_dev = is_remote_dev(&cmd_args);
 
     let (remote_dev_project_path, ij_args) = match is_remote_dev {
         true => {
-            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args[2..])?;
+            let remote_dev_args = RemoteDevLaunchConfiguration::parse_remote_dev_args(&cmd_args)?;
             (remote_dev_args.project_path, remote_dev_args.ij_args)
         },
         false => (None, cmd_args)
@@ -151,26 +185,15 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
 
 pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
 
-fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
+fn unwrap_with_human_readable_error<S>(result: Result<S>, show_error_ui: bool) -> S {
     match result {
         Ok(x) => { x }
         Err(e) => {
-            let message =
-                match e {
-                    LauncherError::HumanReadableError(e) => {
-                        e.message
-                    }
-                    _ => {
-                        format!("{e:?}")
-                    }
-                };
+            eprintln!("{e:?}");
+            error!("{e:?}");
 
-            eprintln!("{}", message);
-            error!("{}", message);
-
-            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
-                Ok(_) => {  }
-                Err(_) => { show_fail_to_start_message("Failed to start", format!("{message:?}").as_str()) }
+            if show_error_ui {
+                show_fail_to_start_message("Failed to start", format!("{e:?}").as_str())
             }
 
             std::process::exit(1);
@@ -194,77 +217,17 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
         }
     };
 
-    debug!("Resolving IDE VM options from files");
-    // 2. .vmoptions
-    let intellij_vm_options = configuration.get_intellij_vm_options()?;
-    for vm_option in intellij_vm_options {
-        full_vm_options.push(vm_option);
-    }
-
     debug!("Resolving classpath");
-    // 3. classpath
+    // 2. classpath
     let class_path_separator = get_class_path_separator();
     let class_path = configuration.get_class_path()?.join(class_path_separator);
     let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
-
     full_vm_options.push(class_path_vm_option);
 
-    // 4. TODO: find out if that's still needed
-    // full_vm_options.push("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader".to_string());
-    full_vm_options.push("-XX:+StartAttachListener".to_string());
-
-    // TODO: shouldn't this already be in .vmoptions?
-    // answer: it's platform-specific :D
-    // linux - replaced
-    // windows - resource file
-    // macos - plist
-    // answer: add to product-info.json
-    full_vm_options.push("--add-opens=java.base/java.io=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang.reflect=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.net=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio.charset=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.text=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.time=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.ssl=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.java2d=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED".to_string());
-
-    // TODO:
-    // "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
-    // "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+    debug!("Resolving IDE VM options");
+    // 3. vmoptions
+    let intellij_vm_options = configuration.get_intellij_vm_options()?;
+    full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
 }

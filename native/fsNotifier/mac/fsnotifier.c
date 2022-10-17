@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-#include <CoreServices/CoreServices.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <strings.h>
 #include <sys/mount.h>
+#include <CoreServices/CoreServices.h>
 
 #define PRIVATE_DIR "/private/"
 #define PRIVATE_LEN 9
@@ -45,7 +45,6 @@ static void callback(__unused ConstFSEventStreamRef streamRef,
     char **paths = eventPaths;
 
     for (size_t i = 0; i < numEvents; i++) {
-        // TODO[max] Lion has much more detailed flags we need accurately process. For now just reduce to SL events range.
         FSEventStreamEventFlags flags = eventFlags[i] & 0xFF;
         if ((flags & kFSEventStreamEventFlagMustScanSubDirs) != 0) {
             reportEvent("RECDIRTY", paths[i]);
@@ -112,16 +111,29 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     CFRelease(mounts);
 }
 
-// Static buffer for fscanf. All of the are being performed from a single thread, so it's thread safe.
-static char command[2048];
+#define INPUT_BUF_LEN 2048
+static char input_buf[INPUT_BUF_LEN];
 
-static void ParseRoots() {
+static char *read_stdin() {
+    char* result = fgets(input_buf, INPUT_BUF_LEN, stdin);
+    if (result == NULL || feof(stdin)) {
+        return NULL;
+    }
+    size_t length = strlen(input_buf);
+    if (length > 0 && input_buf[length - 1] == '\n') {
+        input_buf[length - 1] = '\0';
+    }
+    return input_buf;
+}
+
+static bool ParseRoots() {
     CFMutableArrayRef roots = CFArrayCreateMutable(NULL, 0, NULL);
     bool has_private_root = false;
 
     while (TRUE) {
-        fscanf(stdin, "%s", command);
-        if (strcmp(command, "#") == 0 || feof(stdin)) break;
+        char *command = read_stdin();
+        if (command == NULL) return false;
+        if (strcmp(command, "#") == 0) break;
         char *path = command[0] == '|' ? command + 1 : command;
         CFArrayAppendValue(roots, strdup(path));
         if (strcmp(path, "/") == 0 || strncasecmp(path, PRIVATE_DIR, PRIVATE_LEN) == 0) {
@@ -140,6 +152,7 @@ static void ParseRoots() {
         free(value);
     }
     CFRelease(roots);
+    return true;
 }
 
 int main(void) {
@@ -167,9 +180,11 @@ int main(void) {
     }
 
     while (TRUE) {
-        fscanf(stdin, "%s", command);
-        if (strcmp(command, "EXIT") == 0 || feof(stdin)) break;
-        if (strcmp(command, "ROOTS") == 0) ParseRoots();
+        char *command = read_stdin();
+        if (command == NULL || strcmp(command, "EXIT") == 0) break;
+        if (strcmp(command, "ROOTS") == 0) {
+            if (!ParseRoots()) break;
+        }
     }
 
     return 0;

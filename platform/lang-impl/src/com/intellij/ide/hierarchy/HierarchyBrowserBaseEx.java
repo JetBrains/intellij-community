@@ -199,6 +199,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected abstract void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees);
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getOccurrenceNavigator().getActionUpdateThread();
+  }
+
   /**
    * Put (scope type -> presentable name) pairs into a map.
    * This map is used in {@link #changeView(String, boolean)} method to get a proper localization in UI.
@@ -660,7 +665,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) return;
 
       @Nls String currentViewType = browser.getCurrentViewType();
@@ -691,7 +696,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       presentation.setVisible(true);
 
-      PsiElement selectedElement = browser.getSelectedElement();
+      PsiElement selectedElement = browser.getSelectedElement(event.getDataContext());
       if (selectedElement == null || !browser.isApplicableElementForBaseOn(selectedElement)) {
         presentation.setEnabledAndVisible(false);
       }
@@ -770,7 +775,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     @NotNull
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected final DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup group = new DefaultActionGroup();
 
       for(NamedScope namedScope: getValidScopes()) {

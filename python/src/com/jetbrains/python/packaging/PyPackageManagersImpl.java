@@ -51,7 +51,6 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       manager = myProvidedManagers.get(key);
     }
     if (manager == null) {
-      final VirtualFile homeDirectory = sdk.getHomeDirectory();
       final Map<String, PyPackageManager> cache;
       PyPackageManager customPackageManager = PyCustomPackageManagers.tryCreateCustomPackageManager(sdk);
       if (customPackageManager != null) {
@@ -60,20 +59,12 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        if (PySdkExtKt.isTargetBased(sdk)) {
-          manager = new PyTargetEnvironmentPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isRemote(sdk)) {
-          manager = new PyUnsupportedPackageManager(sdk);
-        }
-        else if (PythonSdkUtil.isConda(sdk) &&
-                 homeDirectory != null &&
-                 PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
-          manager = new PyCondaPackageManagerImpl(sdk);
-        }
-        else {
-          manager = new PyPackageManagerImpl(sdk);
-        }
+        manager = new PyTargetEnvironmentPackageManager(sdk);
+       // TODO:
+        // * There should be no difference between local and "Remote" package manager
+        // * But python flavor makes the difference.
+        // So one must check flavor and execute appropriate command on SDK target
+        // (be it localRequest or target request)
       }
       cache.put(key, manager);
       if (sdk instanceof Disposable) {

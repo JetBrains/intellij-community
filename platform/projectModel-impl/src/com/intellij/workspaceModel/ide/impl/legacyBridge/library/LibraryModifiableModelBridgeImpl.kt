@@ -20,14 +20,11 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
@@ -236,8 +233,8 @@ internal class LibraryModifiableModelBridgeImpl(
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
-      if (!excludedRoots.contains(virtualFileUrl)) {
-        excludedRoots.add(virtualFileUrl)
+      if (!excludedRoots.map { it.url }.contains(virtualFileUrl)) {
+        excludedRoots = excludedRoots + ExcludeUrlEntity(virtualFileUrl, this.entitySource)
       }
     }
 
@@ -319,7 +316,10 @@ internal class LibraryModifiableModelBridgeImpl(
 
     update {
       roots.removeIf{ it.url == virtualFileUrl && it.type.name == rootType.name() }
-      excludedRoots.removeIf { !isUnderRoots(it, roots) }
+    }
+    val libraryEntity = currentLibrary.libraryEntity
+    libraryEntity.excludedRoots.filterNot { isUnderRoots(it.url, libraryEntity.roots) }.forEach { 
+      diff.removeEntity(it)
     }
 
     if (assertChangesApplied && currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) {
@@ -334,11 +334,9 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val virtualFileUrl = virtualFileManager.fromUrl(url)
 
-    if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) return false
-
-    update {
-      excludedRoots.removeIf { it == virtualFileUrl }
-    }
+    val excludeUrlEntity = currentLibrary.libraryEntity.excludedRoots.find { it.url == virtualFileUrl }
+    if (excludeUrlEntity == null) return false
+    diff.removeEntity(excludeUrlEntity)
 
     if (assertChangesApplied && currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) {
       error("removeRoot: removed excluded url '${virtualFileUrl.url}' still exists after removing")

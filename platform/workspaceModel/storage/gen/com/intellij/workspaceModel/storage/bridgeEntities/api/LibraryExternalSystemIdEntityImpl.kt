@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, WorkspaceEntityBase() {
+open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSystemIdEntityData) : LibraryExternalSystemIdEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
@@ -38,10 +38,8 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
 
   }
 
-  @JvmField
-  var _externalSystemId: String? = null
   override val externalSystemId: String
-    get() = _externalSystemId!!
+    get() = dataSource.externalSystemId
 
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
@@ -50,7 +48,7 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
     return connections
   }
 
-  class Builder(val result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
+  class Builder(var result: LibraryExternalSystemIdEntityData?) : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
     constructor() : this(LibraryExternalSystemIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -68,6 +66,9 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -76,11 +77,11 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isExternalSystemIdInitialized()) {
         error("Field LibraryExternalSystemIdEntity#externalSystemId should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryExternalSystemIdEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
@@ -101,21 +102,16 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryExternalSystemIdEntity
-      this.externalSystemId = dataSource.externalSystemId
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.externalSystemId != dataSource.externalSystemId) this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
-        this.library = parents.filterIsInstance<LibraryEntity>().single()
+        val libraryNew = parents.filterIsInstance<LibraryEntity>().single()
+        if ((this.library as WorkspaceEntityBase).id != (libraryNew as WorkspaceEntityBase).id) {
+          this.library = libraryNew
+        }
       }
     }
 
-
-    override var externalSystemId: String
-      get() = getEntityData().externalSystemId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().externalSystemId = value
-        changedProperty.add("externalSystemId")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -124,6 +120,14 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var externalSystemId: String
+      get() = getEntityData().externalSystemId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().externalSystemId = value
+        changedProperty.add("externalSystemId")
       }
 
     override var library: LibraryEntity
@@ -184,12 +188,13 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
   }
 
   override fun createEntity(snapshot: EntityStorage): LibraryExternalSystemIdEntity {
-    val entity = LibraryExternalSystemIdEntityImpl()
-    entity._externalSystemId = externalSystemId
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = LibraryExternalSystemIdEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -216,18 +221,18 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryExternalSystemIdEntityData
 
-    if (this.externalSystemId != other.externalSystemId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.externalSystemId != other.externalSystemId) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as LibraryExternalSystemIdEntityData
 

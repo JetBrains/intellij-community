@@ -108,8 +108,8 @@ public class HgCheckoutProvider implements CheckoutProvider {
   }
 
   @Override
-  public String getVcsName() {
-    return "_Mercurial";
+  public @NotNull String getVcsName() {
+    return HgBundle.message("hg4idea.vcs.name.with.mnemonic");
   }
 
   @NotNull

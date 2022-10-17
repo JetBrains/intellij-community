@@ -18,7 +18,7 @@ package com.jetbrains.python.sdk.flavors;
 import org.jetbrains.annotations.NotNull;
 
 
-public abstract class CPythonSdkFlavor extends PythonSdkFlavor {
+public abstract class CPythonSdkFlavor<T extends PyFlavorData> extends PythonSdkFlavor<T> {
   @NotNull
   @Override
   public String getName() {

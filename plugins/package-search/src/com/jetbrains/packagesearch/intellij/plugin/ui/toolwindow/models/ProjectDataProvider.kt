@@ -25,13 +25,13 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
+import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal class ProjectDataProvider(
-    private val apiClient: PackageSearchProvider,
+    private val apiClient: PackageSearchApiClient,
     private val packageCache: CoroutineLRUCache<InstalledDependency, ApiStandardPackage>
 ) {
 
@@ -101,7 +101,7 @@ internal class ProjectDataProvider(
             "Found ${dependencies.count() - packagesToFetch.count()} packages in cache, still need to fetch ${packagesToFetch.count()} from API"
         }
 
-        val fetchedPackages = packagesToFetch.asSequence()
+        packagesToFetch.asSequence()
             .map { dependency -> dependency.coordinatesString }
             .chunked(size = 25)
             .asFlow()
@@ -116,12 +116,11 @@ internal class ProjectDataProvider(
             }
             .toList()
             .flatten()
-
-        for (v2Package in fetchedPackages) {
-            val dependency = InstalledDependency.from(v2Package)
-            packageCache.put(dependency, v2Package)
-            remoteInfoByDependencyMap[dependency] = v2Package
-        }
+            .forEach { v2Package ->
+                val dependency = InstalledDependency.from(v2Package)
+                packageCache.put(dependency, v2Package)
+                remoteInfoByDependencyMap[dependency] = v2Package
+            }
 
         return remoteInfoByDependencyMap
     }

@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
@@ -70,6 +69,10 @@ class SingleChangeListCommitWorkflowHandler(
   override fun changeListChanged() {
     updateCommitMessage()
     updateCommitOptions()
+  }
+
+  override fun updateDefaultCommitActionName() {
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
   }
 
   override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
@@ -138,7 +141,7 @@ class SingleChangeListCommitWorkflowHandler(
     ui.commitOptionsUi.setVisible(vcses)
   }
 
-  private inner class CommitCustomListener : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = ui.deactivate()
+  private inner class CommitCustomListener : CommitterResultHandler {
+    override fun onSuccess() = ui.deactivate()
   }
 }

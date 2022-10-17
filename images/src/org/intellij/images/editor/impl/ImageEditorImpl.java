@@ -44,7 +44,7 @@ public final class ImageEditorImpl implements ImageEditor {
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, false, true);
+    this(project, file, false, false);
   }
 
     /**

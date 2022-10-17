@@ -24,7 +24,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
+open class WithSoftLinkEntityImpl(val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -34,16 +34,14 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
 
   }
 
-  @JvmField
-  var _link: NameId? = null
   override val link: NameId
-    get() = _link!!
+    get() = dataSource.link
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(val result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity>(), WithSoftLinkEntity.Builder {
+  class Builder(var result: WithSoftLinkEntityData?) : ModifiableWorkspaceEntityBase<WithSoftLinkEntity>(), WithSoftLinkEntity.Builder {
     constructor() : this(WithSoftLinkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,6 +59,9 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
       this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
+      // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
+      // Builder may switch to snapshot at any moment and lock entity data to modification
+      this.result = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -69,11 +70,11 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isLinkInitialized()) {
         error("Field WithSoftLinkEntity#link should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field WithSoftLinkEntity#entitySource should be initialized")
       }
     }
 
@@ -84,21 +85,12 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithSoftLinkEntity
-      this.link = dataSource.link
-      this.entitySource = dataSource.entitySource
+      if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.link != dataSource.link) this.link = dataSource.link
       if (parents != null) {
       }
     }
 
-
-    override var link: NameId
-      get() = getEntityData().link
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().link = value
-        changedProperty.add("link")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -106,6 +98,15 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var link: NameId
+      get() = getEntityData().link
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().link = value
+        changedProperty.add("link")
 
       }
 
@@ -169,12 +170,13 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
   }
 
   override fun createEntity(snapshot: EntityStorage): WithSoftLinkEntity {
-    val entity = WithSoftLinkEntityImpl()
-    entity._link = link
-    entity.entitySource = entitySource
-    entity.snapshot = snapshot
-    entity.id = createEntityId()
-    return entity
+    return getCached(snapshot) {
+      val entity = WithSoftLinkEntityImpl(this)
+      entity.entitySource = entitySource
+      entity.snapshot = snapshot
+      entity.id = createEntityId()
+      entity
+    }
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -199,18 +201,18 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
 
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithSoftLinkEntityData
 
-    if (this.link != other.link) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.link != other.link) return false
     return true
   }
 
   override fun equalsIgnoringEntitySource(other: Any?): Boolean {
     if (other == null) return false
-    if (this::class != other::class) return false
+    if (this.javaClass != other.javaClass) return false
 
     other as WithSoftLinkEntityData
 

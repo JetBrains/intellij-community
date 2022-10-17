@@ -14,7 +14,7 @@ class PluginChunkMerger(
   newBlockMap: BlockMap,
   private val indicator: ProgressIndicator
 ) : ChunkMerger(oldFile, oldBlockMap, newBlockMap) {
-  private val newFileSize: Int = newBlockMap.chunks.sumBy { chunk -> chunk.length }
+  private val newFileSize: Int = newBlockMap.chunks.sumOf { chunk -> chunk.length }
   private var progress: Int = 0
 
   override fun merge(output: OutputStream, newChunkDataSource: Iterator<ByteArray>) {

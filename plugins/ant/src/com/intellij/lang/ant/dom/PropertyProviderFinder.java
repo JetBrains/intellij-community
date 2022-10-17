@@ -124,7 +124,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       String effectiveTargetName;
       final InclusionKind inclusionKind = myNameContext.getCurrentInclusionKind();
       switch (inclusionKind) {
-        case IMPORT:
+        case IMPORT -> {
           final String alias = myNameContext.getShortPrefix() + declaredTargetName;
           if (!myTargetsResolveMap.containsKey(declaredTargetName)) {
             effectiveTargetName = declaredTargetName;
@@ -133,15 +133,9 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
           else {
             effectiveTargetName = alias;
           }
-          break;
-
-        case INCLUDE:
-          effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
-          break;
-
-        default:
-          effectiveTargetName = declaredTargetName;
-          break;
+        }
+        case INCLUDE -> effectiveTargetName = myNameContext.getFQPrefix() + declaredTargetName;
+        default -> effectiveTargetName = declaredTargetName;
       }
       if (effectiveTargetName != null) {
         final AntDomTarget existingTarget = myTargetsResolveMap.get(effectiveTargetName);
@@ -309,9 +303,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     public String calcTargetReferenceText(String targetReferenceText) {
       if (!myPrefixes.isEmpty()) {
         final InclusionKind kind = myPrefixes.getLast().getSecond();
-        switch (kind) {
-          case IMPORT  : return targetReferenceText;
-          case INCLUDE : return getFQPrefix() + targetReferenceText;
+        if (kind == InclusionKind.INCLUDE) {
+          return getFQPrefix() + targetReferenceText;
         }
       }
       return targetReferenceText;

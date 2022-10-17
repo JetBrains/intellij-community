@@ -16,9 +16,9 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -128,7 +128,7 @@ class NestingDepthVisitor extends JavaRecursiveElementWalkingVisitor {
     exitScope(element);
   }
 
-  private final Set<PsiElement> scopeEntered = new THashSet<>();
+  private final Set<PsiElement> scopeEntered = new HashSet<>();
   private void enterScope(PsiElement element) {
     scopeEntered.add(element);
     m_currentDepth++;

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,8 +218,8 @@ public interface Filter {
         TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
         if (normalHyperlinkAttrs != null) {
           grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();
-          grayedHyperlinkAttrs.setForegroundColor(UIUtil.getInactiveTextColor());
-          grayedHyperlinkAttrs.setEffectColor(UIUtil.getInactiveTextColor());
+          grayedHyperlinkAttrs.setForegroundColor(NamedColorUtil.getInactiveTextColor());
+          grayedHyperlinkAttrs.setEffectColor(NamedColorUtil.getInactiveTextColor());
           GRAYED_BY_NORMAL_CACHE.put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
         }
       }

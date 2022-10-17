@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION
 import org.jetbrains.kotlin.diagnostics.Errors.DEPRECATION_ERROR
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -61,7 +63,7 @@ class MigrateExperimentalToRequiresOptInFix(
             val constructorCallee = diagnostic.psiElement.getStrictParentOfType<KtConstructorCalleeExpression>() ?: return null
             val annotationEntry = constructorCallee.parent?.safeAs<KtAnnotationEntry>() ?: return null
             val annotationDescriptor = annotationEntry.resolveToDescriptorIfAny() ?: return null
-            if (annotationDescriptor.fqName == OptInNames.OLD_EXPERIMENTAL_FQ_NAME) {
+            if (annotationDescriptor.fqName == FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME) {
                 val annotationOwner = annotationEntry.getStrictParentOfType<KtModifierListOwner>() ?: return null
                 if (annotationOwner.findAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) != null)
                     return RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.migrate.experimental.annotation.remove"), annotationEntry)

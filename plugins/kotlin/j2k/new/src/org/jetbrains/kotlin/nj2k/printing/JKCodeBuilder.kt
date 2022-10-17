@@ -802,6 +802,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAnnotationRaw(annotation: JKAnnotation) {
             printer.print("@")
+            annotation.useSiteTarget?.let { printer.print("${it.renderName}:") }
             printer.renderSymbol(annotation.classSymbol, annotation)
             if (annotation.arguments.isNotEmpty()) {
                 printer.par {

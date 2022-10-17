@@ -24,9 +24,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-/**
- * @author peter
- */
 class GroovyOverrideImplementTest extends LightGroovyTestCase {
 
   void testInEmptyBraces() throws Exception {

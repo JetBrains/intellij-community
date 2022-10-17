@@ -38,9 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class InspectionValidator {
   public static final ProjectExtensionPointName<InspectionValidator> EP_NAME = new ProjectExtensionPointName<>("com.intellij.compiler.inspectionValidator");
   private final String myId;
@@ -51,16 +48,6 @@ public abstract class InspectionValidator {
 
   @Nullable
   private final InspectionToolProvider myInspectionToolProvider;
-
-  /**
-   * @deprecated use {@link #InspectionValidator(String, String, String)} instead; this constructor uses {@code description} which may
-   * be localized as ID which must not be localized
-   */
-  @Deprecated(forRemoval = true)
-  protected InspectionValidator(@NotNull @Nls String description,
-                                @NotNull @Nls String progressIndicatorText) {
-    this(description, description, progressIndicatorText);
-  }
 
   protected InspectionValidator(@NotNull @NonNls String id, @NotNull @Nls String description,
                                 @NotNull @Nls String progressIndicatorText) {

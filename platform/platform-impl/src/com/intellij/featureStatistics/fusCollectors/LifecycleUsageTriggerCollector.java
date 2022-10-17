@@ -178,20 +178,12 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   public static void onProjectFrameSelected(int option) {
     ProjectOpenMode optionValue;
     switch (option) {
-      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
-        optionValue = ProjectOpenMode.New;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
-        optionValue = ProjectOpenMode.Same;
-        break;
-
-      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH:
-        optionValue = ProjectOpenMode.Attach;
-        break;
-
-      default:
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW -> optionValue = ProjectOpenMode.New;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> optionValue = ProjectOpenMode.Same;
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> optionValue = ProjectOpenMode.Attach;
+      default -> {
         return;
+      }
     }
     PROJECT_FRAME_SELECTED.log(optionValue);
   }

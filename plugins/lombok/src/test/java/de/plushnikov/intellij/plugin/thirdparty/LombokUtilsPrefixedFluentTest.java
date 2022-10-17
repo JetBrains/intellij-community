@@ -11,7 +11,7 @@ public class LombokUtilsPrefixedFluentTest {
 
   private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(true, false, false, "m", "");
 
-  private String makeResults(String fieldName, boolean isBoolean) {
+  private static String makeResults(String fieldName, boolean isBoolean) {
     String lombokResult = LombokHandlerUtil.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
     String result = LombokUtils.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
 

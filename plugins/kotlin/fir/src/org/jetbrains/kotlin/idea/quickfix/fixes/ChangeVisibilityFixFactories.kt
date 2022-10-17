@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
-import org.jetbrains.kotlin.idea.util.isRedundantSetter
-import org.jetbrains.kotlin.idea.util.removeRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
@@ -47,7 +47,7 @@ object ChangeVisibilityFixFactories {
             }
         }
 
-    val makePublicExplicitApplicator = getApplicator(KtTokens.PUBLIC_KEYWORD, true)
+    private val makePublicExplicitApplicator = getApplicator(KtTokens.PUBLIC_KEYWORD, true)
 
     val noExplicitVisibilityInApiMode =
         diagnosticFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiMode::class, makePublicExplicitApplicator) { diagnostic ->

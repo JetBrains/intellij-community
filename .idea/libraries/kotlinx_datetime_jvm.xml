@@ -1,11 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinx-datetime-jvm" type="repository">
-    <properties maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.4.0">
-      <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-      </exclude>
-    </properties>
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.4.0" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0.jar!/" />
     </CLASSES>

@@ -128,19 +128,13 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
   @Override
   public void reset() {
     final int addOrReplace = myManager.getOptionToReplace();
-    switch (addOrReplace) {
-      case 0:
-        myPanel.myReplaceRB.setSelected(true);
-        break;
-      case 1:
-        myPanel.myAddRB.setSelected(true);
-        break;
-      case 2:
-        myPanel.myDoNotApplyRB.setSelected(true);
-        break;
-      default:
-        myPanel.myShowOptionsRB.setSelected(true);
-    }
+    final JRadioButton radioButton = switch (addOrReplace) {
+      case 0 -> myPanel.myReplaceRB;
+      case 1 -> myPanel.myAddRB;
+      case 2 -> myPanel.myDoNotApplyRB;
+      default -> myPanel.myShowOptionsRB;
+    };
+    radioButton.setSelected(true);
 
     myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
     super.reset();

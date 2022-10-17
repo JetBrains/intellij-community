@@ -30,12 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class InspectionLIfeCycleTest extends LightDaemonAnalyzerTestCase {
   public void testInspectionFinishedCalledOnce() {
-    String text = "class LQF {\n" +
-                  "    int f;\n" +
-                  "    public void me() {\n" +
-                  "        <caret>\n" +
-                  "    }\n" +
-                  "}";
+    String text = """
+      class LQF {
+          int f;
+          public void me() {
+              <caret>
+          }
+      }""";
     configureFromFileText("x.java", text);
 
     final AtomicInteger startedCount = new AtomicInteger();

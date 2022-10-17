@@ -340,27 +340,26 @@ public class LocalHintManager implements ClientHintManager {
           Point p = tooltip.getShowingPoint().getPoint(lp);
           if (info.hint != hint) {
             switch (constraint) {
-              case HintManager.ABOVE:
+              case HintManager.ABOVE -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.below) {
                   p.y -= tooltip.getPositionChangeY();
                 }
-                break;
-              case HintManager.UNDER:
-              case HintManager.RIGHT_UNDER:
+              }
+              case HintManager.UNDER, HintManager.RIGHT_UNDER -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.above) {
                   p.y += tooltip.getPositionChangeY();
                 }
-                break;
-              case HintManager.RIGHT:
+              }
+              case HintManager.RIGHT -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.atLeft) {
                   p.x += tooltip.getPositionChangeX();
                 }
-                break;
-              case HintManager.LEFT:
+              }
+              case HintManager.LEFT -> {
                 if (tooltip.getPreferredPosition() == Balloon.Position.atRight) {
                   p.x -= tooltip.getPositionChangeX();
                 }
-                break;
+              }
             }
           }
           return p;

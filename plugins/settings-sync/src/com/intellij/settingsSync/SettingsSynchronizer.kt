@@ -2,19 +2,20 @@ package com.intellij.settingsSync
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener {
+internal class SettingsSynchronizer : ApplicationInitializedListener, ApplicationActivationListener, SettingsSyncEnabledStateListener, SettingsSyncCategoriesChangeListener {
 
   private val executorService = AppExecutorUtil.createBoundedScheduledExecutorService("Settings Sync Update", 1)
   private val autoSyncDelay get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
@@ -22,11 +23,10 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
   override suspend fun execute(asyncScope: CoroutineScope) {
-    if (!isSettingsSyncEnabledByKey()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
       return
     }
 
-    SettingsSyncPluginManager.getInstance()
     SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
 
     if (isSettingsSyncEnabledInSettings()) {
@@ -38,9 +38,9 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
       val migration = MIGRATION_EP.extensionList.firstOrNull()
       if (migration != null) {
         val migrationPossible = migration.isLocalDataAvailable(PathManager.getConfigDir())
-        LOG.info("Found migration from an old storage: ${migration.javaClass.name}, migration possible: $migrationPossible")
         SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
         if (migrationPossible) {
+          LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}, migration possible: $migrationPossible")
           SettingsSyncSettings.getInstance().syncEnabled = true
           executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration)), 0, TimeUnit.SECONDS)
         }
@@ -58,7 +58,7 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     }
 
     if (Registry.`is`("settingsSync.autoSync.on.focus", true)) {
-      scheduleSyncing("Syncing settings on app focus")
+      scheduleSyncingOnAppFocus()
     }
   }
 
@@ -70,21 +70,29 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     LOG.info("Initializing settings sync")
     val settingsSyncMain = SettingsSyncMain.getInstance()
     settingsSyncMain.controls.bridge.initialize(initMode)
-    settingsSyncMain.syncSettings()
+    syncSettings()
   }
 
   override fun enabledStateChanged(syncEnabled: Boolean) {
-    // syncEnabled part is handled inside SettingsSyncEnabler
-    if (!syncEnabled) {
+    if (syncEnabled) {
+      SettingsSyncEvents.getInstance().addCategoriesChangeListener(this)
+      // actual start of the sync is handled inside SettingsSyncEnabler
+    }
+    else {
+      SettingsSyncEvents.getInstance().removeCategoriesChangeListener(this)
       stopSyncingByTimer()
       SettingsSyncMain.getInstance().disableSyncing()
     }
   }
 
-  private fun scheduleSyncing(logMessage: String) {
+  override fun categoriesStateChanged() {
+    syncSettings()
+  }
+
+  private fun scheduleSyncingOnAppFocus() {
     executorService.schedule(Runnable {
-      LOG.info(logMessage)
-      SettingsSyncMain.getInstance().syncSettings()
+      LOG.debug("Syncing settings on app focus")
+      syncSettings()
     }, 0, TimeUnit.SECONDS)
   }
 
@@ -92,9 +100,14 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
   private fun setupSyncingByTimer(): ScheduledFuture<*> {
     val delay = autoSyncDelay
     return executorService.scheduleWithFixedDelay(Runnable {
-      LOG.info("Syncing settings by timer")
-      SettingsSyncMain.getInstance().syncSettings()
+      LOG.debug("Syncing settings by timer")
+      syncSettings()
     }, delay, delay, TimeUnit.SECONDS)
+  }
+
+  private fun syncSettings() {
+    val syncControls = SettingsSyncMain.getInstance().controls
+    syncSettings(syncControls.remoteCommunicator, syncControls.updateChecker)
   }
 
   @RequiresEdt
@@ -109,5 +122,26 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
     private val LOG = logger<SettingsSynchronizer>()
 
     private val MIGRATION_EP = ExtensionPointName.create<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
+
+    @RequiresBackgroundThread
+    internal fun syncSettings(remoteCommunicator: SettingsSyncRemoteCommunicator, updateChecker: SettingsSyncUpdateChecker) {
+      when (remoteCommunicator.checkServerState()) {
+        is ServerState.UpdateNeeded -> {
+          LOG.info("Updating from server")
+          updateChecker.scheduleUpdateFromServer()
+          // the push will happen automatically after updating and merging (if there is anything to merge)
+        }
+        ServerState.FileNotExists -> {
+          LOG.info("No file on server")
+        }
+        ServerState.UpToDate -> {
+          LOG.debug("Updating settings is not needed, will check if push is needed")
+          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.PingRequest)
+        }
+        is ServerState.Error -> {
+          // error already logged in checkServerState, we schedule update
+        }
+      }
+    }
   }
 }

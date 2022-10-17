@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 interface ReferredEntity : WorkspaceEntity {
   val version: Int
@@ -17,8 +18,8 @@ interface ReferredEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ReferredEntity, ModifiableWorkspaceEntity<ReferredEntity>, ObjBuilder<ReferredEntity> {
-    override var version: Int
     override var entitySource: EntitySource
+    override var version: Int
     override var name: String
     override var contentRoot: ContentRootEntity?
   }

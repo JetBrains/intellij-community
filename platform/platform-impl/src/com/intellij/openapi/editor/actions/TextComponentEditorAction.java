@@ -20,6 +20,10 @@ import javax.swing.text.JTextComponent;
 
 
 public abstract class TextComponentEditorAction extends EditorAction {
+  static {
+    TextComponentEditorImpl.ensureRequiredClassesAreLoaded();
+  }
+
   private final boolean allowSpeedSearch;
 
   protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler) {

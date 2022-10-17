@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -85,7 +86,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin());
     }
-    idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+
+    if (ExperimentalUI.isNewUI()) {
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft());
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter());
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_RIGHT, ActionsTreeUtil.getMainToolbarRight());
+    }
+    else {
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+    }
+
     idToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup());
     idToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu());
     idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());
@@ -298,8 +308,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return element;
   }
 
-  @Nullable
-  public AnAction getCorrectedAction(String id) {
+  public @Nullable AnAction getCorrectedAction(String id) {
     if (!idToName.containsKey(id)) {
       return ActionManager.getInstance().getAction(id);
     }
@@ -319,8 +328,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
-  @Nullable
-  public String getDisplayName(@NotNull String id) {
+  public @Nullable String getDisplayName(@NotNull String id) {
     return idToName.get(id);
   }
 
@@ -378,8 +386,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return true;
   }
 
-  @NotNull
-  public List<ActionUrl> getChildActions(ActionUrl url) {
+  public @NotNull List<ActionUrl> getChildActions(ActionUrl url) {
     ArrayList<ActionUrl> result = new ArrayList<>();
     ArrayList<String> groupPath = url.getGroupPath();
     for (ActionUrl actionUrl : actions) {
@@ -506,11 +513,11 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     }
 
     private static int getEquivalenceClass(ActionUrl url) {
-      switch (url.getActionType()) {
-        case ActionUrl.DELETED: return 1;
-        case ActionUrl.ADDED: return 2;
-        default: return 3;
-      }
+      return switch (url.getActionType()) {
+        case ActionUrl.DELETED -> 1;
+        case ActionUrl.ADDED -> 2;
+        default -> 3;
+      };
     }
   }
 }

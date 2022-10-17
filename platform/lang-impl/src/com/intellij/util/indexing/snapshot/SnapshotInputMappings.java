@@ -100,7 +100,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   @Nullable
   @Override
   public InputData<Key, Value> readData(@NotNull FileContent content) throws IOException {
-    if (!((FileContentImpl)content).isPhysicalContent()) {
+    if (((FileContentImpl)content).isTransientContent()) {
       throw new IllegalArgumentException("Non-physical data are not allowed.");
     }
     int hashId = getHashId(content);

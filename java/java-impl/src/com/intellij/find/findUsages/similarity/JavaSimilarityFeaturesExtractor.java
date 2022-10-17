@@ -4,6 +4,7 @@ package com.intellij.find.findUsages.similarity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder;
 import com.intellij.util.ObjectUtils;
@@ -16,13 +17,15 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
 
-  public JavaSimilarityFeaturesExtractor(@NotNull PsiElement context) {
-    myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context);
+  public JavaSimilarityFeaturesExtractor(@NotNull PsiElement usage, @NotNull PsiElement context) {
+    myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context, usage);
     myContext = context;
   }
 
   public @NotNull Bag getFeatures() {
-    myContext.accept(this);
+    if (Registry.is("similarity.find.usages.java.clustering.enable")) {
+      myContext.accept(this);
+    }
     return myUsageSimilarityFeaturesRecorder.getFeatures();
   }
 
@@ -34,7 +37,6 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
     }
     super.visitKeyword(keyword);
   }
-
 
   @Override
   public void visitVariable(@NotNull PsiVariable variable) {
@@ -106,7 +108,7 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     String tokenFeature = null;
     if (!(expression instanceof PsiMethodReferenceExpression)) {
-      tokenFeature = "VAR: ";
+      tokenFeature = null;
       if (!Registry.is("similarity.find.usages.fast.clustering")) {
         tokenFeature += getTypeRepresentation(expression);
       }
@@ -173,6 +175,24 @@ public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor
   public void visitAnonymousClass(@NotNull PsiAnonymousClass clazz) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(clazz, "anonymousClazz");
     super.visitAnonymousClass(clazz);
+  }
+
+  @Override
+  public void visitMethod(@NotNull PsiMethod method) {
+    if (method.equals(myContext)) {
+      final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+      myUsageSimilarityFeaturesRecorder.addFeature(method.isConstructor() ? "CONSTRUCTOR: " : methodSignature.getName());
+      for (PsiType type : methodSignature.getParameterTypes()) {
+        myUsageSimilarityFeaturesRecorder.addFeature("PARAMETER: " + type.getCanonicalText());
+      }
+      PsiType returnType = method.getReturnType();
+      if (returnType != null) {
+        myUsageSimilarityFeaturesRecorder.addFeature("RETURN_TYPE: " + returnType.getCanonicalText());
+      }
+    }
+    else {
+      super.visitMethod(method);
+    }
   }
 
   private static @Nullable String viaResolve(@NotNull PsiMethodReferenceExpression expression) {

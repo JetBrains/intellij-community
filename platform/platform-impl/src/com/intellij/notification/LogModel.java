@@ -5,7 +5,6 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,15 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class LogModel  {
   public static final Topic<EventLogListener> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", EventLogListener.class, Topic.BroadcastDirection.NONE);
+  public record StatusMessage(Notification notification, @NotNull @NlsContexts.StatusBarText String text, long stamp) {}
 
   private final List<Notification> myNotifications = new ArrayList<>();
   private final Map<Notification, @NlsContexts.StatusBarText String> myStatuses = CollectionFactory.createConcurrentWeakIdentityMap();
-  private Trinity<Notification, @NlsContexts.StatusBarText String, Long> myStatusMessage;
+  private StatusMessage myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new HashMap<>();
 
@@ -73,17 +70,16 @@ public final class LogModel  {
 
   void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
     synchronized (myNotifications) {
-      if (myStatusMessage != null && myStatusMessage.first == statusMessage) return;
+      if (myStatusMessage != null && myStatusMessage.notification == statusMessage) return;
       if (myStatusMessage == null && statusMessage == null) return;
 
-      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage,
-                                                                      Objects.requireNonNull(myStatuses.get(statusMessage)), stamp);
+      myStatusMessage = statusMessage == null ? null :
+                        new StatusMessage(statusMessage, Objects.requireNonNull(myStatuses.get(statusMessage)), stamp);
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
 
-  @Nullable
-  Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage() {
+  @Nullable StatusMessage getStatusMessage() {
     synchronized (myNotifications) {
       return myStatusMessage;
     }
@@ -131,8 +127,8 @@ public final class LogModel  {
       UIUtil.invokeLaterIfNeeded(handler);
     }
 
-    Trinity<Notification, String, Long> oldStatus = getStatusMessage();
-    if (oldStatus != null && notification == oldStatus.first) {
+    @Nullable StatusMessage oldStatus = getStatusMessage();
+    if (oldStatus != null && notification == oldStatus.notification) {
       setStatusToImportant();
     }
     fireModelChanged();

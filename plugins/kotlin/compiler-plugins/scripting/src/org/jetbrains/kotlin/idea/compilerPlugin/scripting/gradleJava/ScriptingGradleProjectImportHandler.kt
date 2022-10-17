@@ -11,8 +11,8 @@ import java.io.File
 
 class ScriptingGradleProjectImportHandler : GradleProjectImportHandler {
 
-    val compilerPluginId = KOTLIN_SCRIPTING_PLUGIN_ID
-    val gradlePluginJars = listOf(
+    private val compilerPluginId = KOTLIN_SCRIPTING_PLUGIN_ID
+    private val gradlePluginJars = listOf(
         "scripting-gradle", // obsolete artifact name, only for compatibility with 1.2.5x, where it was introduced (and immediately dropped afterwards)
         "scripting-compiler",
         "scripting-compiler-embeddable"

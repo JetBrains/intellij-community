@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.OverrideResolver
 open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionAction {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         return OverrideResolver.getMissingImplementations(descriptor)
-            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FROM_TEMPLATE) }
+            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FromTemplate) }
     }
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("implement.members.handler.title")
@@ -53,6 +53,6 @@ class ImplementAsConstructorParameter : ImplementMembersHandler() {
     override fun collectMembersToGenerate(descriptor: ClassDescriptor, project: Project): Collection<OverrideMemberChooserObject> {
         return OverrideResolver.getMissingImplementations(descriptor)
             .filterIsInstance<PropertyDescriptor>()
-            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FROM_TEMPLATE, true) }
+            .map { OverrideMemberChooserObject.create(project, it, it, BodyType.FromTemplate, true) }
     }
 }

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespacesAndComments
 
-class GrDoWhileStatementImpl(node: ASTNode) : GrWhileStatementBase(node), GrDoWhileStatement {
+internal class GrDoWhileStatementImpl(node: ASTNode) : GrWhileStatementBase(node), GrDoWhileStatement {
 
   override fun getDoKeyword(): PsiElement = findNotNullChildByType(KW_DO)
 

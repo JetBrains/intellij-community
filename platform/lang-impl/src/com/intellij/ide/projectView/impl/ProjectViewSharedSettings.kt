@@ -21,6 +21,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var showExcludedFiles: Boolean = true
   var showVisibilityIcons: Boolean = false
   var showLibraryContents: Boolean = true
+  var showScratchesAndConsoles: Boolean = true
   var hideEmptyPackages: Boolean = true
   var compactDirectories: Boolean = false
   var abbreviatePackages: Boolean = false

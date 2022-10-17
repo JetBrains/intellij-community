@@ -64,7 +64,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
       logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
       return
     }
-    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    val primaryLanguage: String = lesson.module.primaryLanguage?.primaryLanguage
+                                  ?: error("No primary language for promoting lesson ${lesson.name}")
     resetPrimaryLanguage(primaryLanguage)
     LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
       OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)
@@ -75,11 +76,10 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
   private fun scheduleOnboardingFeedback() {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
-
     val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+    langSupport.onboardingFeedbackData = null
 
     invokeLater {
-      langSupport.onboardingFeedbackData = null
       showOnboardingFeedbackNotification(null, onboardingFeedbackData)
       (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
     }

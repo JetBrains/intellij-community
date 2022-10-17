@@ -2,7 +2,6 @@
 package training.lang
 
 import com.intellij.lang.Language
-import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.*
@@ -16,30 +15,33 @@ import training.util.*
   Storage(value = trainerPluginConfigName, deprecated = true)
 ])
 class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
-  val supportedLanguagesExtensions: List<LanguageExtensionPoint<LangSupport>>
+  val supportedLanguagesExtensions: List<LangSupportBean>
     get() {
-      return ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME).extensionList
-        .filter { courseCanBeUsed(it.language) }
+      return ExtensionPointName<LangSupportBean>(LangSupport.EP_NAME).extensionList
+        .filter { courseCanBeUsed(it.getLang()) }
     }
 
-  val languages: List<LanguageExtensionPoint<LangSupport>>
+  val languages: List<LangSupportBean>
     get() = supportedLanguagesExtensions.filter { Language.findLanguageByID(it.language) != null }
 
-  private var langSupportRef: LangSupport? by WeakReferenceDelegator()
+  private val langSupportDelegator = LazyWeakReferenceDelegator {
+    supportedLanguagesExtensions.find { langBean -> langBean.language == state.languageName }?.instance
+  }
+  private val langSupportRef: LangSupport? by langSupportDelegator
 
   init {
     val productName = ApplicationNamesInfo.getInstance().productName
+    val langSupportBeans = languages
     val onlyLang =
-      languages.singleOrNull()
-      ?: languages.singleOrNull { it.instance.defaultProductName == productName }
-      ?: languages.firstOrNull()?.also {
+      langSupportBeans.singleOrNull()
+      ?: langSupportBeans.singleOrNull { it.defaultProductName == productName }
+      ?: langSupportBeans.firstOrNull()?.also {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
           logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
         }
       }
 
     if (onlyLang != null) {
-      langSupportRef = onlyLang.instance
       state.languageName = onlyLang.language
     }
   }
@@ -48,13 +50,13 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
     fun getInstance() = service<LangManager>()
   }
 
-  fun getLearningProjectPath(langSupport: LangSupport): String? =
-    if (langSupport.useUserProjects) null
-    else state.languageToProjectMap[langSupport.primaryLanguage]
+  fun getLearningProjectPath(languageId: String): String? = state.languageToProjectMap[languageId]
 
   fun setLearningProjectPath(langSupport: LangSupport, path: String) {
-    state.languageToProjectMap[langSupport.primaryLanguage] = path
-    state.intIncrementModificationCount()
+    if (!langSupport.useUserProjects) {
+      state.languageToProjectMap[langSupport.primaryLanguage] = path
+      state.intIncrementModificationCount()
+    }
   }
 
   fun getLangSupportById(languageId: String): LangSupport? {
@@ -62,18 +64,30 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   }
 
   // do not call this if LearnToolWindow with modules or learn views due to reinitViews
-  fun updateLangSupport(langSupport: LangSupport) {
-    this.langSupportRef = langSupport
-    state.languageName = supportedLanguagesExtensions.find { it.instance == langSupport }?.language
-                         ?: throw Exception("Unable to get language.")
+  fun updateLangSupport(languageId: String) {
+    val oldLanguage = state.languageName
+    state.languageName = supportedLanguagesExtensions.find { it.language == languageId }?.language
+                         ?: throw Exception("Unable to find LangSupport for language: $languageId")
+    if (state.languageName != oldLanguage) {
+      langSupportDelegator.reset()
+    }
     getAllLearnToolWindows().forEach { it.reinitViews() }
   }
 
   fun getLangSupport(): LangSupport? = langSupportRef
 
+  fun getLanguageId(): String? = state.languageName
+
+  fun getLangSupportBean(): LangSupportBean? {
+    return supportedLanguagesExtensions.find { langBean -> langBean.language == state.languageName }
+  }
+
   override fun loadState(state: State) {
+    val oldLanguage = this.state.languageName
     super.loadState(state)
-    langSupportRef = supportedLanguagesExtensions.find { langExt -> langExt.language == state.languageName }?.instance ?: return
+    if (oldLanguage != state.languageName) {
+      langSupportDelegator.reset()
+    }
   }
 
   fun getLanguageDisplayName(): String {

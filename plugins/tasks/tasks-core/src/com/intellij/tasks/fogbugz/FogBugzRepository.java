@@ -206,15 +206,14 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
   @Override
   public Task findTask(@NotNull String id) throws Exception {
     Task[] tasks = getCases(id);
-    switch (tasks.length) {
-      case 0:
-        return null;
-      case 1:
-        return tasks[0];
-      default:
+    return switch (tasks.length) {
+      case 0 -> null;
+      case 1 -> tasks[0];
+      default -> {
         LOG.warn("Expected unique case for case id: " + id + ", got " + tasks.length + " instead. Using the first one.");
-        return tasks[0];
-    }
+        yield tasks[0];
+      }
+    };
   }
 
   @NotNull

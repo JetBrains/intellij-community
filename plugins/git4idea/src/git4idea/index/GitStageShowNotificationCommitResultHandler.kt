@@ -6,8 +6,8 @@ import com.intellij.openapi.util.text.HtmlChunk.br
 import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.commit.CommitterResultHandler
 import com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import git4idea.GitNotificationIdsHolder.Companion.STAGE_COMMIT_ERROR
@@ -15,13 +15,13 @@ import git4idea.GitNotificationIdsHolder.Companion.STAGE_COMMIT_SUCCESS
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 
-internal class GitStageShowNotificationCommitResultHandler(private val committer: GitStageCommitter) : CommitResultHandler {
+internal class GitStageShowNotificationCommitResultHandler(private val committer: GitStageCommitter) : CommitterResultHandler {
   private val project get() = committer.project
   private val notifier get() = VcsNotifier.getInstance(project)
 
-  override fun onSuccess(commitMessage: String) = reportResult()
+  override fun onSuccess() = reportResult()
   override fun onCancel() = reportResult()
-  override fun onFailure(errors: MutableList<VcsException>) = reportResult()
+  override fun onFailure() = reportResult()
 
   private fun reportResult() {
     reportSuccess(committer.successfulRepositories, committer.commitMessage)
@@ -32,7 +32,7 @@ internal class GitStageShowNotificationCommitResultHandler(private val committer
     if (repositories.isEmpty()) return
 
     val repositoriesText = repositories.joinToString { "'${getShortVcsRootName(project, it.root)}'" }
-    notifier.notifySuccess(
+    notifier.notifyMinorInfo(
       STAGE_COMMIT_SUCCESS,
       "",
       message("stage.commit.successful", repositoriesText, escapeString(commitMessage))

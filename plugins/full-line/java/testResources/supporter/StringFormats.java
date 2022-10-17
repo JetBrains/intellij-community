@@ -1,0 +1,6 @@
+String test1 = "test1" + strBuffer.toString() + "" + 5 + "\n"
+// String test1 = "$__Variable0$" + strBuffer.toString() + "$__Variable1$" + 5 + "$__Variable2$"
+String test2 = "test2" + "abracadabra" + "string" + "$__Variable10$" + "\n"
+// String test2 = "$__Variable0$" + "$__Variable1$" + "$__Variable2$" + "$__Variable3$" + "$__Variable4$"
+test3 = "all kinds of spaces\n\t\r" + a_variable + "  all  kinds  of  spaces2\n g\t g\r "
+// test3 = "$__Variable0$" + a_variable + "$__Variable1$"

@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
-import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -30,9 +33,11 @@ class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependen
 
         val arg = element.left ?: return null
         val (left, right) = rangeExpression.getArguments() ?: return null
-        if (!arg.isSimple() || left?.isSimple() != true || right?.isSimple() != true) return null
+        val context = lazy { rangeExpression.analyze(BodyResolveMode.PARTIAL) }
+        if (!arg.isSimple() || left?.isSimple() != true || right?.isSimple() != true ||
+            setOf(arg.getType(context.value), left.getType(context.value), right.getType(context.value)).size != 1) return null
 
-        val pattern = when (rangeExpression.getRangeBinaryExpressionType()) {
+        val pattern = when (rangeExpression.getRangeBinaryExpressionType(context)) {
             RANGE_TO -> "$0 <= $1 && $1 <= $2"
             UNTIL, RANGE_UNTIL -> "$0 <= $1 && $1 < $2"
             DOWN_TO -> "$0 >= $1 && $1 >= $2"

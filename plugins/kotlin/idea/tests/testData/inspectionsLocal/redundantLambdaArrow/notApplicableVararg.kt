@@ -1,4 +1,4 @@
-// PROBLEM: Redundant lambda arrow
+// PROBLEM: none
 // WITH_STDLIB
 
 fun main() {

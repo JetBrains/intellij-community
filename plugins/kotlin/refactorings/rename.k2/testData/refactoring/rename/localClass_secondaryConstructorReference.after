@@ -1,0 +1,11 @@
+// NEW_NAME: Bar
+
+package test
+
+fun function() {
+    class Bar constructor(s: String) {
+        constructor(i: Int): this(i.toString())
+    }
+
+    Bar(42)
+}

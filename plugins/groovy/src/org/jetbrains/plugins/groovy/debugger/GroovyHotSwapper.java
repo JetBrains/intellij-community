@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import java.io.File;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 final class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance(GroovyHotSwapper.class);
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";

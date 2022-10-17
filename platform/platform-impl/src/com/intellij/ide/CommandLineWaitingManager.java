@@ -140,7 +140,7 @@ public final class CommandLineWaitingManager {
 
   private static final class MyNotificationPanel extends EditorNotificationPanel {
     private MyNotificationPanel(@NotNull VirtualFile virtualFile) {
-      super(EditorColors.GUTTER_BACKGROUND);
+      super(EditorColors.GUTTER_BACKGROUND, Status.Info);
       setText(IdeBundle.message("activation.file.is.waiting.title"));
 
       createActionLabel(IdeBundle.message("activation.file.is.waiting.release"), () -> {

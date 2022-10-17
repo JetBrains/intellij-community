@@ -555,7 +555,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
 
     private fun handleSuccess(request: RefreshRequest, document: Document, refreshData: RefreshData) {
-      val virtualFile = FileDocumentManager.getInstance().getFile(document)!!
+      val virtualFile = FileDocumentManager.getInstance().getFile(document)
+      if (virtualFile == null) {
+        log("Loading finished: document is not bound", null)
+        return
+      }
+
       val loader = request.loader
 
       val tracker: LocalLineStatusTracker<*>

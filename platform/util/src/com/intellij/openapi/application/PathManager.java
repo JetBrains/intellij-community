@@ -182,7 +182,7 @@ public final class PathManager {
         dir = dir.resolve(osSuffix);
         if (Files.isDirectory(dir)) {
           binDirs.add(dir);
-          if (SystemInfoRt.isLinux) {
+          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
             String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
             if (arch != null) {
               dir = dir.resolve(arch);
@@ -448,7 +448,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
-    return url == null ? null : extractRoot(url, "/"+resourcePath);
+    return url == null ? null : extractRoot(url, "/" + resourcePath);
   }
 
   /**
@@ -724,7 +724,7 @@ public final class PathManager {
     }
 
     Path outClassesDir = rootPath.getParent().getParent();
-    Path artifactsDir = outClassesDir.resolveSibling("project-artifacts");
+    Path artifactsDir = outClassesDir.resolveSibling("jps-artifacts");
     if (!Files.exists(artifactsDir)) {
       // running IDE or tests in IDE
       artifactsDir = outClassesDir.resolve("artifacts");

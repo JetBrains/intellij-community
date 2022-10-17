@@ -22,7 +22,17 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
     if (newValue != oldValue)
       materialiseRendererAt(newValue)
   }
-  private var rendererComponent: Component? = null
+  private var rendererComponent: Component? by Delegates.observable(null) { _, oldValue, newValue ->
+    if (oldValue != null) {
+      list.remove(oldValue)
+    }
+
+    if (newValue != null) {
+      list.add(newValue)
+      newValue.validate()
+      newValue.repaint()
+    }
+  }
 
   private val listRowHoverListener = object : MouseMotionAdapter() {
     override fun mouseMoved(e: MouseEvent) {
@@ -63,7 +73,6 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
 
   private fun materialiseRendererAt(index: Int) {
     if (index < 0 || index > list.model.size - 1) {
-      rendererComponent?.let { list.remove(it) }
       rendererComponent = null
       return
     }
@@ -73,12 +82,15 @@ class JListHoveredRowMaterialiser<T> private constructor(private val list: JList
     val focused = list.hasFocus() && selected
 
     rendererComponent = cellRenderer.getListCellRendererComponent(list, cellValue, index, selected, focused).apply {
-      list.add(this)
-
       bounds = list.getCellBounds(index, index)
-      validate()
-      repaint()
     }
+  }
+
+  /**
+   * Manually redraw the cell
+   */
+  fun update() {
+    materialiseRendererAt(hoveredIndex)
   }
 
   companion object {

@@ -91,17 +91,19 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
 
   // PY-32556
   public void testOverriddingWithDecorator() {
-    doTestByText("class BaseClass():\n" +
-                 "    def method(self, arg1):\n" +
-                 "        pass\n" +
-                 "\n" +
-                 "def my_decorator(func):\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "class Child(BaseClass):\n" +
-                 "    @my_decorator\n" +
-                 "    def method(self, arg1, arg2):\n" +
-                 "        pass\n");
+    doTestByText("""
+                   class BaseClass():
+                       def method(self, arg1):
+                           pass
+
+                   def my_decorator(func):
+                       pass
+
+                   class Child(BaseClass):
+                       @my_decorator
+                       def method(self, arg1, arg2):
+                           pass
+                   """);
   }
 
   // PY-28506
