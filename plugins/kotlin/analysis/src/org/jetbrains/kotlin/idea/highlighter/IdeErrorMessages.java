@@ -181,8 +181,6 @@ public class IdeErrorMessages {
                 new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.UNSUPPORTED, true));
         MAP.put(EXPERIMENTAL_FEATURE_WARNING, "<html>{0}</html>",
                 new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.WARNING, true));
-        MAP.put(EXPERIMENTAL_FEATURE_ERROR, "<html>{0}</html>",
-                new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.ERROR, true));
 
         MAP.put(NO_ACTUAL_FOR_EXPECT, KotlinIdeaAnalysisBundle.htmlMessage("html.expected.0.has.no.actual.declaration.in.module.1.2.html"), DECLARATION_NAME_WITH_KIND,
                 MODULE_WITH_PLATFORM, adaptGenerics1(new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));
