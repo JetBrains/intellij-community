@@ -271,6 +271,7 @@
         "general/gearPlain.svg",
         "general/settings.svg"
       ],
+      "settingSync.svg":"toolbar/unknown.svg",
       "show.svg": [
         "actions/groupBy.svg",
         "actions/show.svg"
