@@ -111,3 +111,10 @@ fun Cell.loadingStatus(loadingIcon: LoadingComponent): List<CellBuilder<JCompone
   )
 }
 
+fun com.intellij.ui.dsl.builder.Row.loadingStatus(loadingIcon: LoadingComponent): List<com.intellij.ui.dsl.builder.Cell<JComponent>> {
+  return listOf(
+    cell(loadingIcon.loadingIcon),
+    cell(loadingIcon.statusText),
+  )
+}
+
