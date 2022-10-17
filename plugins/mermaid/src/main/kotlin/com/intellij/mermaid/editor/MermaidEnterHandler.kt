@@ -102,6 +102,10 @@ internal class MermaidEnterHandler : EnterHandlerDelegateAdapter() {
   }
 
   override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): Result {
+    if (file !is MermaidFile) {
+      return Result.Continue
+    }
+
     val document = editor.document
     val project = file.project
 
