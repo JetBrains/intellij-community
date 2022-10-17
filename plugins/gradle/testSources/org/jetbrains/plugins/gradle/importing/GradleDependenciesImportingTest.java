@@ -1667,10 +1667,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
         allprojects {
             apply plugin: 'java'
-
-            repositories {
-                jcenter()
-            }
         }
 
         def processed = Attribute.of('processed', Boolean)
