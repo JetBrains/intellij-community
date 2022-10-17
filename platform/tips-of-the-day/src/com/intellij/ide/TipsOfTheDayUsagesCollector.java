@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.ide.util.TipsUtilityExperiment;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -14,9 +13,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.List;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 11);
@@ -33,11 +30,7 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     GROUP.registerEvent("dialog.closed", EventFields.Boolean("keep_showing_before"), EventFields.Boolean("keep_showing_after"));
 
   private static final StringEventField ALGORITHM_FIELD =
-    EventFields.String("algorithm",
-                       Stream.concat(Stream.of("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
-                                                   "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"),
-                                     Arrays.stream(TipsUtilityExperiment.values()).map(v -> v.toString()))
-                         .collect(Collectors.toList()));
+    EventFields.String("algorithm", List.of("shuffle", "unknown"));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
                         EventFields.StringValidatedByCustomRule("tip_id", TipInfoValidationRule.class),
