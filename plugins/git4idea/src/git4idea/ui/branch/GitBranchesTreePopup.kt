@@ -583,7 +583,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                                                 hasFocus: Boolean): Component {
         val userObject = TreeUtil.getUserObject(value)
 
-        mainIconComponent.icon = step.getIcon(userObject, selected)
+        mainIconComponent.apply {
+          icon = step.getIcon(userObject, selected)
+          isVisible = icon != null
+        }
 
         mainTextComponent.apply {
           background = JBUI.CurrentTheme.Tree.background(selected, true)
