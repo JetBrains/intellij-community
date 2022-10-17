@@ -36,8 +36,10 @@ internal interface PopupInlineActionsSupport {
   fun getActiveButtonIndex(list: JList<*>): Int?
 
   companion object {
-    fun create(popup: ListPopupImpl): PopupInlineActionsSupport =
-      if (ExperimentalUI.isNewUI() && popup.listStep is ActionPopupStep) PopupInlineActionsSupportImpl(popup)
-      else NonActionsPopupInlineSupport(popup)
+    fun create(popup: ListPopupImpl): PopupInlineActionsSupport {
+      if (!ExperimentalUI.isNewUI()) return Empty
+      if (popup.listStep is ActionPopupStep) return PopupInlineActionsSupportImpl(popup)
+      return NonActionsPopupInlineSupport(popup)
+    }
   }
 }

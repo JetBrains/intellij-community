@@ -261,7 +261,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     updateExtraButtons(list, value, step, isSelected);
 
     boolean nextStepButtonSelected = false;
-    boolean showNextStepLabel = step.hasSubstep(value) && (myPopup.isShowSubmenuOnHover() || !step.isFinal(value));
+    boolean showNextStepLabel = step.hasSubstep(value) && !myInlineActionsSupport.hasExtraButtons(value);
     if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
