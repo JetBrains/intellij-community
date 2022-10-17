@@ -897,11 +897,11 @@ public class MavenUtil {
     }
   }
 
-  @NotNull
+  @Nullable
   public static File getRepositoryFile(@NotNull Project project,
-                                              @NotNull MavenId id,
-                                              @NotNull String extension,
-                                              @Nullable String classifier) {
+                                       @NotNull MavenId id,
+                                       @NotNull String extension,
+                                       @Nullable String classifier) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1608,6 +1608,7 @@ public class MavenUtil {
   public static boolean isMavenizedModule(@NotNull Module m) {
     return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
   }
+
   public static boolean isLinearImportEnabled() {
     return Registry.is("maven.linear.import");
   }
