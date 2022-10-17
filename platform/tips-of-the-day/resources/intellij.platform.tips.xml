@@ -9,6 +9,11 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>
+
+    <registryKey key="tips.of.the.day.feedback"
+                 description="Where to send like/dislike feedback from Tips of the Day (nowhere, staging, production)."
+                 defaultValue="nowhere"
+                 restartRequired="false"/>
   </extensions>
 
   <projectListeners>
