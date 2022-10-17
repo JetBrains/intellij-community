@@ -4,6 +4,7 @@ package git4idea.ui.branch
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -187,6 +188,17 @@ class GitBranchesTreePopupStep(private val project: Project,
       hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
       hasIncoming -> DvcsImplIcons.Incoming
       hasOutgoing -> DvcsImplIcons.Outgoing
+      else -> null
+    }
+  }
+
+  private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
+
+  fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
+    val value = treeNode ?: return null
+    return when (value) {
+      is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
+      is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
       else -> null
     }
   }

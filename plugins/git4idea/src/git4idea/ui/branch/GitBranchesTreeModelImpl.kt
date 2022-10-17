@@ -71,7 +71,7 @@ class GitBranchesTreeModelImpl(
 
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
-  override fun isLeaf(node: Any?): Boolean = (node is GitRepository) || (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
+  override fun isLeaf(node: Any?): Boolean = node is GitBranch
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 

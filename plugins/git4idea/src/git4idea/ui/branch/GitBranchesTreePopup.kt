@@ -27,6 +27,8 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.ui.tree.ui.Control
+import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.FontUtil
@@ -57,6 +59,7 @@ import java.awt.Cursor
 import java.awt.Point
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
+import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
@@ -264,12 +267,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     ClientProperty.put(this, RenderingUtil.SEPARATOR_ABOVE_PREDICATE, Predicate { treeStep.isSeparatorAboveRequired(it) })
 
+    val renderer = Renderer(treeStep)
+
+    ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
+
     selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
     isRootVisible = false
     showsRootHandles = true
 
-    cellRenderer = Renderer(treeStep)
+    cellRenderer = renderer
 
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
@@ -528,6 +535,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
 
     private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
+
+      fun getLeftTreeIconRenderer(path: TreePath): Control? {
+        val lastComponent = path.lastPathComponent
+        val defaultIcon = step.getNodeIcon(lastComponent, false) ?: return null
+        val selectedIcon = step.getNodeIcon(lastComponent, true) ?: return null
+
+        return DefaultControl(defaultIcon, defaultIcon, selectedIcon, selectedIcon)
+      }
 
       private val mainIconComponent = JLabel().apply {
         ClientProperty.put(this, MAIN_ICON, true)
