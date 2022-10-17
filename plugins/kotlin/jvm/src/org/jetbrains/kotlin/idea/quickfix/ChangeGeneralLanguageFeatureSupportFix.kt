@@ -83,7 +83,7 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
 
             return supportedFeatures.flatMap { feature ->
                 doCreateActions(
-                    diagnostic, feature, allowWarningAndErrorMode = false,
+                    diagnostic, feature,
                     quickFixConstructor = if (shouldConfigureInProject(module)) ::InProject else ::InModule
                 )
             }
@@ -92,19 +92,12 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
         private fun doCreateActions(
             diagnostic: Diagnostic,
             feature: LanguageFeature,
-            allowWarningAndErrorMode: Boolean,
             quickFixConstructor: (PsiElement, LanguageFeature, LanguageFeature.State) -> IntentionAction
         ): List<IntentionAction> {
             val newFeatureSupports = when (diagnostic.factory) {
-                Errors.EXPERIMENTAL_FEATURE_ERROR -> {
-                    if (Errors.EXPERIMENTAL_FEATURE_ERROR.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED_WITH_WARNING, LanguageFeature.State.ENABLED)
-                }
                 Errors.EXPERIMENTAL_FEATURE_WARNING -> {
                     if (Errors.EXPERIMENTAL_FEATURE_WARNING.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED, LanguageFeature.State.ENABLED_WITH_ERROR)
+                    listOf(LanguageFeature.State.ENABLED)
                 }
                 else -> return emptyList()
             }
