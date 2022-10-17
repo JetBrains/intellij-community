@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkListItem
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 
 
 fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider): String? {
@@ -22,7 +23,7 @@ fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvid
 
 fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider, externalProjectPath: String?, jdkReference: String?) {
   when (jdkReference) {
-    USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(model.project, externalProjectPath))
+    USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getJavaHome(model.project, externalProjectPath, GradlePropertiesFile))
     else -> setSelectedJdkReference(sdkLookupProvider, jdkReference)
   }
 }
@@ -44,7 +45,7 @@ fun SdkLookupProvider.resolveGradleJvmReference(item: SdkListItem?): String? {
 
 private fun SdkComboBox.addGradleJavaHomeReferenceItem(externalProjectPath: String?) {
   if (externalProjectPath == null) return
-  val gradleJavaHome = getGradleJavaHome(model.project, externalProjectPath) ?: return
+  val gradleJavaHome = getJavaHome(model.project, externalProjectPath, GradlePropertiesFile) ?: return
   addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, gradleJavaHome)
 }
 

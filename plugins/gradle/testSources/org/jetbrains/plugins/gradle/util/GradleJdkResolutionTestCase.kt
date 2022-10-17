@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.properties.GRADLE_CACHE_DIR_NAME
 import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.properties.USER_HOME
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -99,7 +100,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: TestSdk?) {
-    assertEquals(java?.homePath, getGradleJavaHome(project, externalProjectPath))
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {
