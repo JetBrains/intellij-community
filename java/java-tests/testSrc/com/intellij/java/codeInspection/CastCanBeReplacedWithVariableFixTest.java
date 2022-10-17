@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CastCanBeReplacedWithVariableInspectionTest extends LightQuickFixParameterizedTestCase {
+public class CastCanBeReplacedWithVariableFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new CastCanBeReplacedWithVariableInspection()};
