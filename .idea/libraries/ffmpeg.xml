@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="ffmpeg" type="repository">
+    <properties maven-id="org.bytedeco:ffmpeg:5.0-1.5.7" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
