@@ -83,7 +83,7 @@ public final class TipAndTrickBean implements PluginAware {
   public String toString() {
     return "TipAndTrickBean{" +
            "fileName='" + fileName + '\'' +
-           ", plugin='" + pluginDescriptor.getPluginId() + '\'' +
+           ", plugin='" + (pluginDescriptor != null ? pluginDescriptor.getPluginId() : null) + '\'' +
            '}';
   }
 }
