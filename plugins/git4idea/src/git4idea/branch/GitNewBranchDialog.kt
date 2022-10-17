@@ -20,7 +20,6 @@ import git4idea.validators.checkRefNameEmptyOrHead
 import git4idea.validators.conflictsWithLocalBranch
 import git4idea.validators.conflictsWithRemoteBranch
 import org.jetbrains.annotations.Nls
-import java.awt.event.KeyEvent
 import javax.swing.JCheckBox
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -64,7 +63,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     init()
   }
 
-  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking) else null
+  fun showAndGetOptions(): GitNewBranchOptions? {
+    if (!showAndGet()) return null
+    return GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking)
+  }
 
   override fun createCenterPanel() = panel {
     row {
@@ -72,31 +74,27 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
         .bindText(::branchName, { branchName = it })
         .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
-        .focused().validationOnApply(
-        validateBranchName()).apply { startTrackingValidationIfNeeded() }
+        .focused()
+        .validationOnApply(validateBranchName())
+        .apply { startTrackingValidationIfNeeded() }
     }
     row {
       if (showCheckOutOption) {
         checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
           .bindSelected(::checkout)
-          .component.apply {
-          mnemonic = KeyEvent.VK_C
-        }
       }
       if (showResetOption) {
         overwriteCheckbox = checkBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
           .bindSelected(::reset)
-          .component.apply {
-          mnemonic = KeyEvent.VK_R
-          isEnabled = false
-        }
+          .applyToComponent {
+            isEnabled = false
+          }
+          .component
       }
       if (showSetTrackingOption) {
         setTrackingCheckbox = checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
           .bindSelected(::tracking)
-          .component.apply {
-          mnemonic = KeyEvent.VK_T
-        }
+          .component
       }
     }
   }
