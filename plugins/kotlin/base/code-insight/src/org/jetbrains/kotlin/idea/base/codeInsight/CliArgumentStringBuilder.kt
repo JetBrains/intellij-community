@@ -19,7 +19,6 @@ object CliArgumentStringBuilder {
             LanguageFeature.State.ENABLED -> "+"
             LanguageFeature.State.DISABLED -> "-"
             LanguageFeature.State.ENABLED_WITH_WARNING -> "+" // not supported normally
-            LanguageFeature.State.ENABLED_WITH_ERROR -> "-" // not supported normally
         }
 
     private fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
