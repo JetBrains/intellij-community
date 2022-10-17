@@ -13,6 +13,7 @@ import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -157,7 +158,14 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   // non static
 
-  private final Control control = new DefaultControl();
+  private final Control myDefaultControl = new DefaultControl();
+
+  private @NotNull Control getControl(@NotNull JComponent c, @NotNull TreePath path) {
+    Function<@NotNull TreePath, @Nullable Control> controlResolver = ClientProperty.get(c, Control.CUSTOM_CONTROL);
+    Control resolvedControl = controlResolver != null ? controlResolver.apply(path) : myDefaultControl;
+
+    return ObjectUtils.chooseNotNull(resolvedControl, myDefaultControl);
+  }
   private final AtomicBoolean painting = new AtomicBoolean();
   private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
@@ -243,6 +251,7 @@ public class DefaultTreeUI extends BasicTreeUI {
             g.setColor(background);
             if (g instanceof Graphics2D && ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
               int borderOffset = JBUI.scale(12);
+              Control control = getControl(c, path);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
               int left = Math.min(helper.getX() + borderOffset, insets.left + (controlOffset < 0 ? rendererOffset : controlOffset));
@@ -296,6 +305,8 @@ public class DefaultTreeUI extends BasicTreeUI {
                                   paintBounds.x + paintBounds.width - offset, rowBounds.y);
             }
           }
+
+          Control control = getControl(c, path);
 
           int offset = painter.getRendererOffset(control, depth, leaf);
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selectedControl);
@@ -397,6 +408,7 @@ public class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return false;
     Rectangle bounds = getPathBounds(tree, path);
     if (bounds == null) return false;
+    Control control = getControl(tree, path);
     bounds.x = getPainter(tree).getControlOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
     if (bounds.x < 0) return false; // does not paint an icon to expand or collapse path
     Insets insets = tree.getInsets();
@@ -485,6 +497,7 @@ public class DefaultTreeUI extends BasicTreeUI {
     if (tree == null) return 0;
     TreePath path = getPathForRow(tree, row);
     if (path == null) return 0;
+    Control control = getControl(tree, path);
     return getPainter(tree).getRendererOffset(control, TreeUtil.getNodeDepth(tree, path), isLeaf(path.getLastPathComponent()));
   }
 
@@ -545,6 +558,10 @@ public class DefaultTreeUI extends BasicTreeUI {
           }
         }
         if (size == null) return null;
+
+        TreePath path = tree.getPathForRow(row);
+
+        Control control = path != null ? getControl(tree, path) : myDefaultControl;
 
         int x = getPainter(tree).getRendererOffset(control, depth + TreeUtil.getDepthOffset(tree), leaf);
         int height = getRowHeight();
