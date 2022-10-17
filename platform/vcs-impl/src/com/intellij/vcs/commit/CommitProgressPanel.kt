@@ -45,6 +45,10 @@ import kotlinx.coroutines.flow.onEach
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.border.Border
@@ -109,6 +113,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
 
     setupProgressVisibilityDelay()
     setupProgressSpinnerTooltip()
+    MyVisibilitySynchronizer().install()
   }
 
   @Suppress("EXPERIMENTAL_API_USAGE")
@@ -236,6 +241,45 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
       isEmptyMessage -> message("error.no.commit.message")
       else -> null
     }
+
+  private inner class MyVisibilitySynchronizer : ContainerListener {
+    private val childListener = object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent) {
+        syncVisibility()
+      }
+
+      override fun componentHidden(e: ComponentEvent) {
+        syncVisibility()
+      }
+    }
+
+    fun install() {
+      panel.addContainerListener(this)
+
+      for (component in panel.components) {
+        component.addComponentListener(childListener)
+      }
+      syncVisibility()
+    }
+
+    override fun componentAdded(e: ContainerEvent) {
+      e.component.addComponentListener(childListener)
+      syncVisibility()
+    }
+
+    override fun componentRemoved(e: ContainerEvent) {
+      e.component.removeComponentListener(childListener)
+      syncVisibility()
+    }
+
+    private fun syncVisibility() {
+      val isVisible = panel.components.any { it.isVisible }
+      if (scrollPane.isVisible != isVisible) {
+        scrollPane.isVisible = isVisible
+        revalidatePanel()
+      }
+    }
+  }
 }
 
 sealed class CommitCheckFailure {
