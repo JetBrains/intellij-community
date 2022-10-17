@@ -38,7 +38,7 @@ public class DevKitApplicationPatcher extends RunConfigurationExtension {
       }
 
       if (!vmParametersList.getList().contains("--add-opens")) {
-        JUnitDevKitPatcher.appendAddOpensWhenNeeded(jdk, vmParametersList);
+        JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParametersList);
       }
     }
   }
