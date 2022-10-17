@@ -102,7 +102,7 @@ class ConsolePandasColumnNameRetrievalServiceImpl(val project: Project) : Consol
       "str" -> debugValue.value?.let { parseDebugValue(it) } ?: emptyList()
       "NameError" -> emptyList()
       "SyntaxError" -> {
-        ConsolePandasColumnNameCompletionContributor.LOG.error(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
+        ConsolePandasColumnNameCompletionContributor.LOG.info(ConsolePandasColumnNameCompletionContributor.COMPLETION_LOG_MESSAGE + name)
         emptyList()
       }
       else -> emptyList()
