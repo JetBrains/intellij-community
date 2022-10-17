@@ -25,7 +25,7 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData) : JavaResourceRootEntity, WorkspaceEntityBase() {
+open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
@@ -49,7 +49,7 @@ open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData
     return connections
   }
 
-  class Builder(var result: JavaResourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootEntity>(), JavaResourceRootEntity.Builder {
+  class Builder(var result: JavaResourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity>(), JavaResourceRootPropertiesEntity.Builder {
     constructor() : this(JavaResourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -102,7 +102,7 @@ open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as JavaResourceRootEntity
+      dataSource as JavaResourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.generated != dataSource.generated) this.generated = dataSource.generated
       if (this.relativeOutputPath != dataSource.relativeOutputPath) this.relativeOutputPath = dataSource.relativeOutputPath
@@ -180,18 +180,18 @@ open class JavaResourceRootEntityImpl(val dataSource: JavaResourceRootEntityData
       }
 
     override fun getEntityData(): JavaResourceRootEntityData = result ?: super.getEntityData() as JavaResourceRootEntityData
-    override fun getEntityClass(): Class<JavaResourceRootEntity> = JavaResourceRootEntity::class.java
+    override fun getEntityClass(): Class<JavaResourceRootPropertiesEntity> = JavaResourceRootPropertiesEntity::class.java
   }
 }
 
-class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>() {
+class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootPropertiesEntity>() {
   var generated: Boolean = false
   lateinit var relativeOutputPath: String
 
 
   fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaResourceRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     val modifiable = JavaResourceRootEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -203,7 +203,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): JavaResourceRootEntity {
+  override fun createEntity(snapshot: EntityStorage): JavaResourceRootPropertiesEntity {
     return getCached(snapshot) {
       val entity = JavaResourceRootEntityImpl(this)
       entity.entitySource = entitySource
@@ -214,7 +214,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return JavaResourceRootEntity::class.java
+    return JavaResourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -224,7 +224,7 @@ class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>()
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return JavaResourceRootEntity(generated, relativeOutputPath, entitySource) {
+    return JavaResourceRootPropertiesEntity(generated, relativeOutputPath, entitySource) {
       this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
     }
   }

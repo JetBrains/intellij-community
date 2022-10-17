@@ -131,10 +131,10 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
 
   /**
    * If cache invalidation depends on specific properties e.g. [org.jetbrains.jps.model.java.JavaResourceRootProperties.getRelativeOutputPath]
-   * changes from [JavaResourceRootEntity] should be handled
+   * changes from [JavaResourceRootPropertiesEntity] should be handled
    */
   private fun handleJavaResourceRootChanged(event: VersionedStorageChange) {
-    event.getChanges(JavaResourceRootEntity::class.java).forEach { change ->
+    event.getChanges(JavaResourceRootPropertiesEntity::class.java).forEach { change ->
       if (isInUnloadedModule(event, change) { sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }

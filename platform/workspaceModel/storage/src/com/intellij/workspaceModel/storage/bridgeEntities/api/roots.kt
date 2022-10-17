@@ -66,7 +66,7 @@ interface SourceRootEntity : WorkspaceEntity {
 
     @Child val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     val javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
-    val javaResourceRoots: List<@Child JavaResourceRootEntity>
+    val javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -77,7 +77,7 @@ interface SourceRootEntity : WorkspaceEntity {
     override var rootType: String
     override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
     override var javaSourceRoots: List<JavaSourceRootPropertiesEntity>
-    override var javaResourceRoots: List<JavaResourceRootEntity>
+    override var javaResourceRoots: List<JavaResourceRootPropertiesEntity>
   }
 
   companion object : Type<SourceRootEntity, Builder>() {
@@ -206,7 +206,7 @@ fun MutableEntityStorage.modifyEntity(entity: JavaSourceRootPropertiesEntity, mo
   JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
 
-interface JavaResourceRootEntity: WorkspaceEntity {
+interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
 
     val generated: Boolean
@@ -214,18 +214,18 @@ interface JavaResourceRootEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaResourceRootEntity, WorkspaceEntity.Builder<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
+  interface Builder : JavaResourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity>, ObjBuilder<JavaResourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var relativeOutputPath: String
   }
 
-  companion object : Type<JavaResourceRootEntity, Builder>() {
+  companion object : Type<JavaResourceRootPropertiesEntity, Builder>() {
     operator fun invoke(generated: Boolean,
                         relativeOutputPath: String,
                         entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
+                        init: (Builder.() -> Unit)? = null): JavaResourceRootPropertiesEntity {
       val builder = builder()
       builder.generated = generated
       builder.relativeOutputPath = relativeOutputPath
@@ -239,7 +239,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootEntity,
-                                      modification: JavaResourceRootEntity.Builder.() -> Unit) = modifyEntity(
-  JavaResourceRootEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootPropertiesEntity,
+                                      modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+  JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
