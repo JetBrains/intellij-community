@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,10 +32,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import io.opentelemetry.api.metrics.Meter;
 import kotlin.reflect.KClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +50,8 @@ import org.jetbrains.concurrency.Promises;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -71,6 +76,23 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
+  /* ======================== monitoring: ================================================= */
+  private static final boolean ENABLE_OTEL_MONITORING = SystemProperties.getBooleanProperty(
+    "idea.non-blocking-action.enable-monitoring", true);
+  private static final @Nullable OTelMonitor MONITOR;
+
+  static {
+    LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
+    if (ENABLE_OTEL_MONITORING) {
+      final Meter meter = TraceManager.INSTANCE.getMeter("EDT");
+      MONITOR = new OTelMonitor(meter);
+    }
+    else {
+      MONITOR = null;
+    }
+  }
+  /* ======================== monitoring end =============================================== */
+
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
     this(computation, null, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
   }
@@ -83,7 +105,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     @NotNull Set<? extends Disposable> disposables,
                                     @Nullable List<?> coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
-    myComputation = computation;
+    myComputation = MONITOR == null ? computation :
+                    MONITOR.wrap(computation);
     myModalityState = modalityState;
     myUiThreadAction = uiThreadAction;
     myConstraints = constraints;
@@ -92,7 +115,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     myCoalesceEquality = coalesceEquality;
     myProgressIndicator = progressIndicator;
     if ((modalityState == null) != (uiThreadAction == null)) {
-      throw new IllegalArgumentException("myModalityState and myUiThreadAction must be both null or both not-null but got: "+modalityState+", "+uiThreadAction);
+      throw new IllegalArgumentException(
+        "myModalityState and myUiThreadAction must be both null or both not-null but got: " + modalityState + ", " + uiThreadAction);
     }
   }
 
@@ -104,7 +128,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static void invokeLater(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+    ApplicationManager.getApplication()
+      .invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
   }
 
   @Override
@@ -129,14 +154,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
     Set<Disposable> disposables = new HashSet<>(myDisposables);
     disposables.add(parentDisposable);
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions, disposables,
+    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+                                           disposables,
                                            myCoalesceEquality, myProgressIndicator);
   }
 
   @Override
   public @NotNull NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator) {
     LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions, myDisposables,
+    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+                                           myDisposables,
                                            myCoalesceEquality, progressIndicator);
   }
 
@@ -151,9 +178,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     if (equality.length == 1 && isTooCommon(equality[0])) {
-      throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+      throw new IllegalArgumentException(
+        "Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
     }
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions, myDisposables,
+    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+                                           myDisposables,
                                            new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
   }
 
@@ -180,7 +209,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     ProgressIndicator outerIndicator = myProgressIndicator != null ? myProgressIndicator
                                                                    : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    return new Submission<T>(this, SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
+    return new Submission<>(this, SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
   @Override
@@ -247,7 +276,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         };
         //noinspection TestOnlyProblems
-        Disposable parentDisposable = parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
+        Disposable parentDisposable =
+          parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
         if (!Disposer.tryRegister(parentDisposable, child)) {
           cancel();
           break;
@@ -477,7 +507,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       currentIndicator = indicator;
       try {
         Ref<ContextConstraint> unsatisfiedConstraint = Ref.create();
-        boolean success;
+        final boolean success;
         if (ApplicationManager.getApplication().isReadAccessAllowed()) {
           insideReadAction(indicator, unsatisfiedConstraint);
           success = true;
@@ -495,7 +525,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               return false;
             }
           }
-          success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator, unsatisfiedConstraint), indicator);
+          success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator, unsatisfiedConstraint),
+                                                                                  indicator);
         }
         return success && unsatisfiedConstraint.isNull();
       }
@@ -650,5 +681,78 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   @TestOnly
   static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
     return ourTasksByEquality;
+  }
+
+  /**
+   * Encapsulates OTel monitoring fields and methods
+   */
+  private static class OTelMonitor implements AutoCloseable {
+
+    /**
+     * How many actions were successfully executed until the end of the computation (i.e. return result)
+     */
+    private final AtomicInteger finalizedExecutionsCount = new AtomicInteger();
+    /**
+     * How many actions throw exception during execution -- including {@link ProcessCanceledException}
+     * leading to retry of the action
+     */
+    private final AtomicInteger failedExecutionsCount = new AtomicInteger();
+    /**
+     * Total time (in microseconds) of successful executions -- i.e. those that run to the end
+     */
+    private final AtomicLong finalizedExecutionTimeUs = new AtomicLong();
+    /**
+     * Total time (in microseconds) of executions finished with exception -- including {@link ProcessCanceledException}
+     * leading to retry of the action
+     */
+    private final AtomicLong failedExecutionTimeUs = new AtomicLong();
+    private final AutoCloseable otelSubscription;
+
+    private OTelMonitor(final @NotNull Meter meter) {
+      final var finalizedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionsCount").buildObserver();
+      final var failedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionsCount").buildObserver();
+      final var finalizedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionTimeUs").buildObserver();
+      final var failedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionTimeUs").buildObserver();
+
+      otelSubscription = meter.batchCallback(
+        () -> {
+          finalizedExecutionsCounter.record(finalizedExecutionsCount.longValue());
+          finalizedExecutionTimeUsCounter.record(finalizedExecutionTimeUs.longValue());
+
+          failedExecutionsCounter.record(failedExecutionsCount.longValue());
+          failedExecutionTimeUsCounter.record(failedExecutionTimeUs.longValue());
+        },
+        finalizedExecutionsCounter, failedExecutionsCounter,
+        finalizedExecutionTimeUsCounter, failedExecutionTimeUsCounter
+      );
+    }
+
+    public <V> Callable<V> wrap(final @NotNull Callable<V> computation) {
+      return () -> {
+        final long startedAtNs = System.nanoTime();
+        try {
+          final V result = computation.call();
+
+          finalizedExecutionsCount.incrementAndGet();
+          final long finishedAtNs = System.nanoTime();
+          final long durationUs = (finishedAtNs - startedAtNs) / 1000;
+          finalizedExecutionTimeUs.addAndGet(durationUs);
+
+          return result;
+        }
+        catch (Throwable t) {
+          failedExecutionsCount.incrementAndGet();
+          final long finishedAtNs = System.nanoTime();
+          final long durationUs = (finishedAtNs - startedAtNs) / 1000;
+          failedExecutionTimeUs.addAndGet(durationUs);
+          throw t;
+        }
+      };
+    }
+
+    @Override
+    public void close() throws Exception {
+      otelSubscription.close();
+    }
   }
 }
