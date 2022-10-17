@@ -36,8 +36,8 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (JB_UI_BORDERS_EMPTY_METHOD_CALL.test(expression) && canBeSimplified(expression)) {
           holder.registerProblem(expression,
-                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify"),
-                                 new ConvertToJBBorderQuickFix(true));
+                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.can.be.simplified"),
+                                 new SimplifyJBUIEmptyBorderCreationQuickFix());
         }
         super.visitMethodCallExpression(expression);
       }
@@ -46,8 +46,8 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (isSwingEmptyBorderConstructor(expression) && isJBUIClassAccessible(expression)) {
           holder.registerProblem(expression,
-                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.replace"),
-                                 new ConvertToJBBorderQuickFix());
+                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.not.dpi.aware"),
+                                 new ConvertToJBUIBorderQuickFix());
         }
         super.visitNewExpression(expression);
       }
@@ -118,24 +118,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
     return jbuiClass != null;
   }
 
-  private static class ConvertToJBBorderQuickFix implements LocalQuickFix {
-
-    private final boolean simplify;
-
-    ConvertToJBBorderQuickFix() {
-      this(false);
-    }
-
-    ConvertToJBBorderQuickFix(boolean simplify) {
-      this.simplify = simplify;
-    }
-
-    @Override
-    public @IntentionFamilyName @NotNull String getFamilyName() {
-      return simplify
-             ? DevKitBundle.message("inspections.use.dpi.aware.empty.border.family.name")
-             : DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.family.name");
-    }
+  private static abstract class AbstractEmptyBorderQuickFix implements LocalQuickFix {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -185,6 +168,20 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
           editor.getCaretModel().moveToOffset(offset);
         }
       }
+    }
+  }
+
+  private static class SimplifyJBUIEmptyBorderCreationQuickFix extends AbstractEmptyBorderQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify.fix.name");
+    }
+  }
+
+  private static class ConvertToJBUIBorderQuickFix extends AbstractEmptyBorderQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.name");
     }
   }
 }

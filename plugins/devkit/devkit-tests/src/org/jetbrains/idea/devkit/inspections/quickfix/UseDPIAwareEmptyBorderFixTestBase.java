@@ -11,10 +11,10 @@ public abstract class UseDPIAwareEmptyBorderFixTestBase extends JavaCodeInsightF
 
   @SuppressWarnings("SSBasedInspection")
   protected static final String SIMPLIFY_FIX_NAME =
-    DevKitBundle.message("inspections.use.dpi.aware.empty.border.family.name");
+    DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify.fix.name");
   @SuppressWarnings("SSBasedInspection")
   protected static final String CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME =
-    DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.family.name");
+    DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.name");
 
   @NotNull
   protected abstract String getFileExtension();

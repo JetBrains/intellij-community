@@ -22,7 +22,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(0, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 0, 0)</warning>;
                }
              }
              """),
@@ -50,7 +50,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(1, 1, 1, 1)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 1, 1, 1)</warning>;
                }
              }
              """),
@@ -78,7 +78,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(1, 2, 1, 2)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 2, 1, 2)</warning>;
                }
              }
              """),
@@ -106,7 +106,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(1, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 0, 0, 0)</warning>;
                }
              }
              """),
@@ -134,7 +134,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(0, 1, 0, 0)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 1, 0, 0)</warning>;
                }
              }
              """),
@@ -162,7 +162,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(0, 0, 1, 0)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 1, 0)</warning>;
                }
              }
              """),
@@ -190,7 +190,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Replace with JBUI.Borders.empty(...)">new Empty<caret>Border(0, 0, 0, 1)</warning>;
+                 Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 0, 1)</warning>;
                }
              }
              """),
@@ -220,7 +220,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(0, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 0, 0)</warning>;
                }
              }
              """),
@@ -246,7 +246,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(1, 1, 1, 1)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 1, 1, 1)</warning>;
                }
              }
              """),
@@ -272,7 +272,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(1, 2, 1, 2)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 2, 1, 2)</warning>;
                }
              }
              """),
@@ -298,7 +298,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(1, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 0, 0, 0)</warning>;
                }
              }
              """),
@@ -324,7 +324,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(0, 1, 0, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 1, 0, 0)</warning>;
                }
              }
              """),
@@ -350,7 +350,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(0, 0, 1, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 1, 0)</warning>;
                }
              }
              """),
@@ -376,7 +376,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">JBUI.Border<caret>s.empty(0, 0, 0, 1)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 0, 1)</warning>;
                }
              }
              """),
@@ -402,7 +402,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">Border<caret>s.empty(0, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">Border<caret>s.empty(0, 0, 0, 0)</warning>;
                }
              }
              """),
@@ -428,7 +428,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
              class UseJBUIBordersEmptyThatCanBeSimplified {
                void any() {
-                 Border myBorder = <warning descr="Simplify">em<caret>pty(0, 0, 0, 0)</warning>;
+                 Border myBorder = <warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
                }
              }
              """),
