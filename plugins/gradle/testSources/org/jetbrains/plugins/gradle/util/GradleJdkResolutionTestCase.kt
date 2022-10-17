@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.openapi.application.PathManager.PROPERTIES_FILE_NAME
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkNonblockingUtilTestCase.Companion.waitForLookup
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase
 import com.intellij.openapi.externalSystem.service.execution.nonblockingResolveSdkBySdkName
@@ -8,6 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.properties.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
+import org.jetbrains.plugins.gradle.properties.USER_HOME
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
