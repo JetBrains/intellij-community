@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAny;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 
 public abstract class DvcsStatusWidget<T extends Repository> extends EditorBasedWidget
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe {
@@ -141,12 +139,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return myIcon;
   }
 
-  @Nullable
-  @Override
-  public ListPopup getPopupStep() {
-    return null;
-  }
-
   @Override
   public @Nullable JBPopup getPopup() {
     if (isDisposed()) return null;
@@ -155,13 +147,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     if (repository == null) return null;
 
     return getWidgetPopup(project, repository);
-  }
-
-  @Nullable
-  @Override
-  public Consumer<MouseEvent> getClickConsumer() {
-    // has no effect since the click opens a list popup, and the consumer is not called for the MultipleTextValuesPresentation
-    return null;
   }
 
   private void clearStatus() {
