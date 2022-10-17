@@ -207,15 +207,14 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
             else {
               null
             }
-          } ?: continue
+          }
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             if (!file.isValid) {
               return@withContext
             }
 
             for (fileEditor in fileEditors) {
-              val component = componentProvider.apply(fileEditor)
-              updateNotification(fileEditor = fileEditor, provider = provider, component = component)
+              updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
             }
           }
         }
@@ -244,7 +243,10 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
     panels?.get(providerClass)?.let { old ->
       FileEditorManager.getInstance(project).removeTopComponent(fileEditor, old)
     }
-    if (component != null) {
+    if (component == null) {
+      panels?.remove(providerClass)
+    }
+    else {
       if (component is EditorNotificationPanel) {
         component.setClassConsumer {
           logHandlerInvoked(project, provider, it)
@@ -254,9 +256,6 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       FileEditorManager.getInstance(project).addTopComponent(fileEditor, component)
 
       (panels ?: getNotificationPanels(fileEditor)).put(providerClass, component)
-    }
-    else {
-      panels?.remove(providerClass)
     }
   }
 
