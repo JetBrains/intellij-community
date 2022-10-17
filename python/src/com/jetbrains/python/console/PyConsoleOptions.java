@@ -119,7 +119,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;
     public boolean myCommandQueueEnabled = PlatformUtils.isDataSpell();
-    public boolean myAutoCompletionEnabled = false;
+    public boolean myAutoCompletionEnabled = true;
   }
 
   @Tag("console-settings")
