@@ -41,16 +41,6 @@ class WorkspaceModelTopics : Disposable {
 
   var modulesAreLoaded = false
 
-  @Deprecated("Use regular subscription to the topic WorkspaceModelTopics#CHANGED")
-  fun subscribeImmediately(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
-    connection.subscribe(CHANGED, listener)
-  }
-
-  @Deprecated("Use regular subscription to the topic WorkspaceModelTopics#CHANGED")
-  fun subscribeAfterModuleLoading(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
-    subscribeImmediately(connection, listener)
-  }
-
   fun notifyModulesAreLoaded() {
     modulesAreLoaded = true
   }
