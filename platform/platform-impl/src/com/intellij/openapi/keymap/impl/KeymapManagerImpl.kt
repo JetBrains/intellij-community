@@ -112,7 +112,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
-            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader))
+            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader, true))
           }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
