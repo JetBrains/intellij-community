@@ -37,8 +37,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.util.*;
 
-class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
-  private static final Logger LOG = Logger.getInstance(MavenProjectImporterImpl.class);
+class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
+  private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
@@ -51,13 +51,13 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
   private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
 
-  MavenProjectImporterImpl(@NotNull Project p,
-                           @NotNull MavenProjectsTree projectsTree,
-                           @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                           boolean importModuleGroupsRequired,
-                           @NotNull IdeModifiableModelsProvider modelsProvider,
-                           @NotNull MavenImportingSettings importingSettings,
-                           @Nullable Module previewModule) {
+  MavenProjectLegacyImporter(@NotNull Project p,
+                             @NotNull MavenProjectsTree projectsTree,
+                             @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
+                             boolean importModuleGroupsRequired,
+                             @NotNull IdeModifiableModelsProvider modelsProvider,
+                             @NotNull MavenImportingSettings importingSettings,
+                             @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
     myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
     myImportModuleGroupsRequired = importModuleGroupsRequired;
