@@ -143,6 +143,7 @@ object CommunityRepositoryModules {
       )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
       spec.withProjectLibrary("kotlinx-serialization-protobuf")
+      spec.withProjectLibrary("package-search-version-utils")
     },
     plugin("intellij.android.gradle.dsl") { spec ->
       spec.withModule("intellij.android.gradle.dsl.kotlin")
