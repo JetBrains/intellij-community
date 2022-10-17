@@ -6,7 +6,7 @@ import com.intellij.util.Function;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.ParentEntityDependent;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootPropertiesEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
@@ -16,22 +16,22 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<JavaSourceRootEntity, SourceRootEntity> {
+class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<JavaSourceRootPropertiesEntity, SourceRootEntity> {
 
   @Override
-  public @NotNull Class<JavaSourceRootEntity> getEntityClass() {
-    return JavaSourceRootEntity.class;
+  public @NotNull Class<JavaSourceRootPropertiesEntity> getEntityClass() {
+    return JavaSourceRootPropertiesEntity.class;
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaSourceRootEntity entity,
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity entity,
                                                                                                 @NotNull Project project) {
     return collectBuildersOnAddedEntityWithDataExtractor(entity, JavaSourceRootIndexableEntityProvider::getDataForBuilders);
   }
 
   @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaSourceRootEntity oldEntity,
-                                                                                                   @NotNull JavaSourceRootEntity newEntity) {
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaSourceRootPropertiesEntity oldEntity,
+                                                                                                   @NotNull JavaSourceRootPropertiesEntity newEntity) {
     return collectBuildersOnReplacedEntityWithDataExtractor(oldEntity, newEntity,
                                                             JavaSourceRootIndexableEntityProvider::getDataForBuilders);
   }
@@ -57,7 +57,7 @@ class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<Jav
     return Collections.emptyList();
   }
 
-  private static @NotNull Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaSourceRootEntity entity) {
+  private static @NotNull Pair<VirtualFileUrl, ModuleEntity> getDataForBuilders(@NotNull JavaSourceRootPropertiesEntity entity) {
     SourceRootEntity sourceRootEntity = entity.getSourceRoot();
     return new Pair<>(sourceRootEntity.getUrl(), sourceRootEntity.getContentRoot().getModule());
   }

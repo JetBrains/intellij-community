@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtil
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootPropertiesEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -41,12 +41,12 @@ public class PackagePrefixIndex {
           map = myMap;
         }
         if (map != null) {
-          for (EntityChange<JavaSourceRootEntity> change : event.getChanges(JavaSourceRootEntity.class)) {
-            JavaSourceRootEntity oldEntity = change.getOldEntity();
+          for (EntityChange<JavaSourceRootPropertiesEntity> change : event.getChanges(JavaSourceRootPropertiesEntity.class)) {
+            JavaSourceRootPropertiesEntity oldEntity = change.getOldEntity();
             if (oldEntity != null) {
               updateMap(oldEntity, event.getStorageBefore(), (prefix, module) -> map.remove(prefix, module));
             }
-            JavaSourceRootEntity newEntity = change.getNewEntity();
+            JavaSourceRootPropertiesEntity newEntity = change.getNewEntity();
             if (newEntity != null) {
               updateMap(newEntity, event.getStorageAfter(), (prefix, module) -> map.putValue(prefix, module));
             }
@@ -54,7 +54,7 @@ public class PackagePrefixIndex {
         }
       }
       
-      private void updateMap(@NotNull JavaSourceRootEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<? super String, ? super Module> updater) {
+      private void updateMap(@NotNull JavaSourceRootPropertiesEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<? super String, ? super Module> updater) {
         String prefix = entity.getPackagePrefix();
         if (StringUtil.isNotEmpty(prefix)) {
           Module module = ModuleEntityUtils.findModule(entity.getSourceRoot().getContentRoot().getModule(), storageAfter);

@@ -15,7 +15,6 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -23,9 +22,6 @@ import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -38,7 +34,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
                                                                                               CustomSourceRootPropertiesEntity::class.java,
                                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val JAVASOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                                   JavaSourceRootEntity::class.java,
+                                                                                   JavaSourceRootPropertiesEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val JAVARESOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                                      JavaResourceRootEntity::class.java,
@@ -65,8 +61,8 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
   override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
 
-  override val javaSourceRoots: List<JavaSourceRootEntity>
-    get() = snapshot.extractOneToManyChildren<JavaSourceRootEntity>(JAVASOURCEROOTS_CONNECTION_ID, this)!!.toList()
+  override val javaSourceRoots: List<JavaSourceRootPropertiesEntity>
+    get() = snapshot.extractOneToManyChildren<JavaSourceRootPropertiesEntity>(JAVASOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
   override val javaResourceRoots: List<JavaResourceRootEntity>
     get() = snapshot.extractOneToManyChildren<JavaResourceRootEntity>(JAVARESOURCEROOTS_CONNECTION_ID, this)!!.toList()
@@ -269,19 +265,19 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       }
 
     // List of non-abstract referenced types
-    var _javaSourceRoots: List<JavaSourceRootEntity>? = emptyList()
-    override var javaSourceRoots: List<JavaSourceRootEntity>
+    var _javaSourceRoots: List<JavaSourceRootPropertiesEntity>? = emptyList()
+    override var javaSourceRoots: List<JavaSourceRootPropertiesEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<JavaSourceRootEntity>(JAVASOURCEROOTS_CONNECTION_ID,
-                                                               this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                               JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootEntity>
+          _diff.extractOneToManyChildren<JavaSourceRootPropertiesEntity>(JAVASOURCEROOTS_CONNECTION_ID,
+                                                                         this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                               JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootPropertiesEntity>
                                                                                    ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootPropertiesEntity> ?: emptyList()
         }
       }
       set(value) {

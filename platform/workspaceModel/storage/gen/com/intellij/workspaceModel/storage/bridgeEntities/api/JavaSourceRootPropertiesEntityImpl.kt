@@ -15,21 +15,16 @@ import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : JavaSourceRootEntity, WorkspaceEntityBase() {
+open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              JavaSourceRootEntity::class.java,
+                                                                              JavaSourceRootPropertiesEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
@@ -49,7 +44,7 @@ open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : 
     return connections
   }
 
-  class Builder(var result: JavaSourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootEntity>(), JavaSourceRootEntity.Builder {
+  class Builder(var result: JavaSourceRootEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity>(), JavaSourceRootPropertiesEntity.Builder {
     constructor() : this(JavaSourceRootEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -102,7 +97,7 @@ open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : 
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as JavaSourceRootEntity
+      dataSource as JavaSourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.generated != dataSource.generated) this.generated = dataSource.generated
       if (this.packagePrefix != dataSource.packagePrefix) this.packagePrefix = dataSource.packagePrefix
@@ -180,19 +175,19 @@ open class JavaSourceRootEntityImpl(val dataSource: JavaSourceRootEntityData) : 
       }
 
     override fun getEntityData(): JavaSourceRootEntityData = result ?: super.getEntityData() as JavaSourceRootEntityData
-    override fun getEntityClass(): Class<JavaSourceRootEntity> = JavaSourceRootEntity::class.java
+    override fun getEntityClass(): Class<JavaSourceRootPropertiesEntity> = JavaSourceRootPropertiesEntity::class.java
   }
 }
 
-class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
+class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootPropertiesEntity>() {
   var generated: Boolean = false
   lateinit var packagePrefix: String
 
 
   fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaSourceRootEntity> {
-    val modifiable = JavaSourceRootEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
+    val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
       modifiable.snapshot = diff
@@ -203,9 +198,9 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): JavaSourceRootEntity {
+  override fun createEntity(snapshot: EntityStorage): JavaSourceRootPropertiesEntity {
     return getCached(snapshot) {
-      val entity = JavaSourceRootEntityImpl(this)
+      val entity = JavaSourceRootPropertiesEntityImpl(this)
       entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
@@ -214,7 +209,7 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return JavaSourceRootEntity::class.java
+    return JavaSourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -224,7 +219,7 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return JavaSourceRootEntity(generated, packagePrefix, entitySource) {
+    return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
       this.sourceRoot = parents.filterIsInstance<SourceRootEntity>().single()
     }
   }
