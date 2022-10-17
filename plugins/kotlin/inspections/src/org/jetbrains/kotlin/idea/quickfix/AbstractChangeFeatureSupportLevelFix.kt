@@ -36,7 +36,7 @@ abstract class AbstractChangeFeatureSupportLevelFix(
                 LanguageFeature.State.ENABLED_WITH_WARNING -> {
                     KotlinInspectionsBundle.message("fix.change.feature.support.enabled.warning", featureShortName)
                 }
-                LanguageFeature.State.ENABLED_WITH_ERROR, LanguageFeature.State.DISABLED -> {
+                LanguageFeature.State.DISABLED -> {
                     KotlinInspectionsBundle.message("fix.change.feature.support.disabled", featureShortName)
                 }
             }
