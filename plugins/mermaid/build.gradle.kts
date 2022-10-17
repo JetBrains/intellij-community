@@ -62,7 +62,7 @@ val commonJvmArgs = buildList {
   addAll(commonArgs)
   if (OperatingSystem.current().isMacOsX) {
     val path = project.properties["jnaLibsPath"] ?: System.getenv("JNA_LIBS_PATH")
-    add("-Djna.boot.path=$path")
+    add("-Djna.boot.library.path=$path")
   }
 }
 
