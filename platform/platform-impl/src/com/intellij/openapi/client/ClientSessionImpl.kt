@@ -124,6 +124,11 @@ abstract class ClientSessionImpl(
 
   override val componentStore = ClientSessionComponentStore()
 
+  @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
+  override fun getMessageBus(): MessageBus {
+    error("Not supported")
+  }
+
   override fun toString(): String {
     return clientId.toString()
   }
