@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +28,6 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
 
   public static final String JB_UI_CLASS_NAME = JBUI.class.getName();
   public static final String SWING_EMPTY_BORDER_CLASS_NAME = EmptyBorder.class.getName();
-  public static final String JB_EMPTY_BORDER_CLASS_NAME = JBEmptyBorder.class.getName();
 
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -46,9 +44,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
 
       @Override
       public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        if (isSwingEmptyBorderConstructor(expression) &&
-            isJBUIClassAccessible(expression) &&
-            !isUsedAsJBEmptyBorderOrUnknownConstructorParameter(expression)) {
+        if (isSwingEmptyBorderConstructor(expression) && isJBUIClassAccessible(expression)) {
           holder.registerProblem(expression,
                                  DevKitBundle.message("inspections.use.dpi.aware.empty.border.replace"),
                                  new ConvertToJBBorderQuickFix());
@@ -120,15 +116,6 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
     Project project = checkedPlace.getProject();
     PsiClass jbuiClass = JavaPsiFacade.getInstance(project).findClass(JB_UI_CLASS_NAME, checkedPlace.getResolveScope());
     return jbuiClass != null;
-  }
-
-  private static boolean isUsedAsJBEmptyBorderOrUnknownConstructorParameter(@NotNull PsiNewExpression expression) {
-    PsiElement parent = expression.getParent();
-    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
-      PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
-      return parentType == null || JB_EMPTY_BORDER_CLASS_NAME.equals(parentType.getCanonicalText());
-    }
-    return false;
   }
 
   private static class ConvertToJBBorderQuickFix implements LocalQuickFix {
