@@ -227,22 +227,46 @@ class ToolWindowPane internal constructor(frame: JFrame,
   }
 
   private fun setComponent(component: JComponent?, anchor: ToolWindowAnchor, weight: Float) {
-    val size = rootPane.size
     when (anchor) {
       ToolWindowAnchor.TOP -> {
         verticalSplitter.firstComponent = component
-        verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
       }
       ToolWindowAnchor.LEFT -> {
         horizontalSplitter.firstComponent = component
-        horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
       }
       ToolWindowAnchor.BOTTOM -> {
         verticalSplitter.lastComponent = component
-        verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
       }
       ToolWindowAnchor.RIGHT -> {
         horizontalSplitter.lastComponent = component
+      }
+      else -> {
+        LOG.error("unknown anchor: $anchor")
+      }
+    }
+    setWeight(anchor, weight)
+  }
+
+  fun setWeight(window: ToolWindow, weight: Float) {
+    if (window.type != ToolWindowType.DOCKED) {
+      return
+    }
+    setWeight(window.anchor, normalizeWeight(weight))
+  }
+
+  private fun setWeight(anchor: ToolWindowAnchor, weight: Float) {
+    val size = rootPane.size
+    when (anchor) {
+      ToolWindowAnchor.TOP -> {
+        verticalSplitter.firstSize = (size.getHeight() * weight).toInt()
+      }
+      ToolWindowAnchor.LEFT -> {
+        horizontalSplitter.firstSize = (size.getWidth() * weight).toInt()
+      }
+      ToolWindowAnchor.BOTTOM -> {
+        verticalSplitter.lastSize = (size.getHeight() * weight).toInt()
+      }
+      ToolWindowAnchor.RIGHT -> {
         horizontalSplitter.lastSize = (size.getWidth() * weight).toInt()
       }
       else -> {

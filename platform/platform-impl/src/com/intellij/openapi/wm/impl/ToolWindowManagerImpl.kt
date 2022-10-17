@@ -1304,8 +1304,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else if (!item.old.isVisible && item.new.isVisible) {
         toShowWindow = true
-      } else if (item.new.isVisible && item.old.weight != item.new.weight) {
-        toShowWindow = true
+      } else if (item.new.isVisible && item.old.isDocked && item.new.isDocked && item.old.weight != item.new.weight) {
+        getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
       }
 
       if (toShowWindow) {
