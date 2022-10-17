@@ -1,10 +1,8 @@
 package com.intellij.mermaid.lang.lexer
 
 import com.intellij.lexer.Lexer
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.tree.IElementType
+import com.intellij.mermaid.lang.MermaidTestingUtil
 import com.intellij.testFramework.LexerTestCase
-import java.util.*
 
 abstract class MermaidLexerTestCase : LexerTestCase() {
   abstract val diagramName: String
@@ -14,7 +12,7 @@ abstract class MermaidLexerTestCase : LexerTestCase() {
   }
 
   override fun getDirPath(): String {
-    return "src/test/resources/lexer"
+    return "${MermaidTestingUtil.TEST_DATA_PATH}/lexer"
   }
 
   override fun getPathToTestDataFile(extension: String?): String {
@@ -22,16 +20,6 @@ abstract class MermaidLexerTestCase : LexerTestCase() {
   }
 
   override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    return getTestName(getCamelCaseTestName(), lowercaseFirstLetter)
-  }
-
-  private fun getCamelCaseTestName(): String {
-    return StringUtil.trimStart(super.getName(), "test").split(" ").toMutableList().joinToString("") { word ->
-      word.replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(
-          Locale.getDefault()
-        ) else it.toString()
-      }
-    }
+    return MermaidTestingUtil.getTestName(name, lowercaseFirstLetter)
   }
 }

@@ -1,11 +1,11 @@
 package com.intellij.mermaid.lang.symbol
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.util.io.readText
 import junit.framework.TestCase
 import kotlin.io.path.Path
 
-class IdentifierFindUsagesTest : BasePlatformTestCase() {
+class IdentifierFindUsagesTest : MermaidBaseTestCase("symbol/usages") {
   fun `test find usages of identifier without declaration`() = doTest()
 
   fun `test find usages of identifier reference with one declaration`() = doTest()
@@ -25,14 +25,5 @@ class IdentifierFindUsagesTest : BasePlatformTestCase() {
     val expectedFilePath = "$testDataPath/$expectedFile"
     val expected = Path(expectedFilePath).readText()
     TestCase.assertEquals(expected, text)
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "src/test/resources/symbol/usages"
   }
 }

@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.symbol
 
+import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolDeclarationProvider
 import com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolReferenceProvider
 import com.intellij.model.Symbol
@@ -8,10 +9,9 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.psi.util.elementsAtOffsetUp
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 @Suppress("UnstableApiUsage")
-class IdentifierRenameTest : BasePlatformTestCase() {
+class IdentifierRenameTest : MermaidBaseTestCase("symbol/rename") {
   fun `test rename identifier without declaration`() = doTest()
 
   fun `test rename identifier reference with one declaration`() = doTest()
@@ -63,14 +63,5 @@ class IdentifierRenameTest : BasePlatformTestCase() {
       }
     }
     return null
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "src/test/resources/symbol/rename"
   }
 }

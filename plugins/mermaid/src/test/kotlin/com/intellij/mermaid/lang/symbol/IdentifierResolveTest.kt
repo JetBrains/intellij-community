@@ -1,18 +1,18 @@
 package com.intellij.mermaid.lang.symbol
 
+import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.psi.symbol.MermaidSymbol
 import com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolReferenceProvider
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.psi.util.elementsAtOffsetUp
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.io.readText
 import junit.framework.TestCase
 import kotlin.io.path.Path
 
 @Suppress("UnstableApiUsage")
-class IdentifierResolveTest : BasePlatformTestCase() {
+class IdentifierResolveTest : MermaidBaseTestCase("symbol/resolve") {
   fun `test resolve identifier without declaration`() = doTest()
 
   fun `test resolve identifier reference with one declaration`() = doTest()
@@ -49,14 +49,5 @@ class IdentifierResolveTest : BasePlatformTestCase() {
       }
     }
     return emptyList()
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "src/test/resources/symbol/resolve"
   }
 }

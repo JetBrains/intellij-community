@@ -1,13 +1,13 @@
 package com.intellij.mermaid.lang.formatter
 
-import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.application.options.CodeStyle
+import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 
-class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
+class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
   fun `test flowchart`() = doTest()
 
   fun `test sequence`() = doTest()
@@ -30,15 +30,6 @@ class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
 
   fun `test c4`() = doTest()
 
-  override fun getTestDataPath(): String {
-    return "src/test/resources/formatter/"
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
   private fun doTest() {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"
@@ -48,12 +39,6 @@ class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
           INDENT_SIZE = 2
           TAB_SIZE = 2
         }
-//        getCommonSettings(MermaidLanguage).apply {
-//
-//        }
-//        getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
-//
-//        }
       }
       doReformatTest(before, after)
       //check idempotence of formatter
@@ -67,10 +52,10 @@ class MermaidFormatterTest : LightPlatformCodeInsightTestCase() {
   }
 
   private fun doReformatTest(before: String, after: String) {
-    configureByFile(before)
+    myFixture.configureByFile(before)
     WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformat(file)
+      CodeStyleManager.getInstance(project).reformat(myFixture.file)
     }
-    checkResultByFile(after)
+    myFixture.checkResultByFile(after)
   }
 }

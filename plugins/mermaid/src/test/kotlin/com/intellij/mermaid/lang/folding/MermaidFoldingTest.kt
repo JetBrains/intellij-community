@@ -1,8 +1,8 @@
 package com.intellij.mermaid.lang.folding
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.mermaid.lang.MermaidBaseTestCase
 
-class MermaidFoldingTest : BasePlatformTestCase() {
+class MermaidFoldingTest : MermaidBaseTestCase("folding") {
   fun `test diagram body`() = doTest()
 
   fun `test body in braces`() = doTest()
@@ -15,14 +15,5 @@ class MermaidFoldingTest : BasePlatformTestCase() {
 
   private fun doTest() {
     myFixture.testFolding(testDataPath + "/" + getTestName(true) + ".mermaid")
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "src/test/resources/folding"
   }
 }
