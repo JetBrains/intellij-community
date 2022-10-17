@@ -908,6 +908,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
+    jetbrainsLibrary("kinference"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-proto"),
     jetbrainsLibrary("kotlin-script-runtime"),
