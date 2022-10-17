@@ -11,10 +11,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,6 +64,12 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     this.project = project;
     snapshotHandler = new SnapshotHandler(project);
     ModuleDependencyIndex.Companion.getInstance(project).addListener(snapshotHandler.createModuleDependencyListener());
+    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(() -> {
+      snapshotHandler.updateWorkspaceSnapshot(snapshot -> {
+        Sdk newProjectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+        return snapshot.projectJdkChanged(newProjectSdk);
+      });
+    });
   }
 
   @Override

@@ -43,19 +43,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   init {
     if (!project.isDefault) {
       val messageBusConnection = project.messageBus.connect(this)
-      messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun changed(event: VersionedStorageChange) {
-          if (project.isDisposed) return
-
-          // Roots changed event should be fired for the global libraries linked with module
-          val moduleChanges = event.getChanges(ModuleEntity::class.java)
-          for (change in moduleChanges) {
-            change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
-            change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
-          }
-        }
-      })
-
       messageBusConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
     }
   }
@@ -343,6 +330,17 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     libraryTablesListener.unsubscribe()
     jdkChangeListener.unsubscribe()
     setupTrackedLibrariesAndJdks()
+  }
+
+  fun workspaceModelChanged(event: VersionedStorageChange){
+    if (project.isDisposed) return
+
+    // Roots changed event should be fired for the global libraries linked with module
+    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    for (change in moduleChanges) {
+      change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
+      change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
+    }
   }
 
 }
