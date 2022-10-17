@@ -1,5 +1,16 @@
 package org.toml.ide.json
 
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionContributorEP
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.testFramework.registerExtension
+import org.toml.ide.json.TomlJsonSchemaValueCompletionTest.TestCompletionContributor.Companion.TEST_COMPLETION_VARIANT
+import org.toml.lang.TomlLanguage
+
 class TomlJsonSchemaValueCompletionTest : TomlJsonSchemaCompletionTestBase() {
     fun `test enum variants`() = checkContainsCompletion(setOf("\"2015\"", "\"2018\"", "\"2021\""), """
         [package]
@@ -98,4 +109,28 @@ class TomlJsonSchemaValueCompletionTest : TomlJsonSchemaCompletionTestBase() {
         [foo]
         number-enum = <caret>
     """)
+
+    fun `test ordering`() {
+        val completionContributorEP = CompletionContributorEP(
+            TomlLanguage.id,
+            TestCompletionContributor::class.java.name,
+            DefaultPluginDescriptor("testTomlPluginDescriptor")
+        )
+
+        ApplicationManager.getApplication().registerExtension(CompletionContributor.EP, completionContributorEP, testRootDisposable)
+        checkCompletionList(listOf(TEST_COMPLETION_VARIANT, "\"\""), """
+            [package]
+            name = <caret>    
+        """)
+    }
+
+    private class TestCompletionContributor : CompletionContributor() {
+        override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+            result.addElement(LookupElementBuilder.create(TEST_COMPLETION_VARIANT))
+        }
+
+        companion object {
+            const val TEST_COMPLETION_VARIANT = "testCompletionVariant"
+        }
+    }
 }
