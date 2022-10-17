@@ -31,7 +31,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 yieldPathsFromSubgraph(
                     root,
                     currentPath,
-                    getChilds = {
+                    getChildren = {
                         with(DependsOnGraphHelper) { it.unwrapModuleSourceInfo()?.predecessorsInDependsOnGraph() ?: emptyList() }
                     }
                 )
@@ -50,7 +50,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 yieldPathsFromSubgraph(
                     root,
                     currentPath,
-                    getChilds = {
+                    getChildren = {
                         with(DependsOnGraphHelper) { it.unwrapModuleSourceInfo()?.successorsInDependsOnGraph() ?: emptyList() }
                     }
                 )
@@ -63,18 +63,18 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     private suspend fun SequenceScope<ModuleInfoPath>.yieldPathsFromSubgraph(
         root: ModuleInfo,
         currentPath: Stack<ModuleInfo>,
-        getChilds: (ModuleInfo) -> List<ModuleInfo>
+        getChildren: (ModuleInfo) -> List<ModuleInfo>
     ) {
         ProgressManager.checkCanceled()
 
         currentPath.push(root)
 
-        val childs = getChilds(root)
-        if (childs.isEmpty()) {
+        val children = getChildren(root)
+        if (children.isEmpty()) {
             yield(ModuleInfoPath(currentPath.toList()))
         } else {
-            childs.forEach {
-                yieldPathsFromSubgraph(it, currentPath, getChilds)
+            children.forEach {
+                yieldPathsFromSubgraph(it, currentPath, getChildren)
             }
         }
 
