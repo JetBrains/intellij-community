@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.FilePath;
@@ -73,7 +74,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     myMainFrame = createMainFrame(logData, uiProperties, filterUi, isEditorDiffPreview);
 
     LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
-    updateHighlighters();
+    ApplicationManager.getApplication().invokeLater(this::updateHighlighters, o -> myDisposableFlag.isDisposed());
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
