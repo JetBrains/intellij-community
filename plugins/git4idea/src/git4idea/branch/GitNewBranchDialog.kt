@@ -23,6 +23,7 @@ import git4idea.validators.GitRefNameValidator
 import git4idea.validators.checkRefNameEmptyOrHead
 import git4idea.validators.conflictsWithLocalBranch
 import git4idea.validators.conflictsWithRemoteBranch
+import git4idea.validators.conflictsWithLocalBranchDirectory
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
@@ -62,6 +63,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private var overwriteCheckbox: JCheckBox? = null
   private var setTrackingCheckbox: JCheckBox? = null
   private val validator = GitRefNameValidator.getInstance()
+
+  private val localBranchDirectories = collectDirectories(collectLocalBranchNames().asIterable(), false).toSet()
 
   init {
     title = dialogTitle
@@ -109,14 +112,14 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     val branchNames = mutableSetOf<String>()
     branchNames += collectLocalBranchNames()
     branchNames += collectRemoteBranchNames()
-    val directories = collectDirectories(branchNames).filter { it !in branchNames }
+    val directories = collectDirectories(branchNames, true).filter { it !in branchNames }
     return BranchNamesCompletion(directories + branchNames.toList())
   }
 
   private fun collectLocalBranchNames() = repositories.asSequence().flatMap { it.branches.localBranches }.map { it.name }
   private fun collectRemoteBranchNames() = repositories.asSequence().flatMap { it.branches.remoteBranches }.map { it.nameForRemoteOperations }
 
-  private fun collectDirectories(branchNames: Collection<String>): Collection<String> {
+  private fun collectDirectories(branchNames: Iterable<String>, withTrailingSlash: Boolean): Collection<String> {
     val directories = mutableSetOf<String>()
     for (branchName in branchNames) {
       if (branchName.contains(NAME_SEPARATOR)) {
@@ -124,7 +127,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         while (index < branchName.length) {
           val end = branchName.indexOf(NAME_SEPARATOR, index)
           if (end == -1) break
-          directories += branchName.substring(0, end + 1)
+          directories += if(withTrailingSlash) branchName.substring(0, end + 1) else branchName.substring(0, end)
           index = end + 1
         }
       }
@@ -134,10 +137,13 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   private fun validateBranchName(): ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
     it.cleanBranchNameAndAdjustCursorIfNeeded()
-    val errorInfo = checkRefNameEmptyOrHead(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
+    val branchName = validator.cleanUpBranchName(it.text).trim()
+    val errorInfo = checkRefNameEmptyOrHead(branchName)
+                    ?: conflictsWithRemoteBranch(repositories, branchName)
+                    ?: conflictsWithLocalBranchDirectory(localBranchDirectories, branchName)
     if (errorInfo != null) error(errorInfo.message)
     else {
-      val localBranchConflict = conflictsWithLocalBranch(repositories, it.text)
+      val localBranchConflict = conflictsWithLocalBranch(repositories, branchName)
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
