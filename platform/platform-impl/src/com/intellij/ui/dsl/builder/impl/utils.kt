@@ -55,7 +55,7 @@ private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
  */
 private const val FAIL_ON_WARN = false
 
-private val LOG = Logger.getInstance("Jetbrains UI DSL")
+private val LOG = Logger.getInstance("JetBrains UI DSL")
 
 /**
  * Components that can have assigned labels
