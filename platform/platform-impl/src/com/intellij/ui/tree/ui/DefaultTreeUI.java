@@ -559,11 +559,7 @@ public class DefaultTreeUI extends BasicTreeUI {
         }
         if (size == null) return null;
 
-        TreePath path = tree.getPathForRow(row);
-
-        Control control = path != null ? getControl(tree, path) : myDefaultControl;
-
-        int x = getPainter(tree).getRendererOffset(control, depth + TreeUtil.getDepthOffset(tree), leaf);
+        int x = getPainter(tree).getRendererOffset(myDefaultControl, depth + TreeUtil.getDepthOffset(tree), leaf);
         int height = getRowHeight();
         if (height <= 0) height = size.height;
         if (bounds == null) return new Rectangle(x, 0, size.width, height);
