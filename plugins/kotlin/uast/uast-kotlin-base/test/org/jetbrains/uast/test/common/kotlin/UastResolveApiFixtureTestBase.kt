@@ -1283,6 +1283,16 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                     val resolved = node.resolve()
                     TestCase.assertNotNull(resolved)
                     TestCase.assertEquals("invoke", resolved!!.name)
+
+                    val receiver = node.receiver
+                    TestCase.assertNotNull(receiver)
+                    val resolvedReceiverName = (node.receiver as? UReferenceExpression)?.resolvedName
+                    TestCase.assertNotNull(resolvedReceiverName)
+                    TestCase.assertTrue(
+                        resolvedReceiverName!!.startsWith("lambda") ||
+                                resolvedReceiverName.startsWith("getLambda")
+                    )
+
                     return super.visitCallExpression(node)
                 }
             }
