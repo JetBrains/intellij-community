@@ -340,7 +340,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile.getProject(), BackedVirtualFile.getOriginFileIfBacked(psiFile.getVirtualFile()), null);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return new FileScope(psiFile.getProject(), virtualFile != null ? BackedVirtualFile.getOriginFileIfBacked(virtualFile) : null, null);
   }
 
   @NotNull
