@@ -178,6 +178,9 @@ abstract class BaseIdeaProperties : ProductProperties() {
       layout.withoutProjectLibrary("layoutlib")
 
       layout.withoutProjectLibrary("qodana-sarif")
+      // todo it is a quick fix - fix the root cause
+      layout.withoutProjectLibrary("assertJ")
+      layout.withoutProjectLibrary("hamcrest")
     }
 
     productLayout.compatiblePluginsToIgnore = persistentListOf(
