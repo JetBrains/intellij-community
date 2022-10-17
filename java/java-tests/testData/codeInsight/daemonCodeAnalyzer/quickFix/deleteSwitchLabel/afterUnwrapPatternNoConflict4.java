@@ -1,8 +1,8 @@
 // "Remove unreachable branches" "true-preview"
 class Test {
-  final String s = "abc";
+    final String s = "abc";
 
-  int test() {
-    return 1;
-  }
+    int test() {
+        return 1;
+    }
 }
