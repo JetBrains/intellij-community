@@ -64,7 +64,7 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
   override val javaSourceRoots: List<JavaSourceRootPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<JavaSourceRootPropertiesEntity>(JAVASOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
-  override val javaResourceRoots: List<JavaResourceRootEntity>
+  override val javaResourceRoots: List<JavaResourceRootPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<JavaResourceRootEntity>(JAVARESOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
   override fun connectionIdList(): List<ConnectionId> {
@@ -312,19 +312,19 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       }
 
     // List of non-abstract referenced types
-    var _javaResourceRoots: List<JavaResourceRootEntity>? = emptyList()
-    override var javaResourceRoots: List<JavaResourceRootEntity>
+    var _javaResourceRoots: List<JavaResourceRootPropertiesEntity>? = emptyList()
+    override var javaResourceRoots: List<JavaResourceRootPropertiesEntity>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToManyChildren<JavaResourceRootEntity>(JAVARESOURCEROOTS_CONNECTION_ID,
                                                                  this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                 JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootEntity>
+                                                                                                                 JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootPropertiesEntity>
                                                                                      ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootPropertiesEntity> ?: emptyList()
         }
       }
       set(value) {
