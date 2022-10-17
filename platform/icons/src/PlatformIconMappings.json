@@ -278,7 +278,6 @@
         "general/gearPlain.svg",
         "general/settings.svg"
       ],
-      "settingSync.svg":"toolbar/unknown.svg",
       "show.svg": [
         "actions/groupBy.svg",
         "actions/show.svg"
@@ -582,6 +581,7 @@
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
+      "settingSync.svg":"toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "vcs.svg": [
