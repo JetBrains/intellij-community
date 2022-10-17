@@ -126,26 +126,29 @@ object CommunityRepositoryModules {
         copyDir(mavenDist, targetLib.resolve("maven3"))
       })
     },
-    plugin("intellij.gradle") { spec ->
-      spec.withModule("intellij.gradle.common")
+    plugin(listOf(
+      "intellij.gradle",
+      "intellij.gradle.common",
+      "intellij.gradle.toolingProxy",
+    )) { spec ->
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
-      spec.withModule("intellij.gradle.toolingProxy")
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    plugin("intellij.packageSearch") { spec ->
-      spec.withModule("intellij.packageSearch.gradle")
+    plugin(listOf(
+      "intellij.packageSearch",
+      "intellij.packageSearch.gradle",
+      "intellij.packageSearch.maven",
+      "intellij.packageSearch.kotlin",
+      )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-      spec.withModule("intellij.packageSearch.maven")
-      spec.withModule("intellij.packageSearch.kotlin")
+      spec.withProjectLibrary("kotlinx-serialization-protobuf")
     },
     plugin("intellij.android.gradle.dsl") { spec ->
       spec.withModule("intellij.android.gradle.dsl.kotlin")
       spec.withModule("intellij.android.gradle.dsl.toml")
     },
-    plugin("intellij.gradle.java") { spec ->
-      spec.withModule("intellij.gradle.jps")
-    },
+    plugin(listOf("intellij.gradle.java", "intellij.gradle.jps")),
     plugin("intellij.junit") { spec ->
       spec.mainJarName = "idea-junit.jar"
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
@@ -159,9 +162,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin("intellij.dev") { spec ->
-      spec.withModule("intellij.dev.psiViewer")
-    },
+    plugin(listOf("intellij.dev", "intellij.dev.psiViewer")),
     plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
@@ -221,49 +222,44 @@ object CommunityRepositoryModules {
         "intellij.fullLine.kotlin"
       ))
     },
-    plugin("intellij.lombok") { spec ->
-      spec.withModule("intellij.lombok.generated")
-    },
-    plugin("intellij.grazie") { spec ->
-      spec.withModule("intellij.grazie.core")
-      spec.withModule("intellij.grazie.java")
-      spec.withModule("intellij.grazie.json")
-      spec.withModule("intellij.grazie.markdown")
-      spec.withModule("intellij.grazie.properties")
-      spec.withModule("intellij.grazie.xml")
-      spec.withModule("intellij.grazie.yaml")
-    },
-    plugin("intellij.toml") { spec ->
-      spec.withModule("intellij.toml.core")
-      spec.withModule("intellij.toml.json")
-    },
-    plugin("intellij.markdown") { spec ->
-      spec.withModule("intellij.markdown.core")
-      spec.withModule("intellij.markdown.fenceInjection")
-      spec.withModule("intellij.markdown.frontmatter")
-    },
-    plugin("intellij.settingsSync") { spec ->
-      spec.withModule("intellij.settingsSync.git")
-    },
-    plugin("intellij.sh") { spec ->
-      spec.withModules(listOf(
-        "intellij.sh.core",
-        "intellij.sh.terminal",
-        "intellij.sh.copyright",
-        "intellij.sh.python",
-        "intellij.sh.markdown")
-      )
-    },
+    plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
+    plugin(listOf(
+      "intellij.grazie",
+      "intellij.grazie.core",
+      "intellij.grazie.java",
+      "intellij.grazie.json",
+      "intellij.grazie.markdown",
+      "intellij.grazie.properties",
+      "intellij.grazie.xml",
+      "intellij.grazie.yaml",
+    )),
+    plugin(listOf("intellij.toml", "intellij.toml.core", "intellij.toml.json")),
+    plugin(listOf(
+      "intellij.markdown",
+      "intellij.markdown.core",
+      "intellij.markdown.fenceInjection",
+      "intellij.markdown.frontmatter",
+    )),
+    plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
+    plugin(listOf(
+      "intellij.sh",
+      "intellij.sh.core",
+      "intellij.sh.terminal",
+      "intellij.sh.copyright",
+      "intellij.sh.python",
+      "intellij.sh.markdown",
+    )),
     plugin("intellij.featuresTrainer") { spec ->
       spec.withModule("intellij.vcs.git.featuresTrainer")
       spec.withProjectLibrary("assertJ")
       spec.withProjectLibrary("assertj-swing")
       spec.withProjectLibrary("git-learning-project")
     },
-    plugin("intellij.searchEverywhereMl") { spec ->
-      spec.withModule("intellij.searchEverywhereMl.yaml")
-      spec.withModule("intellij.searchEverywhereMl.vcs")
-    },
+    plugin(listOf(
+      "intellij.searchEverywhereMl",
+      "intellij.searchEverywhereMl.yaml",
+      "intellij.searchEverywhereMl.vcs",
+    )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
@@ -325,8 +321,7 @@ object CommunityRepositoryModules {
     }
   }
 
-  @JvmStatic
-  @JvmOverloads
+  @Suppress("SpellCheckingInspection")
   fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
                     mainModuleName: String = "intellij.android.plugin",
                     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -666,7 +661,6 @@ object CommunityRepositoryModules {
     }
   }
 
-  @JvmStatic
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
       spec.directoryName = "javaFX"
