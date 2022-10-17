@@ -288,6 +288,7 @@ object PlatformModules {
       "intellij.platform.icons",
       "intellij.platform.resources",
       "intellij.platform.resources.en",
+      "intellij.platform.colorSchemes",
     ), productLayout, layout)
 
     jar("stats.jar", listOf(
