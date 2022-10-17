@@ -552,6 +552,9 @@
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
     },
+    "toolbar": {
+      "unknown.svg": "toolbar/unknown.svg"
+    },
     "toolwindow": {
       "ant.svg": [
         "toolwindows/toolWindowAnt.svg",

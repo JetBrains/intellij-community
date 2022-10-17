@@ -1134,7 +1134,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon NotificationsNewImportant = load("toolwindows/notificationsNewImportant.svg", -1918528557, 2);
     /** 13x13 */ public static final @NotNull Icon Problems = load("toolwindows/problems.svg", 1234004667, 2);
     /** 13x13 */ public static final @NotNull Icon ProblemsEmpty = load("toolwindows/problemsEmpty.svg", 1213926744, 2);
-    /** 13x13 */ public static final @NotNull Icon SettingSync = load("toolwindows/settingSync.svg", -1074835421, 2);
+    /** 13x13 */ public static final @NotNull Icon SettingSync = load("toolwindows/settingSync.svg", 717169308, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", 745967759, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("toolwindows/toolWindowAnt.svg", 658498879, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("toolwindows/toolWindowBookmarks.svg", 949604189, 2);
