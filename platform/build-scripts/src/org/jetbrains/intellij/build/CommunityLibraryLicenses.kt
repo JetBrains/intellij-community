@@ -155,7 +155,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons Net", libraryName = "commons-net",
                    url = "https://commons.apache.org/proper/commons-net/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-net.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
-    LibraryLicense(name = "Apache Commons Text", libraryName = "org.apache.commons:commons-text:1.8",
+    LibraryLicense(name = "Apache Commons Text", libraryName = "commons-text",
                    url = "https://github.com/apache/commons-text")
       .apache("https://github.com/apache/commons-text/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Apache Ivy", libraryName = "org.apache.ivy", url = "https://github.com/apache/ant-ivy")
