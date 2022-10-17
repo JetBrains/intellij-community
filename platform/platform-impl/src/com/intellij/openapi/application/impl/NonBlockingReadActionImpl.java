@@ -72,7 +72,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final Set<? extends Disposable> myDisposables;
   private final @Nullable List<?> myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
-  /**Original computation passed in */
+  /** Original computation passed in */
   private final Callable<? extends T> myOriginalComputation;
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;

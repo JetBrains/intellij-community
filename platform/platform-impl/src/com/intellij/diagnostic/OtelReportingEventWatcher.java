@@ -49,17 +49,20 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
    */
   private final ObservableLongMeasurement tasksExecutedCounter;
 
-  private final ObservableDoubleMeasurement waitingTimeAvg;
-  private final ObservableLongMeasurement waitingTime90P;
-  private final ObservableLongMeasurement waitingTimeMax;
+  //How long (in nanoseconds) task waits in FlushQueue before starting execution (avg/90%/max):
+  private final ObservableDoubleMeasurement waitingTimeAvgNs;
+  private final ObservableLongMeasurement waitingTime90PNs;
+  private final ObservableLongMeasurement waitingTimeMaxNs;
 
+  //How many items was in FlushQueue at the moment next task is enqueued (avg/90%/max):
   private final ObservableDoubleMeasurement queueSizeAvg;
   private final ObservableLongMeasurement queueSize90P;
   private final ObservableLongMeasurement queueSizeMax;
 
-  private final ObservableDoubleMeasurement executionTimeAvg;
-  private final ObservableLongMeasurement executionTime90P;
-  private final ObservableLongMeasurement executionTimeMax;
+  //How long (in nanoseconds) task executes (avg/90%/max):
+  private final ObservableDoubleMeasurement executionTimeAvgNs;
+  private final ObservableLongMeasurement executionTime90PNs;
+  private final ObservableLongMeasurement executionTimeMaxNs;
 
   // ========== AWT EventQueue measurements:
 
@@ -68,10 +71,11 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
    */
   private final ObservableLongMeasurement awtEventsDispatchedCounter;
 
-  //How long does it take to process AWT events in (Ide)EventQueue.dispatchEvent(e)
-  private final ObservableDoubleMeasurement awtDispatchTimeAvg;
-  private final ObservableLongMeasurement awtDispatchTime90P;
-  private final ObservableLongMeasurement awtDispatchTimeMax;
+  //How long (in nanoseconds) does it take to process AWT events in (Ide)EventQueue.dispatchEvent(e)
+  // (avg/90%/max):
+  private final ObservableDoubleMeasurement awtDispatchTimeAvgNs;
+  private final ObservableLongMeasurement awtDispatchTime90PNs;
+  private final ObservableLongMeasurement awtDispatchTimeMaxNs;
 
 
   private final BatchCallback batchCallback;
@@ -88,13 +92,13 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
     //    be reported as cumulative sum, while with current data collecting approach it is much more natural to report increments
     tasksExecutedCounter = otelMeter.gaugeBuilder("FlushQueue.tasksExecuted").ofLongs().buildObserver();
 
-    waitingTimeAvg = otelMeter.gaugeBuilder("FlushQueue.waitingTimeAvg").buildObserver();
-    waitingTime90P = otelMeter.gaugeBuilder("FlushQueue.waitingTime90P").ofLongs().buildObserver();
-    waitingTimeMax = otelMeter.gaugeBuilder("FlushQueue.waitingTimeMax").ofLongs().buildObserver();
+    waitingTimeAvgNs = otelMeter.gaugeBuilder("FlushQueue.waitingTimeAvgNs").setUnit("ns").buildObserver();
+    waitingTime90PNs = otelMeter.gaugeBuilder("FlushQueue.waitingTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    waitingTimeMaxNs = otelMeter.gaugeBuilder("FlushQueue.waitingTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
-    executionTimeAvg = otelMeter.gaugeBuilder("FlushQueue.executionTimeAvg").buildObserver();
-    executionTime90P = otelMeter.gaugeBuilder("FlushQueue.executionTime90P").ofLongs().buildObserver();
-    executionTimeMax = otelMeter.gaugeBuilder("FlushQueue.executionTimeMax").ofLongs().buildObserver();
+    executionTimeAvgNs = otelMeter.gaugeBuilder("FlushQueue.executionTimeAvgNs").setUnit("ns").buildObserver();
+    executionTime90PNs = otelMeter.gaugeBuilder("FlushQueue.executionTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    executionTimeMaxNs = otelMeter.gaugeBuilder("FlushQueue.executionTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
     queueSizeAvg = otelMeter.gaugeBuilder("FlushQueue.queueSizeAvg").buildObserver();
     queueSize90P = otelMeter.gaugeBuilder("FlushQueue.queueSize90P").ofLongs().buildObserver();
@@ -104,9 +108,9 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
     //    be reported as cumulative sum, while with current data collecting approach it is much more natural to report increments
     awtEventsDispatchedCounter = otelMeter.gaugeBuilder("AWTEventQueue.eventsDispatched").ofLongs().buildObserver();
 
-    awtDispatchTimeAvg = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeAvg").buildObserver();
-    awtDispatchTime90P = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTime90P").ofLongs().buildObserver();
-    awtDispatchTimeMax = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeMax").ofLongs().buildObserver();
+    awtDispatchTimeAvgNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeAvgNs").setUnit("ns").buildObserver();
+    awtDispatchTime90PNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTime90PNs").setUnit("ns").ofLongs().buildObserver();
+    awtDispatchTimeMaxNs = otelMeter.gaugeBuilder("AWTEventQueue.dispatchTimeMaxNs").setUnit("ns").ofLongs().buildObserver();
 
     //MAYBE RC: 1 minute (default batchCallback period) is quite coarse scale, it averages a lot, and short spikes of waiting
     //     time could sink in noise on that scale. But it generates small amount of data, and could be always-on.
@@ -120,11 +124,11 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
     batchCallback = meter.batchCallback(
       this::reportStatsForPeriod,
       tasksExecutedCounter,
-      waitingTimeAvg, waitingTime90P, waitingTimeMax,
+      waitingTimeAvgNs, waitingTime90PNs, waitingTimeMaxNs,
       queueSizeAvg, queueSize90P, queueSizeMax,
-      executionTimeAvg, executionTime90P, executionTimeMax,
+      executionTimeAvgNs, executionTime90PNs, executionTimeMaxNs,
       awtEventsDispatchedCounter,
-      awtDispatchTimeAvg, awtDispatchTime90P, awtDispatchTimeMax
+      awtDispatchTimeAvgNs, awtDispatchTime90PNs, awtDispatchTimeMaxNs
     );
   }
 
@@ -189,23 +193,23 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
 
     tasksExecutedCounter.record(intervalWaitingTimes.getTotalCount());
 
-    waitingTimeAvg.record(intervalWaitingTimes.getMean());
-    waitingTime90P.record(intervalWaitingTimes.getValueAtPercentile(90));
-    waitingTimeMax.record(intervalWaitingTimes.getMaxValue());
+    waitingTimeAvgNs.record(intervalWaitingTimes.getMean());
+    waitingTime90PNs.record(intervalWaitingTimes.getValueAtPercentile(90));
+    waitingTimeMaxNs.record(intervalWaitingTimes.getMaxValue());
 
     queueSizeAvg.record(intervalQueueSizes.getMean());
     queueSize90P.record(intervalQueueSizes.getValueAtPercentile(90));
     queueSizeMax.record(intervalQueueSizes.getMaxValue());
 
-    executionTimeAvg.record(intervalExecutionTimes.getMean());
-    executionTime90P.record(intervalExecutionTimes.getValueAtPercentile(90));
-    executionTimeMax.record(intervalExecutionTimes.getMaxValue());
+    executionTimeAvgNs.record(intervalExecutionTimes.getMean());
+    executionTime90PNs.record(intervalExecutionTimes.getValueAtPercentile(90));
+    executionTimeMaxNs.record(intervalExecutionTimes.getMaxValue());
 
 
     awtEventsDispatchedCounter.record(intervalAWTDispatchTimes.getTotalCount());
 
-    awtDispatchTimeAvg.record(intervalAWTDispatchTimes.getMean());
-    awtDispatchTime90P.record(intervalAWTDispatchTimes.getValueAtPercentile(90));
-    awtDispatchTimeMax.record(intervalAWTDispatchTimes.getMaxValue());
+    awtDispatchTimeAvgNs.record(intervalAWTDispatchTimes.getMean());
+    awtDispatchTime90PNs.record(intervalAWTDispatchTimes.getValueAtPercentile(90));
+    awtDispatchTimeMaxNs.record(intervalAWTDispatchTimes.getMaxValue());
   }
 }
