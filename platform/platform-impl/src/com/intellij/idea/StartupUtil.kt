@@ -34,7 +34,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.win32.IdeaWin32
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
@@ -314,9 +313,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     withContext(Dispatchers.IO) {
       runActivity("system libs loading") {
         JnaLoader.load(log)
-        if (SystemInfoRt.isWindows) {
-          IdeaWin32.isAvailable()
-        }
       }
     }
 
