@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedR
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.reference.SoftReference
+import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBLayeredPane
@@ -104,11 +105,11 @@ class ToolWindowPane internal constructor(frame: JFrame,
     }, parentDisposable)
     verticalSplitter.dividerWidth = 0
     verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    verticalSplitter.background = Color.gray
+    verticalSplitter.background = JBColor.GRAY
     horizontalSplitter = ThreeComponentsSplitter(false, parentDisposable)
     horizontalSplitter.dividerWidth = 0
     horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    horizontalSplitter.background = Color.gray
+    horizontalSplitter.background = JBColor.GRAY
     updateInnerMinSize(registryValue)
     val uiSettings = UISettings.getInstance()
     isWideScreen = uiSettings.wideScreenSupport
