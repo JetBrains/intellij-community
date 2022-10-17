@@ -146,6 +146,15 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     }
 
     @Override
+    public void passResult(@NotNull CompletionResult result) {
+      LookupElement element = result.getLookupElement();
+      if (element != null && element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) == null) {
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+      }
+      super.passResult(result);
+    }
+
+    @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
       if (matcher.equals(getPrefixMatcher())) {
