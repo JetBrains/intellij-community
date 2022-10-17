@@ -143,7 +143,10 @@ literal ::= string_literal | number_literal | boolean_literal | null_literal | p
 
 fake container ::=
 
-reference_expression ::= IDENTIFIER
+reference_expression ::= IDENTIFIER {
+  mixin="com.intellij.json.psi.impl.JsonReferenceLiteralMixin"
+  implements="com.intellij.psi.ContributedReferenceHost"
+}
 
 value ::= object | array | literal | reference_expression
 
