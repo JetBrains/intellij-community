@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +54,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 @VisibleForTesting
 public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
   private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
@@ -70,15 +72,17 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final Set<? extends Disposable> myDisposables;
   private final @Nullable List<?> myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
-  private final Callable<? extends T> myComputation;
+  /**Original computation passed in */
+  private final Callable<? extends T> myOriginalComputation;
+  /** Computation to be executed -- possible, wrapped into some monitoring */
+  private final Callable<? extends T> myActualComputation;
 
   private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
   /* ======================== monitoring: ================================================= */
-  private static final boolean ENABLE_OTEL_MONITORING = SystemProperties.getBooleanProperty(
-    "idea.non-blocking-action.enable-monitoring", true);
+  private static final boolean ENABLE_OTEL_MONITORING = getBooleanProperty("idea.non-blocking-action.enable-monitoring", true);
   private static final @Nullable OTelMonitor MONITOR;
 
   static {
@@ -91,6 +95,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       MONITOR = null;
     }
   }
+
   /* ======================== monitoring end =============================================== */
 
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
@@ -105,8 +110,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     @NotNull Set<? extends Disposable> disposables,
                                     @Nullable List<?> coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
-    myComputation = MONITOR == null ? computation :
-                    MONITOR.wrap(computation);
+    myOriginalComputation = computation;
+    myActualComputation = MONITOR == null ? computation :
+                          MONITOR.wrap(computation);
     myModalityState = modalityState;
     myUiThreadAction = uiThreadAction;
     myConstraints = constraints;
@@ -122,7 +128,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @NotNull
   private NonBlockingReadActionImpl<T> withConstraint(@NotNull ContextConstraint constraint) {
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, ArrayUtil.append(myConstraints, constraint),
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, ArrayUtil.append(myConstraints, constraint),
                                            myCancellationConditions, myDisposables,
                                            myCoalesceEquality, myProgressIndicator);
   }
@@ -144,7 +150,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @Override
   public @NotNull NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition) {
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints,
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints,
                                            ArrayUtil.append(myCancellationConditions, expireCondition),
                                            myDisposables, myCoalesceEquality, myProgressIndicator);
   }
@@ -154,7 +160,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   public NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
     Set<Disposable> disposables = new HashSet<>(myDisposables);
     disposables.add(parentDisposable);
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
                                            disposables,
                                            myCoalesceEquality, myProgressIndicator);
   }
@@ -162,14 +168,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   @Override
   public @NotNull NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator) {
     LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
                                            myDisposables,
                                            myCoalesceEquality, progressIndicator);
   }
 
   @Override
   public @NotNull NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<? super T> uiThreadAction) {
-    return new NonBlockingReadActionImpl<>(myComputation, modality, uiThreadAction,
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, modality, uiThreadAction,
                                            myConstraints, myCancellationConditions, myDisposables, myCoalesceEquality, myProgressIndicator);
   }
 
@@ -181,7 +187,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       throw new IllegalArgumentException(
         "Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
     }
-    return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
+    return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
                                            myDisposables,
                                            new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
   }
@@ -383,6 +389,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         }
         else {
           if (!current.getComputationOrigin().equals(getComputationOrigin())) {
+            //RC: Sort of fool-proofing: sometimes it _could_ be OK to invoke 2 ReadActions with different .computable
+            //    from different places in code, but with same .coalesceBy -- but it is much more likely an error. Hence we
+            //    prefer to prohibit it completely:
             reportCoalescingConflict(current);
           }
           if (current.myReplacement != null) {
@@ -403,7 +412,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     @NotNull
     private String getComputationOrigin() {
-      Object computation = builder.myComputation;
+      Object computation = builder.myOriginalComputation;
       if (computation instanceof RunnableCallable) {
         computation = ((RunnableCallable)computation).getDelegate();
       }
@@ -561,7 +570,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           return;
         }
 
-        T result = builder.myComputation.call();
+        T result = builder.myActualComputation.call();
 
         if (shouldFinishOnEdt()) {
           safeTransferToEdt(result);
@@ -628,7 +637,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     @Override
     public String toString() {
-      return "Submission{" + builder.myComputation + ", " + getState() + "}";
+      return "Submission{" + builder.myOriginalComputation + ", " + getState() + "}";
     }
   }
 
@@ -728,31 +737,50 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     public <V> Callable<V> wrap(final @NotNull Callable<V> computation) {
-      return () -> {
-        final long startedAtNs = System.nanoTime();
-        try {
-          final V result = computation.call();
+      return new MonitoredComputation<>(computation);
+    }
 
-          finalizedExecutionsCount.incrementAndGet();
-          final long finishedAtNs = System.nanoTime();
-          final long durationUs = (finishedAtNs - startedAtNs) / 1000;
-          finalizedExecutionTimeUs.addAndGet(durationUs);
+    private <V> V callWrapped(final @NotNull Callable<V> computation) throws Exception {
+      final long startedAtNs = System.nanoTime();
+      try {
+        final V result = computation.call();
 
-          return result;
-        }
-        catch (Throwable t) {
-          failedExecutionsCount.incrementAndGet();
-          final long finishedAtNs = System.nanoTime();
-          final long durationUs = (finishedAtNs - startedAtNs) / 1000;
-          failedExecutionTimeUs.addAndGet(durationUs);
-          throw t;
-        }
-      };
+        finalizedExecutionsCount.incrementAndGet();
+        final long finishedAtNs = System.nanoTime();
+        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        finalizedExecutionTimeUs.addAndGet(durationUs);
+
+        return result;
+      }
+      catch (Throwable t) {
+        failedExecutionsCount.incrementAndGet();
+        final long finishedAtNs = System.nanoTime();
+        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        failedExecutionTimeUs.addAndGet(durationUs);
+        throw t;
+      }
     }
 
     @Override
     public void close() throws Exception {
       otelSubscription.close();
+    }
+
+    private class MonitoredComputation<V> implements Callable<V> {
+      private final Callable<V> wrappedComputation;
+
+      private MonitoredComputation(final @NotNull Callable<V> wrappedComputation) {
+        this.wrappedComputation = wrappedComputation;
+      }
+
+      @Override
+      public V call() throws Exception {
+        return callWrapped(wrappedComputation);
+      }
+
+      public Callable<V> wrappedComputation() {
+        return wrappedComputation;
+      }
     }
   }
 }
