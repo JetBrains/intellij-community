@@ -41,14 +41,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.properties.models.Property;
+import org.jetbrains.plugins.gradle.properties.GradleProperties;
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleProperties;
-import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.awt.geom.IllegalPathStateException;
@@ -509,9 +510,9 @@ public class GradleExecutionHelper {
     if (buildEnvironment == null) {
       return;
     }
-    GradleProperties properties = GradlePropertiesUtil.getGradleProperties(settings.getServiceDirectory(),
-                                                                           buildEnvironment.getBuildIdentifier().getRootDir().toPath());
-    GradleProperties.GradleProperty<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
+                                                                              buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    Property<String> loggingLevelProperty = properties.getGradleLoggingLevel();
     @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
 
     if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))

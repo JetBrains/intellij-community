@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem
+import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
 
 class GradleJdkComboBoxUtilTest : GradleJdkComboBoxUtilTestCase() {
   fun `test gradle JVM combobox empty setup`() {
