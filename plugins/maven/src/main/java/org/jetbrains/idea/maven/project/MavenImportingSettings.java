@@ -96,12 +96,16 @@ public class MavenImportingSettings implements Cloneable {
     }
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   @NotNull
   @NlsSafe
   public String getDedicatedModuleDir() {
     return dedicatedModuleDir;
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   public void setDedicatedModuleDir(@NotNull String dedicatedModuleDir) {
     this.dedicatedModuleDir = dedicatedModuleDir;
   }
