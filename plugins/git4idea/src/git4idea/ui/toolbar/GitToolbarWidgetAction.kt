@@ -118,7 +118,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
     presentation.addPropertyChangeListener { updateWidget() }
   }
 
-  private fun updateWidget() {
+  override fun updateWidget() {
     text = presentation.text
     toolTipText = presentation.description
     leftIcons = listOfNotNull(presentation.icon)
@@ -130,7 +130,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
     } ?: emptyList()
   }
 
-  override fun doExpand(e: InputEvent) {
+  override fun doExpand(e: InputEvent?) {
     project?.let { proj ->
       val repo = repository
 
