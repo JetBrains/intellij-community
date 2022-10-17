@@ -24,15 +24,13 @@ import org.jetbrains.plugins.gradle.properties.models.Property
 import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
-import org.jetbrains.plugins.gradle.properties.LocalPropertiesFile
 import java.io.File
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
   val gradleProperties = GradlePropertiesFile.getProperties(project, externalProjectPath)
-  val localProperties = LocalPropertiesFile.getProperties(project, externalProjectPath)
-  val javaHomeProperty = gradleProperties.javaHomeProperty ?: localProperties.javaHomeProperty
+  val javaHomeProperty = gradleProperties.javaHomeProperty
   if (javaHomeProperty != null) {
     val javaHome = javaHomeProperty.value
     when (val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)) {
