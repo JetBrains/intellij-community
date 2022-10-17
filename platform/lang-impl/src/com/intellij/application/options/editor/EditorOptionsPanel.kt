@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.ide.ui.search.SearchUtil.ADDITIONAL_SEARCH_LABELS_KEY
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle.message
@@ -39,6 +41,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
@@ -196,7 +199,10 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
     return panel {
       group(message("group.advanced.mouse.usages")) {
         row {
-          chkEnableWheelFontSizeChange = checkBox(enableWheelFontChange).component
+          chkEnableWheelFontSizeChange = checkBox(enableWheelFontChange).component.apply {
+            ClientProperty.put(this, ADDITIONAL_SEARCH_LABELS_KEY, listOf(
+              LangBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.search.hit.1"), LangBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.search.hit.2")))
+          }
         }
         buttonsGroup(indent = true) {
           row {
