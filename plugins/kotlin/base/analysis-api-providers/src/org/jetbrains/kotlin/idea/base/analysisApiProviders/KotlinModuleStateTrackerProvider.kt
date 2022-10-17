@@ -94,7 +94,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                 getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
             }
 
-            getChanges(JavaSourceRootEntity::class.java).mapNotNullTo(this) {
+            getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(this) {
                 getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
             }
         }

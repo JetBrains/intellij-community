@@ -70,14 +70,14 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
 }
 
 /**
- * [JavaSourceRootEntity] has the same entity source as [SourceRootEntity].
+ * [JavaSourceRootPropertiesEntity] has the same entity source as [SourceRootEntity].
  * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.
  */
 fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                  generated: Boolean,
-                                                 packagePrefix: String): JavaSourceRootEntity {
-  val entity = JavaSourceRootEntity(generated, packagePrefix, sourceRoot.entitySource) {
+                                                 packagePrefix: String): JavaSourceRootPropertiesEntity {
+  val entity = JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
   this.addEntity(entity)
@@ -326,7 +326,7 @@ fun MutableEntityStorage.addCustomPackagingElementEntity(typeId: String,
   return entity
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = javaSourceRoots.firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
 fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootEntity? = javaResourceRoots.firstOrNull()
 
 val ModuleEntity.sourceRoots: List<SourceRootEntity>

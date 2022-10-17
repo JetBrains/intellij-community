@@ -123,7 +123,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   }
 
   private fun handleJavaSourceRootChanged(event: VersionedStorageChange) {
-    event.getChanges(JavaSourceRootEntity::class.java).forEach { change ->
+    event.getChanges(JavaSourceRootPropertiesEntity::class.java).forEach { change ->
       if (isInUnloadedModule(event, change){ sourceRoot.contentRoot.module }) return@forEach
       updateCache()
     }

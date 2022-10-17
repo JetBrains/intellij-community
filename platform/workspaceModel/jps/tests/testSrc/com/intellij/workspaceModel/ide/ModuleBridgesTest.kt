@@ -687,13 +687,13 @@ class ModuleBridgesTest {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
       val entityStore = WorkspaceModel.getInstance(project).entityStorage
       assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
-      assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
+      assertEquals(1, entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).count())
 
       ApplicationManager.getApplication().runWriteAction {
         ModuleManager.getInstance(project).disposeModule(module)
       }
       assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
-      assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
+      assertEmpty(entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).toList())
     }
 
     val caughtLogs = catchLog()
