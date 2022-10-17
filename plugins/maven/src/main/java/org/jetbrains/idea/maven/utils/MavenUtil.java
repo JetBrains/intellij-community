@@ -51,6 +51,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -1606,7 +1607,11 @@ public class MavenUtil {
   }
 
   public static boolean isMavenizedModule(@NotNull Module m) {
-    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
+    try {
+      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
+    } catch (AlreadyDisposedException e) {
+      return false;
+    }
   }
 
   public static boolean isLinearImportEnabled() {
