@@ -24,7 +24,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -291,7 +290,6 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
-      override fun getDownArrowIcon() = ExperimentalUI.Icons.General.ChevronDownLargeWhite
     }.also {
       it.foreground = Color.WHITE
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
