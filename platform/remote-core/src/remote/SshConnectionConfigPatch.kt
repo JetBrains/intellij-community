@@ -64,15 +64,19 @@ data class SshConnectionConfigPatch(
   /**
    * @param hashKnownHosts Indicates that host names and addresses should be hashed while being added to the known hosts file.
    * @param strictHostKeyChecking How the SSH client should react on a host key which's not mentioned in the known hosts file.
+   * @param allowDialogs Indicates whether dialogs can be shown during the connection check.
    */
   data class HostKeyVerifier(
     var hashKnownHosts: Boolean?,
     var strictHostKeyChecking: StrictHostKeyChecking?,
+    var allowDialogs: Boolean?
   ) {
-    constructor() : this(null, null)
+    constructor() : this(null, null, null)
 
     fun withHashKnownHosts(value: Boolean): HostKeyVerifier = apply { hashKnownHosts = value }
     fun withStrictHostKeyChecking(value: StrictHostKeyChecking): HostKeyVerifier = apply { strictHostKeyChecking = value }
+
+    fun withAllowDialogs(value: Boolean): HostKeyVerifier = apply { allowDialogs = value }
   }
 
   constructor() : this(
