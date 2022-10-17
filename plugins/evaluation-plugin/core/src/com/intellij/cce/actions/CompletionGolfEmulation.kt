@@ -105,7 +105,7 @@ fun Lookup.selectedWithoutPrefix(): String? {
 
   return suggestions.getOrNull(selectedPosition)?.let {
     if (it.kind == SuggestionKind.TOKEN) firstToken(it.text) else it.text
-  }?.drop(prefix.length)
+  }?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
 }
 
 fun firstToken(line: String): String {
