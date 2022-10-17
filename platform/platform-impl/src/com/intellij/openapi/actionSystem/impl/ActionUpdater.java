@@ -37,9 +37,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.EDT;
-import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -54,6 +52,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
@@ -179,21 +180,20 @@ final class ActionUpdater {
       ProgressManager.checkCanceled();
     }
     if (isEDT || !shallEDT) {
-      Span span = Utils.getTracer(true).spanBuilder(isEDT ? "edt-op" : "bgt-op")
-        .setAttribute(Utils.OT_OP_KEY, operationName)
-        .startSpan();
-      long start = System.nanoTime();
-      try (AccessToken ignored = ProhibitAWTEvents.start(operationName);
-           Scope ignoredScope = span.makeCurrent()) {
-        return call.get();
-      }
-      finally {
-        long elapsed = TimeoutUtil.getDurationMillis(start);
-        span.end();
-        if (elapsed > 1000) {
-          LOG.warn(elapsedReport(elapsed, isEDT, operationName));
+      return computeWithSpan(Utils.getTracer(true), isEDT ? "edt-op" : "bgt-op", span -> {
+        span.setAttribute(Utils.OT_OP_KEY, operationName);
+        long start = System.nanoTime();
+        try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
+          return call.get();
         }
-      }
+        finally {
+          long elapsed = TimeoutUtil.getDurationMillis(start);
+          span.end();
+          if (elapsed > 1000) {
+            LOG.warn(elapsedReport(elapsed, isEDT, operationName));
+          }
+        }
+      });
     }
     if (PopupMenuPreloader.isToSkipComputeOnEDT(myPlace)) {
       throw new ComputeOnEDTSkipped();
@@ -223,27 +223,27 @@ final class ActionUpdater {
       long start = System.nanoTime();
       FList<String> prevStack = ourInEDTActionOperationStack;
       ourInEDTActionOperationStack = prevStack.prepend(operationName);
-      Span span = Utils.getTracer(true).spanBuilder("edt-op")
-        .setAttribute(Utils.OT_OP_KEY, operationName)
-        .startSpan();
-      try (Scope ignoredScope = span.makeCurrent()) {
-        return ProgressManager.getInstance().runProcess(() -> {
-          boolean prevNoRules = ourNoRulesInEDTSection;
-          try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
-            ourNoRulesInEDTSection = noRulesInEDT;
-            return call.get();
-          }
-          finally {
-            ourNoRulesInEDTSection = prevNoRules;
-          }
-        }, ProgressWrapper.wrap(progress));
-      }
-      finally {
-        ourInEDTActionOperationStack = prevStack;
-        myCurEDTPerformMillis = TimeoutUtil.getDurationMillis(start);
-        edtTracesRef.set(ActionUpdateEdtExecutor.ourEDTExecTraces.get());
-        span.end();
-      }
+      return computeWithSpan(Utils.getTracer(true), "edt-op", span -> {
+        span.setAttribute(Utils.OT_OP_KEY, operationName);
+
+        try {
+          return ProgressManager.getInstance().runProcess(() -> {
+            boolean prevNoRules = ourNoRulesInEDTSection;
+            try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
+              ourNoRulesInEDTSection = noRulesInEDT;
+              return call.get();
+            }
+            finally {
+              ourNoRulesInEDTSection = prevNoRules;
+            }
+          }, ProgressWrapper.wrap(progress));
+        }
+        finally {
+          ourInEDTActionOperationStack = prevStack;
+          myCurEDTPerformMillis = TimeoutUtil.getDurationMillis(start);
+          edtTracesRef.set(ActionUpdateEdtExecutor.ourEDTExecTraces.get());
+        }
+      });
     };
     try {
       return computeOnEdt(Context.current().wrapSupplier(supplier));
@@ -460,36 +460,41 @@ final class ActionUpdater {
   private void ensureSlowDataKeysPreCached(@NotNull Object action, @NotNull String targetOperationName) {
     if (!myPreCacheSlowDataKeys) return;
     String operationName = "precache-slow-data@" + targetOperationName;
-    Span span = Utils.getTracer(true).spanBuilder("precache-slow-data")
-      .setAttribute(Utils.OT_OP_KEY, operationName)
-      .startSpan();
+
     long start = System.nanoTime();
-    try (Scope ignored = span.makeCurrent()) {
-      for (DataKey<?> key : DataKey.allKeys()) {
-        try {
-          myDataContext.getData(key);
+    try {
+      runWithSpan(Utils.getTracer(true), "precache-slow-data", span -> {
+        span.setAttribute(Utils.OT_OP_KEY, operationName);
+
+        for (DataKey<?> key : DataKey.allKeys()) {
+          try {
+            myDataContext.getData(key);
+          }
+          catch (ProcessCanceledException ex) {
+            throw ex;
+          }
+          catch (Throwable ex) {
+            LOG.error(ex);
+          }
         }
-        catch (ProcessCanceledException ex) {
-          throw ex;
-        }
-        catch (Throwable ex) {
-          LOG.error(ex);
-        }
-      }
-      myPreCacheSlowDataKeys = false;
+        myPreCacheSlowDataKeys = false;
+      });
     }
     finally {
-      long elapsed = TimeoutUtil.getDurationMillis(start);
-      span.end();
-      if (elapsed > 200 && ActionPlaces.isShortcutPlace(myPlace)) {
-        LOG.error(PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass()));
-      }
-      else if (elapsed > 3000) {
-        LOG.warn(elapsedReport(elapsed, false, operationName));
-      }
-      else if (elapsed > 500 && LOG.isDebugEnabled()) {
-        LOG.debug(elapsedReport(elapsed, false, operationName));
-      }
+      logTimeProblemForPreCached(action, operationName, TimeoutUtil.getDurationMillis(start));
+    }
+  }
+
+  private void logTimeProblemForPreCached(@NotNull Object action, String operationName, long elapsed) {
+    if (elapsed > 200 && ActionPlaces.isShortcutPlace(myPlace)) {
+      LOG.error(
+        PluginException.createByClass(elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass()));
+    }
+    else if (elapsed > 3000) {
+      LOG.warn(elapsedReport(elapsed, false, operationName));
+    }
+    else if (elapsed > 500 && LOG.isDebugEnabled()) {
+      LOG.debug(elapsedReport(elapsed, false, operationName));
     }
   }
 

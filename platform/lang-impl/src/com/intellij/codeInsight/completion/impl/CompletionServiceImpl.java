@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -22,25 +23,26 @@ import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+
+/**
+ * @author peter
+ */
 public final class CompletionServiceImpl extends BaseCompletionService {
   private static final Logger LOG = Logger.getInstance(CompletionServiceImpl.class);
 
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
   private static final Map<ClientId, CompletionPhaseHolder> clientId2Holders = new ConcurrentHashMap<>();
 
-  private final Tracer completionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
+  private final IJTracer myCompletionTracer = TraceManager.INSTANCE.getTracer("codeCompletion");
 
   public CompletionServiceImpl() {
     super();
@@ -306,34 +308,28 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   @Override
   protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
-    Span contributionSpan = completionTracer.spanBuilder(contributor.getClass().getSimpleName()).startSpan();
-
-    try (Scope ignored = contributionSpan.makeCurrent()) {
+    runWithSpan(myCompletionTracer, contributor.getClass().getSimpleName(), span -> {
       super.getVariantsFromContributor(params, contributor, result);
-    }
-    finally {
-      contributionSpan.end();
-    }
+    });
   }
 
   @Override
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    Span span = completionTracer.spanBuilder("performCompletion").startSpan();
-    var countingConsumer = new Consumer<CompletionResult>() {
-      int count = 0;
-      @Override
-      public void consume(CompletionResult result) {
-        count++;
-        consumer.consume(result);
-      }
-    };
-    try (Scope ignored = span.makeCurrent()) {
+    runWithSpan(myCompletionTracer, "performCompletion", span -> {
+      var countingConsumer = new Consumer<CompletionResult>() {
+        int count = 0;
+
+        @Override
+        public void consume(CompletionResult result) {
+          count++;
+          consumer.consume(result);
+        }
+      };
+
       super.performCompletion(parameters, countingConsumer);
-    }
-    finally {
+
       span.setAttribute("lookupsFound", countingConsumer.count);
-      span.end();
-    }
+    });
   }
 
   private static class CompletionPhaseHolder {

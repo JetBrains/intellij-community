@@ -7,7 +7,6 @@ import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.metrics.Meter
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.MetricExporter
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 object TraceManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
-  private var verboseSdk: OpenTelemetry = OpenTelemetry.noop()
+  private var verboseMode: Boolean = false
 
   fun init(mainScope: CoroutineScope) {
     val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
@@ -107,10 +106,9 @@ object TraceManager {
     sdk = otelSdkBuilder.buildAndRegisterGlobal()
 
     val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
-    if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
-      verboseSdk = sdk
-    }
+    verboseMode = useVerboseSdk?.toBooleanStrictOrNull() == true
   }
+
 
   private fun deriveMetricsFile(traceFile: String): String {
     val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
@@ -119,10 +117,18 @@ object TraceManager {
   }
 
   /**
-   * We do not provide default tracer - we enforce using of separate scopes for subsystems.
+   * Method creates a tracer with the scope name.
+   * Separate tracers define different scopes, and as result separate main nodes in the result data.
+   * It is expected that for different subsystems different tracers would be used, to isolate the results.
+   *
+   * @param verbose provides a way to disable by default some tracers.
+   *    Such tracers will be created only if additional system property "verbose" is set to true.
+   *
    */
   @JvmOverloads
-  fun getTracer(scopeName: String, verbose: Boolean = false): Tracer = (if (verbose) verboseSdk else sdk).getTracer(scopeName)
+  fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer {
+    return wrapTracer(scopeName, sdk.getTracer(scopeName), verbose, verboseMode)
+  }
 
   fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
 }
