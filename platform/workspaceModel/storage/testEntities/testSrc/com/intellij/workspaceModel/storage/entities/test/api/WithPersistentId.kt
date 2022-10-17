@@ -2,6 +2,7 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -9,7 +10,7 @@ import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -57,7 +58,7 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OneEntityWithPersistentId, ModifiableWorkspaceEntity<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
+  interface Builder : OneEntityWithPersistentId, WorkspaceEntity.Builder<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
     override var entitySource: EntitySource
     override var myName: String
   }
@@ -103,7 +104,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithSoftLinks, ModifiableWorkspaceEntity<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
+  interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
     override var link: OnePersistentId
     override var manyLinks: MutableList<OnePersistentId>
@@ -164,7 +165,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SoftLinkReferencedChild, ModifiableWorkspaceEntity<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
+  interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
     override var entitySource: EntitySource
     override var parentEntity: EntityWithSoftLinks
   }

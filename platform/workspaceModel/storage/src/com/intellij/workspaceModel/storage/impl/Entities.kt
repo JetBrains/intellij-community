@@ -76,7 +76,7 @@ import kotlin.reflect.KClass
  *
  *   -------------------------------------------------------------------------------------------------------------------------------
  *
- *  - Create [ModifiableWorkspaceEntity] representation:
+ *  - Create [Builder] representation:
  *   - The name should be: Modifiable${entityName}. E.g. ModifiableMyModuleEntity
  *   - This should be inherited from [ModifiableWorkspaceEntityBase]
  *   - Properties (not references to other entities) should be listed in the body as delegation to [EntityDataDelegation()]
@@ -183,7 +183,7 @@ data class EntityLink(
 val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), ModifiableWorkspaceEntity<T> {
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -538,7 +538,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
 
   abstract fun createEntity(snapshot: EntityStorage): E
 
-  abstract fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<E>
+  abstract fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<E>
 
   abstract fun getEntityInterface(): Class<out WorkspaceEntity>
 

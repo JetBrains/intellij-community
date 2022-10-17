@@ -149,7 +149,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
       mapOfEntities.values.flatten().forEach {
-        diff.modifyEntity(ModifiableWorkspaceEntity::class.java, it) { this.entitySource = newEntitySource }
+        diff.modifyEntity(WorkspaceEntity.Builder::class.java, it) { this.entitySource = newEntitySource }
       }
     }
   }
@@ -163,7 +163,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
  * [modificator] - function for modifying an entity
  * There 2 functions are created for better convenience. You should use only one from them.
  */
-private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : ModifiableWorkspaceEntity<E>>(
+private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : WorkspaceEntity.Builder<E>>(
   val entityClass: KClass<E>,
   val modifiableEntityClass: KClass<M>,
   val propertyName: String,

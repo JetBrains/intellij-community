@@ -25,7 +25,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
-                                              ModifiableWorkspaceEntity::class.simpleName,
+                                              WorkspaceEntity.Builder::class.simpleName,
                                               WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
@@ -36,7 +36,7 @@ fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${ModifiableWorkspaceEntity::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
+  val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
 
   section(header) {
     list(allFields.noPersistentId()) {
@@ -65,7 +65,8 @@ private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemRepor
 }
 
 fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
-  if (objProperty.name == "entitySource" && objProperty.receiver.javaFullName.decoded == ModifiableWorkspaceEntity::class.java.name) {
+  if (objProperty.name == "entitySource" &&
+      objProperty.receiver.javaFullName.decoded == WorkspaceEntity.Builder::class.java.name) {
     //ignore until ModifiableWorkspaceEntity is renamed to WorkspaceModel.Builder (IDEA-299150)
     return
   }

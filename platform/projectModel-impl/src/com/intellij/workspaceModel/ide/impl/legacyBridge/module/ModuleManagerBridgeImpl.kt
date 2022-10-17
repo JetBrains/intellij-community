@@ -483,7 +483,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
         val entitiesMap = storage.entitiesBySource { it == oldEntitySource }
         entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatten() }.forEach {
           if (it !is FacetEntity) {
-            diffBuilder.modifyEntity(ModifiableWorkspaceEntity::class.java, it) {
+            diffBuilder.modifyEntity(WorkspaceEntity.Builder::class.java, it) {
               this.entitySource = newSource
             }
           }

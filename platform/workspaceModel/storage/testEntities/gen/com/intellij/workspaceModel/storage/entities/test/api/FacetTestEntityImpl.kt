@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -195,7 +194,7 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
   fun isDataInitialized(): Boolean = ::data.isInitialized
   fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FacetTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetTestEntity> {
     val modifiable = FacetTestEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

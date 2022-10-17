@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -252,7 +251,7 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   var externalSystemModuleType: String? = null
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     val modifiable = ExternalSystemModuleOptionsEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

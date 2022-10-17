@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -175,7 +174,7 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
   fun isExternalSystemIdInitialized(): Boolean = ::externalSystemId.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryExternalSystemIdEntity> {
     val modifiable = LibraryExternalSystemIdEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

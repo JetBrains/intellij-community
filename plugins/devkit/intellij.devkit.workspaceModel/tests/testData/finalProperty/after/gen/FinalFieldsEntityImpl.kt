@@ -115,7 +115,7 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
   fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FinalFieldsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FinalFieldsEntity> {
     val modifiable = FinalFieldsEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

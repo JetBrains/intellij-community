@@ -4,17 +4,13 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
-
-
-
-
 
 interface ContentRootEntity : WorkspaceEntity {
     val module: ModuleEntity
@@ -28,7 +24,7 @@ interface ContentRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ContentRootEntity, ModifiableWorkspaceEntity<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
+  interface Builder : ContentRootEntity, WorkspaceEntity.Builder<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var url: VirtualFileUrl
@@ -74,7 +70,7 @@ interface SourceRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootEntity, ModifiableWorkspaceEntity<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
+  interface Builder : SourceRootEntity, WorkspaceEntity.Builder<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
     override var entitySource: EntitySource
     override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
@@ -113,7 +109,7 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootOrderEntity, ModifiableWorkspaceEntity<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
+  interface Builder : SourceRootOrderEntity, WorkspaceEntity.Builder<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
     override var entitySource: EntitySource
     override var contentRootEntity: ContentRootEntity
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>
@@ -146,7 +142,7 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CustomSourceRootPropertiesEntity, ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
+  interface Builder : CustomSourceRootPropertiesEntity, WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var propertiesXmlTag: String
@@ -181,7 +177,7 @@ interface JavaSourceRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaSourceRootEntity, ModifiableWorkspaceEntity<JavaSourceRootEntity>, ObjBuilder<JavaSourceRootEntity> {
+  interface Builder : JavaSourceRootEntity, WorkspaceEntity.Builder<JavaSourceRootEntity>, ObjBuilder<JavaSourceRootEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var generated: Boolean
@@ -218,7 +214,7 @@ interface JavaResourceRootEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaResourceRootEntity, ModifiableWorkspaceEntity<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
+  interface Builder : JavaResourceRootEntity, WorkspaceEntity.Builder<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var generated: Boolean

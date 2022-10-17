@@ -2,16 +2,14 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-
-
 
 /**
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
@@ -23,7 +21,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
+  interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
     override var entitySource: EntitySource
     override var orderOfFacets: MutableList<String>
     override var moduleEntity: ModuleEntity
@@ -59,7 +57,7 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetExternalSystemIdEntity, ModifiableWorkspaceEntity<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
+  interface Builder : FacetExternalSystemIdEntity, WorkspaceEntity.Builder<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
     override var entitySource: EntitySource
     override var externalSystemId: String
     override var facet: FacetEntity
@@ -98,7 +96,7 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactExternalSystemIdEntity, ModifiableWorkspaceEntity<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
+  interface Builder : ArtifactExternalSystemIdEntity, WorkspaceEntity.Builder<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
     override var entitySource: EntitySource
     override var externalSystemId: String
     override var artifactEntity: ArtifactEntity
@@ -137,7 +135,7 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryExternalSystemIdEntity, ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
+  interface Builder : LibraryExternalSystemIdEntity, WorkspaceEntity.Builder<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
     override var entitySource: EntitySource
     override var externalSystemId: String
     override var library: LibraryEntity
@@ -176,7 +174,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
+  interface Builder : ArtifactsOrderEntity, WorkspaceEntity.Builder<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
     override var entitySource: EntitySource
     override var orderOfArtifacts: MutableList<String>
   }

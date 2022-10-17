@@ -3,8 +3,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -19,7 +20,7 @@ interface ParentSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentSubEntity, ModifiableWorkspaceEntity<ParentSubEntity>, ObjBuilder<ParentSubEntity> {
+  interface Builder : ParentSubEntity, WorkspaceEntity.Builder<ParentSubEntity>, ObjBuilder<ParentSubEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildSubEntity?
@@ -51,7 +52,7 @@ interface ChildSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSubEntity, ModifiableWorkspaceEntity<ChildSubEntity>, ObjBuilder<ChildSubEntity> {
+  interface Builder : ChildSubEntity, WorkspaceEntity.Builder<ChildSubEntity>, ObjBuilder<ChildSubEntity> {
     override var entitySource: EntitySource
     override var parentEntity: ParentSubEntity
     override var child: ChildSubSubEntity?
@@ -81,7 +82,7 @@ interface ChildSubSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSubSubEntity, ModifiableWorkspaceEntity<ChildSubSubEntity>, ObjBuilder<ChildSubSubEntity> {
+  interface Builder : ChildSubSubEntity, WorkspaceEntity.Builder<ChildSubSubEntity>, ObjBuilder<ChildSubSubEntity> {
     override var entitySource: EntitySource
     override var parentEntity: ChildSubEntity
     override var childData: String

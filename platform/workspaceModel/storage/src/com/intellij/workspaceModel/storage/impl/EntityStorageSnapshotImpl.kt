@@ -234,7 +234,7 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
+  override fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
       if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
@@ -245,7 +245,7 @@ internal class MutableEntityStorageImpl(
       // Get entity data that will be modified
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      val modifiableEntity = (if (e is ModifiableWorkspaceEntity<*>) e else copiedData.wrapAsModifiable(this)) as M
+      val modifiableEntity = (if (e is WorkspaceEntity.Builder<*>) e else copiedData.wrapAsModifiable(this)) as M
       modifiableEntity as ModifiableWorkspaceEntityBase<*>
       modifiableEntity.changedProperty.clear()
 

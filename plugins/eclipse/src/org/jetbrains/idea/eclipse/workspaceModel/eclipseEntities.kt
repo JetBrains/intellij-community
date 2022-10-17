@@ -12,7 +12,6 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -39,7 +38,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EclipseProjectPropertiesEntity, ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
+  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var variablePaths: Map<String, String>

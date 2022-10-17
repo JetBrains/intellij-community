@@ -6,7 +6,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -17,7 +17,7 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNullsOppositeMultiple, ModifiableWorkspaceEntity<ParentWithNullsOppositeMultiple>, ObjBuilder<ParentWithNullsOppositeMultiple> {
+  interface Builder : ParentWithNullsOppositeMultiple, WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple>, ObjBuilder<ParentWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var parentData: String
   }
@@ -54,7 +54,7 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNullsOppositeMultiple, ModifiableWorkspaceEntity<ChildWithNullsOppositeMultiple>, ObjBuilder<ChildWithNullsOppositeMultiple> {
+  interface Builder : ChildWithNullsOppositeMultiple, WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple>, ObjBuilder<ChildWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentWithNullsOppositeMultiple?

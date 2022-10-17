@@ -9,11 +9,8 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-
-
 
 interface ModuleEntity : WorkspaceEntityWithPersistentId {
     val name: String
@@ -33,7 +30,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
+  interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity>, ObjBuilder<ModuleEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var type: String?
@@ -79,7 +76,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
+  interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var rootManagerTagCustomData: String?
@@ -114,7 +111,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
+  interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var path: MutableList<String>
@@ -149,7 +146,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
+  interface Builder : JavaModuleSettingsEntity, WorkspaceEntity.Builder<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var inheritedCompilerOutput: Boolean
@@ -195,7 +192,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
+  interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var externalSystem: String?
