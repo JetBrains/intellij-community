@@ -57,7 +57,7 @@ public abstract class JavaTestFramework implements TestFramework {
   protected abstract String getMarkerClassFQName();
 
   /**
-   * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz} 
+   * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
    */
   protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
@@ -117,7 +117,7 @@ public abstract class JavaTestFramework implements TestFramework {
 
   @Nullable
   protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
-  
+
   @Nullable
   @Override
   public PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {

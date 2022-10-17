@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="JUnit5Vintage" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.8.1" />
+    <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.9.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.8.1/junit-vintage-engine-5.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.9.1/junit-vintage-engine-5.9.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
