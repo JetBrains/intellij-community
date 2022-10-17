@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -185,7 +184,7 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
 
   fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<FileCopyPackagingElementEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
     val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

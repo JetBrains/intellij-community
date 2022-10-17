@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -20,7 +20,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : HeadAbstractionEntity, ModifiableWorkspaceEntity<HeadAbstractionEntity>, ObjBuilder<HeadAbstractionEntity> {
+  interface Builder : HeadAbstractionEntity, WorkspaceEntity.Builder<HeadAbstractionEntity>, ObjBuilder<HeadAbstractionEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var child: CompositeBaseEntity?
@@ -52,7 +52,7 @@ interface BaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : BaseEntity> : BaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : BaseEntity> : BaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
   }
@@ -77,7 +77,7 @@ interface CompositeBaseEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
+  interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
@@ -101,7 +101,7 @@ interface MiddleEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, ModifiableWorkspaceEntity<MiddleEntity>, ObjBuilder<MiddleEntity> {
+  interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, WorkspaceEntity.Builder<MiddleEntity>, ObjBuilder<MiddleEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var property: String
@@ -136,7 +136,7 @@ fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: Enti
 interface LeftEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, ModifiableWorkspaceEntity<LeftEntity>, ObjBuilder<LeftEntity> {
+  interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, WorkspaceEntity.Builder<LeftEntity>, ObjBuilder<LeftEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
@@ -173,7 +173,7 @@ fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: E
 interface RightEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, ModifiableWorkspaceEntity<RightEntity>, ObjBuilder<RightEntity> {
+  interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, WorkspaceEntity.Builder<RightEntity>, ObjBuilder<RightEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>

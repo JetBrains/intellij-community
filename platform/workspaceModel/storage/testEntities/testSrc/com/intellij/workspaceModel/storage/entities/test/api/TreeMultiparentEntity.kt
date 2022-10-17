@@ -4,8 +4,9 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -20,7 +21,7 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentRootEntity, ModifiableWorkspaceEntity<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
+  interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeMultiparentLeafEntity>
@@ -53,7 +54,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentLeafEntity, ModifiableWorkspaceEntity<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
+  interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var mainParent: TreeMultiparentRootEntity?

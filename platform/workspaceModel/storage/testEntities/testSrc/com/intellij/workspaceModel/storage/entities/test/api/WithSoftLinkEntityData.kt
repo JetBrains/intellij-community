@@ -1,13 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -47,7 +47,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedEntity, ModifiableWorkspaceEntity<NamedEntity>, ObjBuilder<NamedEntity> {
+  interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity>, ObjBuilder<NamedEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var additionalProperty: String?
@@ -100,7 +100,7 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedChildEntity, ModifiableWorkspaceEntity<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
+  interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: NamedEntity
@@ -144,7 +144,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithSoftLinkEntity, ModifiableWorkspaceEntity<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
+  interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
     override var link: NameId
   }
@@ -178,7 +178,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedLinkEntity, ModifiableWorkspaceEntity<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
+  interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
     override var entitySource: EntitySource
     override var link: ComposedId
   }
@@ -217,7 +217,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
+  interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var links: MutableList<NameId>
@@ -267,7 +267,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedIdSoftRefEntity, ModifiableWorkspaceEntity<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
+  interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var link: NameId

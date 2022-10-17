@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -15,7 +15,7 @@ interface ExcludeUrlEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExcludeUrlEntity, ModifiableWorkspaceEntity<ExcludeUrlEntity>, ObjBuilder<ExcludeUrlEntity> {
+  interface Builder : ExcludeUrlEntity, WorkspaceEntity.Builder<ExcludeUrlEntity>, ObjBuilder<ExcludeUrlEntity> {
     override var entitySource: EntitySource
     override var url: VirtualFileUrl
   }

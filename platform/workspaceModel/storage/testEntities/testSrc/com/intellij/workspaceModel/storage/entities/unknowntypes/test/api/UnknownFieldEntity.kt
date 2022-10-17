@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.Date
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -16,7 +15,7 @@ interface UnknownFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : UnknownFieldEntity, ModifiableWorkspaceEntity<UnknownFieldEntity>, ObjBuilder<UnknownFieldEntity> {
+  interface Builder : UnknownFieldEntity, WorkspaceEntity.Builder<UnknownFieldEntity>, ObjBuilder<UnknownFieldEntity> {
     override var data: Date
     override var entitySource: EntitySource
   }

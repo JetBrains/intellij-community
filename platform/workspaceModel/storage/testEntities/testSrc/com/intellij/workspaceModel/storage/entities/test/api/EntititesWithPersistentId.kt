@@ -1,11 +1,11 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -20,7 +20,7 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
+  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -52,7 +52,7 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
+  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }

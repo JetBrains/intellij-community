@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -194,7 +193,7 @@ class ChildFirstEntityData : WorkspaceEntityData<ChildFirstEntity>() {
   fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
   fun isFirstDataInitialized(): Boolean = ::firstData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ChildFirstEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildFirstEntity> {
     val modifiable = ChildFirstEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

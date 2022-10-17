@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -284,7 +283,7 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
   fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SampleWithPersistentIdEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleWithPersistentIdEntity> {
     val modifiable = SampleWithPersistentIdEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

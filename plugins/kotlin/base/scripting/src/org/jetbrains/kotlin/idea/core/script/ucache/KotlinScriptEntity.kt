@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
@@ -9,7 +10,6 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -32,7 +32,7 @@ interface KotlinScriptEntity: WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : KotlinScriptEntity, ModifiableWorkspaceEntity<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
+  interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
     override var entitySource: EntitySource
     override var path: String
     override var dependencies: List<LibraryEntity>

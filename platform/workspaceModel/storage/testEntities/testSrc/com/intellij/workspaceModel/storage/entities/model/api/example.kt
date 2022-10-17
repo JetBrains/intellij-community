@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.entities.model.api
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -19,7 +18,7 @@ interface TestEntity: WorkspaceEntity {
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1)
-  interface Builder: TestEntity, ModifiableWorkspaceEntity<TestEntity>, ObjBuilder<TestEntity> {
+  interface Builder: TestEntity, WorkspaceEntity.Builder<TestEntity>, ObjBuilder<TestEntity> {
       override var name: String
       override var entitySource: EntitySource
       override var count: Int

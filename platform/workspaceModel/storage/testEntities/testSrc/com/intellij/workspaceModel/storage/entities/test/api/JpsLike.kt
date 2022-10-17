@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.storage.entities.test.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -21,7 +21,7 @@ interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleTestEntity, ModifiableWorkspaceEntity<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
+  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var contentRoots: List<ContentRootTestEntity>
@@ -52,7 +52,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ContentRootTestEntity, ModifiableWorkspaceEntity<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
+  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
     override var entitySource: EntitySource
     override var module: ModuleTestEntity
     override var sourceRootOrder: SourceRootTestOrderEntity?
@@ -81,7 +81,7 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestOrderEntity, ModifiableWorkspaceEntity<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
+  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
@@ -111,7 +111,7 @@ interface SourceRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestEntity, ModifiableWorkspaceEntity<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
+  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
@@ -154,7 +154,7 @@ interface FacetTestEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetTestEntity, ModifiableWorkspaceEntity<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
+  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var moreData: String

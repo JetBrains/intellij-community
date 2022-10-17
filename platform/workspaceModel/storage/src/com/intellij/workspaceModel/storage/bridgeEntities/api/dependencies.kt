@@ -4,16 +4,14 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
-
-
 
 interface LibraryEntity : WorkspaceEntityWithPersistentId {
     val name: String
@@ -30,7 +28,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
+  interface Builder : LibraryEntity, WorkspaceEntity.Builder<LibraryEntity>, ObjBuilder<LibraryEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var tableId: LibraryTableId
@@ -78,7 +76,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
+  interface Builder : LibraryPropertiesEntity, WorkspaceEntity.Builder<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
     override var libraryType: String
@@ -111,7 +109,7 @@ interface SdkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
+  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity>, ObjBuilder<SdkEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
     override var homeUrl: VirtualFileUrl

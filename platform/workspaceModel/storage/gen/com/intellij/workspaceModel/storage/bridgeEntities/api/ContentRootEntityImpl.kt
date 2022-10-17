@@ -7,7 +7,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -393,7 +392,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   fun isUrlInitialized(): Boolean = ::url.isInitialized
   fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<ContentRootEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootEntity> {
     val modifiable = ContentRootEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

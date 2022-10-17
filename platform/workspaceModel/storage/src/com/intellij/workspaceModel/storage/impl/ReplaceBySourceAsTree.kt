@@ -124,7 +124,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
           targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
         }
-        targetStorage.modifyEntity(ModifiableWorkspaceEntity::class.java, targetEntity) {
+        targetStorage.modifyEntity(WorkspaceEntity.Builder::class.java, targetEntity) {
           (this as ModifiableWorkspaceEntityBase<*>).relabel(replaceWithEntity, parents)
         }
         targetStorage.indexes.updateExternalMappingForEntityId(operation.replaceWithEntityId, operation.targetEntityId, replaceWithStorage.indexes)

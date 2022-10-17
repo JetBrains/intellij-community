@@ -7,11 +7,8 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-
-
 
 interface FacetEntity: WorkspaceEntityWithPersistentId {
     val name: String
@@ -27,7 +24,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
+  interface Builder : FacetEntity, WorkspaceEntity.Builder<FacetEntity>, ObjBuilder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var module: ModuleEntity

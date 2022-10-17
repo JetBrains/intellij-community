@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -118,7 +117,7 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OneEntityWithPersistentId> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithPersistentId> {
     val modifiable = OneEntityWithPersistentIdImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

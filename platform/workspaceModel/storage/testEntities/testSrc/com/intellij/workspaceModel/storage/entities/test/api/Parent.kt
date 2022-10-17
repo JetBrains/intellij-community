@@ -1,12 +1,13 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
@@ -21,7 +22,7 @@ interface XParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XParentEntity, ModifiableWorkspaceEntity<XParentEntity>, ObjBuilder<XParentEntity> {
+  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity>, ObjBuilder<XParentEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var children: List<XChildEntity>
@@ -59,7 +60,7 @@ interface XChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildEntity, ModifiableWorkspaceEntity<XChildEntity>, ObjBuilder<XChildEntity> {
+  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity>, ObjBuilder<XChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var dataClass: DataClassX?
@@ -91,7 +92,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildWithOptionalParentEntity, ModifiableWorkspaceEntity<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
+  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var optionalParent: XParentEntity?
@@ -124,7 +125,7 @@ interface XChildChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildChildEntity, ModifiableWorkspaceEntity<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
+  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
     override var entitySource: EntitySource
     override var parent1: XParentEntity
     override var parent2: XChildEntity

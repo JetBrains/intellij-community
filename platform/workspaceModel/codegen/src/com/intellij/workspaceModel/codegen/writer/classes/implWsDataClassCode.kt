@@ -49,7 +49,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       this@implWsDataClassCode.softLinksCode(this, hasSoftLinks)
 
       sectionNl(
-        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${ModifiableWorkspaceEntity::class.fqn}<$javaFullName>") {
+        "override fun wrapAsModifiable(diff: ${MutableEntityStorage::class.fqn}): ${WorkspaceEntity.Builder::class.fqn}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.allowModifications {")
         line("  modifiable.diff = diff")

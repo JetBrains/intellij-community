@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -18,7 +17,7 @@ interface EntityWithUrls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithUrls, ModifiableWorkspaceEntity<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
+  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
     override var entitySource: EntitySource
     override var simpleUrl: VirtualFileUrl
     override var nullableUrl: VirtualFileUrl?

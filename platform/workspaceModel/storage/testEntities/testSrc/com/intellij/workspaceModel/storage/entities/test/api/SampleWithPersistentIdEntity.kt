@@ -1,6 +1,7 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
@@ -8,7 +9,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import java.util.*
 
@@ -27,7 +28,7 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleWithPersistentIdEntity, ModifiableWorkspaceEntity<SampleWithPersistentIdEntity>, ObjBuilder<SampleWithPersistentIdEntity> {
+  interface Builder : SampleWithPersistentIdEntity, WorkspaceEntity.Builder<SampleWithPersistentIdEntity>, ObjBuilder<SampleWithPersistentIdEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
     override var stringProperty: String
@@ -78,7 +79,7 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWpidSampleEntity, ModifiableWorkspaceEntity<ChildWpidSampleEntity>, ObjBuilder<ChildWpidSampleEntity> {
+  interface Builder : ChildWpidSampleEntity, WorkspaceEntity.Builder<ChildWpidSampleEntity>, ObjBuilder<ChildWpidSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SampleWithPersistentIdEntity?

@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import java.util.Date
@@ -14,7 +13,7 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : UnknownPropertyTypeEntity, ModifiableWorkspaceEntity<UnknownPropertyTypeEntity>, ObjBuilder<UnknownPropertyTypeEntity> {
+  interface Builder : UnknownPropertyTypeEntity, WorkspaceEntity.Builder<UnknownPropertyTypeEntity>, ObjBuilder<UnknownPropertyTypeEntity> {
     override var entitySource: EntitySource
     override var date: Date
   }

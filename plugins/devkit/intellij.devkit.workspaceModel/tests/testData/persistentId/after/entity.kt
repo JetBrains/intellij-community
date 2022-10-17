@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.test.api
 import com.intellij.workspaceModel.deft.api.annotations.Default
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -22,7 +21,7 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimplePersistentIdEntity, ModifiableWorkspaceEntity<SimplePersistentIdEntity>, ObjBuilder<SimplePersistentIdEntity> {
+  interface Builder : SimplePersistentIdEntity, WorkspaceEntity.Builder<SimplePersistentIdEntity>, ObjBuilder<SimplePersistentIdEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String

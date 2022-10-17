@@ -92,6 +92,17 @@ interface WorkspaceEntity : Obj {
       return WorkspaceEntityExtensionDelegate()
     }
   }
+
+  /**
+   * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
+   * or [modify an existing value][MutableEntityStorage.modifyEntity].
+   *
+   * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
+   */
+  @Abstract
+  interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
+    override var entitySource: EntitySource
+  }
 }
 
 /**
@@ -100,17 +111,6 @@ interface WorkspaceEntity : Obj {
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
 annotation class EqualsBy
-
-/**
- * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
- * or [modify an existing value][MutableEntityStorage.modifyEntity].
- *
- * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
- */
-@Abstract
-interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
-  override var entitySource: EntitySource
-}
 
 /**
  * Declares a place from which an entity came.
@@ -222,7 +222,7 @@ interface MutableEntityStorage : EntityStorage {
   
   infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 
-  fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
+  fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
   /**
    * Remove the entity from the builder.

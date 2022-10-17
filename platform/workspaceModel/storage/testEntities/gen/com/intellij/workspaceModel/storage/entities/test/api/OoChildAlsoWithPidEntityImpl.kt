@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -174,7 +173,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
 
   fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoChildAlsoWithPidEntity> {
     val modifiable = OoChildAlsoWithPidEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
