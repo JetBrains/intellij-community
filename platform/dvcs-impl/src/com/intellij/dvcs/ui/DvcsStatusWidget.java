@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -57,7 +58,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   /**
-   * @see com.intellij.dvcs.DvcsUtil#guessWidgetRepository
+   * @see DvcsUtil#guessWidgetRepository
    */
   @Nullable
   @CalledInAny
@@ -189,7 +190,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
             clearStatus();
             return;
           }
-        } catch (Throwable t) {
+        }
+        catch (ProcessCanceledException e) {
+          // do nothing - a new update task is scheduled, or widget is disposed
+          return;
+        }
+        catch (Throwable t) {
           LOG.error(t);
           clearStatus();
           return;
