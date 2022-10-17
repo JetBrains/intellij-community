@@ -302,17 +302,15 @@ object CommunityRepositoryModules {
       @Suppress("SpellCheckingInspection")
       spec.withModule("intellij.android.designer.customview", "design-tools.jar")
       spec.withModule("intellij.android.designer", "design-tools.jar")
+      spec.withModule("intellij.android.glance-designer", "design-tools.jar")
       spec.withModule("intellij.android.layoutlib", "design-tools.jar")
       spec.withModule("intellij.android.nav.editor", "design-tools.jar")
 
 
       // libs:
-      spec.withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
       spec.withProjectLibrary("layoutlib")
 
-      spec.withProjectLibrary("studio-analytics-proto")
+      spec.withProjectLibrary("studio-analytics-proto") // This is to avoid this library leaking into project jars
       // :libs
 
       //"resources": [
@@ -510,6 +508,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("precompiled-adblib.ddmlibcompatibility", "android.sdktools.adblib.ddmlibcompatibility", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-adblib.tools", "android.sdktools.adblib.tools", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "sdk-tools.jar")
+      spec.withModuleLibrary("precompiled-device-provisioner", "android.sdktools.device-provisioner", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-deployer", "android.sdktools.deployer", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-dvlib", "android.sdktools.dvlib", "sdk-tools.jar")
       spec.withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "sdk-tools.jar")
@@ -538,16 +537,12 @@ object CommunityRepositoryModules {
 
 
       // libs:
-      spec.withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
-      spec.withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
       spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea", "")
       spec.withModuleLibrary("explainer", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("generator", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("shared", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("okio", "intellij.android.core", "")
       spec.withModuleLibrary("moshi", "intellij.android.core", "")
-      spec.withModuleLibrary("utp-core-proto", "intellij.android.core", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
       spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
@@ -556,6 +551,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
       spec.withModuleLibrary("flatbuffers-java", "android.sdktools.mlkit-common", "")
       spec.withModuleLibrary("tensorflow-lite-metadata", "android.sdktools.mlkit-common", "")
+      spec.withModuleLibrary("trace-perfetto-library", "intellij.android.profilersAndroid", "")
       spec.withProjectLibrary("aapt-proto")
       spec.withProjectLibrary("aia-proto")
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
@@ -564,13 +560,13 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
-      //spec.withProjectLibrary("firebase_java_proto")
+      //spec.withProjectLibrary("firebase_java_proto") <= REMOVED
       spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
-      //tools/adt/idea/.idea/libraries:layoutinspector-view-proto <= replaced with 3 x layout_inspector_xxx_java_proto
+      spec.withProjectLibrary("layoutinspector-view-proto")
       spec.withProjectLibrary("libam-instrumentation-data-proto")
       spec.withProjectLibrary("libapp-processes-proto")
       spec.withProjectLibrary("network_inspector_java_proto")
@@ -581,6 +577,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("studio-grpc")
       spec.withProjectLibrary("studio-proto")
       spec.withProjectLibrary("transport-proto")
+      spec.withProjectLibrary("utp-core-proto-jarjar")
       spec.withProjectLibrary("zxing-core")
       spec.withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
