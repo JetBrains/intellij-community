@@ -37,7 +37,7 @@ abstract class AbstractChangeFeatureSupportLevelFix(
                 LanguageFeature.State.ENABLED_WITH_WARNING -> {
                     KotlinBundle.message("fix.change.feature.support.enabled.warning", featureShortName)
                 }
-                LanguageFeature.State.ENABLED_WITH_ERROR, LanguageFeature.State.DISABLED -> {
+                LanguageFeature.State.DISABLED -> {
                     KotlinBundle.message("fix.change.feature.support.disabled", featureShortName)
                 }
             }
@@ -54,19 +54,12 @@ abstract class AbstractChangeFeatureSupportLevelFix(
         protected fun doCreateActions(
             diagnostic: Diagnostic,
             feature: LanguageFeature,
-            allowWarningAndErrorMode: Boolean,
             quickFixConstructor: (PsiElement, LanguageFeature, LanguageFeature.State) -> IntentionAction
         ): List<IntentionAction> {
             val newFeatureSupports = when (diagnostic.factory) {
-                Errors.EXPERIMENTAL_FEATURE_ERROR -> {
-                    if (Errors.EXPERIMENTAL_FEATURE_ERROR.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED_WITH_WARNING, LanguageFeature.State.ENABLED)
-                }
                 Errors.EXPERIMENTAL_FEATURE_WARNING -> {
                     if (Errors.EXPERIMENTAL_FEATURE_WARNING.cast(diagnostic).a.first != feature) return emptyList()
-                    if (!allowWarningAndErrorMode) listOf(LanguageFeature.State.ENABLED)
-                    else listOf(LanguageFeature.State.ENABLED, LanguageFeature.State.ENABLED_WITH_ERROR)
+                    listOf(LanguageFeature.State.ENABLED)
                 }
                 else -> return emptyList()
             }

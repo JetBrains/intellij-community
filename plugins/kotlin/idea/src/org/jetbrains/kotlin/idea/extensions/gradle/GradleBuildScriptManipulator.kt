@@ -109,7 +109,7 @@ fun GradleBuildScriptManipulator<*>.useNewSyntax(
 }
 
 fun LanguageFeature.State.assertApplicableInMultiplatform() {
-    if (this == LanguageFeature.State.ENABLED_WITH_ERROR || this == LanguageFeature.State.DISABLED)
+    if (this == LanguageFeature.State.DISABLED)
         throw UnsupportedOperationException("Disabling the language feature is unsupported for multiplatform")
 }
 

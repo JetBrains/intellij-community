@@ -79,7 +79,7 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
 
             return supportedFeatures.flatMap { feature ->
                 doCreateActions(
-                    diagnostic, feature, allowWarningAndErrorMode = false,
+                    diagnostic, feature,
                     quickFixConstructor = if (shouldConfigureInProject(module)) ::InProject else ::InModule
                 )
             }
