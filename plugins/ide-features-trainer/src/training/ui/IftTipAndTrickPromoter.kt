@@ -34,10 +34,9 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
   }
 
   private fun findLessonIdForTip(tip: TipAndTrickBean): String? {
-    val tipId = tip.fileName.removePrefix("neue-").removeSuffix(".html")
     val course: LearningCourse = CourseManager.instance.currentCourse ?: return null
     val lessonIdToTipsMap = course.getLessonIdToTipsMap()
-    val lessonIds = lessonIdToTipsMap.filterValues { it.contains(tipId) }.keys
+    val lessonIds = lessonIdToTipsMap.filterValues { it.contains(tip.id) }.keys
     if (lessonIds.isNotEmpty()) {
       if (lessonIds.size > 1) {
         thisLogger().warn("$tip declared as suitable in more than one lesson: $lessonIds")
@@ -104,6 +103,6 @@ class IftTipAndTrickPromoter : TipAndTrickPromotionFactory {
     }
 
     courseManager.openLesson(project, lesson, LessonStartingWay.TIP_AND_TRICK_PROMOTER, forceStartLesson = true)
-    StatisticBase.logLessonLinkClickedFromTip(lessonId, tip.fileName)
+    StatisticBase.logLessonLinkClickedFromTip(lessonId, tip.id)
   }
 }

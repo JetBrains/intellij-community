@@ -14,7 +14,7 @@ abstract class PopupSuggestion(
 class TipSuggestion(
   @Nls message: String,
   suggesterId: String,
-  val suggestingTipFilename: String
+  val suggestingTipId: String
 ) : PopupSuggestion(message, suggesterId)
 
 class DocumentationSuggestion(
