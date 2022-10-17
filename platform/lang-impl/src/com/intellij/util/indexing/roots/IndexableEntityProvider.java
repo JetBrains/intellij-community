@@ -4,7 +4,7 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
+import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
@@ -119,9 +119,9 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
      * Is expected to be merged back after API stabilisation.
      */
     @Nullable
-    IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull E entity,
-                                                                     @NotNull EntityStorage storage,
-                                                                     @NotNull Project project);
+    IndexableSetIterableOrigin getExistingEntityIteratorOrigins(@NotNull E entity,
+                                                                @NotNull EntityStorage storage,
+                                                                @NotNull Project project);
   }
 
   /**

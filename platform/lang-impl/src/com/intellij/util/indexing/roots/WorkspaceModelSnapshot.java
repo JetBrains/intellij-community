@@ -11,14 +11,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginChange;
-import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
-import com.intellij.util.indexing.roots.origin.LibrarySelfDependentOriginImpl;
-import com.intellij.util.indexing.roots.origin.SdkSelfDependentOriginImpl;
+import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
+import com.intellij.util.indexing.roots.origin.LibraryIterableOriginImpl;
+import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +34,7 @@ import static com.intellij.util.indexing.roots.IndexableEntityInducedChangesProv
 
 class WorkspaceModelSnapshot {
   private static volatile Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> GENERATORS;
-  private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins;
+  private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins;
   private final LibrariesSnapshot libraries;
   private final SdkSnapshot sdks;
 
@@ -76,13 +79,13 @@ class WorkspaceModelSnapshot {
     }, null);
   }
 
-  private WorkspaceModelSnapshot(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder,
+  private WorkspaceModelSnapshot(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> builder,
                                  @NotNull LibrariesSnapshot librariesSnapshot,
                                  @NotNull SdkSnapshot sdkSnapshot) {
     this(builder.build(), librariesSnapshot, sdkSnapshot);
   }
 
-  private WorkspaceModelSnapshot(@NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins,
+  private WorkspaceModelSnapshot(@NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins,
                                  @NotNull LibrariesSnapshot librariesSnapshot,
                                  @NotNull SdkSnapshot sdkSnapshot) {
     this.entitiesToOrigins = entitiesToOrigins;
@@ -98,9 +101,9 @@ class WorkspaceModelSnapshot {
   }
 
   @NotNull
-  private static ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> createBuilder(@NotNull Project project,
-                                                                                                                                 @NotNull EntityStorage storage) {
-    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> builder =
+  private static ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> createBuilder(@NotNull Project project,
+                                                                                                                            @NotNull EntityStorage storage) {
+    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> builder =
       new ImmutableMap.Builder<>();
     for (IndexableEntityProvider.ExistingEx<?> provider : GENERATORS.values()) {
       handleProvider((IndexableEntityProvider.ExistingEx<?>)provider, storage, project, builder);
@@ -109,8 +112,8 @@ class WorkspaceModelSnapshot {
   }
 
   @NotNull
-  Collection<? extends IndexableSetSelfDependentOrigin> getOrigins() {
-    List<IndexableSetSelfDependentOrigin> result = new ArrayList<>(libraries.getOrigins());
+  Collection<? extends IndexableSetIterableOrigin> getOrigins() {
+    List<IndexableSetIterableOrigin> result = new ArrayList<>(libraries.getOrigins());
     result.addAll(sdks.getOrigins());
     result.addAll(entitiesToOrigins.values());
     return result;
@@ -119,7 +122,7 @@ class WorkspaceModelSnapshot {
   private static <E extends WorkspaceEntity> void handleProvider(@NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                                  @NotNull EntityStorage storage,
                                                                  @NotNull Project project,
-                                                                 @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities) {
+                                                                 @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entities) {
     Class<E> aClass = provider.getEntityClass();
     for (E entity : SequencesKt.asIterable(storage.entities(aClass))) {
       addOrigins(entities, entity, provider, storage, project);
@@ -157,20 +160,20 @@ class WorkspaceModelSnapshot {
     if (entitiesToRegenerate.isEmpty() && changedLibraries == null) {
       return null;
     }
-    ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin>
+    ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin>
       copy = mergeRegeneratedEntities(entitiesToOrigins, entitiesToRegenerate, generators, project, storage);
     return new WorkspaceModelSnapshot(copy, changedLibraries == null ? libraries : changedLibraries, sdks);
   }
 
-  private static ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> mergeRegeneratedEntities(
-    @NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entitiesToOrigins,
+  private static ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> mergeRegeneratedEntities(
+    @NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins,
     @NotNull Map<EntityReference<? extends WorkspaceEntity>, OriginChange> entitiesToRegenerate,
     @NotNull Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> generators,
     @NotNull Project project,
     @NotNull EntityStorage storage) {
     if (entitiesToRegenerate.isEmpty()) return entitiesToOrigins;
-    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> copy = new ImmutableMap.Builder<>();
-    for (Map.Entry<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entry : entitiesToOrigins.entrySet()) {
+    ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> copy = new ImmutableMap.Builder<>();
+    for (Map.Entry<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entry : entitiesToOrigins.entrySet()) {
       EntityReference<? extends WorkspaceEntity> entityReference = entry.getKey();
       OriginChange originChange = entitiesToRegenerate.remove(entityReference);
       if (originChange == null) {
@@ -191,12 +194,12 @@ class WorkspaceModelSnapshot {
   private static <E extends WorkspaceEntity> void addGeneratedOrigin(@NotNull Project project,
                                                                      @NotNull EntityStorage storage,
                                                                      @NotNull Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> generators,
-                                                                     @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> copy,
+                                                                     @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> copy,
                                                                      @NotNull EntityReference<? extends E> entityReference,
                                                                      @NotNull E entity) {
     //noinspection unchecked
     IndexableEntityProvider.ExistingEx<E> provider = (IndexableEntityProvider.ExistingEx<E>)generators.get(entity.getEntityInterface());
-    IndexableSetSelfDependentOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
+    IndexableSetIterableOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
     if (origin != null) {
       copy.put(entityReference, origin);
     }
@@ -245,12 +248,12 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static <E extends WorkspaceEntity> void addOrigins(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> entities,
+  private static <E extends WorkspaceEntity> void addOrigins(@NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entities,
                                                              @NotNull E entity,
                                                              @NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                              @NotNull EntityStorage storage,
                                                              @NotNull Project project) {
-    IndexableSetSelfDependentOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
+    IndexableSetIterableOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
     if (origin != null) {
       entities.put(entity.createReference(), origin);
     }
@@ -277,7 +280,7 @@ class WorkspaceModelSnapshot {
     }
 
     EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetSelfDependentOrigin> result =
+    ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> result =
       mergeRegeneratedEntities(entitiesToOrigins, entitiesToRegenerate, generators, project, storage);
     return new WorkspaceModelSnapshot(result, libraries, sdks);
   }
@@ -334,17 +337,17 @@ class WorkspaceModelSnapshot {
 
   private static class LibrariesSnapshot {//todo[lene] write test for library rename
     private final ImmutableMap<LibraryId, Collection<ModuleEntity>> dependencies;
-    private final ImmutableMap<LibraryId, IndexableSetSelfDependentOrigin> origins;
+    private final ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins;
 
 
     private LibrariesSnapshot(ImmutableMap<LibraryId, Collection<ModuleEntity>> dependencies,
-                              ImmutableMap<LibraryId, IndexableSetSelfDependentOrigin> origins) {
+                              ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins) {
       this.dependencies = dependencies;
       this.origins = origins;
     }
 
     @NotNull
-    private Collection<? extends IndexableSetSelfDependentOrigin> getOrigins() {
+    private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
     }
 
@@ -396,10 +399,10 @@ class WorkspaceModelSnapshot {
 
   private static class ModifiableLibrariesSnapshot {
     private final MultiMap<LibraryId, ModuleEntity> dependencies;
-    private final Map<LibraryId, IndexableSetSelfDependentOrigin> origins;
+    private final Map<LibraryId, IndexableSetIterableOrigin> origins;
 
     private ModifiableLibrariesSnapshot(MultiMap<LibraryId, ModuleEntity> dependencies,
-                                        Map<LibraryId, IndexableSetSelfDependentOrigin> origins) {
+                                        Map<LibraryId, IndexableSetIterableOrigin> origins) {
       this.dependencies = dependencies;
       this.origins = origins;
     }
@@ -427,7 +430,7 @@ class WorkspaceModelSnapshot {
         @NotNull LibraryId libraryId = ((ModuleDependencyItem.Exportable.LibraryDependency)dependency).getLibrary();
         dependencies.putValue(libraryId, entity);
         if (!origins.containsKey(libraryId)) {
-          IndexableSetSelfDependentOrigin origin = createLibraryOrigin(libraryId, storage, project);
+          IndexableSetIterableOrigin origin = createLibraryOrigin(libraryId, storage, project);
           if (origin != null) {
             origins.put(libraryId, origin);
           }
@@ -466,7 +469,7 @@ class WorkspaceModelSnapshot {
           dependencies.putValue(libraryId, newEntity);
           idsToRemove.remove(libraryId);
           if (!origins.containsKey(libraryId)) {
-            IndexableSetSelfDependentOrigin origin = createLibraryOrigin(libraryId, storage, project);
+            IndexableSetIterableOrigin origin = createLibraryOrigin(libraryId, storage, project);
             if (origin != null) {
               origins.put(libraryId, origin);
             }
@@ -493,7 +496,7 @@ class WorkspaceModelSnapshot {
       //if (!oldId.equals(newId)) {
       //  todo[lene] test rename of a lib
       //}
-      IndexableSetSelfDependentOrigin origin = createLibraryOrigin(newEntity, storage);
+      IndexableSetIterableOrigin origin = createLibraryOrigin(newEntity, storage);
       if (origin != null) {
         origins.put(newId, origin);
       }
@@ -510,44 +513,45 @@ class WorkspaceModelSnapshot {
     }
 
     @Nullable
-    private static IndexableSetSelfDependentOrigin createLibraryOrigin(@NotNull LibraryId libraryId,
-                                                                       @NotNull EntityStorage storage,
-                                                                       @NotNull Project project) {
+    private static IndexableSetIterableOrigin createLibraryOrigin(@NotNull LibraryId libraryId,
+                                                                  @NotNull EntityStorage storage,
+                                                                  @NotNull Project project) {
       Library library = LibraryEntityUtils.findLibraryBridge(libraryId, storage, project);
       return createLibraryOrigin(library);
     }
 
     @Nullable
-    private static IndexableSetSelfDependentOrigin createLibraryOrigin(@NotNull LibraryEntity libraryEntity,
-                                                                       @NotNull EntityStorage storage) {
+    private static IndexableSetIterableOrigin createLibraryOrigin(@NotNull LibraryEntity libraryEntity,
+                                                                  @NotNull EntityStorage storage) {
       Library library = LibraryEntityUtils.findLibraryBridge(libraryEntity, storage);
       return createLibraryOrigin(library);
     }
 
     @Contract("null->null;!null -> !null")
-    private static LibrarySelfDependentOriginImpl createLibraryOrigin(Library library) {
+    private static LibraryIterableOriginImpl createLibraryOrigin(Library library) {
       if (library == null) {
         return null;
       }
       List<VirtualFile> classFiles = LibraryIndexableFilesIteratorImpl.Companion.collectFiles(library, OrderRootType.CLASSES, null);
       List<VirtualFile> sourceFiles = LibraryIndexableFilesIteratorImpl.Companion.collectFiles(library, OrderRootType.SOURCES, null);
-      return new LibrarySelfDependentOriginImpl(classFiles, sourceFiles, Arrays.asList(((LibraryEx)library).getExcludedRoots()));
+      return new LibraryIterableOriginImpl(classFiles, sourceFiles, Arrays.asList(((LibraryEx)library).getExcludedRoots()),
+                                           library.getName(), library.getPresentableName());
     }
   }
 
   private static class SdkSnapshot {
-    private final ImmutableMap<Sdk, IndexableSetSelfDependentOrigin> origins;
+    private final ImmutableMap<Sdk, IndexableSetIterableOrigin> origins;
 
-    private SdkSnapshot(ImmutableMap<Sdk, IndexableSetSelfDependentOrigin> origins) {
+    private SdkSnapshot(ImmutableMap<Sdk, IndexableSetIterableOrigin> origins) {
       this.origins = origins;
     }
 
-    private Collection<? extends IndexableSetSelfDependentOrigin> getOrigins() {
+    private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
     }
 
     private static SdkSnapshot create(@NotNull Collection<SdkId> sdkIds) {
-      ImmutableMap.Builder<Sdk, IndexableSetSelfDependentOrigin> builder = ImmutableMap.builder();
+      ImmutableMap.Builder<Sdk, IndexableSetIterableOrigin> builder = ImmutableMap.builder();
       for (SdkId id : sdkIds) {
         Sdk sdk = ModifiableSdkSnapshot.findSdk(id);
         if (sdk != null) {
@@ -559,9 +563,9 @@ class WorkspaceModelSnapshot {
   }
 
   private static class ModifiableSdkSnapshot {
-    private final Map<Sdk, IndexableSetSelfDependentOrigin> origins;
+    private final Map<Sdk, IndexableSetIterableOrigin> origins;
 
-    private ModifiableSdkSnapshot(Map<Sdk, IndexableSetSelfDependentOrigin> origins) {
+    private ModifiableSdkSnapshot(Map<Sdk, IndexableSetIterableOrigin> origins) {
       this.origins = origins;
     }
 
@@ -572,7 +576,7 @@ class WorkspaceModelSnapshot {
 
     private void addSdk(@NotNull Sdk sdk) {
       if (!origins.containsKey(sdk)) {
-        IndexableSetSelfDependentOrigin origin = createSdkOrigin(sdk);
+        IndexableSetIterableOrigin origin = createSdkOrigin(sdk);
         origins.put(sdk, origin);
       }
     }
@@ -590,9 +594,9 @@ class WorkspaceModelSnapshot {
     }
 
     @NotNull
-    private static IndexableSetSelfDependentOrigin createSdkOrigin(@NotNull Sdk sdk) {
+    private static IndexableSetIterableOrigin createSdkOrigin(@NotNull Sdk sdk) {
       Collection<VirtualFile> rootsToIndex = SdkIndexableFilesIteratorImpl.Companion.getRootsToIndex(sdk);
-      return new SdkSelfDependentOriginImpl(sdk, rootsToIndex);
+      return new SdkIterableOriginImpl(sdk, rootsToIndex);
     }
 
     @Nullable
