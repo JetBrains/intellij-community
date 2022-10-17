@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlin-test-junit" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:1.7.0">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:1.7.20">
       <exclude>
         <dependency maven-id="junit:junit" />
         <dependency maven-id="org.hamcrest:hamcrest-core" />
@@ -13,11 +13,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.7.0/kotlin-test-junit-1.7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.7.20/kotlin-test-junit-1.7.20.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.7.0/kotlin-test-junit-1.7.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/1.7.20/kotlin-test-junit-1.7.20-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
