@@ -43,7 +43,8 @@ fun submitGeneralFeedback(project: Project?,
                           email: String = DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
                           onDone: () -> Unit = {},
                           onError: () -> Unit = {},
-                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST
+                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST,
+                          showNotification: Boolean = true
 ) {
   ApplicationManager.getApplication().executeOnPooledThread {
     // Any class from this module will fit
@@ -69,8 +70,10 @@ fun submitGeneralFeedback(project: Project?,
       onError
     )
   }
-  ApplicationManager.getApplication().invokeLater {
-    ThanksForFeedbackNotification().notify(project)
+  if (showNotification) {
+    ApplicationManager.getApplication().invokeLater {
+      ThanksForFeedbackNotification().notify(project)
+    }
   }
 }
 

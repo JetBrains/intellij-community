@@ -39,9 +39,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -60,7 +59,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private List<TipAndTrickBean> myTips = Collections.emptyList();
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
-  private Boolean myLikenessState = null;
+
+  private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
+  private Boolean myCurrentLikenessState = null;
 
   public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
@@ -184,7 +185,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     return new DumbAwareAction(text, null, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myLikenessState = isSelected() ? null : isLike;
+        myCurrentLikenessState = isSelected() ? null : isLike;
       }
 
       @Override
@@ -201,7 +202,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       }
 
       private boolean isSelected() {
-        return myLikenessState != null && myLikenessState == isLike;
+        return myCurrentLikenessState != null && myCurrentLikenessState == isLike;
       }
     };
   }
@@ -244,7 +245,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
-    myLikenessState = null;
+    saveCurrentTipLikenessState();
+    myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
 
     List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
@@ -320,6 +322,28 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   private static int getDefaultWidth() {
     return TipUiSettings.getImageMaxWidth() + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
+  }
+
+  Map<String, Boolean> getTipIdToLikenessStateMap() {
+    saveCurrentTipLikenessState();
+    return myTipIdToLikenessState;
+  }
+
+  private void saveCurrentTipLikenessState() {
+    if (myCurrentTip != null) {
+      String curTipId = myCurrentTip.getId();
+      if (myCurrentLikenessState != TipsFeedback.getInstance().getLikenessState(curTipId)) {
+        myTipIdToLikenessState.put(curTipId, myCurrentLikenessState);
+      }
+    }
+  }
+
+  private Boolean getLikenessState(TipAndTrickBean tip) {
+    String tipId = tip.getId();
+    if (myTipIdToLikenessState.containsKey(tipId)) {
+      return myTipIdToLikenessState.get(tipId);
+    }
+    return TipsFeedback.getInstance().getLikenessState(tipId);
   }
 
   @Override

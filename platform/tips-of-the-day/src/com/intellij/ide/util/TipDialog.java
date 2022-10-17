@@ -22,6 +22,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
@@ -78,6 +79,17 @@ public final class TipDialog extends DialogWrapper {
   public void doCancelAction() {
     super.doCancelAction();
     TipsOfTheDayUsagesCollector.triggerDialogClosed(myShowingOnStartup);
+
+    Map<String, Boolean> tipIdToLikenessState = myTipPanel.getTipIdToLikenessStateMap();
+    for (Map.Entry<String, Boolean> pair : tipIdToLikenessState.entrySet()) {
+      String tipId = pair.getKey();
+      Boolean likenessState = pair.getValue();
+      TipsFeedback feedback = TipsFeedback.getInstance();
+      feedback.setLikenessState(tipId, likenessState);
+      if (likenessState != null) {
+        feedback.scheduleFeedbackSending(tipId, likenessState);
+      }
+    }
   }
 
   @Override
