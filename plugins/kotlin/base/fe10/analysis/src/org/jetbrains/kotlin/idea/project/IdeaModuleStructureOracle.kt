@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
@@ -64,6 +65,8 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
         currentPath: Stack<ModuleInfo>,
         getChilds: (ModuleInfo) -> List<ModuleInfo>
     ) {
+        ProgressManager.checkCanceled()
+
         currentPath.push(root)
 
         val childs = getChilds(root)
