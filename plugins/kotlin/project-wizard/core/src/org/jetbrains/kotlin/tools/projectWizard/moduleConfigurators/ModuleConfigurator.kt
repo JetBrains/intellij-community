@@ -296,29 +296,30 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
     ): List<FileTemplate> = emptyList()
 
     companion object {
-        val ALL = buildList<ModuleConfigurator> {
-            +RealNativeTargetConfigurator.configurators
-            +NativeForCurrentSystemTarget
-            +JsBrowserTargetConfigurator
-            +MppLibJsBrowserTargetConfigurator
-            +JsNodeTargetConfigurator
-            +CommonTargetConfigurator
-            +JvmTargetConfigurator
-            +AndroidTargetConfigurator
-            +MppModuleConfigurator
-            +JvmSinglePlatformModuleConfigurator
-            +AndroidSinglePlatformModuleConfigurator
-            +IOSSinglePlatformModuleConfigurator
-            +BrowserJsSinglePlatformModuleConfigurator
-            +NodeJsSinglePlatformModuleConfigurator
+        val ALL by lazy {
+            buildList<ModuleConfigurator> {
+                +RealNativeTargetConfigurator.configurators
+                +NativeForCurrentSystemTarget
+                +JsBrowserTargetConfigurator
+                +MppLibJsBrowserTargetConfigurator
+                +JsNodeTargetConfigurator
+                +CommonTargetConfigurator
+                +JvmTargetConfigurator
+                +AndroidTargetConfigurator
+                +MppModuleConfigurator
+                +JvmSinglePlatformModuleConfigurator
+                +AndroidSinglePlatformModuleConfigurator
+                +IOSSinglePlatformModuleConfigurator
+                +BrowserJsSinglePlatformModuleConfigurator
+                +NodeJsSinglePlatformModuleConfigurator
+            }.also { configurators ->
+                configurators.groupBy { it.id }
+                    .forEach { (id, configurators) -> assert(configurators.size == 1) { id } }
+            }
         }
 
-        init {
-            ALL.groupBy(ModuleConfigurator::id)
-                .forEach { (id, configurators) -> assert(configurators.size == 1) { id } }
-        }
+        private val BY_ID by lazy { ALL.associateBy(ModuleConfigurator::id) }
 
-        private val BY_ID = ALL.associateBy(ModuleConfigurator::id)
 
         fun getParser(moduleIdentificator: Identificator): Parser<ModuleConfigurator> =
             valueParserM { value, path ->

@@ -49,12 +49,12 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
     presentation.addPropertyChangeListener { updateWidget() }
   }
 
-  private fun updateWidget() {
+  override fun updateWidget() {
     text = presentation.text
     toolTipText = presentation.description
   }
 
-  override fun doExpand(e: InputEvent) {
+  override fun doExpand(e: InputEvent?) {
     val dataContext = DataManager.getInstance().getDataContext(this)
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))

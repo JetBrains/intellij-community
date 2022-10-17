@@ -653,6 +653,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "NanoXML", license = "zlib/libpng",
                    url = "https://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
                    licenseUrl = "https://www.opensource.org/licenses/zlib-license.html"),
+    LibraryLicense(name = "nest_asyncio", attachedTo = "intellij.python.community.impl",
+                   url = "https://github.com/erdewit/nest_asyncio", license = "BSD 2-Clause License",
+                   licenseUrl = "https://github.com/erdewit/nest_asyncio/blob/master/LICENSE",
+                   version = LibraryLicense.CUSTOM_REVISION),
     LibraryLicense(name = "net.loomchild.segment", libraryName = "net.loomchild:segment:2.0.1",
                    url = "https://github.com/loomchild/segment")
       .mit("https://github.com/loomchild/segment/blob/master/LICENSE.txt"),

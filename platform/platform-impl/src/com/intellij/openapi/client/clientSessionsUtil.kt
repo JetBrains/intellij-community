@@ -6,24 +6,32 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 
+@Deprecated("Use overload accepting ClientKind")
+fun broadcastAllClients(includeLocal: Boolean = false, action: () -> Unit) {
+  broadcastAllClients(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE, action)
+}
+
 /**
  * Executes given action for each client connected to all projects opened in IDE
- * @param includeLocal pass true to execute the action for [com.intellij.codeWithMe.ClientId.localId]
  */
-fun broadcastAllClients(includeLocal: Boolean = false, action: () -> Unit) {
-  for (session in ClientSessionsManager.getInstance().getSessions(includeLocal)) {
+fun broadcastAllClients(kind: ClientKind, action: () -> Unit) {
+  for (session in ClientSessionsManager.getAppSessions(kind)) {
     withClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException(action)
     }
   }
 }
 
+@Deprecated("Use overload accepting ClientKind")
+fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action: () -> Unit) {
+  broadcastAllClients(project, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE, action)
+}
+
 /**
  * Executes given action for each client connected to this [project]
- * @param includeLocal pass true to execute the action for [com.intellij.codeWithMe.ClientId.localId]
  */
-fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action: () -> Unit) {
-  for (session in ClientSessionsManager.getInstance(project).getSessions(includeLocal)) {
+fun broadcastAllClients(project: Project, kind: ClientKind, action: () -> Unit) {
+  for (session in ClientSessionsManager.getProjectSessions(project, kind)) {
     withClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException(action)
     }

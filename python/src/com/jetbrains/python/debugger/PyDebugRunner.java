@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.NetUtils;
@@ -96,6 +97,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
 
+  private static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
+
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
   @Override
@@ -136,6 +139,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
+    if (RegistryManager.getInstance().is("python.debug.asyncio.repl")) {
+      ((PythonRunConfiguration)environment.getRunProfile()).getEnvs().put(ASYNCIO_ENV, "True");
+    }
+
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored -> {
