@@ -20,7 +20,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 0, 0)</warning>;
                }
@@ -32,7 +32,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty();
                }
@@ -48,7 +48,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 1, 1, 1)</warning>;
                }
@@ -60,7 +60,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty(1);
                }
@@ -76,7 +76,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 2, 1, 2)</warning>;
                }
@@ -88,7 +88,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty(1, 2);
                }
@@ -104,7 +104,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(1, 0, 0, 0)</warning>;
                }
@@ -116,7 +116,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyTop(1);
                }
@@ -132,7 +132,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 1, 0, 0)</warning>;
                }
@@ -144,7 +144,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyLeft(1);
                }
@@ -160,7 +160,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 1, 0)</warning>;
                }
@@ -172,7 +172,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyBottom(1);
                }
@@ -188,7 +188,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="'EmptyBorder' is not DPI-aware">new Empty<caret>Border(0, 0, 0, 1)</warning>;
                }
@@ -200,7 +200,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import javax.swing.border.EmptyBorder;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyRight(1);
                }
@@ -211,6 +211,84 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
 
   // Simplifying tests:
 
+  public void testJBUIBordersEmptyWithZero() {
+    doTest(
+      SIMPLIFY_FIX_NAME,
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0)</warning>;
+               }
+             }
+             """),
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = JBUI.Borders.empty();
+               }
+             }
+             """)
+    );
+  }
+
+  public void testJBUIBordersEmptyWithTwoZeros() {
+    doTest(
+      SIMPLIFY_FIX_NAME,
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0)</warning>;
+               }
+             }
+             """),
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = JBUI.Borders.empty();
+               }
+             }
+             """)
+    );
+  }
+
+  public void testJBUIBordersEmptyWithTopAndBottomEqualToLeftAndRight() {
+    doTest(
+      SIMPLIFY_FIX_NAME,
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 1)</warning>;
+               }
+             }
+             """),
+      java("""
+             import com.intellij.util.ui.JBUI;
+             import javax.swing.border.Border;
+
+             class TestClass {
+               void any() {
+                 Border myBorder = JBUI.Borders.empty(1);
+               }
+             }
+             """)
+    );
+  }
+
   public void testJBUIBordersEmptyWithFourZeros() {
     doTest(
       SIMPLIFY_FIX_NAME,
@@ -218,7 +296,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 0, 0)</warning>;
                }
@@ -228,7 +306,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty();
                }
@@ -244,7 +322,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 1, 1, 1)</warning>;
                }
@@ -254,7 +332,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty(1);
                }
@@ -270,7 +348,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 2, 1, 2)</warning>;
                }
@@ -280,7 +358,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.empty(1, 2);
                }
@@ -296,7 +374,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(1, 0, 0, 0)</warning>;
                }
@@ -306,7 +384,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyTop(1);
                }
@@ -322,7 +400,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 1, 0, 0)</warning>;
                }
@@ -332,7 +410,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyLeft(1);
                }
@@ -348,7 +426,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 1, 0)</warning>;
                }
@@ -358,7 +436,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyBottom(1);
                }
@@ -374,7 +452,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">JBUI.Border<caret>s.empty(0, 0, 0, 1)</warning>;
                }
@@ -384,7 +462,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import com.intellij.util.ui.JBUI;
              import javax.swing.border.Border;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = JBUI.Borders.emptyRight(1);
                }
@@ -400,7 +478,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import static com.intellij.util.ui.JBUI.Borders;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">Border<caret>s.empty(0, 0, 0, 0)</warning>;
                }
@@ -410,7 +488,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import static com.intellij.util.ui.JBUI.Borders;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = Borders.empty();
                }
@@ -426,7 +504,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import static com.intellij.util.ui.JBUI.Borders.empty;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = <warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
                }
@@ -436,7 +514,7 @@ public class UseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTest
              import javax.swing.border.Border;
              import static com.intellij.util.ui.JBUI.Borders.empty;
 
-             class UseJBUIBordersEmptyThatCanBeSimplified {
+             class TestClass {
                void any() {
                  Border myBorder = empty();
                }

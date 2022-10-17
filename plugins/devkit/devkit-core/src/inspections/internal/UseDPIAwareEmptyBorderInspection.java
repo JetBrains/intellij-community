@@ -124,49 +124,63 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiCall newExpression = (PsiCall)descriptor.getPsiElement();
       PsiExpressionList list = newExpression.getArgumentList();
-      @NonNls String text;
-      if (list != null && list.getExpressionCount() == 4) {
-        String top = list.getExpressions()[0].getText();
-        String left = list.getExpressions()[1].getText();
-        String bottom = list.getExpressions()[2].getText();
-        String right = list.getExpressions()[3].getText();
+      if (list == null) return;
+      @NonNls String text = null;
+      switch (list.getExpressionCount()) {
+        case 1 -> text = "empty()";
+        case 2 -> {
+          String topAndBottom = list.getExpressions()[0].getText();
+          String leftAndRight = list.getExpressions()[1].getText();
+          if (isZero(topAndBottom, leftAndRight)) {
+            text = "empty()";
+          }
+          else if (topAndBottom.equals(leftAndRight)) {
+            text = "empty(" + topAndBottom + ")";
+          }
+        }
+        case 4 -> {
+          String top = list.getExpressions()[0].getText();
+          String left = list.getExpressions()[1].getText();
+          String bottom = list.getExpressions()[2].getText();
+          String right = list.getExpressions()[3].getText();
+          if (isZero(top, left, bottom, right)) {
+            text = "empty()";
+          }
+          else if (isZero(left, bottom, right)) {
+            text = "emptyTop(" + top + ")";
+          }
+          else if (isZero(top, bottom, right)) {
+            text = "emptyLeft(" + left + ")";
+          }
+          else if (isZero(top, left, right)) {
+            text = "emptyBottom(" + bottom + ")";
+          }
+          else if (isZero(top, left, bottom)) {
+            text = "emptyRight(" + right + ")";
+          }
+          else if (top.equals(left) && left.equals(bottom) && bottom.equals(right)) {
+            text = "empty(" + top + ")";
+          }
+          else if (top.equals(bottom) && right.equals(left)) {
+            text = String.format("empty(%s, %s)", top, left);
+          }
+          else {
+            text = String.format("empty(%s, %s, %s, %s)", top, left, bottom, right);
+          }
+        }
+      }
+      if (text == null) return;
 
-        if (isZero(top, left, bottom, right)) {
-          text = "empty()";
-        }
-        else if (isZero(left, bottom, right)) {
-          text = "emptyTop(" + top + ")";
-        }
-        else if (isZero(top, bottom, right)) {
-          text = "emptyLeft(" + left + ")";
-        }
-        else if (isZero(top, left, right)) {
-          text = "emptyBottom(" + bottom + ")";
-        }
-        else if (isZero(top, left, bottom)) {
-          text = "emptyRight(" + right + ")";
-        }
-        else if (top.equals(left) && left.equals(bottom) && bottom.equals(right)) {
-          text = "empty(" + top + ")";
-        }
-        else if (top.equals(bottom) && right.equals(left)) {
-          text = String.format("empty(%s, %s)", top, left);
-        }
-        else {
-          text = String.format("empty(%s, %s, %s, %s)", top, left, bottom, right);
-        }
+      text = JB_UI_CLASS_NAME + ".Borders." + text;
 
-        text = JB_UI_CLASS_NAME + ".Borders." + text;
-
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-        PsiExpression expression = factory.createExpressionFromText(text, newExpression.getContext());
-        PsiElement newElement = newExpression.replace(expression);
-        PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
-        int offset = el.getTextOffset() + el.getText().length() - 2;
-        Editor editor = PsiEditorUtil.findEditor(el);
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(offset);
-        }
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiExpression expression = factory.createExpressionFromText(text, newExpression.getContext());
+      PsiElement newElement = newExpression.replace(expression);
+      PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+      int offset = el.getTextOffset() + el.getText().length() - 2;
+      Editor editor = PsiEditorUtil.findEditor(el);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(offset);
       }
     }
   }
