@@ -212,14 +212,14 @@ classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-classStatement ::= CLASS classDiagramIdentifier [TILDA genericTypeId TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
+classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
 
-memberStatement ::= classDiagramIdentifier COLON attrOrMethod
+memberStatement ::= classDiagramIdentifier [generic] COLON attrOrMethod
 
-relationStatement ::= classDiagramIdentifier relation classDiagramIdentifier [COLON complexLabel]
+relationStatement ::= classDiagramIdentifier [generic] relation classDiagramIdentifier [generic] [COLON complexLabel]
 complexLabel ::= LABEL+
 
-annotationStatement ::= annotation classDiagramIdentifier
+annotationStatement ::= annotation classDiagramIdentifier [generic]
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 classMembersDocument ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
@@ -235,9 +235,10 @@ private attributes ::= attribute [COMMA attributes]
 arguments ::= attributes
 method ::= attrName OPEN_ROUND [arguments] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
 attrType ::= ATTRIBUTE_WORD
-attrTypeWithGeneric ::= attrType TILDA genericTypeId TILDA
+attrTypeWithGeneric ::= attrType generic
 attrName ::= ATTRIBUTE_WORD
 
+private generic ::= TILDA genericTypeId TILDA
 genericTypeId ::= GENERIC_TYPE {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
