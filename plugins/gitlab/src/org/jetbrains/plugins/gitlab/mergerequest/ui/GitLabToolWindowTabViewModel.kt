@@ -2,11 +2,15 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.mapStateScoped
+import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.collaboration.ui.icon.IconsProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProjectDetailsLoader
@@ -16,6 +20,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory
+import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 
 internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
                                             private val connectionManager: GitLabProjectConnectionManager,
@@ -35,9 +40,14 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
     class Selectors(val selectorVm: GitLabRepositoryAndAccountSelectorViewModel) : NestedViewModel
 
     class MergeRequests(scope: CoroutineScope, connection: GitLabProjectConnection) : NestedViewModel {
+      private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(
+        AsyncImageIconsProvider(scope, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
+      )
+
       private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
         scope,
         historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
+        avatarIconsProvider = avatarIconsProvider,
         projectDetailsLoader = GitLabProjectDetailsLoader(connection.apiClient, connection.repo.repository)
       )
 

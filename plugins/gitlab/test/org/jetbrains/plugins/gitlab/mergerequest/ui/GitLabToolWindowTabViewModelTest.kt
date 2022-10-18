@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.TestGitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
@@ -44,7 +45,7 @@ internal class GitLabToolWindowTabViewModelTest {
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectManager, accountManager)
 
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.Selectors>(vm.nestedViewModelState.value)
-    connectionManager.tryConnect(GitLabProjectMapping(mock(), mock()), mock())
+    connectionManager.tryConnect(GitLabProjectMapping(mock { on(it.serverPath).thenReturn(GitLabServerPath()) }, mock()), mock())
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.MergeRequests>(vm.nestedViewModelState.value)
     connectionManager.disconnect()
     assertInstanceOf<GitLabToolWindowTabViewModel.NestedViewModel.Selectors>(vm.nestedViewModelState.value)
@@ -57,4 +58,3 @@ internal class GitLabToolWindowTabViewModelTest {
     val mainRule = MainDispatcherRule()
   }
 }
-

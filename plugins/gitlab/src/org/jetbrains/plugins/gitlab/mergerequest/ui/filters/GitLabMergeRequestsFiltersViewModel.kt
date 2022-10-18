@@ -3,13 +3,16 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
+import com.intellij.collaboration.ui.icon.IconsProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
+import javax.swing.Icon
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
   val stateFilterState: MutableStateFlow<MergeRequestStateFilterValue?>
@@ -18,11 +21,14 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
 
   suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
+
+  fun loadAvatarIcon(user: GitLabUserDTO): Icon
 }
 
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val projectDetailsLoader: GitLabProjectDetailsLoader
 ) : GitLabMergeRequestsFiltersViewModel,
     ReviewListSearchPanelViewModelBase<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter>(
@@ -59,7 +65,11 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     isValidMergeRequestAccessLevel(member.accessLevel)
   }
 
+  override fun loadAvatarIcon(user: GitLabUserDTO): Icon = avatarIconsProvider.getIcon(user, AVATAR_SIZE)
+
   companion object {
+    private const val AVATAR_SIZE = 20
+
     private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
       return accessLevel == GitLabAccessLevel.REPORTER ||
              accessLevel == GitLabAccessLevel.DEVELOPER ||

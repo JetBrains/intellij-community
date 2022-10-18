@@ -94,7 +94,7 @@ internal class GitLabFiltersPanelFactory(
     participantsLoader: suspend () -> List<GitLabUserDTO>
   ): GitLabUserDTO? {
     return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name)
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.loadAvatarIcon(user))
     }
   }
 
