@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.formatters.python
+package org.jetbrains.completion.full.line.python.formatters
 
 import org.junit.jupiter.api.assertAll
 

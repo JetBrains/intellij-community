@@ -14,8 +14,8 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.completion.full.line.java.JavaIconSet
 import org.jetbrains.completion.full.line.language.LangState
 import org.jetbrains.completion.full.line.language.ModelState
-import org.jetbrains.completion.full.line.language.formatters.JavaCodeFormatter
-import org.jetbrains.completion.full.line.language.formatters.JavaPsiCodeFormatter
+import org.jetbrains.completion.full.line.java.formatters.JavaCodeFormatter
+import org.jetbrains.completion.full.line.java.formatters.JavaPsiCodeFormatter
 import org.jetbrains.completion.full.line.language.supporters.FullLineLanguageSupporterBase
 
 class JavaSupporter : FullLineLanguageSupporterBase() {

@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.formatters
+package org.jetbrains.completion.full.line.java.formatters
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -6,6 +6,7 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.completion.full.line.language.formatters.PsiCodeFormatterBase
 
 class JavaPsiCodeFormatter : PsiCodeFormatterBase() {
 

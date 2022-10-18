@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.formatters.python
+package org.jetbrains.completion.full.line.python.formatters
 
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.python.PythonFileType

@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.java
+package org.jetbrains.completion.full.line.java.formatters
 
 
 internal sealed class JavaFilesPsiCodeFormatterTest : JavaPsiCodeFormatterTest() {
