@@ -162,7 +162,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"
                      key="inspection.use.DPI.aware.insets.display.name"/>
-    <localInspection language="JAVA" shortName="UseDPIAwareBorders"
+    <localInspection language="UAST" shortName="UseDPIAwareBorders"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"

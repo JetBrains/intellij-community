@@ -5,114 +5,157 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.ui.JBUI;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import javax.swing.border.EmptyBorder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
-  private static final CallMatcher JB_UI_BORDERS_EMPTY_METHOD_CALL =
-    CallMatcher.staticCall("com.intellij.util.ui.JBUI.Borders", "empty");
+public class UseDPIAwareEmptyBorderInspection extends DevKitUastInspectionBase {
+  private static final String SWING_EMPTY_BORDER_CLASS_NAME = EmptyBorder.class.getName();
+  private static final String JB_UI_CLASS_NAME = JBUI.class.getName();
+  private static final String JB_UI_BORDERS_CLASS_NAME = JB_UI_CLASS_NAME + ".Borders";
+  private static final Integer ZERO = Integer.valueOf(0);
 
-  public static final String JB_UI_CLASS_NAME = JBUI.class.getName();
-  public static final String SWING_EMPTY_BORDER_CLASS_NAME = EmptyBorder.class.getName();
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends UElement>[] HINTS =
+    new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
 
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
-      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-        if (JB_UI_BORDERS_EMPTY_METHOD_CALL.test(expression) && canBeSimplified(expression)) {
-          holder.registerProblem(expression,
-                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.can.be.simplified"),
-                                 new SimplifyJBUIEmptyBorderCreationQuickFix());
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        UastCallKind expressionKind = expression.getKind();
+        if (expressionKind == UastCallKind.METHOD_CALL) {
+          if (isJBUIBordersEmptyMethodCall(expression) &&
+              canBeSimplified(expression)) {
+            PsiElement sourcePsi = expression.getSourcePsi();
+            if (sourcePsi != null) {
+              holder.registerProblem(sourcePsi,
+                                     DevKitBundle.message("inspections.use.dpi.aware.empty.border.can.be.simplified"),
+                                     new SimplifyJBUIEmptyBorderCreationQuickFix());
+            }
+          }
         }
-        super.visitMethodCallExpression(expression);
-      }
-
-      @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        if (isSwingEmptyBorderConstructor(expression) && isJBUIClassAccessible(expression)) {
-          holder.registerProblem(expression,
-                                 DevKitBundle.message("inspections.use.dpi.aware.empty.border.not.dpi.aware"),
-                                 new ConvertToJBUIBorderQuickFix());
+        else if (expressionKind == UastCallKind.CONSTRUCTOR_CALL &&
+                 isSwingEmptyBorderIntConstructor(expression) &&
+                 isJBUIClassAccessible(expression)) {
+          PsiElement sourcePsi = expression.getSourcePsi();
+          if (sourcePsi != null) {
+            holder.registerProblem(sourcePsi,
+                                   DevKitBundle.message("inspections.use.dpi.aware.empty.border.not.dpi.aware"),
+                                   new ConvertToJBUIBorderQuickFix());
+          }
         }
-        super.visitNewExpression(expression);
+        return super.visitCallExpression(expression);
       }
-    };
+    }, HINTS);
   }
 
-  private static boolean canBeSimplified(PsiMethodCallExpression expression) {
-    PsiType[] types = expression.getArgumentList().getExpressionTypes();
-    if (!(types.length == 1 || types.length == 2 || types.length == 4)) {
+  private static boolean isJBUIBordersEmptyMethodCall(UCallExpression expression) {
+    PsiMethod resolvedMethod = expression.resolve();
+    if (resolvedMethod == null) return false;
+    if (!resolvedMethod.getName().equals("empty")) return false;
+    PsiClass containingClass = resolvedMethod.getContainingClass();
+    if (containingClass == null) return false;
+    return JB_UI_BORDERS_CLASS_NAME.equals(containingClass.getQualifiedName());
+  }
+
+  private static boolean canBeSimplified(UCallExpression expression) {
+    int argumentCount = expression.getValueArgumentCount();
+    if (!(argumentCount == 1 || argumentCount == 2 || argumentCount == 4)) {
       return false;
     }
-    for (PsiType type : types) {
-      if (!PsiType.INT.equals(type)) {
+    List<UExpression> params = expression.getValueArguments();
+    for (UExpression param : params) {
+      if (!PsiType.INT.equals(param.getExpressionType())) {
         return false;
       }
     }
-
-    PsiExpression[] params = expression.getArgumentList().getExpressions();
-    if (params.length == 1) {
-      return params[0].textMatches("0");
-    }
-    else if (params.length == 2) {
-      return areSame(params);
-    }
-    else if (params.length == 4) {
-      if (areSame(params) || (areSame(params[0], params[2]) && areSame(params[1], params[3]))) {
-        return true;
+    switch (params.size()) {
+      case 1 -> {
+        return isZero(params.get(0));
       }
-      int zeros = 0;
-      for (PsiExpression param : params) {
-        zeros += isZero(param.getText()) ? 1 : 0;
+      case 2 -> {
+        return areSame(params.get(0), params.get(1));
       }
-      return zeros == 3;
+      case 4 -> {
+        UExpression top = params.get(0);
+        UExpression left = params.get(1);
+        UExpression bottom = params.get(2);
+        UExpression right = params.get(3);
+        if (areSame(top, left, bottom, right) || (areSame(top, bottom) && areSame(left, right))) {
+          return true;
+        }
+        int zeros = 0;
+        for (UExpression param : params) {
+          zeros += isZero(param) ? 1 : 0;
+        }
+        return zeros == 3;
+      }
     }
     return false;
   }
 
-  private static boolean areSame(PsiExpression... params) {
-    if (params.length < 2) return false;
-
-    String gold = params[0].getText();
-    for (int i = 1; i < params.length; i++) {
-      if (!params[i].textMatches(gold)) {
+  private static boolean areSame(UExpression... expressions) {
+    if (expressions.length < 2) return false;
+    Integer gold = evaluateIntegerValue(expressions[0]);
+    if (gold == null) return false;
+    for (UExpression expression : expressions) {
+      if (!gold.equals(evaluateIntegerValue(expression))) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean isZero(String... args) {
-    if (args.length == 0) return false;
-    for (String arg : args) {
-      if (!"0".equals(arg)) return false;
+  private static boolean isZero(UExpression... expressions) {
+    if (expressions.length == 0) return false;
+    for (UExpression expression : expressions) {
+      if (!ZERO.equals(evaluateIntegerValue(expression))) return false;
     }
     return true;
   }
 
-  private static boolean isSwingEmptyBorderConstructor(@NotNull PsiNewExpression expression) {
-    PsiExpressionList arguments = expression.getArgumentList();
-    if (arguments != null && arguments.getExpressionCount() != 4) return false;
-    PsiType type = expression.getType();
-    return type != null && type.equalsToText(SWING_EMPTY_BORDER_CLASS_NAME);
+  @Nullable
+  private static Integer evaluateIntegerValue(@NotNull UExpression expression) {
+    Object evaluatedExpression = expression.evaluate();
+    if (evaluatedExpression instanceof Integer value) {
+      return value;
+    }
+    return null;
   }
 
-  private static boolean isJBUIClassAccessible(@NotNull PsiElement checkedPlace) {
+  private static boolean isSwingEmptyBorderIntConstructor(@NotNull UCallExpression constructorCall) {
+    if (constructorCall.getValueArgumentCount() != 4) return false;
+    PsiMethod constructor = constructorCall.resolve();
+    if (constructor == null) return false;
+    PsiClass constructorClass = constructor.getContainingClass();
+    if (constructorClass == null) return false;
+    return SWING_EMPTY_BORDER_CLASS_NAME.equals(constructorClass.getQualifiedName());
+  }
+
+
+  private static boolean isJBUIClassAccessible(@NotNull UElement uElement) {
+    PsiElement checkedPlace = uElement.getSourcePsi();
+    if (checkedPlace == null) return false;
     Project project = checkedPlace.getProject();
     PsiClass jbuiClass = JavaPsiFacade.getInstance(project).findClass(JB_UI_CLASS_NAME, checkedPlace.getResolveScope());
     return jbuiClass != null;
@@ -122,67 +165,95 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiCall newExpression = (PsiCall)descriptor.getPsiElement();
-      PsiExpressionList list = newExpression.getArgumentList();
-      if (list == null) return;
-      @NonNls String text = null;
-      switch (list.getExpressionCount()) {
-        case 1 -> text = "empty()";
+      PsiElement element = descriptor.getPsiElement();
+      UCallExpression uExpression = UastContextKt.toUElement(element, UCallExpression.class);
+      if (uExpression == null) return;
+      @NonNls String methodName = null;
+      List<UExpression> paramValues = new ArrayList<>();
+      switch (uExpression.getValueArgumentCount()) {
+        case 1 -> methodName = "empty";
         case 2 -> {
-          String topAndBottom = list.getExpressions()[0].getText();
-          String leftAndRight = list.getExpressions()[1].getText();
+          List<UExpression> params = uExpression.getValueArguments();
+          UExpression topAndBottom = params.get(0);
+          UExpression leftAndRight = params.get(1);
           if (isZero(topAndBottom, leftAndRight)) {
-            text = "empty()";
+            methodName = "empty";
           }
-          else if (topAndBottom.equals(leftAndRight)) {
-            text = "empty(" + topAndBottom + ")";
+          else if (areSame(topAndBottom, leftAndRight)) {
+            methodName = "empty";
+            paramValues.add(topAndBottom);
           }
         }
         case 4 -> {
-          String top = list.getExpressions()[0].getText();
-          String left = list.getExpressions()[1].getText();
-          String bottom = list.getExpressions()[2].getText();
-          String right = list.getExpressions()[3].getText();
+          List<UExpression> params = uExpression.getValueArguments();
+          UExpression top = params.get(0);
+          UExpression left = params.get(1);
+          UExpression bottom = params.get(2);
+          UExpression right = params.get(3);
           if (isZero(top, left, bottom, right)) {
-            text = "empty()";
+            methodName = "empty";
           }
           else if (isZero(left, bottom, right)) {
-            text = "emptyTop(" + top + ")";
+            methodName = "emptyTop";
+            paramValues.add(top);
           }
           else if (isZero(top, bottom, right)) {
-            text = "emptyLeft(" + left + ")";
+            methodName = "emptyLeft";
+            paramValues.add(left);
           }
           else if (isZero(top, left, right)) {
-            text = "emptyBottom(" + bottom + ")";
+            methodName = "emptyBottom";
+            paramValues.add(bottom);
           }
           else if (isZero(top, left, bottom)) {
-            text = "emptyRight(" + right + ")";
+            methodName = "emptyRight";
+            paramValues.add(right);
           }
-          else if (top.equals(left) && left.equals(bottom) && bottom.equals(right)) {
-            text = "empty(" + top + ")";
+          else if (areSame(top, left, bottom, right)) {
+            methodName = "empty";
+            paramValues.add(top);
           }
-          else if (top.equals(bottom) && right.equals(left)) {
-            text = String.format("empty(%s, %s)", top, left);
+          else if (areSame(top, bottom) && areSame(right, left)) {
+            methodName = "empty";
+            paramValues.add(top);
+            paramValues.add(left);
           }
           else {
-            text = String.format("empty(%s, %s, %s, %s)", top, left, bottom, right);
+            methodName = "empty";
+            paramValues.add(top);
+            paramValues.add(left);
+            paramValues.add(bottom);
+            paramValues.add(right);
           }
         }
       }
-      if (text == null) return;
+      if (methodName == null) return;
 
-      text = JB_UI_CLASS_NAME + ".Borders." + text;
-
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      PsiExpression expression = factory.createExpressionFromText(text, newExpression.getContext());
-      PsiElement newElement = newExpression.replace(expression);
-      PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
-      int offset = el.getTextOffset() + el.getText().length() - 2;
-      Editor editor = PsiEditorUtil.findEditor(el);
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
+      UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+      if (generationPlugin == null) return;
+      UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+      UCallExpression emptyBorderFactoryMethodCall = pluginElementFactory.createCallExpression(
+        getReceiverIfNeeded(pluginElementFactory, uExpression, element),
+        methodName,
+        paramValues,
+        null,
+        UastCallKind.METHOD_CALL,
+        element
+      );
+      if (emptyBorderFactoryMethodCall == null) return;
+      generationPlugin.replace(uExpression, emptyBorderFactoryMethodCall, UCallExpression.class);
     }
+  }
+
+  private static @Nullable UExpression getReceiverIfNeeded(UastElementFactory pluginElementFactory,
+                                                           UCallExpression uCallExpression,
+                                                           PsiElement context) {
+    if (!uCallExpression.getLang().is(JavaLanguage.INSTANCE) && uCallExpression.getUastParent() instanceof UQualifiedReferenceExpression) {
+      // workaround for IDEA-304078
+      return null;
+    }
+    UExpression receiver = uCallExpression.getReceiver();
+    return receiver != null ? receiver : pluginElementFactory.createQualifiedReference(JB_UI_BORDERS_CLASS_NAME, context);
   }
 
   private static class SimplifyJBUIEmptyBorderCreationQuickFix extends AbstractEmptyBorderQuickFix {
