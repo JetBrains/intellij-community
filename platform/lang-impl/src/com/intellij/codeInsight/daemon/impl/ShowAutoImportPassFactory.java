@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,Pass.LOCAL_INSPECTIONS}, null, false, -1);
   }
 
   @Override
