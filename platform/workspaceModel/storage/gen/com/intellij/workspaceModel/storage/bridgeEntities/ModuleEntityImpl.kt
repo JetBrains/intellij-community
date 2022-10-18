@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -460,7 +460,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
   }
 }
 
-class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable {
+class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEntity>(), SoftLinkable {
   lateinit var name: String
   var type: String? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
@@ -468,8 +468,8 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     for (item in dependencies) {
       when (item) {
         is ModuleDependencyItem.Exportable -> {
@@ -493,7 +493,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     for (item in dependencies) {
       when (item) {
         is ModuleDependencyItem.Exportable -> {
@@ -516,7 +516,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in dependencies) {
@@ -550,7 +550,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val dependencies_data = dependencies.map {
       val _it = it
@@ -641,7 +641,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     return clonedEntity
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return ModuleId(name)
   }
 

@@ -48,7 +48,7 @@ internal class ModuleBridgeImpl(
       project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId != moduleEntityId) return@forEach
+            if (it.entity.symbolicId != moduleEntityId) return@forEach
 
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 

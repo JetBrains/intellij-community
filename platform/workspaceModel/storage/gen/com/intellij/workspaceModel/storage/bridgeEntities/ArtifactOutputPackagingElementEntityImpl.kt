@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -171,8 +171,8 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   var artifact: ArtifactId? = null
 
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     val optionalLink_artifact = artifact
     if (optionalLink_artifact != null) {
       result.add(optionalLink_artifact)
@@ -180,14 +180,14 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     val optionalLink_artifact = artifact
     if (optionalLink_artifact != null) {
       index.index(this, optionalLink_artifact)
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val optionalLink_artifact = artifact
@@ -202,7 +202,7 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     var artifact_data_optional = if (artifact != null) {
       val artifact___data = if (artifact!! == oldLink) {

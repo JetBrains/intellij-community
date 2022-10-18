@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -129,24 +129,24 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
   }
 }
 
-class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistentId<ComposedIdSoftRefEntity>(), SoftLinkable {
+class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ComposedIdSoftRefEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var link: NameId
 
   fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   fun isLinkInitialized(): Boolean = ::link.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     result.add(link)
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     index.index(this, link)
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_link = mutablePreviousSet.remove(link)
@@ -158,7 +158,7 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val link_data = if (link == oldLink) {
       changed = true
@@ -195,7 +195,7 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return ComposedId(myName, link)
   }
 

@@ -13,7 +13,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
 
-interface LibraryEntity : WorkspaceEntityWithPersistentId {
+interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val name: String
     val tableId: LibraryTableId
 
@@ -23,7 +23,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
     @Child val libraryProperties: LibraryPropertiesEntity?
     @Child val libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
 
-    override val persistentId: LibraryId
+    override val symbolicId: LibraryId
         get() = LibraryId(name, tableId)
 
   //region generated code

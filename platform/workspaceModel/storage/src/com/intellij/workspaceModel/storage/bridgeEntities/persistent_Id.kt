@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import org.jetbrains.deft.annotations.Open
 import java.io.Serializable
 
-data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity> {
+data class ModuleId(val name: String) : SymbolicEntityId<ModuleEntity> {
   override val presentableName: String
     get() = name
 
@@ -18,12 +18,12 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity> {
   override fun hashCode(): Int  = name.hashCode()
 }
 
-data class FacetId(val name: String, val type: String, val parentId: ModuleId) : PersistentEntityId<FacetEntity> {
+data class FacetId(val name: String, val type: String, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
   override val presentableName: String
     get() = name
 }
 
-data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity> {
+data class ArtifactId(val name: String) : SymbolicEntityId<ArtifactEntity> {
   override val presentableName: String
     get() = name
 }
@@ -83,7 +83,7 @@ sealed class LibraryTableId : Serializable {
   abstract val level: String
 }
 
-data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity> {
+data class LibraryId(val name: String, val tableId: LibraryTableId) : SymbolicEntityId<LibraryEntity> {
   override val presentableName: String
     get() = name
 

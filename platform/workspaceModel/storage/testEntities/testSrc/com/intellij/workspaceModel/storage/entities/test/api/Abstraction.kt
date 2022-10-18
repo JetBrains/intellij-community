@@ -11,12 +11,12 @@ import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 
 
-interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
+interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
   val data: String
   val child: @Child CompositeBaseEntity?
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = HeadAbstractionPersistentId(data)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = HeadAbstractionSymbolicId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -43,7 +43,7 @@ fun MutableEntityStorage.modifyEntity(entity: HeadAbstractionEntity, modificatio
   HeadAbstractionEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class HeadAbstractionPersistentId(override val presentableName: String) : PersistentEntityId<HeadAbstractionEntity>
+data class HeadAbstractionSymbolicId(override val presentableName: String) : SymbolicEntityId<HeadAbstractionEntity>
 
 
 @Abstract

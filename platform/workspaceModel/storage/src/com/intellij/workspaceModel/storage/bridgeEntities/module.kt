@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
-interface ModuleEntity : WorkspaceEntityWithPersistentId {
+interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     val name: String
 
     val type: String?
@@ -25,7 +25,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
     @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
     val facets: List<@Child FacetEntity>
 
-    override val persistentId: ModuleId
+    override val symbolicId: ModuleId
         get() = ModuleId(name)
 
   //region generated code

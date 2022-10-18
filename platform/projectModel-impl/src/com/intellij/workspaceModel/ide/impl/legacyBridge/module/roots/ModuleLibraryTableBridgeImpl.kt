@@ -59,7 +59,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
-      initialId = entity.persistentId,
+      initialId = entity.symbolicId,
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = storageBuilder
     )

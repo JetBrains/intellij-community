@@ -364,7 +364,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
     val module = createModule(
-      persistentId = moduleEntity.persistentId,
+      symbolicId = moduleEntity.symbolicId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
@@ -414,7 +414,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   abstract fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity
 
   abstract fun createModule(
-    persistentId: ModuleId,
+    symbolicId: ModuleId,
     name: String,
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,

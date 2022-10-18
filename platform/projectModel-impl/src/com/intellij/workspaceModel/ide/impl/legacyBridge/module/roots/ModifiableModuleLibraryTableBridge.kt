@@ -39,7 +39,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
           //if a module-level library from ModifiableRootModel is changed, the changes must not be committed to the model until
           //ModifiableRootModel is committed. So we place copies of LibraryBridge instances to the modifiable model. If the model is disposed
           //these copies are disposed; if the model is committed they'll be included to the model, and the original instances will be disposed.
-          val modifiableCopy = LibraryBridgeImpl(this, modifiableModel.project, libraryEntry.persistentId,
+          val modifiableCopy = LibraryBridgeImpl(this, modifiableModel.project, libraryEntry.symbolicId,
                                                  modifiableModel.entityStorageOnDiff,
                                                  modifiableModel.diff)
           copyToOriginal[modifiableCopy] = originalLibrary
@@ -94,7 +94,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   private fun createAndAddLibrary(libraryEntity: LibraryEntity, exported: Boolean,
                                   scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
-    val libraryId = libraryEntity.persistentId
+    val libraryId = libraryEntity.symbolicId
 
     modifiableModel.appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(library = libraryId, exported = exported,
                                                                                        scope = scope))
@@ -102,7 +102,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
       project = modifiableModel.project,
-      initialId = libraryEntity.persistentId,
+      initialId = libraryEntity.symbolicId,
       initialEntityStorage = modifiableModel.entityStorageOnDiff,
       targetBuilder = modifiableModel.diff
     )
@@ -110,7 +110,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     return library
   }
 
-  private fun getTableId() = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.persistentId)
+  private fun getTableId() = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.symbolicId)
 
   internal fun addLibraryCopy(original: LibraryBridgeImpl,
                               exported: Boolean,
@@ -152,7 +152,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       return
     }
 
-    val libraryId = libraryEntity.persistentId
+    val libraryId = libraryEntity.symbolicId
     modifiableModel.removeDependencies { _, item ->
       item is ModuleDependencyItem.Exportable.LibraryDependency && item.library == libraryId
     }

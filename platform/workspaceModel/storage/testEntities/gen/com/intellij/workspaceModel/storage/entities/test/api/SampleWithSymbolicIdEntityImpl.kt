@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -27,10 +27,10 @@ import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistentIdEntityData) : SampleWithPersistentIdEntity, WorkspaceEntityBase() {
+open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEntityData) : SampleWithSymbolicIdEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithPersistentIdEntity::class.java,
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithSymbolicIdEntity::class.java,
                                                                             ChildWpidSampleEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
@@ -62,8 +62,8 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
     return connections
   }
 
-  class Builder(var result: SampleWithPersistentIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithPersistentIdEntity>(), SampleWithPersistentIdEntity.Builder {
-    constructor() : this(SampleWithPersistentIdEntityData())
+  class Builder(var result: SampleWithSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithSymbolicIdEntity>(), SampleWithSymbolicIdEntity.Builder {
+    constructor() : this(SampleWithSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -72,7 +72,7 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
           return
         }
         else {
-          error("Entity SampleWithPersistentIdEntity is already created in a different builder")
+          error("Entity SampleWithSymbolicIdEntity is already created in a different builder")
         }
       }
 
@@ -96,26 +96,26 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isStringPropertyInitialized()) {
-        error("Field SampleWithPersistentIdEntity#stringProperty should be initialized")
+        error("Field SampleWithSymbolicIdEntity#stringProperty should be initialized")
       }
       if (!getEntityData().isStringListPropertyInitialized()) {
-        error("Field SampleWithPersistentIdEntity#stringListProperty should be initialized")
+        error("Field SampleWithSymbolicIdEntity#stringListProperty should be initialized")
       }
       if (!getEntityData().isStringMapPropertyInitialized()) {
-        error("Field SampleWithPersistentIdEntity#stringMapProperty should be initialized")
+        error("Field SampleWithSymbolicIdEntity#stringMapProperty should be initialized")
       }
       if (!getEntityData().isFilePropertyInitialized()) {
-        error("Field SampleWithPersistentIdEntity#fileProperty should be initialized")
+        error("Field SampleWithSymbolicIdEntity#fileProperty should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
-          error("Field SampleWithPersistentIdEntity#children should be initialized")
+          error("Field SampleWithSymbolicIdEntity#children should be initialized")
         }
       }
       else {
         if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
-          error("Field SampleWithPersistentIdEntity#children should be initialized")
+          error("Field SampleWithSymbolicIdEntity#children should be initialized")
         }
       }
     }
@@ -133,7 +133,7 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as SampleWithPersistentIdEntity
+      dataSource as SampleWithSymbolicIdEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.booleanProperty != dataSource.booleanProperty) this.booleanProperty = dataSource.booleanProperty
       if (this.stringProperty != dataSource.stringProperty) this.stringProperty = dataSource.stringProperty
@@ -264,12 +264,12 @@ open class SampleWithPersistentIdEntityImpl(val dataSource: SampleWithPersistent
         changedProperty.add("nullableData")
       }
 
-    override fun getEntityData(): SampleWithPersistentIdEntityData = result ?: super.getEntityData() as SampleWithPersistentIdEntityData
-    override fun getEntityClass(): Class<SampleWithPersistentIdEntity> = SampleWithPersistentIdEntity::class.java
+    override fun getEntityData(): SampleWithSymbolicIdEntityData = result ?: super.getEntityData() as SampleWithSymbolicIdEntityData
+    override fun getEntityClass(): Class<SampleWithSymbolicIdEntity> = SampleWithSymbolicIdEntity::class.java
   }
 }
 
-class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<SampleWithPersistentIdEntity>() {
+class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SampleWithSymbolicIdEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
   lateinit var stringListProperty: MutableList<String>
@@ -283,8 +283,8 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
   fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleWithPersistentIdEntity> {
-    val modifiable = SampleWithPersistentIdEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
+    val modifiable = SampleWithSymbolicIdEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
       modifiable.snapshot = diff
@@ -295,9 +295,9 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SampleWithPersistentIdEntity {
+  override fun createEntity(snapshot: EntityStorage): SampleWithSymbolicIdEntity {
     return getCached(snapshot) {
-      val entity = SampleWithPersistentIdEntityImpl(this)
+      val entity = SampleWithSymbolicIdEntityImpl(this)
       entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
@@ -305,19 +305,19 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
     }
   }
 
-  override fun clone(): SampleWithPersistentIdEntityData {
+  override fun clone(): SampleWithSymbolicIdEntityData {
     val clonedEntity = super.clone()
-    clonedEntity as SampleWithPersistentIdEntityData
+    clonedEntity as SampleWithSymbolicIdEntityData
     clonedEntity.stringListProperty = clonedEntity.stringListProperty.toMutableWorkspaceList()
     return clonedEntity
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return SamplePersistentId(stringProperty)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return SampleSymbolicId(stringProperty)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return SampleWithPersistentIdEntity::class.java
+    return SampleWithSymbolicIdEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -327,9 +327,8 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SampleWithPersistentIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty,
-                                        entitySource) {
-      this.nullableData = this@SampleWithPersistentIdEntityData.nullableData
+    return SampleWithSymbolicIdEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
+      this.nullableData = this@SampleWithSymbolicIdEntityData.nullableData
     }
   }
 
@@ -342,7 +341,7 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SampleWithPersistentIdEntityData
+    other as SampleWithSymbolicIdEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.booleanProperty != other.booleanProperty) return false
@@ -358,7 +357,7 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SampleWithPersistentIdEntityData
+    other as SampleWithSymbolicIdEntityData
 
     if (this.booleanProperty != other.booleanProperty) return false
     if (this.stringProperty != other.stringProperty) return false

@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -15,14 +15,16 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistentIdData) : OneEntityWithPersistentId, WorkspaceEntityBase() {
+open class SymbolicIdEntityImpl(val dataSource: SymbolicIdEntityData) : SymbolicIdEntity, WorkspaceEntityBase() {
 
   companion object {
 
@@ -32,15 +34,15 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
 
   }
 
-  override val myName: String
-    get() = dataSource.myName
+  override val data: String
+    get() = dataSource.data
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
 
-  class Builder(var result: OneEntityWithPersistentIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithPersistentId>(), OneEntityWithPersistentId.Builder {
-    constructor() : this(OneEntityWithPersistentIdData())
+  class Builder(var result: SymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SymbolicIdEntity>(), SymbolicIdEntity.Builder {
+    constructor() : this(SymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -49,7 +51,7 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
           return
         }
         else {
-          error("Entity OneEntityWithPersistentId is already created in a different builder")
+          error("Entity SymbolicIdEntity is already created in a different builder")
         }
       }
 
@@ -71,8 +73,8 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isMyNameInitialized()) {
-        error("Field OneEntityWithPersistentId#myName should be initialized")
+      if (!getEntityData().isDataInitialized()) {
+        error("Field SymbolicIdEntity#data should be initialized")
       }
     }
 
@@ -82,9 +84,9 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as OneEntityWithPersistentId
+      dataSource as SymbolicIdEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.myName != dataSource.myName) this.myName = dataSource.myName
+      if (this.data != dataSource.data) this.data = dataSource.data
       if (parents != null) {
       }
     }
@@ -99,26 +101,26 @@ open class OneEntityWithPersistentIdImpl(val dataSource: OneEntityWithPersistent
 
       }
 
-    override var myName: String
-      get() = getEntityData().myName
+    override var data: String
+      get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
-    override fun getEntityData(): OneEntityWithPersistentIdData = result ?: super.getEntityData() as OneEntityWithPersistentIdData
-    override fun getEntityClass(): Class<OneEntityWithPersistentId> = OneEntityWithPersistentId::class.java
+    override fun getEntityData(): SymbolicIdEntityData = result ?: super.getEntityData() as SymbolicIdEntityData
+    override fun getEntityClass(): Class<SymbolicIdEntity> = SymbolicIdEntity::class.java
   }
 }
 
-class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersistentId<OneEntityWithPersistentId>() {
-  lateinit var myName: String
+class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SymbolicIdEntity>() {
+  lateinit var data: String
 
-  fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+  fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithPersistentId> {
-    val modifiable = OneEntityWithPersistentIdImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SymbolicIdEntity> {
+    val modifiable = SymbolicIdEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
       modifiable.snapshot = diff
@@ -129,9 +131,9 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): OneEntityWithPersistentId {
+  override fun createEntity(snapshot: EntityStorage): SymbolicIdEntity {
     return getCached(snapshot) {
-      val entity = OneEntityWithPersistentIdImpl(this)
+      val entity = SymbolicIdEntityImpl(this)
       entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
@@ -139,12 +141,12 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return OnePersistentId(myName)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return LinkedListEntityId(data)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return OneEntityWithPersistentId::class.java
+    return SymbolicIdEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -154,7 +156,7 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return OneEntityWithPersistentId(myName, entitySource) {
+    return SymbolicIdEntity(data, entitySource) {
     }
   }
 
@@ -167,10 +169,10 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as OneEntityWithPersistentIdData
+    other as SymbolicIdEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.myName != other.myName) return false
+    if (this.data != other.data) return false
     return true
   }
 
@@ -178,21 +180,21 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as OneEntityWithPersistentIdData
+    other as SymbolicIdEntityData
 
-    if (this.myName != other.myName) return false
+    if (this.data != other.data) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + myName.hashCode()
+    result = 31 * result + data.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + myName.hashCode()
+    result = 31 * result + data.hashCode()
     return result
   }
 

@@ -116,7 +116,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
     }
 
     private fun hasDependencyOn(library: LibraryEntity, project: Project): Boolean {
-      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
+      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.symbolicId)
     }
   }
 }

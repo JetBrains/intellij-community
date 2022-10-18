@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -176,7 +176,7 @@ open class TreeMultiparentRootEntityImpl(val dataSource: TreeMultiparentRootEnti
   }
 }
 
-class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculablePersistentId<TreeMultiparentRootEntity>() {
+class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculableSymbolicId<TreeMultiparentRootEntity>() {
   lateinit var data: String
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
@@ -203,8 +203,8 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculablePersiste
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return TreeMultiparentPersistentId(data)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return TreeMultiparentSymbolicId(data)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

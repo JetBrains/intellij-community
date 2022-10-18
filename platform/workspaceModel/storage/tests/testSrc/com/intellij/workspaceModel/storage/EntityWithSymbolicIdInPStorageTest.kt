@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
 import org.junit.Assert.assertEquals
@@ -19,7 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 
-class EntityWithPersistentIdInPStorageTest {
+class EntityWithSymbolicIdInPStorageTest {
 
   @JvmField
   @Rule
@@ -89,7 +89,7 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `add entity with existing persistent id`() {
     builder = MutableEntityStorageImpl.create()
-    expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
+    expectedException.expectCause(CoreMatchers.isA(SymbolicIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     builder.addNamedEntity("MyName")
   }
@@ -103,7 +103,7 @@ class EntityWithPersistentIdInPStorageTest {
       builder.addNamedEntity("MyName")
     }
     catch (e: AssertionError) {
-      assert(e.cause is PersistentIdAlreadyExistsException)
+      assert(e.cause is SymbolicIdAlreadyExistsException)
       assertOneElement(builder.entities(NamedEntity::class.java).toList())
     }
   }
@@ -111,7 +111,7 @@ class EntityWithPersistentIdInPStorageTest {
   @Test
   fun `modify entity to repeat persistent id`() {
     builder = MutableEntityStorageImpl.create()
-    expectedException.expectCause(CoreMatchers.isA(PersistentIdAlreadyExistsException::class.java))
+    expectedException.expectCause(CoreMatchers.isA(SymbolicIdAlreadyExistsException::class.java))
     builder.addNamedEntity("MyName")
     val namedEntity = builder.addNamedEntity("AnotherId")
     builder.modifyEntity(namedEntity) {
@@ -130,7 +130,7 @@ class EntityWithPersistentIdInPStorageTest {
       }
     }
     catch (e: AssertionError) {
-      assert(e.cause is PersistentIdAlreadyExistsException)
+      assert(e.cause is SymbolicIdAlreadyExistsException)
       assertOneElement(builder.entities(NamedEntity::class.java).toList().filter { it.myName == "MyName" })
     }
   }

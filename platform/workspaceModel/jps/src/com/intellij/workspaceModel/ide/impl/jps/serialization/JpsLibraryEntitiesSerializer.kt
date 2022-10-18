@@ -223,7 +223,7 @@ private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRoo
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isExternalStorage: Boolean): Element {
   val libraryTag = Element(LIBRARY_TAG)
-  val legacyName = LibraryNameGenerator.getLegacyLibraryName(library.persistentId)
+  val legacyName = LibraryNameGenerator.getLegacyLibraryName(library.symbolicId)
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }

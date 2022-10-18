@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -178,7 +178,7 @@ open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : Kotl
   }
 }
 
-class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<KotlinScriptEntity>() {
+class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptEntity>() {
   lateinit var path: String
 
   fun isPathInitialized(): Boolean = ::path.isInitialized
@@ -205,7 +205,7 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<Ko
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return ScriptId(path)
   }
 

@@ -42,11 +42,11 @@ class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider<Exclu
 
     ContentRootEntity contentRoot = RootsKt.getContentRoot(entity);
     if (contentRoot != null) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(contentRoot.getModule().getPersistentId(), entity.getUrl());
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(contentRoot.getModule().getSymbolicId(), entity.getUrl());
     }
     LibraryEntity library = DependenciesKt.getLibrary(entity);
     if (library != null) {
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(library.getPersistentId(), true);
+      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(library.getSymbolicId(), true);
     }
     return Collections.emptyList();
   }

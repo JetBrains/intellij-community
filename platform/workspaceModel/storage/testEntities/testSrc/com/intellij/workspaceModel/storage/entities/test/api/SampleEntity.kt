@@ -201,22 +201,22 @@ fun MutableEntityStorage.modifyEntity(entity: ChildSourceEntity, modification: C
   ChildSourceEntity.Builder::class.java, entity, modification)
 //endregion
 
-interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
+interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: LinkedListEntityId
+  override val symbolicId: LinkedListEntityId
     get() {
       return LinkedListEntityId(data)
     }
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : PersistentIdEntity, WorkspaceEntity.Builder<PersistentIdEntity>, ObjBuilder<PersistentIdEntity> {
+  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity>, ObjBuilder<SymbolicIdEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<PersistentIdEntity, Builder>() {
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): PersistentIdEntity {
+  companion object : Type<SymbolicIdEntity, Builder>() {
+    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SymbolicIdEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -229,7 +229,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: PersistentIdEntity, modification: PersistentIdEntity.Builder.() -> Unit) = modifyEntity(
-  PersistentIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SymbolicIdEntity, modification: SymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+  SymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 

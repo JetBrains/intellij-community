@@ -259,7 +259,7 @@ class WorkspaceModelSnapshot {
                                  ((EntityChange.Replaced<LibraryEntity>)change).getNewEntity(), storage);
         }
         else if (change instanceof EntityChange.Removed<LibraryEntity>) {
-          snapshot.removeLibrary(((EntityChange.Removed<LibraryEntity>)change).getEntity().getPersistentId());
+          snapshot.removeLibrary(((EntityChange.Removed<LibraryEntity>)change).getEntity().getSymbolicId());
         }
         else {
           throw new IllegalStateException("Unexpected change " + change.getClass());
@@ -364,8 +364,8 @@ class WorkspaceModelSnapshot {
     private void updateLibrary(@NotNull LibraryEntity oldEntity,
                                @NotNull LibraryEntity newEntity,
                                @NotNull EntityStorage storage) {
-      //LibraryId oldId = oldEntity.getPersistentId();
-      LibraryId newId = newEntity.getPersistentId();
+      //LibraryId oldId = oldEntity.getSymbolicId();
+      LibraryId newId = newEntity.getSymbolicId();
       //if (!oldId.equals(newId)) {
       //  todo[lene] test rename of a lib
       //}

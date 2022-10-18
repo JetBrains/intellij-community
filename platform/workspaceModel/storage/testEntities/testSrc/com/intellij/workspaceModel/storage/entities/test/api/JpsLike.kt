@@ -10,14 +10,14 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-interface ModuleTestEntity : WorkspaceEntityWithPersistentId {
+interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
   val name: String
 
   val contentRoots: List<@Child ContentRootTestEntity>
   val facets: List<@Child FacetTestEntity>
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = ModuleTestEntityPersistentId(name)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -134,23 +134,23 @@ fun MutableEntityStorage.modifyEntity(entity: SourceRootTestEntity, modification
   SourceRootTestEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class ModuleTestEntityPersistentId(val name: String) : PersistentEntityId<ModuleTestEntity> {
+data class ModuleTestEntitySymbolicId(val name: String) : SymbolicEntityId<ModuleTestEntity> {
   override val presentableName: String
     get() = name
 }
 
-data class FacetTestEntityPersistentId(val name: String) : PersistentEntityId<FacetTestEntity> {
+data class FacetTestEntitySymbolicId(val name: String) : SymbolicEntityId<FacetTestEntity> {
   override val presentableName: String
     get() = name
 }
 
-interface FacetTestEntity : WorkspaceEntityWithPersistentId {
+interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
   val data: String
   val moreData: String
   val module: ModuleTestEntity
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = FacetTestEntityPersistentId(data)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)

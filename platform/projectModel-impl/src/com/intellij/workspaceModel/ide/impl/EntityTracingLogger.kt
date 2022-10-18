@@ -37,7 +37,7 @@ class EntityTracingLogger {
     }
   }
 
-  private class EntityTracingListener(private val entityId: PersistentEntityId<*>) : WorkspaceModelChangeListener {
+  private class EntityTracingListener(private val entityId: SymbolicEntityId<*>) : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       event.getAllChanges().forEach {
         when (it) {
@@ -52,7 +52,7 @@ class EntityTracingLogger {
     }
 
     private fun printInfo(action: String, entity: WorkspaceEntity) {
-      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId == entityId) {
+      if ((entity as? WorkspaceEntityWithSymbolicId)?.symbolicId == entityId) {
         LOG.info("$action: ${entity.toDebugString()}", Throwable())
       }
     }

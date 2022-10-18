@@ -39,7 +39,7 @@ class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<Jav
   static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> collectBuildersOnAddedEntityWithDataExtractor(@NotNull E entity,
                                                                                                                         @NotNull Function<? super E, @NotNull Pair<VirtualFileUrl, ModuleEntity>> extractor) {
     Pair<VirtualFileUrl, ModuleEntity> data = extractor.fun(entity);
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().getPersistentId(), data.getFirst());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().getSymbolicId(), data.getFirst());
   }
 
   @NotNull
@@ -51,7 +51,7 @@ class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<Jav
     if (newData != null) {
       Pair<VirtualFileUrl, ModuleEntity> oldData = extractor.fun(oldEntity);
       if (oldData == null || !newData.getFirst().equals(oldData.getFirst())) {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().getPersistentId(), newData.getFirst());
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().getSymbolicId(), newData.getFirst());
       }
     }
     return Collections.emptyList();
@@ -72,6 +72,6 @@ class JavaSourceRootIndexableEntityProvider implements ParentEntityDependent<Jav
                                                                                                         @NotNull SourceRootEntity newEntity,
                                                                                                         @NotNull Project project) {
     if(oldEntity.getJavaSourceRoots().equals(newEntity.getJavaSourceRoots())) return Collections.emptyList();
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getPersistentId(), newEntity.getUrl());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getSymbolicId(), newEntity.getUrl());
   }
 }

@@ -181,7 +181,7 @@ fun MutableEntityStorage.addFacetEntity(name: String,
                                         module: ModuleEntity,
                                         underlyingFacet: FacetEntity?,
                                         source: EntitySource): FacetEntity {
-  val entity = FacetEntity(name, facetType, module.persistentId, source) {
+  val entity = FacetEntity(name, facetType, module.symbolicId, source) {
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
@@ -335,11 +335,11 @@ val ModuleEntity.sourceRoots: List<SourceRootEntity>
 
 fun ModuleEntity.getModuleLibraries(storage: EntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java)
-    .filter { (it.persistentId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
+    .filter { (it.symbolicId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }
 
 val EntityStorage.projectLibraries
-  get() = entities(LibraryEntity::class.java).filter { it.persistentId.tableId == LibraryTableId.ProjectLibraryTableId }
+  get() = entities(LibraryEntity::class.java).filter { it.symbolicId.tableId == LibraryTableId.ProjectLibraryTableId }
 
 
 /**

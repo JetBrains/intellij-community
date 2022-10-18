@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -188,7 +188,7 @@ open class NamedEntityImpl(val dataSource: NamedEntityData) : NamedEntity, Works
   }
 }
 
-class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEntity>() {
+class NamedEntityData : WorkspaceEntityData.WithCalculableSymbolicId<NamedEntity>() {
   lateinit var myName: String
   var additionalProperty: String? = null
 
@@ -216,7 +216,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return NameId(myName)
   }
 

@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
-interface FacetEntity: WorkspaceEntityWithPersistentId {
+interface FacetEntity: WorkspaceEntityWithSymbolicId {
     val name: String
     val module: ModuleEntity
     val facetType: String
@@ -19,7 +19,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
 
     // underlyingFacet is a parent facet!!
     val underlyingFacet: FacetEntity?
-    override val persistentId: FacetId
+    override val symbolicId: FacetId
         get() = FacetId(name, facetType, moduleId)
 
   //region generated code

@@ -63,14 +63,14 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
                                  JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
   }
 
-  return ArtifactBridge(it.persistentId, entityStorage, project, null, null)
+  return ArtifactBridge(it.symbolicId, entityStorage, project, null, null)
 }
 
 private fun createInvalidArtifact(it: ArtifactEntity,
                                   entityStorage: VersionedEntityStorage,
                                   project: Project,
                                   @Nls message: String): InvalidArtifactBridge {
-  val invalidArtifactBridge = InvalidArtifactBridge(it.persistentId, entityStorage, project, null, message)
+  val invalidArtifactBridge = InvalidArtifactBridge(it.symbolicId, entityStorage, project, null, message)
 
   val errorDescription = ArtifactLoadingErrorDescription(project, invalidArtifactBridge)
   ProjectLoadingErrorsNotifier.getInstance(project).registerError(errorDescription)

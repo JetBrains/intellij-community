@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -239,7 +239,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
   }
 }
 
-class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleTestEntity>() {
+class ModuleTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleTestEntity>() {
   lateinit var name: String
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
@@ -266,8 +266,8 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Modu
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return ModuleTestEntityPersistentId(name)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return ModuleTestEntitySymbolicId(name)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

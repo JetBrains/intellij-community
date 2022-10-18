@@ -367,7 +367,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.persistentId)!!
+        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.symbolicId)!!
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->

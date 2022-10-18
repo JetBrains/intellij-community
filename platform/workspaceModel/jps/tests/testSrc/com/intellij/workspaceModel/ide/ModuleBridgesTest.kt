@@ -198,7 +198,7 @@ class ModuleBridgesTest {
   fun `test rename module and all dependencies in other modules`() = runBlocking {
     val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
       assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
-                      .first { it.persistentId.name == moduleName }.dependencies
+                      .first { it.symbolicId.name == moduleName }.dependencies
                       .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
     }
 
@@ -485,14 +485,14 @@ class ModuleBridgesTest {
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
-      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
+      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
       ).toMutableList()
     }
 

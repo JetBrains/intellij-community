@@ -138,13 +138,13 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   indexes.softLinks.clear()
   indexes.virtualFileIndex.clear()
   indexes.entitySourceIndex.clear()
-  indexes.persistentIdIndex.clear()
+  indexes.symbolicIdIndex.clear()
   indexes.externalMappings.clear()
 
   indexes.softLinks.copyFrom(backupBuilder.indexes.softLinks)
   indexes.virtualFileIndex.copyFrom(backupBuilder.indexes.virtualFileIndex)
   indexes.entitySourceIndex.copyFrom(backupBuilder.indexes.entitySourceIndex)
-  indexes.persistentIdIndex.copyFrom(backupBuilder.indexes.persistentIdIndex)
+  indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
   TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
