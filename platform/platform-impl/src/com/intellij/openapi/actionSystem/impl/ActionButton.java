@@ -34,10 +34,12 @@ import javax.accessibility.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.RGBImageFilter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
   private static final Logger LOG = Logger.getInstance(ActionButton.class);
@@ -357,7 +359,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myDisabledIcon = null;
     }
     else if (IconLoader.isGoodSize(myIcon)) {
-      myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+      Supplier<RGBImageFilter> disableFilter = myPresentation.getClientProperty(Presentation.DISABLE_ICON_FILTER);
+      myDisabledIcon = IconLoader.getDisabledIcon(myIcon, disableFilter, this);
     }
     else {
       myDisabledIcon = null;
