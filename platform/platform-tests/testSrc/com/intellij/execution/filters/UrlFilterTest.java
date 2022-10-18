@@ -52,6 +52,8 @@ public class UrlFilterTest extends BasePlatformTestCase {
   public void testUrlEncodedFileLinks() {
     assertFileHyperlink("e file:///home/path%20with%20space/file.kt:3 Expecting an expression", 2, 44,
                         "/home/path with space/file.kt", 3, 1);
+    assertFileHyperlink("w file:///home/wrongly%EncodedPath/file.kt:3:10 Variable 'q' is never used", 2, 47,
+                        "/home/wrongly%EncodedPath/file.kt", 3, 10);
   }
 
   private Filter.Result applyFilter(@NotNull String line) {

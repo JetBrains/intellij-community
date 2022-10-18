@@ -89,11 +89,19 @@ public class UrlFilter implements Filter, DumbAware {
           }
         }
       }
-      String filePath = URLDecoder.decode(url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex),
-                                          StandardCharsets.UTF_8);
+      String filePath = decode(url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex));
       return new FileUrlHyperlinkInfo(myProject, filePath, documentLine, documentColumn, url, true);
     }
     return null;
+  }
+
+  private static @NotNull String decode(@NotNull String encodedStr) {
+    try {
+      return URLDecoder.decode(encodedStr, StandardCharsets.UTF_8);
+    }
+    catch (IllegalArgumentException e) {
+      return encodedStr;
+    }
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
