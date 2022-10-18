@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import kotlin.math.PI
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.Variance
+import kotlin.math.PI
 
 internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
@@ -215,8 +216,8 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         analyze(declaration) {
             buildString {
                 val symbol = declaration.getSymbol() as KtCallableSymbol
-                symbol.receiverType?.let { receiver ->
-                    append(receiver.render(renderer, position = Variance.INVARIANT))
+                symbol.receiverType?.let { receiverType ->
+                    append(receiverType.render(renderer, position = Variance.INVARIANT))
                     append('.')
                 }
                 if (symbol is KtFunctionLikeSymbol) {
