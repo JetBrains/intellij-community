@@ -29,12 +29,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -204,50 +204,74 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     });
 
     closeFilesOnFileEditorRemoval();
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    for (Editor editor : editorFactory.getAllEditors()) {
-      registerEditor(editor);
-    }
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        registerEditor(event.getEditor());
-      }
-    }, myProject);
   }
 
-  private void registerEditor(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (project == null || project.isDisposed() || myDisposed) {
-      return;
+  static final class MyEditorFactoryListener implements EditorFactoryListener {
+    MyEditorFactoryListener() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        throw ExtensionNotApplicableException.create();
+      }
     }
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(@NotNull Editor editor1) {
-          if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split")) return;
-          Component comp = editor1.getComponent();
-          while (comp != getMainSplitters() && comp != null) {
-            Component parent = comp.getParent();
-            if (parent instanceof Splitter splitter) {
-              if ((splitter.getFirstComponent() == comp &&
-                   (splitter.getProportion() == splitter.getMinProportion(true) ||
-                    splitter.getProportion() == splitter.getMinimumProportion())) ||
-                  (splitter.getProportion() == splitter.getMinProportion(false) ||
-                   splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
-                for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
-                  Splitter s = pair.getFirst();
-                  s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
-                }
-                break;
-              }
-            }
-            comp = parent;
+
+    @Override
+    public void editorCreated(@NotNull EditorFactoryEvent event) {
+      Editor editor = event.getEditor();
+      if (!(editor instanceof EditorEx)) {
+        return;
+      }
+
+      Project project = editor.getProject();
+      if (project == null || project.isDisposed()) {
+        return;
+      }
+      
+      registerEditor((EditorEx)editor, project);
+    }
+  }
+
+  private static void registerEditor(@NotNull EditorEx editor, @NotNull Project project) {
+    editor.addFocusListener(new FocusChangeListener() {
+      private WeakReference<FileEditorManagerImpl> managerRef;
+
+      @Override
+      public void focusGained(@NotNull Editor editor1) {
+        if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split", false)) {
+          return;
+        }
+
+        FileEditorManagerImpl manager = managerRef == null ? null : managerRef.get();
+        if (manager == null) {
+          FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+          if (fileEditorManager instanceof FileEditorManagerImpl) {
+            manager = ((FileEditorManagerImpl)fileEditorManager);
+            managerRef = new WeakReference<>(manager);
+          }
+          else {
+            return;
           }
         }
-      }, this);
-    }
+
+        Component component = editor1.getComponent();
+        while (component != null && component != manager.getMainSplitters()) {
+          Component parent = component.getParent();
+          if (parent instanceof Splitter splitter) {
+            if ((splitter.getFirstComponent() == component &&
+                 (splitter.getProportion() == splitter.getMinProportion(true) ||
+                  splitter.getProportion() == splitter.getMinimumProportion())) ||
+                (splitter.getProportion() == splitter.getMinProportion(false) ||
+                 splitter.getProportion() == splitter.getMaximumProportion())) {
+              Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
+              for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
+                Splitter s = pair.getFirst();
+                s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
+              }
+              break;
+            }
+          }
+          component = parent;
+        }
+      }
+    }, project);
   }
 
   private void closeFilesOnFileEditorRemoval() {

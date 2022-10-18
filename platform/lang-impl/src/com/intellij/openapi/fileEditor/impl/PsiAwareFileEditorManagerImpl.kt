@@ -16,19 +16,19 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.util.ui.EdtInvocationManager
 
 open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerExImpl(project) {
-  private val problemSolver: WolfTheProblemSolver
+  private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(getProject()) }
 
   /**
    * Updates icons for open files when project roots change
    */
   init {
-    problemSolver = WolfTheProblemSolver.getInstance(project)
     @Suppress("LeakingThis")
     registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
-    val connection = project.messageBus.connect()
+    @Suppress("LeakingThis")
+    val connection = project.messageBus.connect(this)
     connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
       EdtInvocationManager.invokeLaterIfNeeded {
         for (editor in EditorFactory.getInstance().allEditors) {
@@ -41,6 +41,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerEx
 
   override fun isProblem(file: VirtualFile) = problemSolver.isProblemFile(file)
 
+  @Suppress("HardCodedStringLiteral")
   override fun getFileTooltipText(file: VirtualFile, window: EditorWindow): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()
     if (Registry.`is`("ide.tab.tooltip.module", false)) {
