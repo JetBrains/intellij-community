@@ -22,6 +22,8 @@
     <registryKey key="packagesearch.timeout" defaultValue="15000"
                  description="timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
+    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">

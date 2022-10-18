@@ -291,6 +291,7 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
 
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
