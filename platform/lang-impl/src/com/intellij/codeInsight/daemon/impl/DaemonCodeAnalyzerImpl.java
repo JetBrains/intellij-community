@@ -86,7 +86,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final DaemonCodeAnalyzerSettings mySettings;
   private final @NotNull PsiDocumentManager myPsiDocumentManager;
   private final FileEditorManagerEx myFileEditorManager;
-  private final EditorTracker myEditorTracker;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final UpdateRunnable myUpdateRunnable;
@@ -150,7 +149,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (myFileEditorManager == null && !project.isDefault()) {
       throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; myProject="+project);
     }
-    myEditorTracker = EditorTracker.getInstance(project);
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
   }
 
@@ -1198,16 +1196,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     application.assertIsDispatchThread();
 
     // editors in modal context
-    List<? extends Editor> editors = myEditorTracker.getActiveEditors();
+    List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
     Collection<FileEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
     }
     else {
+      TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
       activeTextEditors = new HashSet<>(editors.size());
       for (Editor editor : editors) {
-        if (editor.isDisposed()) continue;
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        if (editor.isDisposed()) {
+          continue;
+        }
+
+        TextEditor textEditor = textEditorProvider.getTextEditor(editor);
         activeTextEditors.add(textEditor);
       }
     }
