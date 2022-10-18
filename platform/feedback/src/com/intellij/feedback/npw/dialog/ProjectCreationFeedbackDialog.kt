@@ -279,9 +279,9 @@ class ProjectCreationFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project) {
           showProjectCreationFeedbackSystemInfoDialog(project, systemInfoData)
-        })
+        }
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
