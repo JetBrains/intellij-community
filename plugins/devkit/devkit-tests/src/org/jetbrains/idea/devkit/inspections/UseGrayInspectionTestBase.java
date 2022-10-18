@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
 public abstract class UseGrayInspectionTestBase extends JavaCodeInsightFixtureTestCase {
 
   @Override
