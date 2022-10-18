@@ -3,7 +3,6 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -91,15 +90,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
   protected void configureUiHelper(final TreeUIHelper helper) {
     helper.installTreeSpeedSearch(this);
-  }
-
-  public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
-    return builder.accept(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      @Override
-      public boolean visit(@NotNull SimpleNode node) {
-        return visitor.accept(node);
-      }
-    }) != null;
   }
 
   public void setPopupGroup(ActionGroup aPopupGroup, String aPlace) {
@@ -422,15 +412,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
       double lastItemBottomLine = rowBounds.getMaxY();
       return e.getY() <= lastItemBottomLine;
     }
-  }
-
-  public boolean select(AbstractTreeBuilder aBuilder, final SimpleNodeVisitor aVisitor, boolean shouldExpand) {
-    return aBuilder.select(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      @Override
-      public boolean visit(@NotNull SimpleNode node) {
-        return aVisitor.accept(node);
-      }
-    }, null, false);
   }
 
   private boolean hasSingleSelection() {

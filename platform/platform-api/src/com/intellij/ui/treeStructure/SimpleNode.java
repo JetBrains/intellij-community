@@ -183,10 +183,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
   public abstract SimpleNode @NotNull [] getChildren();
 
-  public void accept(@NotNull SimpleNodeVisitor visitor) {
-    visitor.accept(this);
-  }
-
   public void handleSelection(SimpleTree tree) {
   }
 
