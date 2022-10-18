@@ -124,7 +124,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       updateScreenState(frameHelper);
     }
 
-    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
+    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, false);
     setGlassPane(glassPane);
     myGlassPaneInitialized = true;
     if (frame instanceof IdeFrameImpl) {

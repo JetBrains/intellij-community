@@ -141,7 +141,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     DEFAULT
   }
 
-  private volatile @Nullable EditorsSplitters mySplitters;
+  private final EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<>(null);
@@ -175,7 +175,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   private final List<EditorComposite> myOpenedComposites = new CopyOnWriteArrayList<>();
 
   private final MessageListenerList<FileEditorManagerListener> myListenerList;
-  private boolean myDisposed = false;
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -204,6 +203,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     });
 
     closeFilesOnFileEditorRemoval();
+
+    mySplitters = new EditorsSplitters(this);
+    DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, mySplitters, false);
+    DockManager.getInstance(myProject).register(dockable, this);
+    Disposer.register(this, dockable);
+    // prepare for toolwindow manager
+    mySplitters.setFocusable(false);
   }
 
   static final class MyEditorFactoryListener implements EditorFactoryListener {
@@ -293,7 +299,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public void dispose() {
     fileToUpdateTitle = null;
-    myDisposed = true;
   }
 
   private void dumbModeFinished(@NotNull Project project) {
@@ -338,11 +343,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public JComponent getComponent() {
-    return initUI();
+    return mySplitters;
   }
 
   public @NotNull EditorsSplitters getMainSplitters() {
-    return initUI();
+    return mySplitters;
   }
 
   public @NotNull Set<EditorsSplitters> getAllSplitters() {
@@ -407,29 +412,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return ((DockableEditorTabbedContainer)container).getSplitters();
     }
     return getMainSplitters();
-  }
-
-  private final Object myInitLock = new Object();
-
-  private @NotNull EditorsSplitters initUI() {
-    EditorsSplitters result = mySplitters;
-    if (result == null) {
-      synchronized (myInitLock) {
-        result = mySplitters;
-        if (result == null) {
-          result = new EditorsSplitters(this);
-          DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
-          DockManager.getInstance(myProject).register(dockable, this);
-          Disposer.register(this, dockable);
-
-          // prepare for toolwindow manager
-          result.setFocusable(false);
-
-          mySplitters = result;
-        }
-      }
-    }
-    return result;
   }
 
   @Override
@@ -1738,8 +1720,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @ApiStatus.Internal
   public final @NotNull EditorsSplitters init() {
-    //myFocusWatcher.install(myWindows.getComponent ());
-    EditorsSplitters splitters = initUI();
+    EditorsSplitters splitters = mySplitters;
     splitters.startListeningFocus();
 
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
@@ -1763,11 +1744,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public @Nullable Element getState() {
-    if (mySplitters == null) {
-      // do not save if not initialized yet
-      return null;
-    }
-
     Element state = new Element("state");
     getMainSplitters().writeExternal(state);
     return state;

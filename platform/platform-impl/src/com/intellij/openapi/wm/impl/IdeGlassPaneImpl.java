@@ -64,6 +64,7 @@ public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, Id
   private MouseEvent myPrevPressEvent;
 
   AbstractPainter windowShadowPainter;
+  private boolean paintersInstalled;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     this(rootPane, false);
@@ -77,9 +78,19 @@ public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, Id
     setEnabled(false);
     setLayout(null);
     if (installPainters) {
-      IdeBackgroundUtil.initFramePainters(this);
-      IdeBackgroundUtil.initEditorPainters(this);
+      installPainters();
     }
+  }
+
+  void installPainters() {
+    if (paintersInstalled) {
+      return;
+    }
+
+    paintersInstalled = true;
+
+    IdeBackgroundUtil.initFramePainters(this);
+    IdeBackgroundUtil.initEditorPainters(this);
 
     if (SystemInfoRt.isWindows && Boolean.getBoolean("ide.window.shadow.painter")) {
       windowShadowPainter = new WindowShadowPainter();

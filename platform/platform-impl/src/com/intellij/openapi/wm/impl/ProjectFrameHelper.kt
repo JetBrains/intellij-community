@@ -184,9 +184,13 @@ open class ProjectFrameHelper(
 
   // purpose of delayed init - to show project frame as early as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
-  fun init() {
+  fun init(installPainters: Boolean = true) {
     if (!isInitialized.compareAndSet(false, true)) {
       return
+    }
+
+    if (installPainters) {
+      installPainters()
     }
 
     rootPane!!.createAndConfigureStatusBar(this, this)
@@ -215,6 +219,10 @@ open class ProjectFrameHelper(
       ModalityState.NON_MODAL,
       { this.frame == null }
     )
+  }
+
+  fun installPainters() {
+    (rootPane!!.glassPane as IdeGlassPaneImpl).installPainters()
   }
 
   override fun getComponent(): JComponent? = frame?.rootPane
