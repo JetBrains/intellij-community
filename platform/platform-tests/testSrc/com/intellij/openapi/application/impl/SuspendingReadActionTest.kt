@@ -295,6 +295,34 @@ class NonBlocking : SuspendingReadActionTest() {
   }
 }
 
+class NonBlockingUndispatched : SuspendingReadActionTest() {
+
+  override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
+    return constrainedReadActionUndispatched(*constraints, action = action)
+  }
+
+  /**
+   * @see NonBlockingReadActionTest.testSyncExecutionFailsInsideReadActionWhenConstraintsAreNotSatisfied
+   */
+  @RepeatedTest(repetitions)
+  fun `read action with unsatisfiable constraint fails if already obtained`(): Unit = timeoutRunBlocking {
+    val unsatisfiableConstraint = object : ReadConstraint {
+      override fun toString(): String = "unsatisfiable constraint"
+      override fun isSatisfied(): Boolean = false
+      override fun schedule(runnable: Runnable): Unit = fail("must not be called")
+    }
+    cra {
+      runBlockingCancellable {
+        assertThrows<IllegalStateException> {
+          cra(unsatisfiableConstraint) {
+            fail("must not be called")
+          }
+        }
+      }
+    }
+  }
+}
+
 class Blocking : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
