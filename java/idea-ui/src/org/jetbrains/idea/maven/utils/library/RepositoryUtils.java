@@ -20,6 +20,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.JBIterable;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -209,5 +212,28 @@ public final class RepositoryUtils {
 
   public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
     return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+  }
+
+  public static Promise<List<OrderRoot>> deleteAndReloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
+    LOG.debug("start deleting files in library " + library.getName());
+    var filesToDelete = new ArrayList<VirtualFile>();
+    for (var rootType : OrderRootType.getAllTypes()) {
+      Collections.addAll(filesToDelete, library.getRootProvider().getFiles(rootType));
+    }
+
+    for (VirtualFile file : filesToDelete) {
+      try {
+        if (file.getFileSystem() instanceof ArchiveFileSystem archiveFs) {
+          var local = archiveFs.getLocalByEntry(file);
+          if (null != local) {
+            var path = local.toNioPath();
+            FileUtil.delete(path);
+          }
+        }
+      } catch (IOException | UnsupportedOperationException e) {
+        LOG.error("error deleting file in library " + library.getName(), e);
+      }
+    }
+    return reloadDependencies(project, library);
   }
 }

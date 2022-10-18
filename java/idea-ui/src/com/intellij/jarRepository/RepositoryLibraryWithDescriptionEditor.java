@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
 
@@ -123,7 +121,7 @@ public class RepositoryLibraryWithDescriptionEditor
   }
 
   private void reloadLibraryDirectory(Project project, LibraryEx library) {
-    reloadDependencies(project, library);
+    deleteAndReloadDependencies(project, library);
     showBalloon(JavaUiBundle.message("popup.reload.success.result", library.getName()), MessageType.INFO);
   }
 
