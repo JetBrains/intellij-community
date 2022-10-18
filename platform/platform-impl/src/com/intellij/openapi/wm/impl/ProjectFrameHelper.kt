@@ -19,7 +19,6 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -43,6 +42,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
@@ -199,7 +200,12 @@ open class ProjectFrameHelper(
       frame.iconImage = null
     }
     else if (SystemInfoRt.isLinux) {
-      IdeMenuBar.installAppMenuIfNeeded(frame)
+      frame.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent) {
+          frame.removeComponentListener(this)
+          IdeMenuBar.installAppMenuIfNeeded(frame)
+        }
+      })
       // in production (not from sources) makes sense only on Linux
       AppUIUtil.updateWindowIcon(frame)
     }
