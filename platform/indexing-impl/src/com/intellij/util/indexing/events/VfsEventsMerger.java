@@ -80,6 +80,7 @@ public final class VfsEventsMerger {
         if (myInstantUpdateProcessor != null) {
           try {
             myInstantUpdateProcessor.process(newChangeInfo);
+            myInstantUpdateProcessor.endBatch();
           } catch (Exception e) {
             if (LOG != null) LOG.error(e);
           }
@@ -92,6 +93,11 @@ public final class VfsEventsMerger {
   @FunctionalInterface
   public interface VfsEventProcessor {
     boolean process(@NotNull ChangeInfo changeInfo);
+
+    /**
+     * this is a helper method that designates the end of the events batch, can be used for optimizations
+     */
+    default void endBatch() {}
   }
 
   // 1. Method can be invoked in several threads
@@ -111,13 +117,17 @@ public final class VfsEventsMerger {
           if (LOG != null) {
             LOG.info("Processing " + info);
           }
-          if (!eventProcessor.process(info)) return false;
+          if (!eventProcessor.process(info)) {
+            eventProcessor.endBatch();
+            return false;
+          }
         }
         catch (ProcessCanceledException pce) { // todo remove
           ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
           assert false;
         }
       }
+      eventProcessor.endBatch();
     }
     return true;
   }

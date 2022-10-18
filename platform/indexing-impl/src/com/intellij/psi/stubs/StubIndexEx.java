@@ -553,5 +553,11 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public void processFileElementTypeUpdate(@NotNull VirtualFile file);
+  public interface FileUpdateProcessor {
+    void processUpdate(@NotNull VirtualFile file);
+    default void endUpdatesBatch() {};
+  }
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  abstract public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor();
 }

@@ -1,57 +1,110 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexedFile;
-import com.intellij.util.indexing.IndexedFileImpl;
+import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-final class PerFileElementTypeStubModificationTracker {
+final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.FileUpdateProcessor {
+  static final Logger LOG = Logger.getInstance(PerFileElementTypeStubModificationTracker.class);
+
   private final ConcurrentMap<String, Ref<Class<? extends IFileElementType>>> // ref is to store nulls
     myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<? extends IFileElementType>, Long> myModCounts = new ConcurrentHashMap<>();
   private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
     return (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
   });
+  private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
+  private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
+  private final Set<Class<? extends IFileElementType>> myModificationsInCurrentBatch = new HashSet<>();
 
-  private void incModCount(@NotNull Class<? extends IFileElementType> fileElementType) {
+  private record FileInfo(VirtualFile file, Project project, Class<? extends IFileElementType> type) { }
+
+  private void registerModificationFor(@NotNull Class<? extends IFileElementType> fileElementType) {
+    myModificationsInCurrentBatch.add(fileElementType);
     myModCounts.compute(fileElementType, (__, value) -> {
       if (value == null) return 1L;
       return value + 1;
     });
   }
 
+  private boolean wereModificationsInCurrentBatch(@NotNull Class<? extends IFileElementType> fileElementType) {
+    return myModificationsInCurrentBatch.contains(fileElementType);
+  }
+
   public Long getModificationStamp(@NotNull Class<? extends IFileElementType> fileElementType) {
     return myModCounts.getOrDefault(fileElementType, 0L);
   }
 
-  public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
-    IndexedFile indexedFile = new IndexedFileImpl(file, ProjectLocator.getInstance().guessProjectForFile(file));
-    var current = determineCurrentFileElementType(indexedFile);
-    if (current != null) {
-      incModCount(current);
+  @Override
+  public void processUpdate(@NotNull VirtualFile file) {
+    myPendingUpdates.add(file);
+  }
+
+  @Override
+  public void endUpdatesBatch() {
+    while (!myPendingUpdates.isEmpty()) {
+      VirtualFile file = myPendingUpdates.poll();
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+      IndexedFile indexedFile = new IndexedFileImpl(file, project);
+      var current = determineCurrentFileElementType(indexedFile);
+      var before = determinePreviousFileElementTypePrecisely(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
+      if (current != before) {
+        if (current != null) registerModificationFor(current);
+        if (before != null) registerModificationFor(before);
+      } else {
+        if (current != null) myProbablyExpensiveUpdates.add(new FileInfo(file, project, current));
+      }
     }
-    int fileId = FileBasedIndex.getFileId(file);
-    var before = determinePreviousFileElementTypePrecisely(fileId, myStubUpdatingIndexStorage.get());
-    if (before != null && before != current) {
-      incModCount(before);
+    DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer =
+      myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
+    while (!myProbablyExpensiveUpdates.isEmpty()) {
+      FileInfo info = myProbablyExpensiveUpdates.poll();
+      if (wereModificationsInCurrentBatch(info.type)) continue;
+      try {
+        var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue()
+          .getForwardIndexAccessor()
+          .getDiffBuilder(
+            FileBasedIndex.getFileId(info.file),
+            null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
+          );
+        FileContent fileContent = FileContentImpl.createByFile(info.file, info.project);
+        Stub stub = StubTreeBuilder.buildStubTree(fileContent);
+        Map<Integer, SerializedStubTree> serializedStub = stub == null ? Collections.emptyMap() : stubIndexer.map(fileContent);
+        if (diffBuilder.differentiate(serializedStub,
+                                      (__, ___, ____) -> { },
+                                      (__, ___, ____) -> { },
+                                      (__, ___) -> { },
+                                      true)
+        ) {
+          registerModificationFor(info.type);
+        }
+      }
+      catch (IOException | StorageException e) {
+        LOG.error(e);
+      }
     }
   }
 
   public void dispose() {
     myFileElementTypesCache.clear();
     myModCounts.clear();
+    myPendingUpdates.clear();
+    myProbablyExpensiveUpdates.clear();
+    myModificationsInCurrentBatch.clear();
   }
 
   @Nullable

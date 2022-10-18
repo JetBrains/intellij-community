@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.SystemProperties;
@@ -420,7 +419,7 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  public void processFileElementTypeUpdate(@NotNull VirtualFile file) {
-    myPerFileElementTypeStubModificationTracker.processFileElementTypeUpdate(file);
+  public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor() {
+    return myPerFileElementTypeStubModificationTracker;
   }
 }

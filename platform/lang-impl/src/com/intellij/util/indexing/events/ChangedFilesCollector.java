@@ -58,12 +58,26 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
 
   public ChangedFilesCollector() {
-    super(changeInfo -> {
-      if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-          StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.VfsEventMerger) {
-        ((StubIndexImpl)StubIndex.getInstance()).processFileElementTypeUpdate(changeInfo.getFile());
+    super(new VfsEventsMerger.VfsEventProcessor() {
+      private final StubIndexEx.FileUpdateProcessor perFileElementTypeUpdateProcessor =
+        ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
+
+      @Override
+      public boolean process(VfsEventsMerger.@NotNull ChangeInfo changeInfo) {
+        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.VfsEventMerger) {
+          perFileElementTypeUpdateProcessor.processUpdate(changeInfo.getFile());
+        }
+        return true;
       }
-      return true;
+
+      @Override
+      public void endBatch() {
+        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.VfsEventMerger) {
+          perFileElementTypeUpdateProcessor.endUpdatesBatch();
+        }
+      }
     });
   }
 
@@ -232,18 +246,31 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void processFilesToUpdateInReadAction() {
-    processFilesInReadAction(info -> {
-      int fileId = info.getFileId();
-      VirtualFile file = info.getFile();
-      if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-      if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-      if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-      if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
-      if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-          StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-        ((StubIndexImpl)StubIndex.getInstance()).processFileElementTypeUpdate(file);
+    processFilesInReadAction(new VfsEventsMerger.VfsEventProcessor() {
+      private final StubIndexImpl.FileUpdateProcessor perFileElementTypeUpdateProcessor =
+        ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
+      @Override
+      public boolean process(VfsEventsMerger.@NotNull ChangeInfo info) {
+        int fileId = info.getFileId();
+        VirtualFile file = info.getFile();
+        if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
+        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
+        if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
+        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
+        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+          perFileElementTypeUpdateProcessor.processUpdate(file);
+        }
+        return true;
       }
-      return true;
+
+      @Override
+      public void endBatch() {
+        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+          perFileElementTypeUpdateProcessor.endUpdatesBatch();
+        }
+      }
     });
   }
 
@@ -260,19 +287,26 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     int phase = myWorkersFinishedSync.getPhase();
     try {
       myFileBasedIndex.waitUntilIndicesAreInitialized();
-      getEventMerger().processChanges(info ->
-        ConcurrencyUtil.withLock(myFileBasedIndex.myWriteLock, () -> {
-          try {
-            ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              processor.process(info);
-            });
-          }
-          finally {
-            IndexingStamp.flushCache(info.getFileId());
-          }
-          return true;
-        })
-      );
+      getEventMerger().processChanges(new VfsEventsMerger.VfsEventProcessor() {
+        @Override
+        public boolean process(VfsEventsMerger.@NotNull ChangeInfo changeInfo) {
+          return ConcurrencyUtil.withLock(myFileBasedIndex.myWriteLock, () -> {
+            try {
+              ProgressManager.getInstance().executeNonCancelableSection(() -> {
+                processor.process(changeInfo);
+              });
+            }
+            finally {
+              IndexingStamp.flushCache(changeInfo.getFileId());
+            }
+            return true;
+          });
+        }
+        @Override
+        public void endBatch() {
+          processor.endBatch();
+        }
+      });
     }
     finally {
       myWorkersFinishedSync.arriveAndDeregister();
