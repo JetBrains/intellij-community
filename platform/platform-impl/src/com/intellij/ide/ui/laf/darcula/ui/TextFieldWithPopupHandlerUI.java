@@ -2,12 +2,14 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.MouseDragSelectionEventHandler;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ClientProperty;
@@ -20,11 +22,9 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -653,7 +653,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (getActionOnClick() != null) {
         prefix = IdeBundle.message("tooltip.search.history");
       }
-      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
+      return (prefix == null) ? null : createTooltip(prefix);
+    }
+
+    @NotNull
+    @NlsContexts.Tooltip
+    private static String createTooltip(@Nls @NotNull String prefix) {
+      String shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory"));
+      return XmlStringUtil.wrapInHtml(prefix + shortcut);
     }
 
     @Override
