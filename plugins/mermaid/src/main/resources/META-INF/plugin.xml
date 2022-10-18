@@ -54,6 +54,14 @@
       language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.intention.ClassDiagramAnnotator"/>
 
+    <localInspection language="Mermaid" shortName="UnusedAttribute"
+                     groupKey="unused.attribute.inspection.display.name"
+                     bundle="messages.MermaidBundle"
+                     key="unused.attribute.inspection.display.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.UnusedAttributesInspection"/>
 
   </extensions>
 </idea-plugin>

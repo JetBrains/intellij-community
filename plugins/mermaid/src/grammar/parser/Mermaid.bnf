@@ -65,7 +65,7 @@ journeyStatement ::= journeyDataStatement
 	| directive
 	| accStatement
 
-journeyDataStatement ::= complexTaskName COLON (IGNORED | recTaskData (COLON recTaskData)+)
+journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData COLON journeyTaskData (COLON journeyTaskData?)*)
 
 journeySectionStatement ::= SECTION complexSectionTitle journeySectionDocument
 journeySectionDocument ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
@@ -77,6 +77,7 @@ complexSectionTitle ::= SECTION_TITLE+
 complexTaskName ::= TASK_NAME+
 complexTaskData ::= TASK_DATA+
 private recTaskData ::= complexTaskData [COMMA recTaskData]
+journeyTaskData ::= recTaskData
 
 flowchartHeader ::= FLOWCHART [DIR]
 
