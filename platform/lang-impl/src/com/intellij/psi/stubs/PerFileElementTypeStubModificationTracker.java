@@ -27,11 +27,12 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
     return (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
   });
+
+  private record FileInfo(VirtualFile file, Project project, Class<? extends IFileElementType> type) { }
+
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
   private final Set<Class<? extends IFileElementType>> myModificationsInCurrentBatch = new HashSet<>();
-
-  private record FileInfo(VirtualFile file, Project project, Class<? extends IFileElementType> type) { }
 
   private void registerModificationFor(@NotNull Class<? extends IFileElementType> fileElementType) {
     myModificationsInCurrentBatch.add(fileElementType);
@@ -50,12 +51,13 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   }
 
   @Override
-  public void processUpdate(@NotNull VirtualFile file) {
+  public synchronized void processUpdate(@NotNull VirtualFile file) {
     myPendingUpdates.add(file);
   }
 
   @Override
-  public void endUpdatesBatch() {
+  public synchronized void endUpdatesBatch() {
+    myModificationsInCurrentBatch.clear();
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
       Project project = ProjectLocator.getInstance().guessProjectForFile(file);
@@ -65,7 +67,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (current != before) {
         if (current != null) registerModificationFor(current);
         if (before != null) registerModificationFor(before);
-      } else {
+      }
+      else {
         if (current != null) myProbablyExpensiveUpdates.add(new FileInfo(file, project, current));
       }
     }
@@ -75,8 +78,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       FileInfo info = myProbablyExpensiveUpdates.poll();
       if (wereModificationsInCurrentBatch(info.type)) continue;
       try {
-        var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue()
-          .getForwardIndexAccessor()
+        var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
           .getDiffBuilder(
             FileBasedIndex.getFileId(info.file),
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
@@ -84,12 +86,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         FileContent fileContent = FileContentImpl.createByFile(info.file, info.project);
         Stub stub = StubTreeBuilder.buildStubTree(fileContent);
         Map<Integer, SerializedStubTree> serializedStub = stub == null ? Collections.emptyMap() : stubIndexer.map(fileContent);
-        if (diffBuilder.differentiate(serializedStub,
-                                      (__, ___, ____) -> { },
-                                      (__, ___, ____) -> { },
-                                      (__, ___) -> { },
-                                      true)
-        ) {
+        if (diffBuilder.differentiate(serializedStub, (__, ___, ____) -> { }, (__, ___, ____) -> { }, (__, ___) -> { }, true)) {
           registerModificationFor(info.type);
         }
       }
