@@ -103,7 +103,7 @@ public final class IdeBackgroundUtil {
     //}
 
     painters.addPainter(new AbstractPainter() {
-      final EditorEmptyTextPainter p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
+      EditorEmptyTextPainter p = null;
 
       @Override
       public boolean needsRepaint() {
@@ -112,6 +112,9 @@ public final class IdeBackgroundUtil {
 
       @Override
       public void executePaint(Component component, Graphics2D g) {
+        if (p == null) {
+          p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
+        }
         p.paintEmptyText((JComponent)component, g);
       }
     }, null);

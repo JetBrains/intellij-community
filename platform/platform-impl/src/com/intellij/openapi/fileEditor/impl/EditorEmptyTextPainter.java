@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,11 +29,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
-    if (!Registry.is("editor.paint.empty.text")) return;
+    if (!Registry.is("editor.paint.empty.text", true)) {
+      return;
+    }
+
     UISettings.setupAntialiasing(g);
     UIUtil.TextPainter painter = createTextPainter();
     advertiseActions(splitters, painter);
@@ -63,7 +64,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
+    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     String message = IdeBundle.message("double.ctrl.or.shift.shortcut", SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
     appendAction(painter, IdeBundle.message("empty.text.search.everywhere"), shortcuts.length == 0 ? message : KeymapUtil.getShortcutsText(shortcuts));
   }
@@ -79,7 +80,9 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendAction(@NotNull UIUtil.TextPainter painter, @NotNull @Nls String action, @Nullable String shortcut) {
-    if (StringUtil.isEmpty(shortcut)) return;
+    if (Strings.isEmpty(shortcut)) {
+      return;
+    }
     appendLine(painter, action + " " + "<shortcut>" + shortcut + "</shortcut>");
   }
 
