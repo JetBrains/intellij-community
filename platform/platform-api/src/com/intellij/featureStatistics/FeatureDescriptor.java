@@ -165,6 +165,15 @@ public class FeatureDescriptor {
     return myUsageCount < myMinUsageCount;
   }
 
+  public void adjustUsageInfo(int newUsageCount, long newLastTimeUsed) {
+    if (myUsageCount < newUsageCount) {
+      myUsageCount = newUsageCount;
+    }
+    if (myLastTimeUsed < newLastTimeUsed) {
+      myLastTimeUsed = newLastTimeUsed;
+    }
+  }
+
   public String toString() {
 
     return "id = [" +
