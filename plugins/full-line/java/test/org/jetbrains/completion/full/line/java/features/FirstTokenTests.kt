@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.features
+package org.jetbrains.completion.full.line.java.features
 
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 

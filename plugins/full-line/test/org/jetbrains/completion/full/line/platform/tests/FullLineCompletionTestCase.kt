@@ -36,11 +36,14 @@ abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Bo
     }
     Registry.get("full.line.multi.token.everywhere").setValue(true)
     MLServerCompletionSettings.getInstance().state.useTopN = false
+    MLServerCompletionSettings.getInstance().state.enable = true
   }
 
   @Suppress("SSBasedInspection")
   override fun tearDown() {
     try {
+      MLServerCompletionSettings.getInstance().state.useTopN = true
+      MLServerCompletionSettings.getInstance().state.enable = false
       TestFullLineCompletionProvider.clear()
       Registry.get("full.line.multi.token.everywhere").setValue(false)
     }

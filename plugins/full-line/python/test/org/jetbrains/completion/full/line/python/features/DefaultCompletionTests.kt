@@ -1,12 +1,12 @@
-package org.jetbrains.completion.full.line.features
+package org.jetbrains.completion.full.line.python.features
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
-import org.jetbrains.completion.full.line.platform.tests.PythonProject
+import org.jetbrains.completion.full.line.python.tests.FullLinePythonCompletionTestCase
 import org.junit.jupiter.api.Assertions
 
-class DefaultCompletionTests : FullLineCompletionTestCase(), PythonProject {
+class DefaultCompletionTests : FullLinePythonCompletionTestCase() {
   fun `test selecting default with enter`() = doTestWithElse('\n')
   fun `test selecting default with tag`() = doTestWithElse('\t')
   fun `test selecting default with space`() = doTestWithElse(' ')

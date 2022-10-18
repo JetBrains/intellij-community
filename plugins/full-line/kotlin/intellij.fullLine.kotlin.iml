@@ -14,12 +14,13 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.fullLine" />
     <orderEntry type="module" module-name="intellij.fullLine.core" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.fullLine" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.fullLine.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.fullLine.core.tests" scope="TEST" />
   </component>
 </module>

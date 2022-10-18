@@ -1,10 +1,9 @@
-package org.jetbrains.completion.full.line.features
+package org.jetbrains.completion.full.line.python.features
 
-import com.intellij.codeInsight.lookup.Lookup
-import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
-import org.jetbrains.completion.full.line.platform.tests.PythonProject
+import org.jetbrains.completion.full.line.UtilsTestCase.Companion.prefix
+import org.jetbrains.completion.full.line.python.tests.FullLinePythonCompletionTestCase
 
-class PrefixTests : FullLineCompletionTestCase(), PythonProject {
+class PrefixTests : FullLinePythonCompletionTestCase() {
   private fun pyDocContext(content: String) = """
         def function_with_doc_string(function):
             ""\"$content""\"
@@ -29,15 +28,4 @@ class PrefixTests : FullLineCompletionTestCase(), PythonProject {
     val prefix = myFixture.lookup.prefix()
     assertEquals(expectedPrefix, prefix)
   }
-}
-
-fun Lookup.prefix(): String {
-  val text = editor.document.text
-  val offset = editor.caretModel.offset
-  var startOffset = offset
-  for (i in offset - 1 downTo 0) {
-    if (!text[i].isJavaIdentifierPart()) break
-    startOffset = i
-  }
-  return text.substring(startOffset, offset)
 }

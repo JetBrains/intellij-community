@@ -1,13 +1,10 @@
-package org.jetbrains.completion.full.line.features
+package org.jetbrains.completion.full.line.java.features
 
-import com.intellij.lang.Language
-import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.fileTypes.FileTypeManager
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 import org.junit.jupiter.api.Assertions
 
-abstract class SuffixTests : FullLineCompletionTestCase() {
+abstract class JavaSuffixTests : FullLineCompletionTestCase() {
   override fun getBasePath() = "testData/completion/features/suffix"
 
   protected fun doTestJavaQuote(context: String, raw: String, expected: String = raw) {
@@ -15,11 +12,10 @@ abstract class SuffixTests : FullLineCompletionTestCase() {
       "Context must contains `<caret>` for correct usage"
     }
 
-    val lang = Language.findInstance(JavaLanguage::class.java)
-    val fileType = FileTypeManager.getInstance().findFileTypeByLanguage(lang)
+    val fileType = fileTypeFromLanguage("JAVA")
 
     myFixture.configureByText(
-      fileType!!,
+      fileType,
       """
                 public class Main {
                     public static void main(String[] args) {
@@ -41,23 +37,13 @@ abstract class SuffixTests : FullLineCompletionTestCase() {
   }
 }
 
-class CaretSuffixTests : SuffixTests() {
+class CaretSuffixTests : JavaSuffixTests() {
   fun `test CaretPositionWithSuffix`() = doEnterTest("JAVA", "new int[")
 
   fun `test CaretPositionWithSuffixAndValue`() = doEnterTest("JAVA", "new int[0")
-
-  fun `test suffix with override chars`() = doEnterTest("Python", "map(int, input().split(\"")
-
-  fun `test suffix with override suffix`() = doEnterTest("Python", "map(int, input().split")
-
-  // https://jetbrains.slack.com/archives/GKW1WVAV7/p1644331514433269
-  fun `test in string char suffix`() = doEnterTest("Python", "{color}.txt\", \"r\") as f:")
-
-  // https://jetbrains.slack.com/archives/GKW1WVAV7/p1644331584258539
-  fun `test suffix after multiple strings`() = doEnterTest("Python", "t\", \"--with_target\", action=\"store_true")
 }
 
-class QuoteTests : SuffixTests() {
+class QuoteTests : JavaSuffixTests() {
   fun `test multiple strings`() {
     doTestJavaQuote(
       "<caret>",

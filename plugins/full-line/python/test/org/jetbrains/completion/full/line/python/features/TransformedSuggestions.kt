@@ -1,10 +1,9 @@
-package org.jetbrains.completion.full.line.features
+package org.jetbrains.completion.full.line.python.features
 
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
-import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
-import org.jetbrains.completion.full.line.platform.tests.PythonProject
+import org.jetbrains.completion.full.line.python.tests.FullLinePythonCompletionTestCase
 
-class TransformedSuggestions : FullLineCompletionTestCase(), PythonProject {
+class TransformedSuggestions : FullLinePythonCompletionTestCase() {
   private val context = "\n<caret>"
 
   fun `test empty lookup shown`() {
