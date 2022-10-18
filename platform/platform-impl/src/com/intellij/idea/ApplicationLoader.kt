@@ -33,6 +33,7 @@ import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -201,7 +202,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
     app.getServiceAsync(FileTypeManager::class.java).join()
 
     // ProjectJdkTable wants FileTypeManager
-    launch { app.getServiceAsync(ProjectJdkTable::class.java) }
+    launch {
+      // and VirtualFilePointerManager
+      app.getServiceAsync(VirtualFilePointerManager::class.java).join()
+      app.getServiceAsync(ProjectJdkTable::class.java)
+    }
 
     // wants PropertiesComponent
     launch { app.getServiceAsync(DebugLogManager::class.java) }
