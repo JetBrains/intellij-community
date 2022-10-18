@@ -212,7 +212,7 @@ classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-classStatement ::= CLASS classDiagramIdentifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
+classStatement ::= CLASS classDiagramIdentifier [TILDA genericTypeId TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
 
 memberStatement ::= classDiagramIdentifier COLON attrOrMethod
 
@@ -235,9 +235,12 @@ private attributes ::= attribute [COMMA attributes]
 arguments ::= attributes
 method ::= attrName OPEN_ROUND [arguments] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
 attrType ::= ATTRIBUTE_WORD
-attrTypeWithGeneric ::= attrType TILDA GENERIC_TYPE TILDA
+attrTypeWithGeneric ::= attrType TILDA genericTypeId TILDA
 attrName ::= ATTRIBUTE_WORD
 
+genericTypeId ::= GENERIC_TYPE {
+    mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
 
 relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
 cardinality ::= string
