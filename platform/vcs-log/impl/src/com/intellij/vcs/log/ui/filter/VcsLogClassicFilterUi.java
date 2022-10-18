@@ -15,6 +15,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +41,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -844,11 +846,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         String modelText = myTextFilterModel.getText();
         if (!Objects.equals(getText(), modelText)) setText(modelText);
       });
-      new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
-        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
-        .setLocation(HelpTooltip.Alignment.BOTTOM)
-        .installOn(getTextEditor());
+
+      getTextEditor().setToolTipText(createTooltipText());
       Disposer.register(parentDisposable, this::hidePopup);
+    }
+
+    @NotNull
+    @NlsContexts.Tooltip
+    private static String createTooltipText() {
+      String text = VcsLogBundle.message("vcs.log.filter.text.hash.tooltip");
+      String shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
+      return XmlStringUtil.wrapInHtml(text + shortcut);
     }
 
     protected void applyFilter() {
