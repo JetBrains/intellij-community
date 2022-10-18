@@ -194,7 +194,10 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().withLastDocumentLine(
         psiElement(MermaidTokens.GitGraph.GIT_GRAPH),
         psiElement(MermaidElements.GIT_GRAPH_DOCUMENT),
-        psiElement(MermaidElements.COMMIT_STATEMENT)
+        or(
+          psiElement(MermaidElements.COMMIT_STATEMENT),
+          psiElement(MermaidElements.MERGE_STATEMENT)
+        )
       ).andNot(
         psiElement().afterSiblingSkippingElementsAndWhitespaces(
           psiElement(MermaidTokens.COLON),
