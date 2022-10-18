@@ -34,8 +34,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitUastInspectionBase {
   private static final Integer ZERO = Integer.valueOf(0);
 
   @SuppressWarnings("unchecked")
-  public static final Class<? extends UElement>[] HINTS =
-    new Class[]{UCallExpression.class, UQualifiedReferenceExpression.class, USimpleNameReferenceExpression.class};
+  public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
 
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
