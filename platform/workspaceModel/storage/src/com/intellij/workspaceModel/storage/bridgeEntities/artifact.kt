@@ -12,7 +12,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 
-interface ArtifactEntity : WorkspaceEntityWithPersistentId {
+interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     val name: String
 
     val artifactType: String
@@ -22,7 +22,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
     @Child val rootElement: CompositePackagingElementEntity?
     val customProperties: List<@Child ArtifactPropertiesEntity>
     @Child val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
-    override val persistentId: ArtifactId
+    override val symbolicId: ArtifactId
         get() = ArtifactId(name)
 
   //region generated code

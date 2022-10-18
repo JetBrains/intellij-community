@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -378,7 +378,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
   }
 }
 
-class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<LibraryEntity>(), SoftLinkable {
+class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
   lateinit var roots: MutableList<LibraryRoot>
@@ -387,8 +387,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
   fun isRootsInitialized(): Boolean = ::roots.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     val _tableId = tableId
     when (_tableId) {
       is LibraryTableId.GlobalLibraryTableId -> {
@@ -404,7 +404,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     val _tableId = tableId
     when (_tableId) {
       is LibraryTableId.GlobalLibraryTableId -> {
@@ -419,7 +419,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val _tableId = tableId
@@ -442,7 +442,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val _tableId = tableId
     val res_tableId = when (_tableId) {
@@ -502,7 +502,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     return clonedEntity
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return LibraryId(name, tableId)
   }
 

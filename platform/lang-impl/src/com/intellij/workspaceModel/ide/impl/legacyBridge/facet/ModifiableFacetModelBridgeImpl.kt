@@ -173,7 +173,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     val entity = diff.facetMapping().getEntities(facet).singleOrNull()
     if (entity == null) return false
     return if (entity is FacetEntity) {
-      entity.persistentId !in initialStorage
+      entity.symbolicId !in initialStorage
     } else true
   }
 

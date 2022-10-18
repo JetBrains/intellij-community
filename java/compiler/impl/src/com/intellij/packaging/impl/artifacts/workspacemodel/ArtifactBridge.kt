@@ -36,7 +36,7 @@ open class ArtifactBridge(
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.persistentId != artifactId) return@forEach
+          if (it.entity.symbolicId != artifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
@@ -78,9 +78,9 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val persistentId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.persistentId
-      if (persistentId != null) {
-        artifactIdRaw = persistentId
+      val symbolicId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.symbolicId
+      if (symbolicId != null) {
+        artifactIdRaw = symbolicId
       }
       return artifactIdRaw
     }

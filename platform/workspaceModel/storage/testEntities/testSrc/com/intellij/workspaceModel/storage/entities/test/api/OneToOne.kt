@@ -146,18 +146,18 @@ fun MutableEntityStorage.addOoChildWithNullableParentEntity(
 }
 
 
-//region ------------------- Parent Entity with PersistentId --------------------------------
+//region ------------------- Parent Entity with SymbolicId --------------------------------
 
-data class OoParentEntityId(val name: String) : PersistentEntityId<OoParentWithPidEntity> {
+data class OoParentEntityId(val name: String) : SymbolicEntityId<OoParentWithPidEntity> {
   override val presentableName: String
     get() = name
 }
 
 
-interface OoParentWithPidEntity : WorkspaceEntityWithPersistentId {
+interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
   val parentProperty: String
 
-  override val persistentId: OoParentEntityId get() = OoParentEntityId(parentProperty)
+  override val symbolicId: OoParentEntityId get() = OoParentEntityId(parentProperty)
 
   val childOne: @Child OoChildForParentWithPidEntity?
   val childThree: @Child OoChildAlsoWithPidEntity?
@@ -199,7 +199,7 @@ fun MutableEntityStorage.addOoParentWithPidEntity(
 }
 
 
-// ---------------- Child entity for parent with PersistentId for Nullable ref ----------------------
+// ---------------- Child entity for parent with SymbolicId for Nullable ref ----------------------
 
 interface OoChildForParentWithPidEntity : WorkspaceEntity {
   val childProperty: String
@@ -246,13 +246,13 @@ fun MutableEntityStorage.addOoChildForParentWithPidEntity(
   return ooChildForParentWithPidEntity
 }
 
-// ---------------- Child with PersistentId for parent with PersistentId ----------------------
+// ---------------- Child with SymbolicId for parent with SymbolicId ----------------------
 
-interface OoChildAlsoWithPidEntity : WorkspaceEntityWithPersistentId {
+interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
   val childProperty: String
   val parentEntity: OoParentWithPidEntity
 
-  override val persistentId: OoChildEntityId get() = OoChildEntityId(childProperty)
+  override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -293,7 +293,7 @@ fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
   return ooChildAlsoWithPidEntity
 }
 
-// ------------------- Parent Entity without PersistentId for Nullable ref --------------------------------
+// ------------------- Parent Entity without SymbolicId for Nullable ref --------------------------------
 
 
 interface OoParentWithoutPidEntity : WorkspaceEntity {
@@ -337,18 +337,18 @@ fun MutableEntityStorage.addOoParentWithoutPidEntity(
   return ooParentWithoutPidEntity
 }
 
-// ---------------- Child entity with PersistentId for Nullable ref----------------------
+// ---------------- Child entity with SymbolicId for Nullable ref----------------------
 
-data class OoChildEntityId(val name: String) : PersistentEntityId<OoChildWithPidEntity> {
+data class OoChildEntityId(val name: String) : SymbolicEntityId<OoChildWithPidEntity> {
   override val presentableName: String
     get() = name
 }
 
-interface OoChildWithPidEntity : WorkspaceEntityWithPersistentId {
+interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
   val childProperty: String
   val parentEntity: OoParentWithoutPidEntity
 
-  override val persistentId: OoChildEntityId get() = OoChildEntityId(childProperty)
+  override val symbolicId: OoChildEntityId get() = OoChildEntityId(childProperty)
 
   //region generated code
   @GeneratedCodeApiVersion(1)

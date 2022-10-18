@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -196,7 +196,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
   }
 }
 
-class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<OoParentWithPidEntity>() {
+class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<OoParentWithPidEntity>() {
   lateinit var parentProperty: String
 
   fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
@@ -223,7 +223,7 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return OoParentEntityId(parentProperty)
   }
 

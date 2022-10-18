@@ -206,7 +206,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
       val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
 
       entityWithVFU.entity as LibraryEntity
-      val oldLibraryRoots = diff.resolve(entityWithVFU.entity.persistentId)?.roots?.filter { it.url == oldVFU }
+      val oldLibraryRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
                             ?: error("Incorrect state of the VFU index")
       oldLibraryRoots.forEach { oldLibraryRoot ->
         val newLibraryRoot = LibraryRoot(newVFU, oldLibraryRoot.type, oldLibraryRoot.inclusionOptions)

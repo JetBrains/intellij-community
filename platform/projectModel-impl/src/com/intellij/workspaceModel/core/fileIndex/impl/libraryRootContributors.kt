@@ -21,7 +21,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val projectLibraryId = entity.persistentId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
+    val projectLibraryId = entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
     val compiledRootsData = LibraryRootFileSetData(projectLibraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(projectLibraryId)
     for (root in entity.roots) {

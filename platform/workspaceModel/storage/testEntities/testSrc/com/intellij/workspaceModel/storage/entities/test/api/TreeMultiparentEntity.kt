@@ -11,13 +11,13 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-interface TreeMultiparentRootEntity : WorkspaceEntityWithPersistentId {
+interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
   val data: String
 
   val children: List<@Child TreeMultiparentLeafEntity>
 
-  override val persistentId: TreeMultiparentPersistentId
-    get() = TreeMultiparentPersistentId(data)
+  override val symbolicId: TreeMultiparentSymbolicId
+    get() = TreeMultiparentSymbolicId(data)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -80,7 +80,7 @@ fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentLeafEntity,
   TreeMultiparentLeafEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class TreeMultiparentPersistentId(val data: String) : PersistentEntityId<TreeMultiparentRootEntity> {
+data class TreeMultiparentSymbolicId(val data: String) : SymbolicEntityId<TreeMultiparentRootEntity> {
   override val presentableName: String
     get() = data
 }

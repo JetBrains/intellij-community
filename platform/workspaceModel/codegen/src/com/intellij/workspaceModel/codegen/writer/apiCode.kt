@@ -26,7 +26,7 @@ import org.jetbrains.deft.Type
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
                                               WorkspaceEntity.Builder::class.simpleName,
-                                              WorkspaceEntityWithPersistentId::class.simpleName)
+                                              WorkspaceEntityWithSymbolicId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
@@ -39,7 +39,7 @@ fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   val header = "interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder::class.fqn}<$typeParameter>, ${ObjBuilder::class.fqn}<$typeParameter>"
 
   section(header) {
-    list(allFields.noPersistentId()) {
+    list(allFields.noSymbolicId()) {
       checkProperty(this, reporter)
       wsBuilderApi
     }
@@ -122,7 +122,7 @@ private val keepUnknownFields: Boolean
 private val knownInterfaces = setOf(
   VirtualFileUrl::class.qualifiedName!!,
   EntitySource::class.qualifiedName!!,
-  PersistentEntityId::class.qualifiedName!!,
+  SymbolicEntityId::class.qualifiedName!!,
 )
 
 fun ObjClass<*>.generateCompanionObject(): String = lines {
@@ -166,7 +166,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
 }
 
 fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
-  var fields = this.noRefs().noOptional().noPersistentId().noDefaultValue()
+  var fields = this.noRefs().noOptional().noSymbolicId().noDefaultValue()
   if (fields.isNotEmpty()) {
     fields = fields.noEntitySource() + fields.single { it.name == "entitySource" }
   }

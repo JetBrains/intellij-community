@@ -254,7 +254,7 @@ internal class WorkspaceProjectImporter(
     for (each in mavenProjectsWithModules) {
       val appliedModules = each.modules.mapNotNull<ModuleWithTypeData<ModuleEntity>, ModuleWithTypeData<Module>> {
         val originalEntity = it.module
-        val appliedEntity = appliedStorage.resolve(originalEntity.persistentId) ?: return@mapNotNull null
+        val appliedEntity = appliedStorage.resolve(originalEntity.symbolicId) ?: return@mapNotNull null
         val module = appliedEntity.findModule(appliedStorage) ?: return@mapNotNull null
         ModuleWithTypeData(module, it.type)
       }

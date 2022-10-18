@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -309,7 +309,7 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
   }
 }
 
-class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<ArtifactEntity>() {
+class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ArtifactEntity>() {
   lateinit var name: String
   lateinit var artifactType: String
   var includeInProjectBuild: Boolean = false
@@ -341,7 +341,7 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return ArtifactId(name)
   }
 

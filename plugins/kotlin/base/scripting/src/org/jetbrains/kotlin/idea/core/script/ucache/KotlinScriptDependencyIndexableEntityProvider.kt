@@ -45,5 +45,5 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
 
 
     private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
-        IndexableIteratorBuilders.forLibraryEntity(dependency.persistentId, true)
+        IndexableIteratorBuilders.forLibraryEntity(dependency.symbolicId, true)
 }

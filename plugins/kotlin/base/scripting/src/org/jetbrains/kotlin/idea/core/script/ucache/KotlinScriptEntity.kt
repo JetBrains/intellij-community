@@ -19,7 +19,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 val LibraryEntity.kotlinScript: KotlinScriptEntity? by WorkspaceEntity.extension()
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
-interface KotlinScriptEntity: WorkspaceEntityWithPersistentId {
+interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 
     val path: String
 
@@ -27,7 +27,7 @@ interface KotlinScriptEntity: WorkspaceEntityWithPersistentId {
     val dependencies: List<@Child LibraryEntity>
 
 
-    override val persistentId: ScriptId
+    override val symbolicId: ScriptId
         get() = ScriptId(path)
 
   //region generated code
@@ -61,7 +61,7 @@ var LibraryEntity.Builder.kotlinScript: KotlinScriptEntity?
 
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource
 
-data class ScriptId(val path: String) : PersistentEntityId<KotlinScriptEntity> {
+data class ScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
     override val presentableName: String
         get() = path
 }

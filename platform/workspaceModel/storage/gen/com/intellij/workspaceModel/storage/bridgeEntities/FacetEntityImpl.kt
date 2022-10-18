@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -266,7 +266,7 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
   }
 }
 
-class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEntity>(), SoftLinkable {
+class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var facetType: String
   var configurationXmlTag: String? = null
@@ -276,17 +276,17 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   fun isFacetTypeInitialized(): Boolean = ::facetType.isInitialized
   fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     result.add(moduleId)
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     index.index(this, moduleId)
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
@@ -298,7 +298,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     val moduleId_data = if (moduleId == oldLink) {
       changed = true
@@ -335,7 +335,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return FacetId(name, facetType, moduleId)
   }
 

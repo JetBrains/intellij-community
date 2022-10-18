@@ -176,7 +176,7 @@ private val expectedKryoRegistration = """
   [12, com.intellij.workspaceModel.storage.impl.ChildEntityId]
   [13, com.intellij.workspaceModel.storage.impl.ParentEntityId]
   [14, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
-  [15, com.intellij.workspaceModel.storage.impl.indices.PersistentIdInternalIndex]
+  [15, com.intellij.workspaceModel.storage.impl.indices.SymbolicIdInternalIndex]
   [16, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
   [17, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
   [18, com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap]

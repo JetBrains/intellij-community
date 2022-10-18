@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -64,7 +64,7 @@ internal interface EntityManipulation {
       AbstractEntities.Left,
       AbstractEntities.Right,
 
-      // Do not enable at the moment. A lot of issues about entities with persistentId
+      // Do not enable at the moment. A lot of issues about entities with symbolicId
       //NamedEntityManipulation
     )
   }
@@ -205,7 +205,7 @@ internal abstract class ModifyEntity<E : WorkspaceEntity, M : WorkspaceEntity.Bu
         storage.modifyEntity(modifiableClass, entity, modifications)
         env.logMessage("$entity modified")
       }
-      catch (e: PersistentIdAlreadyExistsException) {
+      catch (e: SymbolicIdAlreadyExistsException) {
         env.logMessage("Cannot modify ${entityClass.simpleName} entity. Persistent id ${e.id} already exists")
       }
     }
@@ -227,12 +227,12 @@ private object NamedEntityManipulation : EntityManipulation {
         return try {
           storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
         }
-        catch (e: PersistentIdAlreadyExistsException) {
-          val persistentId = e.id as NameId
-          assert(storage.entities(NamedEntity::class.java).any { it.persistentId == persistentId }) {
-            "$persistentId reported as existing, but it's not found"
+        catch (e: SymbolicIdAlreadyExistsException) {
+          val symbolicId = e.id as NameId
+          assert(storage.entities(NamedEntity::class.java).any { it.symbolicId == symbolicId }) {
+            "$symbolicId reported as existing, but it's not found"
           }
-          null to "NamedEntity with this property isn't added because this persistent id already exists"
+          null to "NamedEntity with this property isn't added because this symbolic id already exists"
         }
       }
     }

@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import java.util.*
 
 
-interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
+interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val booleanProperty: Boolean
   val stringProperty: String
   val stringListProperty: List<String>
@@ -23,12 +23,12 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
   val children: List<@Child ChildWpidSampleEntity>
   val nullableData: String?
 
-  override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
-    get() = SamplePersistentId(stringProperty)
+  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+    get() = SampleSymbolicId(stringProperty)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleWithPersistentIdEntity, WorkspaceEntity.Builder<SampleWithPersistentIdEntity>, ObjBuilder<SampleWithPersistentIdEntity> {
+  interface Builder : SampleWithSymbolicIdEntity, WorkspaceEntity.Builder<SampleWithSymbolicIdEntity>, ObjBuilder<SampleWithSymbolicIdEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
     override var stringProperty: String
@@ -39,14 +39,14 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
     override var nullableData: String?
   }
 
-  companion object : Type<SampleWithPersistentIdEntity, Builder>() {
+  companion object : Type<SampleWithSymbolicIdEntity, Builder>() {
     operator fun invoke(booleanProperty: Boolean,
                         stringProperty: String,
                         stringListProperty: List<String>,
                         stringMapProperty: Map<String, String>,
                         fileProperty: VirtualFileUrl,
                         entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SampleWithPersistentIdEntity {
+                        init: (Builder.() -> Unit)? = null): SampleWithSymbolicIdEntity {
       val builder = builder()
       builder.booleanProperty = booleanProperty
       builder.stringProperty = stringProperty
@@ -63,26 +63,26 @@ interface SampleWithPersistentIdEntity : WorkspaceEntityWithPersistentId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleWithPersistentIdEntity,
-                                      modification: SampleWithPersistentIdEntity.Builder.() -> Unit) = modifyEntity(
-  SampleWithPersistentIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SampleWithSymbolicIdEntity,
+                                      modification: SampleWithSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+  SampleWithSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class SamplePersistentId(val stringProperty: String) : PersistentEntityId<SampleWithPersistentIdEntity> {
+data class SampleSymbolicId(val stringProperty: String) : SymbolicEntityId<SampleWithSymbolicIdEntity> {
   override val presentableName: String
     get() = stringProperty
 }
 
 interface ChildWpidSampleEntity : WorkspaceEntity {
   val data: String
-  val parentEntity: SampleWithPersistentIdEntity?
+  val parentEntity: SampleWithSymbolicIdEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildWpidSampleEntity, WorkspaceEntity.Builder<ChildWpidSampleEntity>, ObjBuilder<ChildWpidSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
-    override var parentEntity: SampleWithPersistentIdEntity?
+    override var parentEntity: SampleWithSymbolicIdEntity?
   }
 
   companion object : Type<ChildWpidSampleEntity, Builder>() {

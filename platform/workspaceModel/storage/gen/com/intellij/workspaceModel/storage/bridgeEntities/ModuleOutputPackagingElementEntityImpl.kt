@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -171,8 +171,8 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   var module: ModuleId? = null
 
 
-  override fun getLinks(): Set<PersistentEntityId<*>> {
-    val result = HashSet<PersistentEntityId<*>>()
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
     val optionalLink_module = module
     if (optionalLink_module != null) {
       result.add(optionalLink_module)
@@ -180,14 +180,14 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     return result
   }
 
-  override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     val optionalLink_module = module
     if (optionalLink_module != null) {
       index.index(this, optionalLink_module)
     }
   }
 
-  override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val optionalLink_module = module
@@ -202,7 +202,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     }
   }
 
-  override fun updateLink(oldLink: PersistentEntityId<*>, newLink: PersistentEntityId<*>): Boolean {
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
     var module_data_optional = if (module != null) {
       val module___data = if (module!! == oldLink) {

@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
-data class OnePersistentId(val name: String) : PersistentEntityId<OneEntityWithPersistentId> {
+data class OneSymbolicId(val name: String) : SymbolicEntityId<OneEntityWithSymbolicId> {
   override val presentableName: String
     get() = name
 
@@ -25,14 +25,14 @@ data class OnePersistentId(val name: String) : PersistentEntityId<OneEntityWithP
   }
 }
 
-data class Container(val id: OnePersistentId, val justData: String = "")
-data class DeepContainer(val goDeep: List<Container>, val optionalId: OnePersistentId?)
+data class Container(val id: OneSymbolicId, val justData: String = "")
+data class DeepContainer(val goDeep: List<Container>, val optionalId: OneSymbolicId?)
 data class TooDeepContainer(val goDeeper: List<DeepContainer>)
 
 @Open
 sealed class SealedContainer {
-  data class BigContainer(val id: OnePersistentId) : SealedContainer()
-  data class SmallContainer(val notId: OnePersistentId) : SealedContainer()
+  data class BigContainer(val id: OneSymbolicId) : SealedContainer()
+  data class SmallContainer(val notId: OneSymbolicId) : SealedContainer()
   data class EmptyContainer(val data: String) : SealedContainer()
   data class ContainerContainer(val container: List<Container>) : SealedContainer()
 }
@@ -43,28 +43,28 @@ sealed class DeepSealedOne {
   sealed class DeepSealedTwo : DeepSealedOne() {
     @Open
     sealed class DeepSealedThree : DeepSealedTwo() {
-      data class DeepSealedFour(val id: OnePersistentId) : DeepSealedThree()
+      data class DeepSealedFour(val id: OneSymbolicId) : DeepSealedThree()
     }
   }
 }
 
-interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
+interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
   val myName: String
 
-  override val persistentId: OnePersistentId
+  override val symbolicId: OneSymbolicId
     get() {
-      return OnePersistentId(myName)
+      return OneSymbolicId(myName)
     }
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OneEntityWithPersistentId, WorkspaceEntity.Builder<OneEntityWithPersistentId>, ObjBuilder<OneEntityWithPersistentId> {
+  interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId>, ObjBuilder<OneEntityWithSymbolicId> {
     override var entitySource: EntitySource
     override var myName: String
   }
 
-  companion object : Type<OneEntityWithPersistentId, Builder>() {
-    operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneEntityWithPersistentId {
+  companion object : Type<OneEntityWithSymbolicId, Builder>() {
+    operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneEntityWithSymbolicId {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
@@ -77,15 +77,15 @@ interface OneEntityWithPersistentId : WorkspaceEntityWithPersistentId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OneEntityWithPersistentId,
-                                      modification: OneEntityWithPersistentId.Builder.() -> Unit) = modifyEntity(
-  OneEntityWithPersistentId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: OneEntityWithSymbolicId,
+                                      modification: OneEntityWithSymbolicId.Builder.() -> Unit) = modifyEntity(
+  OneEntityWithSymbolicId.Builder::class.java, entity, modification)
 //endregion
 
 interface EntityWithSoftLinks : WorkspaceEntity {
-  val link: OnePersistentId
-  val manyLinks: List<OnePersistentId>
-  val optionalLink: OnePersistentId?
+  val link: OneSymbolicId
+  val manyLinks: List<OneSymbolicId>
+  val optionalLink: OneSymbolicId?
   val inContainer: Container
   val inOptionalContainer: Container?
   val inContainerList: List<Container>
@@ -106,9 +106,9 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   @GeneratedCodeApiVersion(1)
   interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
-    override var link: OnePersistentId
-    override var manyLinks: MutableList<OnePersistentId>
-    override var optionalLink: OnePersistentId?
+    override var link: OneSymbolicId
+    override var manyLinks: MutableList<OneSymbolicId>
+    override var optionalLink: OneSymbolicId?
     override var inContainer: Container
     override var inOptionalContainer: Container?
     override var inContainerList: MutableList<Container>
@@ -123,8 +123,8 @@ interface EntityWithSoftLinks : WorkspaceEntity {
   }
 
   companion object : Type<EntityWithSoftLinks, Builder>() {
-    operator fun invoke(link: OnePersistentId,
-                        manyLinks: List<OnePersistentId>,
+    operator fun invoke(link: OneSymbolicId,
+                        manyLinks: List<OneSymbolicId>,
                         inContainer: Container,
                         inContainerList: List<Container>,
                         deepContainer: List<TooDeepContainer>,

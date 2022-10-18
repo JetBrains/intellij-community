@@ -8,7 +8,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -187,7 +187,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
   }
 }
 
-class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetTestEntity>() {
+class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTestEntity>() {
   lateinit var data: String
   lateinit var moreData: String
 
@@ -216,8 +216,8 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculablePersistentId<Facet
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
-    return FacetTestEntityPersistentId(data)
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return FacetTestEntitySymbolicId(data)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

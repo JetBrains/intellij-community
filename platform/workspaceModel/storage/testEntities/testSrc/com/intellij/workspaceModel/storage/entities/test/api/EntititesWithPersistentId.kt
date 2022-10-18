@@ -11,9 +11,9 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
-interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
+interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: FirstPId
+  override val symbolicId: FirstPId
     get() {
       return FirstPId(data)
     }
@@ -43,11 +43,11 @@ fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId, modification: 
   FirstEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
-data class FirstPId(override val presentableName: String) : PersistentEntityId<FirstEntityWithPId>
+data class FirstPId(override val presentableName: String) : SymbolicEntityId<FirstEntityWithPId>
 
-interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
+interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
   val data: String
-  override val persistentId: SecondPId
+  override val symbolicId: SecondPId
     get() = SecondPId(data)
 
   //region generated code
@@ -75,5 +75,5 @@ fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId, modification:
   SecondEntityWithPId.Builder::class.java, entity, modification)
 //endregion
 
-data class SecondPId(override val presentableName: String) : PersistentEntityId<SecondEntityWithPId>
+data class SecondPId(override val presentableName: String) : SymbolicEntityId<SecondEntityWithPId>
 data class TestPId(var presentableName: String, val aaa: Int?, var angry: Boolean)

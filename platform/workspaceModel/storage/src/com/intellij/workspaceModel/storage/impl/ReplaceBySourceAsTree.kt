@@ -229,7 +229,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     private fun infoOf(entityId: EntityId, store: AbstractEntityStorage, short: Boolean): String {
       val entityData = store.entityDataByIdOrDie(entityId)
       val entity = entityData.createEntity(store)
-      return if (entity is WorkspaceEntityWithPersistentId) entity.persistentId.toString() else if (short) "$entity" else "$entity | $entityData"
+      return if (entity is WorkspaceEntityWithSymbolicId) entity.symbolicId.toString() else if (short) "$entity" else "$entity | $entityData"
     }
   }
 
@@ -264,8 +264,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         return findAndReplaceRootEntity(replaceWithEntity)
       }
       else {
-        if (replaceWithEntity is WorkspaceEntityWithPersistentId) {
-          val targetEntity = targetStorage.resolve(replaceWithEntity.persistentId)
+        if (replaceWithEntity is WorkspaceEntityWithSymbolicId) {
+          val targetEntity = targetStorage.resolve(replaceWithEntity.symbolicId)
           val parentsAssociation = replaceWithTrack.parents.mapNotNullTo(HashSet()) { processEntity(it) }
           return processExactEntity(targetEntity, replaceWithEntity, parentsAssociation)
         }
@@ -338,7 +338,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
             return null
           }
           !entityFilter(targetEntity.entitySource) && entityFilter(replaceWithEntity.entitySource) -> {
-            if (targetEntity is WorkspaceEntityWithPersistentId) {
+            if (targetEntity is WorkspaceEntityWithSymbolicId) {
               if (replaceWithEntity.entitySource !is DummyParentEntitySource) {
                 replaceWorkspaceData(targetEntityId, replaceWithEntityId, parents)
               } else {
@@ -468,17 +468,17 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
     /**
      * This method searched for the "associated" entity of [targetEntityTrack] in the repalceWith storage
-     * Here, let's use "associated" termin to define what we're looking for. If the entity have a [PersistentEntityId],
-     *   this is super simple. "associated" entity is just an entity from the different storage with the same PersistentId.
+     * Here, let's use "associated" termin to define what we're looking for. If the entity have a [SymbolicEntityId],
+     *   this is super simple. "associated" entity is just an entity from the different storage with the same SymbolicId.
      *
-     *   Things go complicated if there is no PersistentId. In this case we build a track to the root entities in the graph, trying
+     *   Things go complicated if there is no SymbolicId. In this case we build a track to the root entities in the graph, trying
      *     to find same roots in the replaceWith storage and building a "track" to the entity in the replaceWith storage. This
      *     traced entity is an "associated" entity for our current entity.
      *
      * This is a recursive algorithm
      * - Get all parents of the entity
      * - if there are NO parents:
-     *    - Try to find associated entity in replaceWith storage (by PersistentId in most cases)
+     *    - Try to find associated entity in replaceWith storage (by SymbolicId in most cases)
      * - if there are parents:
      *    - Run this algorithm on all parents to find associated parents in the replaceWith storage
      *    - Based on found parents in replaceWith storage, find an associated entity for our currenly searched entity
@@ -585,8 +585,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
 
       val targetEntity = targetEntityData.createEntity(targetStorage)
       var replaceWithEntity: WorkspaceEntityBase? = null
-      if (targetEntity is WorkspaceEntityWithPersistentId) {
-        replaceWithEntity = replaceWithStorage.resolve(targetEntity.persistentId) as? WorkspaceEntityBase
+      if (targetEntity is WorkspaceEntityWithSymbolicId) {
+        replaceWithEntity = replaceWithStorage.resolve(targetEntity.symbolicId) as? WorkspaceEntityBase
       }
       else {
         // Here we're just traversing parents. If we find a parent that does have a child entity that is equal to our entity, stop and save
@@ -835,9 +835,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
                                         goalStorage: AbstractEntityStorage,
                                         oppositeStorage: AbstractEntityStorage,
                                         goalState: Long2ObjectMap<out Any>): WorkspaceEntity? {
-      return if (rootEntity is WorkspaceEntityWithPersistentId) {
-        val persistentId = rootEntity.persistentId
-        goalStorage.resolve(persistentId)
+      return if (rootEntity is WorkspaceEntityWithSymbolicId) {
+        val symbolicId = rootEntity.symbolicId
+        goalStorage.resolve(symbolicId)
       }
       else {
         val oppositeEntityData = oppositeStorage.entityDataByIdOrDie(rootEntity.id)

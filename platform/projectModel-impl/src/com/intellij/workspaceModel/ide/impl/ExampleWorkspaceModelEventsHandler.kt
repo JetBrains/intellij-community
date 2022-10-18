@@ -209,7 +209,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   }
 
   private fun libraryIsDependency(library: LibraryEntity, project: Project): Boolean {
-    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
+    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.symbolicId)
   }
 
   private fun updateCache() { }

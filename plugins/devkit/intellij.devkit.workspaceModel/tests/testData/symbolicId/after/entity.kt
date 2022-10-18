@@ -6,22 +6,22 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
-interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
+interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val version: Int
   val name: String
   val related: SimpleId
   val sealedClassWithLinks: SealedClassWithLinks
 
-  override val persistentId: SimpleId
+  override val symbolicId: SimpleId
     get() = SimpleId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimplePersistentIdEntity, WorkspaceEntity.Builder<SimplePersistentIdEntity>, ObjBuilder<SimplePersistentIdEntity> {
+  interface Builder : SimpleSymbolicIdEntity, WorkspaceEntity.Builder<SimpleSymbolicIdEntity>, ObjBuilder<SimpleSymbolicIdEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String
@@ -29,13 +29,13 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
     override var sealedClassWithLinks: SealedClassWithLinks
   }
 
-  companion object : Type<SimplePersistentIdEntity, Builder>() {
+  companion object : Type<SimpleSymbolicIdEntity, Builder>() {
     operator fun invoke(version: Int,
                         name: String,
                         related: SimpleId,
                         sealedClassWithLinks: SealedClassWithLinks,
                         entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimplePersistentIdEntity {
+                        init: (Builder.() -> Unit)? = null): SimpleSymbolicIdEntity {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -50,12 +50,12 @@ interface SimplePersistentIdEntity : WorkspaceEntityWithPersistentId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimplePersistentIdEntity,
-                                      modification: SimplePersistentIdEntity.Builder.() -> Unit) = modifyEntity(
-  SimplePersistentIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: SimpleSymbolicIdEntity,
+                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
+  SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class SimpleId(val name: String) : PersistentEntityId<SimplePersistentIdEntity> {
+data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {
   override val presentableName: String
     get() = name
 }

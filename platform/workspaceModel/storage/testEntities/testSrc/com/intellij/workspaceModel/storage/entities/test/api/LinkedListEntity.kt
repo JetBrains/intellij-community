@@ -12,16 +12,16 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
-data class LinkedListEntityId(val name: String) : PersistentEntityId<LinkedListEntity> {
+data class LinkedListEntityId(val name: String) : SymbolicEntityId<LinkedListEntity> {
   override val presentableName: String
     get() = name
 }
 
-interface LinkedListEntity : WorkspaceEntityWithPersistentId {
+interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val next: LinkedListEntityId
 
-  override val persistentId: LinkedListEntityId
+  override val symbolicId: LinkedListEntityId
     get() = LinkedListEntityId(myName)
 
   //region generated code

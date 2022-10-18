@@ -53,6 +53,6 @@ class JavaResourceRootIndexableEntityProvider implements ParentEntityDependent<J
                                                                                                         @NotNull SourceRootEntity newEntity,
                                                                                                         @NotNull Project project) {
     if (oldEntity.getJavaResourceRoots().equals(newEntity.getJavaResourceRoots())) return Collections.emptyList();
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getPersistentId(), newEntity.getUrl());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getContentRoot().getModule().getSymbolicId(), newEntity.getUrl());
   }
 }

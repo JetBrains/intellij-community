@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -109,7 +109,7 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
   }
 }
 
-class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<FirstEntityWithPId>() {
+class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<FirstEntityWithPId>() {
   lateinit var data: String
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
@@ -136,7 +136,7 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return FirstPId(data)
   }
 

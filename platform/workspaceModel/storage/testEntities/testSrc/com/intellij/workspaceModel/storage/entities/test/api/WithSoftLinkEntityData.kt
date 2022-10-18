@@ -15,34 +15,34 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 // ------------------------------ Persistent Id ---------------
 
-data class NameId(private val name: String) : PersistentEntityId<NamedEntity> {
+data class NameId(private val name: String) : SymbolicEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class AnotherNameId(private val name: String) : PersistentEntityId<NamedEntity> {
+data class AnotherNameId(private val name: String) : SymbolicEntityId<NamedEntity> {
   override val presentableName: String
     get() = name
 
   override fun toString(): String = name
 }
 
-data class ComposedId(val name: String, val link: NameId) : PersistentEntityId<ComposedIdSoftRefEntity> {
+data class ComposedId(val name: String, val link: NameId) : SymbolicEntityId<ComposedIdSoftRefEntity> {
   override val presentableName: String
     get() = "$name - ${link.presentableName}"
 }
 
 // ------------------------------ Entity With Persistent Id ------------------
 
-interface NamedEntity : WorkspaceEntityWithPersistentId {
+interface NamedEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val additionalProperty: String?
 
   val children: List<@Child NamedChildEntity>
 
-  override val persistentId: NameId
+  override val symbolicId: NameId
     get() = NameId(myName)
 
   //region generated code
@@ -207,13 +207,13 @@ fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntityS
   return composedLinkEntity
 }
 
-// ------------------------- Entity with persistentId and the list of soft links ------------------
+// ------------------------- Entity with SymbolicId and the list of soft links ------------------
 
 
-interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
+interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val links: List<NameId>
-  override val persistentId: AnotherNameId get() = AnotherNameId(myName)
+  override val symbolicId: AnotherNameId get() = AnotherNameId(myName)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -260,10 +260,10 @@ fun MutableEntityStorage.addWithListSoftLinksEntity(
 // --------------------------- Entity with composed persistent id via soft reference ------------------
 
 
-interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
+interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
   val myName: String
   val link: NameId
-  override val persistentId: ComposedId get() = ComposedId(myName, link)
+  override val symbolicId: ComposedId get() = ComposedId(myName, link)
 
   //region generated code
   @GeneratedCodeApiVersion(1)

@@ -28,14 +28,14 @@ class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryE
     //  sure we are interested only in libraries used in project, but in case registered library is downloaded
     // no change in dependencies happen, only Added event on LibraryEntity.
     // For debug see com.intellij.roots.libraries.LibraryTest
-    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getPersistentId(), false);
+    return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getSymbolicId(), false);
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull LibraryEntity oldEntity,
                                                                                                    @NotNull LibraryEntity newEntity) {
     if (hasSomethingToIndex(oldEntity, newEntity)) {
-      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getPersistentId(), false);
+      return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(newEntity.getSymbolicId(), false);
     }
     else {
       return Collections.emptyList();

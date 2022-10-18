@@ -147,8 +147,8 @@ class ArtifactModifiableModelBridge(
       outputUrl, rootElementEntity, source
     )
 
-    val persistentId = artifactEntity.persistentId
-    val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher, null)
+    val symbolicId = artifactEntity.symbolicId
+    val modifiableArtifact = ArtifactBridge(symbolicId, versionedOnBuilder, project, eventDispatcher, null)
     modifiableToOriginal[modifiableArtifact] = modifiableArtifact
     diff.mutableArtifactsMap.addMapping(artifactEntity, modifiableArtifact)
 
@@ -182,7 +182,7 @@ class ArtifactModifiableModelBridge(
     if (artifact as ArtifactBridge in modifiableToOriginal) return artifact
 
     val entity = diff.artifactsMap.getEntities(artifact).singleOrNull() as? ArtifactEntity ?: error("Artifact doesn't exist")
-    val artifactId = entity.persistentId
+    val artifactId = entity.symbolicId
     val existingModifiableArtifact = modifiableToOriginal.getKeysByValue(artifact)?.singleOrNull()
     if (existingModifiableArtifact != null) return existingModifiableArtifact
 
