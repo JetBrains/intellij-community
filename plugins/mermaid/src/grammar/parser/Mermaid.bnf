@@ -500,12 +500,15 @@ private commitAttributesWithMsg ::=
   | commitIdAttribute
 
 branchOrder ::= ORDER COLON NUM
-commitIdAttribute ::= ID_KEYWORD COLON string
+commitIdAttribute ::= ID_KEYWORD COLON DOUBLE_QUOTE commitIdValue DOUBLE_QUOTE
 commitTypeAttribute ::= TYPE COLON commitType
 commitTagAttribute ::= TAG COLON string
 commitMsgAttribute ::= MSG COLON string
 commit_arg ::= string
 private commitType ::= NORMAL | REVERSE | HIGHLIGHT
+commitIdValue ::= STRING_VALUE? {
+    mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
 
 
 c4Header ::= C4_CONTEXT
