@@ -108,6 +108,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private JEditorPane myDescriptionComponent;
   private String myDescription;
   private ChangeNotes myChangeNotesPanel;
+  private JBPanelWithEmptyText myChangeNotesEmptyState;
   private PluginImagesComponent myImagesComponent;
   private ReviewCommentListContainer myReviewPanel;
   private JButton myReviewNextPageButton;
@@ -602,9 +603,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         changeNotes.setVisible(text != null);
       }
     };
-    JPanel parent = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
+    JBPanelWithEmptyText parent = new JBPanelWithEmptyText(new BorderLayout());
+    parent.setOpaque(true);
+    parent.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     parent.setBorder(JBUI.Borders.emptyLeft(12));
     parent.add(changeNotes);
+    myChangeNotesEmptyState = parent;
     pane.add(IdeBundle.message("plugins.configurable.whats.new.tab.name"), createScrollPane(parent));
   }
 
@@ -1011,6 +1015,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myDescriptionComponent.setVisible(description != null);
 
     myChangeNotesPanel.show(getChangeNotes());
+
+    if (myChangeNotesEmptyState != null) {
+      String message = IdeBundle.message("plugins.configurable.notes.empty.text",
+                                         StringUtil.defaultIfEmpty(StringUtil.defaultIfEmpty(organization, vendor), IdeBundle.message(
+                                           "plugins.configurable.notes.empty.text.default.vendor")));
+      myChangeNotesEmptyState.getEmptyText().setText(message);
+    }
 
     if (myImagesComponent != null) {
       myImagesComponent.show(myPlugin);
