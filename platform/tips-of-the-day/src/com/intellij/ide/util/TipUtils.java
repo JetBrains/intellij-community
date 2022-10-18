@@ -89,7 +89,7 @@ public final class TipUtils {
     if (registry == null) return null;
     return registry.getFeatureIds().stream()
       .map(featureId -> registry.getFeatureDescriptor(featureId))
-      .filter(descriptor -> Objects.equals(descriptor.getTipFileName(), tip.fileName))
+      .filter(descriptor -> Objects.equals(descriptor.getTipId(), tip.getId()))
       .findFirst()
       .map(feature -> {
         String groupId = feature.getGroupId();
