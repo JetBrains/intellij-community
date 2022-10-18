@@ -2,17 +2,14 @@ package org.jetbrains.completion.full.line.settings.ui.panels
 
 import com.intellij.lang.Language
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
-import com.intellij.ui.layout.panel
-import com.intellij.ui.layout.selected
 import org.jetbrains.completion.full.line.language.KeepKind
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 import org.jetbrains.completion.full.line.settings.ui.components.doubleTextField
-import org.jetbrains.completion.full.line.settings.ui.components.intTextFieldFixed
-import org.jetbrains.completion.full.line.settings.ui.enableSubRowsIf
 
 class ExtendedSettingsPanel(
   language: Language,
@@ -25,70 +22,92 @@ class ExtendedSettingsPanel(
   val state = settings.getModelState(settings.getLangState(language), type)
 
   override val panel = panel {
-    row {
-      row(message("fl.server.completion.bs")) {
+    rowsRange {
+      row {
+        label(message("fl.server.completion.bs"))
+      }
+      indent {
         if (language.id == "JAVA") {
           row {
-            checkBox(message("fl.server.completion.enable.psi.completion"), state::psiBased)
+            checkBox(message("fl.server.completion.enable.psi.completion")).bindSelected(state::psiBased)
           }
         }
         row(message("fl.server.completion.bs.num.iterations")) {
-          intTextFieldFixed(state::numIterations, 1, IntRange(0, 50))
+          intTextField(IntRange(0, 50), 1)
+            .columns(4)
+            .bindIntText(state::numIterations)
         }
         row(message("fl.server.completion.bs.beam.size")) {
-          intTextFieldFixed(state::beamSize, 1, IntRange(0, 20))
+          intTextField(IntRange(0, 20), 1)
+            .columns(4)
+            .bindIntText(state::beamSize)
         }
         row(message("fl.server.completion.bs.len.base")) {
-          doubleTextField(state::lenBase, 1, IntRange(0, 10))
+          doubleTextField(state::lenBase, IntRange(0, 10))
+            .columns(4)
         }
         row(message("fl.server.completion.bs.len.pow")) {
-          doubleTextField(state::lenPow, 1, IntRange(0, 1))
+          doubleTextField(state::lenPow, IntRange(0, 1))
+            .columns(4)
         }
         row(message("fl.server.completion.bs.diversity.strength")) {
-          doubleTextField(state::diversityStrength, 1, IntRange(0, 10))
+          doubleTextField(state::diversityStrength, IntRange(0, 10))
+            .columns(4)
         }
         row(message("fl.server.completion.bs.diversity.groups")) {
-          intTextFieldFixed(state::diversityGroups, 1, IntRange(0, 5))
+          intTextField(IntRange(0, 5), 1)
+            .columns(4)
+            .bindIntText(state::diversityGroups)
+        }
+        indent {
+          lateinit var groupUse: ComponentPredicate
           row {
-            val groupUse = checkBox(
-              message("fl.server.completion.group.top.n.use"),
-              state::useGroupTopN
-            ).selected
+            groupUse = checkBox(message("fl.server.completion.group.top.n.use"))
+              .bindSelected(state::useGroupTopN)
+              .selected
+          }
+          indent {
             row {
-              intTextFieldFixed(state::groupTopN, 1, IntRange(0, 20))
-                .enableIf(groupUse)
+              intTextField(IntRange(0, 20), 1)
+                .columns(4)
+                .bindIntText(state::groupTopN)
+                .enabledIf(groupUse)
             }
           }
         }
+        lateinit var lengthUse: ComponentPredicate
         row {
-          val groupUse = checkBox(
-            message("fl.server.completion.context.length.use"),
-            state::useCustomContextLength
-          ).selected
+          lengthUse = checkBox(message("fl.server.completion.context.length.use"))
+            .bindSelected(state::useCustomContextLength)
+            .selected
+        }
+        indent {
           row {
-            intTextFieldFixed(state::customContextLength, 1, IntRange(0, 384))
-              .enableIf(groupUse)
+            intTextField(IntRange(0, 384), 1)
+              .columns(4)
+              .bindIntText(state::customContextLength)
+              .enabledIf(lengthUse)
           }
         }
-        row(message("fl.server.completion.deduplication.minimum.prefix")) {
-          doubleTextField(state::minimumPrefixDist, 1, IntRange(0, 1))
-        }
-        row(message("fl.server.completion.deduplication.minimum.edit")) {
-          doubleTextField(state::minimumEditDist, 1, IntRange(0, 1))
-        }
-        row(message("fl.server.completion.deduplication.keep.kinds")) {
-          cell {
+        panel {
+          row(message("fl.server.completion.deduplication.minimum.prefix")) {
+            doubleTextField(state::minimumPrefixDist, IntRange(0, 1))
+              .columns(4)
+          }
+          row(message("fl.server.completion.deduplication.minimum.edit")) {
+            doubleTextField(state::minimumEditDist, IntRange(0, 1))
+              .columns(4)
+          }
+          row(message("fl.server.completion.deduplication.keep.kinds")) {
             KeepKind.values().map { kind ->
               @NlsSafe val text = kind.name.toLowerCase().capitalize()
-              checkBox(
-                text,
-                { state.keepKinds.contains(kind) },
-                { if (it) state.keepKinds.add(kind) else state.keepKinds.remove(kind) }
-              )
+              checkBox(text)
+                .bindSelected({ state.keepKinds.contains(kind) },
+                              { if (it) state.keepKinds.add(kind) else state.keepKinds.remove(kind) })
             }
           }
         }
       }
-    }.enableSubRowsIf(flccEnabled.and(langsEnabled.getValue(language.displayName)))
+    }.enabledIf(flccEnabled.and(langsEnabled.getValue(language.displayName)))
   }
 }
