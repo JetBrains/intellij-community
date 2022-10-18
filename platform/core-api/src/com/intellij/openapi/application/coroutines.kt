@@ -48,7 +48,7 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  * @see constrainedReadActionBlocking
  */
 suspend fun <T> constrainedReadAction(vararg constraints: ReadConstraint, action: () -> T): T {
-  return readActionSupport().executeReadAction(constraints.toList(), blocking = false, action)
+  return readActionSupport().executeReadAction(constraints.toList(), action = action)
 }
 
 /**

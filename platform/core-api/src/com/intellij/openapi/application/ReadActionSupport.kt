@@ -14,7 +14,7 @@ interface ReadActionSupport {
 
   suspend fun <X> executeReadAction(
     constraints: List<ReadConstraint>,
-    blocking: Boolean,
+    blocking: Boolean = false,
     action: () -> X,
   ): X
 
