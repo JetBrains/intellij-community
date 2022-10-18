@@ -1,0 +1,16 @@
+Index: platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginLayout.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginLayout.kt b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginLayout.kt
+--- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginLayout.kt	(revision 1d27236ae89e91e502e388d0c11c912f51e152a3)
++++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginLayout.kt	(date 1665567126675)
+@@ -41,7 +41,6 @@
+   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
+   var directoryNameSetExplicitly: Boolean = false
+   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+-    internal set
+   var pathsToScramble: PersistentList<String> = persistentListOf()
+   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
+   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
