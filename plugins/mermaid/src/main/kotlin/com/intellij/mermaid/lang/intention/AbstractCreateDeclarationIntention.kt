@@ -3,8 +3,6 @@ package com.intellij.mermaid.lang.intention
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.lang.ASTFactory
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.psi.MermaidElementFactory
-import com.intellij.mermaid.lang.psi.MermaidGitGraphStatement
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -12,13 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
+import kotlin.reflect.KFunction2
 
-class CreateBranchDeclarationIntention(
+abstract class AbstractCreateDeclarationIntention(
   private val psiElement: PsiElement,
+  private val statement: PsiElement,
   private val className: String = psiElement.text
 ) : BaseIntentionAction() {
-  override fun getText(): String = MermaidBundle.message("fix.create.branch.declaration", className)
+  abstract val createDeclarationPsiElement: KFunction2<Project, String, PsiElement?>
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
 
@@ -32,9 +31,8 @@ class CreateBranchDeclarationIntention(
 
   private fun createDeclaration(project: Project) {
     WriteCommandAction.runWriteCommandAction(project) {
-      val statement = psiElement.parentOfType<MermaidGitGraphStatement>() ?: return@runWriteCommandAction
       val parent = statement.parent
-      val declaration = MermaidElementFactory.createBranchStatement(project, className.replace(" ", "\\\\ "))
+      val declaration = createDeclarationPsiElement(project, className.replace(" ", "\\\\ "))
         ?: return@runWriteCommandAction
 
       parent.node.addChild(declaration.node, statement.node)

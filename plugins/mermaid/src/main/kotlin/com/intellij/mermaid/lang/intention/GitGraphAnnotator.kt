@@ -6,9 +6,12 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.psi.*
+import com.intellij.mermaid.lang.psi.MermaidElementFactory.Companion.createBranchStatement
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
+import kotlin.reflect.KFunction2
 
 
 class GitGraphAnnotator : Annotator {
@@ -51,7 +54,7 @@ class GitGraphAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.branch"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateBranchDeclarationIntention(identifier))
+      .withFix(CreateBranchDeclarationIntention(identifier, parent))
       .create()
   }
 
@@ -76,7 +79,7 @@ class GitGraphAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.commit.id"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateCommitDeclarationIntention(identifier))
+      .withFix(CreateCommitDeclarationIntention(identifier, parent))
       .create()
   }
 
@@ -151,5 +154,21 @@ class GitGraphAnnotator : Annotator {
 
       return
     }
+  }
+
+  private class CreateBranchDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
+    AbstractCreateDeclarationIntention(psiElement, statement, className) {
+    override fun getText(): String = MermaidBundle.message("fix.create.branch.declaration", className)
+
+    override val createDeclarationPsiElement
+      get() = ::createBranchStatement
+  }
+
+  private class CreateCommitDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
+    AbstractCreateDeclarationIntention(psiElement, statement, className) {
+    override fun getText(): String = MermaidBundle.message("fix.create.commit.declaration", className)
+
+    override val createDeclarationPsiElement: KFunction2<Project, String, PsiElement?>
+      get() = MermaidElementFactory.Companion::createCommitStatement
   }
 }
