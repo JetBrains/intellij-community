@@ -13,7 +13,6 @@ public final class GithubIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GithubIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("org/jetbrains/plugins/github/defaultAvatar.svg", -1805780461, 0);
   /** 16x16 */ public static final @NotNull Icon IssueClosed = load("org/jetbrains/plugins/github/issueClosed.svg", 1719010430, 0);
   /** 16x16 */ public static final @NotNull Icon IssueOpened = load("org/jetbrains/plugins/github/issueOpened.svg", -493627856, 0);
   /** 16x16 */ public static final @NotNull Icon LocalBranch = load("org/jetbrains/plugins/github/localBranch.svg", -557346630, 2);

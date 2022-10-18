@@ -7,11 +7,11 @@ import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runUnderIndicator
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
@@ -25,7 +25,7 @@ import java.awt.Image
 internal class GHAccountsDetailsProvider(
   scope: CoroutineScope,
   private val executorSupplier: suspend (GithubAccount) -> GithubApiRequestExecutor?
-) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, GithubIcons.DefaultAvatar) {
+) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager, accountsModel: GHAccountsListModel)
     : this(scope, { getExecutor(accountManager, accountsModel, it) }) {

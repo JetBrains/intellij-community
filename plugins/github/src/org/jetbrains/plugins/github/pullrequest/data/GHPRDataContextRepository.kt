@@ -19,10 +19,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.await
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -170,7 +170,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
       avatarsLoader.requestAvatar(requestExecutor, key).await()
 
     override fun createBaseIcon(key: String?, iconSize: Int): Icon =
-      IconUtil.resizeSquared(GithubIcons.DefaultAvatar, iconSize)
+      IconUtil.resizeSquared(CollaborationToolsIcons.Review.DefaultAvatar, iconSize)
 
     override suspend fun postProcess(image: Image): Image =
       ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))

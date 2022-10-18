@@ -29,6 +29,7 @@ public final class CollaborationToolsIcons {
     /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/review/commentUnread.svg", -1937473850, 0);
     /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", -1694628613, 2);
     /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", -3756667, 0);
+    /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -1805780461, 0);
     /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/review/fileUnread.svg", 1594372685, 0);
     /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", -107566367, 0);
   }
