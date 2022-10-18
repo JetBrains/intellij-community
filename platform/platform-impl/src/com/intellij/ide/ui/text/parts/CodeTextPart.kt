@@ -24,7 +24,7 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
 
   init {
     fontGetter = {
-      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size)
+      EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN).deriveFont(JBFont.label().size.toFloat())
     }
     editAttributes {
       StyleConstants.setForeground(this, JBUI.CurrentTheme.Label.foreground())
