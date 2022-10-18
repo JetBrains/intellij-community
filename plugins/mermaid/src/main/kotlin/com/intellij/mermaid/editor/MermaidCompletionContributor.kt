@@ -315,8 +315,7 @@ class MermaidCompletionContributor : CompletionContributor() {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
         for (child in psiElement.containingFile.children) {
           if (documentPattern.accepts(child)) {
-            val lastLine = child.lastChild
-            val lastElement = lastLine.lastChild
+            val lastElement = child.lastChild
             return lastElement.elementType == MermaidTokens.EOL
           }
         }
