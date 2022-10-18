@@ -7,7 +7,11 @@ import org.gradle.util.GradleVersion
 
 
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
-  return if (isSupportedKotlin4(gradleVersion)) "1.4.32" else "1.3.50"
+  return when {
+    gradleVersion.baseVersion >= GradleVersion.version("6.7.1") -> "1.7.20"
+    gradleVersion.baseVersion >= GradleVersion.version("5.6.2") -> "1.4.32"
+    else -> "1.3.50"
+  }
 }
 
 fun getGroovyVersion(): String {

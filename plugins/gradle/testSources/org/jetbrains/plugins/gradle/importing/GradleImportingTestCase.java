@@ -344,7 +344,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
     config = injectRepo(config);
-    if (isGradleNewerOrSameAs("5.6")) {
+    if (isGradleNewerOrSameAs("7.0")) {
       GradleSystemSettings.getInstance().setGradleVmOptions("-Dorg.gradle.warning.mode=fail");
     }
     super.importProject(config, skipIndexing);
