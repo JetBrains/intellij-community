@@ -17,6 +17,17 @@ class MermaidElementFactory {
       return element as? MermaidClassDiagramStatement
     }
 
+    fun createGitGraphStatement(project: Project, name: String): MermaidGitGraphStatement? {
+      val text = """
+        gitGraph
+          branch $name
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      val element = file.findElementAt("gitGraph\n  ".length)?.parent?.parent
+      return element as? MermaidGitGraphStatement
+    }
+
     private fun createFile(project: Project?, text: String): MermaidFile {
       val name = "dummy.mermaid"
       return PsiFileFactory.getInstance(project).createFileFromText(name, MermaidLanguage, text) as MermaidFile

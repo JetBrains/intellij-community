@@ -54,6 +54,10 @@
       language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.intention.ClassDiagramAnnotator"/>
 
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.GitGraphAnnotator"/>
+
     <localInspection language="Mermaid" shortName="UnusedAttribute"
                      groupKey="unused.attribute.inspection.display.name"
                      bundle="messages.MermaidBundle"
