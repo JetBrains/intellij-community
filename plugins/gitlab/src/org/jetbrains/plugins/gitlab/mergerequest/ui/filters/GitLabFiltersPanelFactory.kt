@@ -50,9 +50,10 @@ internal class GitLabFiltersPanelFactory(
   private fun createStateFilter(viewScope: CoroutineScope): JComponent {
     return DropDownComponentFactory(vm.stateFilterState).create(
       viewScope,
-      GitLabBundle.message("merge.request.list.filter.category.state"),
-      listOf(MergeRequestStateFilterValue.OPENED, MergeRequestStateFilterValue.MERGED, MergeRequestStateFilterValue.CLOSED),
-      ::getShortText
+      filterName = GitLabBundle.message("merge.request.list.filter.category.state"),
+      items = listOf(MergeRequestStateFilterValue.OPENED, MergeRequestStateFilterValue.MERGED, MergeRequestStateFilterValue.CLOSED),
+      onSelect = {},
+      valuePresenter = ::getShortText
     )
   }
 
