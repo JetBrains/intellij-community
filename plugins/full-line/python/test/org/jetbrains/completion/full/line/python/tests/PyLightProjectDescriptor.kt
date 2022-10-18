@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.platform.tests.python
+package org.jetbrains.completion.full.line.python.tests
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.psi.LanguageLevel

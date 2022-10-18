@@ -1,7 +1,5 @@
 package org.jetbrains.completion.full.line.platform.tests
 
-import com.jetbrains.python.psi.LanguageLevel
-import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.Language
 import com.intellij.openapi.application.PluginPathManager
@@ -9,7 +7,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.completion.full.line.FullLineProposal.BasicSyntaxCorrectness
@@ -25,35 +22,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.assertAll
 
-/**
- * For tests with indexing (such as auto) or other language-specific just add an extra interface along with [FullLineCompletionTestCase]
- */
-interface PythonProject : ProjectDescriptorWrapper
-interface JavaProject : ProjectDescriptorWrapper
-interface KotlinProject : ProjectDescriptorWrapper
-interface ProjectDescriptorWrapper
-
-// default function for ProjectDescriptorWrapper
-fun ProjectDescriptorWrapper.getProjectDescriptor(basePath: String): LightProjectDescriptor? {
-  return when (this) {
-    is PythonProject                 -> PyLightProjectDescriptor(basePath, LanguageLevel.PYTHON36)
-    //LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED
-    is JavaProject, is KotlinProject -> null
-    else -> throw IllegalStateException("Cannot find project descriptor for ${this::class.simpleName}")
-  }
-}
-
 @Suppress("MemberVisibilityCanBePrivate")
 abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Boolean = true) : BasePlatformTestCase() {
   // override `getBasePath` for better navigation in resources, in IDE
   override fun getTestDataPath() = PluginPathManager.getPluginHome("full-line").resolve(basePath).path
-
-  override fun getProjectDescriptor() = if (this is ProjectDescriptorWrapper) {
-    (this as ProjectDescriptorWrapper).getProjectDescriptor(basePath)
-  }
-  else {
-    super.getProjectDescriptor()
-  }
 
   override fun setUp() {
     super.setUp()

@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.platform.tests.python
+package org.jetbrains.completion.full.line.python.tests
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
@@ -25,11 +25,11 @@ object PythonMockSdk {
         }
 
         return MockSdk(
-            "Mock ${PyNames.PYTHON_SDK_ID_NAME} ${level.toPythonVersion()}",
-            "$dataPath/$mockName/bin/python",
-            toVersionString(level),
-            roots,
-            PyMockSdkType(level)
+          "Mock ${PyNames.PYTHON_SDK_ID_NAME} ${level.toPythonVersion()}",
+          "$dataPath/$mockName/bin/python",
+          toVersionString(level),
+          roots,
+          PyMockSdkType(level)
         ).clone()
     }
 
