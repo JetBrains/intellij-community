@@ -612,7 +612,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JPanel topPanel = new Wrapper();
     topPanel.setBorder(JBUI.Borders.empty(16, 0, 12, 0));
 
-    LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.EAST);
+    LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false,
                                     () -> ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
                                           "/intellij/" +
