@@ -65,11 +65,6 @@ private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemRepor
 }
 
 fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
-  if (objProperty.name == "entitySource" &&
-      objProperty.receiver.javaFullName.decoded == WorkspaceEntity.Builder::class.java.name) {
-    //ignore until ModifiableWorkspaceEntity is renamed to WorkspaceModel.Builder (IDEA-299150)
-    return
-  }
   objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField -> 
     if (!overriddenField.open) {
       reporter.reportProblem(
