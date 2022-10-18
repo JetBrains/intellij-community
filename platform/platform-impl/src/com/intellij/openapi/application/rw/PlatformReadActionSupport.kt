@@ -20,7 +20,11 @@ internal class PlatformReadActionSupport : ReadActionSupport {
     return CommittedDocumentsConstraint(project)
   }
 
-  override suspend fun <X> executeReadAction(constraints: List<ReadConstraint>, blocking: Boolean, action: () -> X): X {
+  override suspend fun <X> executeReadAction(
+    constraints: List<ReadConstraint>,
+    blocking: Boolean,
+    action: () -> X,
+  ): X {
     return InternalReadAction(constraints, blocking, action).runReadAction()
   }
 
