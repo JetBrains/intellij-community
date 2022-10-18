@@ -16,8 +16,7 @@ import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.FilteringTreeModel;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ui.JBUI;
@@ -40,8 +39,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
   private TreePath myShowingChildPath;
   private TreePath myPendingChildPath;
-  private FilteringTreeStructure myStructure;
-  private StructureTreeModel<FilteringTreeStructure> myModel;
+  private FilteringTreeModel myModel;
 
   public TreePopupImpl(@Nullable Project project,
                        @Nullable JBPopup parent,
@@ -55,11 +53,9 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   protected JComponent createContent() {
     myWizardTree = new MyTree();
     myWizardTree.getAccessibleContext().setAccessibleName("WizardTree");
-    myStructure = new FilteringTreeStructure(this, getTreeStep().getStructure());
-    myModel = new StructureTreeModel<>(myStructure, this);
+    myModel = FilteringTreeModel.createModel(getTreeStep().getStructure(), this, this);
     myWizardTree.setModel(new AsyncTreeModel(myModel, this));
-    updateTree();
-
+    myModel.updateTree(myWizardTree, false, null);
     myWizardTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     Action action = myWizardTree.getActionMap().get("toggleSelectionPreserveAnchor");
@@ -429,30 +425,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
-    updateTree();
-  }
-
-  private void updateTree() {
-    myModel.getInvoker().invoke(() -> {
-      myStructure.refilter();
-      myModel.invalidateAsync().thenRun(() -> {
-        TreeUtil.promiseExpandAll(myWizardTree).then(o -> {
-          TreePath selectionPath = myWizardTree.getSelectionPath();
-          if (selectionPath == null) {
-            TreeUtil.promiseSelect(myWizardTree, path -> {
-              Object component = TreeUtil.getUserObject(path.getLastPathComponent());
-              if (component == null) return TreeVisitor.Action.CONTINUE;
-              Object @NotNull [] state = myStructure.getChildElements(component);
-              return state.length > 0 ? TreeVisitor.Action.CONTINUE: TreeVisitor.Action.INTERRUPT;
-            });
-          }
-          else {
-            TreeUtil.scrollToVisible(myWizardTree, selectionPath, false);
-          }
-          return true;
-        });
-      });
-    });
+    myModel.updateTree(myWizardTree, mySpeedSearch.isHoldingFilter(), null);
   }
 
   @Override
