@@ -748,7 +748,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addPostfix("configurations { tests }")
             .withTask("testJar", "Jar", task -> {
               task.code("dependsOn testClasses");
-              task.code("baseName = \"${project.archivesBaseName}-tests\"");
+              if (isGradleNewerOrSameAs("7.0")) {
+                task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
+              } else {
+                task.code("baseName = \"${project.archivesBaseName}-tests\"");
+              }
               task.code("classifier 'tests'");
               task.code("from sourceSets.test.output");
               return null;
@@ -1948,10 +1952,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     createSettingsFile("""
                          dependencyResolutionManagement {
                              versionCatalogs {
-                                 libs1 {
+                                 fooLibs {
                                      from(files('my_versions.toml'))
                                  }
-                                 libs2 {
+                                 barLibs {
                                      from(files('my_versions_2.toml'))
                                  }
                              }
@@ -1960,15 +1964,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                     .withJavaPlugin()
                     .addPostfix(
                       "dependencies {",
-                      "  testImplementation libs1.mylib",
-                      "  testImplementation libs2.myOtherLib",
+                      "  testImplementation fooLibs.mylib",
+                      "  testImplementation barLibs.myOtherLib",
                       "}"
                     ).generate());
 
     VersionCatalogsLocator locator = myProject.getService(VersionCatalogsLocator.class);
     final Map<String, Path> stringStringMap = locator.getVersionCatalogsForModule(getModule("project.main"));
-    assertThat(stringStringMap).containsOnly(entry("libs1", Path.of(toml1.getPath())),
-                                             entry("libs2", Path.of(toml2.getPath())));
+    assertThat(stringStringMap).containsOnly(entry("fooLibs", Path.of(toml1.getPath())),
+                                             entry("barLibs", Path.of(toml2.getPath())));
   }
 
   @SuppressWarnings("SameParameterValue")
