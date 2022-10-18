@@ -126,7 +126,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private SelectionBasedPluginModelAction.OptionButtonController<PluginDetailsPageComponent> myEnableDisableController;
 
   public static boolean isMultiTabs() {
-    return Registry.is("plugins.show.multi.tabs", false);
+    return Registry.is("plugins.show.multi.tabs", true);
   }
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
