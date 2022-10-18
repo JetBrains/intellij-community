@@ -439,6 +439,7 @@
         "nodes/propertyWrite.svg",
         "nodes/propertyWriteStatic.svg"
       ],
+      "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
