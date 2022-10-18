@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
@@ -29,11 +28,11 @@ import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.*
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.*
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -85,9 +84,9 @@ internal abstract class AttachToProcessView(
 
   abstract fun getViewActions(): List<AnAction>
 
-  @Nls
-  @NlsContexts.Button
-  abstract fun getName(): String
+  fun getName(): String = getHostType().displayText
+
+  abstract fun getHostType(): AttachDialogHostType
 
   protected abstract suspend fun doUpdateProcesses()
 

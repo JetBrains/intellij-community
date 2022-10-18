@@ -34,6 +34,7 @@ import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToPro
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import java.awt.Container
@@ -107,6 +108,8 @@ open class AttachToProcessDialog(
     currentAttachView.afterChange { updateView(it) }
     currentAttachView.set(if (!isLocalViewDefault && attachHostProviders.any()) remoteAttachView else localAttachView)
 
+    currentAttachView.afterChange { AttachDialogStatisticsCollector.hostSwitched(it) } // register view switch logging only after initialization
+
     filterTextField.addDocumentListener(object : DocumentAdapter() {
       override fun insertUpdate(e: DocumentEvent) {
         super.insertUpdate(e)
@@ -177,6 +180,9 @@ open class AttachToProcessDialog(
   }
 
   protected open fun onSearchFieldInsertUpdate() {
+    if (filterTextField.text?.length == 1) {
+      AttachDialogStatisticsCollector.searchFieldUsed()
+    }
   }
 
   private fun onItemDoubleClicked() {
@@ -386,6 +392,9 @@ open class AttachToProcessDialog(
         actions.add(object : AnAction({ debuggersFilter.getDisplayText() }) {
           override fun actionPerformed(e: AnActionEvent) {
             state.selectedDebuggersFilter.set(debuggersFilter)
+            if (debuggersFilter != AttachDialogAllDebuggersFilter) {
+              AttachDialogStatisticsCollector.debuggersFilterSet()
+            }
           }
         })
       }
@@ -515,7 +524,9 @@ open class AttachToProcessDialog(
     fun onFilterUpdated() {
       val filter = state.selectedDebuggersFilter.get()
       activePresentationGroup = debuggers.keys.filter { filter.canBeAppliedTo(setOf(it)) }.minByOrNull { it.order } ?: debuggers.keys.minByOrNull { it.order }
+      debuggers.forEach { debuggersPair -> debuggersPair.value.forEach { it.isMainAction = false } }
       val activeDebuggerAction = getActiveDebuggerAction()
+      activeDebuggerAction?.isMainAction = true
       isEnabled = activeDebuggerAction != null
       putValue(Action.NAME, activeDebuggerAction?.debugger.getActionPresentation())
     }
@@ -530,13 +541,18 @@ open class AttachToProcessDialog(
     }
   }
 
-  private inner class AttachDebuggerAction(val debugger: XAttachDebugger, private val item: AttachToProcessItem): AbstractAction(), DumbAware {
+  private inner class AttachDebuggerAction(
+    val debugger: XAttachDebugger,
+    private val item: AttachToProcessItem): AbstractAction(), DumbAware {
+
+    var isMainAction: Boolean = false
 
     init {
       putValue(Action.NAME, debugger.getActionPresentation())
     }
 
     override fun actionPerformed(e: ActionEvent?) {
+      AttachDialogStatisticsCollector.attachButtonPressed(isMainAction)
       attach(debugger, item)
     }
   }
