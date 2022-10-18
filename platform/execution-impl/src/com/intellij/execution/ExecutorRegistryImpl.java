@@ -367,7 +367,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         if (ExperimentalUI.isNewUI() &&
             needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
-          text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          if (myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)) {
+            text = ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration);
+          }
+          else {
+            text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          }
         }
         else {
           text = myExecutor.getStartActionText(configuration.getName());
