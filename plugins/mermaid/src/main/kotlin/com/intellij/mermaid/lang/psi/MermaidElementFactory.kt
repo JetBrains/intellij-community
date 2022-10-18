@@ -17,10 +17,21 @@ class MermaidElementFactory {
       return element as? MermaidClassDiagramStatement
     }
 
-    fun createGitGraphStatement(project: Project, name: String): MermaidGitGraphStatement? {
+    fun createBranchStatement(project: Project, name: String): MermaidGitGraphStatement? {
       val text = """
         gitGraph
           branch $name
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      val element = file.findElementAt("gitGraph\n  ".length)?.parent?.parent
+      return element as? MermaidGitGraphStatement
+    }
+
+    fun createCommitStatement(project: Project, name: String): MermaidGitGraphStatement? {
+      val text = """
+        gitGraph
+          commit id: "$name"
       """.trimIndent()
       val file = createFile(project, text)
 

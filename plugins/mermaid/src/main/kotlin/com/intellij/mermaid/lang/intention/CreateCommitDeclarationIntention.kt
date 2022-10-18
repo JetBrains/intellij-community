@@ -14,11 +14,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 
-class CreateBranchDeclarationIntention(
+class CreateCommitDeclarationIntention(
   private val psiElement: PsiElement,
   private val className: String = psiElement.text
 ) : BaseIntentionAction() {
-  override fun getText(): String = MermaidBundle.message("fix.create.branch.declaration", className)
+  override fun getText(): String = MermaidBundle.message("fix.create.commit.declaration", className)
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
 
@@ -34,7 +34,7 @@ class CreateBranchDeclarationIntention(
     WriteCommandAction.runWriteCommandAction(project) {
       val statement = psiElement.parentOfType<MermaidGitGraphStatement>() ?: return@runWriteCommandAction
       val parent = statement.parent
-      val declaration = MermaidElementFactory.createBranchStatement(project, className.replace(" ", "\\\\ "))
+      val declaration = MermaidElementFactory.createCommitStatement(project, className.replace(" ", "\\\\ "))
         ?: return@runWriteCommandAction
 
       parent.node.addChild(declaration.node, statement.node)

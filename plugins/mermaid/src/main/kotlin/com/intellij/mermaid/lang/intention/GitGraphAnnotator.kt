@@ -5,10 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.psi.MermaidBranchStatement
-import com.intellij.mermaid.lang.psi.MermaidCheckoutStatement
-import com.intellij.mermaid.lang.psi.MermaidGitGraphStatement
-import com.intellij.mermaid.lang.psi.MermaidMergeStatement
+import com.intellij.mermaid.lang.psi.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 
@@ -40,6 +37,30 @@ class GitGraphAnnotator : Annotator {
         .range(identifier.textRange)
         .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
         .withFix(CreateBranchDeclarationIntention(identifier))
+        .create()
+    }
+    if (element is MermaidCherryPickStatement) {
+      val identifier = element.commitIdAttribute.commitIdValue
+
+      val text = identifier.text
+      val parent = element.parent ?: return
+
+      val matchingIds = parent
+        .siblings(forward = false, withSelf = false)
+        .filterIsInstance<MermaidGitGraphStatement>()
+        .map { it.firstChild }
+        .filterIsInstance<MermaidCommitStatement>()
+        .mapNotNull { it.commitIdAttribute?.commitIdValue?.text }
+        .filter { it == text }
+
+      if (matchingIds.toList().isNotEmpty()) {
+        return
+      }
+
+      holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.commit.id"))
+        .range(identifier.textRange)
+        .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
+        .withFix(CreateCommitDeclarationIntention(identifier))
         .create()
     }
   }
