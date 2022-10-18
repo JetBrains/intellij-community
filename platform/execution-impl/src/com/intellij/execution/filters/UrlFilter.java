@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -87,7 +89,8 @@ public class UrlFilter implements Filter, DumbAware {
           }
         }
       }
-      String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
+      String filePath = URLDecoder.decode(url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex),
+                                          StandardCharsets.UTF_8);
       return new FileUrlHyperlinkInfo(myProject, filePath, documentLine, documentColumn, url, true);
     }
     return null;
@@ -107,6 +110,9 @@ public class UrlFilter implements Filter, DumbAware {
 
   public static class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     private @NotNull final String myUrl;
+    final String myFilePath;
+    final int myDocumentLine;
+    final int myDocumentColumn;
 
     public FileUrlHyperlinkInfo(@NotNull Project project,
                                 @NotNull String filePath,
@@ -116,6 +122,9 @@ public class UrlFilter implements Filter, DumbAware {
                                 boolean useBrowser) {
       super(project, filePath, documentLine, documentColumn, useBrowser);
       myUrl = url;
+      myFilePath = filePath;
+      myDocumentLine = documentLine;
+      myDocumentColumn = documentColumn;
     }
 
     @Override
