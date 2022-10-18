@@ -37,7 +37,7 @@ public class FloatingModeHelper {
 
   public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavBarVmImpl navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
-    NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar);
+    NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar, project);
     panel.add(component);
     panel.setOpaque(true);
 

@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.navbar.vm.StaticNavBarVm
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import javax.swing.JPanel
 internal class StaticNavBarPanel(
   cs: CoroutineScope,
   staticVm: StaticNavBarVm,
+  project: Project,
 ) : JPanel(BorderLayout()) {
 
   init {
@@ -26,7 +28,7 @@ internal class StaticNavBarPanel(
         }
         else {
           coroutineScope {
-            add(NewNavBarPanel(this@coroutineScope, vm))
+            add(NewNavBarPanel(this@coroutineScope, vm, project))
           }
         }
       }

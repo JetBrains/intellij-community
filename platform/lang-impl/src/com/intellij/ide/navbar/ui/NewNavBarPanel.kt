@@ -7,6 +7,7 @@ import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HintHint
@@ -29,6 +30,7 @@ import javax.swing.SwingUtilities
 internal class NewNavBarPanel(
   cs: CoroutineScope,
   private val vm: NavBarVm,
+  private val myProject: Project,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
   private val myItemComponents = arrayListOf<NavBarItemComponent>()
@@ -62,19 +64,21 @@ internal class NewNavBarPanel(
                          || isLast
                          || item.presentation.hasContainingFile
 
-      val itemComponent = NavBarItemComponent(item, item.presentation, isIconNeeded, !isLast)
+      val itemComponent = NavBarItemComponent(item, myProject, isIconNeeded, !isLast)
 
       itemComponent.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.isConsumed) {
             return
           }
-          e.consume()
-          if (e.clickCount == 1) {
-            vm.selectItem(item)
-          }
-          else if (e.button == MouseEvent.BUTTON1) {
-            vm.activateItem(item)
+          if (e.button == MouseEvent.BUTTON1) {
+            e.consume()
+            if (e.clickCount == 1) {
+              vm.selectItem(item)
+            }
+            else {
+              vm.activateItem(item)
+            }
           }
         }
       })
@@ -104,7 +108,7 @@ internal class NewNavBarPanel(
       return
     }
     scrollRectToVisible(itemComponent.bounds)
-    val popupHint = NavigationBarPopup(vm)
+    val popupHint = NavigationBarPopup(vm, myProject)
     val point = getItemPopupLocation(itemComponent, popupHint)
     popupHint.show(this, point.x, point.y, this, HintHint(this, point))
   }

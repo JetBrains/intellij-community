@@ -4,13 +4,10 @@ package com.intellij.ide.navbar.ui
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVmItem
 import com.intellij.ide.navbar.vm.PopupResult.*
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.LightweightHint
-import com.intellij.ui.ListActions
-import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.popup.HintUpdateSupply
@@ -20,6 +17,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.event.*
 import javax.swing.*
+
 
 private fun registerListActions(list: JList<NavBarVmItem>, popup: LightweightHint, vm: NavBarPopupVm) {
   list.actionMap.put(ListActions.Left.ID, object : AbstractAction() {
@@ -51,7 +49,7 @@ private fun registerListActions(list: JList<NavBarVmItem>, popup: LightweightHin
   })
 }
 
-internal class NavigationBarPopup(private val vm: NavBarPopupVm) : LightweightHint(createPopupContents(vm)) {
+internal class NavigationBarPopup(private val vm: NavBarPopupVm, project: Project) : LightweightHint(createPopupContents(vm, project)) {
 
   init {
     setFocusRequestor(component)
@@ -65,13 +63,13 @@ internal class NavigationBarPopup(private val vm: NavBarPopupVm) : LightweightHi
   }
 }
 
-private fun createPopupContents(vm: NavBarPopupVm): JComponent {
+private fun createPopupContents(vm: NavBarPopupVm, project: Project): JComponent {
   val list = JBList<NavBarVmItem>()
   list.model = CollectionListModel(vm.items)
   list.border = JBUI.Borders.empty(5)
   HintUpdateSupply.installSimpleHintUpdateSupply(list)
 
-  list.installCellRenderer { item -> NavigationBarPopupItemComponent(item.presentation) }
+  list.installCellRenderer { item -> NavigationBarPopupItemComponent(item, project) }
 
   val selectedChild = vm.selectedChild
   if (selectedChild != null) {

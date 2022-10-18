@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.JComponent
 
+
 @Service(PROJECT)
 internal class NavBarService(private val project: Project) : Disposable {
 
@@ -37,7 +38,7 @@ internal class NavBarService(private val project: Project) : Disposable {
 
   val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
     EDT.assertIsEdt()
-    StaticNavBarPanel(cs, staticNavBarVm)
+    StaticNavBarPanel(cs, staticNavBarVm, project)
   }
 
   fun jumpToNavbar(dataContext: DataContext) {
