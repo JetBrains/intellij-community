@@ -474,6 +474,8 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 
       @Suppress("SpellCheckingInspection")
       System.setProperty("sun.awt.noerasebackground", "true")
+      // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
+      System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
       runActivity("awt toolkit creating") {
         Toolkit.getDefaultToolkit()
