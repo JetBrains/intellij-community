@@ -52,8 +52,20 @@ class CompletionGolfFragmentBuilder(project: Project, language: Language) : Code
       val text = TextRange(range.startOffset, commentStart ?: range.endOffset).substring(space.containingFile.text)
 
       // Take only valuable lines
-      if (text.find { it.isLetterOrDigit() } != null) {
-        codeFragment?.addChild(CodeToken(text, range.startOffset, text.length, prop))
+      if (text.contains("\n")) {
+        var start = range.startOffset
+        text.lines().map {
+          val t = TextRange(start, start + it.length).substring(space.containingFile.text)
+          CodeToken(t, start, t.length, prop).also {
+            start += t.length + 1
+          }
+        }.filter { it.text.find { it.isLetterOrDigit() || it == '\'' || it == '"' } != null }
+          .forEach { codeFragment?.addChild(it) }
+      } else {
+        // Take only valuable lines
+        if (text.find { it.isLetterOrDigit() || it == '\'' || it == '"' } != null) {
+          codeFragment?.addChild(CodeToken(text, range.startOffset, text.length, prop))
+        }
       }
       super.visitWhiteSpace(space)
     }
