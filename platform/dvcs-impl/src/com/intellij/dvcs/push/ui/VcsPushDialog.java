@@ -60,11 +60,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   private static final int CENTER_PANEL_WIDTH = 800;
 
   protected final Project myProject;
-  private final PushLog myListPanel;
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
+  private final PushLog myListPanel;
 
-  private Action myMainAction;
+  private final Action myMainAction;
   @NotNull private final List<ActionWrapper> myPushActions;
 
   public VcsPushDialog(@NotNull Project project,
@@ -74,7 +74,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   public VcsPushDialog(@NotNull Project project,
-                       Collection<? extends Repository> allRepos, @NotNull List<? extends Repository> selectedRepositories,
+                       @NotNull Collection<? extends Repository> allRepos,
+                       @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myProject = project;
@@ -83,7 +84,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
                          pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
+
     myPushActions = collectPushActions();
+    myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
+    myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
 
     init();
     updateOkActions();
@@ -207,8 +211,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   protected Action @NotNull [] createActions() {
     final List<Action> actions = new ArrayList<>();
-    myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
-    myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myMainAction);
     actions.add(getCancelAction());
     actions.add(getHelpAction());

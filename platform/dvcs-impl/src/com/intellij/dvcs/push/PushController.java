@@ -12,7 +12,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -174,9 +173,7 @@ public final class PushController implements Disposable {
   @Nullable
   private <R extends Repository, S extends PushSource, T extends PushTarget> PushSupport<R, S, T> getPushSupportByRepository(@NotNull final R repository) {
     //noinspection unchecked
-    return (PushSupport<R, S, T>)ContainerUtil.find(
-      myPushSupports,
-      (Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>)support -> support.getVcs().equals(repository.getVcs()));
+    return (PushSupport<R, S, T>)ContainerUtil.find(myPushSupports, support -> support.getVcs().equals(repository.getVcs()));
   }
 
   private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull R repository,
@@ -580,16 +577,13 @@ public final class PushController implements Disposable {
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        @NonNls
-        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), new VcsLinkListener() {
-          @Override
-          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
+        @NonNls final VcsLinkedTextComponent moreCommitsLink =
+          new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), (sourceNode, event) -> {
             TreeNode parent = sourceNode.getParent();
             if (parent instanceof RepositoryNode) {
               addMoreCommits((RepositoryNode)parent);
             }
-          }
-        });
+          });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));
         break;
       }
@@ -652,8 +646,10 @@ public final class PushController implements Disposable {
     @NotNull private final CheckBoxModel myCheckBoxModel;
 
     MyRepoModel(@NotNull Repo repository,
-                       @NotNull PushSupport<Repo, S, T> supportForRepo,
-                       boolean isSelected, @NotNull S source, @Nullable T target) {
+                @NotNull PushSupport<Repo, S, T> supportForRepo,
+                boolean isSelected,
+                @NotNull S source,
+                @Nullable T target) {
       myRepository = repository;
       mySupport = supportForRepo;
       myCheckBoxModel = new CheckBoxModel(isSelected);
@@ -732,5 +728,4 @@ public final class PushController implements Disposable {
       myCheckBoxModel.setChecked(checked);
     }
   }
-
 }

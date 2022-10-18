@@ -288,7 +288,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
     setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     setLayout(new BorderLayout());
-    add(splitter);
+    add(splitter, BorderLayout.CENTER);
     myTree.setRowHeight(0);
   }
 
