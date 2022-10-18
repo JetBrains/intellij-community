@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,7 +71,8 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
+public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+                                                                   UISettingsListener {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -118,6 +120,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
     for (MouseListener l : getMouseListeners()) removeMouseListener(l);
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
+  }
+
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    if (uiSettings.getPresentationMode() && myEditor.getFontSize() != uiSettings.getPresentationModeFontSize()) {
+      myEditor.setFontSize(uiSettings.getPresentationModeFontSize());
+    }
   }
 
   @DirtyUI
