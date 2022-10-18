@@ -6,7 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -113,21 +115,51 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   @NotNull
-  private ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
+  private static ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
     ActionManager actionManager = ActionManager.getInstance();
     @NotNull ActionGroup textActionGroup = (ActionGroup)actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP);
-    ActionToolbar toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
       @Override
-      protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
-
-        super.applyToolbarLook(look, presentation, component);
+      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                          ActionButtonLook look,
+                                                          @NotNull String place,
+                                                          @NotNull Presentation presentation,
+                                                          @NotNull Dimension minimumSize) {
+        MyActionButton button = new MyActionButton(action);
+        button.setFocusable(true);
+        applyToolbarLook(look, presentation, button);
+        return button;
       }
     };
+
+    toolbar.setCustomButtonLook(new FieldInplaceActionButtonLook());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setTargetComponent(editor);
     toolbar.updateActionsImmediately();
     return toolbar;
   }
+
+  private static final class MyActionButton extends ActionButton {
+    MyActionButton(@NotNull AnAction action) {
+      super(action, action.getTemplatePresentation().clone(), "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      updateIcon();
+    }
+
+    @Override
+    public int getPopState() {
+      return isSelected() ? SELECTED : super.getPopState();
+    }
+
+    @Override
+    public Icon getIcon() {
+      if (isEnabled() && isSelected()) {
+        Icon selectedIcon = myPresentation.getSelectedIcon();
+        if (selectedIcon != null) return selectedIcon;
+      }
+      return super.getIcon();
+    }
+  }
+
 
   @Override
   public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
