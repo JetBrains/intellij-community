@@ -10,8 +10,10 @@ data class GitLabMergeRequestsFiltersValue(
   override val searchQuery: String? = null,
   val state: MergeRequestStateFilterValue? = null,
   val author: MergeRequestsMemberFilterValue? = null,
+  val assignee: MergeRequestsMemberFilterValue? = null,
+  val reviewer: MergeRequestsMemberFilterValue? = null
 ) : ReviewListSearchValue {
-  private val filters: List<FilterValue?> = listOf(state, author)
+  private val filters: List<FilterValue?> = listOf(state, author, assignee, reviewer)
 
   fun toSearchQuery(): String = filters.mapNotNull { it }.joinToString(separator = "&") { filter ->
     "${filter.queryField()}=${filter.queryValue()}"
@@ -42,6 +44,16 @@ data class GitLabMergeRequestsFiltersValue(
   internal class MergeRequestsAuthorFilterValue(username: String, fullname: String)
     : MergeRequestsMemberFilterValue(username, fullname) {
     override fun queryField(): String = "author_username"
+  }
+
+  internal class MergeRequestsAssigneeFilterValue(username: String, fullname: String)
+    : MergeRequestsMemberFilterValue(username, fullname) {
+    override fun queryField(): String = "assignee_username"
+  }
+
+  internal class MergeRequestsReviewerFilterValue(username: String, fullname: String)
+    : MergeRequestsMemberFilterValue(username, fullname) {
+    override fun queryField(): String = "reviewer_username"
   }
 
   companion object {

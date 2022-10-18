@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
@@ -25,12 +26,16 @@ internal class GitLabFiltersPanelFactory(
       if (searchQuery != null) append(""""$searchQuery"""").append(" ")
       if (state != null) append("""state:"${getShortText(state)}"""").append(" ")
       if (author != null) append("""author:"${author}"""").append(" ")
+      if (assignee != null) append("""assignee:"${assignee}"""").append(" ")
+      if (reviewer != null) append("""reviewer:"${reviewer}"""").append(" ")
     }.toString()
   }
 
   override fun createFilters(viewScope: CoroutineScope): List<JComponent> = listOf(
     createStateFilter(viewScope),
-    createAuthorFilter(viewScope)
+    createAuthorFilter(viewScope),
+    createAssigneeFilter(viewScope),
+    createReviewerFilter(viewScope)
   )
 
   override fun GitLabMergeRequestsQuickFilter.getQuickFilterTitle(): String = when (this) {
@@ -46,15 +51,41 @@ internal class GitLabFiltersPanelFactory(
     )
   }
 
-  private fun createAuthorFilter(viewScope: CoroutineScope): JComponent = DropDownComponentFactory(vm.authorFilterState).create(
+  private fun createAuthorFilter(viewScope: CoroutineScope): JComponent = createParticipantFilter(
     viewScope,
-    GitLabBundle.message("merge.request.list.filter.category.author"),
-    valuePresenter = { author -> author.fullname },
+    participantFilterState = vm.authorFilterState,
+    filterName = GitLabBundle.message("merge.request.list.filter.category.author"),
+    participantCreator = { user -> MergeRequestsAuthorFilterValue(user.username, user.name) }
+  )
+
+  private fun createAssigneeFilter(viewScope: CoroutineScope): JComponent = createParticipantFilter(
+    viewScope,
+    participantFilterState = vm.assigneeFilterState,
+    filterName = GitLabBundle.message("merge.request.list.filter.category.assignee"),
+    participantCreator = { user -> MergeRequestsAssigneeFilterValue(user.username, user.name) }
+  )
+
+  private fun createReviewerFilter(viewScope: CoroutineScope): JComponent = createParticipantFilter(
+    viewScope,
+    participantFilterState = vm.reviewerFilterState,
+    filterName = GitLabBundle.message("merge.request.list.filter.category.reviewer"),
+    participantCreator = { user -> MergeRequestsReviewerFilterValue(user.username, user.name) }
+  )
+
+  private fun <T : MergeRequestsMemberFilterValue> createParticipantFilter(
+    viewScope: CoroutineScope,
+    participantFilterState: MutableStateFlow<T?>,
+    filterName: @Nls String,
+    participantCreator: (GitLabUserDTO) -> T
+  ): JComponent = DropDownComponentFactory(participantFilterState).create(
+    viewScope,
+    filterName,
+    valuePresenter = { participant -> participant.fullname },
     chooseValue = { point, popupState ->
       val selectedAuthor = showParticipantChooser(point, popupState, participantsLoader = {
         vm.getMergeRequestMembers().map { member -> member.user }
       })
-      selectedAuthor?.let { user -> MergeRequestsAuthorFilterValue(user.username, user.name) }
+      selectedAuthor?.let { user -> participantCreator(user) }
     })
 
   private suspend fun showParticipantChooser(
@@ -62,8 +93,8 @@ internal class GitLabFiltersPanelFactory(
     popupState: PopupState<JBPopup>,
     participantsLoader: suspend () -> List<GitLabUserDTO>
   ): GitLabUserDTO? {
-    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { userDTO ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = userDTO.name)
+    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name)
     }
   }
 

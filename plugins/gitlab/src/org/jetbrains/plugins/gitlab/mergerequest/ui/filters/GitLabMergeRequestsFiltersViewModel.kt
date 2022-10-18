@@ -14,6 +14,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
   val stateFilterState: MutableStateFlow<MergeRequestStateFilterValue?>
   val authorFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
+  val assigneeFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
+  val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
 
   suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
 }
@@ -43,6 +45,14 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override val authorFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::author) {
     copy(author = it)
+  }
+
+  override val assigneeFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::assignee) {
+    copy(assignee = it)
+  }
+
+  override val reviewerFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::reviewer) {
+    copy(reviewer = it)
   }
 
   override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> = projectDetailsLoader.projectMembers().filter { member ->
