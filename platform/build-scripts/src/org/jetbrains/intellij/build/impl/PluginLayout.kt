@@ -29,8 +29,15 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String): BaseLayout() {
-  constructor(mainModule: String) : this(mainModule, convertModuleNameToFileName(mainModule))
+class PluginLayout private constructor(
+  val mainModule: String,
+  mainJarNameWithoutExtension: String,
+) : BaseLayout() {
+
+  constructor(mainModule: String) : this(
+    mainModule,
+    convertModuleNameToFileName(mainModule),
+  )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
 
