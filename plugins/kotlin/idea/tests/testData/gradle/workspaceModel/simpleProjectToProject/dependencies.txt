@@ -52,7 +52,9 @@ MODULES
         < Kotlin SDK >
         <Module source>
         SimpleProjectToProject.a.commonMain (scope: COMPILE, exported: false)
+#MACOS
         SimpleProjectToProject.b.macosX64Main (scope: COMPILE, exported: false)
+#END
         SimpleProjectToProject.b.commonMain (scope: COMPILE, exported: false)
         <Kotlin/Native Distribution Libraries Test Stub>
     SimpleProjectToProject.a.macosX64Test
@@ -62,7 +64,9 @@ MODULES
         SimpleProjectToProject.a.commonMain (scope: TEST, exported: false)
         SimpleProjectToProject.a.commonTest (scope: TEST, exported: false)
         SimpleProjectToProject.a.macosX64Main (scope: TEST, exported: false)
+#MACOS
         SimpleProjectToProject.b.macosX64Main (scope: TEST, exported: false)
+#END
         SimpleProjectToProject.b.commonMain (scope: TEST, exported: false)
         <Kotlin/Native Distribution Libraries Test Stub>
     SimpleProjectToProject.b
