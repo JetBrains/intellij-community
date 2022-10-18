@@ -2,13 +2,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
-      <!--suppress PluginXmlValidity -->
-      <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
@@ -28,6 +21,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+      serviceInterface="com.intellij.openapi.fileEditor.FileEditorManager"
+      serviceImplementation="com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl"
+      headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
+      preload="await"
+    />
+
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"

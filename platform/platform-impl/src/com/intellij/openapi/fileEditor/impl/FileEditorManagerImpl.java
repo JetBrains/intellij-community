@@ -19,6 +19,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -110,9 +111,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WINDOW;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 
-/**
- * @author Eugene Belyaev
- */
 @State(name = "FileEditorManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
@@ -750,7 +748,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private List<ClientFileEditorManager> getAllClientFileEditorManagers() {
-    return myProject.getServices(ClientFileEditorManager.class, false);
+    return myProject.getServices(ClientFileEditorManager.class, ClientKind.REMOTE);
   }
 
   @Override

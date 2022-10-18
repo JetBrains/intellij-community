@@ -33,7 +33,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   public override fun setUp() {
     super.setUp()
     manager = FileEditorManagerExImpl(project)
-    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
+    project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     initialContainers = DockManager.getInstance(project).containers.size
   }

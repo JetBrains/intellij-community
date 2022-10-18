@@ -16,7 +16,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.testFramework.registerComponentInstance
+import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ArrayUtilRt
 import javax.swing.SwingConstants
@@ -28,7 +28,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
     super.setUp()
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     manager = FileEditorManagerExImpl(project).also { it.initDockableContentFactory() }
-    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
+    project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
   }
 

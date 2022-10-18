@@ -13,8 +13,8 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureTestCase<ModuleFixtureBuilder<?>> {
   protected VirtualFile getFile(String path) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(
-      PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager" + path);
+    return LocalFileSystem.getInstance()
+      .refreshAndFindFileByPath(PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager" + path);
   }
 
   @Override
@@ -23,7 +23,7 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
 
     Project project = getProject();
     FileEditorManagerImpl manager = new FileEditorManagerExImpl(project);
-    ServiceContainerUtil.registerComponentInstance(project, FileEditorManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.registerServiceInstance(project, FileEditorManager.class, manager);
   }
 
   @Override
