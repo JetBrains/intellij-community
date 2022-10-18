@@ -43,7 +43,12 @@ internal class ProjectResolutionFacade(
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
             val resolverProvider = computeModuleResolverProvider()
-            CachedValueProvider.Result.create(resolverProvider, resolverForProjectDependencies)
+            val allDependencies = if (invalidateOnOOCB) {
+                resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            } else {
+                resolverForProjectDependencies
+            }
+            CachedValueProvider.Result.create(resolverProvider, allDependencies)
         },
         /* trackValue = */ false
     )
@@ -97,9 +102,7 @@ internal class ProjectResolutionFacade(
                 }
             }
 
-            val allDependencies = resolverForProjectDependencies + listOf(
-                KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-            )
+            val allDependencies = resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
             CachedValueProvider.Result.create(results, allDependencies)
         }, false
     )
@@ -129,7 +132,7 @@ internal class ProjectResolutionFacade(
             modulesToCreateResolvers,
             syntheticFilesByModule,
             delegateResolverForProject,
-            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else null,
+            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else LibraryModificationTracker.getInstance(project),
             settings
         )
     }
