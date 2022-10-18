@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
