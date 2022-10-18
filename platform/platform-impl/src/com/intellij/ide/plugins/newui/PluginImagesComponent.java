@@ -238,6 +238,10 @@ public class PluginImagesComponent extends JPanel {
         count = myImages.size();
       }
 
+      if (count < 2) {
+        return;
+      }
+
       int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
       int ovalGap = JBUI.scale(14);
       int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
@@ -422,6 +426,10 @@ public class PluginImagesComponent extends JPanel {
         g2.draw(new RoundRectangle2D.Float(x, y, width - 1, height - offset, 7, 7));
       }
 
+      if (count < 2) {
+        return;
+      }
+
       int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
       int ovalGap = JBUI.scale(14);
       int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
@@ -440,7 +448,7 @@ public class PluginImagesComponent extends JPanel {
         ovalX += ovalSize + ovalGap;
       }
 
-      if (myHovered && count > 1) {
+      if (myHovered) {
         paintAction(g2, x, y, width, height, offset, true);
         paintAction(g2, x, y, width, height, offset, false);
       }
