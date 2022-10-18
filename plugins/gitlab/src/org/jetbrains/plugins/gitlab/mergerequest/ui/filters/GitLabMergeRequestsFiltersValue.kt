@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class GitLabMergeRequestsFiltersValue(
   override val searchQuery: String? = null,
-  val state: MergeRequestStateFilterValue? = null
+  val state: MergeRequestStateFilterValue? = null,
+  val author: MergeRequestsMemberFilterValue? = null,
 ) : ReviewListSearchValue {
-  private val filters: List<FilterValue?> = listOf(state)
+  private val filters: List<FilterValue?> = listOf(state, author)
 
   fun toSearchQuery(): String = filters.mapNotNull { it }.joinToString(separator = "&") { filter ->
     "${filter.queryField()}=${filter.queryValue()}"
@@ -30,6 +32,16 @@ data class GitLabMergeRequestsFiltersValue(
       CLOSED -> "closed"
       MERGED -> "merged"
     }
+  }
+
+  @Serializable
+  sealed class MergeRequestsMemberFilterValue(val username: @NlsSafe String, val fullname: @NlsSafe String) : FilterValue {
+    override fun queryValue(): String = username
+  }
+
+  internal class MergeRequestsAuthorFilterValue(username: String, fullname: String)
+    : MergeRequestsMemberFilterValue(username, fullname) {
+    override fun queryField(): String = "author_username"
   }
 
   companion object {

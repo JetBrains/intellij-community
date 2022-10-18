@@ -1,11 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
 import org.jetbrains.plugins.gitlab.ui.GitLabBundle
 import javax.swing.JComponent
 
@@ -19,11 +24,13 @@ internal class GitLabFiltersPanelFactory(
     StringBuilder().apply {
       if (searchQuery != null) append(""""$searchQuery"""").append(" ")
       if (state != null) append("""state:"${getShortText(state)}"""").append(" ")
+      if (author != null) append("""author:"${author}"""").append(" ")
     }.toString()
   }
 
   override fun createFilters(viewScope: CoroutineScope): List<JComponent> = listOf(
-    createStateFilter(viewScope)
+    createStateFilter(viewScope),
+    createAuthorFilter(viewScope)
   )
 
   override fun GitLabMergeRequestsQuickFilter.getQuickFilterTitle(): String = when (this) {
@@ -37,6 +44,27 @@ internal class GitLabFiltersPanelFactory(
       listOf(MergeRequestStateFilterValue.OPENED, MergeRequestStateFilterValue.MERGED, MergeRequestStateFilterValue.CLOSED),
       ::getShortText
     )
+  }
+
+  private fun createAuthorFilter(viewScope: CoroutineScope): JComponent = DropDownComponentFactory(vm.authorFilterState).create(
+    viewScope,
+    GitLabBundle.message("merge.request.list.filter.category.author"),
+    valuePresenter = { author -> author.fullname },
+    chooseValue = { point, popupState ->
+      val selectedAuthor = showParticipantChooser(point, popupState, participantsLoader = {
+        vm.getMergeRequestMembers().map { member -> member.user }
+      })
+      selectedAuthor?.let { user -> MergeRequestsAuthorFilterValue(user.username, user.name) }
+    })
+
+  private suspend fun showParticipantChooser(
+    point: RelativePoint,
+    popupState: PopupState<JBPopup>,
+    participantsLoader: suspend () -> List<GitLabUserDTO>
+  ): GitLabUserDTO? {
+    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { userDTO ->
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = userDTO.name)
+    }
   }
 
   companion object {

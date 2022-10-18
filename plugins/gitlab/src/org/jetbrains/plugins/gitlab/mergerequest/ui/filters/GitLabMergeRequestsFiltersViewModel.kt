@@ -5,15 +5,23 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPane
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
   val stateFilterState: MutableStateFlow<MergeRequestStateFilterValue?>
+  val authorFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
+
+  suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
 }
 
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
-  historyModel: GitLabMergeRequestsFiltersHistoryModel
+  historyModel: GitLabMergeRequestsFiltersHistoryModel,
+  private val projectDetailsLoader: GitLabProjectDetailsLoader
 ) : GitLabMergeRequestsFiltersViewModel,
     ReviewListSearchPanelViewModelBase<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter>(
       scope,
@@ -31,5 +39,22 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
 
   override val stateFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::state) {
     copy(state = it)
+  }
+
+  override val authorFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::author) {
+    copy(author = it)
+  }
+
+  override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> = projectDetailsLoader.projectMembers().filter { member ->
+    isValidMergeRequestAccessLevel(member.accessLevel)
+  }
+
+  companion object {
+    private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
+      return accessLevel == GitLabAccessLevel.REPORTER ||
+             accessLevel == GitLabAccessLevel.DEVELOPER ||
+             accessLevel == GitLabAccessLevel.MAINTAINER ||
+             accessLevel == GitLabAccessLevel.OWNER
+    }
   }
 }
