@@ -1664,6 +1664,11 @@ public class Mappings {
       assert myCompiledFiles != null;
       assert myAffectedFiles != null;
 
+      if (classRepr.isEnum()) {
+        debug("Constants added to enum, affecting class usages ", classRepr.name);
+        state.myAffectedUsages.add(classRepr.createUsage());
+      }
+      
       for (final FieldRepr f : added) {
         debug("Field: ", f.name);
 
