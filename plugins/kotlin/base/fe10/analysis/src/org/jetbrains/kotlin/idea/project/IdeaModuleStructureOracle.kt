@@ -37,6 +37,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 )
             }
         }.map {
+            ProgressManager.checkCanceled()
             it.toModulePath()
         }.toList()
     }
@@ -56,6 +57,7 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
                 )
             }
         }.map {
+            ProgressManager.checkCanceled()
             it.toModulePath()
         }.toList()
     }
@@ -84,14 +86,20 @@ class IdeaModuleStructureOracle : ModuleStructureOracle {
     private class ModuleInfoPath(val nodes: List<ModuleInfo>)
 
     private fun ModuleInfoPath.toModulePath(): ModulePath =
-        ModulePath(nodes.mapNotNull { it.unwrapModuleSourceInfo()?.toDescriptor() })
+        ModulePath(nodes.mapNotNull {
+            ProgressManager.checkCanceled()
+            it.unwrapModuleSourceInfo()?.toDescriptor()
+        })
 }
 
 object DependsOnGraphHelper {
     fun ModuleDescriptor.predecessorsInDependsOnGraph(): List<ModuleDescriptor> {
         return moduleSourceInfo
             ?.predecessorsInDependsOnGraph()
-            ?.mapNotNull { it.toDescriptor() }
+            ?.mapNotNull {
+                ProgressManager.checkCanceled()
+                it.toDescriptor()
+            }
             ?: emptyList()
     }
 
@@ -107,12 +115,17 @@ object DependsOnGraphHelper {
     fun ModuleDescriptor.successorsInDependsOnGraph(): List<ModuleDescriptor> {
         return moduleSourceInfo
             ?.successorsInDependsOnGraph()
-            ?.mapNotNull { it.toDescriptor() }
+            ?.mapNotNull {
+                ProgressManager.checkCanceled()
+                it.toDescriptor()
+            }
             ?: emptyList()
     }
 
     fun ModuleSourceInfo.successorsInDependsOnGraph(): List<ModuleSourceInfo> {
         return module.successorsInDependsOnGraph().mapNotNull { module ->
+            ProgressManager.checkCanceled()
+
             val sourceRootType = module.kotlinSourceRootType ?: return@mapNotNull null
             module.getModuleInfo(sourceRootType)
         }
