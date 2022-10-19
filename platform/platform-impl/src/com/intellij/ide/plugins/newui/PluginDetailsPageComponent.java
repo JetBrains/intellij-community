@@ -571,7 +571,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private static void setTabContainerBorder(@NotNull JComponent pane) {
     Component tabContainer = UIUtil.uiChildren(pane).find(component -> component.getClass().getSimpleName().equals("TabContainer"));
     if (tabContainer instanceof JComponent) {
-      ((JComponent)tabContainer).setBorder(new SideBorder(Gray.xD1, SideBorder.BOTTOM));
+      ((JComponent)tabContainer).setBorder(new SideBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, SideBorder.BOTTOM));
     }
   }
 

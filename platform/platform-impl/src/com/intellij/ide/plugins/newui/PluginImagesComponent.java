@@ -474,7 +474,7 @@ public class PluginImagesComponent extends JPanel {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       if (!myShowFullContent) {
-        g2.setColor(Gray.xD1);
+        g2.setColor(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR);
         g2.draw(new RoundRectangle2D.Float(x, y, width - 1, height - offset, 7, 7));
       }
 
