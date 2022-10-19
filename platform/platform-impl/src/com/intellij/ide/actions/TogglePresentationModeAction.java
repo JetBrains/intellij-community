@@ -67,6 +67,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
+    if (inPresentation) {
+      ourSavedConsoleFontSize = EditorColorsManager.getInstance().getGlobalScheme().getConsoleFontSize2D();
+    }
+
     UISettings settings = UISettings.getInstance();
     settings.setPresentationMode(inPresentation);
 
@@ -108,7 +112,6 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     float fontSize = inPresentation ? settings.getPresentationModeFontSize() : globalScheme.getEditorFontSize2D();
     if (inPresentation) {
-      ourSavedConsoleFontSize = globalScheme.getConsoleFontSize2D();
       globalScheme.setConsoleFontSize(fontSize);
     }
     else {
