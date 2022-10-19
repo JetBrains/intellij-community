@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.types.error.ErrorScopeKind
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartSet
 
+@JvmOverloads // For binary compatibility
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
     preferStarForRaw: Boolean = false,
