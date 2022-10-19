@@ -71,7 +71,7 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
+  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
     .also { Disposer.register(this) { it.cancel() } }
 
   private val taskInfo = CommitChecksTaskInfo()
