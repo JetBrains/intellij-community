@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -42,14 +44,15 @@ final class CanonicalPathMap {
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
     initializeMappings();
     Map<String, String> canonicalPathMappings = new ConcurrentHashMap<>();
-    Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
-      .parallel()
-      .forEach(root -> {
+    var futures = Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
+      .map(root -> CompletableFuture.runAsync(() -> {
         String canonicalRoot = FileSystemUtil.resolveSymLink(root);
         if (canonicalRoot != null && OSAgnosticPathUtil.COMPARATOR.compare(canonicalRoot, root) != 0) {
           canonicalPathMappings.put(root, canonicalRoot);
         }
-      });
+      }, ProcessIOExecutorService.INSTANCE))
+      .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(futures).join();
 
     NavigableSet<String> canonicalRecursiveRoots = WatchRootsUtil.createFileNavigableSet();
     for (String root : myOptimizedRecursiveWatchRoots) {
