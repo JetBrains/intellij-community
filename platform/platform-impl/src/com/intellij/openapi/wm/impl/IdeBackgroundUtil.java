@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.geom.*;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -105,11 +107,6 @@ public final class IdeBackgroundUtil {
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
     PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
-
-    //Image centerImage = null;
-    //if (centerImage != null) {
-    //  painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
-    //}
 
     painters.addPainter(new AbstractPainter() {
       EditorEmptyTextPainter p = null;
@@ -314,21 +311,6 @@ public final class IdeBackgroundUtil {
       return b;
     }
 
-    private static @Nullable Shape calcTempClip(@Nullable Shape prevClip, @NotNull Shape forcedClip) {
-      if (prevClip == null) {
-        return forcedClip;
-      }
-      else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
-        Rectangle2D r = ((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip);
-        return r.isEmpty() ? null : r;
-      }
-      else {
-        Area area = new Area(prevClip);
-        area.intersect(new Area(forcedClip));
-        return area.getBounds().isEmpty() ? null : area;
-      }
-    }
-
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
       boolean hasAlpha;
@@ -347,17 +329,18 @@ public final class IdeBackgroundUtil {
         return;
       }
 
-      Shape prevClip = getClip();
-      Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
-      if (tmpClip == null) return;
-
       boolean preserve = preserved != null && reason instanceof Color && preserved.test((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-      setClip(tmpClip);
-      helper.runAllPainters(myDelegate, offsets);
-      setClip(prevClip);
+      Graphics2D clipped = (Graphics2D)create();
+      try {
+        clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+        helper.runAllPainters(clipped, offsets);
+      }
+      finally {
+        clipped.dispose();
+      }
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
       }
