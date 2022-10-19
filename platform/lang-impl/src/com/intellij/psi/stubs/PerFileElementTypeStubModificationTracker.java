@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 
 final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.FileUpdateProcessor {
   static final Logger LOG = Logger.getInstance(PerFileElementTypeStubModificationTracker.class);
+  public static final int PRECISE_CHECK_THRESHOLD =
+    SystemProperties.getIntProperty("stub.index.per.file.element.type.modification.tracker.precise.check.threshold", 20);
 
   private final ConcurrentMap<String, Ref<Class<? extends IFileElementType>>> // ref is to store nulls
     myFileElementTypesCache = new ConcurrentHashMap<>();
@@ -58,20 +61,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   @Override
   public synchronized void endUpdatesBatch() {
     myModificationsInCurrentBatch.clear();
-    while (!myPendingUpdates.isEmpty()) {
-      VirtualFile file = myPendingUpdates.poll();
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-      IndexedFile indexedFile = new IndexedFileImpl(file, project);
-      var current = determineCurrentFileElementType(indexedFile);
-      var before = determinePreviousFileElementTypePrecisely(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
-      if (current != before) {
-        if (current != null) registerModificationFor(current);
-        if (before != null) registerModificationFor(before);
-      }
-      else {
-        if (current != null) myProbablyExpensiveUpdates.add(new FileInfo(file, project, current));
-      }
+    fastCheck();
+    if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
+      coarseCheck();
+    } else {
+      preciseCheck();
     }
+  }
+
+  private void coarseCheck() {
+    while (!myProbablyExpensiveUpdates.isEmpty()) {
+      FileInfo info = myProbablyExpensiveUpdates.poll();
+      if (wereModificationsInCurrentBatch(info.type)) continue;
+      registerModificationFor(info.type);
+    }
+  }
+
+  private void preciseCheck() {
     DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer =
       myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
     while (!myProbablyExpensiveUpdates.isEmpty()) {
@@ -92,6 +98,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       }
       catch (IOException | StorageException e) {
         LOG.error(e);
+      }
+    }
+  }
+
+  private void fastCheck() {
+    while (!myPendingUpdates.isEmpty()) {
+      VirtualFile file = myPendingUpdates.poll();
+      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+      IndexedFile indexedFile = new IndexedFileImpl(file, project);
+      var current = determineCurrentFileElementType(indexedFile);
+      var before = determinePreviousFileElementTypePrecisely(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
+      if (current != before) {
+        if (current != null) registerModificationFor(current);
+        if (before != null) registerModificationFor(before);
+      }
+      else {
+        if (current != null) myProbablyExpensiveUpdates.add(new FileInfo(file, project, current));
       }
     }
   }

@@ -12,11 +12,22 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.writeChild
 import com.intellij.util.io.write
+import org.junit.Ignore
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.nio.file.Paths
 import kotlin.reflect.KClass
 
+/**
+ * set "stub.index.per.file.element.type.modification.tracker.precise.check.threshold" system
+ * property to ~1000 before executing and comment out @Ignore
+ */
+@RunWith(JUnit4::class)
 class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
-  fun testBenchmark() {
+  @Test
+  @Ignore
+  fun benchmark() {
     var lastModCount = getModCount(JavaFileElementType::class)
     fun assertModCountIncreasedAtLeast(minInc: Int) {
       val modCount = getModCount(JavaFileElementType::class)
@@ -43,7 +54,7 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
       srcDir.createChildDirectory(this, "pkg")
     }
 
-    val filesRange = 0..500
+    val filesRange = 1..500
     runWriteAction {
       for (i in filesRange) {
         pkg.writeChild("C$i.java", """
@@ -102,7 +113,7 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
   }
 
-  private fun <T: IFileElementType> getModCount(elementType: KClass<T>) =
+  private fun getModCount(elementType: KClass<out IFileElementType>) =
     (StubIndex.getInstance() as StubIndexEx)
       .getPerFileElementTypeModificationTracker(elementType.java).modificationCount
 }
