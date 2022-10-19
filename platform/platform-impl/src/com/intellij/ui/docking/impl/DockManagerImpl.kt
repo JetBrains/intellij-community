@@ -422,26 +422,30 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
                               id: String?,
                               container: DockContainer,
                               canReopenWindow: Boolean): DockWindow {
-    val windowId = id ?: Integer.toString(windowIdCounter++)
-    val window = DockWindow(dimensionKey, windowId, project, container, container is DockContainer.Dialog, canReopenWindow)
-    containerToWindow[container] = window
-    windows[windowId] = window
+    val windowId = id ?: (windowIdCounter++).toString()
+    val window = DockWindow(dimensionKey = dimensionKey,
+                            id = windowId,
+                            project = project,
+                            container = container,
+                            isDialog = container is DockContainer.Dialog,
+                            supportReopen = canReopenWindow)
+    containerToWindow.put(container, window)
+    windows.put(windowId, window)
     return window
   }
 
-  private fun getOrCreateWindowFor(id: String,
-                                   container: DockContainer): DockWindow {
-    val existingWindow = windows[id]
+  private fun getOrCreateWindowFor(id: String, container: DockContainer): DockWindow {
+    val existingWindow = windows.get(id)
     if (existingWindow != null) {
       val oldContainer = existingWindow.replaceContainer(container)
       containerToWindow.remove(oldContainer)
-      containerToWindow[container] = existingWindow
+      containerToWindow.put(container, existingWindow)
       if (oldContainer is Disposable) {
-        Disposer.dispose((oldContainer as Disposable))
+        Disposer.dispose(oldContainer)
       }
       return existingWindow
     }
-    return createWindowFor(null, id, container, true)
+    return createWindowFor(dimensionKey = null, id = id, container = container, canReopenWindow = true)
   }
 
   private inner class DockWindow(dimensionKey: String?,

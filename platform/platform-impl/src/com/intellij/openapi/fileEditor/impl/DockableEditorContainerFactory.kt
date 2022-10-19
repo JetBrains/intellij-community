@@ -1,74 +1,55 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl;
+package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockContainerFactory;
-import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.docking.DockableContent;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.IdeFrameEx
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.docking.DockContainer
+import com.intellij.ui.docking.DockContainerFactory
+import com.intellij.ui.docking.DockableContent
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 
-public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
-  public static final @NonNls String TYPE = "file-editors";
-
-  private final FileEditorManagerImpl myFileEditorManager;
-
-  public DockableEditorContainerFactory(@NotNull FileEditorManagerImpl fileEditorManager) {
-    myFileEditorManager = fileEditorManager;
+internal class DockableEditorContainerFactory(private val fileEditorManager: FileEditorManagerImpl) : DockContainerFactory.Persistent {
+  companion object {
+    const val TYPE: @NonNls String = "file-editors"
   }
 
-  @Override
-  public @NotNull DockContainer createContainer(@Nullable DockableContent content) {
-    return createContainer(false);
-  }
+  override fun createContainer(content: DockableContent<*>?): DockContainer = createContainer(false)
 
-  private DockContainer createContainer(boolean loadingState) {
-    Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
-    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager) {
-      @Override
-      public void afterFileClosed$intellij_platform_ide_impl(@NotNull VirtualFile file) {
-        containerRef.get().fireContentClosed(file);
+  private fun createContainer(loadingState: Boolean): DockableEditorTabbedContainer {
+    var container: DockableEditorTabbedContainer? = null
+    val splitters = object : EditorsSplitters(fileEditorManager) {
+      override fun afterFileClosed(file: VirtualFile) {
+        container!!.fireContentClosed(file)
       }
 
-      @Override
-      protected void afterFileOpen(@NotNull VirtualFile file) {
-        containerRef.get().fireContentOpen(file);
+      override fun afterFileOpen(file: VirtualFile) {
+        container!!.fireContentOpen(file)
       }
 
-      @Override
-      protected IdeFrameEx getFrame(@NotNull Project project) {
-        IdeFrame frame = DockManager.getInstance(project).getIdeFrame(containerRef.get());
-        return frame instanceof IdeFrameEx ? (IdeFrameEx)frame : ProjectFrameHelper.getFrameHelper(((IdeFrameImpl)frame));
+      override fun getFrame(project: Project): IdeFrameEx? {
+        val frame = ComponentUtil.findUltimateParent(this)
+        return if (frame is IdeFrameEx) frame else getFrameHelper(frame as IdeFrameImpl)
       }
 
-      @Override
-      public boolean isFloating() {
-        return true;
-      }
-    };
-    if (!loadingState) {
-      splitters.createCurrentWindow();
+      override val isFloating: Boolean
+        get() = true
     }
-
-    DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(splitters, true);
-    containerRef.set(container);
-    container.getSplitters().startListeningFocus();
-    return container;
+    if (!loadingState) {
+      splitters.createCurrentWindow()
+    }
+    container = DockableEditorTabbedContainer(splitters, true)
+    container.splitters.startListeningFocus()
+    return container
   }
 
-  @Override
-  public DockContainer loadContainerFrom(Element element) {
-    DockableEditorTabbedContainer container = (DockableEditorTabbedContainer)createContainer(true);
-    container.getSplitters().readExternal(element.getChild("state"));
-    return container;
+  override fun loadContainerFrom(element: Element): DockContainer {
+    val container = createContainer(true)
+    container.splitters.readExternal(element.getChild("state"))
+    return container
   }
 }
