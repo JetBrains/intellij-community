@@ -43,6 +43,13 @@ import java.util.Objects;
  * @author Alexander Lobas
  */
 public class PluginImagesComponent extends JPanel {
+  private static final int None = -1;
+  private static final int NextImage = -2;
+  private static final int PrevImage = -3;
+  private static final int FullScreen = -4;
+
+  private final Cursor myHandCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+
   private final Object myLock = new Object();
   private JComponent myParent;
   private final boolean myShowFullContent;
@@ -56,10 +63,15 @@ public class PluginImagesComponent extends JPanel {
     myParent = parent;
     myShowFullContent = false;
 
-    addMouseListener(new MouseAdapter() {
+    MouseAdapter listener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         handleClick(e);
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        handleMMove(e);
       }
 
       @Override
@@ -73,7 +85,9 @@ public class PluginImagesComponent extends JPanel {
         myHovered = false;
         repaint();
       }
-    });
+    };
+    addMouseListener(listener);
+    addMouseMotionListener(listener);
   }
 
   private PluginImagesComponent(@NotNull List<BufferedImage> images, int currentImage) {
@@ -83,12 +97,19 @@ public class PluginImagesComponent extends JPanel {
     myCurrentImage = currentImage;
     setOpaque(false);
 
-    addMouseListener(new MouseAdapter() {
+    MouseAdapter listener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         handleClick(e);
       }
-    });
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        handleMMove(e);
+      }
+    };
+    addMouseListener(listener);
+    addMouseMotionListener(listener);
   }
 
   public void show(@NotNull IdeaPluginDescriptor descriptor) {
@@ -201,17 +222,49 @@ public class PluginImagesComponent extends JPanel {
     return new Dimension(width, height);
   }
 
+  private void handleMMove(@NotNull MouseEvent e) {
+    int state = handleEvent(e, true);
+    Cursor newCursor = state == None ? null : myHandCursor;
+
+    if (getCursor() != newCursor) {
+      setCursor(newCursor);
+    }
+  }
+
   private void handleClick(@NotNull MouseEvent e) {
     if (e.getButton() != MouseEvent.BUTTON1) {
       return;
     }
 
+    int state = handleEvent(e, false);
+    if (state == None) {
+      return;
+    }
+
+    if (state >= 0) {
+      synchronized (myLock) {
+        if (myCurrentImage != state) {
+          myCurrentImage = state;
+          repaint();
+        }
+      }
+    }
+    else if (state == FullScreen) {
+      handleFullScreen();
+    }
+    else {
+      showNextImage(state == PrevImage);
+    }
+  }
+
+  private int handleEvent(@NotNull MouseEvent e, boolean cutFullScreen) {
     Insets insets = getInsets();
     int x = insets.left;
     int y = insets.top;
     int width = getFullWidth() - insets.left - insets.right;
     int height = getHeight() - insets.top - insets.bottom;
     int offset = JBUI.scale(28);
+    int offset2 = offset * 2;
     int actionOffset = JBUI.scale(8);
     int actionSize = getActionSize();
     int leftActionX = x + actionOffset;
@@ -221,47 +274,46 @@ public class PluginImagesComponent extends JPanel {
     int mouseY = e.getY();
 
     if (new Rectangle(leftActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      showNextImage(true);
+      return PrevImage;
     }
-    else if (new Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
-      showNextImage(false);
+    if (new Rectangle(rightActionX, actionY, actionSize, actionSize).contains(mouseX, mouseY)) {
+      return NextImage;
     }
-    else if (new Rectangle(x + offset, y, width - offset, height - offset).contains(mouseX, mouseY)) {
-      handleFullScreen();
-    }
-    else {
-      int count;
-      synchronized (myLock) {
-        if (ContainerUtil.isEmpty(myImages)) {
-          return;
-        }
-        count = myImages.size();
-      }
+    if (new Rectangle(x + offset, y, width - offset2, height - offset).contains(mouseX, mouseY)) {
 
-      if (count < 2) {
-        return;
+      if (cutFullScreen && !new Rectangle(x + offset2, y, width - 2 * offset2, height - offset).contains(mouseX, mouseY)) {
+        return None;
       }
-
-      int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
-      int ovalGap = JBUI.scale(14);
-      int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
-      int ovalX = x + (width - ovalsWidth) / 2;
-      int ovalY = insets.top + height - (offset + ovalSize) / 2;
-      Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
-
-      for (int i = 0; i < count; i++) {
-        if (bounds.contains(mouseX, mouseY)) {
-          synchronized (myLock) {
-            if (myCurrentImage != i) {
-              myCurrentImage = i;
-              repaint();
-            }
-          }
-          return;
-        }
-        bounds.x += ovalSize + ovalGap;
-      }
+      return FullScreen;
     }
+
+    int count;
+    synchronized (myLock) {
+      if (ContainerUtil.isEmpty(myImages)) {
+        return None;
+      }
+      count = myImages.size();
+    }
+
+    if (count < 2) {
+      return None;
+    }
+
+    int ovalSize = JBUI.scale(myShowFullContent ? 8 : 6);
+    int ovalGap = JBUI.scale(14);
+    int ovalsWidth = count * ovalSize + (count - 1) * ovalGap;
+    int ovalX = x + (width - ovalsWidth) / 2;
+    int ovalY = insets.top + height - (offset + ovalSize) / 2;
+    Rectangle bounds = new Rectangle(ovalX, ovalY, ovalSize, ovalSize);
+
+    for (int i = 0; i < count; i++) {
+      if (bounds.contains(mouseX, mouseY)) {
+        return i;
+      }
+      bounds.x += ovalSize + ovalGap;
+    }
+
+    return None;
   }
 
   private void handleFullScreen() {
