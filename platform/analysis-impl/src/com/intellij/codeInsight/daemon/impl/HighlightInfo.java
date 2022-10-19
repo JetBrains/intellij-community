@@ -1099,7 +1099,7 @@ public class HighlightInfo implements Segment {
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
     if (action == null) return;
-    if (fixRange == null) fixRange = new TextRange(startOffset, endOffset);
+    if (fixRange == null) fixRange = new TextRange(getActualStartOffset(), getActualEndOffset());
     if (quickFixActionRanges == null) {
       quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
     }
@@ -1113,8 +1113,7 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx myHighlighter = highlighter;
     if (myHighlighter != null) {
       // highlighter already has been created, we need to update quickFixActionMarkers
-      updateQuickFixFields(myHighlighter.getDocument(), new Long2ObjectOpenHashMap<>(),
-                           TextRangeScalarUtil.toScalarRange(myHighlighter.getStartOffset(), myHighlighter.getEndOffset()));
+      updateQuickFixFields(myHighlighter.getDocument(), new Long2ObjectOpenHashMap<>(), TextRangeScalarUtil.toScalarRange(myHighlighter));
     }
   }
 
