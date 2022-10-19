@@ -62,11 +62,15 @@ class AsyncFullLineRequest private constructor(
     ): AsyncFullLineRequest {
       val queue = LinkedBlockingQueue<RequestResult>()
       val indicator = ProgressManager.getInstance().progressIndicator
+      val startTime = System.currentTimeMillis()
       providers.forEach { provider ->
         runAsync {
           val result = provider.getVariants(query, indicator)
 
-          result.forEach { it.provider = provider.getId() }
+          result.forEach {
+            it.details.provider = provider.getId()
+            it.details.inferenceTime = (System.currentTimeMillis() - startTime).toInt()
+          }
 
           return@runAsync result.map { it.withSuggestion(head + it.suggestion) }
         }

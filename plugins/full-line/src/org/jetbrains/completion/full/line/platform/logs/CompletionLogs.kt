@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.lang.Language
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.completion.full.line.AnalyzedFullLineProposal
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
@@ -37,6 +38,12 @@ class FullLineContextFeatureProvider : ContextFeatureProvider {
     if (isEnabled) {
       result["model_type"] = MLFeatureValue.categorical(getModelMode())
     }
+
+    val langState = getLangState(language)
+    result["red_code_policy"] = MLFeatureValue.categorical(langState.redCodePolicy)
+    if (Registry.`is`("full.line.only.proposals")) {
+      result["only_full_lines"] = MLFeatureValue.binary(true)
+    }
   }
 }
 
@@ -52,18 +59,24 @@ class FullLineElementFeatureProvider : ElementFeatureProvider {
   }
 
   private fun calculateFullLineFeatures(element: FullLineLookupElement): Map<String, MLFeatureValue> {
-    return mapOf(
+    val features = mutableMapOf(
       "tab_selected" to MLFeatureValue.binary(element.selectedByTab),
-      *fromProposal(element.proposal)
     )
+
+    features.putAll(fromProposal(element.proposal))
+    return features
   }
 
-  private fun fromProposal(proposal: AnalyzedFullLineProposal): Array<Pair<String, MLFeatureValue>> {
-    return arrayOf(
+  private fun fromProposal(proposal: AnalyzedFullLineProposal): List<Pair<String, MLFeatureValue>> {
+    val details = proposal.details
+    return listOfNotNull(
       "ref_validity" to MLFeatureValue.categorical(proposal.refCorrectness),
       "syntax_validity" to MLFeatureValue.categorical(proposal.isSyntaxCorrect),
       "suffix_length" to MLFeatureValue.float(proposal.suffix.length),
-      "score" to MLFeatureValue.float(proposal.score)
+      "score" to MLFeatureValue.float(proposal.score),
+      details.inferenceTime?.let { "inference_time" to MLFeatureValue.numerical(it) },
+      details.checksTime?.let { "checks_time" to MLFeatureValue.numerical(it) },
+      details.cacheHitLength?.let { "cache_hit_length" to MLFeatureValue.numerical(it) }
     )
   }
 
