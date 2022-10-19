@@ -16,8 +16,8 @@ class UnusedAttributesInspection : LocalInspectionTool(), CleanupLocalInspection
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (holder.file !is MermaidFile) return PsiElementVisitor.EMPTY_VISITOR
     return object : MermaidVisitor() {
-      override fun visitJourneyDataStatement(o: MermaidJourneyDataStatement) {
-        val taskDataList = o.journeyTaskDataList
+      override fun visitJourneyDataStatement(mermaidJourneyDataStatement: MermaidJourneyDataStatement) {
+        val taskDataList = mermaidJourneyDataStatement.journeyTaskDataList
         if (taskDataList.size >= 2) {
           val secondTaskData = taskDataList[1]
 
@@ -26,7 +26,7 @@ class UnusedAttributesInspection : LocalInspectionTool(), CleanupLocalInspection
             .filter { it.elementType == MermaidTokens.COLON }
             .firstOrNull() ?: return
 
-          val endElement = o.lastChild
+          val endElement = mermaidJourneyDataStatement.lastChild
 
           holder.registerProblem(
             InspectionManagerBase.getInstance(holder.project)
@@ -48,11 +48,9 @@ class UnusedAttributesInspection : LocalInspectionTool(), CleanupLocalInspection
     override fun getFamilyName() = MermaidBundle.message("fix.remove.unused.attributes")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-      if (element is LeafPsiElement) {
-        element.delete()
-      } else {
-        element.deleteChildRange(descriptor.startElement, descriptor.endElement)
+      when (val element = descriptor.psiElement) {
+        is LeafPsiElement -> element.delete()
+        else -> element.deleteChildRange(descriptor.startElement, descriptor.endElement)
       }
     }
   }
