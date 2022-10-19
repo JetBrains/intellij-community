@@ -166,12 +166,8 @@ public class FeatureDescriptor {
   }
 
   public void adjustUsageInfo(int newUsageCount, long newLastTimeUsed) {
-    if (myUsageCount < newUsageCount) {
-      myUsageCount = newUsageCount;
-    }
-    if (myLastTimeUsed < newLastTimeUsed) {
-      myLastTimeUsed = newLastTimeUsed;
-    }
+    myUsageCount = Math.max(myUsageCount, newUsageCount);
+    myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
   }
 
   public String toString() {
