@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -241,7 +242,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @ApiStatus.Internal
   public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
-    if (SystemInfo.isWindows && getClass() == LocalFileSystemImpl.class) {
+    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
       Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
       if (cache != null) {
         LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
