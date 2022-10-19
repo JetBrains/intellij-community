@@ -139,8 +139,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
-    if (RegistryManager.getInstance().is("python.debug.asyncio.repl")) {
-      ((PythonRunConfiguration)environment.getRunProfile()).getEnvs().put(ASYNCIO_ENV, "True");
+    RunProfile runProfile = environment.getRunProfile();
+    if (RegistryManager.getInstance().is("python.debug.asyncio.repl") && runProfile instanceof AbstractPythonRunConfiguration<?>) {
+      ((AbstractPythonRunConfiguration<?>) runProfile).getEnvs().put(ASYNCIO_ENV, "True");
     }
 
     return AppUIExecutor.onUiThread()
