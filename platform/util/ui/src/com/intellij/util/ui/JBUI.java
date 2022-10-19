@@ -1514,6 +1514,7 @@ public final class JBUI {
 
     public final static class RunWidget {
       public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
+      public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
     }
   }
 
