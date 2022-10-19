@@ -148,7 +148,7 @@ internal class MainMenuButton {
       if (actionToShow != null) {
         for (listStep in popup.listStep.values) {
           listStep as PopupFactoryImpl.ActionItem
-          if (listStep.action === actionToShow) {
+          if (listStep.action.unwrap() === actionToShow.unwrap()) {
             SwingUtilities.invokeLater {
               // Wait popup showing
               popup.selectAndExpandValue(listStep)
@@ -197,12 +197,18 @@ private fun getMainMenuGroup(): ActionGroup {
   )
 }
 
-private class ActionGroupPopupWrapper(action: ActionGroup) : ActionGroupWrapper(action) {
+private class ActionGroupPopupWrapper(val wrapped: ActionGroup) : ActionGroupWrapper(wrapped) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isPopupGroup = true
   }
 }
+
+private fun AnAction.unwrap(): AnAction =
+  if (this is ActionGroupPopupWrapper)
+    this.wrapped
+  else
+    this
 
 const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
