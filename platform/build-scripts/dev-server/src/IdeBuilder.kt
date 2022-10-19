@@ -304,7 +304,7 @@ private fun getBundledMainModuleNames(productProperties: ProductProperties, addi
   return bundledPlugins
 }
 
-internal fun getAdditionalModules(): Sequence<String>? {
+fun getAdditionalModules(): Sequence<String>? {
   return (System.getProperty("additional.modules") ?: return null)
     .splitToSequence(',')
     .map(String::trim)
