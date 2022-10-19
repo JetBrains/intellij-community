@@ -30,11 +30,16 @@ class GradleGroovyContextFeatureProvider : ContextFeatureProvider {
       return emptyMap()
     }
 
+    addIsGradleFeature(features)
     addVersionFeature(originalFile, features)
     addIsSettingsFeature(originalFile, features)
     addLocationFeature(position, features)
 
     return features
+  }
+
+  private fun addIsGradleFeature(features: MutableMap<String, MLFeatureValue>) {
+    features["is_gradle_file"] = MLFeatureValue.binary(true)
   }
 
   private fun addLocationFeature(position: PsiElement?, features: MutableMap<String, MLFeatureValue>) {
