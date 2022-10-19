@@ -8,6 +8,8 @@ import com.intellij.lang.Language
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.completion.full.line.AnalyzedFullLineProposal
+import org.jetbrains.completion.full.line.language.LangState
+import org.jetbrains.completion.full.line.language.ModelState
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 
@@ -35,15 +37,31 @@ class FullLineContextFeatureProvider : ContextFeatureProvider {
     val isEnabled = isEnabled(language)
     result["enabled"] = MLFeatureValue.binary(isEnabled)
 
-    if (isEnabled) {
-      result["model_type"] = MLFeatureValue.categorical(getModelMode())
+    if (!isEnabled) return
+
+    result["model_type"] = MLFeatureValue.categorical(getModelMode())
+
+    getLangState(language).capture(result)
+    getModelState(language).capture(result)
+
+    if (Registry.`is`("full.line.only.proposals")) {
+      result["hide_standard_proposals"] = MLFeatureValue.binary(true)
+    }
+  }
+
+  private fun LangState.capture(result: MutableMap<String, MLFeatureValue>) {
+    result["red_code_policy"] = MLFeatureValue.categorical(redCodePolicy)
+
+    if (onlyFullLines) {
+      result["full_lines_enabled"] = MLFeatureValue.binary(true)
     }
 
-    val langState = getLangState(language)
-    result["red_code_policy"] = MLFeatureValue.categorical(langState.redCodePolicy)
-    if (Registry.`is`("full.line.only.proposals")) {
-      result["only_full_lines"] = MLFeatureValue.binary(true)
-    }
+    result["strings_walking"] = MLFeatureValue.binary(stringsWalking)
+  }
+
+  private fun ModelState.capture(result: MutableMap<String, MLFeatureValue>) {
+    result["num_iterations"] = MLFeatureValue.numerical(numIterations)
+    result["beam_size"] = MLFeatureValue.numerical(beamSize)
   }
 }
 
