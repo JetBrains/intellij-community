@@ -125,7 +125,6 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.to.string.in.string.template.display.name" bundle="messages.KotlinBundle"/>
 
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.DestructuringWrongNameInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -133,5 +132,22 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.destructuring.wrong.name.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ReplaceSizeCheckWithIsNotEmptyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.size.check.with.is.not.empty.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.ReplaceSizeZeroCheckWithIsEmptyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.size.zero.check.with.is.empty.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
