@@ -16,6 +16,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.docking.DockContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -190,5 +191,9 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   @Override
   public void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {
     AsyncEditorLoader.performWhenLoaded(editor, runnable);
+  }
+
+  public @Nullable DockContainer getDockContainer() {
+    return null;
   }
 }

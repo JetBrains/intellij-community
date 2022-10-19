@@ -1,881 +1,730 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.docking.impl;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FrameWrapper;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.toolWindow.*;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.awt.DevicePoint;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.VerticalBox;
-import com.intellij.ui.docking.*;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ui.docking.impl
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.util.List;
-import java.util.*;
-import java.util.function.Predicate;
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.FrameWrapper
+import com.intellij.openapi.util.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
+import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.awt.DevicePoint
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.ui.docking.*
+import com.intellij.ui.docking.DockContainer.ContentResponse
+import com.intellij.util.IconUtil
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import org.jdom.Element
+import org.jetbrains.annotations.Contract
+import java.awt.*
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.util.*
+import java.util.function.Predicate
+import javax.swing.*
 
-import static javax.swing.SwingConstants.CENTER;
+@State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+class DockManagerImpl(private val project: Project) : DockManager(), PersistentStateComponent<Element?> {
+  private val factories = HashMap<String, DockContainerFactory>()
+  private val containers = HashSet<DockContainer>()
+  private val windows = HashMap<String, DockWindow>()
+  private val containerToWindow = HashMap<DockContainer, DockWindow>()
+  private var currentDragSession: MyDragSession? = null
 
-@State(name = "DockManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
-  private final Project myProject;
+  private val busyObject: BusyObject.Impl = object : BusyObject.Impl() {
+    override fun isReady(): Boolean = currentDragSession == null
+  }
 
-  private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
-  private final Set<DockContainer> myContainers = new HashSet<>();
-  private final Map<String, DockWindow> myWindows = new HashMap<>();
-  private final Map<DockContainer, DockWindow> containerToWindow = new HashMap<>();
+  private var windowIdCounter = 1
+  private var loadedState: Element? = null
 
-  private MyDragSession myCurrentDragSession;
+  companion object {
+    val SHOW_NORTH_PANEL = Key.create<Boolean>("SHOW_NORTH_PANEL")
+    val WINDOW_DIMENSION_KEY = Key.create<String>("WINDOW_DIMENSION_KEY")
+    @JvmField
+    val REOPEN_WINDOW = Key.create<Boolean>("REOPEN_WINDOW")
+    @JvmField
+    val ALLOW_DOCK_TOOL_WINDOWS = Key.create<Boolean>("ALLOW_DOCK_TOOL_WINDOWS")
 
-  private final BusyObject.Impl myBusyObject = new BusyObject.Impl() {
-    @Override
-    public boolean isReady() {
-      return myCurrentDragSession == null;
+    @JvmStatic
+    fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
+      return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
     }
-  };
 
-  private int myWindowIdCounter = 1;
+    private fun getWindowDimensionKey(content: DockableContent<*>): String? {
+      return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
+    }
 
-  private Element myLoadedState;
+    private fun getWindowDimensionKey(file: VirtualFile): String? = WINDOW_DIMENSION_KEY.get(file)
 
-  public static final Key<Boolean> SHOW_NORTH_PANEL = Key.create("SHOW_NORTH_PANEL");
+    @JvmStatic
+    fun isNorthPanelVisible(uiSettings: UISettings): Boolean {
+      return uiSettings.showNavigationBar && !uiSettings.presentationMode
+    }
 
-  public static final Key<String> WINDOW_DIMENSION_KEY = Key.create("WINDOW_DIMENSION_KEY");
-  public static final Key<Boolean> REOPEN_WINDOW = Key.create("REOPEN_WINDOW");
-  public static final Key<Boolean> ALLOW_DOCK_TOOL_WINDOWS = Key.create("ALLOW_DOCK_TOOL_WINDOWS");
-
-  public DockManagerImpl(@NotNull Project project) {
-    myProject = project;
-  }
-
-  @Override
-  public void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable) {
-    myContainers.add(container);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myContainers.remove(container);
-      }
-    });
-  }
-
-  @Override
-  public void register(@NotNull String id, @NotNull DockContainerFactory factory, @NotNull Disposable parentDisposable) {
-    myFactories.put(id, factory);
-
-    if (parentDisposable != myProject) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myFactories.remove(id);
+    @JvmStatic
+    fun isNorthPanelAvailable(editors: List<FileEditor>): Boolean {
+      val defaultNorthPanelVisible = isNorthPanelVisible(getInstance())
+      for (editor in editors) {
+        if (SHOW_NORTH_PANEL.isIn(editor)) {
+          return SHOW_NORTH_PANEL.get(editor, defaultNorthPanelVisible)
         }
-      });
-    }
-
-    readStateFor(id);
-  }
-
-  public void readState() {
-    for (String id : myFactories.keySet()) {
-      readStateFor(id);
+      }
+      return defaultNorthPanelVisible
     }
   }
 
-  @Override
-  public @NotNull Set<DockContainer> getContainers() {
-    Set<DockContainer> result = new HashSet<>(myContainers.size() + containerToWindow.size());
-    result.addAll(myContainers);
-    result.addAll(containerToWindow.keySet());
-    return Collections.unmodifiableSet(result);
+  override fun register(container: DockContainer, parentDisposable: Disposable) {
+    containers.add(container)
+    Disposer.register(parentDisposable) { containers.remove(container) }
   }
 
-  @Override
-  public IdeFrame getIdeFrame(@NotNull DockContainer container) {
-    Component parent = UIUtil.findUltimateParent(container.getContainerComponent());
-    return parent instanceof IdeFrame ? (IdeFrame)parent : null;
-  }
-
-  @Override
-  public String getDimensionKeyForFocus(@NotNull String key) {
-    Component owner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    if (owner == null) {
-      return key;
+  override fun register(id: String, factory: DockContainerFactory, parentDisposable: Disposable) {
+    factories.put(id, factory)
+    if (parentDisposable !== project) {
+      Disposer.register(parentDisposable) { factories.remove(id) }
     }
-
-    DockWindow window = containerToWindow.get(getContainerFor(owner, dockContainer -> true));
-    return window != null ? key + "#" + window.myId : key;
+    readStateFor(id)
   }
 
-  @Override
-  public DockContainer getContainerFor(Component c) {
-    return getContainerFor(c, dockContainer -> true);
+  fun readState() {
+    for (id in factories.keys) {
+      readStateFor(id)
+    }
+  }
+
+  override fun getContainers(): Set<DockContainer> {
+    val result = LinkedHashSet<DockContainer>(containers.size + containerToWindow.size + 1)
+    FileEditorManagerEx.getInstanceEx(project)?.dockContainer?.let(result::add)
+    result.addAll(containers)
+    result.addAll(containerToWindow.keys)
+    return Collections.unmodifiableSet(result)
+  }
+
+  override fun getIdeFrame(container: DockContainer): IdeFrame? {
+    return ComponentUtil.findUltimateParent(container.containerComponent ?: return null) as? IdeFrame
+  }
+
+  override fun getDimensionKeyForFocus(key: String): String {
+    val owner = IdeFocusManager.getInstance(project).focusOwner ?: return key
+    val window = containerToWindow.get(getContainerFor(owner) { _ -> true })
+    return if (window == null) key else "$key#${window.id}"
+  }
+
+  override fun getContainerFor(c: Component): DockContainer? {
+    return getContainerFor(c) { true }
   }
 
   @Contract("null, _ -> null")
-  @Override
-  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter) {
+  override fun getContainerFor(c: Component?, filter: Predicate<in DockContainer>): DockContainer? {
     if (c == null) {
-      return null;
+      return null
     }
 
-    for (DockContainer eachContainer : getAllContainers()) {
-      if (SwingUtilities.isDescendingFrom(c, eachContainer.getContainerComponent()) && filter.test(eachContainer)) {
-        return eachContainer;
+    for (eachContainer in allContainers) {
+      if (SwingUtilities.isDescendingFrom(c, eachContainer.containerComponent) && filter.test(eachContainer)) {
+        return eachContainer
       }
     }
-
-    Component parent = UIUtil.findUltimateParent(c);
-    for (DockContainer eachContainer : getAllContainers()) {
-      if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent()) && filter.test(eachContainer)) {
-        return eachContainer;
+    val parent = UIUtil.findUltimateParent(c)
+    for (eachContainer in allContainers) {
+      if (parent === UIUtil.findUltimateParent(eachContainer.containerComponent) && filter.test(eachContainer)) {
+        return eachContainer
       }
     }
-
-    return null;
+    return null
   }
 
-  @Override
-  public DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content) {
-    stopCurrentDragSession();
-
-    for (DockContainer each : getAllContainers()) {
-      if (each.isEmpty() && each.isDisposeWhenEmpty()) {
-        DockWindow window = containerToWindow.get(each);
-        if (window != null) {
-          window.setTransparent(true);
-        }
+  override fun createDragSession(mouseEvent: MouseEvent, content: DockableContent<*>): DragSession {
+    stopCurrentDragSession()
+    for (each in allContainers) {
+      if (each.isEmpty && each.isDisposeWhenEmpty) {
+        val window = containerToWindow.get(each)
+        window?.setTransparent(true)
       }
     }
-
-    myCurrentDragSession = new MyDragSession(mouseEvent, content);
-    return myCurrentDragSession;
+    currentDragSession = MyDragSession(mouseEvent, content)
+    return currentDragSession!!
   }
 
-
-  public void stopCurrentDragSession() {
-    if (myCurrentDragSession != null) {
-      myCurrentDragSession.cancelSession();
-      myCurrentDragSession = null;
-      myBusyObject.onReady();
-
-      for (DockContainer each : getAllContainers()) {
-        if (!each.isEmpty()) {
-          DockWindow window = containerToWindow.get(each);
-          if (window != null) {
-            window.setTransparent(false);
-          }
+  fun stopCurrentDragSession() {
+    if (currentDragSession != null) {
+      currentDragSession!!.cancelSession()
+      currentDragSession = null
+      busyObject.onReady()
+      for (each in allContainers) {
+        if (!each.isEmpty) {
+          val window = containerToWindow.get(each)
+          window?.setTransparent(false)
         }
       }
     }
   }
 
-  private ActionCallback getReady() {
-    return myBusyObject.getReady(this);
-  }
+  private val ready: ActionCallback
+    get() = busyObject.getReady(this)
 
-  private final class MyDragSession implements DragSession {
-    private final JDialog myWindow;
+  private inner class MyDragSession(mouseEvent: MouseEvent, content: DockableContent<*>) : DragSession {
+    private val window: JDialog
+    private var dragImage: Image?
+    private val defaultDragImage: Image
+    private val content: DockableContent<*>
+    val startDragContainer: DockContainer?
+    private var currentOverContainer: DockContainer? = null
+    private val imageContainer: JLabel
 
-    private Image myDragImage;
-    private final Image myDefaultDragImage;
-
-    private final @NotNull DockableContent myContent;
-
-    private final DockContainer myStartDragContainer;
-    private DockContainer myCurrentOverContainer;
-    private final JLabel myImageContainer;
-
-    private MyDragSession(MouseEvent me, @NotNull DockableContent content) {
-      myWindow = new JDialog(ComponentUtil.getWindow(me.getComponent()));
-      myWindow.setUndecorated(true);
-      myContent = content;
-      myStartDragContainer = getContainerFor(me.getComponent());
-
-      BufferedImage buffer = ImageUtil.toBufferedImage(content.getPreviewImage());
-
-      double requiredSize = 220;
-
-      double width = buffer.getWidth(null);
-      double height = buffer.getHeight(null);
-
-      double ratio;
-      if (width > height) {
-        ratio = requiredSize / width;
+    init {
+      window = JDialog(ComponentUtil.getWindow(mouseEvent.component))
+      window.isUndecorated = true
+      this.content = content
+      startDragContainer = getContainerFor(mouseEvent.component)
+      val buffer = ImageUtil.toBufferedImage(content.previewImage)
+      val requiredSize = 220.0
+      val width = buffer.getWidth(null).toDouble()
+      val height = buffer.getHeight(null).toDouble()
+      val ratio: Double = if (width > height) {
+        requiredSize / width
       }
       else {
-        ratio = requiredSize / height;
+        requiredSize / height
       }
+      defaultDragImage = buffer.getScaledInstance((width * ratio).toInt(), (height * ratio).toInt(), Image.SCALE_SMOOTH)
+      dragImage = defaultDragImage
+      imageContainer = JLabel(object : Icon {
+        override fun getIconWidth(): Int = defaultDragImage.getWidth(window)
 
-      myDefaultDragImage = buffer.getScaledInstance((int)(width * ratio), (int)(height * ratio), Image.SCALE_SMOOTH);
-      myDragImage = myDefaultDragImage;
+        override fun getIconHeight(): Int = defaultDragImage.getHeight(window)
 
-      myImageContainer = new JLabel(new Icon() {
-        @Override
-        public int getIconWidth() {
-          return myDefaultDragImage.getWidth(myWindow);
+        @Synchronized
+        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+          StartupUiUtil.drawImage(g, defaultDragImage, x, y, window)
         }
-
-        @Override
-        public int getIconHeight() {
-          return myDefaultDragImage.getHeight(myWindow);
-        }
-
-        @Override
-        public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-          StartupUiUtil.drawImage(g, myDefaultDragImage, x, y, myWindow);
-        }
-      });
-      myWindow.setContentPane(myImageContainer);
-
-      setLocationFrom(me);
-
-      myWindow.setVisible(true);
-
-      WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
-      windowManager.setAlphaModeEnabled(myWindow, true);
-      windowManager.setAlphaModeRatio(myWindow, 0.1f);
+      })
+      window.contentPane = imageContainer
+      setLocationFrom(mouseEvent)
+      window.isVisible = true
+      val windowManager = WindowManagerEx.getInstanceEx()
+      windowManager.setAlphaModeEnabled(window, true)
+      windowManager.setAlphaModeRatio(window, 0.1f)
     }
 
-    private void setLocationFrom(MouseEvent me) {
-      DevicePoint devicePoint = new DevicePoint(me);
-      Point showPoint = devicePoint.getLocationOnScreen();
-
-      Dimension size = myImageContainer.getSize();
-      showPoint.x -= size.width / 2;
-      showPoint.y -= size.height / 2;
-      myWindow.setBounds(new Rectangle(showPoint, size));
+    private fun setLocationFrom(me: MouseEvent) {
+      val devicePoint = DevicePoint(me)
+      val showPoint = devicePoint.locationOnScreen
+      val size = imageContainer.size
+      showPoint.x -= size.width / 2
+      showPoint.y -= size.height / 2
+      window.bounds = Rectangle(showPoint, size)
     }
 
-    @Override
-    public @NotNull DockContainer.ContentResponse getResponse(MouseEvent e) {
-      DevicePoint point = new DevicePoint(e);
-      for (DockContainer each : getAllContainers()) {
-        RelativeRectangle rec = each.getAcceptArea();
+    override fun getResponse(e: MouseEvent): ContentResponse {
+      val point = DevicePoint(e)
+      for (each in allContainers) {
+        val rec = each.acceptArea
         if (rec.contains(point)) {
-          JComponent component = each.getContainerComponent();
-          if (component.getGraphicsConfiguration() != null) {
-            DockContainer.ContentResponse response = each.getContentResponse(myContent, point.toRelativePoint(component));
+          val component = each.containerComponent
+          if (component.graphicsConfiguration != null) {
+            val response = each.getContentResponse(content, point.toRelativePoint(component))
             if (response.canAccept()) {
-              return response;
+              return response
             }
           }
         }
       }
-      return DockContainer.ContentResponse.DENY;
+      return ContentResponse.DENY
     }
 
-    @Override
-    public void process(MouseEvent e) {
-      DevicePoint devicePoint = new DevicePoint(e);
-
-      Image img = null;
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
-        DockContainer over = findContainerFor(devicePoint, myContent);
-        if (myCurrentOverContainer != null && myCurrentOverContainer != over) {
-          myCurrentOverContainer.resetDropOver(myContent);
-          myCurrentOverContainer = null;
+    override fun process(e: MouseEvent) {
+      val devicePoint = DevicePoint(e)
+      var img: Image? = null
+      if (e.id == MouseEvent.MOUSE_DRAGGED) {
+        val over = findContainerFor(devicePoint, content)
+        if (currentOverContainer != null && currentOverContainer !== over) {
+          currentOverContainer!!.resetDropOver(content)
+          currentOverContainer = null
         }
-
-        if (myCurrentOverContainer == null && over != null) {
-          myCurrentOverContainer = over;
-          RelativePoint point = devicePoint.toRelativePoint(over.getContainerComponent());
-          img = myCurrentOverContainer.startDropOver(myContent, point);
+        if (currentOverContainer == null && over != null) {
+          currentOverContainer = over
+          val point = devicePoint.toRelativePoint(over.containerComponent)
+          img = currentOverContainer!!.startDropOver(content, point)
         }
-
-        if (myCurrentOverContainer != null) {
-          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
-          img = myCurrentOverContainer.processDropOver(myContent, point);
+        if (currentOverContainer != null) {
+          val point = devicePoint.toRelativePoint(currentOverContainer!!.containerComponent)
+          img = currentOverContainer!!.processDropOver(content, point)
         }
-
         if (img == null) {
-          img = myDefaultDragImage;
+          img = defaultDragImage
         }
-
-        if (img != myDragImage) {
-          myDragImage = img;
-          myImageContainer.setIcon(IconUtil.createImageIcon(myDragImage));
-          myWindow.pack();
+        if (img !== dragImage) {
+          dragImage = img
+          imageContainer.icon = IconUtil.createImageIcon(dragImage!!)
+          window.pack()
         }
-
-        setLocationFrom(e);
+        setLocationFrom(e)
       }
-      else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-        if (myCurrentOverContainer == null) {
+      else if (e.id == MouseEvent.MOUSE_RELEASED) {
+        if (currentOverContainer == null) {
           // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
-          RelativePoint point = new RelativePoint(e);
-          createNewDockContainerFor(myContent, point);
-          e.consume();//Marker for DragHelper: drag into separate window is not tabs reordering
+          val point = RelativePoint(e)
+          createNewDockContainerFor(content, point)
+          e.consume() //Marker for DragHelper: drag into separate window is not tabs reordering
         }
         else {
-          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
-          myCurrentOverContainer.add(myContent, point);
-          ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
+          val point = devicePoint.toRelativePoint(currentOverContainer!!.containerComponent)
+          currentOverContainer!!.add(content, point)
+          ObjectUtils.consumeIfCast(currentOverContainer,
+                                    DockableEditorTabbedContainer::class.java) { container: DockableEditorTabbedContainer ->
             //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
-            if (container.getCurrentDropSide() == CENTER) e.consume();
-          });
+            if (container.currentDropSide == SwingConstants.CENTER) e.consume()
+          }
         }
-        stopCurrentDragSession();
+        stopCurrentDragSession()
       }
     }
 
-    @Override
-    public void cancel() {
-      stopCurrentDragSession();
+    override fun cancel() {
+      stopCurrentDragSession()
     }
 
-    private void cancelSession() {
-      myWindow.dispose();
-
-      if (myCurrentOverContainer != null) {
-        myCurrentOverContainer.resetDropOver(myContent);
-        myCurrentOverContainer = null;
+    fun cancelSession() {
+      window.dispose()
+      if (currentOverContainer != null) {
+        currentOverContainer!!.resetDropOver(content)
+        currentOverContainer = null
       }
     }
   }
 
-  private @Nullable DockContainer findContainerFor(DevicePoint devicePoint, @NotNull DockableContent<?> content) {
-    List<DockContainer> containers = new ArrayList<>(getContainers());
-    containers.remove(myCurrentDragSession.myStartDragContainer);
-    containers.add(0, myCurrentDragSession.myStartDragContainer);
+  private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
+    val containers = containers.toMutableList()
+    FileEditorManagerEx.getInstanceEx(project)?.dockContainer?.let(containers::add)
 
-    for (DockContainer each : containers) {
-      RelativeRectangle rec = each.getAcceptArea();
-      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
-        return each;
+    val startDragContainer = currentDragSession!!.startDragContainer!!
+    containers.remove(startDragContainer)
+    containers.add(0, startDragContainer)
+    for (each in containers) {
+      val rec = each.acceptArea
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.containerComponent)).canAccept()) {
+        return each
       }
     }
-
-    for (DockContainer each : containers) {
-      RelativeRectangle rec = each.getAcceptAreaFallback();
-      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
-        return each;
+    for (each in containers) {
+      val rec = each.acceptAreaFallback
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.containerComponent)).canAccept()) {
+        return each
       }
     }
-    return null;
+    return null
   }
 
-  private DockContainerFactory getFactory(String type) {
-    assert myFactories.containsKey(type) : "No factory for content type=" + type;
-    return myFactories.get(type);
+  private fun getFactory(type: String): DockContainerFactory? {
+    assert(factories.containsKey(type)) { "No factory for content type=$type" }
+    return factories.get(type)
   }
 
-  public void createNewDockContainerFor(@NotNull DockableContent<?> content, @NotNull RelativePoint point) {
-    DockContainer container = getFactory(content.getDockContainerType()).createContainer(content);
-
-    Boolean canReopenWindow = content.getPresentation().getClientProperty(REOPEN_WINDOW);
-    boolean reopenWindow = canReopenWindow == null || canReopenWindow;
-    DockWindow window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow);
-    boolean isNorthPanelAvailable = (content instanceof EditorTabbedContainer.DockableEditor)
-                                    ? ((EditorTabbedContainer.DockableEditor)content).isNorthPanelAvailable()
-                                    : isNorthPanelVisible(UISettings.getInstance());
+  fun createNewDockContainerFor(content: DockableContent<*>, point: RelativePoint) {
+    val container = getFactory(content.dockContainerType)!!.createContainer(content)
+    val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
+    val reopenWindow = canReopenWindow == null || canReopenWindow
+    val window = createWindowFor(getWindowDimensionKey(content), null, container, reopenWindow)
+    val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(getInstance())
     if (isNorthPanelAvailable) {
-      window.setupNorthPanel();
+      window.setupNorthPanel()
     }
-
-    Boolean canDockToolWindows = content.getPresentation().getClientProperty(ALLOW_DOCK_TOOL_WINDOWS);
+    val canDockToolWindows = content.presentation.getClientProperty(ALLOW_DOCK_TOOL_WINDOWS)
     if (canDockToolWindows == null || canDockToolWindows) {
-      window.setupToolWindowPane();
+      window.setupToolWindowPane()
     }
-
-    Dimension size = content.getPreferredSize();
+    val size = content.preferredSize
 
     // The given relative point might be relative to a component on a different screen, using different DPI screen coordinates. Convert to
     // device coordinates first. Ideally, we would be given a DevicePoint
-    Point showPoint = new DevicePoint(point).getLocationOnScreen();
-    showPoint.x -= size.width / 2;
-    showPoint.y -= size.height / 2;
-
-    Rectangle target = new Rectangle(showPoint, size);
-    ScreenUtil.moveRectangleToFitTheScreen(target);
-    ScreenUtil.cropRectangleToFitTheScreen(target);
-
-    window.setLocation(target.getLocation());
-    window.myDockContentUiContainer.setPreferredSize(target.getSize());
-
-    window.show(false);
-    window.getFrame().pack();
-
-    container.add(content, new RelativePoint(target.getLocation()));
-
-    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
+    val showPoint = DevicePoint(point).locationOnScreen
+    showPoint.x -= size.width / 2
+    showPoint.y -= size.height / 2
+    val target = Rectangle(showPoint, size)
+    ScreenUtil.moveRectangleToFitTheScreen(target)
+    ScreenUtil.cropRectangleToFitTheScreen(target)
+    window.setLocation(target.location)
+    window.dockContentUiContainer.preferredSize = target.size
+    window.show(false)
+    window.getFrame().pack()
+    container.add(content, RelativePoint(target.location))
+    SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file,
-                                                                                     @NotNull FileEditorManagerImpl fileEditorManager) {
-    DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
+  fun createNewDockContainerFor(file: VirtualFile,
+                                fileEditorManager: FileEditorManagerImpl): Pair<Array<FileEditor?>, Array<FileEditorProvider>> {
+    val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
 
     // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
     // parent window is floating.
-    DockWindow window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true));
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      window.show(true);
+    val window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW[file, true])
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) {
+      window.show(true)
     }
-
-    EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
-    Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
-
-    if (!isSingletonEditorInWindow(result.first)) {
-      window.setupToolWindowPane();
+    val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
+    val result = fileEditorManager.openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
+    if (!isSingletonEditorInWindow(result.first.asList())) {
+      window.setupToolWindowPane()
     }
-
-    boolean isNorthPanelAvailable = isNorthPanelAvailable(result.first);
+    val isNorthPanelAvailable = isNorthPanelAvailable(result.first.asList())
     if (isNorthPanelAvailable) {
-      window.setupNorthPanel();
+      window.setupNorthPanel()
     }
-    container.add(EditorTabbedContainer
-                    .createDockableEditor(myProject, null, file, new Presentation(file.getName()), editorWindow, isNorthPanelAvailable),
-                  null);
-
-    SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
-    return result;
+    container.add(
+      EditorTabbedContainer.createDockableEditor(project, null, file, Presentation(file.name), editorWindow, isNorthPanelAvailable),
+      null
+    )
+    SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
+    return result
   }
 
-  public static boolean isSingletonEditorInWindow(FileEditor[] editors) {
-    for (FileEditor editor : editors) {
-      if (FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(editor, false)
-        || EditorWindow.HIDE_TABS.get(editor, false)) {
-        return true;
-      }
-    }
-    return false;
+  private fun createWindowFor(dimensionKey: String?,
+                              id: String?,
+                              container: DockContainer,
+                              canReopenWindow: Boolean): DockWindow {
+    val windowId = id ?: Integer.toString(windowIdCounter++)
+    val window = DockWindow(dimensionKey, windowId, project, container, container is DockContainer.Dialog, canReopenWindow)
+    containerToWindow[container] = window
+    windows[windowId] = window
+    return window
   }
 
-  private static @Nullable String getWindowDimensionKey(@NotNull DockableContent<?> content) {
-    if (content instanceof EditorTabbedContainer.DockableEditor){
-      VirtualFile contentFile = ((EditorTabbedContainer.DockableEditor)content).getFile();
-      return getWindowDimensionKey(contentFile);
-    }
-
-    return null;
-  }
-
-  private static @Nullable String getWindowDimensionKey(@NotNull VirtualFile file) {
-    return WINDOW_DIMENSION_KEY.get(file);
-  }
-
-  private @NotNull DockWindow createWindowFor(@Nullable String dimensionKey,
-                                              @Nullable String id,
-                                              @NotNull DockContainer container,
-                                              boolean canReopenWindow) {
-    String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
-    DockWindow window =
-      new DockWindow(dimensionKey, windowId, myProject, container, container instanceof DockContainer.Dialog, canReopenWindow);
-    containerToWindow.put(container, window);
-    myWindows.put(windowId, window);
-    return window;
-  }
-
-  private @NotNull DockWindow getOrCreateWindowFor(@NotNull String id,
-                                                   @NotNull DockContainer container) {
-    final DockWindow existingWindow = myWindows.get(id);
+  private fun getOrCreateWindowFor(id: String,
+                                   container: DockContainer): DockWindow {
+    val existingWindow = windows[id]
     if (existingWindow != null) {
-      final DockContainer oldContainer = existingWindow.replaceContainer(container);
-      containerToWindow.remove(oldContainer);
-      containerToWindow.put(container, existingWindow);
-
-      if (oldContainer instanceof Disposable) {
-        Disposer.dispose((Disposable)oldContainer);
+      val oldContainer = existingWindow.replaceContainer(container)
+      containerToWindow.remove(oldContainer)
+      containerToWindow[container] = existingWindow
+      if (oldContainer is Disposable) {
+        Disposer.dispose((oldContainer as Disposable))
       }
-
-      return existingWindow;
+      return existingWindow
     }
-
-    return createWindowFor(null, id, container, true);
+    return createWindowFor(null, id, container, true)
   }
 
-  public static boolean isNorthPanelVisible(@NotNull UISettings uiSettings) {
-    return uiSettings.getShowNavigationBar()
-           && !uiSettings.getPresentationMode();
-  }
+  private inner class DockWindow(dimensionKey: String?,
+                                 val id: String?,
+                                 project: Project,
+                                 private var container: DockContainer,
+                                 isDialog: Boolean,
+                                 val supportReopen: Boolean) : FrameWrapper(project, dimensionKey ?: "dock-window-$id",
+                                                                        isDialog), IdeEventQueue.EventDispatcher {
+    var northPanelAvailable = false
+    private val northPanel = VerticalBox()
+    private val myNorthExtensions = LinkedHashMap<String, IdeRootPaneNorthExtension>()
+    val uiContainer: NonOpaquePanel
+    private val centerPanel = JPanel(BorderLayout(0, 2))
+    val dockContentUiContainer: JPanel
+    var toolWindowPane: ToolWindowPane? = null
 
-  public static boolean isNorthPanelAvailable(FileEditor @NotNull [] editors) {
-    boolean defaultNorthPanelVisible = isNorthPanelVisible(UISettings.getInstance());
-    for (FileEditor editor : editors) {
-      if (SHOW_NORTH_PANEL.isIn(editor)) {
-        return SHOW_NORTH_PANEL.get(editor, defaultNorthPanelVisible);
-      }
-    }
-
-    return defaultNorthPanelVisible;
-  }
-
-  private final class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
-    private final String myId;
-    private boolean myNorthPanelAvailable;
-    private final boolean mySupportReopen;
-    private DockContainer myContainer;
-
-    private final VerticalBox myNorthPanel = new VerticalBox();
-    private final Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<>();
-
-    private final NonOpaquePanel myUiContainer;
-    private final JPanel myCenterPanel = new JPanel(new BorderLayout(0, 2));
-    private final JPanel myDockContentUiContainer;
-    @Nullable private ToolWindowPane myToolWindowPane = null;
-
-    private DockWindow(@Nullable String dimensionKey,
-                       @Nullable String id,
-                       @NotNull Project project,
-                       @NotNull DockContainer container,
-                       boolean isDialog,
-                       boolean supportReopen) {
-      super(project, dimensionKey != null ? dimensionKey : "dock-window-" + id, isDialog);
-
-      myId = id;
-      myContainer = container;
-      setProject(project);
-
-      mySupportReopen = supportReopen;
-
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !(container instanceof DockContainer.Dialog)) {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    init {
+      setProject(project)
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment && container !is DockContainer.Dialog) {
+        val statusBar = WindowManager.getInstance().getStatusBar(project)
         if (statusBar != null) {
-          Window frame = getFrame();
-          if (frame instanceof IdeFrame) {
-            setStatusBar(statusBar.createChild((IdeFrame)frame));
+          val frame = getFrame()
+          if (frame is IdeFrame) {
+            this.statusBar = statusBar.createChild(frame)
           }
         }
       }
-
-      myUiContainer = new NonOpaquePanel(new BorderLayout());
-
-      myCenterPanel.setOpaque(false);
-
-      myDockContentUiContainer = new JPanel(new BorderLayout());
-      myDockContentUiContainer.setOpaque(false);
-
-      myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
-      myCenterPanel.add(myDockContentUiContainer, BorderLayout.CENTER);
-      myUiContainer.add(myCenterPanel, BorderLayout.CENTER);
-
-      StatusBar statusBar = getStatusBar();
-      if (statusBar != null) {
-        myUiContainer.add(statusBar.getComponent(), BorderLayout.SOUTH);
+      uiContainer = NonOpaquePanel(BorderLayout())
+      centerPanel.isOpaque = false
+      dockContentUiContainer = JPanel(BorderLayout())
+      dockContentUiContainer.isOpaque = false
+      dockContentUiContainer.add(container.containerComponent, BorderLayout.CENTER)
+      centerPanel.add(dockContentUiContainer, BorderLayout.CENTER)
+      uiContainer.add(centerPanel, BorderLayout.CENTER)
+      statusBar?.let {
+        uiContainer.add(it.component, BorderLayout.SOUTH)
       }
-
-      setComponent(myUiContainer);
-
-      IdeEventQueue.getInstance().addPostprocessor(this, this);
-
-      myContainer.addListener(new DockContainer.Listener() {
-        @Override
-        public void contentRemoved(Object key) {
-          getReady().doWhenDone(() -> closeIfEmpty());
+      component = uiContainer
+      IdeEventQueue.getInstance().addPostprocessor(this, this)
+      container.addListener(object : DockContainer.Listener {
+        override fun contentRemoved(key: Any) {
+          ready.doWhenDone(Runnable(::closeIfEmpty))
         }
-      }, this);
+      }, this)
     }
 
-    private void setupToolWindowPane() {
-      if (ApplicationManager.getApplication().isUnitTestMode() || !(getFrame() instanceof JFrame)) {
-        return;
+    fun setupToolWindowPane() {
+      if (ApplicationManager.getApplication().isUnitTestMode || getFrame() !is JFrame) {
+        return
       }
 
-      if (myToolWindowPane != null) {
-        return;
+      if (toolWindowPane != null) {
+        return
       }
 
-      final String paneId = Objects.requireNonNull(getDimensionKey());
-
-      final ToolWindowButtonManager buttonManager;
+      val paneId = dimensionKey!!
+      val buttonManager: ToolWindowButtonManager
       if (ExperimentalUI.isNewUI()) {
-        buttonManager = new ToolWindowPaneNewButtonManager(paneId, false);
-        buttonManager.add(myDockContentUiContainer);
-        buttonManager.initMoreButton();
+        buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
+        buttonManager.add(dockContentUiContainer)
+        buttonManager.initMoreButton()
       }
       else {
-        buttonManager = new ToolWindowPaneOldButtonManager(paneId);
+        buttonManager = ToolWindowPaneOldButtonManager(paneId)
       }
-
-      final JComponent containerComponent = myContainer.getContainerComponent();
-      myToolWindowPane = new ToolWindowPane((JFrame)getFrame(), this, paneId, buttonManager);
-      myToolWindowPane.setDocumentComponent(containerComponent);
-
-      myDockContentUiContainer.remove(containerComponent);
-      myDockContentUiContainer.add(myToolWindowPane, BorderLayout.CENTER);
+      val containerComponent = container.containerComponent
+      toolWindowPane = ToolWindowPane((getFrame() as JFrame), this, paneId, buttonManager)
+      toolWindowPane!!.setDocumentComponent(containerComponent)
+      dockContentUiContainer.remove(containerComponent)
+      dockContentUiContainer.add(toolWindowPane!!, BorderLayout.CENTER)
 
       // Close the container if it's empty, and we've just removed the last tool window
-      myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-        @Override
-        public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
-                                 @NotNull ToolWindowManagerListener.ToolWindowManagerEventType eventType) {
-          if (eventType == ToolWindowManagerEventType.ActivateToolWindow
-              || eventType == ToolWindowManagerEventType.MovedOrResized
-              || eventType == ToolWindowManagerEventType.SetContentUiType) {
-            return;
+      project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun stateChanged(toolWindowManager: ToolWindowManager,
+                                  eventType: ToolWindowManagerEventType) {
+          if (eventType == ToolWindowManagerEventType.ActivateToolWindow || eventType == ToolWindowManagerEventType.MovedOrResized || eventType == ToolWindowManagerEventType.SetContentUiType) {
+            return
           }
-          getReady().doWhenDone(() -> closeIfEmpty());
+          ready.doWhenDone(Runnable { closeIfEmpty() })
         }
-      });
+      })
     }
 
-    private DockContainer replaceContainer(DockContainer container) {
-      final JComponent newContainerComponent = container.getContainerComponent();
-      if (myToolWindowPane != null) {
-        myToolWindowPane.setDocumentComponent(newContainerComponent);
+    fun replaceContainer(container: DockContainer): DockContainer {
+      val newContainerComponent = container.containerComponent
+      if (toolWindowPane != null) {
+        toolWindowPane!!.setDocumentComponent(newContainerComponent)
       }
       else {
-        myDockContentUiContainer.remove(myContainer.getContainerComponent());
-        myDockContentUiContainer.add(newContainerComponent);
+        dockContentUiContainer.remove(this.container.containerComponent)
+        dockContentUiContainer.add(newContainerComponent)
       }
-      final DockContainer oldContainer = myContainer;
-      myContainer = container;
-      if (getFrame().isVisible() && myContainer instanceof Activatable) {
-        ((Activatable)myContainer).showNotify();
+      val oldContainer = this.container
+      this.container = container
+      if (getFrame().isVisible && this.container is Activatable) {
+        (this.container as Activatable).showNotify()
       }
-      return oldContainer;
+      return oldContainer
     }
 
-    private void closeIfEmpty() {
-      if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
-        close();
-        myContainers.remove(myContainer);
+    private fun closeIfEmpty() {
+      if (container.isEmpty && (toolWindowPane == null || !toolWindowPane!!.buttonManager.hasButtons())) {
+        close()
+        containers.remove(container)
       }
     }
 
-    private void setupNorthPanel() {
-      if (myNorthPanelAvailable) {
-        return;
+    fun setupNorthPanel() {
+      if (northPanelAvailable) {
+        return
       }
-      myCenterPanel.add(myNorthPanel, BorderLayout.NORTH);
-      myNorthPanelAvailable = true;
-      myProject.getMessageBus().connect(this)
-        .subscribe(UISettingsListener.TOPIC, uiSettings -> updateNorthPanel(isNorthPanelVisible(uiSettings)));
-      updateNorthPanel(isNorthPanelVisible(UISettings.getInstance()));
+      centerPanel.add(northPanel, BorderLayout.NORTH)
+      northPanelAvailable = true
+      project.messageBus.connect(this)
+        .subscribe(UISettingsListener.TOPIC, UISettingsListener { uiSettings: UISettings ->
+          updateNorthPanel(
+            isNorthPanelVisible(uiSettings))
+        })
+      updateNorthPanel(isNorthPanelVisible(getInstance()))
     }
 
-    @Override
-    protected IdeRootPaneNorthExtension getNorthExtension(String key) {
-      return myNorthExtensions.get(key);
+    override fun getNorthExtension(key: String?): IdeRootPaneNorthExtension? {
+      return myNorthExtensions[key]
     }
 
-    private void updateNorthPanel(boolean visible) {
-      if (ApplicationManager.getApplication().isUnitTestMode() || !myNorthPanelAvailable) {
-        return;
+    private fun updateNorthPanel(visible: Boolean) {
+      if (ApplicationManager.getApplication().isUnitTestMode || !northPanelAvailable) {
+        return
       }
-
-      myNorthPanel.setVisible(!(myContainer instanceof DockContainer.Dialog) && visible);
-
-      Set<String> processedKeys = new HashSet<>();
-      for (IdeRootPaneNorthExtension each : IdeRootPaneNorthExtension.EP_NAME.getExtensions(myProject)) {
-        processedKeys.add(each.getKey());
-        if (myNorthExtensions.containsKey(each.getKey())) {
-          continue;
+      northPanel.isVisible = container !is DockContainer.Dialog && visible
+      val processedKeys: MutableSet<String?> = HashSet()
+      for (each in IdeRootPaneNorthExtension.EP_NAME.getExtensions(project)) {
+        processedKeys.add(each.key)
+        if (myNorthExtensions.containsKey(each.key)) {
+          continue
         }
-        IdeRootPaneNorthExtension toInstall = each.copy();
-        if(toInstall != null) {
-          myNorthExtensions.put(toInstall.getKey(), toInstall);
-          myNorthPanel.add(toInstall.getComponent());
+        val toInstall = each.copy()
+        if (toInstall != null) {
+          myNorthExtensions[toInstall.key] = toInstall
+          northPanel.add(toInstall.component)
         }
       }
-
-      Iterator<String> existing = myNorthExtensions.keySet().iterator();
+      val existing = myNorthExtensions.keys.iterator()
       while (existing.hasNext()) {
-        String each = existing.next();
+        val each = existing.next()
         if (processedKeys.contains(each)) {
-          continue;
+          continue
         }
-
-        IdeRootPaneNorthExtension toRemove = myNorthExtensions.get(each);
-        myNorthPanel.remove(toRemove.getComponent());
-        existing.remove();
-        if (toRemove instanceof Disposable) {
-          Disposer.dispose((Disposable)toRemove);
+        val toRemove = myNorthExtensions[each]
+        northPanel.remove(toRemove!!.component)
+        existing.remove()
+        if (toRemove is Disposable) {
+          Disposer.dispose((toRemove as Disposable?)!!)
         }
       }
-
-      myNorthPanel.revalidate();
-      myNorthPanel.repaint();
+      northPanel.revalidate()
+      northPanel.repaint()
     }
 
-    public void setTransparent(boolean transparent) {
+    fun setTransparent(transparent: Boolean) {
+      val windowManager = WindowManagerEx.getInstanceEx()
       if (transparent) {
-        WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
-        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0.5f);
+        windowManager.setAlphaModeEnabled(getFrame(), true)
+        windowManager.setAlphaModeRatio(getFrame(), 0.5f)
       }
       else {
-        WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
-        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0f);
+        windowManager.setAlphaModeEnabled(getFrame(), true)
+        windowManager.setAlphaModeRatio(getFrame(), 0f)
       }
     }
 
-    @Override
-    public void dispose() {
-      super.dispose();
-      final DockWindow removed = containerToWindow.remove(myContainer);
-      myWindows.remove(removed.myId);
-      if (myContainer instanceof Disposable) {
-        Disposer.dispose((Disposable)myContainer);
+    override fun dispose() {
+      super.dispose()
+      val removed = containerToWindow.remove(container)
+      windows.remove(removed!!.id)
+      if (container is Disposable) {
+        Disposer.dispose((container as Disposable))
       }
-      for (IdeRootPaneNorthExtension each : myNorthExtensions.values()) {
-        if (each instanceof Disposable) {
-          Disposer.dispose((Disposable)each);
+      for (each in myNorthExtensions.values) {
+        if (each is Disposable) {
+          Disposer.dispose((each as Disposable))
         }
       }
-      myNorthExtensions.clear();
+      myNorthExtensions.clear()
     }
 
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      if (e instanceof KeyEvent) {
-        if (myCurrentDragSession != null) {
-          stopCurrentDragSession();
+    override fun dispatch(e: AWTEvent): Boolean {
+      if (e is KeyEvent) {
+        if (currentDragSession != null) {
+          stopCurrentDragSession()
         }
       }
-      return false;
+      return false
     }
 
-    @Override
-    protected @NotNull JFrame createJFrame(@NotNull IdeFrame parent) {
-      JFrame frame = super.createJFrame(parent);
-      installListeners(frame);
-      return frame;
+    override fun createJFrame(parent: IdeFrame): JFrame {
+      val frame = super.createJFrame(parent)
+      installListeners(frame)
+      return frame
     }
 
-    @Override
-    protected @NotNull JDialog createJDialog(@NotNull IdeFrame parent) {
-      JDialog frame = super.createJDialog(parent);
-      installListeners(frame);
-      return frame;
+    override fun createJDialog(parent: IdeFrame): JDialog {
+      val frame = super.createJDialog(parent)
+      installListeners(frame)
+      return frame
     }
 
-    private void installListeners(@NotNull Window frame) {
-      UiNotifyConnector uiNotifyConnector = myContainer instanceof Activatable
-                                            ? new UiNotifyConnector(((RootPaneContainer)frame).getContentPane(), (Activatable)myContainer)
-                                            : null;
-      frame.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosing(WindowEvent e) {
-          myContainer.closeAll();
+    private fun installListeners(frame: Window) {
+      val uiNotifyConnector = if (container is Activatable) UiNotifyConnector((frame as RootPaneContainer).contentPane,
+                                                                              (container as Activatable))
+      else null
+      frame.addWindowListener(object : WindowAdapter() {
+        override fun windowClosing(e: WindowEvent) {
+          container.closeAll()
           if (uiNotifyConnector != null) {
-            Disposer.dispose(uiNotifyConnector);
+            Disposer.dispose(uiNotifyConnector)
           }
         }
-      });
+      })
     }
   }
 
-  @Override
-  public Element getState() {
-    Element root = new Element("state");
-    for (DockContainer each : getAllContainers()) {
-      DockWindow eachWindow = containerToWindow.get(each);
-      if (eachWindow != null && eachWindow.mySupportReopen && each instanceof DockContainer.Persistent) {
-        DockContainer.Persistent eachContainer = (DockContainer.Persistent)each;
-        Element eachWindowElement = new Element("window");
-        String id = eachWindow.myId;
+  override fun getState(): Element {
+    val root = Element("state")
+    for (each in allContainers) {
+      val eachWindow = containerToWindow.get(each)
+      if (eachWindow != null && eachWindow.supportReopen && each is DockContainer.Persistent) {
+        val eachWindowElement = Element("window")
+        val id = eachWindow.id
         if (id != null) {
-          eachWindowElement.setAttribute("id", id);
+          eachWindowElement.setAttribute("id", id)
         }
-        eachWindowElement.setAttribute("withNorthPanel", Boolean.toString(eachWindow.myNorthPanelAvailable));
-        eachWindowElement.setAttribute("withToolWindowPane", Boolean.toString(eachWindow.myToolWindowPane != null));
-        Element content = new Element("content");
-        content.setAttribute("type", eachContainer.getDockContainerType());
-        content.addContent(eachContainer.getState());
-        eachWindowElement.addContent(content);
-
-        root.addContent(eachWindowElement);
+        eachWindowElement.setAttribute("withNorthPanel", eachWindow.northPanelAvailable.toString())
+        eachWindowElement.setAttribute("withToolWindowPane", (eachWindow.toolWindowPane != null).toString())
+        val content = Element("content")
+        content.setAttribute("type", each.dockContainerType)
+        content.addContent(each.state)
+        eachWindowElement.addContent(content)
+        root.addContent(eachWindowElement)
       }
     }
-    return root;
+    return root
   }
 
-  private @NotNull Iterable<DockContainer> getAllContainers() {
-    return ContainerUtil.concat(myContainers, containerToWindow.keySet());
+  private val allContainers: Sequence<DockContainer>
+    get() = containers.asSequence() + containerToWindow.keys
+
+  override fun loadState(state: Element) {
+    loadedState = state
   }
 
-  @Override
-  public void loadState(@NotNull Element state) {
-    myLoadedState = state;
-  }
-
-  private void readStateFor(@NotNull String type) {
-    if (myLoadedState == null) {
-      return;
-    }
-
-    for (Element windowElement : myLoadedState.getChildren("window")) {
-      Element eachContent = windowElement.getChild("content");
-      if (eachContent == null) {
-        continue;
+  private fun readStateFor(type: String) {
+    for (windowElement in (loadedState ?: return).getChildren("window")) {
+      val eachContent = windowElement.getChild("content") ?: continue
+      val eachType = eachContent.getAttributeValue("type")
+      if (type != eachType || !factories.containsKey(eachType)) {
+        continue
       }
 
-      String eachType = eachContent.getAttributeValue("type");
-      if (!type.equals(eachType) || !myFactories.containsKey(eachType)) {
-        continue;
-      }
-
-      DockContainerFactory factory = myFactories.get(eachType);
-      if (!(factory instanceof DockContainerFactory.Persistent)) {
-        continue;
-      }
-
-      DockContainer container = ((DockContainerFactory.Persistent)factory).loadContainerFrom(eachContent);
+      val factory = factories.get(eachType) as? DockContainerFactory.Persistent ?: continue
+      val container = factory.loadContainerFrom(eachContent)
 
       // If the window already exists, reuse it, otherwise create it. This handles changes in tasks & contexts. When we clear the current
       // context, all open editors are closed, but a floating editor container with a docked tool window will remain open. Switching to a
       // new context will reuse the window and open editors in that editor container. If the new context doesn't use this window, or it's
       // a default clean context, the window will remain open, containing only the docked tool windows.
-      DockWindow window = getOrCreateWindowFor(windowElement.getAttributeValue("id"), container);
+      val window = getOrCreateWindowFor(windowElement.getAttributeValue("id"), container)
 
       // If the window already exists, we can't remove the north panel or tool window pane, but we can add them
-      boolean withNorthPanel = Boolean.parseBoolean(windowElement.getAttributeValue("withNorthPanel", Boolean.toString(true)));
-      if (withNorthPanel) {
-        window.setupNorthPanel();
+      if (windowElement.getAttributeValue("withNorthPanel", "true").toBoolean()) {
+        window.setupNorthPanel()
       }
-      boolean withToolWindowPane = Boolean.parseBoolean(windowElement.getAttributeValue("withToolWindowPane", Boolean.toString(true)));
-      if (withToolWindowPane) {
-        window.setupToolWindowPane();
+      if (windowElement.getAttributeValue("withToolWindowPane", "true").toBoolean()) {
+        window.setupToolWindowPane()
       }
 
       // If the window exists, it's already visible. Don't show multiple times as this will set up additional listeners and window decoration
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!window.getFrame().isVisible()) {
-          window.show();
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!window.getFrame().isVisible) {
+          window.show()
         }
-      });
+      }
     }
   }
 }

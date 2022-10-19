@@ -29,7 +29,6 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var initialContainers = 0
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
     manager = FileEditorManagerExImpl(project)

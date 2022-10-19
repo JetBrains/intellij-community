@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 public final class StatusBarUtil {
-  private static final Logger LOG = Logger.getInstance(StatusBar.class);
-
   private StatusBarUtil() { }
 
   @Nullable
@@ -68,11 +66,11 @@ public final class StatusBarUtil {
       return LightEditService.getInstance().getSelectedFileEditor();
     }
 
-    DockContainer c = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),
-                                                                       DockableEditorTabbedContainer.class::isInstance);
+    DockContainer dockContainer = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),
+                                                                                   DockableEditorTabbedContainer.class::isInstance);
     EditorsSplitters splitters = null;
-    if (c instanceof DockableEditorTabbedContainer) {
-      splitters = ((DockableEditorTabbedContainer)c).getSplitters();
+    if (dockContainer instanceof DockableEditorTabbedContainer) {
+      splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }
 
     if (splitters != null && splitters.getCurrentWindow() != null) {
@@ -91,22 +89,26 @@ public final class StatusBarUtil {
     }
   }
 
+  @SuppressWarnings("LoggerInitializedWithForeignClass")
   private static boolean ensureValidEditorFile(@NotNull Editor editor, @Nullable FileEditor fileEditor) {
     Document document = editor.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null && !file.isValid()) {
-      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
-      Project project = editor.getProject();
-      Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
-      LOG.error("Returned editor for invalid file: " + editor +
-                "; disposed=" + editor.isDisposed() +
-                (fileEditor == null ? "" : "; fileEditor=" + fileEditor + "; fileEditor.valid=" + fileEditor.isValid()) +
-                "; file " + file.getClass() +
-                "; cached document exists: " + (cachedDocument != null) +
-                "; same as document: " + (cachedDocument == document) +
-                "; file is open: " + fileIsOpen);
-      return false;
+    if (file == null || file.isValid()) {
+      return true;
     }
-    return true;
+
+    Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
+    Project project = editor.getProject();
+    Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
+    Logger.getInstance(StatusBar.class).error(
+      "Returned editor for invalid file: " + editor +
+      "; disposed=" + editor.isDisposed() +
+      (fileEditor == null ? "" : "; fileEditor=" + fileEditor + "; fileEditor.valid=" + fileEditor.isValid()) +
+      "; file " + file.getClass() +
+      "; cached document exists: " + (cachedDocument != null) +
+      "; same as document: " + (cachedDocument == document) +
+      "; file is open: " + fileIsOpen
+    );
+    return false;
   }
 }

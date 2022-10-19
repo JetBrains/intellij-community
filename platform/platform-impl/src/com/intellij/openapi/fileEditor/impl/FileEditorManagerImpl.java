@@ -142,6 +142,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private final EditorsSplitters mySplitters;
+  private final DockableEditorTabbedContainer dockable;
+
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<>(null);
@@ -167,7 +169,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    * Removes invalid myEditor and updates "modified" status.
    */
   private final PropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-  private final DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
   private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
 
@@ -178,7 +179,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
-    myDockManager = DockManager.getInstance(myProject);
     myListenerList = new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
     queue.setTrackUiActivity(true);
@@ -205,11 +205,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     closeFilesOnFileEditorRemoval();
 
     mySplitters = new EditorsSplitters(this);
-    DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, mySplitters, false);
-    DockManager.getInstance(myProject).register(dockable, this);
-    Disposer.register(this, dockable);
+    dockable = new DockableEditorTabbedContainer(myProject, mySplitters, false);
     // prepare for toolwindow manager
     mySplitters.setFocusable(false);
+  }
+
+  @Override
+  public @Nullable DockContainer getDockContainer() {
+    return dockable;
   }
 
   static final class MyEditorFactoryListener implements EditorFactoryListener {
@@ -299,6 +302,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public void dispose() {
     fileToUpdateTitle = null;
+    Disposer.dispose(mySplitters);
   }
 
   private void dumbModeFinished(@NotNull Project project) {
@@ -331,7 +335,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this);
-    myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
+    DockManager.getInstance(myProject).register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {
@@ -353,7 +357,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   public @NotNull Set<EditorsSplitters> getAllSplitters() {
     Set<EditorsSplitters> all = new LinkedHashSet<>();
     all.add(getMainSplitters());
-    Set<DockContainer> dockContainers = myDockManager.getContainers();
+    Set<DockContainer> dockContainers = DockManager.getInstance(myProject).getContainers();
     for (DockContainer each : dockContainers) {
       if (each instanceof DockableEditorTabbedContainer) {
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
@@ -373,7 +377,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
 
       Component focusOwner = fm.getFocusOwner();
-      DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+      DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
         result.complete(((DockableEditorTabbedContainer)container).getSplitters());
       }
@@ -402,10 +406,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       focusOwner = fm.getLastFocusedFor(fm.getLastFocusedIdeWindow());
     }
 
-    DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+    DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     if (container == null) {
       focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+      container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     }
 
     if (container instanceof DockableEditorTabbedContainer) {
@@ -2208,7 +2212,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public EditorsSplitters getSplittersFor(Component c) {
     EditorsSplitters splitters = null;
-    DockContainer dockContainer = myDockManager.getContainerFor(c, DockableEditorTabbedContainer.class::isInstance);
+    DockContainer dockContainer = DockManager.getInstance(myProject).getContainerFor(c, DockableEditorTabbedContainer.class::isInstance);
     if (dockContainer instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }

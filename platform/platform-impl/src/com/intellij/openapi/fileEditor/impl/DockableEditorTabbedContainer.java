@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -40,9 +40,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
-public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable, Disposable {
-  @NotNull
-  private final EditorsSplitters mySplitters;
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
+  private final @NotNull EditorsSplitters mySplitters;
   private final Project myProject;
 
   private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<>();
@@ -61,11 +60,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     myProject = project;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
-  }
-
-  @Override
-  public void dispose() {
-    Disposer.dispose(mySplitters);
   }
 
   @Override
@@ -250,7 +244,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentPainter == null) {
       myCurrentPainter = new MyDropAreaPainter();
       myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
-      Disposer.register(this, myGlassPaneListenersDisposable);
+      Disposer.register(mySplitters, myGlassPaneListenersDisposable);
       IdeGlassPaneUtil.find(myCurrentOver.getComponent())
         .addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }

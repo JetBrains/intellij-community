@@ -59,6 +59,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -491,7 +492,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       }
       presentation.setIcon(info.getIcon());
       EditorComposite composite = myWindow.getComposite(myFile);
-      FileEditor[] editors = composite != null ? composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY) : FileEditor.EMPTY_ARRAY;
+      List<FileEditor> editors = composite == null ? Collections.emptyList() : composite.getAllEditors();
       boolean isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors);
       presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !DockManagerImpl.isSingletonEditorInWindow(editors));
       mySession = getDockManager()
