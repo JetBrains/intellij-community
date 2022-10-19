@@ -1666,7 +1666,13 @@ public class Mappings {
 
       if (classRepr.isEnum()) {
         debug("Constants added to enum, affecting class usages ", classRepr.name);
-        state.myAffectedUsages.add(classRepr.createUsage());
+        final UsageRepr.Usage usage = classRepr.createUsage();
+        state.myAffectedUsages.add(usage);
+        // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
+        state.myUsageConstraints.put(usage, residence -> {
+          final ClassRepr candidate = myPresent.classReprByName(residence);
+          return candidate != null && candidate.isSynthetic();
+        });
       }
       
       for (final FieldRepr f : added) {
