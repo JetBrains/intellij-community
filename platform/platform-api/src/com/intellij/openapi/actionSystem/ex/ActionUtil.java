@@ -265,7 +265,9 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     Project project = e.getProject();
     if (project != null && PerformWithDocumentsCommitted.isPerformWithDocumentsCommitted(action)) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      }
     }
     performDumbAwareUpdate(action, e, true);
 
