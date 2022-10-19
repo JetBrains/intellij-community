@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.buildExpression
  * Generates a `kotlin.text.buildString` call from [operandsWithExtras]. A separate `append(operand)` call is generated for each
  * [KtExpression] operand. The [PsiElement] extras associated with an operand are appended to the end of their operand's line as text.
  */
-fun generateBuildStringCall(
+fun generateBuildStringCallWithExtras(
     project: Project,
     operandsWithExtras: List<Pair<KtExpression, List<PsiElement>>>,
 ): KtExpression =
@@ -29,3 +29,6 @@ fun generateBuildStringCall(
         }
         appendFixedText("}")
     }
+
+fun generateBuildStringCall(project: Project, operands: List<KtExpression>): KtExpression =
+    generateBuildStringCallWithExtras(project, operands.map { Pair(it, emptyList()) })

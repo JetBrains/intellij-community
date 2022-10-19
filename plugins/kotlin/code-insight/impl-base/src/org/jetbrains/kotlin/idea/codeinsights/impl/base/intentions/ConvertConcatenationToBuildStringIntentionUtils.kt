@@ -9,7 +9,7 @@ import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.tailComments
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCall
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCallWithExtras
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -18,7 +18,7 @@ fun convertConcatenationToBuildStringCall(element: KtBinaryExpression): KtExpres
     val operandsWithExtras = operands.mapIndexed {
         index, expression -> transformOperand(expression, isLast = index == operands.lastIndex)
     }
-    val call = generateBuildStringCall(element.project, operandsWithExtras)
+    val call = generateBuildStringCallWithExtras(element.project, operandsWithExtras)
     element.deleteTailComments()
     val replacedElement = element.replaced(call)
     replacedElement.reformat(canChangeWhiteSpacesOnly = true)
