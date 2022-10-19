@@ -9,6 +9,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryListener
 import com.intellij.warmup.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
@@ -34,6 +36,8 @@ internal class ProjectIndexesWarmup : ModernApplicationStarter() {
 
     // to avoid sync progress task execution as it works in test mode
     SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", true.toString())
+
+    SystemProperties.setProperty("intellij.MergingUpdateQueue.enable.global.flusher", true.toString())
   }
 
   override suspend fun start(args: List<String>) {
@@ -57,6 +61,15 @@ internal class ProjectIndexesWarmup : ModernApplicationStarter() {
 
     val buildMode = System.getenv()["IJ_WARMUP_BUILD"]
     val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
+
+    val application = ApplicationManager.getApplication()
+    WarmupStatus.statusChanged(application, WarmupStatus.InProgress)
+    var totalIndexedFiles = 0
+    application.messageBus.connect().subscribe(ProjectIndexingHistoryListener.TOPIC, object : ProjectIndexingHistoryListener {
+      override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
+        totalIndexedFiles += projectIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
+      }
+    })
 
     val project = withLoggingProgresses {
       waitIndexInitialization()
@@ -87,9 +100,10 @@ internal class ProjectIndexesWarmup : ModernApplicationStarter() {
       }
     }
 
-    ConsoleLog.info("IDE Warm-up finished. Exiting the application...")
+    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles))
+    ConsoleLog.info("IDE Warm-up finished. $totalIndexedFiles files were indexed. Exiting the application...")
     withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().exit(false, true, false)
+      application.exit(false, true, false)
     }
   }
 }
