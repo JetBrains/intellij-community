@@ -614,7 +614,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private void createReviewTab(@NotNull JBTabbedPane pane) {
     JPanel topPanel = new Wrapper();
-    topPanel.setBorder(JBUI.Borders.empty(16, 0, 12, 0));
+    topPanel.setBorder(JBUI.Borders.empty(16, 16, 12, 16));
 
     LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false,
@@ -624,7 +624,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
                                           "/review/new");
 
     JPanel reviewsPanel = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
-    reviewsPanel.setBorder(JBUI.Borders.emptyLeft(12));
     reviewsPanel.add(topPanel, BorderLayout.NORTH);
 
     myReviewPanel = new ReviewCommentListContainer();
@@ -664,7 +663,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       });
     });
 
+    Insets insets = pane.getTabComponentInsets();
+    pane.setTabComponentInsets(JBInsets.emptyInsets());
     pane.add(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel));
+    pane.setTabComponentInsets(insets);
   }
 
   private void createAdditionalInfoTab(@NotNull JBTabbedPane pane) {
