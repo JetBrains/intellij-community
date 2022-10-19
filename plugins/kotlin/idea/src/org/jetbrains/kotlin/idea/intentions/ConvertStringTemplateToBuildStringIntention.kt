@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -15,7 +16,7 @@ class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStr
     KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
-        return !element.text.startsWith("\"\"\"") && !element.mustBeConstant()
+        return !element.text.startsWith("\"\"\"") && !element.isAnnotationArgument()
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {

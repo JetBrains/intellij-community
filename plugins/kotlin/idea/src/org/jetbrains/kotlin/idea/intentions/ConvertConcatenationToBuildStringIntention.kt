@@ -10,6 +10,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.nextLeafs
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -27,7 +28,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
-        return element.isConcatenation() && !element.parent.isConcatenation() && !element.mustBeConstant()
+        return element.isConcatenation() && !element.parent.isConcatenation() && !element.isAnnotationArgument()
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
@@ -104,5 +105,3 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 
     private fun PsiElement.isWhiteSpaceWithLineBreak() = this is PsiWhiteSpace && this.textContains('\n')
 }
-
-internal fun KtExpression.mustBeConstant(): Boolean = this.parents.any { it is KtAnnotationEntry }

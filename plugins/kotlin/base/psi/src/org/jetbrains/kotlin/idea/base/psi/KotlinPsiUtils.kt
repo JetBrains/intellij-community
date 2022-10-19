@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -214,3 +215,5 @@ fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
         }
         visit(this@childrenDfsSequence)
     }
+
+fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }
