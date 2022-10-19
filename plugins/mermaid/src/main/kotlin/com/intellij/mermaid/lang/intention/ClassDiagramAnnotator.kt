@@ -13,7 +13,6 @@ import com.intellij.mermaid.lang.psi.MermaidRelationStatement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
-import kotlin.reflect.KFunction2
 
 
 class ClassDiagramAnnotator : Annotator {
@@ -55,7 +54,6 @@ class ClassDiagramAnnotator : Annotator {
   private class CreateClassDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
     AbstractCreateDeclarationIntention(psiElement, statement, className) {
     override fun getText(): String = MermaidBundle.message("fix.create.class.declaration", className)
-    override val createDeclarationPsiElement: KFunction2<Project, String, PsiElement?>
-      get() = ::createClassDiagramStatement
+    override fun createDeclarationPsiElement(project: Project, name: String) = createClassDiagramStatement(project, name)
   }
 }

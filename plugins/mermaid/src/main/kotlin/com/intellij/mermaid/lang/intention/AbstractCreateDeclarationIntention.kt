@@ -10,14 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import kotlin.reflect.KFunction2
 
 abstract class AbstractCreateDeclarationIntention(
   private val psiElement: PsiElement,
   private val statement: PsiElement,
   private val className: String = psiElement.text
 ) : BaseIntentionAction() {
-  abstract val createDeclarationPsiElement: KFunction2<Project, String, PsiElement?>
+  abstract fun createDeclarationPsiElement(project: Project, name: String): PsiElement?
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
 
