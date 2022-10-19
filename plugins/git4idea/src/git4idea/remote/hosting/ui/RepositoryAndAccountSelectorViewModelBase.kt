@@ -8,7 +8,9 @@ import com.intellij.collaboration.util.URIUtil
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 
 abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepositoryMapping, A : ServerAccount>(
@@ -32,14 +34,15 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
 
   final override val accountSelectionState = MutableStateFlow<A?>(null)
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   final override val missingCredentialsState: StateFlow<Boolean> =
-    channelFlow {
-      accountSelectionState.collectLatest {
-        if(it == null) {
-          send(false)
-        } else {
-          accountManager.getCredentialsFlow(it, true).collect { creds ->
-            send(creds == null)
+    accountSelectionState.transformLatest {
+      if(it == null) {
+        emit(false)
+      } else {
+        coroutineScope {
+          accountManager.getCredentialsState(this, it).collect { creds ->
+            emit(creds == null)
           }
         }
       }

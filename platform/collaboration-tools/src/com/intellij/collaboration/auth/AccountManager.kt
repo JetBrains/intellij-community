@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -42,7 +43,12 @@ interface AccountManager<A : Account, Cred> {
 
   /**
    * Flow of account credentials
-   * Will be closed when the account is removed
    */
-  fun getCredentialsFlow(account: A, withCurrent: Boolean = true): Flow<Cred?>
+  fun getCredentialsFlow(account: A): Flow<Cred?>
+
+  /**
+   * Flow of account credentials with the latest state
+   * Credentials are acquired and updated under [scope]
+   */
+  suspend fun getCredentialsState(scope: CoroutineScope, account: A): StateFlow<Cred?>
 }

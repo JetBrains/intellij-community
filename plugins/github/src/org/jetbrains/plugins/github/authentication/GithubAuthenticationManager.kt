@@ -47,7 +47,7 @@ class GithubAuthenticationManager internal constructor() {
         listener.onAccountListChanged(prev, current)
         current.forEach { acc ->
           async {
-            accountManager.getCredentialsFlow(acc, false).collectLatest {
+            accountManager.getCredentialsFlow(acc).collectLatest {
               listener.onAccountCredentialsChanged(acc)
             }
           }

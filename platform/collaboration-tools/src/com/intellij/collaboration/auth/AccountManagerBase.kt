@@ -4,10 +4,13 @@ package com.intellij.collaboration.auth
 import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Base class for account management application service
@@ -115,34 +118,26 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
 
   override suspend fun findCredentials(account: A): Cred? = persistentCredentials.retrieveCredentials(account)
 
-  override fun getCredentialsFlow(account: A, withCurrent: Boolean): Flow<Cred?> = channelFlow {
-    mutex.withLock {
-      // subscribe to map updates first
-      launch(start = CoroutineStart.UNDISPATCHED) {
-        accountsEventsFlow.collect {
-          when (it) {
-            is Event.AccountsAddedOrUpdated -> {
-              send(it.map[account])
-            }
-            is Event.AccountsRemoved -> {
-              if (account in it.accounts) {
-                cancel()
-              }
-            }
+  override suspend fun getCredentialsState(scope: CoroutineScope, account: A): StateFlow<Cred?> =
+    withContext(scope.coroutineContext + Dispatchers.Default) {
+      mutex.withLock {
+        getCredentialsFlow(account).stateIn(scope, SharingStarted.Eagerly, findCredentials(account))
+      }
+    }
+
+  override fun getCredentialsFlow(account: A): Flow<Cred?> =
+    accountsEventsFlow.transform {
+      when (it) {
+        is Event.AccountsAddedOrUpdated -> {
+          emit(it.map[account])
+        }
+        is Event.AccountsRemoved -> {
+          if (account in it.accounts) {
+            emit(null)
           }
         }
       }
-      if (withCurrent) {
-        try {
-          send(persistentCredentials.retrieveCredentials(account))
-        }
-        catch (e: Exception) {
-          logger.warn("Failed to retrieve credentials", e)
-          send(null)
-        }
-      }
-    }
-  }.flowOn(Dispatchers.Default)
+    }.flowOn(Dispatchers.Default)
 
   override fun dispose() = Unit
 

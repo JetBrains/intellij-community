@@ -40,7 +40,7 @@ internal class GHRepositoryConnectionManager(scope: CoroutineScope,
             }
           }.collectLatest {
             coroutineScope {
-              accountManager.getCredentialsFlow(account).collectLatest { token ->
+              accountManager.getCredentialsState(this, account).collectLatest { token ->
                 if (token == null) {
                   throw CancellationException()
                 }

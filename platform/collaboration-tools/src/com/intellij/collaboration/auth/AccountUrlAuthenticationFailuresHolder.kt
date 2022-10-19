@@ -17,7 +17,7 @@ class AccountUrlAuthenticationFailuresHolder<A : Account>(
   fun markFailed(account: A, url: String) {
     storeMap.computeIfAbsent(account) {
       cs.launch {
-        accountManager().getCredentialsFlow(account, false).first()
+        accountManager().getCredentialsFlow(account).first()
         storeMap.remove(account)
       }
       ContainerUtil.newConcurrentSet()
