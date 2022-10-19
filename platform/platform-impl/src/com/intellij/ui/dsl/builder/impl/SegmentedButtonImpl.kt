@@ -41,11 +41,13 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     rebuild()
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
     super.verticalAlign(verticalAlign)
     return this

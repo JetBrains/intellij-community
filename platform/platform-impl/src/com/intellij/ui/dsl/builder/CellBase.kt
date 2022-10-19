@@ -46,14 +46,10 @@ interface CellBase<out T : CellBase<T>> {
    */
   fun enabledIf(predicate: ComponentPredicate): CellBase<T>
 
-  /**
-   * Will be deprecated soon. Use [align] instead
-   */
+  @Deprecated("Use align method instead")
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
-  /**
-   * Will be deprecated soon. Use [align] instead
-   */
+  @Deprecated("Use align method instead")
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
@@ -73,7 +69,7 @@ interface CellBase<out T : CellBase<T>> {
    * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
-   * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]
+   * Note that alignment inside the cell is managed by [align] method
    *
    * @see [Grid.resizableColumns]
    */

@@ -352,11 +352,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && (parent == null || parent.isVisible())
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
     super.verticalAlign(verticalAlign)
     return this
