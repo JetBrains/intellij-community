@@ -270,6 +270,9 @@ object EventFields {
     }
   }
 
+  @JvmField
+  val IsSubmenu = Boolean("isSubmenu")
+
   //will be replaced with ObjectEventField in the future
   @JvmField
   val PluginInfo = object : PrimitiveEventField<PluginInfo?>() {
