@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
 import java.util.*
 
@@ -89,14 +90,24 @@ abstract class Committer(
 }
 
 interface CommitterResultHandler : EventListener {
-  fun onSuccess() {}
-  fun onCancel() {}
-  fun onFailure() {}
+  @RequiresEdt
+  fun onSuccess() {
+  }
+
+  @RequiresEdt
+  fun onCancel() {
+  }
+
+  @RequiresEdt
+  fun onFailure() {
+  }
 
   /**
    * 'onFinally' that might be delayed until VFS/CLM refreshes are done.
    */
-  fun onAfterRefresh() {}
+  @RequiresEdt
+  fun onAfterRefresh() {
+  }
 }
 
 class CommitResultHandlerNotifier(private val committer: Committer,
