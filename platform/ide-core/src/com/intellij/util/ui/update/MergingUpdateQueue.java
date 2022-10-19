@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -37,6 +38,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean mySuspended;
 
   private final ConcurrentIntObjectMap<Map<Update, Update>> myScheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private static final Set<MergingUpdateQueue> ourQueues =
+    SystemProperties.getBooleanProperty("intellij.MergingUpdateQueue.enable.global.flusher", false)
+    ? ContainerUtil.newConcurrentSet()
+    : null;
 
   private final Alarm myWaiterForMerge;
 
@@ -121,6 +126,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     if (activationComponent != null) {
       UiNotifyConnector connector = new UiNotifyConnector(activationComponent, this);
       Disposer.register(this, connector);
+    }
+
+    if (ourQueues != null) {
+      ourQueues.add(this);
     }
   }
 
@@ -238,6 +247,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     flush();
   }
 
+  @ApiStatus.Internal
+  public static void flushAllQueues() {
+    if (ourQueues != null) {
+      for (MergingUpdateQueue queue : ourQueues) {
+        queue.flush();
+      }
+    }
+  }
+
   /**
    * executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
@@ -245,7 +263,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public void flush() {
     synchronized (myScheduledUpdates) {
       if (myScheduledUpdates.isEmpty()) {
-        finishActivity();
+        //finishActivity();
         return;
       }
     }
@@ -413,10 +431,17 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   @Override
   public void dispose() {
-    myDisposed = true;
-    myActive = false;
-    finishActivity();
-    clearWaiter();
+    try {
+      myDisposed = true;
+      myActive = false;
+      finishActivity();
+      clearWaiter();
+    }
+    finally {
+      if (ourQueues != null) {
+        ourQueues.remove(this);
+      }
+    }
   }
 
   private void clearWaiter() {
