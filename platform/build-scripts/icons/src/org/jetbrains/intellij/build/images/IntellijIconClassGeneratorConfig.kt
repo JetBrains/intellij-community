@@ -73,7 +73,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         className = "DjangoIcons",
         packageName = "com.jetbrains.django"
       )
-      "intellij.python.jinja2" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.jinja" -> IntellijIconClassGeneratorModuleConfig(
         className = "Jinja2Icons",
         packageName = "com.jetbrains.jinja2"
       )
