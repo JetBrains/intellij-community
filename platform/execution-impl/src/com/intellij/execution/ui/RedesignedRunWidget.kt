@@ -186,7 +186,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, Color.WHITE), x, y)
+    super.paintIcon(g, actionButton, IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND), x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -290,7 +290,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
     }.also {
-      it.foreground = Color.WHITE
+      it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
     }
   }
@@ -303,7 +303,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
     val g2 = g.create() as Graphics2D
     g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
     g2.fill(Rectangle(size))
-    g2.color = Color.WHITE.addAlpha(0.4)
+    g2.color = JBUI.CurrentTheme.RunWidget.FOREGROUND.addAlpha(0.4)
     g2.stroke = BasicStroke(JBUIScale.scale(1f))
     g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }

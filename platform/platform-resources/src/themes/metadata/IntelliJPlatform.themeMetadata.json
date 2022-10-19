@@ -1775,6 +1775,11 @@
       "key": "MainToolbar.separatorColor",
       "description": "Color of the Main Toolbar separators",
       "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.foreground",
+      "description": "Foreground for run widget components and stroke icons",
+      "since": "2022.3"
     }
   ]
 }

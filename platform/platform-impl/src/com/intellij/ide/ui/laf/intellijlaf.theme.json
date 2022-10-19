@@ -982,6 +982,9 @@
       },
       "PackageTagSelected.background": "#4395e2",
       "PackageTagSelected.foreground": "white"
+    },
+    "RunWidget" : {
+      "foreground": "#ffffff"
     }
   }
 }

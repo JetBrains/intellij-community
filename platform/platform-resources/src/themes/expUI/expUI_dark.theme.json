@@ -576,6 +576,9 @@
       },
       "PackageTagSelected.background": "Blue4",
       "PackageTagSelected.foreground": "Grey10"
+    },
+    "RunWidget" : {
+      "foreground": "Grey14"
     }
   },
 
