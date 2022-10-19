@@ -51,6 +51,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -338,7 +339,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(Color.WHITE);
+              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.FOREGROUND);
               presentation.putClientProperty(spinningIconKey, spinningIcon);
             }
             presentation.setDisabledIcon(spinningIcon);

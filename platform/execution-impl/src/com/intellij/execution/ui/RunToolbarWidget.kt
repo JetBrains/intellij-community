@@ -154,7 +154,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
 
   private fun iconFor(executorId: String, needRerunIcon: Boolean): Icon {
     val icon = getExecutorByIdOrDefault(executorId).let { if (needRerunIcon) it.rerunIcon else it.icon }
-    return IconUtil.toStrokeIcon(icon, Color.WHITE)
+    return IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -378,7 +378,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, Color.WHITE)
+    e.presentation.icon = IconUtil.toStrokeIcon(AllIcons.Actions.Suspend, JBUI.CurrentTheme.RunWidget.FOREGROUND)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
@@ -481,8 +481,8 @@ private class RunToolbarWidgetRunAction(
 private enum class RunButtonColors {
   BLUE {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.foreground") { Color.WHITE }
-      button.separatorColor = getColor("RunWidget.separatorColor") { ColorUtil.withAlpha(Color.WHITE, 0.3) }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
+      button.separatorColor = getColor("RunWidget.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
       button.background = getColor("RunWidget.background") { ColorUtil.fromHex("#3574F0") }
       button.hoverBackground = getColor("RunWidget.leftHoverBackground") { ColorUtil.fromHex("#3369D6") }
       button.pressedBackground = getColor("RunWidget.leftPressedBackground") { ColorUtil.fromHex("#315FBD") }
@@ -490,8 +490,8 @@ private enum class RunButtonColors {
   },
   GREEN {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.Running.foreground") { Color.WHITE }
-      button.separatorColor = getColor("RunWidget.Running.separatorColor") { ColorUtil.withAlpha(Color.WHITE, 0.3) }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
+      button.separatorColor = getColor("RunWidget.Running.separatorColor") { ColorUtil.withAlpha(JBUI.CurrentTheme.RunWidget.FOREGROUND, 0.3) }
       button.background = getColor("RunWidget.Running.background") { ColorUtil.fromHex("#599E5E") }
       button.hoverBackground = getColor("RunWidget.Running.leftHoverBackground") { ColorUtil.fromHex("#4F8453") }
       button.pressedBackground = getColor("RunWidget.Running.leftPressedBackground") { ColorUtil.fromHex("#456B47") }
@@ -499,7 +499,7 @@ private enum class RunButtonColors {
   },
   RED {
     override fun updateColors(button: RunDropDownButton) {
-      button.foreground = getColor("RunWidget.StopButton.foreground") { Color.WHITE }
+      button.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       button.background = getColor("RunWidget.StopButton.background") { ColorUtil.fromHex("#EB7171") }
       button.hoverBackground = getColor("RunWidget.StopButton.leftHoverBackground") { ColorUtil.fromHex("#E35252") }
       button.pressedBackground = getColor("RunWidget.StopButton.leftPressedBackground") { ColorUtil.fromHex("#C94F4F") }
@@ -578,7 +578,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     b as RunDropDownButton
     b.border = JBUI.Borders.empty(0, 7)
     b.isOpaque = false
-    b.foreground = Color.WHITE
+    b.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
     b.background = ColorUtil.fromHex("#3574F0")
     b.hoverBackground = ColorUtil.fromHex("#3369D6")
     b.pressedBackground = ColorUtil.fromHex("#315FBD")

@@ -1511,6 +1511,10 @@ public final class JBUI {
         }
       }
     }
+
+    public final static class RunWidget {
+      public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
+    }
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {
