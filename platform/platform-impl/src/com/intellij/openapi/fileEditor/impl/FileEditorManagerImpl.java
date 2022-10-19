@@ -1506,13 +1506,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
+  public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
     List<VirtualFile> result = new ArrayList<>();
     Collections.addAll(result, getOpenFiles());
     for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
       result.addAll(m.getAllFiles());
     }
-    return result.toArray(VirtualFile.EMPTY_ARRAY);
+    return result;
   }
 
   @Override
@@ -1936,10 +1936,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       assertDispatchThread();
 
       VirtualFile file = event.getFile();
-      VirtualFile[] openFiles = getOpenFilesWithRemotes();
-      for (int i = openFiles.length - 1; i >= 0; i--) {
-        if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i],true, true);
+      var openFiles = getOpenFilesWithRemotes();
+      for (int i = openFiles.size() - 1; i >= 0; i--) {
+        if (VfsUtilCore.isAncestor(file, openFiles.get(i), false)) {
+          closeFile(openFiles.get(i), true, true);
         }
       }
     }

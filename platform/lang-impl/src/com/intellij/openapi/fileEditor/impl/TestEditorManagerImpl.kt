@@ -312,13 +312,8 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return result.toArray(FileEditor.EMPTY_ARRAY)
   }
 
-  override fun getOpenFilesWithRemotes(): Array<VirtualFile> {
-    val result = ArrayList<VirtualFile>()
-    result.addAll(openFiles)
-    for (m in allClientFileEditorManagers) {
-      result.addAll(m.getAllFiles())
-    }
-    return result.toTypedArray()
+  override fun getOpenFilesWithRemotes(): List<VirtualFile> {
+    return (openFiles.asSequence() + allClientFileEditorManagers.asSequence().flatMap { it.getAllFiles() }).toList()
   }
 
   @Throws(UnsupportedOperationException::class)

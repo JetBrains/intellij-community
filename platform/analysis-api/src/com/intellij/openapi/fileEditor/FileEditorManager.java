@@ -116,9 +116,7 @@ public abstract class FileEditorManager {
    * but at the same time editor notifications should be shown to all users.
    */
   @ApiStatus.Experimental
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
-    return getOpenFiles();
-  }
+  public abstract @NotNull List<VirtualFile> getOpenFilesWithRemotes();
 
   public boolean hasOpenFiles() {
     return getOpenFiles().length > 0;

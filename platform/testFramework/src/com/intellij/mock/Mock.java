@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 //[kirillk] - this class looks to be an overkill but IdeDocumentHistory is highly coupled
 // with all of that stuff below, so it's not possible to test it's back/forward capabilities
 // w/o making mocks for all of them. perhaps later we will decouple those things
-public class Mock {
+public final class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final Document @NotNull [] DOCUMENTS;
 
@@ -198,12 +198,10 @@ public class Mock {
 
     @Override
     public void unsplitWindow() {
-
     }
 
     @Override
     public void unsplitAllWindow() {
-
     }
 
     @Override
@@ -308,6 +306,11 @@ public class Mock {
     @Override
     public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
+    }
+
+    @Override
+    public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
+      return Collections.emptyList();
     }
 
     @Override
