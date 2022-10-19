@@ -198,33 +198,48 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
       ChangeListManagerEx.getInstanceEx(project).waitForUpdate()
 
-      ApplicationManager.getApplication().invokeAndWait {
-        val newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
-          val file = ChangesUtil.getAfterPath(change)?.virtualFile
-          file != null && allProcessedFiles.contains(file)
-        }
+      val newChanges = changeListManager.defaultChangeList.changes.filter { change: Change ->
+        val file = ChangesUtil.getAfterPath(change)?.virtualFile
+        file != null && allProcessedFiles.contains(file)
+      }
 
-        if (moveRequired && newChanges.isNotEmpty()) {
-          changeListManager.moveChangesTo(targetList!!, newChanges)
+      val changesMoved = moveRequired && newChanges.isNotEmpty()
+      if (changesMoved) {
+        changeListManager.moveChangesTo(targetList!!, newChanges)
+      }
 
-          if (changesConsumer != null) {
-            val newList = changeListManager.getChangeList(targetList.id)
-            if (newList != null) {
-              // 'newChanges' may contain ChangeListChange instances from the active changelist.
-              // We need to obtain changes again from the up-to-date changelist to pass to callback.
-              val movedChanges = newList.changes.intersect(newChanges.toSet())
-              changesConsumer.consume(movedChanges.toList())
-            }
-            else {
-              logger<ScheduleForAdditionAction>().warn("Changelist not found after moving new changes: $targetList")
-              changesConsumer.consume(newChanges)
-            }
-          }
-        }
-        else if (changesConsumer != null) {
-          changesConsumer.consume(newChanges)
+      if (changesConsumer != null) {
+        ApplicationManager.getApplication().invokeLater {
+          notifyChangesConsumer(project, changesConsumer, targetList, newChanges, rereadChanges = changesMoved)
         }
       }
+    }
+
+    private fun notifyChangesConsumer(project: Project,
+                                      changesConsumer: Consumer<in List<Change>>,
+                                      targetList: LocalChangeList?,
+                                      newChanges: List<Change>,
+                                      rereadChanges: Boolean) {
+      val changeListManager = ChangeListManager.getInstance(project)
+
+      val changes: List<Change>
+      if (rereadChanges) {
+        val newList = changeListManager.getChangeList(targetList!!.id)
+        if (newList != null) {
+          // 'newChanges' may contain ChangeListChange instances from the active changelist.
+          // We need to obtain changes again from the up-to-date changelist to pass to callback.
+          changes = newList.changes.intersect(newChanges.toSet()).toList()
+        }
+        else {
+          logger<ScheduleForAdditionAction>().warn("Changelist not found after moving new changes: $targetList")
+          changes = newChanges
+        }
+      }
+      else {
+        changes = newChanges
+      }
+
+      changesConsumer.consume(changes)
     }
 
     private fun performUnversionedFilesAdditionForVcs(project: Project,
