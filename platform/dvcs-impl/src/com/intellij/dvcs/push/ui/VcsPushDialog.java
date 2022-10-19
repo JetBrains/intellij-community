@@ -63,6 +63,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
   private final PushLog myListPanel;
+  private final JComponent myTopPanel;
 
   private final Action myMainAction;
   @NotNull private final List<ActionWrapper> myPushActions;
@@ -84,6 +85,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
                          pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
+    myTopPanel = myController.createTopPanel();
 
     myPushActions = collectPushActions();
     myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
@@ -156,7 +158,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = JBUI.Panels.simplePanel(0, 2)
+    JPanel panel = JBUI.Panels.simplePanel()
+      .addToTop(myTopPanel)
       .addToCenter(myListPanel)
       .addToBottom(createOptionsPanel());
     myListPanel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
@@ -166,6 +169,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @NotNull
   protected JPanel createOptionsPanel() {
     JPanel optionsPanel = new OptionsPanel();
+    optionsPanel.setBorder(JBUI.Borders.emptyTop(2));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.DEFAULT) {
         optionsPanel.add(panel);

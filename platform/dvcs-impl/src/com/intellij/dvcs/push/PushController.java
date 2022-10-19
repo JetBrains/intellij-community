@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
@@ -21,6 +22,8 @@ import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.StepsProgressIndicator;
+import com.intellij.util.ui.JBUI;
+import com.intellij.vcs.commit.PostCommitChecksHandler;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.*;
 
@@ -599,6 +602,21 @@ public final class PushController implements Disposable {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
     return result;
+  }
+
+  @NotNull
+  public JComponent createTopPanel() {
+    List<JComponent> notifications = new ArrayList<>();
+    if (myPushSource == null) {
+      ContainerUtil.addIfNotNull(notifications, PostCommitChecksHandler.getInstance(myProject).createPushStatusNotification());
+    }
+
+    notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
+    JComponent panel = DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP);
+    if (!notifications.isEmpty()) {
+      panel.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+    }
+    return panel;
   }
 
   private static final class PushInfoImpl implements PushInfo {

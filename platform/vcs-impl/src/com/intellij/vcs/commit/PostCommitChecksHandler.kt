@@ -17,19 +17,26 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
+import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class PostCommitChecksHandler(val project: Project) {
+class PostCommitChecksHandler(val project: Project) {
   companion object {
     private val LOG = logger<PostCommitChecksHandler>()
 
+    @JvmStatic
     fun getInstance(project: Project): PostCommitChecksHandler = project.service()
   }
 
   private val pendingCommits = mutableListOf<StaticCommitInfo>()
+  private var lastCommitWarning: String? = null
+
   private var lastJob: Job? = null
 
   fun canHandle(commitInfo: CommitInfo): Boolean {
@@ -39,6 +46,7 @@ internal class PostCommitChecksHandler(val project: Project) {
 
   fun resetPendingCommits() {
     pendingCommits.clear()
+    lastCommitWarning = null
     lastJob?.cancel()
   }
 
@@ -61,9 +69,11 @@ internal class PostCommitChecksHandler(val project: Project) {
       if (problems.isEmpty()) {
         LOG.debug("Post-commit checks succeeded")
         pendingCommits.clear()
+        lastCommitWarning = null
       }
       else {
         reportPostCommitChecksFailure(problems)
+        lastCommitWarning = problems.joinToString("<br/>") { it.text }
       }
     }
   }
@@ -183,6 +193,18 @@ internal class PostCommitChecksHandler(val project: Project) {
     }
 
     notification.notify(project)
+  }
+
+  fun createPushStatusNotification(): JComponent? {
+    if (lastJob?.isActive == true) {
+      return EditorNotificationPanel(EditorNotificationPanel.Status.Warning)
+        .text(VcsBundle.message("post.commit.checks.not.finished.push.dialog.notification.text"))
+    }
+    if (lastCommitWarning != null) {
+      return EditorNotificationPanel(EditorNotificationPanel.Status.Error)
+        .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", lastCommitWarning))
+    }
+    return null
   }
 }
 
