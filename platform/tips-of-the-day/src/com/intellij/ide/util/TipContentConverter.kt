@@ -6,7 +6,7 @@ import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
 import com.intellij.ide.util.TipUtils.IconWithRoundedBorder
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import com.intellij.util.ui.JBFont
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -116,15 +116,16 @@ internal class TipContentConverter(private val tipContent: Element,
           }
           node.tagName() == "span" && node.hasClass("shortcut") -> {
             val text = getElementInnerText(node)
+            val delimiter = RegularTextPart("$NON_BREAK_SPACE$NON_BREAK_SPACE")
             if (text.startsWith("&shortcut:")) {
               val actionId = text.removePrefix("&shortcut:").removeSuffix(";")
-              ShortcutTextPart(actionId, isRaw = false, addSpaceAround = true)
+              ShortcutTextPart(actionId, isRaw = false).apply { this.delimiter = delimiter }
             }
-            else ShortcutTextPart(text, isRaw = true, addSpaceAround = true)
+            else ShortcutTextPart(text, isRaw = true).apply { this.delimiter = delimiter }
           }
           node.tagName() == "span" && node.hasClass("code_emphasis") -> {
-            val text = getElementInnerText(node).replace(" ", StringUtil.NON_BREAK_SPACE)
-            CodeTextPart(text, addSpaceAround = true)
+            val text = getElementInnerText(node).replace(" ", NON_BREAK_SPACE)
+            CodeTextPart(text).apply { this.delimiter = RegularTextPart("$NON_BREAK_SPACE$NON_BREAK_SPACE") }
           }
           node.tagName() == "span" -> {
             // any other span elements: inlined product information
