@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -91,6 +92,8 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
                 }
             }
         }
+
+        OverrideImplementFacility.getInstance().implement(editor, psiFile, true)
     }
 
     companion object {
