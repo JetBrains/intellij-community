@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -14,7 +15,9 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.checkin.*
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 
@@ -26,23 +29,65 @@ internal class PostCommitChecksHandler(val project: Project) {
     fun getInstance(project: Project): PostCommitChecksHandler = project.service()
   }
 
+  private val pendingCommits = mutableListOf<StaticCommitInfo>()
+  private var lastJob: Job? = null
+
   fun canHandle(commitInfo: CommitInfo): Boolean {
     return commitInfo.affectedVcses.isNotEmpty() &&
            commitInfo.affectedVcses.all { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter != null }
   }
 
+  fun resetPendingCommits() {
+    pendingCommits.clear()
+    lastJob?.cancel()
+  }
+
   @RequiresEdt
   fun startPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
-    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
-    scope.launch {
-      withBackgroundProgressIndicator(project, VcsBundle.message("post.commit.checks.progress.text")) {
-        val postCommitInfo = createPostCommitInfo(commitInfo)
-        withContext(Dispatchers.EDT) {
-          val problems = runCommitChecks(commitChecks, postCommitInfo)
-          if (problems.isEmpty()) return@withContext
+    val previousJob = lastJob
+    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.EDT)
+    lastJob = scope.launch {
+      previousJob?.cancelAndJoin()
+      runPostCommitChecks(commitInfo, commitChecks)
+    }
+  }
 
-          reportPostCommitChecksFailure(problems)
+  private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
+                                          commitChecks: List<CommitCheck>) {
+    withBackgroundProgressIndicator(project, VcsBundle.message("post.commit.checks.progress.text")) {
+      val postCommitInfo = prepareCommitsToCheck(commitInfo)
+
+      val problems = runCommitChecks(commitChecks, postCommitInfo)
+      if (problems.isEmpty()) {
+        LOG.debug("Post-commit checks succeeded")
+        pendingCommits.clear()
+      }
+      else {
+        reportPostCommitChecksFailure(problems)
+      }
+    }
+  }
+
+  private suspend fun prepareCommitsToCheck(commitInfo: StaticCommitInfo): PostCommitInfo {
+    val lastCommitInfos = pendingCommits.toList()
+    pendingCommits += commitInfo
+
+    if (lastCommitInfos.isNotEmpty()) {
+      val mergedCommitInfo = withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          mergeCommitInfos(lastCommitInfos, commitInfo)
         }
+      }
+      if (mergedCommitInfo != null) return mergedCommitInfo
+
+      LOG.debug("Dropping pending commits: ${lastCommitInfos.size}")
+      pendingCommits.clear()
+      pendingCommits += commitInfo
+    }
+
+    return withContext(Dispatchers.IO) {
+      runUnderIndicator {
+        createPostCommitInfo(commitInfo)
       }
     }
   }
@@ -63,6 +108,36 @@ internal class PostCommitChecksHandler(val project: Project) {
     return problems
   }
 
+  @RequiresBackgroundThread
+  private fun mergeCommitInfos(lastCommitInfos: List<StaticCommitInfo>, currentCommit: StaticCommitInfo): PostCommitInfo? {
+    if (lastCommitInfos.isEmpty()) return null
+
+    val allCommits = lastCommitInfos + currentCommit
+    val allVcses = allCommits.flatMap { it.affectedVcses }.toSet()
+    val allCommitContexts = allCommits.map { it.commitContext }
+
+    val changeConverters = allVcses
+      .mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
+    if (changeConverters.isEmpty()) {
+      LOG.error("Post-commit change converters not found for ${allVcses}")
+      return null
+    }
+
+    if (changeConverters.any { changeConverter -> !changeConverter.areConsequentCommits(allCommitContexts) }) {
+      LOG.debug("Non-consequent commits")
+      return null
+    }
+
+    val staticChanges = mutableListOf<Change>()
+    for (commit in allCommits) {
+      staticChanges += collectChangesFor(commit.commitContext, changeConverters) ?: return null
+    }
+    val zippedChanges = CommittedChangesTreeBrowser.zipChanges(staticChanges)
+
+    return PostCommitInfo(currentCommit, zippedChanges)
+  }
+
+  @RequiresBackgroundThread
   private fun createPostCommitInfo(commitInfo: StaticCommitInfo): PostCommitInfo {
     val changeConverters = commitInfo.affectedVcses.mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
     if (changeConverters.isEmpty()) LOG.error("Post-commit change converters not found for ${commitInfo.affectedVcses}")
@@ -70,23 +145,28 @@ internal class PostCommitChecksHandler(val project: Project) {
     val commitContext = commitInfo.commitContext
     commitContext.isPostCommitCheck = true
 
-    val staticChanges = mutableListOf<Change>()
+    val staticChanges = collectChangesFor(commitContext, changeConverters)
+
+    return PostCommitInfo(commitInfo, staticChanges ?: commitInfo.committedChanges)
+  }
+
+  @RequiresBackgroundThread
+  private fun collectChangesFor(commitContext: CommitContext, changeConverters: List<PostCommitChangeConverter>): List<Change>? {
     try {
+      val staticChanges = mutableListOf<Change>()
       for (changeConverter in changeConverters) {
         staticChanges += changeConverter.collectChangesAfterCommit(commitContext)
       }
       if (staticChanges.isEmpty()) {
         LOG.warn("Post-commit converters returned empty list of changes")
-        staticChanges += commitInfo.committedChanges
+        return null
       }
+      return staticChanges
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      staticChanges.clear()
-      staticChanges += commitInfo.committedChanges
+      return null
     }
-
-    return PostCommitInfo(commitInfo, staticChanges)
   }
 
   private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {

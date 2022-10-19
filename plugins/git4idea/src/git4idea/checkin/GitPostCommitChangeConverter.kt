@@ -12,6 +12,7 @@ import com.intellij.vcs.commit.commitProperty
 import com.intellij.vcs.log.Hash
 import git4idea.GitCommit
 import git4idea.GitUtil
+import git4idea.commands.Git
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
@@ -34,6 +35,27 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
     val commit = consumer.result.first()
 
     return commit.getChanges(0).toList()
+  }
+
+  override fun areConsequentCommits(commitContexts: List<CommitContext>): Boolean {
+    val commitHashes = commitContexts.map { it.postCommitHashes }
+    if (commitHashes.all { it == null }) return true // no git commits, not our problem
+    if (commitHashes.any { it == null }) return false // has non-git commits, give up
+
+    val repoMap = mutableMapOf<GitRepository, Hash>()
+    for (hashes in commitHashes.reversed()) {
+      for ((repo, hash) in hashes!!) {
+        val oldHash = repoMap.put(repo, hash)
+        if (oldHash != null) {
+          val parentHash = Git.getInstance().resolveReference(repo, "${oldHash}^1")
+          if (parentHash != hash) {
+            logger<GitPostCommitChangeConverter>().debug("Non-consequent commits: $oldHash - $hash")
+            return false
+          }
+        }
+      }
+    }
+    return true
   }
 
   companion object {

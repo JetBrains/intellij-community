@@ -334,6 +334,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
           pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
         }
         else {
+          postCommitChecksHandler.resetPendingCommits()
           runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
         }
       }
@@ -486,6 +487,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun dispose() {
     hideCommitChecksFailureNotification()
     coroutineScope.cancel()
+    project.getServiceIfCreated(PostCommitChecksHandler::class.java)?.resetPendingCommits() // null during Project dispose
     super.dispose()
   }
 

@@ -15,4 +15,12 @@ public interface PostCommitChangeConverter {
   @NotNull
   @RequiresBackgroundThread
   List<Change> collectChangesAfterCommit(@NotNull CommitContext commitContext) throws VcsException;
+
+  /**
+   * @param commitContexts Contexts for multiple consequent local commits, in order.
+   * @return whether commits were created one-after-another and can be analyzed as one.
+   * If vcs branch was changed between the commits, only the last commit should be checked.
+   */
+  @RequiresBackgroundThread
+  boolean areConsequentCommits(@NotNull List<CommitContext> commitContexts);
 }
