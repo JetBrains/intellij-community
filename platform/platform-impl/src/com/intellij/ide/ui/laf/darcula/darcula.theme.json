@@ -604,7 +604,8 @@
       "PackageTagSelected.foreground": "#bbbbbb"
     },
     "RunWidget" : {
-      "foreground": "#ffffff"
+      "foreground": "#ffffff",
+      "background": "#3369d6"
     }
   },
 

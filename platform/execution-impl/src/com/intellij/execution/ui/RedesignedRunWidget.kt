@@ -315,7 +315,7 @@ private fun Color.addAlpha(alpha: Double): Color {
   return JBColor.lazy { Color(red, green, blue, (255 * alpha).toInt()) }
 }
 
-private fun getRunWidgetBackgroundColor(isRunning: Boolean): JBColor = if (isRunning)
+private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)
   JBColor.namedColor("Green5", 0x599E5E)
 else
-  JBColor.namedColor("Blue5", 0x3369D6)
+  JBUI.CurrentTheme.RunWidget.BACKGROUND

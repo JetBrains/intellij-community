@@ -607,7 +607,8 @@
       "PackageTagSelected.foreground": "Grey13"
     },
     "RunWidget" : {
-      "foreground": "Grey13"
+      "foreground": "Grey13",
+      "background": "Blue5"
     }
   },
 

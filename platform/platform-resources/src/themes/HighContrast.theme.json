@@ -511,7 +511,8 @@
     "textInactiveText" : "#E0861F",
 
     "RunWidget" : {
-      "foreground": "#ffffff"
+      "foreground": "#ffffff",
+      "background": "#3369d6"
     }
   },
 
