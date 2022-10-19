@@ -329,7 +329,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       if (postCommitChecks.isNotEmpty()) {
         if (Registry.`is`("vcs.non.modal.post.commit.checks") &&
-            commitInfo.executor?.requiresSyncCommitChecks() != true) {
+            commitInfo.executor?.requiresSyncCommitChecks() != true &&
+            postCommitChecksHandler.canHandle(commitInfo)) {
           pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
         }
         else {

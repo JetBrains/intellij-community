@@ -25,6 +25,11 @@ internal class PostCommitChecksHandler(val project: Project) {
     fun getInstance(project: Project): PostCommitChecksHandler = project.service()
   }
 
+  fun canHandle(commitInfo: CommitInfo): Boolean {
+    return commitInfo.affectedVcses.isNotEmpty() &&
+           commitInfo.affectedVcses.all { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter != null }
+  }
+
   @RequiresEdt
   fun startPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
     val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
@@ -58,8 +63,8 @@ internal class PostCommitChecksHandler(val project: Project) {
   }
 
   private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
-    val changeConverters = commitInfo.affectedVcses.mapNotNull { it.checkinEnvironment?.postCommitChangeConverter }
-    if (changeConverters.isEmpty()) LOG.warn("Post-commit change converters not found for ${commitInfo.affectedVcses}")
+    val changeConverters = commitInfo.affectedVcses.mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
+    if (changeConverters.isEmpty()) LOG.error("Post-commit change converters not found for ${commitInfo.affectedVcses}")
 
     val commitContext = commitInfo.commitContext
     commitContext.isPostCommitCheck = true
