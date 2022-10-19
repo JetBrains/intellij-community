@@ -770,6 +770,104 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantModalityModifier")
+        public static class RedundantModalityModifier extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractFunctionInAbstractClass.kt")
+            public void testAbstractFunctionInAbstractClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/abstractFunctionInAbstractClass.kt");
+            }
+
+            @TestMetadata("finalFunctionInAbstractDerivedClass.kt")
+            public void testFinalFunctionInAbstractDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/finalFunctionInAbstractDerivedClass.kt");
+            }
+
+            @TestMetadata("finalFunctionInOpenDerivedClass.kt")
+            public void testFinalFunctionInOpenDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/finalFunctionInOpenDerivedClass.kt");
+            }
+
+            @TestMetadata("finalValueInAbstractDerivedClass.kt")
+            public void testFinalValueInAbstractDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/finalValueInAbstractDerivedClass.kt");
+            }
+
+            @TestMetadata("openValueInAbstractClass.kt")
+            public void testOpenValueInAbstractClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/openValueInAbstractClass.kt");
+            }
+
+            @TestMetadata("redundantAbstractFunctionInInterface.kt")
+            public void testRedundantAbstractFunctionInInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantAbstractFunctionInInterface.kt");
+            }
+
+            @TestMetadata("redundantAbstractInterface.kt")
+            public void testRedundantAbstractInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantAbstractInterface.kt");
+            }
+
+            @TestMetadata("redundantFinalClass.kt")
+            public void testRedundantFinalClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantFinalClass.kt");
+            }
+
+            @TestMetadata("redundantFinalFunctionInAbstractClass.kt")
+            public void testRedundantFinalFunctionInAbstractClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantFinalFunctionInAbstractClass.kt");
+            }
+
+            @TestMetadata("redundantFinalFunctionInFinalDerivedClass.kt")
+            public void testRedundantFinalFunctionInFinalDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantFinalFunctionInFinalDerivedClass.kt");
+            }
+
+            @TestMetadata("redundantFinalObject.kt")
+            public void testRedundantFinalObject() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantFinalObject.kt");
+            }
+
+            @TestMetadata("redundantOpenFunctionInAbstractDerivedClass.kt")
+            public void testRedundantOpenFunctionInAbstractDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenFunctionInAbstractDerivedClass.kt");
+            }
+
+            @TestMetadata("redundantOpenFunctionInDerivedInterface.kt")
+            public void testRedundantOpenFunctionInDerivedInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenFunctionInDerivedInterface.kt");
+            }
+
+            @TestMetadata("redundantOpenFunctionInInterface.kt")
+            public void testRedundantOpenFunctionInInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenFunctionInInterface.kt");
+            }
+
+            @TestMetadata("redundantOpenInterface.kt")
+            public void testRedundantOpenInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenInterface.kt");
+            }
+
+            @TestMetadata("redundantOpenValueInAbstractDerivedClass.kt")
+            public void testRedundantOpenValueInAbstractDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenValueInAbstractDerivedClass.kt");
+            }
+
+            @TestMetadata("redundantOpenValueInInterface.kt")
+            public void testRedundantOpenValueInInterface() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenValueInInterface.kt");
+            }
+
+            @TestMetadata("redundantOpenValueInOpenDerivedClass.kt")
+            public void testRedundantOpenValueInOpenDerivedClass() throws Exception {
+                runTest("testData/inspectionsLocal/redundantModalityModifier/redundantOpenValueInOpenDerivedClass.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantVisibilityModifierFir")
         public static class RedundantVisibilityModifierFir extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

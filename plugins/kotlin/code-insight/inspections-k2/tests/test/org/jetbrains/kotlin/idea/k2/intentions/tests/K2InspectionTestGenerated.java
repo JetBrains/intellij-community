@@ -51,25 +51,4 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
             }
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspections")
-    public abstract static class Inspections extends AbstractK2InspectionTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspections/redundantModalityModifier")
-        public abstract static class RedundantModalityModifier extends AbstractK2InspectionTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/inspections/redundantModalityModifier/inspectionData")
-            public static class InspectionData extends AbstractK2InspectionTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("inspections.test")
-                public void testInspections_test() throws Exception {
-                    runTest("testData/inspections/redundantModalityModifier/inspectionData/inspections.test");
-                }
-            }
-        }
-    }
 }
