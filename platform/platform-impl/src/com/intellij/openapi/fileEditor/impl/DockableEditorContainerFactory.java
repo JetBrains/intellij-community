@@ -20,11 +20,9 @@ import org.jetbrains.annotations.Nullable;
 public final class DockableEditorContainerFactory implements DockContainerFactory.Persistent {
   public static final @NonNls String TYPE = "file-editors";
 
-  private final Project myProject;
   private final FileEditorManagerImpl myFileEditorManager;
 
-  public DockableEditorContainerFactory(@NotNull Project project, @NotNull FileEditorManagerImpl fileEditorManager) {
-    myProject = project;
+  public DockableEditorContainerFactory(@NotNull FileEditorManagerImpl fileEditorManager) {
     myFileEditorManager = fileEditorManager;
   }
 
@@ -61,7 +59,7 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
       splitters.createCurrentWindow();
     }
 
-    DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
+    DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(splitters, true);
     containerRef.set(container);
     container.getSplitters().startListeningFocus();
     return container;

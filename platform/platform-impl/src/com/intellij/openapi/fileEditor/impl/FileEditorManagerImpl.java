@@ -205,7 +205,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     closeFilesOnFileEditorRemoval();
 
     mySplitters = new EditorsSplitters(this);
-    dockable = new DockableEditorTabbedContainer(myProject, mySplitters, false);
+    dockable = new DockableEditorTabbedContainer(mySplitters, false);
     // prepare for toolwindow manager
     mySplitters.setFocusable(false);
   }
@@ -334,7 +334,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return;
     }
 
-    myContentFactory = new DockableEditorContainerFactory(myProject, this);
+    myContentFactory = new DockableEditorContainerFactory(this);
     DockManager.getInstance(myProject).register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
   }
 

@@ -6,9 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +40,6 @@ import static javax.swing.SwingConstants.*;
 
 public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
   private final @NotNull EditorsSplitters mySplitters;
-  private final Project myProject;
 
   private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<>();
 
@@ -56,8 +53,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private boolean myWasEverShown;
 
-  DockableEditorTabbedContainer(Project project, @NotNull EditorsSplitters splitters, boolean disposeWhenEmpty) {
-    myProject = project;
+  DockableEditorTabbedContainer(@NotNull EditorsSplitters splitters, boolean disposeWhenEmpty) {
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
   }
@@ -190,7 +186,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withIndex(index)
       .withRequestFocus();
-    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, openOptions);
+    mySplitters.getManager().openFileImpl2(window, file, openOptions);
     window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 
@@ -209,7 +205,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
       ActionsCollectorImpl.recordActionInvoked(
-        myProject, ActionManager.getInstance().getAction(actionId), event,
+        mySplitters.getManager().getProject(), ActionManager.getInstance().getAction(actionId), event,
         (list) -> {
           list.add(ActionsEventLogGroup.ADDITIONAL.with(
             new ObjectEventData(SAME_WINDOW.with(sameWindow))));
