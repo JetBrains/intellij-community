@@ -5,41 +5,35 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
+import com.intellij.util.CollectConsumer
 import com.intellij.vcs.commit.commitProperty
 import com.intellij.vcs.log.Hash
-import git4idea.GitContentRevision
-import git4idea.GitRevisionNumber
+import git4idea.GitCommit
 import git4idea.GitUtil
+import git4idea.history.GitCommitRequirements
+import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 
 class GitPostCommitChangeConverter(private val project: Project) : PostCommitChangeConverter {
-  override fun convertChangesAfterCommit(changes: List<Change>, commitContext: CommitContext): List<Change> {
-    val hashes = commitContext.postCommitHashes ?: return changes
-    return changes.map { convertChangeAfterCommit(it, hashes) ?: it }
+  override fun collectChangesAfterCommit(commitContext: CommitContext): List<Change> {
+    val hashes = commitContext.postCommitHashes ?: return emptyList()
+
+    val result = mutableListOf<Change>()
+    for ((repo, hash) in hashes) {
+      result += loadChangesFromCommit(repo, hash)
+    }
+    return result
   }
 
-  private fun convertChangeAfterCommit(change: Change, hashes: Map<GitRepository, Hash>): Change? {
-    val filePath = ChangesUtil.getFilePath(change)
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(filePath) ?: return null
-    val commitHash = hashes[repository] ?: return null
+  private fun loadChangesFromCommit(repo: GitRepository, hash: Hash): List<Change> {
+    val consumer = CollectConsumer<GitCommit>()
+    val commitRequirements = GitCommitRequirements(diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT)
+    GitLogUtil.readFullDetailsForHashes(project, repo.root, listOf(hash.asString()), commitRequirements, consumer)
+    val commit = consumer.result.first()
 
-    val bRev = change.beforeRevision
-    val fixedBRev = when {
-      bRev != null -> GitContentRevision.createRevision(bRev.file, GitRevisionNumber("${commitHash.asString()}~1"), project)
-      else -> null
-    }
-
-    val aRev = change.afterRevision
-    val fixedARev = when {
-      aRev != null -> GitContentRevision.createRevision(aRev.file, GitRevisionNumber(commitHash.asString()), project)
-      else -> null
-    }
-
-    return Change(fixedBRev, fixedARev, change.fileStatus)
+    return commit.getChanges(0).toList()
   }
 
   companion object {

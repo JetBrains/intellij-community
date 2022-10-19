@@ -11,8 +11,10 @@ import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -69,9 +71,20 @@ internal class PostCommitChecksHandler(val project: Project) {
     val commitContext = commitInfo.commitContext
     commitContext.isPostCommitCheck = true
 
-    var staticChanges = commitInfo.committedChanges
-    for (changeConverter in changeConverters) {
-      staticChanges = changeConverter.convertChangesAfterCommit(staticChanges, commitContext)
+    val staticChanges = mutableListOf<Change>()
+    try {
+      for (changeConverter in changeConverters) {
+        staticChanges += changeConverter.collectChangesAfterCommit(commitContext)
+      }
+      if (staticChanges.isEmpty()) {
+        LOG.warn("Post-commit converters returned empty list of changes")
+        staticChanges += commitInfo.committedChanges
+      }
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      staticChanges.clear()
+      staticChanges += commitInfo.committedChanges
     }
 
     return StaticCommitInfo(commitContext, commitInfo.executor, commitInfo.commitActionText,
