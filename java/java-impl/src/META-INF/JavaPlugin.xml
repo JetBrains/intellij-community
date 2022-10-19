@@ -753,6 +753,10 @@
                               implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
     <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.execution.ui.VmOptionsCompletionContributor"
+      order="first"/>
+    <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
+                        serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 

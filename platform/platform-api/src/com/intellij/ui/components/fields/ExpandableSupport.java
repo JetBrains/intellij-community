@@ -3,6 +3,7 @@ package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
@@ -175,7 +176,9 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
           return false;
         }
       }).createPopup();
-    popup.show(new RelativePoint(location));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      popup.show(new RelativePoint(location));
+    }
   }
 
   @NotNull
