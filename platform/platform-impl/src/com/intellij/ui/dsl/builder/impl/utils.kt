@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.TitledSeparator
@@ -138,20 +139,25 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
   return result
 }
 
-internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
-  return getLabelComponentFor(cell) != null
-}
-
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  val component = getLabelComponentFor(cell) ?: return
-  label.labelFor = component
-}
-
-private fun getLabelComponentFor(cell: CellBaseImpl<*>?): JComponent? {
-  if (cell is CellImpl<*>) {
-    return getLabelComponentFor(cell.component.origin)
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text)
+  val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
+  if (cell !is CellImpl<*>) {
+    if (mnemonicExists) {
+      warn("Cannot assign mnemonic to Panel and other non-component cells, label '${label.text}'")
+    }
+    return
   }
-  return null
+
+  val component = getLabelComponentFor(cell.component.origin)
+  if (component == null) {
+    if (mnemonicExists) {
+      warn("Unsupported labeled component ${cell.component.javaClass.name}, label '${label.text}'")
+    }
+    return
+  }
+
+  label.labelFor = component
 }
 
 private fun getLabelComponentFor(component: JComponent): JComponent? {

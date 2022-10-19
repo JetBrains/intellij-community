@@ -126,12 +126,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
               i++
             }
 
-            if (isAllowedLabel(cell)) {
-              labelCell(it, cell)
-            }
-            else {
-              warn("Unsupported labeled component: ${cell.component.javaClass.name}")
-            }
+            labelCell(it, cell)
           }
         }
 
