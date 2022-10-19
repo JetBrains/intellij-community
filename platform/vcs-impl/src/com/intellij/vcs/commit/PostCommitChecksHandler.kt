@@ -10,11 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -49,7 +48,7 @@ internal class PostCommitChecksHandler(val project: Project) {
   }
 
   private suspend fun runCommitChecks(commitChecks: List<CommitCheck>,
-                                      postCommitInfo: StaticCommitInfo): List<CommitProblem> {
+                                      postCommitInfo: PostCommitInfo): List<CommitProblem> {
     val problems = mutableListOf<CommitProblem>()
 
     if (DumbService.isDumb(project)) {
@@ -64,7 +63,7 @@ internal class PostCommitChecksHandler(val project: Project) {
     return problems
   }
 
-  private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
+  private fun createPostCommitInfo(commitInfo: StaticCommitInfo): PostCommitInfo {
     val changeConverters = commitInfo.affectedVcses.mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
     if (changeConverters.isEmpty()) LOG.error("Post-commit change converters not found for ${commitInfo.affectedVcses}")
 
@@ -87,8 +86,7 @@ internal class PostCommitChecksHandler(val project: Project) {
       staticChanges += commitInfo.committedChanges
     }
 
-    return StaticCommitInfo(commitContext, commitInfo.executor, commitInfo.commitActionText,
-                            staticChanges, commitInfo.affectedVcses, commitInfo.commitMessage)
+    return PostCommitInfo(commitInfo, staticChanges)
   }
 
   private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
@@ -106,4 +104,16 @@ internal class PostCommitChecksHandler(val project: Project) {
 
     notification.notify(project)
   }
+}
+
+private class PostCommitInfo(
+  commitInfo: StaticCommitInfo,
+  staticChanges: List<Change>
+) : CommitInfo {
+  override val commitContext: CommitContext = commitInfo.commitContext
+  override val executor: CommitExecutor? = commitInfo.executor
+  override val commitActionText: String = commitInfo.commitActionText
+  override val committedChanges: List<Change> = staticChanges
+  override val affectedVcses: List<AbstractVcs> = commitInfo.affectedVcses
+  override val commitMessage: String = commitInfo.commitMessage
 }
