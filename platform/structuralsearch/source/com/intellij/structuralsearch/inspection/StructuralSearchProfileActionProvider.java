@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
@@ -30,6 +31,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
+import org.intellij.lang.regexp.inspection.custom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +53,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     enableSSIfDisabled(panel.getProfile(), panel.getProject());
     final DefaultActionGroup actionGroup = new DefaultActionGroup(
       new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.search.template.button"), false),
-      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true)
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true),
+      new AddCustomRegExpInspectionAction(panel, SSRBundle.message("action.add.regexp.search.inspection.text"), false),
+      new AddCustomRegExpInspectionAction(panel, SSRBundle.message("action.add.regexp.replace.inspection.text"), true)
     );
     actionGroup.setPopup(true);
     actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
@@ -86,7 +90,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myPanel.getSelectedTool() instanceof StructuralSearchInspectionToolWrapper);
+      final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
+      e.getPresentation().setEnabled(selectedTool instanceof CustomRegExpInspectionToolWrapper ||
+                                     selectedTool instanceof StructuralSearchInspectionToolWrapper);
     }
 
     @Override
@@ -98,13 +104,54 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     public void actionPerformed(@NotNull AnActionEvent e) {
       final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
       final String shortName = selectedTool.getShortName();
+      final String mainToolId = selectedTool.getMainToolId();
       myPanel.removeSelectedRow();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-      inspection.removeConfigurationsWithUuid(shortName);
+      final InspectionProfileEntry inspection = InspectionProfileUtil.getInspection(profile, mainToolId);
+      if (inspection instanceof SSBasedInspection ssBasedInspection) {
+        ssBasedInspection.removeConfigurationsWithUuid(shortName);
+      }
+      else if (inspection instanceof CustomRegExpInspection customRegExpInspection) {
+        customRegExpInspection.removeConfigurationWithUuid(shortName);
+      }
       profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
+    }
+  }
+
+  static final class AddCustomRegExpInspectionAction extends DumbAwareAction {
+    private final SingleInspectionProfilePanel myPanel;
+    private final boolean myReplace;
+
+    AddCustomRegExpInspectionAction(@NotNull SingleInspectionProfilePanel panel, @NlsActions.ActionText String text, boolean replace) {
+      super(text);
+      myPanel = panel;
+      myReplace = replace;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final RegExpDialog dialog = new RegExpDialog(e.getProject(), true, myReplace ? RegExpInspectionConfiguration.InspectionPattern.EMPTY_REPLACE_PATTERN : null);
+      if (myReplace) {
+        // do something?
+      }
+      if (!dialog.showAndGet()) return;
+
+      final RegExpInspectionConfiguration.InspectionPattern pattern = dialog.getPattern();
+      final InspectionProfileModifiableModel profile = myPanel.getProfile();
+      final CustomRegExpInspection inspection = InspectionProfileUtil.getCustomRegExpInspection(profile);
+      final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration("new inspection");
+      configuration.patterns.add(pattern);
+      final Project project = getEventProject(e);
+      final MetaDataDialog metaDataDialog = new MetaDataDialog(project, inspection, configuration, true);
+      if (!metaDataDialog.showAndGet()) return;
+
+      inspection.addConfiguration(configuration);
+      CustomRegExpInspection.addInspectionToProfile(project, profile, configuration);
+      profile.setModified(true);
+      InspectionProfileUtil.fireProfileChanged(profile);
+      myPanel.selectInspectionTool(configuration.getUuid());
     }
   }
 
@@ -210,7 +257,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
+    public JComponent getPreferredFocusedComponent() {
       return myNameTextField;
     }
 

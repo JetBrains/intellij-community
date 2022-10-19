@@ -36,6 +36,9 @@
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
 
+    <localInspection shortName="CustomRegExpInspection" enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.custom.regexp"
+                     implementationClass="org.intellij.lang.regexp.inspection.custom.CustomRegExpInspection" language=""/>
     <localInspection language="RegExp" shortName="RegExpRepeatedSpace" enabledByDefault="true" level="WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.consecutive.spaces"
                      implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
@@ -84,4 +87,10 @@
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.digit.class.element"
                      implementationClass="org.intellij.lang.regexp.inspection.RegExpRedundantClassElementInspection"/>
   </extensions>
+
+  <actions resource-bundle="messages.RegExpBundle">
+    <action id="open.regexp.dialog"
+            class="org.intellij.lang.regexp.inspection.custom.OpenRegExpDialogAction"
+            icon="AllIcons.Actions.Regex"/>
+  </actions>
 </idea-plugin>
