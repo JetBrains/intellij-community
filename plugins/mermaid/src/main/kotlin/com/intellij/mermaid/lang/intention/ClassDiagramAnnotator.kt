@@ -5,11 +5,8 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.psi.MermaidClassDiagramStatement
-import com.intellij.mermaid.lang.psi.MermaidClassStatement
+import com.intellij.mermaid.lang.psi.*
 import com.intellij.mermaid.lang.psi.MermaidElementFactory.Companion.createClassDiagramStatement
-import com.intellij.mermaid.lang.psi.MermaidMemberStatement
-import com.intellij.mermaid.lang.psi.MermaidRelationStatement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
@@ -17,11 +14,15 @@ import com.intellij.psi.util.siblings
 
 class ClassDiagramAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element !is MermaidMemberStatement) {
-      return
+    if (element is MermaidMemberStatement || element is MermaidAnnotationStatement) {
+      annotateUnresolvedClass(element, holder)
     }
+  }
 
-    val identifier = element.classDiagramIdentifier
+  private fun annotateUnresolvedClass(element: PsiElement, holder: AnnotationHolder) {
+    val identifier = (element as? MermaidMemberStatement)?.classDiagramIdentifier
+      ?: (element as? MermaidAnnotationStatement)?.classDiagramIdentifier
+      ?: return
     val text = identifier.text
     val parent = element.parent ?: return
 
