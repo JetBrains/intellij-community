@@ -47,7 +47,7 @@ public interface ReferenceImporter {
    * When this extension found an auto-importable reference, it should return an action which, being run in the EDT, does the auto-import
    * and returns true if the auto-import completed successfully or false if auto-import wasn't able to run.
    * This method allows to split the process of importing the reference into two parts: computing in background and applying in EDT,
-   * to reduce freezes.
+   * to reduce freezes and improve responsiveness.
    */
   @ApiStatus.Experimental
   default BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
