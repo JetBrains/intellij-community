@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartSet
 import java.util.LinkedHashMap
 
+@JvmOverloads // For binary compatibility
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
     preferStarForRaw: Boolean = false,
