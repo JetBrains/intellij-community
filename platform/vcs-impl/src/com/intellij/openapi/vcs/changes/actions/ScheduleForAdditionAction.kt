@@ -140,7 +140,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
           moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
         }
         finally {
-          if (!exceptions.isEmpty()) {
+          if (exceptions.isNotEmpty()) {
             VcsNotifier.getInstance(project).notifyError(ADD_UNVERSIONED_ERROR,
                                                          VcsBundle.message("error.adding.files.notification.title"),
                                                          createErrorMessage(exceptions))
@@ -163,7 +163,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
         moveAddedChangesTo(project, targetChangeList, allProcessedFiles, changesConsumer)
       }
 
-      if (!exceptions.isEmpty()) {
+      if (exceptions.isNotEmpty()) {
         Messages.showErrorDialog(project, createErrorMessage(exceptions), VcsBundle.message("error.adding.files.title"))
       }
 
@@ -190,7 +190,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
                                    changesConsumer: Consumer<in List<Change>>?) {
       val changeListManager = ChangeListManager.getInstance(project)
       val moveRequired = targetList != null && !targetList.isDefault &&
-                         !allProcessedFiles.isEmpty() &&
+                         allProcessedFiles.isNotEmpty() &&
                          changeListManager.areChangeListsEnabled()
       val syncUpdateRequired = changesConsumer != null
 
@@ -204,7 +204,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
           file != null && allProcessedFiles.contains(file)
         }
 
-        if (moveRequired && !newChanges.isEmpty()) {
+        if (moveRequired && newChanges.isNotEmpty()) {
           changeListManager.moveChangesTo(targetList!!, newChanges)
 
           if (changesConsumer != null) {
