@@ -48,7 +48,7 @@ fun downloadAndroidStudio(): Pair<Path, File> {
 
 fun downloadLatestAndroidSdk(javaHome: Path): Path {
   val packages = listOf(
-    "build-tools;28.0.3",
+    "build-tools;31.0.0",
     //"cmake;3.10.2.4988404",
     //"docs",
     //"ndk;20.0.5594570",
