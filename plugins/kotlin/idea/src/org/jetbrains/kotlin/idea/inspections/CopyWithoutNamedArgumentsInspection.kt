@@ -14,18 +14,18 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.resolve.DataClassResolver
 
 class CopyWithoutNamedArgumentsInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return callExpressionVisitor(fun(expression) {
             val reference = expression.referenceExpression() as? KtNameReferenceExpression ?: return
-            if (reference.getReferencedNameAsName() != DataClassDescriptorResolver.COPY_METHOD_NAME) return
+            if (!DataClassResolver.isCopy(reference.getReferencedNameAsName())) return
             if (expression.valueArguments.all { it.isNamed() }) return
 
             val context = expression.analyze(BodyResolveMode.PARTIAL)

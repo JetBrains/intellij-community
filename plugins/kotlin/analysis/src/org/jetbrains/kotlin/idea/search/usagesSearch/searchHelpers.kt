@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -66,7 +66,7 @@ fun KtParameter.dataClassComponentFunction(): FunctionDescriptor? {
 
     val constructor = paramDescriptor?.containingDeclaration as? ConstructorDescriptor ?: return null
     val index = constructor.valueParameters.indexOf(paramDescriptor)
-    val correspondingComponentName = DataClassDescriptorResolver.createComponentName(index + 1)
+    val correspondingComponentName = DataClassResolver.createComponentName(index + 1)
 
     val dataClass = constructor.containingDeclaration as? ClassDescriptor ?: return null
     dataClass.unsubstitutedMemberScope.getContributedFunctions(correspondingComponentName, NoLookupLocation.FROM_IDE)

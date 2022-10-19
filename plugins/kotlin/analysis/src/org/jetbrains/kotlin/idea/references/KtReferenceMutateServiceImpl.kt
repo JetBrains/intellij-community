@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -161,7 +161,7 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
         // Do not rename if the reference corresponds to synthesized component function
         val expressionText = expression.text
         if (expressionText != null && Name.isValidIdentifier(expressionText)) {
-            if (DataClassDescriptorResolver.isComponentLike(Name.identifier(expressionText)) && resolve() is KtParameter) {
+            if (DataClassResolver.isComponentLike(Name.identifier(expressionText)) && resolve() is KtParameter) {
                 return expression
             }
         }
