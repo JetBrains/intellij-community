@@ -935,7 +935,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myModel.invalidateAsync().thenRun(() -> {
       MyNode node = findNode(toSelect);
       if (node != null) {
-        myModel.select(node, myTree, treePath -> {});
+        FilteringTreeStructure.FilteringNode filteringNode = myModel.getTreeStructure().getVisibleNodeFor(node);
+        myModel.select(filteringNode, myTree, treePath -> {});
       }
     });
   }
