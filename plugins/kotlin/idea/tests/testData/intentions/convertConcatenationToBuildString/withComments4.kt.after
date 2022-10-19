@@ -3,10 +3,7 @@
 fun test(foo: String, bar: Int, baz: Int) {
     val s = buildString {
         append("${foo.length}, ") // comment1
-        // comment2
-        append("$bar, ") // comment3
-        // comment4
-        append(baz) // comment5
+        append("$bar, ") /* comment2 */
+        append(baz) // comment3
     }
-    // Unrelated comment
 }
