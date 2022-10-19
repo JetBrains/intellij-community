@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -22,6 +23,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
@@ -167,35 +169,44 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
           return;
         }
 
-        T repository;
-        try {
-          Project project = getProject();
-          repository = guessCurrentRepository(project, selectedFile);
-          if (repository == null) {
-            clearStatus();
-            return;
-          }
+        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+          updateOnBackground(selectedFile);
+        })) {
+          updateLater();
         }
-        catch (ProcessCanceledException e) {
-          // do nothing - a new update task is scheduled, or widget is disposed
-          return;
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-          clearStatus();
-          return;
-        }
-
-        myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
-        myTooltip = getToolTip(repository);
-        myIcon = getIcon(repository);
-        if (myStatusBar != null) {
-          myStatusBar.updateWidget(ID());
-        }
-
-        rememberRecentRoot(repository.getRoot().getPath());
       }, 10);
     });
+  }
+
+  @RequiresReadLock
+  private void updateOnBackground(VirtualFile selectedFile) {
+    T repository;
+    try {
+      Project project = getProject();
+      repository = guessCurrentRepository(project, selectedFile);
+      if (repository == null) {
+        clearStatus();
+        return;
+      }
+    }
+    catch (ProcessCanceledException e) {
+      // do nothing - a new update task is scheduled, or widget is disposed
+      return;
+    }
+    catch (Throwable t) {
+      LOG.error(t);
+      clearStatus();
+      return;
+    }
+
+    myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
+    myTooltip = getToolTip(repository);
+    myIcon = getIcon(repository);
+    if (myStatusBar != null) {
+      myStatusBar.updateWidget(ID());
+    }
+
+    rememberRecentRoot(repository.getRoot().getPath());
   }
 
   @NlsContexts.Tooltip
