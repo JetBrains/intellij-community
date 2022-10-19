@@ -134,7 +134,7 @@ fun <A : Account> LazyLoadingAccountsDetailsProvider<A, *>.cancelOnRemoval(scope
       coroutineScope {
         for (account in it) {
           launch {
-            accountManager.getCredentialsFlow(account, false).collect {
+            accountManager.getCredentialsFlow(account).collect {
               clearDetails(account)
             }
           }

@@ -17,7 +17,7 @@ class AccountUrlAuthenticationFailuresHolderTest {
   fun `test not failed on token change`() = runTest(UnconfinedTestDispatcher()) {
     val credsFlow = MutableSharedFlow<String>()
     val accountManager = mock<AccountManager<Account, String>> {
-      on(it.getCredentialsFlow(any(), any())).thenReturn(credsFlow)
+      on(it.getCredentialsFlow(any())).thenReturn(credsFlow)
     }
     val holder = AccountUrlAuthenticationFailuresHolder(this) {
       accountManager

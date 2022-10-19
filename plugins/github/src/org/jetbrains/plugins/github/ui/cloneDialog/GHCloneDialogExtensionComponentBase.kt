@@ -375,7 +375,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
             if (!currentAccounts.contains(it)) {
               model.add(it)
               async {
-                accountManager.getCredentialsFlow(it, false).collect { _ ->
+                accountManager.getCredentialsFlow(it).collect { _ ->
                   model.contentsChanged(it)
                 }
               }
