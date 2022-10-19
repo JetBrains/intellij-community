@@ -232,12 +232,10 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
-    if (parent != null) {
-      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
-    }
     // parent == null means name is root
-    return StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
+    //noinspection StaticMethodReferencedViaSubclass
+    return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
+                          : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
   }
 
   @ApiStatus.Internal
