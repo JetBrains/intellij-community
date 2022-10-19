@@ -6,33 +6,24 @@ import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.Icon
 import javax.swing.JTextPane
-import javax.swing.SwingUtilities
 import javax.swing.text.JTextComponent
-import javax.swing.text.Position
 
 internal object StyledTextPaneUtils {
   fun JTextComponent.drawRectangleAroundText(startOffset: Int, endOffset: Int, g: Graphics, needColor: Color, font: Font, fill: Boolean) {
     val g2d = g as Graphics2D
-    // modelToView2D from JTextComponent returns rectangle of the text row that is affected by the line spacing
-    // so get the rectangle using other way
-    val rect = ui.getRootView(this)
-      .modelToView(startOffset, Position.Bias.Forward, endOffset, Position.Bias.Backward, this.bounds)
-      .let { SwingUtilities.convertRectangle(this.parent, it.bounds, this) }
-      .bounds2D
-    val fontHeight = g2d.getFontMetrics(font).height
-    if (rect.height > fontHeight) {
-      return  // there is line break between startOffset and endOffset
-    }
+    val startRect = modelToView2D(startOffset)
+    val endRect = modelToView2D(endOffset)
+    val fontMetrics = g2d.getFontMetrics(font)
 
     val color = g2d.color
     g2d.color = needColor
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    
+
     val verticalIndent = JBUIScale.scale(1.5f).toDouble()
     val horizontalIndent = JBUIScale.scale(4f).toDouble()
     val arc = JBUIScale.scale(8f).toDouble()
-    val r2d = RoundRectangle2D.Double(rect.x - horizontalIndent, rect.y - verticalIndent,
-                                      rect.width + 2 * horizontalIndent, rect.height + 2 * verticalIndent,
+    val r2d = RoundRectangle2D.Double(startRect.x - horizontalIndent, startRect.y - verticalIndent,
+                                      endRect.x - startRect.x + 2 * horizontalIndent, fontMetrics.height + 2 * verticalIndent,
                                       arc, arc)
 
     if (fill) g2d.fill(r2d) else g2d.draw(r2d)
