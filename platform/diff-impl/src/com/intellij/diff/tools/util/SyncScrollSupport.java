@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Range;
@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -331,7 +330,7 @@ public final class SyncScrollSupport {
 
     @Override
     public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-      if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
+      if (getSlave().getFoldingModel().isInBatchFoldingOperation()) return;
       if (getMaster().isDisposed() || getSlave().isDisposed()) return;
 
       Rectangle newRectangle = e.getNewRectangle();

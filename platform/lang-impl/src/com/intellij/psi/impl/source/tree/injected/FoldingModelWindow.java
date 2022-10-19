@@ -118,6 +118,11 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   }
 
   @Override
+  public boolean isInBatchFoldingOperation() {
+    return myDelegate.isInBatchFoldingOperation();
+  }
+
+  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }

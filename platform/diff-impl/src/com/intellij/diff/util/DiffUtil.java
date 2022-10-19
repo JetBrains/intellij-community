@@ -22,9 +22,10 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
-import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -47,6 +48,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -83,6 +86,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -197,7 +201,14 @@ public final class DiffUtil {
   }
 
   public static void setEditorHighlighter(@Nullable Project project, @NotNull EditorEx editor, @NotNull DocumentContent content) {
-    Disposable disposable = ((EditorImpl)editor).getDisposable();
+    Disposable disposable = null;
+    if (editor instanceof EditorImpl) {
+      disposable = ((EditorImpl)editor).getDisposable();
+    }
+    else if (editor instanceof EditorWindow) {
+      disposable = ((EditorWindow)editor);
+    }
+    if (disposable == null) return;
     if (project != null) {
       DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
       updater.updateHighlightersAsync();
@@ -255,8 +266,38 @@ public final class DiffUtil {
     EditorKind kind = EditorKind.DIFF;
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
+    if (document instanceof DocumentWindow && project != null) {
+      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (injectedFile != null) {
+        FoldingModelEx model = editor.getFoldingModel();
+        int length = editor.getDocument().getTextLength();
+        model.runBatchFoldingOperation(() -> {
+          int start = 0;
+          int end = -1;
+          for (Segment range : ((DocumentWindow)document).getHostRanges()) {
+            FoldRegion region = model.addFoldRegion(start, range.getStartOffset(), "");
+            if (region != null) {
+              region.setExpanded(false);
+            }
+            end = range.getEndOffset();
+          }
+          if (end > 0) {
+            FoldRegion region = model.addFoldRegion(end, length, "");
+            if (region != null) {
+              region.setExpanded(false);
+            }
+          }
+        });
+
+        editor = (EditorEx)EditorWindowTracker.getInstance().createEditor(((DocumentWindow)document), editor, injectedFile);
+      }
+    }
+
     editor.getSettings().setShowIntentionBulb(false);
-    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
+    MarkupModelEx model = editor.getMarkupModel();
+    if (model instanceof EditorMarkupModel) {
+      ((EditorMarkupModel)model).setErrorStripeVisible(true);
+    }
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
     if (enableFolding) {

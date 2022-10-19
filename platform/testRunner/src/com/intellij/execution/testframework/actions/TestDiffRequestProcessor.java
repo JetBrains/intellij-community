@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -12,8 +12,11 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Location;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,6 +26,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +75,14 @@ public class TestDiffRequestProcessor {
     public DiffRequest process(@NotNull UserDataHolder context,
                                @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       String windowTitle = myHyperlink.getDiffTitle();
+      AbstractTestProxy testProxy = myHyperlink.getTestProxy();
 
       String text1 = myHyperlink.getLeft();
       String text2 = myHyperlink.getRight();
       VirtualFile file1 = findFile(myHyperlink.getFilePath());
+      if (file1 == null && testProxy != null) {
+        file1 = ReadAction.compute(() -> extractInjection(testProxy));
+      }
       VirtualFile file2 = findFile(myHyperlink.getActualFilePath());
 
       DiffContent content1 = createContentWithTitle(myProject, text1, file1, file2);
@@ -85,6 +94,21 @@ public class TestDiffRequestProcessor {
                                     : ExecutionBundle.message("diff.content.actual.title");
 
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
+    }
+
+    @Nullable
+    private VirtualFile extractInjection(AbstractTestProxy testProxy) {
+      if (myProject == null) return null;
+      Location<?> location = testProxy.getLocation(myProject, GlobalSearchScope.projectScope(myProject));
+      if (location == null) return null;
+      TestDiffProvider testDiffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(
+        location.getPsiElement().getLanguage()
+      );
+      String stackTrace = testProxy.getStacktrace();
+      if (stackTrace == null) return null;
+      PsiElement injectionLiteral = testDiffProvider.getInjectionLiteral(myProject, testProxy.getStacktrace());
+      if (injectionLiteral == null) return null;
+      return injectionLiteral.getContainingFile().getVirtualFile();
     }
 
     @Override
