@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -732,13 +731,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    val alarm = focusAlarm
-    alarm.cancelAllRequests()
-    if (Registry.`is`("toolwindow.immediate.focus")) {
-      focusTask.run()
-    } else {
-      alarm.request(delay = 0)
-    }
+    focusAlarm.cancelAllRequests()
+    focusTask.run()
   }
 }
 
