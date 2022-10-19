@@ -83,7 +83,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithTwoZeros() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty()")
     );
   }
@@ -91,7 +92,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithTopAndBottomEqualToLeftAndRight() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">e<caret>mpty(1, 1)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">e<caret>mpty(1, 1)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty(1)")
     );
   }
@@ -99,7 +101,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithFourZeros() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0, 0, 0)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0, 0, 0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty()")
     );
   }
@@ -107,7 +110,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithFourTheSameValues() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(1, 1, 1, 1)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(1, 1, 1, 1)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty(1)")
     );
   }
@@ -115,7 +119,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithFirstThirdAndSecondFourthValuesTheSame() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 2, 1, 2)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 2, 1, 2)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty(1, 2)")
     );
   }
@@ -123,7 +128,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentFirstParam() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Border<caret>s.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 0, 0, 0)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 0, 0, 0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.emptyTop(1)")
     );
   }
@@ -131,7 +137,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentSecondParam() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 1, 0, 0)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 1, 0, 0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.emptyLeft(1)")
     );
   }
@@ -139,7 +146,8 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentThirdParam() {
     doTest(
       SIMPLIFY_FIX_NAME,
-      jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(0, 0, 1, 0)</warning>"),
+      jbuiEmptyBorder(
+        "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(0, 0, 1, 0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.emptyBottom(1)")
     );
   }
@@ -157,27 +165,27 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     doTest(
       SIMPLIFY_FIX_NAME,
       kotlin("""
-             import javax.swing.border.Border
-             import com.intellij.util.ui.JBUI.Borders
+               import javax.swing.border.Border
+               import com.intellij.util.ui.JBUI.Borders
 
-             @Suppress("UNUSED_VARIABLE")
-             class TestClass {
-               fun any() {
-                 val myBorder = Borders.<warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
+               @Suppress("UNUSED_VARIABLE")
+               class TestClass {
+                 fun any() {
+                   val myBorder = Borders.<warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
+                 }
                }
-             }
-             """),
+               """),
       kotlin("""
-             import javax.swing.border.Border
-             import com.intellij.util.ui.JBUI.Borders
+               import javax.swing.border.Border
+               import com.intellij.util.ui.JBUI.Borders
 
-             @Suppress("UNUSED_VARIABLE")
-             class TestClass {
-               fun any() {
-                 val myBorder = Borders.empty();
+               @Suppress("UNUSED_VARIABLE")
+               class TestClass {
+                 fun any() {
+                   val myBorder = Borders.empty();
+                 }
                }
-             }
-             """)
+               """)
     );
   }
 
@@ -185,27 +193,27 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     doTest(
       SIMPLIFY_FIX_NAME,
       kotlin("""
-             import javax.swing.border.Border
-             import com.intellij.util.ui.JBUI.Borders.empty
+               import javax.swing.border.Border
+               import com.intellij.util.ui.JBUI.Borders.empty
 
-             @Suppress("UNUSED_VARIABLE")
-             class TestClass {
-               fun any() {
-                 val myBorder = <warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
+               @Suppress("UNUSED_VARIABLE")
+               class TestClass {
+                 fun any() {
+                   val myBorder = <warning descr="Empty border creation can be simplified">em<caret>pty(0, 0, 0, 0)</warning>;
+                 }
                }
-             }
-             """),
+               """),
       kotlin("""
-             import javax.swing.border.Border
-             import com.intellij.util.ui.JBUI.Borders.empty
+               import javax.swing.border.Border
+               import com.intellij.util.ui.JBUI.Borders.empty
 
-             @Suppress("UNUSED_VARIABLE")
-             class TestClass {
-               fun any() {
-                 val myBorder = empty();
+               @Suppress("UNUSED_VARIABLE")
+               class TestClass {
+                 fun any() {
+                   val myBorder = empty();
+                 }
                }
-             }
-             """)
+               """)
     );
   }
 
