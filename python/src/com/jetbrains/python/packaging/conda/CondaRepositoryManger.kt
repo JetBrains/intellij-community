@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.pip.PipBasedRepositoryManager
@@ -21,10 +22,12 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
     return if (repository is CondaPackageRepository) CondaPackageCache.packages else super.packagesFromRepository(repository)
   }
 
-  override fun buildPackageDetails(rawInfo: String, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     if (spec is CondaPackageSpecification) {
-      val detailsFromPyPI = super.buildPackageDetails(rawInfo, spec)
       val versions = CondaPackageCache[spec.name] ?: error("No conda package versions in cache")
+      if (rawInfo == null) return CondaPackageDetails(spec.name, versions, PyBundle.message("conda.packaging.empty.pypi.info"))
+
+      val detailsFromPyPI = super.buildPackageDetails(rawInfo, spec)
 
       return CondaPackageDetails(detailsFromPyPI.name,
                                  versions,
