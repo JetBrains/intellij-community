@@ -34,6 +34,9 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField
+    val IS_SUBMENU = EventFields.Boolean("isSubmenu")
+
+    @JvmField
     val DUMB_START = EventFields.Boolean("dumb_start")
 
     @JvmField
@@ -64,7 +67,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val ACTION_GROUP_EXPANDED = GROUP.registerVarargEvent("action.group.expanded", EventFields.PluginInfo,
                                                           ACTION_ID, ACTION_CLASS, ACTION_PARENT,
-                                                          EventFields.ActionPlace, EventFields.IsSubmenu, EventFields.Size,
+                                                          EventFields.ActionPlace, IS_SUBMENU, EventFields.Size,
                                                           EventFields.Language, EventFields.DurationMs)
 
 

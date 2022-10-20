@@ -132,7 +132,7 @@ class ActionsCollectorImpl : ActionsCollector() {
         add(EventFields.PluginInfo.with(info))
         add(EventFields.Language.with(language))
         add(EventFields.ActionPlace.with(place))
-        add(EventFields.IsSubmenu.with(submenu))
+        add(ActionsEventLogGroup.IS_SUBMENU.with(submenu))
         add(EventFields.DurationMs.with(durationMs))
         add(EventFields.Size.with(result?.size ?: -1))
       }
