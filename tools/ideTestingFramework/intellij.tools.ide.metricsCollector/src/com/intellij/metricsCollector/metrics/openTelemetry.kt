@@ -75,11 +75,18 @@ private fun combineMetrics(metrics: MutableMap<String, MutableList<MetricWithAtt
     }
     else {
       var counter = 1
+      val mediumAttributes: MutableMap<String, MutableList<Long>> = mutableMapOf()
       entry.value.forEach { metric ->
         val value = metric.metric.value.toLong()
         val spanUpdatedName = entry.key + "_$counter"
         result.add(Metric(Duration(spanUpdatedName), value))
         result.addAll(getAttributes(spanUpdatedName, metric))
+        getAttributes(entry.key, metric).forEach {
+          val key = it.id.name
+          val collection = mediumAttributes.getOrDefault(key, mutableListOf())
+          collection.add(it.value.toLong())
+          mediumAttributes[key] = collection
+        }
         counter++
       }
       val sum = entry.value.sumOf { it.metric.value.toLong() }
@@ -87,12 +94,24 @@ private fun combineMetrics(metrics: MutableMap<String, MutableList<MetricWithAtt
       val variance = (entry.value
         .map { (it.metric.value.toDouble() - mean.toDouble()).pow(2) }
         .reduce { acc, d -> acc + d }) / (entry.value.size)
+      for (attr in mediumAttributes) {
+        result.add(Metric(Duration(attr.key + "#mean_value"), attr.value.average().toLong()))
+        result.add(Metric(Duration(attr.key + "#standard_deviation"), standardDeviation(attr.value)))
+      }
       result.add(Metric(Duration(entry.key), sum))
       result.add(Metric(Duration(entry.key +  "#mean_value"), mean))
       result.add(Metric(Duration(entry.key +  "#standard_deviation"), sqrt(variance).toLong()))
     }
   }
   return result
+}
+
+private fun standardDeviation(data: Collection<Long>): Long {
+  val mean = data.average()
+  val variance = (data
+    .map { (it - mean).pow(2) }
+    .reduce { acc, d -> acc + d }) / (data.size)
+  return sqrt(variance).toLong()
 }
 
 private fun getAttributes(spanName: String, metric: MetricWithAttributes): Collection<Metric<*>> {

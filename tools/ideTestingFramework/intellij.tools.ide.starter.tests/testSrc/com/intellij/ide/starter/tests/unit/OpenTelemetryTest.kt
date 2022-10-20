@@ -34,6 +34,8 @@ class OpenTelemetryTest {
       Metric(Duration("FindUsagesManager.startProcessUsages"), 7705),
       Metric(Duration("FindUsagesManager.startProcessUsages#mean_value"), 2568),
       Metric(Duration("FindUsagesManager.startProcessUsages#standard_deviation"), 1513),
+      Metric(Duration("FindUsagesManager.startProcessUsages#number_of_found_usages#mean_value"), 464),
+      Metric(Duration("FindUsagesManager.startProcessUsages#number_of_found_usages#standard_deviation"), 349),
     ))
   }
 
@@ -66,6 +68,12 @@ class OpenTelemetryTest {
       Metric(Duration("findUsages#standard_deviation"), 10),
       Metric(Duration("findUsages"), 2389),
       Metric(Duration("findUsages#mean_value"), 1194),
+      Metric(Duration("timer#max_awt_delay#mean_value"), 70),
+      Metric(Duration("timer#max_awt_delay#standard_deviation"), 13),
+      Metric(Duration("findUsages#number_of_found_usages#mean_value"), 1384),
+      Metric(Duration("findUsages#number_of_found_usages#standard_deviation"), 0),
+      Metric(Duration("timer#average_awt_delay#mean_value"), 5),
+      Metric(Duration("timer#average_awt_delay#standard_deviation"), 2),
     ))
   }
 }
