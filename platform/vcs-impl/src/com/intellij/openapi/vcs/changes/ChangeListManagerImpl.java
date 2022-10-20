@@ -421,6 +421,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     scheduleUpdateImpl();
   }
 
+  @ApiStatus.Internal
   public void scheduleUpdateImpl() {
     myUpdater.schedule();
   }
