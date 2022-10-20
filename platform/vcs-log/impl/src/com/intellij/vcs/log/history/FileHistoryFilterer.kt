@@ -76,7 +76,11 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
     fileHistoryTask = null
   }
 
-  private fun createFileHistoryTask(vcs: AbstractVcs, root: VirtualFile, filePath: FilePath, hash: Hash?, isInitial: Boolean): FileHistoryTask {
+  private fun createFileHistoryTask(vcs: AbstractVcs,
+                                    root: VirtualFile,
+                                    filePath: FilePath,
+                                    hash: Hash?,
+                                    isInitial: Boolean): FileHistoryTask {
     val oldHistoryTask = fileHistoryTask
     if (oldHistoryTask != null && !oldHistoryTask.isCancelled && !isInitial &&
         oldHistoryTask.filePath == filePath && oldHistoryTask.hash == hash) return oldHistoryTask
@@ -259,20 +263,20 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
       TraceManager.getTracer("vcs").spanBuilder("collecting renames").useWithScope {
         val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
 
-        val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull {
-          val parentHash = storage.getCommitId(it.parent)!!.hash
-          val childHash = storage.getCommitId(it.child)!!.hash
-          if (it.isAddition) handler.getRename(root, it.filePath, parentHash, childHash)
-          else handler.getRename(root, it.filePath, childHash, parentHash)
+        val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull { ad ->
+          val parentHash = storage.getCommitId(ad.parent)!!.hash
+          val childHash = storage.getCommitId(ad.child)!!.hash
+          if (ad.isAddition) handler.getRename(root, ad.filePath, parentHash, childHash)
+          else handler.getRename(root, ad.filePath, childHash, parentHash)
         }.map { r ->
           Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
         }
 
         it.setAttribute("renamesSize", renames.size.toLong())
-        it.setAttribute("numberOfAdditionDeletions",fileHistory.unmatchedAdditionsDeletions.size.toLong())
+        it.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
 
         val result = MultiMap<UnorderedPair<Int>, Rename>()
-        renames.forEach { result.putValue(it.commits, it) }
+        renames.forEach { rename -> result.putValue(rename.commits, rename) }
         return result
       }
     }
