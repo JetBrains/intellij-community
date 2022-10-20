@@ -163,7 +163,7 @@ class CheckOutputThread(PyDBDaemonThread):
     def __init__(self, py_db):
         PyDBDaemonThread.__init__(self)
         self.py_db = py_db
-        self.setName('pydevd.CheckAliveThread')
+        self.name = 'pydevd.CheckAliveThread'
         self.daemon = False
 
     @overrides(PyDBDaemonThread._on_run)
