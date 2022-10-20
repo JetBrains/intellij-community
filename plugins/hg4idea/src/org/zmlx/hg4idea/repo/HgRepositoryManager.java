@@ -11,19 +11,17 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
-import java.util.Objects;
 
 public final class HgRepositoryManager extends AbstractRepositoryManager<HgRepository> {
-  private final HgProjectSettings mySettings;
-
   public HgRepositoryManager(@NotNull Project project) {
     super(HgVcs.getInstance(project), HgUtil.DOT_HG);
-    mySettings = Objects.requireNonNull(HgVcs.getInstance(project)).getProjectSettings();
   }
 
   @Override
   public boolean isSyncEnabled() {
-    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
+    HgProjectSettings settings = ((HgVcs)getVcs()).getProjectSettings();
+    return settings.getSyncSetting() == DvcsSyncSettings.Value.SYNC &&
+           !MultiRootBranches.diverged(getRepositories());
   }
 
   @NotNull
