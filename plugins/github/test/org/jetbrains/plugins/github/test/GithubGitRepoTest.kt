@@ -16,11 +16,15 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubUtil
 
 abstract class GithubGitRepoTest : GithubTest() {
+
+  private lateinit var ghRepositoryManager: GHHostedRepositoriesManager
+
   protected lateinit var repository: GitRepository
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
+    ghRepositoryManager = project.service()
   }
 
   override fun setCurrentAccount(accountData: AccountData?) {
@@ -63,7 +67,7 @@ abstract class GithubGitRepoTest : GithubTest() {
   protected fun checkRemoteConfigured() {
     assertNotNull(repository)
     val mappings = runBlocking {
-      project.service<GHHostedRepositoriesManager>().knownRepositoriesFlow.first()
+      ghRepositoryManager.knownRepositoriesFlow.first()
     }
     assertTrue("GitHub remote is not configured, current mappings: $mappings", mappings.any {
       it.remote.repository == repository

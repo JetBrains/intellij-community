@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.async.disposingScope
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -17,10 +18,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
 @Service
 class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManager<GHGitRepositoryMapping>, Disposable {
-
-  override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>> by lazy {
-    knownRepositoriesFlow.stateIn(disposingScope(), SharingStarted.Eagerly, emptySet())
-  }
 
   @VisibleForTesting
   internal val knownRepositoriesFlow = run {
@@ -46,6 +43,9 @@ class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManag
       LOG.debug("New list of known repos: $it")
     }
   }
+
+  override val knownRepositoriesState: StateFlow<Set<GHGitRepositoryMapping>> =
+    knownRepositoriesFlow.stateIn(disposingScope(), getStateSharingStartConfig(), emptySet())
 
   private suspend fun checkForDedicatedServer(remote: GitRemoteUrlCoordinates): GithubServerPath? {
     val uri = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)
@@ -78,5 +78,8 @@ class GHHostedRepositoriesManager(project: Project) : HostedGitRepositoriesManag
 
   companion object {
     private val LOG = logger<GHHostedRepositoriesManager>()
+
+    private fun getStateSharingStartConfig() =
+      if (ApplicationManager.getApplication().isUnitTestMode) SharingStarted.Eagerly else SharingStarted.Lazily
   }
 }
