@@ -16,7 +16,7 @@ boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
   String python27version = "2.7.18"
-  String python36version = "3.6.8"
+  String python36version = "3.6.15"
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
@@ -98,62 +98,6 @@ task buildBinaries() {
   }
   else if (isMac) {
     dependsOn buildBinariesOnMac
-  }
-}
-
-task checkVersionOfCFiles() {
-  description "Checks if the binary version in C files matches the regular version."
-  doLast {
-    File additionalThreadInfoRegular = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_additional_thread_info_regular.py").toFile()
-    File cFile = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_cython.c").toFile()
-    Integer regularVersion = extractVersion(additionalThreadInfoRegular, ~/version = (\d+)/)
-    Integer cVersion = extractVersion(cFile, ~/\s+version = (\d+)/)
-    assert regularVersion == cVersion : "The version '$regularVersion' in ${additionalThreadInfoRegular.name} does not matches the '$cVersion' " +
-                                        "version in ${cFile.name}"
-  }
-}
-
-task checkCFilesAreUpToDate() {
-  description "Checks if the C files are up to date by checking their creation time and binary version."
-  dependsOn checkVersionOfCFiles
-  doLast {
-    String pydevdRoot = project.ext.pydevDir.path
-
-    def mappings = [
-      ["_pydevd_bundle", "pydevd_cython"],
-      ["_pydevd_frame_eval", "pydevd_frame_evaluator_common"],
-      ["_pydevd_frame_eval", "pydevd_frame_evaluator"],
-      ["_pydevd_frame_eval", "pydevd_frame_evaluator_py39_and_above"]
-    ]
-
-    for (mapping in mappings) {
-      def (dir, extName) = mapping
-      File pxdFile = Paths.get(pydevdRoot, dir, extName + ".pxd").toFile()
-      File pyxFile = Paths.get(pydevdRoot, dir, extName + ".pyx").toFile()
-      File cFile = Paths.get(pydevdRoot, dir, extName + ".c").toFile()
-
-      def checkTimespamps = { File mainFile, File dependentFile ->
-        assert dependentFile.lastModified() > mainFile.lastModified() : "${dependentFile.name} is older than ${mainFile.name}"
-      }
-
-      checkTimespamps(pxdFile, cFile)
-      checkTimespamps(pyxFile, cFile)
-    }
-
-    println "The C files are up to date."
-  }
-}
-
-Integer extractVersion(File file, Pattern versionPattern) {
-  file.withReader {reader ->
-    def line
-    while ((line = reader.readLine()) != null) {
-      def matcher = line =~ versionPattern
-      if (matcher.find()) {
-        return Integer.parseInt(matcher.group(1))
-      }
-    }
-    throw new RuntimeException("Can't find version in ${file.path}")
   }
 }
 
