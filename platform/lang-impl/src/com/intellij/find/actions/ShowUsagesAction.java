@@ -689,14 +689,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
     String hint = getSecondInvocationHint(actionHandler);
-    if (hint != null) {
-      advertiser.addAdvertisement(hint);
+
+    JPanel advertiserComponent = null;
+    if (advertiser.addAdvertisement(hint) || advertiser.addSpeedSearchAdvertisement() != null) {
+      advertiserComponent = advertiser.getComponent();
     }
-    advertiser.addSpeedSearchAdvertisement();
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdvertiser(advertiser.getComponent()).
+      setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
