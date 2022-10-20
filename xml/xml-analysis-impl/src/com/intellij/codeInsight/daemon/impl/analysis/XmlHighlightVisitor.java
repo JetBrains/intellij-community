@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -481,7 +482,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   static boolean isUrlReference(PsiReference reference) {
-    return reference instanceof FileReferenceOwner || reference instanceof AnchorReference;
+    return reference instanceof FileReferenceOwner || reference instanceof AnchorReference || reference instanceof PsiFileReference;
   }
 
   @NotNull
