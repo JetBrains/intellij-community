@@ -82,7 +82,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
       spec.withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt/saxon.jar")
       spec.withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt/saxon9he.jar")
-      spec.withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
+      spec.withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt/xalan-2.7.2.jar")
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
