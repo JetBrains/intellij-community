@@ -8,6 +8,7 @@ import com.sun.jdi.Field
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
 import java.util.*
 
@@ -126,6 +127,7 @@ private fun createPendingValue(container: PendingValue.Container, field: Field):
 
     // Ordinary values (everything but 'this')
     assert(name.startsWith(AsmUtil.CAPTURED_PREFIX))
-    val capturedValueName = name.drop(1).takeIf { it.isNotEmpty() } ?: return null
+
+    val capturedValueName = name.drop(1).removeSuffix(INLINE_TRANSFORMATION_SUFFIX).takeIf { it.isNotEmpty() } ?: return null
     return PendingValue.Ordinary(capturedValueName, field, container)
 }

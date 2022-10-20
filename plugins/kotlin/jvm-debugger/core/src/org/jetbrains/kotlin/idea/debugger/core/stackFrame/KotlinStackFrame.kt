@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -96,11 +95,6 @@ open class KotlinStackFrame(
     ): Boolean {
         val thisObject = evaluationContext.frameProxy?.thisObject() ?: return false
 
-        if (thisObject.type().isSubtype(CONTINUATION_TYPE)) {
-            ExistingInstanceThisRemapper.find(children)?.remove()
-            return true
-        }
-
         val thisObjectType = thisObject.type()
         if (thisObjectType.isSubtype(Function::class.java.name) && '$' in thisObjectType.signature()) {
             val existingThis = ExistingInstanceThisRemapper.find(children)
@@ -111,6 +105,16 @@ open class KotlinStackFrame(
                 if (containerValue != null) {
                     attachCapturedValues(evaluationContext, children, containerValue, existingVariables)
                 }
+            }
+            return true
+        }
+
+        if (thisObject.type().isSubtype(CONTINUATION_TYPE)) {
+            ExistingInstanceThisRemapper.find(children)?.remove()
+            val dispatchReceiver = (evaluationContext.frameProxy as? KotlinStackFrameProxyImpl)?.dispatchReceiver() ?: return true
+            val dispatchReceiverType = dispatchReceiver.type()
+            if (dispatchReceiverType.isSubtype(Function::class.java.name) && '$' in dispatchReceiverType.signature()) {
+                attachCapturedValues(evaluationContext, children, dispatchReceiver, existingVariables)
             }
             return true
         }
