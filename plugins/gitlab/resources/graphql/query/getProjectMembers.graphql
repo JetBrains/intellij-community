@@ -1,0 +1,12 @@
+query($fullPath: ID!) {
+  project(fullPath: $fullPath) {
+    projectMembers {
+      nodes {
+        ...member
+      }
+      pageInfo {
+        ...pageInfo
+      }
+    }
+  }
+}

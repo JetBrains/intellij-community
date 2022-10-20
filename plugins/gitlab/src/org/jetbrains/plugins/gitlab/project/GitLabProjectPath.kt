@@ -7,6 +7,8 @@ import git4idea.remote.hosting.GitHostingUrlUtil
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
 data class GitLabProjectPath(val owner: String, val name: String) {
+  fun fullPath(): String = "$owner/$name"
+
   companion object {
     fun create(server: GitLabServerPath, remote: GitRemoteUrlCoordinates): GitLabProjectPath? {
       val serverPath = server.toURI().path
