@@ -50,10 +50,6 @@ public final class MacWinTabsHandler {
   private static ID myObserverDelegate;
 
   public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    if (!JdkEx.isTabbingModeAvailable()) {
-      return northComponent;
-    }
-
     JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();

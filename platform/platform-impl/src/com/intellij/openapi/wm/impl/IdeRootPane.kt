@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -81,8 +82,12 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
     val contentPane = contentPane!!
-    @Suppress("LeakingThis")
-    contentPane.add(if (SystemInfoRt.isMac) MacWinTabsHandler.wrapRootPaneNorthSide(this, northPanel) else northPanel, BorderLayout.NORTH)
+    if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
+      contentPane.add(MacWinTabsHandler.wrapRootPaneNorthSide(this, northPanel), BorderLayout.NORTH)
+    }
+    else {
+      contentPane.add(northPanel, BorderLayout.NORTH)
+    }
 
     // listen to mouse motion events for a11y
     contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
