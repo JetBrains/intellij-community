@@ -53,11 +53,6 @@ import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
-  private static final JBColor BORDER_COLOR = JBColor.namedColor("SpeedSearch.borderColor", JBColor.LIGHT_GRAY);
-  protected static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  protected static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
-  protected static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
-
   private static JBInsets borderInsets() {
     return JBUI.insets("SpeedSearch.borderInsets", JBUI.insets(0, 0, 0, 0));
   }
