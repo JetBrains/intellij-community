@@ -59,12 +59,14 @@ class ToolWindowPane internal constructor(frame: JFrame,
   companion object {
     const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
 
-    //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
+    // the size of topmost 'resize' area when toolwindow caption is used for both resize and drag
     internal val headerResizeArea: Int
       get() = JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26))
 
     private fun normalizeWeight(weight: Float): Float {
-      if (weight <= 0) return WindowInfoImpl.DEFAULT_WEIGHT
+      if (weight <= 0) {
+        return WindowInfoImpl.DEFAULT_WEIGHT
+      }
       return if (weight >= 1) 1 - WindowInfoImpl.DEFAULT_WEIGHT else weight
     }
   }
@@ -81,7 +83,7 @@ class ToolWindowPane internal constructor(frame: JFrame,
   private val layeredPane: MyLayeredPane
 
   /*
-   * Splitters.
+   * Splitters
    */
   private val verticalSplitter: ThreeComponentsSplitter
   private val horizontalSplitter: ThreeComponentsSplitter

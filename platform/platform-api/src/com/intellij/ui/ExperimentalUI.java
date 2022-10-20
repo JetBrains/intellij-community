@@ -139,7 +139,7 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont(defaults);
+      installInterFont();
     }
   }
 
@@ -148,14 +148,14 @@ public abstract class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont(UIDefaults defaults) {
+  private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
   }
 
-  public static class Icons {
+  public static final class Icons {
     public static class Gutter {
       public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");

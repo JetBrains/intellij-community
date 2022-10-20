@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettings.Companion.shadowInstance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.jdkEx.JdkEx
@@ -12,7 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -61,7 +60,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   var statusBar: IdeStatusBarImpl? = null
     private set
 
-  private var myStatusBarDisposed = false
+  private var statusBarDisposed = false
   private val northPanel = JBBox.createVerticalBox()
   private val northComponents: MutableList<IdeRootPaneNorthExtension> = ArrayList()
   private var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
@@ -157,7 +156,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
        * Returns true if menu should be placed in toolbar instead of menu bar
        */
       get() {
-        val uiSettings = shadowInstance
+        val uiSettings = UISettings.shadowInstance
         return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.separateMainMenu
       }
 
@@ -170,10 +169,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
   }
 
+  /**
+   * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
+   */
   open val mainMenuActionGroup: ActionGroup?
-    /**
-     * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
-     */
     get() = null
 
   protected open fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
@@ -186,7 +185,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
     else {
       toolWindowButtonManager = ToolWindowPaneOldButtonManager(paneId)
     }
-    toolWindowPane = ToolWindowPane(frame, parentDisposable, paneId, toolWindowButtonManager)
+    toolWindowPane = ToolWindowPane(frame = frame,
+                                    parentDisposable = parentDisposable,
+                                    paneId = paneId,
+                                    buttonManager = toolWindowButtonManager)
     return toolWindowPane!!
   }
 
@@ -225,8 +227,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
    */
   override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (!myStatusBarDisposed) {
-        myStatusBarDisposed = true
+      if (!statusBarDisposed) {
+        statusBarDisposed = true
         Disposer.dispose(statusBar!!)
       }
       jMenuBar = null
@@ -347,7 +349,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
     val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
-    val toolBar = getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
+    val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
     toolBar.targetComponent = null
     toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
     PopupHandler.installPopupMenu(toolBar.component, "MainToolbarPopupActions", "MainToolbarPopup")
@@ -378,7 +380,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       toolbar = createToolbar()
       northPanel.add(toolbar, 0)
     }
-    val uiSettings = shadowInstance
+    val uiSettings = UISettings.shadowInstance
     val isNewToolbar = ExperimentalUI.isNewUI()
     val visible = ((isNewToolbar && !isToolbarInHeader(uiSettings) || !isNewToolbar && uiSettings.showMainToolbar)
                    && if (hideInPresentationMode) !uiSettings.presentationMode else !fullScreen)
@@ -386,12 +388,12 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   private fun updateStatusBarVisibility() {
-    val uiSettings = shadowInstance
+    val uiSettings = UISettings.shadowInstance
     statusBar!!.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
   }
 
   private fun updateMainMenuVisibility() {
-    val uiSettings = shadowInstance
+    val uiSettings = UISettings.shadowInstance
     if (uiSettings.presentationMode || IdeFrameDecorator.isCustomDecorationActive()) {
       return
     }
@@ -409,7 +411,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   internal open fun installNorthComponents(project: Project) {
-    val uiSettings = shadowInstance
+    val uiSettings = UISettings.shadowInstance
     statusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project) { it is StatusBarCentralWidget }
     northComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project))
     if (northComponents.isEmpty()) {
