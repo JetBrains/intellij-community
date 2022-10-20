@@ -9,7 +9,9 @@ import com.intellij.ui.components.ActionLink
 import java.awt.FlowLayout
 import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 open class ComponentAdvertiser {
   val component = JPanel(FlowLayout(FlowLayout.LEFT))
@@ -35,7 +37,9 @@ open class ComponentAdvertiser {
     component.border = JBUI.CurrentTheme.Advertiser.border()
   }
 
-  fun addAdvertisement(@NlsContexts.PopupAdvertisement text: String) {
+  fun addAdvertisement(@NlsContexts.PopupAdvertisement text: String?): Boolean {
+    if (text == null) return false
+
     val label = JLabel()
       .apply {
         font = adFont()
@@ -46,6 +50,7 @@ open class ComponentAdvertiser {
       }
 
     addComponentAdvertiser(label)
+    return true
   }
 
   fun addComponentAdvertiser(component: JComponent) {
