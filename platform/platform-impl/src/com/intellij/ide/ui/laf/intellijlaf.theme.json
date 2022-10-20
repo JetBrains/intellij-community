@@ -649,13 +649,6 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
     },
 
-    "SpeedSearch": {
-      "background": "contentBackground",
-      "borderColor": "grey02",
-      "errorForeground": "#ff0000",
-      "foreground": "foreground"
-    },
-
     "Spinner": {
       "arrowButtonInsets": "1,1,1,1",
       "background": "panel",
