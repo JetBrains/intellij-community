@@ -139,6 +139,7 @@ impl RemoteDevLaunchConfiguration {
             "run" => { "cwmHostNoLobby" }
             "status" => { "cwmHostStatus" }
             "dumpLaunchParameters" => { "dump-launch-parameters" }
+            "invalidate-caches" => { "invalidateCaches" }
             x => {
                 print_help();
                 bail!("Unknown command: {x}")
