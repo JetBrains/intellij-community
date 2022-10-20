@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -40,6 +40,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -49,13 +50,11 @@ import java.awt.*
 import java.awt.event.MouseMotionAdapter
 import javax.swing.*
 
+@Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(frame: JFrame,
                                             frameHelper: IdeFrame,
                                             parentDisposable: Disposable) : JRootPane(), UISettingsListener {
-  /**
-   * Toolbar and status bar.
-   */
   private var toolbar: JComponent? = null
 
   var statusBar: IdeStatusBarImpl? = null
@@ -66,7 +65,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private val northComponents: MutableList<IdeRootPaneNorthExtension> = ArrayList()
   private var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
   private var toolWindowPane: ToolWindowPane? = null
-  //private var contentPane: JBPanel<*>? = null
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
   private var customFrameTitlePane: MainFrameCustomHeader? = null
@@ -78,14 +76,17 @@ open class IdeRootPane internal constructor(frame: JFrame,
         windowDecorationStyle = FRAME
       }
       catch (e: Exception) {
-        Logger.getInstance(IdeRootPane::class.java).error(e)
+        logger<IdeRootPane>().error(e)
       }
     }
+
     val contentPane = contentPane!!
-    contentPane.add(IdeFrameDecorator.wrapRootPaneNorthSide(this, northPanel), BorderLayout.NORTH)
+    @Suppress("LeakingThis")
+    contentPane.add(if (SystemInfoRt.isMac) MacWinTabsHandler.wrapRootPaneNorthSide(this, northPanel) else northPanel, BorderLayout.NORTH)
 
     // listen to mouse motion events for a11y
     contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
+
     val menu = IdeMenuBar.createMenuBar()
     val isDecoratedMenu = isDecoratedMenu
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
@@ -112,7 +113,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
       if (isFloatingMenuBarSupported) {
         menuBar = menu
-        layeredPane.add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1))
+        layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }
       @Suppress("LeakingThis")
       addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(frameHelper) }
@@ -125,6 +126,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     if (frame is IdeFrameImpl) {
       putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, java.lang.Boolean.TRUE)
     }
+
     UIUtil.decorateWindowHeader(this)
     glassPane.isVisible = false
     border = UIManager.getBorder("Window.border")
