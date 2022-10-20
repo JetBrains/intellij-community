@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DialogWrapper
@@ -18,7 +19,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
@@ -37,11 +38,12 @@ import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.Path
 
 internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
   override fun openLink(project: Project?, link: String) {
     val uri = createUri(link) ?: return
-    if (tryOpenInEditor(uri)) {
+    if (tryOpenInEditor(project, uri)) {
       return
     }
     invokeLater {
@@ -140,40 +142,48 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
              isLocalHost(hostName, false, false)
     }
 
-    private fun tryOpenInEditor(uri: URI): Boolean {
+    private fun tryOpenInEditor(project: Project?, uri: URI): Boolean {
       if (uri.scheme != "file") {
         return false
       }
       return runReadAction {
-        actuallyOpenInEditor(uri)
+        actuallyOpenInEditor(project, uri)
       }
     }
 
-    private fun actuallyOpenInEditor(uri: URI): Boolean {
+    private fun URI.findVirtualFile(): VirtualFile? {
+      val path = Path.of(path)
+      return VfsUtil.findFile(path, true)
+    }
+
+    private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
       val anchor = uri.fragment
-      val path = uri.path
-      val targetFile = LocalFileSystem.getInstance().findFileByPath(path) ?: return false
-      val project = guessProjectForFile(targetFile) ?: return false
+      val targetFile = uri.findVirtualFile() ?: return false
+      val project = project ?: guessProjectForFile(targetFile) ?: return false
       if (anchor == null) {
         invokeLater {
           OpenFileAction.openFile(targetFile, project)
         }
         return true
       }
-      val point = obtainHeadersPopupPosition(project) ?: return false
+      val point = obtainHeadersPopupPosition(project)
+      if (point == null) {
+        logger.warn("Failed to obtain screen point for showing popup")
+        return false
+      }
       val headers = runReadAction {
         val file = PsiManager.getInstance(project).findFile(targetFile)
         val scope = when (file) {
           null -> GlobalSearchScope.EMPTY_SCOPE
           else -> GlobalSearchScope.fileScope(file)
         }
-        HeaderAnchorIndex.collectHeaders(project, scope, anchor)
+        return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor)
       }
       invokeLater {
         when {
           headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-          headers.size == 1 -> navigateToHeader(targetFile, headers.first())
-          else -> showHeadersPopup(headers, point)
+          headers.size == 1 -> navigateToHeader(project, targetFile, headers.first())
+          else -> showHeadersPopup(project, headers, point)
         }
       }
       return true
@@ -196,11 +206,12 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       balloon.show(point, Balloon.Position.below)
     }
 
-    private fun showHeadersPopup(headers: Collection<PsiElement>, point: RelativePoint) {
-      JBPopupFactory.getInstance().createListPopup(HeadersPopup(headers.toList())).show(point)
+    private fun showHeadersPopup(project: Project, headers: Collection<PsiElement>, point: RelativePoint) {
+      JBPopupFactory.getInstance().createListPopup(HeadersPopup(project, headers.toList())).show(point)
     }
 
     private class HeadersPopup(
+      private val project: Project,
       headers: List<PsiElement>
     ): BaseListPopupStep<PsiElement>(MarkdownBundle.message("markdown.navigate.to.header"), headers) {
       override fun getTextFor(value: PsiElement): String {
@@ -213,22 +224,22 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
 
       override fun onChosen(selectedValue: PsiElement, finalChoice: Boolean): PopupStep<*> {
         return doFinalStep {
-          navigateToHeader(selectedValue.containingFile.virtualFile, selectedValue)
+          navigateToHeader(project, selectedValue.containingFile.virtualFile, selectedValue)
         }
       }
     }
 
-    private fun navigateToHeader(targetFile: VirtualFile, item: PsiElement) {
-      val editorManager = FileEditorManager.getInstance(item.project)
-      val editor = editorManager.getSelectedEditor(targetFile) as? MarkdownEditorWithPreview ?: return
-      val oldAutoScrollPreview = editor.isAutoScrollPreview
-      if (!oldAutoScrollPreview) {
-        editor.isAutoScrollPreview = true
+    private fun navigateToHeader(project: Project, file: VirtualFile, element: PsiElement) {
+      val manager = FileEditorManager.getInstance(project)
+      val openedEditors = manager.getEditors(file).filterIsInstance<MarkdownEditorWithPreview>()
+      if (openedEditors.isNotEmpty()) {
+        for (editor in openedEditors) {
+          PsiNavigateUtil.navigate(element, true)
+        }
+        return
       }
-      PsiNavigateUtil.navigate(item)
-      if (!oldAutoScrollPreview) {
-        editor.isAutoScrollPreview = false
-      }
+      val descriptor = OpenFileDescriptor(project, file, element.textOffset)
+      manager.openEditor(descriptor, true)
     }
   }
 }
