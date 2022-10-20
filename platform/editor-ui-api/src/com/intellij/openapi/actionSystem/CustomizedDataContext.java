@@ -21,28 +21,38 @@ public abstract class CustomizedDataContext implements DataContext {
   public abstract @Nullable Object getRawCustomData(@NotNull String dataId);
 
   @ApiStatus.Internal
-  public final @Nullable Object getCustomData(@NotNull String dataId) {
-    return getRawCustomData(dataId);
+  public final @NotNull DataProvider getCustomDataProvider() {
+    return this instanceof Simple ? ((Simple)this).provider : this::getRawCustomData;
   }
 
   @Override
   @ApiStatus.NonExtendable
   public @Nullable Object getData(@NotNull String dataId) {
-    Object data = DataManager.getInstance().getCustomizedData(dataId, getParent(), this::getCustomData);
+    Object data = DataManager.getInstance().getCustomizedData(dataId, getParent(), getCustomDataProvider());
     return data == EXPLICIT_NULL ? null : data;
   }
 
   public static @NotNull CustomizedDataContext create(@NotNull DataContext parent, @NotNull DataProvider provider) {
-    return new CustomizedDataContext() {
-      @Override
-      public @NotNull DataContext getParent() {
-        return parent;
-      }
+    return new Simple(parent, provider);
+  }
 
-      @Override
-      public @Nullable Object getRawCustomData(@NotNull String dataId) {
-        return provider.getData(dataId);
-      }
-    };
+  private static class Simple extends CustomizedDataContext {
+    final DataContext parent;
+    final DataProvider provider;
+
+    Simple(@NotNull DataContext parent, @NotNull DataProvider provider) {
+      this.parent = parent;
+      this.provider = provider;
+    }
+
+    @Override
+    public @NotNull DataContext getParent() {
+      return parent;
+    }
+
+    @Override
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
+      return provider.getData(dataId);
+    }
   }
 }

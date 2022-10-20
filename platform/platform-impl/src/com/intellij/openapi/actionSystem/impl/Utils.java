@@ -101,10 +101,10 @@ public final class Utils {
       CustomizedDataContext context = (CustomizedDataContext)dataContext;
       DataContext delegate = wrapToAsyncDataContext(context.getParent());
       if (delegate == DataContext.EMPTY_CONTEXT) {
-        return new PreCachedDataContext(null).prependProvider(context::getRawCustomData);
+        return new PreCachedDataContext(null).prependProvider(context.getCustomDataProvider());
       }
       else if (delegate instanceof PreCachedDataContext) {
-        return ((PreCachedDataContext)delegate).prependProvider(context::getRawCustomData);
+        return ((PreCachedDataContext)delegate).prependProvider(context.getCustomDataProvider());
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) { // see `HeadlessContext`
