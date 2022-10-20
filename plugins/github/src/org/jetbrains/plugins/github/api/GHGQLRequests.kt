@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHBranchProtectionRule
+import org.jetbrains.plugins.github.api.data.GHComment
+import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
+import org.jetbrains.plugins.github.api.data.GHRepository
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
@@ -41,7 +45,7 @@ object GHGQLRequests {
                                  "organization", "teams")
 
       private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam>)
-        : GHConnection<GHTeam>(pageInfo, nodes)
+        : GraphQLConnectionDTO<GHTeam>(pageInfo, nodes)
     }
   }
 
@@ -66,7 +70,7 @@ object GHGQLRequests {
     }
 
     private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule>)
-      : GHConnection<GHBranchProtectionRule>(pageInfo, nodes)
+      : GraphQLConnectionDTO<GHBranchProtectionRule>(pageInfo, nodes)
   }
 
   object Comment {
@@ -129,7 +133,7 @@ object GHGQLRequests {
       }
 
     private class PullRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequest>)
-      : GHConnection<GHPullRequest>(pageInfo, nodes)
+      : GraphQLConnectionDTO<GHPullRequest>(pageInfo, nodes)
 
     fun update(repository: GHRepositoryCoordinates, pullRequestId: String, title: String?, description: String?): GQLQuery<GHPullRequest> {
       val parameters = mutableMapOf<String, Any>("pullRequestId" to pullRequestId)
@@ -186,7 +190,7 @@ object GHGQLRequests {
       )
 
     private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread>)
-      : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
+      : GraphQLConnectionDTO<GHPullRequestReviewThread>(pageInfo, nodes)
 
     fun commits(
       repository: GHRepositoryCoordinates,
@@ -200,7 +204,7 @@ object GHGQLRequests {
       )
 
     private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit>)
-      : GHConnection<GHPullRequestCommit>(pageInfo, nodes)
+      : GraphQLConnectionDTO<GHPullRequestCommit>(pageInfo, nodes)
 
     fun files(
       repository: GHRepositoryCoordinates,
@@ -214,7 +218,7 @@ object GHGQLRequests {
       )
 
     private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile>) :
-      GHConnection<GHPullRequestChangedFile>(pageInfo, nodes)
+      GraphQLConnectionDTO<GHPullRequestChangedFile>(pageInfo, nodes)
 
     fun markFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
       GQLQuery.TraversedParsed(
@@ -249,7 +253,7 @@ object GHGQLRequests {
       }
 
       private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem>)
-        : GHConnection<GHPRTimelineItem>(pageInfo, nodes)
+        : GraphQLConnectionDTO<GHPRTimelineItem>(pageInfo, nodes)
     }
 
     object Review {
