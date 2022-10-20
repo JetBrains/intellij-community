@@ -1,0 +1,12 @@
+[{
+37|test.f(B.|getB|()),
+38|test2.f(B.|getB|()),
+39|globalB.f(B.|getB|()),
+40|outer.f(B.|getB|()),
+41|inner.f(B.|getB|())}
+, {
+42|A1.f(B.|getB|()),
+43|A1.f(B.|getB|())}
+, {
+44|A2.f(B.|getB|())}
+]
