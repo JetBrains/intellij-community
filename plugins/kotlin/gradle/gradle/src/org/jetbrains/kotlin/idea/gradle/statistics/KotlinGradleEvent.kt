@@ -14,7 +14,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.text.trimMiddle
-import org.jetbrains.kotlin.idea.statistics.GradleStatisticsEventGroups
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
