@@ -17,35 +17,37 @@ class EditorConfigUnexpectedCommaInspection : LocalInspectionTool() {
     override fun visitOptionValueList(list: EditorConfigOptionValueList) {
       val badCommas = findBadCommas(list)
       val message by lazy { EditorConfigBundle["inspection.value.list.comma.unexpected.message"] }
-      val quickFix by lazy { EditorConfigCleanupValueListQuickFix(badCommas) }
+      val quickFix by lazy { EditorConfigCleanupValueListQuickFix() }
       badCommas.forEach {
         holder.registerProblem(it, message, quickFix)
       }
     }
   }
 
-  private fun findBadCommas(list: EditorConfigOptionValueList): List<PsiElement> {
-    val ranges = list.optionValueIdentifierList
-      .asSequence()
-      .zipWithNext()
-      .map { (previous, current) -> TextRange(previous.textRange.endOffset, current.textRange.startOffset) }
-      .toMutableList()
-    val commas = findCommas(list)
+  companion object {
+    fun findBadCommas(list: EditorConfigOptionValueList): List<PsiElement> {
+      val ranges = list.optionValueIdentifierList
+        .asSequence()
+        .zipWithNext()
+        .map { (previous, current) -> TextRange(previous.textRange.endOffset, current.textRange.startOffset) }
+        .toMutableList()
+      val commas = findCommas(list)
 
-    return commas.filter { comma ->
-      val range = ranges.firstOrNull { it.contains(comma.textOffset) } ?: return@filter true
-      ranges.remove(range)
-      false
-    }
-  }
-
-  private fun findCommas(list: EditorConfigOptionValueList): List<PsiElement> {
-    val result = mutableListOf<PsiElement>()
-    EditorConfigPsiTreeUtil.iterateVisibleChildren(list) {
-      if (it.node.elementType == EditorConfigElementTypes.COMMA) {
-        result.add(it)
+      return commas.filter { comma ->
+        val range = ranges.firstOrNull { it.contains(comma.textOffset) } ?: return@filter true
+        ranges.remove(range)
+        false
       }
     }
-    return result
+
+    private fun findCommas(list: EditorConfigOptionValueList): List<PsiElement> {
+      val result = mutableListOf<PsiElement>()
+      EditorConfigPsiTreeUtil.iterateVisibleChildren(list) {
+        if (it.node.elementType == EditorConfigElementTypes.COMMA) {
+          result.add(it)
+        }
+      }
+      return result
+    }
   }
 }
