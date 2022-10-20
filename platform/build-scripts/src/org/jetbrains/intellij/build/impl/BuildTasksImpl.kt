@@ -107,20 +107,6 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
                                                    context = context)
   }
 
-  override suspend fun generateProjectStructureMapping(targetFile: Path) {
-    val pluginLayoutRoot = withContext(Dispatchers.IO) {
-      Files.createDirectories(context.paths.tempDir)
-      Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-    }
-    writeProjectStructureReport(
-      entries = generateProjectStructureMapping(context = context,
-                                                state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
-                                                pluginLayoutRoot = pluginLayoutRoot),
-      file = targetFile,
-      buildPaths = context.paths
-    )
-  }
-
   override fun compileProjectAndTests(includingTestsInModules: List<String>) {
     compileModules(null, includingTestsInModules)
   }
@@ -134,11 +120,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
   }
 
   override fun buildFullUpdaterJar() {
-    doBuildUpdaterJar(context, "updater-full.jar")
-  }
-
-  fun buildUpdaterJar() {
-    doBuildUpdaterJar(context, "updater.jar")
+    buildUpdaterJar(context, "updater-full.jar")
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -171,6 +153,23 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
     }
   }
+}
+
+/**
+ * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
+ */
+suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
+  val pluginLayoutRoot = withContext(Dispatchers.IO) {
+    Files.createDirectories(context.paths.tempDir)
+    Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+  }
+  writeProjectStructureReport(
+    entries = generateProjectStructureMapping(context = context,
+                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
+                                              pluginLayoutRoot = pluginLayoutRoot),
+    file = targetFile,
+    buildPaths = context.paths
+  )
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
@@ -924,7 +923,7 @@ internal fun logFreeDiskSpace(dir: Path, phase: String) {
   ))
 }
 
-private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
+fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
   val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
