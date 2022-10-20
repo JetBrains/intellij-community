@@ -28,7 +28,11 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<Class<? extends IFileElementType>, Long> myModCounts = new ConcurrentHashMap<>();
   private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
-    return (StubUpdatingIndexStorage)((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    UpdatableIndex index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
+      index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex)index).getBaseIndex();
+    }
+    return (StubUpdatingIndexStorage)index;
   });
 
   private record FileInfo(VirtualFile file, Project project, Class<? extends IFileElementType> type) { }
