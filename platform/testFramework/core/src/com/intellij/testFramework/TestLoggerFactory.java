@@ -65,7 +65,9 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     var julLogger = java.util.logging.Logger.getLogger(category);
-    configureLogToStdoutIfDebug(julLogger);
+    if (System.getenv("TEAMCITY_VERSION") != null) {
+      configureLogToStdoutIfDebug(julLogger);
+    }
     return new TestLogger(julLogger, this);
   }
 
