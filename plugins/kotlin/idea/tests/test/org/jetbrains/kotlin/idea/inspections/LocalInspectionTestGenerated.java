@@ -7996,6 +7996,39 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3")
+    public static class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3 extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3/simple2.kt");
+        }
+
+        @TestMetadata("simple3.kt")
+        public void testSimple3() throws Exception {
+            runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3/simple3.kt");
+        }
+
+        @TestMetadata("simple4.kt")
+        public void testSimple4() throws Exception {
+            runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3/simple4.kt");
+        }
+
+        @TestMetadata("simple5.kt")
+        public void testSimple5() throws Exception {
+            runTest("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3/simple5.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/recursiveEqualsCall")
     public static class RecursiveEqualsCall extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

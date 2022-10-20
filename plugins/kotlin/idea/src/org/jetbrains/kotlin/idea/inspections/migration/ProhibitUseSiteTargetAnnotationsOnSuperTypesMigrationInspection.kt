@@ -22,6 +22,6 @@ class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigrationInspection :
     }
 
     override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *> =
-        Errors.ANNOTATION_ON_SUPERCLASS.errorFactory
+        with(Errors.ANNOTATION_ON_SUPERCLASS) { languageVersionSettings.chooseFactory() }
 }
 
