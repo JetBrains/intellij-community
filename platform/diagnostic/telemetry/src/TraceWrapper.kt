@@ -51,7 +51,7 @@ private class TraceWrapper(private val scopeName: String,
   }
 }
 
-internal object IJNoopTracer : IJTracer {
+object IJNoopTracer : IJTracer {
   val noopTrace: Tracer = TracerProvider.noop().get("")
 
   override fun spanBuilder(spanName: String): SpanBuilder = noopTrace.spanBuilder(spanName)

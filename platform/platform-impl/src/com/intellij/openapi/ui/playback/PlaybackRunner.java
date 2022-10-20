@@ -19,6 +19,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -125,17 +127,14 @@ public class PlaybackRunner {
       return myActionCallback;
     }
 
-    new Thread("playback runner") {
-      @Override
-      public void run() {
-        if (myUseDirectActionCall) {
-          executeFrom(0, getScriptDir());
-        }
-        else {
-          IdeEventQueue.getInstance().doWhenReady(() -> executeFrom(0, getScriptDir()));
-        }
+    new Thread(null, Context.current().wrap(() -> {
+      if (myUseDirectActionCall) {
+        executeFrom(0, getScriptDir());
       }
-    }.start();
+      else {
+        IdeEventQueue.getInstance().doWhenReady(Context.current().wrap(() -> executeFrom(0, getScriptDir())));
+      }
+    }), "playback runner").start();
 
     return myActionCallback;
   }
@@ -215,27 +214,31 @@ public class PlaybackRunner {
           }
         };
       final Promise<Object> cmdCallback = cmd.execute(context);
+      Context initialContext = Context.current();
       cmdCallback
         .onSuccess(it -> {
-          if (cmd.canGoFurther()) {
-            int delay = getDelay(cmd);
-            if (delay > 0) {
-              if (SwingUtilities.isEventDispatchThread()) {
-                new SingleAlarm(() -> {
+          try(Scope ignored = initialContext.makeCurrent()) {
+            if (cmd.canGoFurther()) {
+              int delay = getDelay(cmd);
+              if (delay > 0) {
+                if (SwingUtilities.isEventDispatchThread()) {
+                  new SingleAlarm(Context.current().wrap(() -> {
+                    executeFrom(cmdIndex + 1, context.getBaseDir());
+                  }), delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+                }
+                else {
+                  LockSupport.parkUntil(System.currentTimeMillis() + delay);
                   executeFrom(cmdIndex + 1, context.getBaseDir());
-                }, delay, myOnStop, Alarm.ThreadToUse.SWING_THREAD).request();
+                }
               }
               else {
-                LockSupport.parkUntil(System.currentTimeMillis() + delay);
                 executeFrom(cmdIndex + 1, context.getBaseDir());
               }
-            } else {
-              executeFrom(cmdIndex + 1, context.getBaseDir());
             }
-          }
-          else {
-            myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
-            myActionCallback.setDone();
+            else {
+              myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
+              myActionCallback.setDone();
+            }
           }
         })
         .onError(error -> {
