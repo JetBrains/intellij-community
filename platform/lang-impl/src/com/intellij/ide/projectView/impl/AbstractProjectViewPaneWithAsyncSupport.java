@@ -47,11 +47,11 @@ import java.util.StringTokenizer;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
-public abstract class AsyncProjectViewPane extends AbstractProjectViewPane {
+public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane {
   private AsyncProjectViewSupport myAsyncSupport;
   private JComponent myComponent;
 
-  protected AsyncProjectViewPane(@NotNull Project project) {
+  protected AbstractProjectViewPaneWithAsyncSupport(@NotNull Project project) {
     super(project);
   }
 
