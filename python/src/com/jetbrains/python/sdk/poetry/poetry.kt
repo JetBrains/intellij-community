@@ -622,7 +622,8 @@ fun parsePoetryShowOutdated(input: String): Map<String, PoetryOutdatedVersion> {
   return input
     .lines()
     .mapNotNull { line ->
-      line.split(Pattern.compile(" +"))
+      // We need to ignore the 'uninstalled indicator' `(!)`
+      line.split(Regex("( |\\(!\\))+"))
         .takeIf { it.size > 3 }?.let { it[0] to PoetryOutdatedVersion(it[1], it[2]) }
     }.toMap()
 }
