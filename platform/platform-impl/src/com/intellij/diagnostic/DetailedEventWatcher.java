@@ -89,7 +89,8 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   public void runnableTaskFinished(final @NotNull Runnable runnable,
                                    final long waitedInQueueNs,
                                    final int queueSize,
-                                   final long executionDurationNs) {
+                                   final long executionDurationNs,
+                                   final boolean wasInSkippedItems) {
     final long finishedAtMs = System.currentTimeMillis();
     final long startedExecutionAtMs = finishedAtMs - NANOSECONDS.toMillis(executionDurationNs);
     Class<?> runnableOrCallableClass = getCallableOrRunnableClass(runnable);

@@ -136,10 +136,23 @@ public class OtelReportingEventWatcher implements EventWatcher, Disposable {
   public void runnableTaskFinished(final @NotNull Runnable runnable,
                                    final long waitedInQueueNs,
                                    final int queueSize,
-                                   final long executionDurationNs) {
-    waitingTimesHistogram.recordValue(waitedInQueueNs);
-    queueSizesHistogram.recordValue(queueSize);
-    executionTimeHistogram.recordValue(executionDurationNs);
+                                   final long executionDurationNs,
+                                   final boolean wasInSkippedItems) {
+    //wasInSkippedItems is true for tasks that couldn't be executed in order because of modalityState mismatch, and
+    // was delayed. Such a delay is huge compared to usual task queue waiting times, and 'skipped' tasks dominate
+    // waiting time stats -- which is undesirable, since we want waiting times to be a metric of queue utilization,
+    // not modal dialogs opening times. What is why I excluded skippedItems from stats: this leads to a bias in
+    // queue stats, but even with such a bias queue stats still somehow describes queue utilization -- while total
+    // (non-skipped+skipped) stats describes mostly user behavior in relation to a modal dialogs.
+    //FIXME RC: Better approach would be to gather wasInSkippedItems=true tasks statistics separately, because they
+    //          naturally have much longer waiting times, better not to be mixed with regular (not bypassed) tasks
+    //          waiting times. Also, it could be beneficial to collect for 'skipped' tasks their waiting times since
+    //          re-appending to a queue (see apt TODOs in FlushQueue)
+    if (!wasInSkippedItems) {
+      waitingTimesHistogram.recordValue(waitedInQueueNs);
+      queueSizesHistogram.recordValue(queueSize);
+      executionTimeHistogram.recordValue(executionDurationNs);
+    }
   }
 
 

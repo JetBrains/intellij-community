@@ -70,12 +70,14 @@ public interface EventWatcher {
    *                            samplings, they are equivalent only if arrivals are poisson-distributed, which are
    *                            rarely true for real workloads.
    * @param executionDurationNs how long did it take to execute the task (nanos)
+   * @param wasInSkippedItems task was bypassed for a while because of modality state mismatch
    */
   @RequiresEdt
   void runnableTaskFinished(final @NotNull Runnable runnable,
                             final long waitedInQueueNs,
                             final int queueSize,
-                            final long executionDurationNs);
+                            final long executionDurationNs,
+                            final boolean wasInSkippedItems);
 
   @RequiresEdt
   void edtEventStarted(@NotNull AWTEvent event, long startedAtMs);
