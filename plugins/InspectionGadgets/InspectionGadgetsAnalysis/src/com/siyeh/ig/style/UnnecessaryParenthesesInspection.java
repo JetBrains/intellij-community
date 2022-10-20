@@ -33,10 +33,10 @@ import java.util.Objects;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClarifyingParentheses = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreParenthesesOnConditionals = false;
 
   @SuppressWarnings("PublicField")
