@@ -69,14 +69,11 @@ data class SshConnectionConfigPatch(
   data class HostKeyVerifier(
     var hashKnownHosts: Boolean?,
     var strictHostKeyChecking: StrictHostKeyChecking?,
-    var allowDialogs: Boolean?
   ) {
-    constructor() : this(null, null, null)
+    constructor() : this(null, null)
 
     fun withHashKnownHosts(value: Boolean): HostKeyVerifier = apply { hashKnownHosts = value }
     fun withStrictHostKeyChecking(value: StrictHostKeyChecking): HostKeyVerifier = apply { strictHostKeyChecking = value }
-
-    fun withAllowDialogs(value: Boolean): HostKeyVerifier = apply { allowDialogs = value }
   }
 
   constructor() : this(
