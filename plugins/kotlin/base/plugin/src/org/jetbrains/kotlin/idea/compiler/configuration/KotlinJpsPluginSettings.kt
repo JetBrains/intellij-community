@@ -119,16 +119,17 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
          *
          * Please, prefer [getInstance] if possible.
          */
-        fun readFromKotlincXmlOrIpr(path: Path) =
-            path.takeIf { it.fileIsNotEmpty() }
+        fun readFromKotlincXmlOrIpr(path: Path): JpsPluginSettings? {
+            return path.takeIf { it.fileIsNotEmpty() }
                 ?.let { JDOMUtil.load(path) }
                 ?.children
                 ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
                 ?.let { xmlElement ->
                     JpsPluginSettings().apply {
-                        XmlSerializer.deserializeInto(this, xmlElement)
+                    XmlSerializer.deserializeInto(this, xmlElement)
                     }
                 }
+        }
 
         fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
             val version = jpsVersion(project)
