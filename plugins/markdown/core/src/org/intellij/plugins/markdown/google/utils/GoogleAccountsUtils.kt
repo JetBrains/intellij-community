@@ -8,23 +8,26 @@ import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
 import org.intellij.plugins.markdown.google.accounts.*
@@ -56,7 +59,16 @@ internal object GoogleAccountsUtils {
     val oAuthService = service<GoogleOAuthService>()
 
     if (!GoogleChooseAccountDialog(project, accountsListModel, accountManager).showAndGet()) return null
-    updateAccountsList(accountsListModel, accountManager)
+
+    val newTokensMap = mutableMapOf<GoogleAccount, GoogleCredentials?>()
+    newTokensMap.putAll(accountsListModel.newCredentials)
+    for (account in accountsListModel.accounts) {
+      newTokensMap.putIfAbsent(account, null)
+    }
+    runBlockingModal(ModalTaskOwner.project(project), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+      accountManager.updateAccounts(newTokensMap)
+    }
+    accountsListModel.clearNewCredentials()
 
     return try {
       val selectedAccount = accountsListModel.selectedAccount ?: error("The selected account cannot be null")
@@ -95,11 +107,12 @@ internal object GoogleAccountsUtils {
   /**
    * Returns the user's credentials if the access token is still valid, otherwise updates the credentials and returns updated.
    */
+  //TODO: rework to access token on BG
   @RequiresEdt
   fun getOrUpdateUserCredentials(oAuthService: GoogleOAuthService,
                                  accountManager: GoogleAccountManager,
                                  account: GoogleAccount): GoogleCredentials? =
-    accountManager.findCredentials(account)?.let { credentials ->
+    runBlocking { accountManager.findCredentials(account) }?.let { credentials ->
       if (credentials.isAccessTokenValid()) return credentials
 
       val refreshRequest = getGoogleRefreshRequest(credentials.refreshToken)
@@ -108,7 +121,9 @@ internal object GoogleAccountsUtils {
       return try {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
           val newCred = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialFuture)
-          accountManager.updateAccount(account, newCred)
+          runBlocking {
+            accountManager.updateAccount(account, newCred)
+          }
 
           newCred
         }, MarkdownBundle.message("markdown.google.account.update.credentials.progress.title"), true, null)
@@ -145,8 +160,7 @@ internal object GoogleAccountsUtils {
     return panel {
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
       }.resizableRow()
     }
   }
@@ -196,17 +210,6 @@ internal object GoogleAccountsUtils {
     val tokenResponse = getTokenResponse(credentials)
 
     return GoogleCredential().setFromTokenResponse(tokenResponse)
-  }
-
-  @RequiresEdt
-  private fun updateAccountsList(accountsListModel: GoogleAccountsListModel, accountManager: GoogleAccountManager) {
-    val newTokensMap = mutableMapOf<GoogleAccount, GoogleCredentials?>()
-    newTokensMap.putAll(accountsListModel.newCredentials)
-    for (account in accountsListModel.accounts) {
-      newTokensMap.putIfAbsent(account, null)
-    }
-    accountManager.updateAccounts(newTokensMap)
-    accountsListModel.clearNewCredentials()
   }
 
   /**

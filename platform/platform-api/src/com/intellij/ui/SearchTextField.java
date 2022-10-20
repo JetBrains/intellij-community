@@ -98,6 +98,18 @@ public class SearchTextField extends JPanel {
         }
         return bounds;
       }
+
+      @Override
+      public String getToolTipText() {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText();
+      }
+
+      @Override
+      public String getToolTipText(MouseEvent event) {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText(event);
+      }
     };
     myTextField.setColumns(15);
     myTextField.addFocusListener(new FocusAdapter() {

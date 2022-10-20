@@ -10,11 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public class CompletionSorterImpl extends CompletionSorter {
   private final List<? extends ClassifierFactory<LookupElement>> myMembers;
   private final int myHashCode;
@@ -71,7 +67,7 @@ public class CompletionSorterImpl extends CompletionSorter {
   }
 
   public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
-    return new CompletionSorterImpl(myMembers.stream().filter(removeCondition.negate()).collect(Collectors.toList()));
+    return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
   }
 
   private CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
@@ -87,14 +83,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof CompletionSorterImpl)) return false;
-
-    CompletionSorterImpl that = (CompletionSorterImpl)o;
-
-    if (!myMembers.equals(that.myMembers)) return false;
-
-    return true;
+    return this == o || o instanceof CompletionSorterImpl that && myMembers.equals(that.myMembers);
   }
 
   @Override

@@ -6,13 +6,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +41,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,21 +117,51 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   @NotNull
-  private ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
+  private static ActionToolbar createTextActionsToolbar(@Nullable JComponent editor) {
     ActionManager actionManager = ActionManager.getInstance();
     @NotNull ActionGroup textActionGroup = (ActionGroup)actionManager.getAction(VcsLogActionIds.TEXT_FILTER_SETTINGS_ACTION_GROUP);
-    ActionToolbar toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, textActionGroup, true) {
       @Override
-      protected void applyToolbarLook(@Nullable ActionButtonLook look, @NotNull Presentation presentation, @NotNull JComponent component) {
-
-        super.applyToolbarLook(look, presentation, component);
+      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                          ActionButtonLook look,
+                                                          @NotNull String place,
+                                                          @NotNull Presentation presentation,
+                                                          @NotNull Dimension minimumSize) {
+        MyActionButton button = new MyActionButton(action);
+        button.setFocusable(true);
+        applyToolbarLook(look, presentation, button);
+        return button;
       }
     };
+
+    toolbar.setCustomButtonLook(new FieldInplaceActionButtonLook());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setTargetComponent(editor);
     toolbar.updateActionsImmediately();
     return toolbar;
   }
+
+  private static final class MyActionButton extends ActionButton {
+    MyActionButton(@NotNull AnAction action) {
+      super(action, action.getTemplatePresentation().clone(), "Vcs.Log.SearchTextField", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      updateIcon();
+    }
+
+    @Override
+    public int getPopState() {
+      return isSelected() ? SELECTED : super.getPopState();
+    }
+
+    @Override
+    public Icon getIcon() {
+      if (isEnabled() && isSelected()) {
+        Icon selectedIcon = myPresentation.getSelectedIcon();
+        if (selectedIcon != null) return selectedIcon;
+      }
+      return super.getIcon();
+    }
+  }
+
 
   @Override
   public void updateDataPack(@NotNull VcsLogDataPack newDataPack) {
@@ -812,11 +846,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         String modelText = myTextFilterModel.getText();
         if (!Objects.equals(getText(), modelText)) setText(modelText);
       });
-      new HelpTooltip().setTitle(VcsLogBundle.message("vcs.log.filter.text.hash.tooltip"))
-        .setShortcut(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER))
-        .setLocation(HelpTooltip.Alignment.BOTTOM)
-        .installOn(getTextEditor());
+
+      getTextEditor().setToolTipText(createTooltipText());
       Disposer.register(parentDisposable, this::hidePopup);
+    }
+
+    @NotNull
+    @NlsContexts.Tooltip
+    private static String createTooltipText() {
+      String text = VcsLogBundle.message("vcs.log.filter.text.hash.tooltip");
+      String shortcut = HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
+      return XmlStringUtil.wrapInHtml(text + shortcut);
     }
 
     protected void applyFilter() {

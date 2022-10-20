@@ -20,9 +20,6 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.patterns.XmlPatterns;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DomReferenceContributor extends PsiReferenceContributor{
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {

@@ -7,15 +7,15 @@ import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import java.nio.file.Paths
+import java.nio.file.Path
 import kotlin.io.path.extension
 
-const val KOTLIN_BUNDLED = "KOTLIN_BUNDLED"
+const val KOTLIN_BUNDLED: String = "KOTLIN_BUNDLED"
 
-class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
+private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributor {
     override fun getProjectPathMacros(projectFilePath: String): Map<String, String> {
         // It's not possible to use KotlinJpsPluginSettings.getInstance(project) because the project isn't yet initialized
-        val path = Paths.get(projectFilePath)
+        val path = Path.of(projectFilePath)
             .let { iprOrMisc ->
                 when (iprOrMisc.extension) {
                     ProjectFileType.DEFAULT_EXTENSION -> iprOrMisc

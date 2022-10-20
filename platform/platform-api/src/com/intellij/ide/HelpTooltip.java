@@ -619,8 +619,8 @@ public class HelpTooltip {
     initialShowScheduled = false;
     popupAlarm.cancelAllRequests();
 
-    if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
-      myPopup.cancel();
+    if (myPopup != null && (!isOverPopup || force)) {
+      if (myPopup.isVisible()) myPopup.cancel();
       myPopup = null;
       myToolTipText = null;
     }

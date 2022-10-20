@@ -42,11 +42,13 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T> {
     this.horizontalAlign = horizontalAlign
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T> {
     this.verticalAlign = verticalAlign
     return this
@@ -57,7 +59,6 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
       is AlignX -> setAlign(align, null)
       is AlignY -> setAlign(null, align)
       is AlignBoth -> {
-        align as AlignBothImpl
         setAlign(align.alignX, align.alignY)
       }
     }

@@ -12,7 +12,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
@@ -47,15 +47,15 @@ internal class EntityStorageSnapshotImpl constructor(
 ) : EntityStorageSnapshot, AbstractEntityStorage() {
 
   // This cache should not be transferred to other versions of storage
-  private val persistentIdCache = ConcurrentHashMap<PersistentEntityId<*>, WorkspaceEntity>()
+  private val symbolicIdCache = ConcurrentHashMap<SymbolicEntityId<*>, WorkspaceEntity>()
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
   private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
 
   @Suppress("UNCHECKED_CAST")
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entity = persistentIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entity = symbolicIdCache.getOrPut(id) { super.resolve(id) ?: NULL_ENTITY }
     return if (entity !== NULL_ENTITY) entity as E else null
   }
 
@@ -132,8 +132,8 @@ internal class MutableEntityStorageImpl(
     return entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
-                                                                                    entityClass: Class<R>): Sequence<R> {
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
+                                                                                  entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
 
     @Suppress("UNCHECKED_CAST")
@@ -142,8 +142,8 @@ internal class MutableEntityStorageImpl(
       .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
     @Suppress("UNCHECKED_CAST")
     return entityData.wrapAsModifiable(this) as E?
@@ -191,7 +191,7 @@ internal class MutableEntityStorageImpl(
       val newEntityData = entity.getEntityData()
 
       // Check for persistent id uniqueness
-      assertUniquePersistentId(newEntityData)
+      assertUniqueSymbolicId(newEntityData)
 
       entitiesByType.add(newEntityData, entity.getEntityClass().toClassId())
 
@@ -206,35 +206,35 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  private fun <T : WorkspaceEntity> assertUniquePersistentId(pEntityData: WorkspaceEntityData<T>) {
-    pEntityData.persistentId()?.let { persistentId ->
-      val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
+  private fun <T : WorkspaceEntity> assertUniqueSymbolicId(pEntityData: WorkspaceEntityData<T>) {
+    pEntityData.symbolicId()?.let { symbolicId ->
+      val ids = indexes.symbolicIdIndex.getIdsByEntry(symbolicId)
       if (ids != null) {
-        // Oh, oh. This persistent id exists already
+        // Oh, oh. This symbolic id exists already
         // Fallback strategy: remove existing entity with all it's references
         val existingEntityData = entityDataByIdOrDie(ids)
         val existingEntity = existingEntityData.createEntity(this)
         removeEntity(existingEntity)
         LOG.error(
           """
-              addEntity: persistent id already exists. Replacing entity with the new one.
-              Persistent id: $persistentId
+              addEntity: symbolic id already exists. Replacing entity with the new one.
+              Symbolic id: $symbolicId
               
               Existing entity data: $existingEntityData
               New entity data: $pEntityData
               
               Broken consistency: $brokenConsistency
-            """.trimIndent(), PersistentIdAlreadyExistsException(persistentId)
+            """.trimIndent(), SymbolicIdAlreadyExistsException(symbolicId)
         )
         if (throwExceptionOnError) {
-          throw PersistentIdAlreadyExistsException(persistentId)
+          throw SymbolicIdAlreadyExistsException(symbolicId)
         }
       }
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
+  override fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     try {
       lockWrite()
       if (e is ModifiableWorkspaceEntityBase<*> && e.diff !== this) error("Trying to modify entity from a different builder")
@@ -245,11 +245,11 @@ internal class MutableEntityStorageImpl(
       // Get entity data that will be modified
       val copiedData = entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<T>
 
-      val modifiableEntity = (if (e is ModifiableWorkspaceEntity<*>) e else copiedData.wrapAsModifiable(this)) as M
+      val modifiableEntity = (if (e is WorkspaceEntity.Builder<*>) e else copiedData.wrapAsModifiable(this)) as M
       modifiableEntity as ModifiableWorkspaceEntityBase<*>
       modifiableEntity.changedProperty.clear()
 
-      val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId else null
+      val beforeSymbolicId = if (e is WorkspaceEntityWithSymbolicId) e.symbolicId else null
 
       val originalParents = this.getOriginalParents(entityId.asChild())
       val beforeParents = this.refs.getParentRefsOfChild(entityId.asChild())
@@ -262,11 +262,11 @@ internal class MutableEntityStorageImpl(
       }
 
       // Check for persistent id uniqueness
-      if (beforePersistentId != null) {
-        val newPersistentId = copiedData.persistentId()
-        if (newPersistentId != null) {
-          val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-          if (beforePersistentId != newPersistentId && ids != null) {
+      if (beforeSymbolicId != null) {
+        val newSymbolicId = copiedData.symbolicId()
+        if (newSymbolicId != null) {
+          val ids = indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
+          if (beforeSymbolicId != newSymbolicId && ids != null) {
             // Oh, oh. This persistent id exists already.
             // Remove an existing entity and replace it with the new one.
 
@@ -279,9 +279,9 @@ internal class MutableEntityStorageImpl(
               Persistent id: $copiedData
               
               Broken consistency: $brokenConsistency
-            """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
+            """.trimIndent(), SymbolicIdAlreadyExistsException(newSymbolicId))
             if (throwExceptionOnError) {
-              throw PersistentIdAlreadyExistsException(newPersistentId)
+              throw SymbolicIdAlreadyExistsException(newSymbolicId)
             }
           }
         }
@@ -300,7 +300,7 @@ internal class MutableEntityStorageImpl(
 
       val updatedEntity = copiedData.createEntity(this)
 
-      this.indexes.updatePersistentIdIndexes(this, updatedEntity, beforePersistentId, copiedData, modifiableEntity)
+      this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
 
       return updatedEntity
     }
@@ -752,8 +752,8 @@ internal sealed class AbstractEntityStorage : EntityStorage {
     //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>,
-                                                                                    entityClass: Class<R>): Sequence<R> {
+  override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
+                                                                                  entityClass: Class<R>): Sequence<R> {
     val classId = entityClass.toClassId()
 
     @Suppress("UNCHECKED_CAST")
@@ -762,14 +762,14 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
-  override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+  override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
+    val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     @Suppress("UNCHECKED_CAST")
     return entityDataById(entityIds)?.createEntity(this) as E?
   }
 
-  operator override fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean {
-    return indexes.persistentIdIndex.getIdsByEntry(id) != null
+  operator override fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
+    return indexes.symbolicIdIndex.getIdsByEntry(id) != null
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {

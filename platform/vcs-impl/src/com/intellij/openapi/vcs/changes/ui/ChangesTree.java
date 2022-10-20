@@ -779,7 +779,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColor(myProject);
+      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
     }
     return null;
   }

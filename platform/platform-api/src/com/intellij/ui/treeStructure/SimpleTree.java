@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,7 +17,6 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -34,7 +31,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   private String myPlace;
 
   private JComponent myEditorComponent;
-  private boolean myEscapePressed;
   private int myEditingRow;
   private boolean myIgnoreSelectionChange;
 
@@ -93,15 +89,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     helper.installTreeSpeedSearch(this);
   }
 
-  public boolean accept(AbstractTreeBuilder builder, final SimpleNodeVisitor visitor) {
-    return builder.accept(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      @Override
-      public boolean visit(@NotNull SimpleNode node) {
-        return visitor.accept(node);
-      }
-    }) != null;
-  }
-
   public void setPopupGroup(ActionGroup aPopupGroup, String aPlace) {
     myPopupGroup = aPopupGroup;
     myPlace = aPlace;
@@ -158,10 +145,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
       }
     }
     return result.toArray(new SimpleNode[0]);
-  }
-
-  public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {
-    builder.select(node.getElement(), null, false);
   }
 
   @Override
@@ -315,8 +298,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
 
     myEditorComponent.setBounds(nodeBounds);
-
-    myEscapePressed = false;
   }
 
   private void doStopEditing() {
@@ -327,14 +308,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
       myEditingRow = INVALID;
       repaint();
     }
-  }
-
-  public boolean isEscapePressed() {
-    return myEscapePressed;
-  }
-
-  public void setEscapePressed() {
-    myEscapePressed = true;
   }
 
   @Override
@@ -370,10 +343,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
     Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(this, e);
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
-  }
-
-  protected ActionGroup getPopupGroup() {
-    return myPopupGroup;
   }
 
   protected void invokeContextMenu(final MouseEvent e) {
@@ -424,15 +393,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
     }
   }
 
-  public boolean select(AbstractTreeBuilder aBuilder, final SimpleNodeVisitor aVisitor, boolean shouldExpand) {
-    return aBuilder.select(SimpleNode.class, new TreeVisitor<SimpleNode>() {
-      @Override
-      public boolean visit(@NotNull SimpleNode node) {
-        return aVisitor.accept(node);
-      }
-    }, null, false);
-  }
-
   private boolean hasSingleSelection() {
     return !isSelectionEmpty() && getSelectionPaths().length == 1;
   }
@@ -468,31 +428,5 @@ public class SimpleTree extends Tree implements CellEditorListener {
   @Override
   public void processKeyEvent(final KeyEvent e) {
     super.processKeyEvent(e);
-  }
-
-  private int getBoxWidth(TreePath path) {
-    final Object root = getModel().getRoot();
-    if (!isRootVisible()) {
-      if (path.getPathCount() == 2) {
-        final TreePath parent = path.getParentPath();
-        if (parent.getLastPathComponent() == root && !getShowsRootHandles()) {
-          return 0;
-        }
-      }
-    }
-
-    return getBoxWidth(this);
-  }
-
-  private static int getBoxWidth(JTree tree) {
-    BasicTreeUI basicTreeUI = (BasicTreeUI)tree.getUI();
-    int boxWidth;
-    if (basicTreeUI.getExpandedIcon() != null) {
-      boxWidth = basicTreeUI.getExpandedIcon().getIconWidth();
-    }
-    else {
-      boxWidth = 8;
-    }
-    return boxWidth;
   }
 }

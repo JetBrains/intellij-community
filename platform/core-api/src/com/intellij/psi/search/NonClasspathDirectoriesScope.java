@@ -28,9 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   private final Set<VirtualFile> myRoots;
 

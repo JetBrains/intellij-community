@@ -105,7 +105,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
           PsiClassUtil.hasSuperClass(psiClass) &&
           !hasOneOfMethodsDefined(psiClass)) {
         builder.addWarning(LombokBundle.message("inspection.message.generating.equals.hashcode.implementation"),
-                           ContainerUtil.map2Array(quickFixes, Supplier::get));
+                           ContainerUtil.map2Array(quickFixes, LocalQuickFix.class, Supplier<LocalQuickFix>::get));
       }
     }
   }
@@ -196,7 +196,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     methodBuilder.withBodyText(m -> {
       PsiClass aClass = m.getContainingClass();
       PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-      return createEqualsBlockString(aClass, anno, hasCanEqualMethod, EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
+      return createEqualsBlockString(aClass, anno, hasCanEqualMethod,
+                                     EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
     });
     return methodBuilder;
   }
@@ -213,7 +214,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withBodyText(m -> {
         PsiClass aClass = m.getContainingClass();
         PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-        return createHashcodeBlockString(aClass, anno, EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
+        return createHashcodeBlockString(aClass, anno,
+                                         EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
       });
   }
 

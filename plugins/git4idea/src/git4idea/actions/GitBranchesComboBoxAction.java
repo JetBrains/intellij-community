@@ -60,7 +60,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
-    GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project));
+    GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project, context));
 
     ListPopup popup = GitBranchPopup.getInstance(project, repo, context).asListPopup();
     popup.addListener(new JBPopupListener() {

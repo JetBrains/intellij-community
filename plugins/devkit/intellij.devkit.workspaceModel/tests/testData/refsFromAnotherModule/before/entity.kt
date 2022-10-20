@@ -1,7 +1,7 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import org.jetbrains.deft.annotations.Child
 
 interface ReferredEntity : WorkspaceEntity {

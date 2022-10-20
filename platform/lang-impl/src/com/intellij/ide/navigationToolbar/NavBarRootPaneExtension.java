@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.ide.navbar.ide.NavBarService;
-import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -114,7 +114,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private void toggleNavPanel(UISettings settings) {
     boolean show = ExperimentalUI.isNewUI() ?
                    settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP :
-                   settings.getShowNavigationBar() && !settings.getPresentationMode();
+                   NavBarIdeUtil.isNavbarShown(settings);
     if (show) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myWrapperPanel.add(getNavBarPanel(), BorderLayout.CENTER);
@@ -233,7 +233,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       myScrollPane.setViewportBorder(null);
 
       if (ExperimentalUI.isNewUI()) {
-        boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
+        boolean visible = NavBarIdeUtil.isNavbarShown(settings);
         myScrollPane.setVisible(visible);
         if (myNavigationBar instanceof NavBarPanel) {
           ((NavBarPanel)myNavigationBar).updateState(visible);
@@ -253,8 +253,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private JComponent getNavBarPanel() {
     if (myNavBarPanel != null) return myNavBarPanel;
 
-    if (NavigationBarKt.getNavbarV2Enabled()) {
-      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavbarPanel();
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
+      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavBarPanel();
     }
     else {
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
@@ -298,7 +298,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   @Override
   public void uiSettingsChanged(@NotNull UISettings settings) {
 
-    if (NavigationBarKt.getNavbarV2Enabled()) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
       myProject.getService(NavBarService.class).uiSettingsChanged(settings);
     }
 
@@ -309,7 +309,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (myNavigationBar instanceof NavBarPanel) {
       ((NavBarPanel)myNavigationBar).updateState(settings.getShowNavigationBar());
     }
-    boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
+    boolean visible = NavBarIdeUtil.isNavbarShown(settings);
     if (ExperimentalUI.isNewUI()) {
       myScrollPane.setVisible(visible);
     }
@@ -361,8 +361,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
     // Evanescent me: fix run panel show condition in ExpUI if necessary.
-    if (!ExperimentalUI.isNewUI() && uiSettings.getShowNavigationBar() &&
-        !uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode()) {
+    if (!ExperimentalUI.isNewUI() && !uiSettings.getShowMainToolbar() && NavBarIdeUtil.isNavbarShown(uiSettings)) {
       ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
       return !toolbarSettings.isVisible() || !toolbarSettings.isAvailable();
     }

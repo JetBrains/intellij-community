@@ -78,6 +78,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
+            public static class TestNamedWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("namedWithInvoke.0.kt")
+                public void testNamedWithInvoke() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/namedWithInvoke.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestSimple extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -86,6 +99,32 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("simple.0.kt")
                 public void testSimple() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/simple.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
+            public static class TestWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("withInvoke.0.kt")
+                public void testWithInvoke() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/withInvoke.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
+            public static class TestWithInvokeFromParent extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("withInvokeFromParent.0.kt")
+                public void testWithInvokeFromParent() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/companionObject/withInvokeFromParent.0.kt");
                 }
             }
         }
@@ -1376,6 +1415,58 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("interfaceOverrides.0.kt")
                 public void testInterfaceOverrides() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/interfaceOverrides.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestInvokeFromClassCompanion extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeFromClassCompanion.0.kt")
+                public void testInvokeFromClassCompanion() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanion.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestInvokeFromClassCompanionExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeFromClassCompanionExtension.0.kt")
+                public void testInvokeFromClassCompanionExtension() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromClassCompanionExtension.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestInvokeFromInterfaceCompanion extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeFromInterfaceCompanion.0.kt")
+                public void testInvokeFromInterfaceCompanion() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromInterfaceCompanion.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestInvokeFromParentCompanionClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("invokeFromParentCompanionClass.0.kt")
+                public void testInvokeFromParentCompanionClass() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/invokeFromParentCompanionClass.0.kt");
                 }
             }
 

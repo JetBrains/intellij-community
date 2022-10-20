@@ -14,17 +14,37 @@ import kotlin.coroutines.resume
 
 internal class InternalReadAction<T>(
   private val constraints: List<ReadConstraint>,
+  private val undispatched: Boolean,
   private val blocking: Boolean,
   private val action: () -> T
 ) {
 
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
 
-  suspend fun runReadAction(): T = withContext(Dispatchers.Default) {
-    check(!application.isReadAccessAllowed) {
-      "This thread unexpectedly holds the read lock"
+  suspend fun runReadAction(): T {
+    return if (undispatched) {
+      check(!application.isDispatchThread) {
+        "Must not call from EDT"
+      }
+      if (application.isReadAccessAllowed) {
+        val unsatisfiedConstraint = findUnsatisfiedConstraint()
+        check(unsatisfiedConstraint == null) {
+          "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
+        }
+        return blockingContext(action)
+      }
+      coroutineScope {
+        readLoop()
+      }
     }
-    readLoop()
+    else {
+      withContext(Dispatchers.Default) {
+        check(!application.isReadAccessAllowed) {
+          "This thread unexpectedly holds the read lock"
+        }
+        readLoop()
+      }
+    }
   }
 
   private fun findUnsatisfiedConstraint(): ReadConstraint? {

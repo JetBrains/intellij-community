@@ -14,7 +14,6 @@ import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.writeText
 
-
 object KotlinTestHelpers {
     fun getExpectedPath(path: Path, suffix: String): Path {
         val parent = path.parent
@@ -94,8 +93,15 @@ data class Tag(val startOffset: Int, val endOffset: Int, val name: String, val a
     fun renderOpen(): String = buildString {
         append('<').append(name)
         for ((key, value) in arguments) {
+            val escapedValue = value
+                .let { KotlinTestHelpers.stripTags(it, "html") }
+                .let(XmlEscapers.xmlAttributeEscaper()::escape)
+                .replace("&apos;", "'")
+                .replace("&quot;", "''")
+                .replace("&amp;", "&")
+
             append(' ').append(key).append("=")
-            append('"').append(XmlEscapers.xmlAttributeEscaper().escape(value)).append('"')
+            append('"').append(escapedValue).append('"')
         }
         append(">")
     }

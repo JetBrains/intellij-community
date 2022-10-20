@@ -915,6 +915,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private Insets getListInsets() {
-    return PopupUtil.getListInsets(getStep().getTitle() != null, isAdVisible());
+    return PopupUtil.getListInsets(StringUtil.isNotEmpty(getStep().getTitle()), isAdVisible());
   }
 }

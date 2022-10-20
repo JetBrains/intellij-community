@@ -63,6 +63,16 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/InterfaceWithGetterInOtherFile/");
     }
 
+    @TestMetadata("Java17_RecordClass")
+    public void testJava17_RecordClass() throws Exception {
+        runTest("testData/multiFile/Java17_RecordClass/");
+    }
+
+    @TestMetadata("Java17_RecordClassExplicitAccessor")
+    public void testJava17_RecordClassExplicitAccessor() throws Exception {
+        runTest("testData/multiFile/Java17_RecordClassExplicitAccessor/");
+    }
+
     @TestMetadata("JavaUsageOfBothFieldAndAccessor")
     public void testJavaUsageOfBothFieldAndAccessor() throws Exception {
         runTest("testData/multiFile/JavaUsageOfBothFieldAndAccessor/");

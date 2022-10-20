@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -300,8 +301,9 @@ public class Menu extends MenuItem {
 
     IS_ENABLED = false;
 
-    if (!SystemInfo.isMacOSMojave) return false;
-    if (!Boolean.getBoolean("jbScreenMenuBar.enabled")) return false;
+    if (!SystemInfoRt.isMac || !Boolean.getBoolean("jbScreenMenuBar.enabled")) {
+      return false;
+    }
     if (Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       Logger.getInstance(Menu.class).info("apple.laf.useScreenMenuBar==true, default screen menu implementation will be used");
       return false;
@@ -309,7 +311,7 @@ public class Menu extends MenuItem {
 
     Path lib = PathManager.findBinFile("libmacscreenmenu64.dylib");
     try {
-      System.load(lib.toFile().getAbsolutePath());
+      System.load(lib.toString());
       nativeInitClass();
       // create and dispose native object (just for to test)
       Menu test = new Menu("test");

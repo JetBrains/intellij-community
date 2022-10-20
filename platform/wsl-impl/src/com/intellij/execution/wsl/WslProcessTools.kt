@@ -1,8 +1,8 @@
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.processTools.ProcessExistedNotZeroException
-import com.intellij.execution.processTools.waitGetResultStdout
+import com.intellij.execution.processTools.getResultStdoutStr
+import kotlinx.coroutines.runBlocking
 
 
 internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: String):
@@ -10,11 +10,9 @@ internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: Strin
 
 /**
  * Executes [commands] on [AbstractWslDistribution], waits its completion and returns stdout as string
- * or throws [ProcessExistedNotZeroException]
  */
-@Throws(ProcessExistedNotZeroException::class)
-fun AbstractWslDistribution.runCommand(vararg commands: String): String =
-  createProcess(*commands).waitGetResultStdout()
+fun AbstractWslDistribution.runCommand(vararg commands: String): Result<String> =
+  runBlocking { createProcess(*commands).getResultStdoutStr() }
 
 /**
  * Executes [commands] on [AbstractWslDistribution] and returns process

@@ -422,12 +422,6 @@
       "selectedPressedBackground": "Blue12"
     },
 
-    "SpeedSearch": {
-      "background": "Grey13",
-      "borderColor": "Grey10",
-      "errorForeground": "errorForeground"
-    },
-
     "StatusBar": {
       "background": "Grey12",
       "Widget": {

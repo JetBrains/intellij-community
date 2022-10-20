@@ -157,7 +157,9 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
       palette[index] = convertHSLtoRGB(hsl, alpha)
     }
 
-    return ImageUtil.createImage(graphicsConfiguration, image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
+    // UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
+    @Suppress("UndesirableClassUsage")
+    return BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
   }
 
   // Note: returns alpha, resulting color resides in `hsl`

@@ -9,14 +9,16 @@ import com.jetbrains.python.sdk.SealedClassAdapter
 
 /**
  * Conda environment could be either named or unnamed (based on path).
+ * [userReadableName] used as sdk name
  */
 @JsonAdapter(SealedClassAdapter::class)
-sealed class PyCondaEnvIdentity {
-  data class NamedEnv(val envName: String) : PyCondaEnvIdentity() {
+sealed class PyCondaEnvIdentity(val userReadableName: String) {
+
+  data class NamedEnv(val envName: String) : PyCondaEnvIdentity(envName) {
     override fun toString(): String = envName
   }
 
-  data class UnnamedEnv(val envPath: FullPathOnTarget, val isBase: Boolean) : PyCondaEnvIdentity() {
+  data class UnnamedEnv(val envPath: FullPathOnTarget, val isBase: Boolean) : PyCondaEnvIdentity(envPath) {
     override fun toString(): String = envPath
   }
 }

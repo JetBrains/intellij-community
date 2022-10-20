@@ -41,7 +41,7 @@ public class LombokElementRenameVetoHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable DataContext dataContext) {
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeInner(project, editor);
   }

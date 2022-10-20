@@ -2,10 +2,10 @@
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.progress.progressSink
@@ -41,7 +41,7 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   private val condaPathField = TextFieldWithBrowseButton()
   private val panel = panel {
 
-    row(PyBundle.message("python.add.sdk.panel.path.to.conda.field")) {
+    row(PyBundle.message("python.add.sdk.panel.path.to.conda.field") + ":") {
 
       cell(condaPathField.apply {
         addBrowseFolderListener(PyBundle.message("python.add.sdk.panel.path.to.conda.field"),
@@ -56,9 +56,8 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
         .trimmedTextValidation(CHECK_NON_EMPTY)
 
       button(PyBundle.message("python.add.sdk.panel.load.envs")) {
-        runBlockingUnderModalProgress(PyBundle.message("python.add.sdk.panel.wait")) {
-          this.progressSink
-          model.onCondaPathSetOkClicked(Dispatchers.EDT)
+        runBlockingModal(model.project, PyBundle.message("python.sdk.conda.getting.list.envs")) {
+          model.onLoadEnvsClicked(Dispatchers.EDT, this.progressSink)
         }.onFailure {
           showError(it.localizedMessage)
         }
@@ -103,11 +102,12 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun previous() = Unit
   override fun next() = Unit
   override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
-  ///
 
   override fun onSelected() {
-    runBlockingUnderModalProgress(PyBundle.message("python.add.sdk.conda.detecting")) {
-      model.detectConda(Dispatchers.EDT)
+    invokeLater { // We must free AWT to redraw screen (remove selection etc.) before entering modal state
+      runBlockingModal(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
+        model.detectConda(Dispatchers.EDT, progressSink)
+      }
     }
   }
 

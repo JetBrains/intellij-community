@@ -34,11 +34,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
-  private static final String KEY = "ide.experimental.ui";
+  public static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
     // CWM-7348 thin client does not support new UI
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+    return (EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported()) || Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
   }
 
   public static boolean isSupported() {
@@ -139,7 +139,7 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont(defaults);
+      installInterFont();
     }
   }
 
@@ -148,14 +148,14 @@ public abstract class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont(UIDefaults defaults) {
+  private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
   }
 
-  public static class Icons {
+  public static final class Icons {
     public static class Gutter {
       public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");

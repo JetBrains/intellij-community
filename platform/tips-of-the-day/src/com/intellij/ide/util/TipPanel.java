@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,10 +27,9 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +37,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -52,6 +51,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
+  private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
@@ -60,27 +60,48 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private List<TipAndTrickBean> myTips = Collections.emptyList();
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
-  private Boolean myLikenessState = null;
+
+  private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
+  private Boolean myCurrentLikenessState = null;
 
   public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
+
+    JPanel contentPanel = new JPanel();
+    contentPanel.setBackground(TipUiSettings.getPanelBackground());
+    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+    mySubSystemLabel = new JLabel() {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(JBFont.label().lessOn(1.0f));
+      }
+    };
+    mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
+    mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
+    mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    contentPanel.add(mySubSystemLabel);
+
     myTextPane = new StyledTextPane();
-    myTextPane.setBackground(UIUtil.getTextFieldBackground());
-    myTextPane.setBorder(null);
+    myTextPane.setBackground(TipUiSettings.getPanelBackground());
+    myTextPane.setMargin(JBInsets.emptyInsets());
+    myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
+    contentPanel.add(myTextPane);
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
     Border insideBorder = TipUiSettings.getTipPanelBorder();
     Border outsideBorder = JBUI.Borders.customLine(TipUiSettings.getImageBorderColor(), 0, 0, 1, 0);
     centerPanel.setBorder(JBUI.Borders.compound(outsideBorder, insideBorder));
-    centerPanel.setBackground(UIUtil.getTextFieldBackground());
+    centerPanel.setBackground(TipUiSettings.getPanelBackground());
 
     // scroll will not be shown in a regular case
     // it is required only for technical writers to test whether the content of the new do not exceed the bounds
-    JBScrollPane scrollPane = new JBScrollPane(myTextPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
+    JBScrollPane scrollPane = new JBScrollPane(contentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(JBUI.Borders.empty());
     centerPanel.add(scrollPane);
 
     centerPanel.add(Box.createRigidArea(new JBDimension(0, TipUiSettings.getFeedbackPanelTopIndent())));
@@ -98,7 +119,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private JPanel createFeedbackPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-    panel.setBackground(UIUtil.getTextFieldBackground());
+    panel.setBackground(TipUiSettings.getPanelBackground());
     panel.add(Box.createHorizontalGlue());
 
     JLabel label = new JLabel(IdeBundle.message("tip.of.the.day.feedback.question"));
@@ -166,8 +187,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
         return getPreferredSize();
       }
     };
-    toolbar.setBackground(UIUtil.getTextFieldBackground());
-    toolbar.setBorder(null);
+    toolbar.setBackground(TipUiSettings.getPanelBackground());
+    toolbar.setBorder(JBUI.Borders.empty());
     toolbar.setTargetComponent(this);
     return toolbar;
   }
@@ -184,7 +205,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     return new DumbAwareAction(text, null, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myLikenessState = isSelected() ? null : isLike;
+        myCurrentLikenessState = isSelected() ? null : isLike;
       }
 
       @Override
@@ -201,29 +222,17 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       }
 
       private boolean isSelected() {
-        return myLikenessState != null && myLikenessState == isLike;
+        return myCurrentLikenessState != null && myCurrentLikenessState == isLike;
       }
     };
   }
 
   void setTips(@NotNull List<TipAndTrickBean> list) {
-    RecommendationDescription recommendation = ApplicationManager.getApplication().getService(TipsOrderUtil.class).sort(list);
-    myTips = new ArrayList<>(recommendation.getTips());
+    RecommendationDescription recommendation = TipsOrderUtil.getInstance().sort(list, myProject);
+    myTips = recommendation.getTips();
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
-    if (!isExperiment(myAlgorithm)) {
-      myTips = TipsUsageManager.getInstance().filterShownTips(myTips);
-    }
     showNext(true);
-  }
-
-  /**
-   * We are running the experiment for research purposes and we want the experiment to be pure.
-   * This requires disabling idea's filtering mechanism as this mechanism affects the experiment
-   * results by modifying tips order.
-   */
-  private static boolean isExperiment(String algorithm) {
-    return algorithm.endsWith("_SUMMER2020");
   }
 
   private void showNext(boolean forward) {
@@ -244,8 +253,13 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
-    myLikenessState = null;
+    saveCurrentTipLikenessState();
+    myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
+
+    String groupName = TipUtils.getGroupDisplayNameForTip(tip);
+    mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
+    mySubSystemLabel.setVisible(groupName != null);
 
     List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
     myTextPane.setParagraphs(tipContent);
@@ -320,6 +334,28 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   private static int getDefaultWidth() {
     return TipUiSettings.getImageMaxWidth() + TipUiSettings.getTipPanelLeftIndent() + TipUiSettings.getTipPanelRightIndent();
+  }
+
+  Map<String, Boolean> getTipIdToLikenessStateMap() {
+    saveCurrentTipLikenessState();
+    return myTipIdToLikenessState;
+  }
+
+  private void saveCurrentTipLikenessState() {
+    if (myCurrentTip != null) {
+      String curTipId = myCurrentTip.getId();
+      if (myCurrentLikenessState != TipsFeedback.getInstance().getLikenessState(curTipId)) {
+        myTipIdToLikenessState.put(curTipId, myCurrentLikenessState);
+      }
+    }
+  }
+
+  private Boolean getLikenessState(TipAndTrickBean tip) {
+    String tipId = tip.getId();
+    if (myTipIdToLikenessState.containsKey(tipId)) {
+      return myTipIdToLikenessState.get(tipId);
+    }
+    return TipsFeedback.getInstance().getLikenessState(tipId);
   }
 
   @Override

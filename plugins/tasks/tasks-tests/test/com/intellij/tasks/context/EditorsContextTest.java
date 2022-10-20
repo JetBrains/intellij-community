@@ -10,20 +10,17 @@ import org.jdom.Element;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Dmitry Avdeev
- */
 @SkipInHeadlessEnvironment
 public class EditorsContextTest extends FileEditorManagerTestCase {
   public void testDockableContainer() {
     DockManager dockManager = DockManager.getInstance(getProject());
     VirtualFile file = getFile("/foo.txt");
     manager.openFile(file, /* focusEditor = */ false);
-    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
+    assertThat(dockManager.getContainers()).hasSize(1);
     manager.initDockableContentFactory();
 
     manager.openFileInNewWindow(file);
-    assertThat(dockManager.getContainers()).hasSize(initialContainers + 2);
+    assertThat(dockManager.getContainers()).hasSize(2);
 
     Element context = new Element("context");
     WorkingContextManager contextManager = WorkingContextManager.getInstance(getProject());
@@ -32,7 +29,7 @@ public class EditorsContextTest extends FileEditorManagerTestCase {
     assertThat(EditorFactory.getInstance().getAllEditors()).hasSize(2);
 
     contextManager.clearContext();
-    assertThat(dockManager.getContainers()).hasSize(initialContainers + 1);
+    assertThat(dockManager.getContainers()).hasSize(1);
     assertThat(EditorFactory.getInstance().getAllEditors()).isEmpty();
   }
 

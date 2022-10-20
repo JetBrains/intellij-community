@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass> {
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 

@@ -237,6 +237,12 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
                                ActionManager.getInstance().getAction("ChooseRunConfiguration")))
   }
 
+  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+    actions.add(SelectCurrentFileWithInlineActions(listOf(
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(runExecutor),
+      ExecutorRegistryImpl.RunCurrentFileExecutorAction(debugExecutor))))
+  }
+  actions.add(Separator.create())
   actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
   return actions
 }
@@ -295,12 +301,12 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               debugExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
-                                              shouldBeShown: () -> Boolean = { true }): ActionGroupWithInlineActions {
+                                              shouldBeShown: () -> Boolean = { true }): SelectRunConfigurationWithInlineActions {
   val inlineActions = mutableListOf<AnAction>()
   inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
   inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-  return ActionGroupWithInlineActions(inlineActions, conf, project, shouldBeShown)
+  return SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
 }
 
 private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
@@ -337,7 +343,7 @@ private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnActi
   }
 }
 
-internal class ActionGroupWithInlineActions(
+internal class SelectRunConfigurationWithInlineActions(
   private val actions: List<AnAction>,
   configuration: RunnerAndConfigurationSettings,
   project: Project,
@@ -345,6 +351,12 @@ internal class ActionGroupWithInlineActions(
 ) : SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder, HideableAction {
   override fun getInlineActions(): List<AnAction> = actions
 }
+
+internal class SelectCurrentFileWithInlineActions(private val actions: List<AnAction>) :
+  RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug), InlineActionsHolder {
+  override fun getInlineActions(): List<AnAction> = actions
+}
+
 
 class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
 
@@ -386,7 +398,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
+    }.let { Wrapper(it).apply {
+      border = JBUI.Borders.empty(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) RUN_TOOLBAR_BORDER_HEIGHT else 7,6)
+    } }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -581,7 +595,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
     val prefSize = BasicGraphicsUtils.getPreferredButtonSize(c, c.iconTextGap)
     return prefSize?.apply {
       width = maxOf(width, if (c.isCombined) 0 else 72)
-      height = JBUIScale.scale(26)
+      height = JBUIScale.scale(if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) RUN_TOOLBAR_HEIGHT else 26)
       /**
        * If combined view is enabled the button should not draw a separate line
        * and reserve a place if dropdown is not enabled. Therefore, add only a half

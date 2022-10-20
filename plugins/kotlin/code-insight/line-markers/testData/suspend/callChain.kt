@@ -1,6 +1,6 @@
 suspend fun test() {
-    <lineMarker text="Suspend function call &apos;foo()&apos;">foo</lineMarker>()
-        .<lineMarker text="Suspend function call &apos;bar()&apos;">bar</lineMarker>()
+    <lineMarker text="Suspend function call 'foo()'">foo</lineMarker>()
+        .<lineMarker text="Suspend function call 'bar()'">bar</lineMarker>()
 }
 
 suspend fun foo(): Foo {

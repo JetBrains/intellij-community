@@ -8,6 +8,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.JavaTokenType.SUPER_KEYWORD
 import com.intellij.psi.JavaTokenType.THIS_KEYWORD
+import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.CompositeElement
@@ -18,6 +19,7 @@ import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -460,11 +462,19 @@ class JavaToJKTreeBuilder constructor(
                     }
                 }
 
+                target is LightRecordMethod -> {
+                    val field = getFieldForComponent(target.recordComponent) ?: return createErrorExpression()
+                    JKFieldAccessExpression(symbolProvider.provideDirectSymbol(field) as JKFieldSymbol)
+                        .qualified(qualifier ?: JKThisExpression(JKLabelEmpty()))
+                }
+
                 symbol is JKMethodSymbol ->
                     JKCallExpressionImpl(symbol, arguments.toJK(), typeArguments)
                         .qualified(qualifier)
+
                 symbol is JKFieldSymbol ->
                     JKFieldAccessExpression(symbol).qualified(qualifier)
+
                 else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
@@ -695,13 +705,30 @@ class JavaToJKTreeBuilder constructor(
                 annotationList(this),
                 otherModifiers(),
                 visibility(),
-                modality()
+                modality(),
+                recordComponents()
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
                 klass.withFormattingFrom(this)
             }
 
+        private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
+            recordComponents.map { component ->
+                val psiTypeElement = component.typeElement
+                val type = psiTypeElement?.type?.toJK() ?: JKNoType
+                val typeElement = with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
+                JKJavaRecordComponent(
+                    typeElement,
+                    JKNameIdentifier(component.name),
+                    component.isVarArgs,
+                    component.annotationList(docCommentOwner = this)
+                ).also {
+                    it.withFormattingFrom(component)
+                    symbolProvider.provideUniverseSymbol(component, it)
+                    it.psi = component
+                }
+            }
 
         fun PsiClass.inheritanceInfo(): JKInheritanceInfo {
             val implementsTypes = implementsList?.referencedTypes?.map { type ->
@@ -939,9 +966,10 @@ class JavaToJKTreeBuilder constructor(
             val type =
                 if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList())
                 else rawType.asTypeElement(typeElement.annotationList())
+            val name = if (nameIdentifier != null) nameIdentifier.toJK() else JKNameIdentifier(name)
             return JKParameter(
                 type,
-                nameIdentifier.toJK(),
+                name,
                 isVarArgs,
                 annotationList = annotationList(null)
             ).also {

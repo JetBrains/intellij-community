@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -59,7 +60,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       return compareKey != 0 ? compareKey : compareCaseInsensitively(o1.getGroupName(), o2.getGroupName());
     }
 
-    private int compareCaseInsensitively(String s1, String s2) {
+    private static int compareCaseInsensitively(String s1, String s2) {
       int result = s1.compareToIgnoreCase(s2);
       return result != 0 ? result : s1.compareTo(s2);
     }
@@ -426,11 +427,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   void removeRows() {
-    TreeNode toSelect = null;
-
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return;
 
+    TreeNode toSelect = null;
     for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
@@ -472,7 +472,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           TemplateImpl template = (TemplateImpl)value;
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
           LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
-          Color fgColor = defaultTemplate != null && templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
+          Color fgColor = defaultTemplate == null || templatesDiffer(allContexts, template, defaultTemplate) ? JBColor.BLUE : null;
           getTextRenderer().append(template.getKey(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor));
           String description = template.getDescription();
           if (StringUtil.isNotEmpty(description)) {
@@ -594,7 +594,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
+      .addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
@@ -609,7 +609,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;
         }
-      }).addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
+      }).addExtraAction(new DumbAwareActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TemplateSettings.getInstance().reset();
@@ -668,7 +668,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
         final TemplateGroup templateGroup = getSingleSelectedGroup();
         boolean enabled = templateGroup != null;
         e.getPresentation().setEnabledAndVisible(enabled);
-        super.update(e);
       }
 
       @Override
@@ -682,8 +681,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     };
     rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
+    class MoveGroup extends DefaultActionGroup implements DumbAware {
 
-    final DefaultActionGroup move = new DefaultActionGroup(CodeInsightBundle.message("action.text.move"), true) {
+      MoveGroup() {
+        super(CodeInsightBundle.message("action.text.move"), true);
+      }
+
       @Override
       public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
@@ -722,7 +725,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
       }
-    };
+    }
+    final DefaultActionGroup move = new MoveGroup();
 
     final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.change.context")) {
 
@@ -730,7 +734,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         boolean enabled = !getSelectedTemplates().isEmpty();
         e.getPresentation().setEnabled(enabled);
-        super.update(e);
       }
 
       @Override

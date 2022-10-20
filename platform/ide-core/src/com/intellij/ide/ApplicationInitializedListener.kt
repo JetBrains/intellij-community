@@ -16,7 +16,6 @@ interface ApplicationInitializedListener {
    * Invoked when all application level components are initialized.
    * Write actions and time-consuming activities are not recommended because directly affects application start time.
    */
-  @JvmDefault
   suspend fun execute(asyncScope: CoroutineScope) {
     @Suppress("DEPRECATION")
     componentsInitialized()

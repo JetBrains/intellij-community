@@ -96,6 +96,7 @@ class FullLinePipeline(
     for (raw in this) {
       val (time, analyzed) = measureTimeMillisWithResult { analyzer.analyze(raw) }
       LOG.debug("Analyzing \"${analyzed.suggestion}\" took $time ms: [${analyzed.describe()}]")
+      analyzed.details.checksTime = time.toInt()
       result.add(analyzed)
     }
 
@@ -119,11 +120,13 @@ class FullLinePipeline(
   private fun RawFullLineProposal.describe(): String {
     return buildString {
       append("score: $score, basic correctness: $isSyntaxCorrect")
-      if (provider != null) {
-        append(", provider: $provider")
+
+      details.provider?.let {
+        append(", provider: $it")
       }
-      if (cacheHitLength != null) {
-        append(", cacheHitLength: $cacheHitLength")
+
+      details.cacheHitLength?.let {
+        append(", cacheHitLength: $it")
       }
     }
   }

@@ -1664,6 +1664,17 @@ public class Mappings {
       assert myCompiledFiles != null;
       assert myAffectedFiles != null;
 
+      if (classRepr.isEnum()) {
+        debug("Constants added to enum, affecting class usages ", classRepr.name);
+        final UsageRepr.Usage usage = classRepr.createUsage();
+        state.myAffectedUsages.add(usage);
+        // only mark synthetic classes used to implement switch statements: this will limit the number of recompiled classes to those where switch statements on changed enum are used
+        state.myUsageConstraints.put(usage, residence -> {
+          final ClassRepr candidate = myPresent.classReprByName(residence);
+          return candidate != null && candidate.isSynthetic();
+        });
+      }
+      
       for (final FieldRepr f : added) {
         debug("Field: ", f.name);
 
@@ -2062,7 +2073,7 @@ public class Mappings {
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else if (diff.targetAttributeCategoryMightChange()) {
-              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE target, adding class usage to affected usages");
+              debug("Annotation's attribute category in bytecode might be affected because of TYPE_USE or RECORD_COMPONENT target, adding class usage to affected usages");
               state.myAffectedUsages.add(changedClass.createUsage());
             }
             else {

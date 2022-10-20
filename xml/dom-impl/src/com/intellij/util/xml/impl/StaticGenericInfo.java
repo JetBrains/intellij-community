@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * @author peter
- */
 public final class StaticGenericInfo extends DomGenericInfoEx {
   private final Class<? extends DomElement> myClass;
 

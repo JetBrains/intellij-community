@@ -43,13 +43,7 @@ fun interface ProposalTransformer {
           currentNotWhitespaces <= beforeSuggestion
         }
 
-      RawFullLineProposal(
-        formattedSuggestion,
-        proposal.score,
-        proposal.isSyntaxCorrect,
-        proposal.provider,
-        proposal.cacheHitLength
-      )
+      proposal.withSuggestion(formattedSuggestion)
     }
   }
 }

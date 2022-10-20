@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public interface FunctionDescriptor extends PsiWritableMetaData, PsiMetaData {
   String getFunctionClass();
 

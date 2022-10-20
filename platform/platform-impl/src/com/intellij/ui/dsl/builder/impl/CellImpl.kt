@@ -52,11 +52,13 @@ internal class CellImpl<T : JComponent>(
   private var visible = viewComponent.isVisible
   private var enabled = viewComponent.isEnabled
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): CellImpl<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): CellImpl<T> {
     super.verticalAlign(verticalAlign)
     return this

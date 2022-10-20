@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity> {
@@ -56,4 +59,37 @@ public interface IndexableEntityInducedChangesProvider<E extends WorkspaceEntity
 
   @NotNull
   Collection<OriginChange> getInducedChangesFromRefresh(@NotNull E entity);
+
+  static <E extends WorkspaceEntity> void forEachRelevantProvider(@NotNull E entity,
+                                                                  @NotNull Consumer<IndexableEntityInducedChangesProvider<E>> consumer) {
+    //noinspection unchecked
+    Class<E> entityInterface = (Class<E>)entity.getEntityInterface();
+    for (IndexableEntityInducedChangesProvider<? extends WorkspaceEntity> provider : EP_NAME.getExtensionList()) {
+      if (entityInterface.equals(provider.getEntityInterface())) {
+        //noinspection unchecked
+        consumer.accept((IndexableEntityInducedChangesProvider<E>)provider);
+      }
+    }
+  }
+
+  static <E extends WorkspaceEntity> void forEachRelevantProvider(@NotNull EntityChange<? extends E> entityChange,
+                                                                  @NotNull BiConsumer<IndexableEntityInducedChangesProvider<E>, EntityChange<E>> consumer) {
+    Class<E> entityInterface;
+    E newEntity = entityChange.getNewEntity();
+    if (newEntity != null) {
+      //noinspection unchecked
+      entityInterface = (Class<E>)newEntity.getEntityInterface();
+    }
+    else {
+      //noinspection unchecked
+      entityInterface = (Class<E>)Objects.requireNonNull(entityChange.getOldEntity()).getEntityInterface();
+    }
+
+    for (IndexableEntityInducedChangesProvider<? extends WorkspaceEntity> provider : EP_NAME.getExtensionList()) {
+      if (entityInterface.equals(provider.getEntityInterface())) {
+        //noinspection unchecked
+        consumer.accept((IndexableEntityInducedChangesProvider<E>)provider, (EntityChange<E>)entityChange);
+      }
+    }
+  }
 }

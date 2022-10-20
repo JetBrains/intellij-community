@@ -242,6 +242,10 @@ class BuildContextImpl private constructor(
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
     val options = BuildOptions()
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
+    options.buildStepsToSkip = this.options.buildStepsToSkip
+    options.compressZipFiles = this.options.compressZipFiles
+    options.targetArch = this.options.targetArch
+    options.targetOs = this.options.targetOs
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,

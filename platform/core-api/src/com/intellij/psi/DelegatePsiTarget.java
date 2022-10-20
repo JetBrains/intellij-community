@@ -22,9 +22,6 @@ import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DelegatePsiTarget implements PsiTarget {
   private final PsiElement myElement;
 

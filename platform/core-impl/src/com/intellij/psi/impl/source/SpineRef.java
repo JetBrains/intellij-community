@@ -8,9 +8,6 @@ import com.intellij.psi.stubs.StubTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class SpineRef extends SubstrateRef {
   private final PsiFileImpl myFile;
   private final int myIndex;

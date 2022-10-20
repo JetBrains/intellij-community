@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
-/**
- * @author peter
- */
 class DynamicMembersContributor : NonCodeMembersContributor() {
 
   override fun processDynamicElements(qualifierType: PsiType,

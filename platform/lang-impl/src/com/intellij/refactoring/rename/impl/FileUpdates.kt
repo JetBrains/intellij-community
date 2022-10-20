@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.injected.editor.DocumentWindow
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.refactoring.suggested.range
 import com.intellij.util.DocumentUtil
 import com.intellij.util.io.write
@@ -114,6 +115,33 @@ class FileUpdates(
           documentModifications = left.documentModifications + right.documentModifications
         )
       }
+    }
+
+    fun createFileUpdates(fileOperations: Collection<FileOperation>): FileUpdates {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+
+      val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
+      val filesToMove = ArrayList<Pair<VirtualFile, Path>>()
+      val filesToRemove = ArrayList<VirtualFile>()
+      val fileModifications = ArrayList<Pair<RangeMarker, CharSequence>>()
+
+      loop@
+      for (fileOperation: FileOperation in fileOperations) {
+        when (fileOperation) {
+          is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
+          is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
+          is FileOperation.Remove -> filesToRemove += fileOperation.file
+          is FileOperation.Modify -> {
+            val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
+            for (stringOperation: StringOperation in fileOperation.modifications) {
+              val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
+              fileModifications += Pair(rangeMarker, stringOperation.replacement)
+            }
+          }
+        }
+      }
+
+      return FileUpdates(filesToAdd, filesToMove, filesToRemove, fileModifications)
     }
   }
 }

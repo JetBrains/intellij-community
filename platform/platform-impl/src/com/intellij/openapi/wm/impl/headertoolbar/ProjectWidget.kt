@@ -16,10 +16,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.JBGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -49,12 +49,12 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
     presentation.addPropertyChangeListener { updateWidget() }
   }
 
-  private fun updateWidget() {
+  override fun updateWidget() {
     text = presentation.text
     toolTipText = presentation.description
   }
 
-  override fun doExpand(e: InputEvent) {
+  override fun doExpand(e: InputEvent?) {
     val dataContext = DataManager.getInstance().getDataContext(this)
     val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
@@ -142,7 +142,7 @@ internal class ProjectWidget(private val presentation: Presentation) : ToolbarCo
         customizeSpacingConfiguration(EmptySpacingConfiguration()) {
           row {
             icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true))
-              .verticalAlign(VerticalAlign.TOP)
+              .align(AlignY.TOP)
               .customize(JBGaps(right = 8))
 
             panel {

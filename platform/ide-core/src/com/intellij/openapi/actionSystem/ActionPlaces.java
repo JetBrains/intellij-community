@@ -2,11 +2,15 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -60,7 +64,6 @@ public abstract class ActionPlaces {
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
-  private static final String TESTSTATISTICS_VIEW_POPUP = "TestStatisticsViewPopup";
 
   public static final String TYPE_HIERARCHY_VIEW_POPUP = "TypeHierarchyViewPopup";
   public static final String TYPE_HIERARCHY_VIEW_TOOLBAR = "TypeHierarchyViewToolbar";
@@ -207,28 +210,20 @@ public abstract class ActionPlaces {
     return MAIN_TOOLBAR.equals(place);
   }
 
-  private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
-    UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
-    TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, TABS_MORE_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
-    LEARN_TOOLWINDOW, PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
-    METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, SIMILAR_USAGES_PREVIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
-    SHOW_USAGES_POPUP_TOOLBAR,
-    STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,
-    ANT_MESSAGES_TOOLBAR, ANT_EXPLORER_TOOLBAR, CODE_INSPECTION, JAVADOC_TOOLBAR, JAVADOC_INPLACE_SETTINGS,
-    FILEHISTORY_VIEW_TOOLBAR, RUN_CONFIGURATIONS_COMBOBOX, WELCOME_SCREEN, CHANGES_VIEW_TOOLBAR, DATABASE_VIEW_TOOLBAR,
-    PHING_EXPLORER_TOOLBAR, DOCK_MENU, PHING_MESSAGES_TOOLBAR, DIFF_TOOLBAR,
-    ANALYZE_STACKTRACE_PANEL_TOOLBAR, TOUCHBAR_GENERAL, COMPOSER_EDITOR_NOTIFICATION_PANEL, COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA,
-    COMPOSER_LOG_RERUN, EDITOR_GUTTER, EDITOR_INLAY, TOOLWINDOW_CONTENT, SERVICES_TOOLBAR, REFACTORING_QUICKLIST, INTENTION_MENU,
-    TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION, FILE_STRUCTURE_POPUP,
-    RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
-    RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST, RUN_TOOLBAR_LEFT_SIDE,
-    QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR, TOOLWINDOW_GRADLE, SETTINGS_HISTORY,
-    VCS_LOG_TOOLBAR_PLACE, VCS_HISTORY_TOOLBAR_PLACE, CHANGES_VIEW_EMPTY_STATE, COMMIT_VIEW_EMPTY_STATE
-  );
+  private static final Set<String> ourCommonPlaces;
+  static {
+    Set<String> set = new HashSet<>();
+    for (Field field : ActionPlaces.class.getDeclaredFields()) {
+      if (!Modifier.isStatic(field.getModifiers()) || !Modifier.isPublic(field.getModifiers())) continue;
+      Object value = ReflectionUtil.getFieldValue(field, null);
+      if (value instanceof String) set.add((String)value);
+    }
+    ourCommonPlaces = set;
+  }
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
     POPUP, EDITOR_POPUP, EDITOR_TAB_POPUP, QUICK_SWITCH_SCHEME_POPUP, COMMANDER_POPUP, INTENTION_MENU,
-    PROJECT_VIEW_POPUP, BOOKMARKS_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TESTSTATISTICS_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
+    PROJECT_VIEW_POPUP, BOOKMARKS_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, COPY_REFERENCE_POPUP,
     ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
@@ -251,7 +246,8 @@ public abstract class ActionPlaces {
   }
 
   public static boolean isCommonPlace(@NotNull String place) {
-    return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
+    return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place) ||
+           place.startsWith(POPUP_PREFIX) && isCommonPlace(place.substring(POPUP_PREFIX.length()));
   }
 
   public static @NotNull String getActionGroupPopupPlace(@Nullable String actionId) {

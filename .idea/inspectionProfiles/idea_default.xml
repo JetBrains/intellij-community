@@ -1308,13 +1308,13 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="nullability for array elements specified, probably nullability for the array itself was intended" text="@$Anno$ $Type$ $x$($T$ $param$);" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="member">
         <constraint name="__context__" within="" contains="" />
         <constraint name="x" within="" contains="" />
         <constraint name="Anno" regexp="Nullable|NotNull" target="true" within="" contains="" />
-        <constraint name="Type" script="&quot;def parent = Type.parent;&#10;com.intellij.psi.util.PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp; &#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
+        <constraint name="Type" script="&quot;import com.intellij.psi.util.PsiUtil&#10;&#10;def parent = Type.parent;&#10;parent != null &amp;&amp;&#10;PsiUtil.isLanguageLevel8OrHigher(Type) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.NotNull&quot;) &amp;&amp;&#10;!parent.hasAnnotation(&quot;org.jetbrains.annotations.Nullable&quot;);&quot;" regexp=".*(\[\])+" within="" contains="" />
         <constraint name="T" within="" contains="" />
         <constraint name="param" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
@@ -1381,6 +1381,18 @@
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" within="" contains="" />
         <constraint name="Var1" nameOfExprType="Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.setText($presentation2$.getText())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.getTextWithPossibleMnemonic())">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" exprTypeWithinHierarchy="true" minCount="0" within="" contains=""/>
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" exprTypeWithinHierarchy="true" minCount="0" within="" contains=""/>
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.setText($presentation2$.getText())" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.getTextWithPossibleMnemonic())">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Presentation text copying will lose mnemonic" description="&lt;code&gt;Presentation.getText()&lt;/code&gt; omits assigned action mnemonic.&#10;Consider using &lt;code&gt;presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic())&lt;/code&gt; instead." suppressId="PresentationTextCopyMnemonic" text="$presentation1$.text = $presentation2$.text" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$presentation1$.setTextWithMnemonic($presentation2$.textWithPossibleMnemonic)">
+        <constraint name="presentation1" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
+        <constraint name="presentation2" nameOfExprType="com\.intellij\.openapi\.actionSystem\.Presentation" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="PsiManager.getInstance(psiElement.getProject())" text="com.intellij.psi.PsiManager.getInstance($psiElement$.getProject())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$psiElement$.getManager()">
         <constraint name="psiElement" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
@@ -1696,12 +1708,12 @@
         <constraint name="states" within="" contains="" />
         <constraint name="dd" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).toList()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="c" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
+      <replaceConfiguration name="Stream expression can be replaced with ContainerUtil call" uuid="1299c1fd-42c2-3e16-acef-db5a14c07955" text="StreamEx.of($f$).select($c$).collect(Collectors.toList())" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filterIsInstance($f$, $c$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="f" within="" contains="" />
         <constraint name="c" within="" contains="" />

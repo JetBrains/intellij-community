@@ -8,8 +8,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 
 class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity> {
   override val entityClass: Class<ContentRootEntity>
@@ -34,10 +34,12 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
       val contentRoot = entity.contentRoot.url.virtualFile
       val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT 
       registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType))
-      //todo update index when parent ContentRootEntity is modified
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
+
+  override val dependenciesOnParentEntities: List<DependencyOnParentEntity<SourceRootEntity, *>>
+    get() = listOf(DependencyOnParentEntity(ContentRootEntity::class.java) { it.sourceRoots.asSequence() })
 }
 
 /**

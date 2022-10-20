@@ -20,9 +20,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -81,8 +81,8 @@ class ProjectLibraryTableBridgeImpl(
               }
             }
             is EntityChange.Replaced -> {
-              val idBefore = change.oldEntity.persistentId
-              val idAfter = change.newEntity.persistentId
+              val idBefore = change.oldEntity.symbolicId
+              val idAfter = change.newEntity.symbolicId
 
               if (idBefore != idAfter) {
                 val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
@@ -109,7 +109,7 @@ class ProjectLibraryTableBridgeImpl(
         LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
           project = project,
-          initialId = addChange.entity.persistentId,
+          initialId = addChange.entity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = builder
         )
@@ -127,7 +127,7 @@ class ProjectLibraryTableBridgeImpl(
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
           project = project,
-          initialId = libraryEntity.persistentId,
+          initialId = libraryEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = targetBuilder
         ))

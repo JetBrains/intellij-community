@@ -537,7 +537,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.getPlugin() == descriptor) {
+      if (panel.getDescriptorForActions() == descriptor) {
         panel.showProgress();
       }
     }
@@ -566,6 +566,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           gridComponent.setPluginDescriptor(installedDescriptor);
         }
         gridComponent.hideProgress(success, restartRequired);
+        if (gridComponent.myInstalledDescriptorForMarketplace != null) {
+          gridComponent.updateErrors();
+        }
       }
     }
     List<ListPluginComponent> installedComponents = myInstalledPluginComponentMap.get(pluginId);
@@ -957,6 +960,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateEnabledState();
     }
+    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
+      for (ListPluginComponent plugin : plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          plugin.updateEnabledState();
+        }
+      }
+    }
     for (PluginDetailsPageComponent detailPanel : myDetailPanels) {
       detailPanel.updateEnabledState();
     }
@@ -990,19 +1000,37 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
-    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(descriptor.getPluginId());
+    PluginId pluginId = descriptor.getPluginId();
+
+    List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(pluginId);
     if (listComponents != null) {
       for (ListPluginComponent listComponent : listComponents) {
         listComponent.updateAfterUninstall(needRestartForUninstall);
       }
     }
 
+    List<ListPluginComponent> marketplaceComponents = myMarketplacePluginComponentMap.get(pluginId);
+    if (marketplaceComponents != null) {
+      for (ListPluginComponent component : marketplaceComponents) {
+        if (component.myInstalledDescriptorForMarketplace != null) {
+          component.updateAfterUninstall(needRestartForUninstall);
+        }
+      }
+    }
+
     for (ListPluginComponent component : myInstalledPluginComponents) {
       component.updateErrors();
     }
+    for (List<ListPluginComponent> plugins : myMarketplacePluginComponentMap.values()) {
+      for (ListPluginComponent plugin : plugins) {
+        if (plugin.myInstalledDescriptorForMarketplace != null) {
+          plugin.updateErrors();
+        }
+      }
+    }
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.getPlugin() == descriptor) {
+      if (panel.getDescriptorForActions() == descriptor) {
         panel.updateButtons();
       }
     }

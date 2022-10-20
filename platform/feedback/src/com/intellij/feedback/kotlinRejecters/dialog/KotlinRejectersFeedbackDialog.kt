@@ -296,9 +296,9 @@ class KotlinRejectersFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project) {
           showFeedbackSystemInfoDialog(project, commonSystemInfoData.value)
-        })
+        }
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
 
     }.also { dialog ->

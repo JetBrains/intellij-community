@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public abstract class ValuePatternCondition<T> extends PatternCondition<T>{
 
   protected ValuePatternCondition(@NonNls String methodName) {

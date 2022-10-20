@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.idea.statistics.KotlinFUSLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
 import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
@@ -62,11 +61,11 @@ class KotlinGradleFUSLogger : StartupActivity.DumbAware, Runnable {
                                     previousEvent = metricContainer
                                 }
                             } catch (e: Exception) {
-                                Logger.getInstance(KotlinFUSLogger::class.java)
+                                Logger.getInstance(KotlinGradleFUSCollector::class.java)
                                     .info("Failed to process file ${statisticFile.absolutePath}: ${e.message}", e)
                             } finally {
                                 if (fileWasRead && !statisticFile.delete()) {
-                                    Logger.getInstance(KotlinFUSLogger::class.java)
+                                    Logger.getInstance(KotlinGradleFUSCollector::class.java)
                                         .warn("[FUS] Failed to delete file ${statisticFile.absolutePath}")
                                 }
                             }

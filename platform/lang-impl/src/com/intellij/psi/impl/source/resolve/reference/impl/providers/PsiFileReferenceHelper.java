@@ -35,9 +35,6 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.providers.JpsF
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-/**
- * @author peter
- */
 public class PsiFileReferenceHelper extends FileReferenceHelper {
   @NotNull
   public static PsiFileReferenceHelper getInstance() {

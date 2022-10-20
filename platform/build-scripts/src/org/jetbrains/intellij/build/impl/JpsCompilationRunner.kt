@@ -155,8 +155,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val missing = artifactNames.filter { name ->
       artifacts.none { it.name == name }
     }
-    require(missing.isEmpty()) {
-      "Artifacts won't be built: " + missing.joinToString()
+    if (missing.isNotEmpty()) {
+      context.messages.error("Artifacts aren't configured in the project: " + missing.joinToString())
     }
     artifacts.forEach {
       if (context.compilationData.builtArtifacts.contains(it.name) &&
@@ -207,7 +207,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val buildLogFile = compilationData.buildLogFile
     try {
       val factory = Log4jFileLoggerFactory(buildLogFile.toFile(), categoriesWithDebugLevel)
-      AntLoggerFactory.fileLoggerFactory = factory
+      JpsLoggerFactory.fileLoggerFactory = factory
       context.messages.info("Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
                             "will be written to $buildLogFile")
     }
@@ -221,12 +221,12 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                        artifactNames: Collection<String>,
                        includeTests: Boolean,
                        resolveProjectDependencies: Boolean) {
-    messageHandler = AntMessageHandler(context)
+    messageHandler = JpsMessageHandler(context)
     if (context.options.compilationLogEnabled) {
       setupAdditionalBuildLogging(compilationData)
     }
 
-    Logger.setFactory(AntLoggerFactory::class.java)
+    Logger.setFactory(JpsLoggerFactory::class.java)
     val forceBuild = !context.options.incrementalCompilation
     val scopes = ArrayList<TargetTypeBuildScope>()
     for (type in JavaModuleBuildTargetType.ALL_TYPES) {
@@ -263,7 +263,6 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       scopes.add(builder.addAllTargetId(artifactsToBuild).build())
     }
     val compilationStart = System.nanoTime()
-    val messageHandler = messageHandler!!
     spanBuilder("compilation")
       .setAttribute("scope", "${if (allModules) "all" else moduleSet.size} modules")
       .setAttribute("includeTests", includeTests)
@@ -298,7 +297,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 }
 
-internal class AntLoggerFactory : Logger.Factory {
+private class JpsLoggerFactory : Logger.Factory {
   companion object {
     var fileLoggerFactory: Logger.Factory? = null
   }
@@ -306,15 +305,15 @@ internal class AntLoggerFactory : Logger.Factory {
   override fun getLoggerInstance(category: String): Logger = BackedLogger(category, fileLoggerFactory?.getLoggerInstance(category))
 }
 
-private class AntMessageHandler(private val context: CompilationContext) : MessageHandler {
+private class JpsMessageHandler(private val context: CompilationContext) : MessageHandler {
   val errorMessagesByCompiler = MultiMap.createConcurrent<String, String>()
-  private val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
-  private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
-  private var progress = -1.0.toFloat()
+  val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
+  val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
+  var progress = (-1.0).toFloat()
   override fun processMessage(message: BuildMessage) {
     val text = message.messageText
     when (message.kind) {
-      BuildMessage.Kind.ERROR -> {
+      BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
         val compilerName: String
         val messageText: String
         if (message is CompilerMessage) {
@@ -337,7 +336,7 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
         errorMessagesByCompiler.putValue(compilerName, messageText)
       }
       BuildMessage.Kind.WARNING -> context.messages.warning(text)
-      BuildMessage.Kind.INFO -> if (message is BuilderStatisticsMessage) {
+      BuildMessage.Kind.INFO, BuildMessage.Kind.JPS_INFO -> if (message is BuilderStatisticsMessage) {
         val buildKind = if (context.options.incrementalCompilation) " (incremental)" else ""
         context.messages.reportStatisticValue("Compilation time '${message.builderName}'$buildKind, ms", message.elapsedTimeMs.toString())
         val sources = message.numberOfProcessedSources
@@ -359,7 +358,7 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
       else if (message is BuildingTargetProgressMessage) {
         val targets = message.targets
         val target = targets.first()
-        val targetId = "$target.id${if (targets.size > 1) " and ${targets.size} more" else ""} ($target.targetType.typeId)"
+        val targetId = "${target.id}${if (targets.size > 1) " and ${targets.size} more" else ""} (${target.targetType.typeId})"
         if (message.eventType == BuildingTargetProgressMessage.Event.STARTED) {
           reportProgress(targets, "")
           compilationStartTimeForTarget.put(targetId, System.nanoTime())
@@ -368,9 +367,7 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
           compilationFinishTimeForTarget.put(targetId, System.nanoTime())
         }
       }
-      else -> {
-        // ignore
-      }
+      BuildMessage.Kind.OTHER, null -> context.messages.warning(text)
     }
   }
 
@@ -381,14 +378,14 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
 
     Files.newBufferedWriter(context.paths.buildOutputDir.resolve("log/compilation-time.csv")).use { out ->
       compilationFinishTimeForTarget.forEach(BiConsumer { k, v ->
-        val startTime = compilationStartTimeForTarget.get(k)!! - compilationStart
+        val startTime = compilationStartTimeForTarget.getValue(k) - compilationStart
         val finishTime = v - compilationStart
         out.write("$k,$startTime,$finishTime\n")
       })
     }
     val buildMessages = context.messages
     buildMessages.info("Compilation time per target:")
-    val compilationTimeForTarget = compilationFinishTimeForTarget.entries.map { it.key to (it.value - compilationStartTimeForTarget.get(it.key)!!) }
+    val compilationTimeForTarget = compilationFinishTimeForTarget.entries.map { it.key to (it.value - compilationStartTimeForTarget.getValue(it.key)) }
 
     buildMessages.info(" average: ${String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)}ms")
     val topTargets = compilationTimeForTarget.sortedBy { it.second }.asReversed().take(10)
@@ -398,7 +395,7 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
     }
   }
 
-  private fun reportProgress(targets: Collection<BuildTarget<*>>, targetSpecificMessage: String) {
+  fun reportProgress(targets: Collection<BuildTarget<*>>, targetSpecificMessage: String) {
     val targetsString = targets.joinToString(separator = ", ") { Introspector.decapitalize(it.presentableName) }
     val progressText = if (progress >= 0) " (${(100 * progress).toInt()}%)" else ""
     val targetSpecificText = if (targetSpecificMessage.isEmpty()) "" else ", $targetSpecificMessage"
@@ -409,16 +406,16 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
 private class BackedLogger constructor(category: String?, private val fileLogger: Logger?) : DefaultLogger(category) {
   override fun error(@Nls message: @NonNls String?, t: Throwable?, vararg details: String) {
     if (t == null) {
-      messageHandler!!.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
+      messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
     }
     else {
-      messageHandler!!.processMessage(CompilerMessage.createInternalBuilderError(COMPILER_NAME, t))
+      messageHandler.processMessage(CompilerMessage.createInternalBuilderError(COMPILER_NAME, t))
     }
     fileLogger?.error(message, t, *details)
   }
 
   override fun warn(message: @NonNls String?, t: Throwable?) {
-    messageHandler!!.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
+    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
     fileLogger?.warn(message, t)
   }
 
@@ -459,7 +456,7 @@ private class BackedLogger constructor(category: String?, private val fileLogger
   }
 }
 
-private var messageHandler: AntMessageHandler? = null
+private lateinit var messageHandler: JpsMessageHandler
 @Nls
 private const val COMPILER_NAME = "build runner"
 

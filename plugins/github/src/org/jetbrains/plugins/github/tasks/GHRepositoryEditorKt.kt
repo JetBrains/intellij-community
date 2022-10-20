@@ -3,18 +3,26 @@ package org.jetbrains.plugins.github.tasks
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginRequest
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 
 private object GHRepositoryEditorKt {
   fun askToken(project: Project, host: String): String? {
     val server = tryParse(host) ?: return null
 
-    return GithubAuthenticationManager.getInstance().login(
-      project, null,
-      GHLoginRequest(server = server)
-    )?.token
+    val model = object : GHLoginModel {
+      var token: String? = null
+
+      override fun isAccountUnique(server: GithubServerPath, login: String): Boolean = true
+
+      override suspend fun saveLogin(server: GithubServerPath, login: String, token: String) {
+        this.token = token
+      }
+    }
+    GHAccountsUtil.login(model, GHLoginRequest(server = server), project, null)
+    return model.token
   }
 
   private fun tryParse(host: String): GithubServerPath? {

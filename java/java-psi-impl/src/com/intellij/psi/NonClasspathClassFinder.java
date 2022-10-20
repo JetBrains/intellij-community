@@ -33,9 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private static final Logger LOG = Logger.getInstance(NonClasspathClassFinder.class);
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();

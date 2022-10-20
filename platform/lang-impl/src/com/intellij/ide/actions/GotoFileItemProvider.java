@@ -39,9 +39,6 @@ import java.util.HashMap;
 import java.util.*;
 import java.util.function.Function;
 
-/**
-* @author peter
-*/
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
 

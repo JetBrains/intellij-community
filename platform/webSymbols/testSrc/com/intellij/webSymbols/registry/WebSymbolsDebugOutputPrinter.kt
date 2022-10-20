@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.registry
 
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.DebugOutputPrinter
+import com.intellij.webSymbols.PsiSourcedWebSymbol
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import java.util.*
 
-open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
+open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
   private val parents = Stack<WebSymbol>()
 
@@ -18,6 +21,12 @@ open class WebSymbolsDebugOutputPrinter: DebugOutputPrinter() {
       is WebSymbolNameSegment -> builder.printSegment(level, value)
       else -> super.printValueImpl(builder, level, value)
     }
+
+  override fun printRecursiveValue(builder: StringBuilder, level: Int, value: Any): StringBuilder =
+    if (value is WebSymbol)
+      if (parents.peek() == value) builder.append("<self>") else builder.append("<recursive>")
+    else
+      super.printRecursiveValue(builder, level, value)
 
   private fun StringBuilder.printCodeCompletionItem(topLevel: Int, item: WebSymbolCodeCompletionItem): StringBuilder =
     printObject(topLevel) { level ->

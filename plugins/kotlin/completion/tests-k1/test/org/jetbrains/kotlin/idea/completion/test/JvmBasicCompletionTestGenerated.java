@@ -3226,6 +3226,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/java/ExtensionFromStandardLibrary.kt");
             }
 
+            @TestMetadata("FlowCollectMethodLowerPriority.kt")
+            public void testFlowCollectMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/java/FlowCollectMethodLowerPriority.kt");
+            }
+
             @TestMetadata("InPackage.kt")
             public void testInPackage() throws Exception {
                 runTest("../testData/basic/java/InPackage.kt");
@@ -3294,6 +3299,16 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
             @TestMetadata("PackageDirective.kt")
             public void testPackageDirective() throws Exception {
                 runTest("../testData/basic/java/PackageDirective.kt");
+            }
+
+            @TestMetadata("ReadlineMethodLowerPriority.kt")
+            public void testReadlineMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/java/ReadlineMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("ReadlineMethodUsualPriorityInInOldVersions.kt")
+            public void testReadlineMethodUsualPriorityInInOldVersions() throws Exception {
+                runTest("../testData/basic/java/ReadlineMethodUsualPriorityInInOldVersions.kt");
             }
 
             @TestMetadata("SAMAdaptersStatic.kt")

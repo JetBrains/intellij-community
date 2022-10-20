@@ -177,6 +177,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
             runTest("../idea/tests/testData/highlighter/DefinitelyNonNullableType.kt");
         }
 
+        @TestMetadata("DelegateFunctionMissing.kt")
+        public void testDelegateFunctionMissing() throws Exception {
+            runTest("../idea/tests/testData/highlighter/DelegateFunctionMissing.kt");
+        }
+
         @TestMetadata("DelegatingCtor.kt")
         public void testDelegatingCtor() throws Exception {
             runTest("../idea/tests/testData/highlighter/DelegatingCtor.kt");
@@ -280,6 +285,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
         @TestMetadata("Todo.kt")
         public void testTodo() throws Exception {
             runTest("../idea/tests/testData/highlighter/Todo.kt");
+        }
+
+        @TestMetadata("TooManyArguments.kt")
+        public void testTooManyArguments() throws Exception {
+            runTest("../idea/tests/testData/highlighter/TooManyArguments.kt");
         }
 
         @TestMetadata("TopLevelDestructuring.kt")

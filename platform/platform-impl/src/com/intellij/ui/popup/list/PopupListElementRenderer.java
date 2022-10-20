@@ -261,7 +261,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     updateExtraButtons(list, value, step, isSelected);
 
     boolean nextStepButtonSelected = false;
-    if (step.hasSubstep(value)) {
+    boolean showNextStepLabel = step.hasSubstep(value) && !myInlineActionsSupport.hasExtraButtons(value);
+    if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       if (!ExperimentalUI.isNewUI() ) {
@@ -423,7 +424,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   static Insets getListCellPadding() {
     if (ExperimentalUI.isNewUI()) {
       int leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get();
-      return JBUI.insets(0, leftRightInset, 0, leftRightInset);
+      return JBUI.insets(0, leftRightInset, 0, leftRightInset + leftRightInset);
     }
 
     return UIUtil.getListCellPadding();

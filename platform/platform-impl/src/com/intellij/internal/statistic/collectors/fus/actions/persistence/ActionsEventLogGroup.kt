@@ -16,7 +16,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 68)
+    val GROUP = EventLogGroup("actions", 70)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
@@ -32,6 +32,9 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
 
     @JvmField
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
+
+    @JvmField
+    val IS_SUBMENU = EventFields.Boolean("isSubmenu")
 
     @JvmField
     val DUMB_START = EventFields.Boolean("dumb_start")
@@ -60,6 +63,13 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ACTION_UPDATED = GROUP.registerVarargEvent("action.updated", EventFields.PluginInfo,
                                                    ACTION_ID, ACTION_CLASS, ACTION_PARENT,
                                                    EventFields.Language, EventFields.DurationMs)
+
+    @JvmField
+    val ACTION_GROUP_EXPANDED = GROUP.registerVarargEvent("action.group.expanded", EventFields.PluginInfo,
+                                                          ACTION_ID, ACTION_CLASS, ACTION_PARENT,
+                                                          EventFields.ActionPlace, IS_SUBMENU, EventFields.Size,
+                                                          EventFields.Language, EventFields.DurationMs)
+
 
     @JvmStatic
     fun registerActionEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {

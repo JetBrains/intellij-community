@@ -94,6 +94,13 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   /**
+   * Temporary hack to deal with leagcy conda. Use constructor instead
+   */
+  public final void changeFlavorAndData(@NotNull PyFlavorAndData<?, ?> flavorAndData) {
+    this.myFlavorAndData = flavorAndData;
+  }
+
+  /**
    * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
    */
   @NotNull

@@ -4,10 +4,7 @@ package com.jetbrains.python.sdk.add.target.conda
 import com.intellij.execution.Platform
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressSink
@@ -23,7 +20,6 @@ import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getPythonBinaryPath
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
@@ -42,7 +38,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaE
     else -> PyTargetAwareAdditionalData(flavorAndData, targetConfig)
   }
 
-  val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName("$condaIdentity@$fullCondaPathOnTarget", existingSdks),
+  val sdk = ProjectJdkImpl(SdkConfigurationUtil.createUniqueSdkName(condaIdentity.userReadableName, existingSdks),
                            PythonSdkType.getInstance())
   sdk.sdkAdditionalData = additionalData
   sdk.homePath = sdk.getPythonBinaryPath(project).getOrThrow()
@@ -73,7 +69,10 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
     Platform.UNIX -> arrayOf("~/anaconda3/bin/conda",
                              "~/miniconda3/bin/conda",
                              "/usr/local/bin/conda",
+                             "~/opt/miniconda3/condabin/conda",
+                             "~/opt/anaconda3/condabin/conda",
                              "/opt/miniconda3/condabin/conda",
+                             "/opt/conda/bin/conda",
                              "/opt/anaconda3/condabin/conda")
     Platform.WINDOWS -> arrayOf("%ALLUSERSPROFILE%\\Anaconda3\\condabin\\conda.bat",
                                 "%ALLUSERSPROFILE%\\Miniconda3\\condabin\\conda.bat",
@@ -85,7 +84,7 @@ suspend fun suggestCondaPath(configuration: TargetEnvironmentConfiguration?): Fu
 }
 
 
-private fun TargetEnvironmentRequest.executeShellCommand(command: String): Process {
+private suspend fun TargetEnvironmentRequest.executeShellCommand(command: String): Process {
   val commandLine = TargetedCommandLineBuilder(this).apply {
     if (targetPlatform.platform == Platform.WINDOWS) {
       setExePath("cmd.exe")
@@ -97,14 +96,14 @@ private fun TargetEnvironmentRequest.executeShellCommand(command: String): Proce
     }
     addParameter(command)
   }.build()
-  return prepareEnvironment(TargetProgressIndicator.EMPTY).createProcess(commandLine)
+  return prepareEnvironment(TargetProgressIndicator.EMPTY).createProcessWithResult(commandLine).getOrThrow()
 }
 
 /**
  * If [file] is executable returns it in expanded (env vars resolved) manner.
  */
 suspend fun TargetEnvironmentRequest.getExpandedPathIfExecutable(file: FullPathOnTarget): FullPathOnTarget? = withContext(Dispatchers.IO) {
-  val expandedPath = executeShellCommand("echo $file").getResultStdoutStr().await().getOrElse {
+  val expandedPath = executeShellCommand("echo $file").getResultStdoutStr().getOrElse {
     logger<PyAddCondaPanelModel>().warn(it)
     return@withContext null
   }
@@ -119,7 +118,7 @@ suspend fun TargetEnvironmentRequest.getExpandedPathIfExecutable(file: FullPathO
       logger<PyAddCondaPanelModel>().warn("Remote windows target not supported")
       return@withContext null
     }
-    return@withContext if (executeShellCommand("test -x $expandedPath").getBareExecutionResult().await().exitCode == 0) expandedPath
+    return@withContext if (executeShellCommand("test -x $expandedPath").getBareExecutionResult().exitCode == 0) expandedPath
     else null
   }
 }

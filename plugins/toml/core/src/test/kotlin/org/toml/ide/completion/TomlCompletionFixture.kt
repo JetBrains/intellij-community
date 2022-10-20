@@ -9,6 +9,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
+import org.junit.Assert
 
 class TomlCompletionFixture(
     private val myFixture: CodeInsightTestFixture,
@@ -31,6 +32,22 @@ class TomlCompletionFixture(
     ) = withNoAutoCompletion {
         myFixture.configureByText(defaultFileName, code.trimIndent())
         doNotContainsCompletion(variants, render)
+    }
+
+    fun checkCompletionList(
+        variants: List<String>,
+        code: String,
+        render: LookupElement.() -> String
+    ) = withNoAutoCompletion {
+        myFixture.configureByText(defaultFileName, code.trimIndent())
+        val lookups = myFixture.completeBasic()
+
+        checkNotNull(lookups) {
+            "Expected completions that contain $variants, but no completions found"
+        }
+
+        val renderedLookups = lookups.map { it.render() }
+        Assert.assertEquals(variants, renderedLookups)
     }
 
     private fun withNoAutoCompletion(block: () -> Unit) {

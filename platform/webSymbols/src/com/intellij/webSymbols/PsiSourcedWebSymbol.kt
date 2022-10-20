@@ -10,19 +10,15 @@ import com.intellij.psi.PsiElement
 
 interface PsiSourcedWebSymbol : WebSymbol {
 
-  @JvmDefault
   override val psiContext: PsiElement?
     get() = source
 
-  @JvmDefault
   val source: PsiElement?
     get() = null
 
-  @JvmDefault
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     source?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
 
-  @JvmDefault
   override fun isEquivalentTo(symbol: Symbol): Boolean {
     if (this == symbol) return true
     val source = this.source ?: return false

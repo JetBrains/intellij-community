@@ -34,12 +34,16 @@ import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.analysis.isInlinedArgument
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.base.psi.getEndLineOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
@@ -47,9 +51,6 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
@@ -602,13 +603,15 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
 }
 
 private fun KtFunction.isSamLambda(): Boolean {
-    if (this !is KtFunctionLiteral && this !is KtNamedFunction) return false
-    return analyze(this) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
-        val call = getResolvedFunctionCall(parentCall) ?: return false
-        val valueArgument = parentCall.getValueArgumentForExpression(this@isSamLambda) ?: return false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+    if (this !is KtFunctionLiteral && this !is KtNamedFunction) {
+        return false
+    }
 
+    analyze(this) {
+        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
+        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return false
+        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
+        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argument.returnType is KtUsualClassType
     }
 }

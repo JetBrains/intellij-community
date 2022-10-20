@@ -675,7 +675,6 @@ com/intellij/ide/plugins/ModuleDependenciesDescriptor$ModuleReference.class:lib/
 com/intellij/ide/plugins/ModuleDependenciesDescriptor$PluginReference.class:lib/app.jar
 intellij.platform.feedback.xml:lib/app.jar
 intellij.notebooks.visualization.xml:lib/app.jar
-com/intellij/openapi/util/io/win32/IdeaWin32.class:lib/util.jar
 com/intellij/ui/RasterizedImageDataLoader.class:lib/app.jar
 intellij.platform.images.copyright.xml:lib/app.jar
 com/intellij/ui/icons/IconLoadMeasurer.class:lib/app.jar
@@ -4061,7 +4060,6 @@ com/intellij/database/vfs/DbStorageFileType$Detector.class:plugins/DatabaseTools
 net/jpountz/xxhash/StreamingXXHash32JNI$Factory.class:lib/3rd-party-rt.jar
 com/intellij/ide/HelpTooltip$Header.class:lib/app.jar
 net/jpountz/xxhash/StreamingXXHash32.class:lib/3rd-party-rt.jar
-com/intellij/openapi/util/io/FileSystemUtil$IdeaWin32MediatorImpl.class:lib/util.jar
 net/jpountz/xxhash/StreamingXXHash32JNI.class:lib/3rd-party-rt.jar
 com/intellij/util/ui/JBUI$CurrentTheme$ContextHelp.class:lib/app.jar
 net/jpountz/xxhash/XXHash64.class:lib/3rd-party-rt.jar

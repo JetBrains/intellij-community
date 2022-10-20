@@ -20,7 +20,7 @@ abstract class SplitJoinIntention : PsiElementBaseIntentionAction(), LowPriority
       return editor?.document ?: documentManager.getDocument(element.containingFile)
     }
     
-    val logger = Logger.getInstance(SplitJoinIntention::class.java)
+    private val logger = Logger.getInstance(SplitJoinIntention::class.java)
   }
 
   protected abstract fun operation(): JoinOrSplit

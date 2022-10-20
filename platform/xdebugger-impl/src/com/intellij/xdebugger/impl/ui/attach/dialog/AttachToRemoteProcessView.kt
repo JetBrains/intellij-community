@@ -88,7 +88,7 @@ internal class AttachToRemoteProcessView(private val project: Project,
     }
   }
 
-  override fun getName(): String = XDebuggerBundle.message("xdebugger.remote.attach.button.name")
+  override fun getHostType(): AttachDialogHostType = AttachDialogHostType.REMOTE
 
   override fun getViewActions(): List<AnAction> = listOf(hostsComboBoxAction, addHostButtonAction)
 

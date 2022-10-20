@@ -668,9 +668,6 @@ public final class EditorActionUtil {
     }
     else {
       newOffset = getNextCaretStopOffset(editor, caretStopPolicy, isCamel);
-      if (isWithSelection && isAfterNewLine(editor, newOffset) && editor.getCaretModel().getOffset() + 1 != newOffset) {
-        --newOffset;
-      }
       if (newOffset == offset) return;
 
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(newOffset);
@@ -688,12 +685,6 @@ public final class EditorActionUtil {
     EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-  }
-
-  private static boolean isAfterNewLine(@NotNull Editor editor, int offset) {
-    if (offset == 0) return false;
-    char charBeforeCaret = editor.getDocument().getText(new TextRange(offset - 1, offset)).charAt(0);
-    return charBeforeCaret == '\n';
   }
 
   private static void setupSelection(@NotNull Editor editor,

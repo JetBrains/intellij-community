@@ -101,7 +101,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     BaseProjectTreeBuilder treeBuilder = createBuilder(treeModel);
     if (treeBuilder != null) {
-      installComparator(treeBuilder);
+      installComparator(treeBuilder, createComparator());
       setTreeBuilder(treeBuilder);
     }
     else {
@@ -134,11 +134,17 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+  public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+    installComparator(getTreeBuilder(), comparator);
+  }
+
+  private void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myAsyncSupport != null) {
       myAsyncSupport.setComparator(comparator);
     }
-    super.installComparator(builder, comparator);
+    else if (builder != null) {
+      builder.setNodeDescriptorComparator(comparator);
+    }
   }
 
   @Override

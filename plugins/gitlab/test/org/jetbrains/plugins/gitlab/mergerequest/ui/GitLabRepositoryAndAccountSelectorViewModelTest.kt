@@ -22,10 +22,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.doAnswer
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class GitLabRepositoryAndAccountSelectorViewModelTest {
@@ -61,7 +58,8 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(mapOf(account to "token"))
+    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
+    whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, connectionManager, projectManager, accountManager)

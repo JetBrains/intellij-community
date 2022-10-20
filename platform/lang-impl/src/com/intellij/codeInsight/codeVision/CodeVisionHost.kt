@@ -16,7 +16,9 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -54,6 +56,8 @@ import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.whenTrue
 import com.jetbrains.rd.util.trace
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 
@@ -62,7 +66,6 @@ open class CodeVisionHost(val project: Project) {
     private val logger = getLogger<CodeVisionHost>()
     const val defaultVisibleLenses: Int = 5
     const val settingsLensProviderId: String = "!Settings"
-    const val moreLensProviderId: String = "!More"
 
     /**
      * Flag which is enabled when executed test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
@@ -307,7 +310,6 @@ open class CodeVisionHost(val project: Project) {
 
     val calculationLifetimes = SequentialLifetimes(editorLifetime)
 
-    val editorManager = FileEditorManager.getInstance(project)
     var recalculateWhenVisible = false
 
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
@@ -319,6 +321,7 @@ open class CodeVisionHost(val project: Project) {
     var calcRunning = false
 
     fun recalculateLenses(groupToRecalculate: Collection<String> = emptyList()) {
+      val editorManager = FileEditorManager.getInstance(project)
       if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {
           isAllowedFileEditor(it) && (it as TextEditor).editor == editor
         }) {
@@ -326,8 +329,9 @@ open class CodeVisionHost(val project: Project) {
         return
       }
       recalculateWhenVisible = false
-      if (calcRunning && groupToRecalculate.isNotEmpty())
+      if (calcRunning && groupToRecalculate.isNotEmpty()) {
         return recalculateLenses(emptyList())
+      }
       calcRunning = true
       val lt = calculationLifetimes.next()
       calculateFrontendLenses(lt, editor, groupToRecalculate) { lenses, providersToUpdate ->
@@ -345,9 +349,9 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.cancelAllUpdates()
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
-          application.invokeLater(
-            { recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate) },
-            ModalityState.stateForComponent(editor.contentComponent))
+          project.coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(editor.contentComponent).asContextElement()) {
+            recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
+          }
         }
       })
     }

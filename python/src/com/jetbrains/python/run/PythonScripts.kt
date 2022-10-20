@@ -47,13 +47,13 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   commandLineBuilder.addEnvironmentVariable(PythonEnvUtil.PYTHONIOENCODING, charset.name())
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
-  charset.let { commandLineBuilder.setCharset(it) }
+  commandLineBuilder.charset = charset
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
                                 ?: throw IllegalArgumentException("Python script path must be set")
-    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", moduleName)) }
+    is PythonModuleExecution -> moduleName?.let { commandLineBuilder.addParameters(listOf("-m", it)) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {

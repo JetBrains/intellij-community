@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
@@ -361,6 +362,50 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     readFiles(myProjectPom);
     assertTrue(getRootNodes().get(0).getNavigatable().canNavigateToSource());
+  }
+
+  @Test
+  public void testCanIterateOverRootNodeChildren() throws Exception {
+    myProjectsManager.fireActivatedInTests();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    readFiles(myProjectPom);
+
+    var rootNode = myStructure.getRootElement();
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
+    var project = projectsManager.getProjects().get(0);
+    var node = myStructure.new ProjectNode(project);
+    rootNode.add(node);
+    var children = rootNode.doGetChildren();
+    rootNode.remove(node);
+    for (var child : children) {
+      assertNotNull(child);
+    }
+  }
+
+  @Test
+  public void testCanIterateOverProjectNodeChildren() throws Exception {
+    myProjectsManager.fireActivatedInTests();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    readFiles(myProjectPom);
+
+    var projectsManager = MavenProjectsManager.getInstance(myProject);
+    var project = projectsManager.getProjects().get(0);
+    var node = myStructure.new ProjectNode(project);
+    var projectNode = getRootNodes().get(0);
+    projectNode.add(node);
+    var children = projectNode.doGetChildren();
+    projectNode.remove(node);
+    for (var child : children) {
+      assertNotNull(child);
+    }
   }
 
   private void readFiles(VirtualFile... files) throws Exception {

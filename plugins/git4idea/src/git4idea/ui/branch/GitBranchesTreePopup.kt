@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -26,6 +27,8 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.ui.tree.ui.Control
+import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.FontUtil
@@ -56,6 +59,7 @@ import java.awt.Cursor
 import java.awt.Point
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
+import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
@@ -81,7 +85,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private var userResized: Boolean
 
   init {
-    setMinimumSize(JBDimension(200, 200))
+    setMinimumSize(JBDimension(300, 200))
     dimensionServiceKey = if (isChild()) null else GitBranchPopup.DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
@@ -111,6 +115,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       Disposer.register(this) {
         it.model = null
       }
+      it.border = JBUI.Borders.emptyLeft(JBUIScale.scale(10))
     }
     searchPatternStateFlow = MutableStateFlow(null)
     speedSearch.installSupplyTo(tree, false)
@@ -263,12 +268,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     ClientProperty.put(this, RenderingUtil.SEPARATOR_ABOVE_PREDICATE, Predicate { treeStep.isSeparatorAboveRequired(it) })
 
+    val renderer = Renderer(treeStep)
+
+    ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
+
     selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
     isRootVisible = false
     showsRootHandles = true
 
-    cellRenderer = Renderer(treeStep)
+    cellRenderer = renderer
 
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
@@ -509,7 +518,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     @JvmStatic
     fun create(project: Project): JBPopup {
       val repositories = GitRepositoryManager.getInstance(project).repositories
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories))
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories, true))
     }
 
     private fun uiScope(parent: Disposable) =
@@ -527,6 +536,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
 
     private class Renderer(private val step: GitBranchesTreePopupStep) : TreeCellRenderer {
+
+      fun getLeftTreeIconRenderer(path: TreePath): Control? {
+        val lastComponent = path.lastPathComponent
+        val defaultIcon = step.getNodeIcon(lastComponent, false) ?: return null
+        val selectedIcon = step.getNodeIcon(lastComponent, true) ?: return null
+
+        return DefaultControl(defaultIcon, defaultIcon, selectedIcon, selectedIcon)
+      }
 
       private val mainIconComponent = JLabel().apply {
         ClientProperty.put(this, MAIN_ICON, true)
@@ -549,7 +566,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(JBUI.Panels.simplePanel(mainIconComponent).addToRight(mainTextComponent).andTransparent())
+        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
         .addToCenter(secondaryLabel)
         .andTransparent()
 
@@ -567,7 +584,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                                                 hasFocus: Boolean): Component {
         val userObject = TreeUtil.getUserObject(value)
 
-        mainIconComponent.icon = step.getIcon(userObject, selected)
+        mainIconComponent.apply {
+          icon = step.getIcon(userObject, selected)
+          isVisible = icon != null
+        }
 
         mainTextComponent.apply {
           background = JBUI.CurrentTheme.Tree.background(selected, true)

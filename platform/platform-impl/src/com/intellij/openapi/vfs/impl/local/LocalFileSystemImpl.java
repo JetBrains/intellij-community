@@ -6,23 +6,26 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +38,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
   private volatile boolean myDisposed;
+
+  private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
+  private final DiskQueryRelay<VirtualFile, Map<String, FileAttributes>> myChildrenAttrGetter = new DiskQueryRelay<>(dir -> listWithAttributes(dir));
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -204,11 +210,6 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @Override
-  public String toString() {
-    return "LocalFileSystem";
-  }
-
-  @Override
   @TestOnly
   public void cleanupForNextTest() {
     super.cleanupForNextTest();
@@ -231,11 +232,81 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   private static boolean startsWith(@Nullable VirtualFile parent, CharSequence name, String symlinkTarget) {
-    if (parent != null) {
-      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
-      return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
-    }
     // parent == null means name is root
-    return StringUtilRt.equal(name, symlinkTarget, SystemInfoRt.isFileSystemCaseSensitive);
+    //noinspection StaticMethodReferencedViaSubclass
+    return parent != null ? VfsUtilCore.isAncestorOrSelf(StringUtil.trimEnd(symlinkTarget, "/" + name), parent)
+                          : StringUtil.equal(name, symlinkTarget, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  @ApiStatus.Internal
+  public String @NotNull [] listWithCaching(@NotNull VirtualFile dir) {
+    if ((SystemInfo.isWindows || SystemInfo.isMac && CpuArch.isArm64()) && getClass() == LocalFileSystemImpl.class) {
+      Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+      if (cache != null) {
+        LOG.error("unordered access to " + dir + " without cleaning after " + cache.first);
+      }
+      Map<String, FileAttributes> result = myChildrenAttrGetter.accessDiskWithCheckCanceled(dir);
+      myFileAttributesCache.set(new Pair<>(dir, result));
+      return ArrayUtil.toStringArray(result.keySet());
+    }
+    else {
+      return list(dir);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void clearListCache() {
+    myFileAttributesCache.remove();
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    Pair<VirtualFile, Map<String, FileAttributes>> cache = myFileAttributesCache.get();
+    if (cache != null) {
+      if (!cache.first.equals(file.getParent())) {
+        LOG.error("unordered access to " + file + " outside " + cache.first);
+      }
+      else {
+        return cache.second.get(file.getName());
+      }
+    }
+
+    return super.getAttributes(file);
+  }
+
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
+    try {
+      Map<String, FileAttributes> result = CollectionFactory.createFilePathMap(10, dir.isCaseSensitive());
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
+        for (Path file : stream) {
+          BasicFileAttributes attrs = null;
+          if (file instanceof sun.nio.fs.BasicFileAttributesHolder) {
+            attrs = ((sun.nio.fs.BasicFileAttributesHolder)file).get();
+          }
+          if (attrs == null) {
+            try {
+              attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            }
+            catch (IOException e) {
+              LOG.trace(e);
+            }
+          }
+          if (attrs != null) {
+            result.put(file.getFileName().toString(), FileAttributes.fromNio(file, attrs));
+          }
+        }
+      }
+      return result;
+    }
+    catch (InvalidPathException | IOException | SecurityException e) {
+      LOG.warn(e);
+      return Map.of();
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "LocalFileSystem";
   }
 }

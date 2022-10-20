@@ -619,6 +619,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiElement unwrapped = unwrap(other, context);
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
+      if (other instanceof PsiReferenceExpression && other.getParent() instanceof PsiMethodCallExpression) {
+        myMatchingVisitor.setResult(false);
+        return;
+      }
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         if (myMatchingVisitor.setResult(matchWithinHierarchy(reference, unwrapped, handler))) {

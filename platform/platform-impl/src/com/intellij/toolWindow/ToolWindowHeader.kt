@@ -130,7 +130,7 @@ abstract class ToolWindowHeader internal constructor(
       true
     ) {
       override fun getDataContext(): DataContext {
-        val content = toolWindow.contentManagerIfCreated?.selectedContent
+        val content = contentUi.contentManager.selectedContent
         val target = content?.preferredFocusableComponent ?: content?.component ?: this
         if (targetComponent != target) targetComponent = target
         return super.getDataContext()

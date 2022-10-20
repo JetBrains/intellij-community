@@ -25,9 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;

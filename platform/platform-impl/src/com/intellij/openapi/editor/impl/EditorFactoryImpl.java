@@ -249,9 +249,8 @@ public class EditorFactoryImpl extends EditorFactory {
       .filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
-  @NotNull
-  private static Stream<Editor> collectAllEditors() {
-    return ClientEditorManager.getAllInstances().stream().flatMap(it -> it.editors());
+  private static @NotNull Stream<Editor> collectAllEditors() {
+    return ClientEditorManager.getAllInstances().stream().flatMap(ClientEditorManager::editors);
   }
 
   @Override
@@ -267,7 +266,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @Override
   public void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable) {
-    myEditorFactoryEventDispatcher.addListener(listener,parentDisposable);
+    myEditorFactoryEventDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -281,10 +280,10 @@ public class EditorFactoryImpl extends EditorFactory {
     return myEditorEventMulticaster;
   }
 
-  public static final class MyRawTypedHandler implements TypedActionHandlerEx {
+  private static final class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
-    public MyRawTypedHandler(TypedActionHandler delegate) {
+    private MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }
 

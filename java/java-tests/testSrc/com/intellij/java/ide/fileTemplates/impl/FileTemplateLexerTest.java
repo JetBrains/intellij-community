@@ -19,9 +19,6 @@ import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 
-/**
- * @author peter
- */
 public class FileTemplateLexerTest extends LexerTestCase {
 
   public void testEscapes() {

@@ -23,7 +23,6 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -207,15 +206,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
-    WizardPopup parent = getPopupContainer(this);
     PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      parent, null, actionGroup, event.getDataContext(), false,
+      null, null, actionGroup, event.getDataContext(), false,
       false, true, false,
       null, -1, null,
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
       createPresentationFactory(), false);
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
+    popup.setActiveRoot(getPopupContainer(this) == null);
     PopupImplUtil.setPopupToggleButton(popup, this);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;
@@ -400,9 +399,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
     paintButtonLook(g);
-    if (shallPaintDownArrow()) {
-      paintDownArrow(g);
-    }
   }
 
   // used in Rider, please don't change visibility
@@ -418,15 +414,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return true;
   }
 
-  private void paintDownArrow(Graphics g) {
-    Container parent = getParent();
-    boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
-                         ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
-    int x = horizontal ? JBUIScale.scale(6) : JBUIScale.scale(5);
-    int y = horizontal ? JBUIScale.scale(5) : JBUIScale.scale(6);
-    Icon arrowIcon = isEnabled() ? AllIcons.General.Dropdown :
-                     IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
-    arrowIcon.paintIcon(this, g, x, y);
+  @NotNull
+  protected final Icon getEnableOrDisable(@NotNull Icon icon) {
+    return isEnabled() ? icon : IconLoader.getDisabledIcon(icon);
   }
 
   protected void paintButtonLook(Graphics g) {
@@ -436,6 +426,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
+    if (shallPaintDownArrow()) {
+      Icon arrowIcon = getEnableOrDisable(AllIcons.General.Dropdown);
+      look.paintDownArrow(g, this, getIcon(), arrowIcon);
+    }
   }
 
   protected ActionButtonLook getButtonLook() {

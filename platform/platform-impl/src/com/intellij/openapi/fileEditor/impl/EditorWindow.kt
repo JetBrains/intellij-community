@@ -44,6 +44,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.*
 import java.awt.*
@@ -480,11 +481,11 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     return owner.getWindows().filter { win -> win != this@EditorWindow && SwingUtilities.isDescendingFrom(win.panel, splitter) }
   }
 
-  fun updateFileBackgroundColor(file: VirtualFile) {
+  @RequiresEdt
+  fun updateFileBackgroundColor(file: VirtualFile, backgroundColor: Color?) {
     val index = findFileEditorIndex(file)
     if (index != -1) {
-      val color = EditorTabPresentationUtil.getEditorTabBackgroundColor(manager.project, file)
-      setBackgroundColorAt(index, color)
+      setBackgroundColorAt(index, backgroundColor)
     }
   }
 

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
-import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKMethodData
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
@@ -40,7 +40,7 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveApplicab
             }
         }
         psi<PsiMethod>()?.let { psiMethod ->
-            context.externalCodeProcessor.addMember(JKMethodData(psiMethod))
+            context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
         }
     }
 

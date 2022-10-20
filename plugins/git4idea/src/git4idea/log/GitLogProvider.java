@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
+import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -43,8 +44,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +51,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.diagnostic.telemetry.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenameLimit;
 
@@ -59,7 +61,6 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private static final Logger LOG = Logger.getInstance(GitLogProvider.class);
   public static final Function<VcsRef, String> GET_TAG_NAME = ref -> ref.getType() == GitRefManager.TAG ? ref.getName() : null;
 
-  private static final Tracer TRACER = TraceManager.INSTANCE.getTracer("vcs");
 
   public static final it.unimi.dsi.fastutil.Hash.Strategy<VcsRef> DONT_CONSIDER_SHA = new it.unimi.dsi.fastutil.Hash.Strategy<>() {
     @Override
@@ -80,6 +81,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
+  @NotNull private final IJTracer myTracer = TraceManager.INSTANCE.getTracer("vcs");
 
   public GitLogProvider(@NotNull Project project) {
     myProject = project;
@@ -139,10 +141,11 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    Span span = TRACER.spanBuilder("sorting commits").setAttribute("rootName", root.getName()).startSpan();
-    List<VcsCommitMetadata> sortedCommits = VcsLogSorter.sortByDateTopoOrder(allDetails);
-    sortedCommits = ContainerUtil.getFirstItems(sortedCommits, requirements.getCommitCount());
-    span.end();
+    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, "sorting commits", span ->  {
+      span.setAttribute("rootName", root.getName());
+      List<VcsCommitMetadata> commits = VcsLogSorter.sortByDateTopoOrder(allDetails);
+      return ContainerUtil.getFirstItems(commits, requirements.getCommitCount());
+    });
 
     if (LOG.isDebugEnabled()) {
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
@@ -151,39 +154,42 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
   }
 
-  private static void validateDataAndReportError(@NotNull final VirtualFile root,
+  private void validateDataAndReportError(@NotNull final VirtualFile root,
                                                  @NotNull final Set<? extends VcsRef> allRefs,
                                                  @NotNull final List<? extends VcsCommitMetadata> sortedCommits,
                                                  @NotNull final DetailedLogData firstBlockSyncData,
                                                  @NotNull final Set<? extends VcsRef> manuallyReadBranches,
                                                  @Nullable final Set<String> currentTagNames,
                                                  @Nullable final DetailedLogData commitsFromTags) {
-    Span span = TRACER.spanBuilder("validating data").setAttribute("rootName", root.getName()).startSpan();
-    final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
+    runWithSpan(myTracer, "validating data", span -> {
+      span.setAttribute("rootName", root.getName());
 
-    PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
-      @Override
-      public int getColorOfBranch(@NotNull Hash headCommit) {
-        return 0;
-      }
+      final Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
-      @Override
-      public int getColorOfFragment(@NotNull Hash headCommit, int magicIndex) {
-        return 0;
-      }
-
-      @Override
-      public int compareHeads(@NotNull Hash head1, @NotNull Hash head2) {
-        if (!refs.contains(head1) || !refs.contains(head2)) {
-          LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
-                                                                                printErrorDetails(root, allRefs, sortedCommits,
-                                                                                                  firstBlockSyncData, manuallyReadBranches,
-                                                                                                  currentTagNames, commitsFromTags)));
+      PermanentGraphImpl.newInstance(sortedCommits, new GraphColorManager<>() {
+        @Override
+        public int getColorOfBranch(@NotNull Hash headCommit) {
+          return 0;
         }
-        return 0;
-      }
-    }, refs);
-    span.end();
+
+        @Override
+        public int getColorOfFragment(@NotNull Hash headCommit, int magicIndex) {
+          return 0;
+        }
+
+        @Override
+        public int compareHeads(@NotNull Hash head1, @NotNull Hash head2) {
+          if (!refs.contains(head1) || !refs.contains(head2)) {
+            LOG.error("GitLogProvider returned inconsistent data", new Attachment("error-details.txt",
+                                                                                  printErrorDetails(root, allRefs, sortedCommits,
+                                                                                                    firstBlockSyncData,
+                                                                                                    manuallyReadBranches,
+                                                                                                    currentTagNames, commitsFromTags)));
+          }
+          return 0;
+        }
+      }, refs);
+    });
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -258,11 +264,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    Span span = TRACER.spanBuilder("reading tags").setAttribute("rootName", root.getName()).startSpan();
-    Set<String> tags = new HashSet<>();
-    tags.addAll(GitBranchUtil.getAllTags(myProject, root));
-    span.end();
-    return tags;
+    return computeWithSpanThrows(myTracer, "reading tags", span -> {
+      span.setAttribute("rootName", root.getName());
+      return new HashSet<>(GitBranchUtil.getAllTags(myProject, root));
+    });
   }
 
   @NotNull
@@ -286,21 +291,23 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private DetailedLogData loadSomeCommitsOnTaggedBranches(@NotNull VirtualFile root,
                                                           int commitCount,
                                                           @NotNull Collection<String> unmatchedTags) throws VcsException {
-    Span span = TRACER.spanBuilder("loading commits on tagged branch").setAttribute("rootName", root.getName()).startSpan();
-    List<String> params = new ArrayList<>();
-    params.add("--max-count=" + commitCount);
+    return computeWithSpanThrows(myTracer, "loading commits on tagged branch", span -> {
+      span.setAttribute("rootName", root.getName());
 
-    Set<VcsRef> refs = new HashSet<>();
-    Set<VcsCommitMetadata> commits = new HashSet<>();
-    VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-      String[] parameters = ArrayUtilRt.toStringArray(ContainerUtil.concat(params, tagsChunk));
-      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
-      refs.addAll(logData.getRefs());
-      commits.addAll(logData.getCommits());
+      List<String> params = new ArrayList<>();
+      params.add("--max-count=" + commitCount);
+
+      Set<VcsRef> refs = new HashSet<>();
+      Set<VcsCommitMetadata> commits = new HashSet<>();
+      VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
+        String[] parameters = ArrayUtilRt.toStringArray(ContainerUtil.concat(params, tagsChunk));
+        DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
+        refs.addAll(logData.getRefs());
+        commits.addAll(logData.getCommits());
+      });
+
+      return new LogDataImpl(refs, new ArrayList<>(commits));
     });
-
-    span.end();
-    return new LogDataImpl(refs, new ArrayList<>(commits));
   }
 
   @Override
@@ -350,29 +357,30 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @NotNull
   private Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    Span span = TRACER.spanBuilder("readBranches").setAttribute("rootName", repository.getRoot().getName()).startSpan();
-    VirtualFile root = repository.getRoot();
-    repository.update();
-    GitBranchesCollection branches = repository.getBranches();
-    Collection<GitLocalBranch> localBranches = branches.getLocalBranches();
-    Collection<GitRemoteBranch> remoteBranches = branches.getRemoteBranches();
-    Set<VcsRef> refs = new HashSet<>(localBranches.size() + remoteBranches.size());
-    for (GitLocalBranch localBranch : localBranches) {
-      Hash hash = branches.getHash(localBranch);
-      assert hash != null;
-      refs.add(myVcsObjectsFactory.createRef(hash, localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
-    }
-    for (GitRemoteBranch remoteBranch : remoteBranches) {
-      Hash hash = branches.getHash(remoteBranch);
-      assert hash != null;
-      refs.add(myVcsObjectsFactory.createRef(hash, remoteBranch.getNameForLocalOperations(), GitRefManager.REMOTE_BRANCH, root));
-    }
-    String currentRevision = repository.getCurrentRevision();
-    if (currentRevision != null) { // null => fresh repository
-      refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root));
-    }
-    span.end();
-    return refs;
+    return computeWithSpan(myTracer, "readBranches", span -> {
+      span.setAttribute("rootName", repository.getRoot().getName());
+      VirtualFile root = repository.getRoot();
+      repository.update();
+      GitBranchesCollection branches = repository.getBranches();
+      Collection<GitLocalBranch> localBranches = branches.getLocalBranches();
+      Collection<GitRemoteBranch> remoteBranches = branches.getRemoteBranches();
+      Set<VcsRef> refs = new HashSet<>(localBranches.size() + remoteBranches.size());
+      for (GitLocalBranch localBranch : localBranches) {
+        Hash hash = branches.getHash(localBranch);
+        assert hash != null;
+        refs.add(myVcsObjectsFactory.createRef(hash, localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+      }
+      for (GitRemoteBranch remoteBranch : remoteBranches) {
+        Hash hash = branches.getHash(remoteBranch);
+        assert hash != null;
+        refs.add(myVcsObjectsFactory.createRef(hash, remoteBranch.getNameForLocalOperations(), GitRefManager.REMOTE_BRANCH, root));
+      }
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) { // null => fresh repository
+        refs.add(myVcsObjectsFactory.createRef(HashImpl.build(currentRevision), GitUtil.HEAD, GitRefManager.HEAD, root));
+      }
+      return refs;
+    });
   }
 
   @NotNull

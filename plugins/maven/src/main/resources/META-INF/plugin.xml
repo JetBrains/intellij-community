@@ -97,6 +97,9 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenTasksManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
+                        serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
+
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.project.MavenResourceConfigurationGeneratorCompileTask"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
@@ -288,6 +291,11 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
+
+
+    <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
+                 description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 
     <registryKey key="maven.dedicated.indexer" defaultValue="false"
                  description="Dedicated maven indexer" restartRequired="true"/>
@@ -323,9 +331,6 @@
 
     <registryKey key="maven.server.vm.remove.javaagent" defaultValue="true"
                  description="Maven server remove -javaagent vm parameter"/>
-
-    <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
-                 description="Deleted maven modules will not be marked as ignored"/>
 
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>

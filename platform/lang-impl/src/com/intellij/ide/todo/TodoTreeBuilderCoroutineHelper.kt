@@ -3,6 +3,7 @@ package com.intellij.ide.todo
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -66,6 +67,7 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
 @RequiresBackgroundThread
 @RequiresReadLock
 private fun TodoTreeBuilder.collectFiles() {
+  ProgressManager.checkCanceled()
   clearCache()
 
   collectFiles {
@@ -82,6 +84,8 @@ private fun TodoTreeBuilder.collectFiles() {
 @RequiresBackgroundThread
 @RequiresReadLock
 private fun TodoTreeBuilder.validateCacheAndUpdateTree() {
+  ProgressManager.checkCanceled()
+
   todoTreeStructure.validateCache()
   updateVisibleTree()
 }

@@ -4,12 +4,14 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.MaximizeEditorInSplitAction;
 import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -17,6 +19,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,12 +29,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
@@ -108,9 +111,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WINDOW;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 
-/**
- * @author Eugene Belyaev
- */
 @State(name = "FileEditorManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
@@ -141,7 +141,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     DEFAULT
   }
 
-  private volatile @Nullable EditorsSplitters mySplitters;
+  private final EditorsSplitters splitters;
+  private final DockableEditorTabbedContainer dockable;
+
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
   private Reference<EditorComposite> myLastSelectedComposite = new WeakReference<>(null);
@@ -167,7 +169,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    * Removes invalid myEditor and updates "modified" status.
    */
   private final PropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-  private final DockManager myDockManager;
   private DockableEditorContainerFactory myContentFactory;
   private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
 
@@ -175,11 +176,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   private final List<EditorComposite> myOpenedComposites = new CopyOnWriteArrayList<>();
 
   private final MessageListenerList<FileEditorManagerListener> myListenerList;
-  private boolean myDisposed = false;
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
-    myDockManager = DockManager.getInstance(myProject);
     myListenerList = new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
     queue.setTrackUiActivity(true);
@@ -204,50 +203,84 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     });
 
     closeFilesOnFileEditorRemoval();
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    for (Editor editor : editorFactory.getAllEditors()) {
-      registerEditor(editor);
-    }
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        registerEditor(event.getEditor());
-      }
-    }, myProject);
+
+    splitters = new EditorsSplitters(this);
+    dockable = new DockableEditorTabbedContainer(splitters, false);
+    // prepare for toolwindow manager
+    splitters.setFocusable(false);
   }
 
-  private void registerEditor(@NotNull Editor editor) {
-    Project project = editor.getProject();
-    if (project == null || project.isDisposed() || myDisposed) {
-      return;
+  @Override
+  public @Nullable DockContainer getDockContainer() {
+    return dockable;
+  }
+
+  static final class MyEditorFactoryListener implements EditorFactoryListener {
+    MyEditorFactoryListener() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        throw ExtensionNotApplicableException.create();
+      }
     }
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(@NotNull Editor editor1) {
-          if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split")) return;
-          Component comp = editor1.getComponent();
-          while (comp != getMainSplitters() && comp != null) {
-            Component parent = comp.getParent();
-            if (parent instanceof Splitter splitter) {
-              if ((splitter.getFirstComponent() == comp &&
-                   (splitter.getProportion() == splitter.getMinProportion(true) ||
-                    splitter.getProportion() == splitter.getMinimumProportion())) ||
-                  (splitter.getProportion() == splitter.getMinProportion(false) ||
-                   splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
-                for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
-                  Splitter s = pair.getFirst();
-                  s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
-                }
-                break;
-              }
-            }
-            comp = parent;
+
+    @Override
+    public void editorCreated(@NotNull EditorFactoryEvent event) {
+      Editor editor = event.getEditor();
+      if (!(editor instanceof EditorEx)) {
+        return;
+      }
+
+      Project project = editor.getProject();
+      if (project == null || project.isDisposed()) {
+        return;
+      }
+      
+      registerEditor((EditorEx)editor, project);
+    }
+  }
+
+  private static void registerEditor(@NotNull EditorEx editor, @NotNull Project project) {
+    editor.addFocusListener(new FocusChangeListener() {
+      private WeakReference<FileEditorManagerImpl> managerRef;
+
+      @Override
+      public void focusGained(@NotNull Editor editor1) {
+        if (!Registry.is("editor.maximize.on.focus.gained.if.collapsed.in.split", false)) {
+          return;
+        }
+
+        FileEditorManagerImpl manager = managerRef == null ? null : managerRef.get();
+        if (manager == null) {
+          FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+          if (fileEditorManager instanceof FileEditorManagerImpl) {
+            manager = ((FileEditorManagerImpl)fileEditorManager);
+            managerRef = new WeakReference<>(manager);
+          }
+          else {
+            return;
           }
         }
-      }, this);
-    }
+
+        Component component = editor1.getComponent();
+        while (component != null && component != manager.getMainSplitters()) {
+          Component parent = component.getParent();
+          if (parent instanceof Splitter splitter) {
+            if ((splitter.getFirstComponent() == component &&
+                 (splitter.getProportion() == splitter.getMinProportion(true) ||
+                  splitter.getProportion() == splitter.getMinimumProportion())) ||
+                (splitter.getProportion() == splitter.getMinProportion(false) ||
+                 splitter.getProportion() == splitter.getMaximumProportion())) {
+              Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
+              for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
+                Splitter s = pair.getFirst();
+                s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
+              }
+              break;
+            }
+          }
+          component = parent;
+        }
+      }
+    }, project);
   }
 
   private void closeFilesOnFileEditorRemoval() {
@@ -269,7 +302,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public void dispose() {
     fileToUpdateTitle = null;
-    myDisposed = true;
+    Disposer.dispose(dockable);
   }
 
   private void dumbModeFinished(@NotNull Project project) {
@@ -301,8 +334,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return;
     }
 
-    myContentFactory = new DockableEditorContainerFactory(myProject, this);
-    myDockManager.register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
+    myContentFactory = new DockableEditorContainerFactory(this);
+    DockManager.getInstance(myProject).register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {
@@ -314,20 +347,19 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public JComponent getComponent() {
-    return initUI();
+    return splitters;
   }
 
   public @NotNull EditorsSplitters getMainSplitters() {
-    return initUI();
+    return splitters;
   }
 
   public @NotNull Set<EditorsSplitters> getAllSplitters() {
     Set<EditorsSplitters> all = new LinkedHashSet<>();
-    all.add(getMainSplitters());
-    Set<DockContainer> dockContainers = myDockManager.getContainers();
-    for (DockContainer each : dockContainers) {
-      if (each instanceof DockableEditorTabbedContainer) {
-        all.add(((DockableEditorTabbedContainer)each).getSplitters());
+    all.add(splitters);
+    for (DockContainer container : DockManager.getInstance(myProject).getContainers()) {
+      if (container instanceof DockableEditorTabbedContainer) {
+        all.add(((DockableEditorTabbedContainer)container).getSplitters());
       }
     }
     return Collections.unmodifiableSet(all);
@@ -344,7 +376,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
 
       Component focusOwner = fm.getFocusOwner();
-      DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+      DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
         result.complete(((DockableEditorTabbedContainer)container).getSplitters());
       }
@@ -373,39 +405,16 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       focusOwner = fm.getLastFocusedFor(fm.getLastFocusedIdeWindow());
     }
 
-    DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+    DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     if (container == null) {
       focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
+      container = DockManager.getInstance(myProject).getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     }
 
     if (container instanceof DockableEditorTabbedContainer) {
       return ((DockableEditorTabbedContainer)container).getSplitters();
     }
     return getMainSplitters();
-  }
-
-  private final Object myInitLock = new Object();
-
-  private @NotNull EditorsSplitters initUI() {
-    EditorsSplitters result = mySplitters;
-    if (result == null) {
-      synchronized (myInitLock) {
-        result = mySplitters;
-        if (result == null) {
-          result = new EditorsSplitters(this);
-          DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
-          DockManager.getInstance(myProject).register(dockable, this);
-          Disposer.register(this, dockable);
-
-          // prepare for toolwindow manager
-          result.setFocusable(false);
-
-          mySplitters = result;
-        }
-      }
-    }
-    return result;
   }
 
   @Override
@@ -478,7 +487,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (ExperimentalUI.isNewUI()) return;
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
-      each.updateFileBackgroundColor(file);
+      each.updateFileBackgroundColorAsync(file);
     }
   }
 
@@ -670,7 +679,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return clientManager.getSelectedFile();
     }
     // if mySplitters is null, it means that not yet initialized
-    return mySplitters == null ? null : getActiveSplittersSync().getCurrentFile();
+    return splitters == null ? null : getActiveSplittersSync().getCurrentFile();
   }
 
   @Override
@@ -748,7 +757,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private List<ClientFileEditorManager> getAllClientFileEditorManagers() {
-    return myProject.getServices(ClientFileEditorManager.class, false);
+    return myProject.getServices(ClientFileEditorManager.class, ClientKind.REMOTE);
   }
 
   @Override
@@ -1170,7 +1179,12 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
         AsyncFileEditorProvider.Builder builder = builders.isEmpty() ? null : builders.get(i);
         FileEditor editor = builder == null ? provider.createEditor(myProject, file) : builder.build();
-        LOG.assertTrue(editor.isValid(), "Invalid editor created by provider " + provider.getClass().getName());
+        if (!editor.isValid()) {
+          PluginDescriptor pluginDescriptor = PluginManager.getPluginByClass(provider.getClass());
+          LOG.error(new PluginException("Invalid editor created by provider " + provider.getClass().getName(),
+                                        pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
+          continue;
+        }
         editorsWithProviders.add(new FileEditorWithProvider(editor, provider));
       }
       catch (ProcessCanceledException e) {
@@ -1492,13 +1506,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
+  public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
     List<VirtualFile> result = new ArrayList<>();
     Collections.addAll(result, getOpenFiles());
     for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
       result.addAll(m.getAllFiles());
     }
-    return result.toArray(VirtualFile.EMPTY_ARRAY);
+    return result;
   }
 
   @Override
@@ -1709,8 +1723,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @ApiStatus.Internal
   public final @NotNull EditorsSplitters init() {
-    //myFocusWatcher.install(myWindows.getComponent ());
-    EditorsSplitters splitters = initUI();
+    EditorsSplitters splitters = this.splitters;
     splitters.startListeningFocus();
 
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
@@ -1734,11 +1747,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public @Nullable Element getState() {
-    if (mySplitters == null) {
-      // do not save if not initialized yet
-      return null;
-    }
-
     Element state = new Element("state");
     getMainSplitters().writeExternal(state);
     return state;
@@ -1928,10 +1936,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       assertDispatchThread();
 
       VirtualFile file = event.getFile();
-      VirtualFile[] openFiles = getOpenFilesWithRemotes();
-      for (int i = openFiles.length - 1; i >= 0; i--) {
-        if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i],true, true);
+      var openFiles = getOpenFilesWithRemotes();
+      for (int i = openFiles.size() - 1; i >= 0; i--) {
+        if (VfsUtilCore.isAncestor(file, openFiles.get(i), false)) {
+          closeFile(openFiles.get(i), true, true);
         }
       }
     }
@@ -2201,18 +2209,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public EditorsSplitters getSplittersFor(Component c) {
-    EditorsSplitters splitters = null;
-    DockContainer dockContainer = myDockManager.getContainerFor(c, DockableEditorTabbedContainer.class::isInstance);
+  public EditorsSplitters getSplittersFor(Component component) {
+    EditorsSplitters result = null;
+    DockContainer dockContainer = DockManager.getInstance(myProject).getContainerFor(component, DockableEditorTabbedContainer.class::isInstance);
     if (dockContainer instanceof DockableEditorTabbedContainer) {
-      splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
+      result = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }
-
-    if (splitters == null) {
-      splitters = getMainSplitters();
-    }
-
-    return splitters;
+    return result == null ? splitters : result;
   }
 
   public @NotNull List<Pair<VirtualFile, EditorWindow>> getSelectionHistory() {
@@ -2221,7 +2224,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       if (pair.second.getFiles().length == 0) {
         EditorWindow[] windows = pair.second.getOwner().getWindows();
         if (windows.length > 0 && windows[0] != null && windows[0].getFiles().length > 0) {
-          Pair<VirtualFile, EditorWindow> p = Pair.create(pair.first, windows[0]);
+          Pair<VirtualFile, EditorWindow> p = new Pair<>(pair.first, windows[0]);
           if (!copy.contains(p)) {
             copy.add(p);
           }

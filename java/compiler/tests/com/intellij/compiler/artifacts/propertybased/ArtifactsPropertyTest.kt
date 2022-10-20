@@ -28,10 +28,10 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -367,7 +367,7 @@ class ArtifactsPropertyTest {
       }
 
       checkResult(env) {
-        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.persistentId)!!
+        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.symbolicId)!!
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->

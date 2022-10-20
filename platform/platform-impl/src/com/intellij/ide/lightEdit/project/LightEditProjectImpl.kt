@@ -62,10 +62,10 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
                     implementation = LightEditDumbService::class.java,
                     pluginDescriptor = pluginDescriptor,
                     override = true)
-    registerComponent(key = FileEditorManager::class.java,
-                      implementation = LightEditFileEditorManagerImpl::class.java,
-                      pluginDescriptor = pluginDescriptor,
-                      override = true)
+    registerService(serviceInterface = FileEditorManager::class.java,
+                    implementation = LightEditFileEditorManagerImpl::class.java,
+                    pluginDescriptor = pluginDescriptor,
+                    override = true)
   }
 
   override fun setProjectName(value: String) {

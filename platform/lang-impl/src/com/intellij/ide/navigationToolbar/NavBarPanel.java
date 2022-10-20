@@ -850,7 +850,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
+  public static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
     DataProvider provider = o -> getSlowDataImpl(o, project, selection);
     // slow extension data with selection
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {

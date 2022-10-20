@@ -6,6 +6,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.j2k.ProgressPortionReporter
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
+import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing.MemberKey.*
 import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
@@ -24,10 +26,16 @@ class NewExternalCodeProcessing(
     private val referenceSearcher: ReferenceSearcher,
     private val inConversionContext: (PsiElement) -> Boolean
 ) : ExternalCodeProcessing {
+
     private sealed class MemberKey {
-        data class MethodKey(val fqName: FqName, val parameters: List<FqName>) : MemberKey()
-        data class FieldKey(val fqName: FqName) : MemberKey()
+        abstract val fqName: FqName
+
+        data class PhysicalMethodKey(override val fqName: FqName, val parameters: List<FqName>) : MemberKey()
+        data class LightMethodKey(override val fqName: FqName) : MemberKey()
+        data class FieldKey(override val fqName: FqName) : MemberKey()
     }
+
+    private fun MemberKey.toLightMethodKey() = LightMethodKey(fqName)
 
     private val members = mutableMapOf<MemberKey, JKMemberData>()
 
@@ -40,39 +48,43 @@ class NewExternalCodeProcessing(
     }
 
     fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
-    fun getMember(element: KtDeclaration): JKMemberData? = members[element.buildKey()]
+
+    fun getMember(element: KtNamedDeclaration): JKMemberData? {
+        val key = element.buildKey()
+        // For Java record classes, we collect usages of light (non-physical) methods that correspond to the record components.
+        // In the resulting Kotlin PSI there are no such methods. So, we have to find the registered light method
+        // by the primary constructor property that is the Kotlin's version of a Java record component.
+        return members[key] ?: members[key.toLightMethodKey()].takeIf { element.isConstructorDeclaredProperty() }
+    }
 
     private fun JKMemberData.buildKey(): MemberKey? {
         val fqName = this.fqName ?: return null
         return when (this) {
-            is JKMethodData -> MemberKey.MethodKey(fqName, this.javaElement.parameterList.parameters.mapNotNull { it.typeFqName() })
-            else -> MemberKey.FieldKey(fqName)
+            is JKPhysicalMethodData -> PhysicalMethodKey(fqName, this.javaElement.parameterList.parameters.mapNotNull { it.typeFqName() })
+            is JKLightMethodData -> LightMethodKey(fqName)
+            else -> FieldKey(fqName)
         }
     }
 
     private fun PsiMember.buildKey(): MemberKey? {
         val fqName = this.kotlinFqName ?: return null
         return when (this) {
-            is PsiMethod -> MemberKey.MethodKey(fqName, this.parameterList.parameters.mapNotNull { it.typeFqName() })
-            else -> MemberKey.FieldKey(fqName)
+            is PsiMethod -> PhysicalMethodKey(fqName, this.parameterList.parameters.mapNotNull { it.typeFqName() })
+            else -> FieldKey(fqName)
         }
     }
 
-    private fun KtDeclaration.buildKey() = when (this) {
-        is KtNamedFunction -> MemberKey.MethodKey(this.fqNameWithoutCompanions, this.valueParameters.mapNotNull { it.typeFqName() })
-        else -> MemberKey.FieldKey(this.fqNameWithoutCompanions)
+    private fun KtNamedDeclaration.buildKey() = when (this) {
+        is KtNamedFunction -> PhysicalMethodKey(this.fqNameWithoutCompanions, this.valueParameters.mapNotNull { it.typeFqName() })
+        else -> FieldKey(this.fqNameWithoutCompanions)
     }
 
     private fun List<KtFile>.bindJavaDeclarationsToConvertedKotlinOnes() {
         forEach { file ->
             file.forEachDescendantOfType<KtNamedDeclaration> { declaration ->
-                val member = getMember(declaration) ?: return@forEachDescendantOfType
-                when {
-                    member is JKFieldData ->
-                        member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
-
-                    member is JKMethodData && declaration is KtNamedFunction ->
-                        member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
+                if (declaration is KtNamedFunction || declaration is KtProperty || declaration.isConstructorDeclaredProperty()) {
+                    val member = getMember(declaration) ?: return@forEachDescendantOfType
+                    member.kotlinElementPointer = SmartPointerManager.createPointer(declaration)
                 }
             }
         }

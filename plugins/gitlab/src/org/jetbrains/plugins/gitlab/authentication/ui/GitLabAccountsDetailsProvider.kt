@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gitlab.ui.GitLabBundle
 import java.awt.Image
 
 internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
-                                             private val apiClientSupplier: (GitLabAccount) -> GitLabApi?)
+                                             private val apiClientSupplier: suspend (GitLabAccount) -> GitLabApi?)
   : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, EmptyIcon.ICON_16) {
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {

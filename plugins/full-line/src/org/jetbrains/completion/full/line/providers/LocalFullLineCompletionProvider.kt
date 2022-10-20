@@ -48,13 +48,15 @@ class LocalFullLineCompletionProvider private constructor(
         )
       )
       rawCompletions.mapNotNull {
-        if (it.fullLineCompletionResult.text.trim().isNotEmpty()) RawFullLineProposal(
-          it.fullLineCompletionResult.text.trimStart(),
-          it.fullLineCompletionResult.info.probs.reduce(Double::times),
-          FullLineProposal.BasicSyntaxCorrectness.UNKNOWN,
-          null,
-          it.cacheHitLength
-        )
+        if (it.fullLineCompletionResult.text.trim().isNotEmpty()) {
+          val proposal = RawFullLineProposal(
+            it.fullLineCompletionResult.text.trimStart(),
+            it.fullLineCompletionResult.info.probs.reduce(Double::times),
+            FullLineProposal.BasicSyntaxCorrectness.UNKNOWN
+          )
+          proposal.details.cacheHitLength = it.cacheHitLength
+          proposal
+        }
         else null
       }
     }

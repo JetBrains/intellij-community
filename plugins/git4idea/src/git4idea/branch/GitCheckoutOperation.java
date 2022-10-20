@@ -28,8 +28,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitBranchesUsageCollector.*;
@@ -89,22 +88,23 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @Override
   protected void execute() {
-    StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
-      IS_BRANCH_PROTECTED.with(isBranchProtected()),
-      IS_NEW_BRANCH.with(myNewBranch != null)
-    ));
-    Ref<Boolean> finishedSuccessfullyRef = Ref.create(false);
-    Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("checkout").startSpan()
-      .setAttribute("branch", myNewBranch != null ? myNewBranch : "null");
-    try (Scope ignored = span.makeCurrent()) {
-      finishedSuccessfullyRef.set(doExecute(checkoutActivity));
-    }
-    finally {
-      checkoutActivity.finished(() -> {
-        span.end();
-        return List.of(FINISHED_SUCCESSFULLY.with(finishedSuccessfullyRef.get()));
-      });
-    }
+    runWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "checkout", (span) -> {
+      StructuredIdeActivity checkoutActivity = CHECKOUT_ACTIVITY.started(myProject, () -> List.of(
+        IS_BRANCH_PROTECTED.with(isBranchProtected()),
+        IS_NEW_BRANCH.with(myNewBranch != null)
+      ));
+      Ref<Boolean> finishedSuccessfullyRef = Ref.create(false);
+
+      span.setAttribute("branch", myNewBranch != null ? myNewBranch : "null");
+      try {
+        finishedSuccessfullyRef.set(doExecute(checkoutActivity));
+      }
+      finally {
+        checkoutActivity.finished(() -> {
+          return List.of(FINISHED_SUCCESSFULLY.with(finishedSuccessfullyRef.get()));
+        });
+      }
+    });
   }
 
   private boolean isBranchProtected() {

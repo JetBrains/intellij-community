@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -131,6 +132,7 @@ public class MavenIndexerCMDState extends CommandLineState {
 
     params.setJdk(myJdk);
     params.setWorkingDirectory(PathManager.getBinPath());
+    params.getVMParametersList().add(Registry.stringValue("maven.dedicated.indexer.vmargs"));
     if (myDebugPort != null) {
       params.getVMParametersList()
         .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);

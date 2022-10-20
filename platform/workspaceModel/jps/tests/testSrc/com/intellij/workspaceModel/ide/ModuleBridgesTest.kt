@@ -36,7 +36,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -198,7 +198,7 @@ class ModuleBridgesTest {
   fun `test rename module and all dependencies in other modules`() = runBlocking {
     val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
       assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
-                      .first { it.persistentId.name == moduleName }.dependencies
+                      .first { it.symbolicId.name == moduleName }.dependencies
                       .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
     }
 
@@ -485,14 +485,14 @@ class ModuleBridgesTest {
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
-      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
+      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
       ).toMutableList()
     }
 
@@ -687,13 +687,13 @@ class ModuleBridgesTest {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))
       val entityStore = WorkspaceModel.getInstance(project).entityStorage
       assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
-      assertEquals(1, entityStore.current.entities(JavaSourceRootEntity::class.java).count())
+      assertEquals(1, entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).count())
 
       ApplicationManager.getApplication().runWriteAction {
         ModuleManager.getInstance(project).disposeModule(module)
       }
       assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
-      assertEmpty(entityStore.current.entities(JavaSourceRootEntity::class.java).toList())
+      assertEmpty(entityStore.current.entities(JavaSourceRootPropertiesEntity::class.java).toList())
     }
 
     val caughtLogs = catchLog()

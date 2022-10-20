@@ -32,7 +32,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -68,7 +68,7 @@ class ModifiableRootModelBridgeImpl(
   private fun getModuleEntity(current: EntityStorage, myModuleBridge: ModuleBridge): ModuleEntity? {
     // Try to get entity by module id
     // In some cases this won't work. These cases can happen during maven or gradle import where we provide a general builder.
-    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old persistentId. After that
+    //   The case: we rename the module. Since the changes not yet committed, the module will remain with the old symbolicId. After that
     //   we try to get modifiableRootModel. In general case it would work fine because the builder will be based on main store, but
     //   in case of gradle/maven import we take the builder that was used for renaming. So, the old name cannot be found in the new store.
     return current.resolve(myModuleBridge.moduleEntityId) ?: myModuleBridge.findModuleEntity(current)

@@ -702,7 +702,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @Override
   public @Nullable TextAttributesKey getEditorAttributes(@NotNull String shortName, @Nullable PsiElement element) {
-    return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
+    ToolsImpl tools = getToolsOrNull(shortName, element != null ? element.getProject() : null);
+    return tools != null ? tools.getAttributesKey(element) : null;
   }
 
   public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {

@@ -62,7 +62,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         row {
           cell(myDoNotAskConfigurableUi.createComponent())
             .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
-            .align(AlignBoth.FILL)
+            .align(Align.FILL)
         }.topGap(TopGap.SMALL)
           .resizableRow()
       }

@@ -24,9 +24,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-/**
- * @author peter
- */
 class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCase {
   void testConstructorAtOffset() {
     doConstructorTest()

@@ -8,6 +8,7 @@ import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,7 +86,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem");
+           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem", true);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
@@ -196,10 +197,11 @@ public final class Utils {
     RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
                           JBPopupFactory.getInstance().guessBestPopupLocation(context);
     Runnable removeIcon = addLoadingIcon(point, place);
+    List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("expandActionGroup").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
     try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
-      return computeWithRetries(
+      return result = computeWithRetries(
         () -> expandActionGroupImpl(group, presentationFactory, context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
         null, removeIcon);
     }
@@ -209,6 +211,7 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to expandActionGroup@" + place);
       }
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, false, elapsed, result);
     }
   }
 
@@ -339,16 +342,17 @@ public final class Utils {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
+    List<AnAction> result = null;
     Span span = getTracer(false).spanBuilder("fillMenu").setAttribute("place", place).startSpan();
     long start = System.nanoTime();
     try (Scope ignore = Context.current().with(span).with(OT_ENABLE_SPANS, true).makeCurrent()) {
       Runnable removeIcon = addLoadingIcon(progressPoint, place);
-      List<AnAction> list = computeWithRetries(
+      result = computeWithRetries(
         () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
         expire, removeIcon);
       boolean checked = group instanceof CheckedActionGroup;
       boolean multiChoice = isMultiChoiceGroup(group);
-      fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+      fillMenuInner(component, result, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
     }
     finally {
       long elapsed = TimeoutUtil.getDurationMillis(start);
@@ -356,6 +360,8 @@ public final class Utils {
       if (elapsed > 1000) {
         LOG.warn(elapsed + " ms to fillMenu@" + place);
       }
+      boolean submenu = component instanceof ActionMenu && component.getParent() != null;
+      ActionsCollectorImpl.recordActionGroupExpanded(group, context, place, submenu, elapsed, result);
     }
   }
 
@@ -508,7 +514,7 @@ public final class Utils {
       sb.append(c.getSimpleName()).append("/");
     }
     sb.append(c.getName()).append(")");
-    sb.insert(0, c.getSimpleName());
+    sb.insert(0, StringUtil.isNotEmpty(c.getSimpleName()) ? c.getSimpleName() : StringUtil.getShortName(c.getName()));
     return sb.toString();
   }
 
@@ -767,7 +773,7 @@ public final class Utils {
     }
     long elapsed = TimeoutUtil.getDurationMillis(start);
     if (elapsed > 1000) {
-      LOG.warn(elapsed + " ms to update actions for " + place);
+      LOG.warn(elapsed + " ms to runUpdateSessionForInputEvent@" + place);
     }
     return result;
   }

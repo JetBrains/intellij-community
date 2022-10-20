@@ -20,13 +20,8 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.LabelPosition
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.selected
 
 class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
   DiffBundle.message("configurable.ExternalDiffSettingsConfigurable.display.name"),
@@ -48,7 +43,7 @@ class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
           val treePanel = ExternalToolsTreePanel(models)
           cell(treePanel.component)
             .label(DiffBundle.message("settings.external.diff.panel.tree.title"), LabelPosition.TOP)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .onIsModified { treePanel.onModified(settings) }
             .onApply { treePanel.onApply(settings) }
             .onReset { treePanel.onReset(settings) }
@@ -58,7 +53,7 @@ class ExternalDiffSettingsConfigurable : BoundSearchableConfigurable(
           val externalToolsTablePanel = ExternalToolsTablePanel(models)
           cell(externalToolsTablePanel.component)
             .label(DiffBundle.message("settings.external.diff.panel.table.title"), LabelPosition.TOP)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .onIsModified { externalToolsTablePanel.onModified(settings) }
             .onApply { externalToolsTablePanel.onApply(settings) }
             .onReset { externalToolsTablePanel.onReset(settings) }

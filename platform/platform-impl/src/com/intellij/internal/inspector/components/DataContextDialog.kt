@@ -9,10 +9,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Comparing
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -49,8 +48,7 @@ class DataContextDialog(
       }
       row {
         scrollCell(table)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .resizableColumn()
       }.resizableRow()
     }

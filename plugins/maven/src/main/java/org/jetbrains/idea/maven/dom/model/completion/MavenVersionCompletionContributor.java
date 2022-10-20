@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom.model.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -69,8 +71,18 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
   @Override
   protected void fillResult(@NotNull MavenDomShortArtifactCoordinates coordinates,
                             @NotNull CompletionResultSet result,
-                            @NotNull MavenRepositoryArtifactInfo item) {
-    result.addAllElements(ContainerUtil.map(item.getItems(), dci -> MavenDependencyCompletionUtil.lookupElement(dci, dci.getVersion())));
+                            @NotNull MavenRepositoryArtifactInfo item,
+                            @NotNull String completionPrefix) {
+    result.addAllElements(
+      ContainerUtil.map(
+        item.getItems(),
+        dci -> {
+          final LookupElement lookup = MavenDependencyCompletionUtil.lookupElement(dci, dci.getVersion());
+          lookup.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix);
+          return lookup;
+        }
+      )
+    );
   }
 
   @Override
@@ -100,7 +112,8 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
     public void accept(RepositoryArtifactData rad) {
       if (rad instanceof MavenRepositoryArtifactInfo) {
         MavenRepositoryArtifactInfo mrai = (MavenRepositoryArtifactInfo)rad;
-        if (StringUtil.equals(mrai.getArtifactId(), myArtifactId) && (StringUtil.isEmpty(myGroupId) || StringUtil.equals(mrai.getGroupId(), myGroupId))) {
+        if (StringUtil.equals(mrai.getArtifactId(), myArtifactId) &&
+            (StringUtil.isEmpty(myGroupId) || StringUtil.equals(mrai.getGroupId(), myGroupId))) {
           myConsumer.accept(mrai);
         }
       }

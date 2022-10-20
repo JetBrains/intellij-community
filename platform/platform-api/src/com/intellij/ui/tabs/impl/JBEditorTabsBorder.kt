@@ -90,7 +90,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
           val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
-        if (!ExperimentalUI.isNewUI() || (tabs as JBEditorTabs).shouldPaintBottomBorder()) {
+        if (!ExperimentalUI.isNewUI() || (tabs as? JBEditorTabs)?.shouldPaintBottomBorder() == true) {
           val yl = lastRow * tabs.myHeaderFitSize.height + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }

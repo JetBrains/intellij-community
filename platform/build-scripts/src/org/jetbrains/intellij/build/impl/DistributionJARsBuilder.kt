@@ -258,7 +258,7 @@ class DistributionJARsBuilder {
       .useWithScope2 { span ->
         val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
         plugins.filterTo(pluginsToBundle) {
-          satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, context = context) &&
+          satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, withEphemeral = false, context = context) &&
           !pluginDirectoriesToSkip.contains(it.directoryName)
         }
 
@@ -295,7 +295,7 @@ class DistributionJARsBuilder {
               return@mapNotNull null
             }
 
-            val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, context) }
+            val osSpecificPlugins = pluginLayouts.filter { satisfiesBundlingRequirements(it, osFamily, arch, withEphemeral = false, context) }
             if (osSpecificPlugins.isEmpty()) {
               return@mapNotNull null
             }
@@ -424,7 +424,7 @@ class DistributionJARsBuilder {
     spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope2 {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
-                   targetDir = pluginsToPublishDir,
+                   targetDir = pluginsToPublishDir.resolve(directory),
                    state = state,
                    context = context,
                    buildPlatformJob = null)
@@ -447,7 +447,7 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext,
                                                       productLayout = context.productProperties.productLayout)
     val entries = ArrayList<DistributionFileEntry>()
     for (plugin in allPlugins) {
-      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
+      if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, withEphemeral = true, context = context)) {
         entries.addAll(layoutDistribution(layout = plugin,
                                           targetDirectory = pluginLayoutRoot,
                                           copyFiles = false,
@@ -854,10 +854,16 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
 fun satisfiesBundlingRequirements(plugin: PluginLayout,
                                   osFamily: OsFamily?,
                                   arch: JvmArchitecture?,
+                                  withEphemeral: Boolean,
                                   context: BuildContext): Boolean {
   val bundlingRestrictions = plugin.bundlingRestrictions
   if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
     return false
+  }
+
+  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
+    if (!withEphemeral) return false
+    else return osFamily == null && arch == null
   }
 
   return when {

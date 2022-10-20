@@ -1,26 +1,5 @@
 <!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
-      <!--suppress PluginXmlValidity -->
-      <headless-implementation-class>com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl</headless-implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.problems.WolfTheProblemSolver</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver</headless-implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <!-- only bundled plugin can define extension -->
     <!--suppress PluginXmlDynamicPlugin -->
@@ -28,6 +7,23 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+      serviceInterface="com.intellij.openapi.fileEditor.FileEditorManager"
+      serviceImplementation="com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl"
+      headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
+    />
+    <projectService
+      serviceInterface="com.intellij.problems.WolfTheProblemSolver"
+      serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
+      headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
+    />
+    <!-- no preload="await" - requested by DaemonListeners -->
+    <projectService
+      serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
+      serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
+    />
+    <editorFactoryListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$MyEditorFactoryListener"/>
+
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher$RootsChangeWatcherDelegator"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
@@ -76,7 +72,7 @@
                         client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.ClientCurrentEditorProvider"
-                        client="guest"/>
+                        client="remote"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.ToolWindowManager"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"

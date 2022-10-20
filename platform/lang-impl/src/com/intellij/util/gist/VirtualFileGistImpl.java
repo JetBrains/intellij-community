@@ -36,9 +36,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance(VirtualFileGist.class);
   private static final int ourInternalVersion = 2;

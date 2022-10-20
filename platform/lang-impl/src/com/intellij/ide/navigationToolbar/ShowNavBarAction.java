@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.ide.navbar.ide.NavBarService;
-import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -29,7 +29,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
     if (project == null) {
       return;
     }
-    if (NavigationBarKt.getNavbarV2Enabled()) {
+    if (NavBarIdeUtil.isNavbarV2Enabled()) {
       showNavBarV2(e, project);
     }
     else {
@@ -40,7 +40,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
   private static void showNavBar(@NotNull AnActionEvent e, @NotNull Project project) {
     final DataContext context = e.getDataContext();
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()
+    if (NavBarIdeUtil.isNavbarShown(uiSettings)
       && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){SelectInNavBarTarget.selectInNavBar(true);
     }
     else {

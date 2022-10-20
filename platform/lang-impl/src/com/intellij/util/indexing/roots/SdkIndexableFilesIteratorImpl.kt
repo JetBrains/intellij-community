@@ -18,6 +18,7 @@ import java.util.*
 @ApiStatus.Internal
 class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
                                                         private val rootsToIndex: Collection<VirtualFile>) : IndexableFilesIterator {
+
   override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${rootsToIndex.joinToString { it.path }}"
 
   private val sdkPresentableName: String
@@ -53,35 +54,42 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
 
     fun createIterators(sdk: Sdk, listOfRootsToFilter: List<VirtualFile>): Collection<IndexableFilesIterator> {
       val sdkRoots = getRootsToIndex(sdk).toMutableList()
+      val rootsToIndex = filterRootsToIterate(sdkRoots, listOfRootsToFilter)
+
+      val oldStyle: Collection<IndexableFilesIterator> = if (rootsToIndex.isEmpty()) {
+        emptyList()
+      }
+      else {
+        Collections.singletonList(SdkIndexableFilesIteratorImpl(sdk, rootsToIndex))
+      }
+      return oldStyle
+    }
+
+    fun filterRootsToIterate(initialRoots: MutableList<VirtualFile>,
+                             listOfRootsToFilter: List<VirtualFile>): List<VirtualFile> {
       val rootsToFilter = listOfRootsToFilter.toMutableList()
       val rootsToIndex = mutableListOf<VirtualFile>()
 
       val iteratorToFilter = rootsToFilter.iterator()
       while (iteratorToFilter.hasNext()) {
         val next = iteratorToFilter.next()
-        for (sdkRoot in sdkRoots) {
+        for (sdkRoot in initialRoots) {
           if (VfsUtil.isAncestor(next, sdkRoot, false)) {
             rootsToIndex.add(sdkRoot)
-            sdkRoots.remove(sdkRoot)
+            initialRoots.remove(sdkRoot)
             iteratorToFilter.remove()
             break
           }
         }
       }
       for (file in rootsToFilter) {
-        for (sdkRoot in sdkRoots) {
+        for (sdkRoot in initialRoots) {
           if (VfsUtil.isAncestor(sdkRoot, file, false)) {
             rootsToIndex.add(file)
           }
         }
       }
-
-      if (rootsToIndex.isEmpty()) {
-        return emptyList()
-      }
-      else {
-        return Collections.singletonList(SdkIndexableFilesIteratorImpl(sdk, rootsToIndex))
-      }
+      return rootsToIndex
     }
   }
 }

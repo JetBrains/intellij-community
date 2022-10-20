@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Ref;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.filters.ExpandProperties;
 import org.gradle.api.Transformer;
-import org.gradle.util.ConfigureUtil;
+import org.gradle.util.internal.ConfigureUtil;
 import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.jps.incremental.CompileContext;

@@ -3,9 +3,13 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.ImportFilter
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -84,7 +88,7 @@ import java.util.TreeSet
 internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
     factory: Factory
-) : KotlinQuickFixAction<T>(expression), HighPriorityAction {
+) : KotlinQuickFixAction<T>(expression), HintAction, HighPriorityAction {
     private val project = expression.project
 
     private val modificationCountOnCreate = PsiModificationTracker.getInstance(project).modificationCount
@@ -105,6 +109,20 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     protected abstract val importNames: Collection<Name>
     protected abstract fun getCallTypeAndReceiver(): CallTypeAndReceiver<*, *>?
     protected open fun getReceiverTypeFromDiagnostic(): KotlinType? = null
+
+    override fun showHint(editor: Editor): Boolean {
+        val element = element?.takeIf(PsiElement::isValid) ?: return false
+
+        if (isOutdated()) return false
+
+        if (ApplicationManager.getApplication().isHeadlessEnvironment ||
+            !DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled ||
+            HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
+
+        if (!suggestions.isInitialized() || suggestions().isEmpty()) return false
+
+        return createAction(project, editor, element).showHint()
+    }
 
     private fun calculateText(): String {
         val descriptors  =

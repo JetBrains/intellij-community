@@ -27,7 +27,7 @@ import kotlin.coroutines.CoroutineContext
  * Model for [PyAddCondaPanelView]
  * Each boundable property ends with "Prop" and either "ro" (view can read it) or "rw" (view can set it)
  *
- * First, user fills [condaPathTextBoxRwProp] then clicks [onCondaPathSetOkClicked]
+ * First, user fills [condaPathTextBoxRwProp] then clicks [onLoadEnvsClicked]
  * (if [showCondaPathSetOkButtonRoProp] is true).
  *
  * After path validation [showCondaActionsPanelRoProp] becomes "true", hence radio buttons should be displayed
@@ -103,7 +103,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Name for the new conda environment
    */
-  val newEnvNameRwProperty: ObservableMutableProperty<String> = propertyGraph.property("")
+  val newEnvNameRwProperty: ObservableMutableProperty<String> = propertyGraph.property(if (project.isDefault) "" else project.name)
 
   /**
    * Python version for the new conda environment dropdown
@@ -122,16 +122,18 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   /**
    * Loaded list of existing conda envs
    */
-  private var condaEnvs: Result<CondaInfo> = Result.failure(Exception("Check conda path and click 'OK"))
+  private var condaEnvs: Result<CondaInfo> = Result.failure(Exception(PyBundle.message("python.sdk.conda.no.exec")))
 
   /**
-   * To be called when user sets path to conda and clicks "On".
+   * To be called when user sets path to conda and clicks "Load Envs".
    *
    * [uiContext] is for swing.
    * Result may contain an error
    */
-  suspend fun onCondaPathSetOkClicked(uiContext: CoroutineContext): Result<List<PyCondaEnv>> = withContext(uiContext) {
+  suspend fun onLoadEnvsClicked(uiContext: CoroutineContext,
+                                progressSink: ProgressSink? = null): Result<List<PyCondaEnv>> = withContext(uiContext) {
     val path = condaPathTextBoxRwProp.get()
+    progressSink?.text(PyBundle.message("python.sdk.conda.getting.list.envs"))
     PyCondaEnv.getEnvs(PyCondaCommand(path.trim(), targetConfiguration))
       .onFailure {
         condaEnvs = Result.failure(it)
@@ -139,6 +141,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
         showCondaActionsPanelRoProp.set(false)
       }
       .onSuccess { condaEnvsList ->
+        condaEnvModel.removeAllElements()
         condaEnvs = Result.success(CondaInfo(path, condaEnvsList))
         condaEnvModel.addAll(condaEnvsList.map { it.envIdentity })
         condaEnvModel.selectedItem = condaEnvModel.getElementAt(0)
@@ -151,9 +154,9 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
 
 
   /**
-   * Detects conds in well-known locations so user doesn't have to provide conda path
+   * Detects condas in well-known locations so user doesn't have to provide conda path
    */
-  suspend fun detectConda(uiContext: CoroutineContext) {
+  suspend fun detectConda(uiContext: CoroutineContext, progressSink: ProgressSink? = null) {
     if (withContext(uiContext) {
         // Already set, no need to detect
         condaPathTextBoxRwProp.get().isNotBlank()
@@ -161,7 +164,8 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
     val condaPath = suggestCondaPath(targetConfiguration) ?: return
     withContext(uiContext) {
       condaPathTextBoxRwProp.set(condaPath)
-      onCondaPathSetOkClicked(uiContext)
+      // Since path is set, lets click button on behalf of user
+      onLoadEnvsClicked(uiContext, progressSink)
     }
   }
 

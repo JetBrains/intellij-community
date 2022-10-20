@@ -169,6 +169,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertTrue(usageView.canPerformReRun());
 
     UsageView newView = usageView.doReRun();
+    Disposer.register(myFixture.getTestRootDisposable(), newView);
     Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
   }

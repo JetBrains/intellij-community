@@ -1,5 +1,7 @@
 <idea-plugin>
   <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
+
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
                     dynamic="true"/>
@@ -36,6 +38,10 @@
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
+
+    <completion.ml.contextFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyElementFeatureProvider"/>
+    <completion.ml.ranking.features.policy language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyCompletionFeaturesPolicy"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
     <trafficLightRendererContributor implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>

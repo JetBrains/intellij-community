@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.ide.BrowserUtil.browse
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
@@ -33,16 +35,12 @@ internal class GHTokenCredentialsUi(
   private val tokenTextField = JBPasswordField()
   private var fixedLogin: String? = null
 
-  fun setToken(token: String) {
-    tokenTextField.text = token
-  }
-
   override fun Panel.centerPanel() {
-    row(message("credentials.server.field")) { cell(serverTextField).horizontalAlign(HorizontalAlign.FILL) }
+    row(message("credentials.server.field")) { cell(serverTextField).align(AlignX.FILL) }
     row(message("credentials.token.field")) {
       cell(tokenTextField)
         .comment(message("login.insufficient.scopes", GHSecurityUtil.MASTER_SCOPES))
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .resizableColumn()
       button(message("credentials.button.generate")) { browseNewTokenUrl() }
         .enabledIf(serverTextField.serverValid)
@@ -55,15 +53,11 @@ internal class GHTokenCredentialsUi(
 
   override fun getValidator(): Validator = { notBlank(tokenTextField, message("login.token.cannot.be.empty")) }
 
-  override fun createExecutor() = factory.create(tokenTextField.text)
-
-  override fun acquireLoginAndToken(
-    server: GithubServerPath,
-    executor: GithubApiRequestExecutor,
-    indicator: ProgressIndicator
-  ): Pair<String, String> {
-    val login = acquireLogin(server, executor, indicator, isAccountUnique, fixedLogin)
-    return login to tokenTextField.text
+  override suspend fun login(server: GithubServerPath): Pair<String, String> = withContext(Dispatchers.Main.immediate) {
+    val token = tokenTextField.text
+    val executor = factory.create(token)
+    val login = acquireLogin(server, executor, isAccountUnique, fixedLogin)
+    login to token
   }
 
   override fun handleAcquireError(error: Throwable): ValidationInfo =
@@ -81,14 +75,17 @@ internal class GHTokenCredentialsUi(
   }
 
   companion object {
-    fun acquireLogin(
+    suspend fun acquireLogin(
       server: GithubServerPath,
       executor: GithubApiRequestExecutor,
-      indicator: ProgressIndicator,
       isAccountUnique: UniqueLoginPredicate,
       fixedLogin: String?
     ): String {
-      val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, server)
+      val (details, scopes) = withContext(Dispatchers.IO) {
+        runUnderIndicator {
+          GHSecurityUtil.loadCurrentUserWithScopes(executor, server)
+        }
+      }
       if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
         throw GithubAuthenticationException("Insufficient scopes granted to token.")
 

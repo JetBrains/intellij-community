@@ -13,15 +13,15 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot.InclusionOptions.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity> {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val projectLibraryId = entity.persistentId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
+    val projectLibraryId = entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
     val compiledRootsData = LibraryRootFileSetData(projectLibraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(projectLibraryId)
     for (root in entity.roots) {

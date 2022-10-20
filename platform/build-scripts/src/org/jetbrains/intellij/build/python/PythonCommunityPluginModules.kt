@@ -15,6 +15,7 @@ object PythonCommunityPluginModules {
     "intellij.python.community.plugin.java",
     "intellij.python.psi",
     "intellij.python.psi.impl",
+    "intellij.python.community.core.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
     "intellij.python.langInjection",

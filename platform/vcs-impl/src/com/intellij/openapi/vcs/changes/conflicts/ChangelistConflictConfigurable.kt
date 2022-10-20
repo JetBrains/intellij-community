@@ -17,12 +17,8 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.listCellRenderer
 import javax.swing.DefaultListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -98,8 +94,7 @@ class ChangelistConflictConfigurable(val project: Project)
                 ignoredFilesModel.addElement(path)
               }
             }
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
             .label(message("settings.files.with.ignored.conflicts.list.title"), LabelPosition.TOP)
         }.resizableRow()
         row {
@@ -117,7 +112,7 @@ class ChangelistConflictConfigurable(val project: Project)
                 }
                 shouldClear = false
               }
-            }.horizontalAlign(HorizontalAlign.RIGHT)
+            }.align(AlignX.RIGHT)
             .enabledIf(ListNotEmptyPredicate(ignoredFilesModel))
         }
       }.enabledIf(changeListsEnabledPredicate)

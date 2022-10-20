@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -11,13 +10,10 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -41,14 +37,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     return panel {
       row {
         panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
-          .also {
-            DataManager.registerDataProvider(it.component) { key ->
-              if (GHAccountsHost.KEY.`is`(key)) accountsModel
-              else null
-            }
-          }
+          .align(Align.FILL)
       }.resizableRow()
 
       row {

@@ -10,7 +10,7 @@ fun main(rawArgs: Array<String>) {
   runBlocking(Dispatchers.Default) {
     buildProductInProcess(BuildRequest(
       platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
-      additionalModules = emptyList(),
+      additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
       homePath = Path.of(PathManager.getHomePath()),
       keepHttpClient = false,
     ))

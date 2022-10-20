@@ -136,7 +136,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     for (fileState in snapshot.fileStates) {
       val file = settingsSyncStorage.resolve(fileState.file)
       when (fileState) {
-        is FileState.Modified -> file.write(fileState.content, 0, fileState.size)
+        is FileState.Modified -> file.write(fileState.content)
         is FileState.Deleted -> file.write(DELETED_FILE_MARKER)
       }
       addCommand.addFilepattern(fileState.file)

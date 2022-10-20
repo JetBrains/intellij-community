@@ -5,10 +5,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.EventListener
+import java.util.*
 
 /**
  * Maintains index of libraries and SDKs referenced from project's modules. This is an internal low-level API, it isn't supposed to be used
@@ -61,78 +61,66 @@ interface ModuleDependencyListener : EventListener {
   /** 
    * Called when [library] is added to dependency of some module, and there were no dependencies on this library before 
    */
-  @JvmDefault
   fun addedDependencyOn(library: Library) {
   }
 
   /**
    * Called when [library] is removed from dependencies of some module, and there are no dependencies on this library anymore 
    */
-  @JvmDefault
   fun removedDependencyOn(library: Library) {
   }
 
   /**
    * Called when [library] is created and some module has a dependency on this library (it was unresolved before) 
    */
-  @JvmDefault
   fun referencedLibraryAdded(library: Library) {
   }
 
   /**
    * Called when configuration of [library] is changed if some module has a dependency on this library
    */
-  @JvmDefault
   fun referencedLibraryChanged(library: Library) {
   }
 
   /**
    * Called when [library] is removed and some module has a dependency on this library (it will become unresolved)
    */
-  @JvmDefault
   fun referencedLibraryRemoved(library: Library) {
   }
 
   /**
    * Called when [sdk] is added to dependency of some module, and there were no dependencies on this SDK before
    */
-  @JvmDefault
   fun addedDependencyOn(sdk: Sdk) {
   }
 
   /**
    * Called when [sdk] is removed from dependencies of some module, and there are no dependencies on this SDK anymore
    */
-  @JvmDefault
   fun removedDependencyOn(sdk: Sdk) {
   }
 
   /**
    * Called when [sdk] is created and some module has a dependency on this SDK (it was unresolved before)
    */
-  @JvmDefault
   fun referencedSdkAdded(sdk: Sdk) {
   }
 
   /**
    * Called when configuration of [sdk] is changed if some module has a dependency on this SDK
    */
-  @JvmDefault
   fun referencedSdkChanged(sdk: Sdk) {
   }
 
   /**
    * Called when [sdk] is removed and some module has a dependency on this SDK (it will become unresolved)
    */
-  @JvmDefault
   fun referencedSdkRemoved(sdk: Sdk) {
   }
 
-  @JvmDefault
   fun firstDependencyOnSdkAdded() {
   }
 
-  @JvmDefault
   fun lastDependencyOnSdkRemoved() {
   }
 }

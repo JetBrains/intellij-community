@@ -25,7 +25,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -43,7 +42,7 @@ import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
@@ -246,9 +245,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           }
           val name = generateUniqueLibraryName(path, libraryNames)
           val roots = createLibraryRoots(url, srcUrl, nativeRoot, entryTag, moduleEntity, relativePathResolver, virtualUrlManager)
-          val libraryEntity = builder.addLibraryEntity(name, LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId), roots,
+          val libraryEntity = builder.addLibraryEntity(name, LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId), roots,
                                                        emptyList(), contentRootEntity.entitySource)
-          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.persistentId, exported,
+          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
                                                                              ModuleDependencyItem.DependencyScope.COMPILE))
         }
         EclipseXml.VAR_KIND -> {
@@ -279,9 +278,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             convertRelativePathToUrl(it, contentRootEntity, relativePathResolver, virtualUrlManager)
           }
           val roots = createLibraryRoots(url, srcUrl, nativeRoot, entryTag, moduleEntity, relativePathResolver, virtualUrlManager)
-          val libraryEntity = builder.addLibraryEntity(libName, LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
+          val libraryEntity = builder.addLibraryEntity(libName, LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
                                                        roots, emptyList(), contentRootEntity.entitySource)
-          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.persistentId, exported,
+          dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
                                                                              ModuleDependencyItem.DependencyScope.COMPILE))
 
         }
@@ -312,9 +311,9 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val url = EclipseClasspathReader.getJunitClsUrl(junitName.contains("4"))
             val roots = listOf(LibraryRoot(virtualUrlManager.fromUrl(url),
                                            LibraryRootTypeId.COMPILED))
-            val libraryEntity = builder.addLibraryEntity(junitName, LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
+            val libraryEntity = builder.addLibraryEntity(junitName, LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
                                                          roots, emptyList(), contentRootEntity.entitySource)
-            dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.persistentId, exported,
+            dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.symbolicId, exported,
                                                                                ModuleDependencyItem.DependencyScope.COMPILE))
           }
           else {

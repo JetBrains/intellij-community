@@ -2,8 +2,8 @@
 package com.intellij.slicer
 
 import com.intellij.lang.LangBundle
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import javax.swing.JTextField
 
 class SliceBackwardAdditionalUi {
@@ -11,7 +11,7 @@ class SliceBackwardAdditionalUi {
   val panel = panel {
     row(LangBundle.message("label.filter.value")) {
       field = textField()
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .component
     }
   }

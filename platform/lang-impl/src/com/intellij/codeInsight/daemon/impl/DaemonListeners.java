@@ -75,7 +75,8 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +115,7 @@ public final class DaemonListeners implements Disposable {
       return;
     }
 
-    MessageBusConnection connection = messageBus.connect();
+    SimpleMessageBusConnection connection = messageBus.simpleConnect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -174,7 +175,7 @@ public final class DaemonListeners implements Disposable {
         return;
       }
 
-      myActiveEditors = new ArrayList<>(activeEditors);
+      myActiveEditors = activeEditors.isEmpty() ? Collections.emptyList() : new ArrayList<>(activeEditors);
       // do not stop daemon if idea loses/gains focus
       stopDaemon(true, "Active editor change");
       if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
@@ -183,8 +184,9 @@ public final class DaemonListeners implements Disposable {
       }
 
       ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
       for (Editor editor : activeEditors) {
-        PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
         errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
       }
     });
@@ -217,7 +219,7 @@ public final class DaemonListeners implements Disposable {
         myActiveEditors.remove(event.getEditor());
         // mem leak after closing last editor otherwise
         if (myActiveEditors.isEmpty()) {
-          UIUtil.invokeLaterIfNeeded(() -> {
+          EdtInvocationManager.invokeLaterIfNeeded(() -> {
             IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
             if (intentionUI != null) {
               intentionUI.invalidateForEditor(event.getEditor());
@@ -337,7 +339,6 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
-    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {

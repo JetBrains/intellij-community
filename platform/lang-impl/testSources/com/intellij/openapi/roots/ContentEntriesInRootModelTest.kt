@@ -75,6 +75,19 @@ class ContentEntriesInRootModelTest {
 
     run {
       val model = createModifiableModel(module)
+      model.removeContentEntry(model.contentEntries.single())
+      val committed = commitModifiableRootModel(model)
+      assertThat(committed.contentEntries).isEmpty()
+    }
+  }
+
+  @Test
+  fun `add remove excluded pattern`() {
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    ModuleRootModificationUtil.addContentRoot(module, contentRoot)
+
+    run {
+      val model = createModifiableModel(module)
       val entry = model.contentEntries.single()
       entry.addExcludePattern("*.txt")
       checkContentEntryConsistency(entry)
@@ -84,12 +97,24 @@ class ContentEntriesInRootModelTest {
       assertThat(committedEntry.file).isEqualTo(contentRoot)
       assertThat(committedEntry.excludePatterns).containsExactly("*.txt")
     }
+    
+    run {
+      val model = createModifiableModel(module)
+      val entry = model.contentEntries.single()
+      entry.addExcludePattern("*.xml")
+      entry.removeExcludePattern("*.txt")
+      assertThat(entry.excludePatterns).containsExactly("*.xml")
+      val committed = commitModifiableRootModel(model)
+      assertThat(committed.contentEntries.single().excludePatterns).containsExactly("*.xml")
+    }
 
     run {
       val model = createModifiableModel(module)
-      model.removeContentEntry(model.contentEntries.single())
+      val entry = model.contentEntries.single()
+      entry.excludePatterns = listOf("*.js", "*.ts")
+      assertThat(entry.excludePatterns).containsExactly("*.js", "*.ts")
       val committed = commitModifiableRootModel(model)
-      assertThat(committed.contentEntries).isEmpty()
+      assertThat(committed.contentEntries.single().excludePatterns).containsExactly("*.js", "*.ts")
     }
   }
 

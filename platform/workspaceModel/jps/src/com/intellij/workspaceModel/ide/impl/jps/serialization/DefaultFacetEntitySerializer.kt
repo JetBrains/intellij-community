@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -30,7 +29,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
       // thus same root facet will be declared in two places
-      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.persistentId)
+      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.symbolicId)
       var facetEntity: FacetEntity? = null
       val existingFacet = builder.resolve(newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {

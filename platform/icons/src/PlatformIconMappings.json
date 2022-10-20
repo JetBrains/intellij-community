@@ -1,10 +1,17 @@
 {
   "expui": {
     "actions": {
+      "filterdups.svg": "toolbar/filterdups.svg",
+      "generated.svg": "actions/generatedFolder.svg",
+      "groupByMethod.svg": "action/groupByMethod.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
       "playForward.svg": "actions/play_forward.svg",
-      "playLast.svg": "actions/play_last.svg"
+      "playLast.svg": "actions/play_last.svg",
+      "showWriteAccess.svg": "actions/showWriteAccess.svg",
+      "showReadAccess.svg": "actions/showReadAccess.svg",
+      "showImportStatements.svg": "actions/showImportStatements.svg"
+
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
@@ -432,6 +439,7 @@
         "nodes/propertyWrite.svg",
         "nodes/propertyWriteStatic.svg"
       ],
+      "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
@@ -545,6 +553,9 @@
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
     },
+    "toolbar": {
+      "unknown.svg": "toolbar/unknown.svg"
+    },
     "toolwindow": {
       "ant.svg": [
         "toolwindows/toolWindowAnt.svg",
@@ -574,6 +585,7 @@
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
+      "settingSync.svg":"toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "vcs.svg": [

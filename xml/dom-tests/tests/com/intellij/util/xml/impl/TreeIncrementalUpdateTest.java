@@ -31,9 +31,6 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class TreeIncrementalUpdateTest extends DomTestCase {
 
   public void testRenameCollectionTag() {

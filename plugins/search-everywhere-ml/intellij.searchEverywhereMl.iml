@@ -62,6 +62,16 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="find-classes-model-experimental" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-classes-model:223.2.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/223.2.1/find-classes-model-223.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.yaml" scope="RUNTIME" />
   </component>

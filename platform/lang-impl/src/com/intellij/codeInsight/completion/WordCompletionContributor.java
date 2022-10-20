@@ -24,9 +24,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
     return (DumbService.isDumb(file.getProject()) &&

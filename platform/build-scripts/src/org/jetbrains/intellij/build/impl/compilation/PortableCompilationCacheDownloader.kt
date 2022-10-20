@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
-import java.nio.charset.StandardCharsets
+import org.jetbrains.jps.cache.model.BuildTargetState
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -24,12 +24,6 @@ internal class PortableCompilationCacheDownloader(
   private val availableForHeadCommitForced: Boolean,
   private val downloadCompilationOutputsOnly: Boolean,
 ) {
-  private companion object {
-    val isAwsCliAvailable by lazy {
-      ProcessBuilder("aws", "--version").inheritIO().start().waitFor() == 0
-    }
-  }
-
   private val remoteCacheUrl = remoteCacheUrl.trimEnd('/')
 
   private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
@@ -42,8 +36,8 @@ internal class PortableCompilationCacheDownloader(
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
   private fun downloadString(url: String): String = retryWithExponentialBackOff {
-    if (url.startsWith("s3://")) {
-      awsCli("aws", "s3", "cp", url, "-")
+    if (url.isS3()) {
+      awsS3Cli("cp", url, "-")
     }
     else {
       httpClient.get(url).useSuccessful { it.body.string() }
@@ -54,8 +48,8 @@ internal class PortableCompilationCacheDownloader(
     TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
-        if (url.startsWith("s3://")) {
-          awsCli("aws", "s3", "cp", url, "$file")
+        if (url.isS3()) {
+          awsS3Cli("cp", url, "$file")
         } else {
           httpClient.get(url).useSuccessful { response ->
             Files.newOutputStream(file).use {
@@ -148,18 +142,5 @@ internal class PortableCompilationCacheDownloader(
     val outputArchive = Path.of(compilationOutput.path, "tmp-output.zip")
     downloadToFile("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive, spanName = "download output")
     return outputArchive
-  }
-
-  private fun awsCli(vararg args: String): String {
-    require(isAwsCliAvailable)
-    requireNotNull(System.getenv("AWS_ACCESS_KEY_ID"))
-    requireNotNull(System.getenv("AWS_SECRET_ACCESS_KEY"))
-    requireNotNull(System.getenv("AWS_DEFAULT_REGION"))
-    val process = ProcessBuilder(*args).start()
-    val output = process.inputStream.use {
-      String(it.readAllBytes(), StandardCharsets.UTF_8)
-    }
-    require(process.waitFor() == 0)
-    return output
   }
 }

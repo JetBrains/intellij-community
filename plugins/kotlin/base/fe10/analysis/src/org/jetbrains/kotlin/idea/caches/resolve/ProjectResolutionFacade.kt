@@ -110,7 +110,9 @@ internal class ProjectResolutionFacade(
                 }
             }
 
-            val allDependencies = resolverForProjectDependencies + KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+            // TODO: why do we need OCB tracker for libs ?
+            val allDependencies = resolverForProjectDependencies +
+                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
             CachedValueProvider.Result.create(results, allDependencies)
         }, false
     )
@@ -210,6 +212,12 @@ internal class ProjectResolutionFacade(
 
         //TODO: (module refactoring) several elements are passed here in debugger
         return AnalysisResult.success(bindingContext, findModuleDescriptor(element.moduleInfo))
+    }
+
+    internal fun fetchAnalysisResultsForElement(element: KtElement): AnalysisResult? {
+        val cache = analysisResultsSimpleLock.guarded { analysisResults.value!! }
+        val perFileCache = cache.getIfCached(element.containingKtFile)
+        return perFileCache?.fetchAnalysisResults(element)
     }
 
     private fun analysisResultForElement(

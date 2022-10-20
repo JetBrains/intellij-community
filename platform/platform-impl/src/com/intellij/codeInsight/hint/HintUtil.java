@@ -47,9 +47,10 @@ public final class HintUtil {
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
   public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", new JBColor(0xb5d0fb, 0x376c89));
+  public static final ColorKey WARNING_COLOR_KEY = ColorKey.createColorKey("WARNING_HINT", new JBColor(0xfff8dc, 0x665014));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
   /**
-   * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
+   * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY}, {@link #WARNING_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
    */
   public static final ColorKey HINT_BORDER_COLOR_KEY = ColorKey.createColorKey("HINT_BORDER", new JBColor(0xC9CCD6, 0x5A5D63));
 
@@ -66,6 +67,10 @@ public final class HintUtil {
 
   public static @NotNull Color getQuestionColor() {
     return notNull(getGlobalOrDefaultColor(QUESTION_COLOR_KEY), QUESTION_COLOR_KEY.getDefaultColor());
+  }
+
+  public static @NotNull Color getWarningColor() {
+    return notNull(getGlobalOrDefaultColor(WARNING_COLOR_KEY), WARNING_COLOR_KEY.getDefaultColor());
   }
 
   public static @NotNull Color getErrorColor() {
@@ -171,6 +176,25 @@ public final class HintUtil {
 
   public static @NotNull JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null);
+  }
+
+  public static JComponent createWarningLabel(@NotNull @HintText String text,
+                                              @Nullable HyperlinkListener hyperlinkListener,
+                                              @Nullable MouseListener mouseListener) {
+    Color bg = getWarningColor();
+    HintHint hintHint = new HintHint()
+      .setBorderColor(getHintBorderColor())
+      .setTextBg(bg)
+      .setTextFg(JBColor.foreground())
+      .setFont(getBoldFont())
+      .setAwtTooltip(true);
+    HintLabel label = createLabel(text, null, bg, hintHint);
+    configureLabel(label, hyperlinkListener, mouseListener, null);
+    return label;
+  }
+
+  public static @NotNull JComponent createWarningLabel(@NotNull @HintText String text) {
+    return createWarningLabel(text, null, null);
   }
 
   @ApiStatus.Internal

@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -35,7 +35,7 @@ internal class LibraryModifiableModelBridgeImpl(
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
-  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId
+  private var entityId = originalLibrarySnapshot.libraryEntity.symbolicId
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
@@ -71,7 +71,7 @@ internal class LibraryModifiableModelBridgeImpl(
       error("Library named $name already exists")
     }
 
-    entityId = entity.persistentId.copy(name = name)
+    entityId = entity.symbolicId.copy(name = name)
     diff.modifyEntity(entity) {
       this.name = name
     }

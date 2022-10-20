@@ -11,7 +11,7 @@ import com.intellij.ui.content.ContentFactory
 class PyPackagesToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val service = project.service<PyPackagingToolWindowService>()
-    val toolWindowPanel = PyPackagingToolWindowPanel(service, toolWindow)
+    val toolWindowPanel = PyPackagingToolWindowPanel(project, toolWindow)
     service.initialize(toolWindowPanel)
     val content = ContentFactory.getInstance().createContent(toolWindowPanel.component, null, false)
     toolWindow.contentManager.addContent(content)

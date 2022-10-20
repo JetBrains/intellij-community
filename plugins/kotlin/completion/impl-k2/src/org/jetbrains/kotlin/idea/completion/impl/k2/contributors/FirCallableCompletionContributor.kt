@@ -351,13 +351,14 @@ internal class FirCallableReferenceCompletionContributor(
         when (val resolved = explicitReceiver.reference()?.resolveToSymbol()) {
             is KtPackageSymbol -> return
             is KtNamedClassOrObjectSymbol -> {
-                resolved.getMemberScope()
-                    .getCallableSymbols(scopeNameFilter)
-                    .filter { visibilityChecker.isVisible(it) }
-                    .forEach { symbol ->
-                        addCallableSymbolToCompletion(context.withoutExpectedType(), symbol, getOptions(symbol))
+                fun process(callable: KtCallableSymbol) {
+                    if (visibilityChecker.isVisible(callable)) {
+                        addCallableSymbolToCompletion(context.withoutExpectedType(), callable, getOptions(callable))
                     }
+                }
 
+                resolved.getMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
+                resolved.companionObject?.getMemberScope()?.getCallableSymbols(scopeNameFilter)?.forEach(::process)
             }
 
             else -> {

@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -64,7 +64,7 @@ public class EditorSettingsManager implements EditorFactoryListener {
 
   private static void setRightMarginShown(@NotNull Editor editor, boolean isShown) {
     Color rightMarginColor =
-      isShown ? EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) : null;
+      isShown ? AbstractColorsScheme.INHERITED_COLOR_MARKER : null;
     editor.getColorsScheme().setColor(EditorColors.RIGHT_MARGIN_COLOR, rightMarginColor);
   }
 }

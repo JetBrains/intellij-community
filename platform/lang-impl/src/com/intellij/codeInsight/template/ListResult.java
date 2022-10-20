@@ -21,9 +21,6 @@ import com.intellij.psi.PsiFile;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class ListResult implements Result {
   private final List<Result> myComponents;
 

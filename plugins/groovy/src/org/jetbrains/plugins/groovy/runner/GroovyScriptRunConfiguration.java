@@ -57,9 +57,6 @@ import java.util.Map;
 
 import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
-/**
- * @author peter
- */
 public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 

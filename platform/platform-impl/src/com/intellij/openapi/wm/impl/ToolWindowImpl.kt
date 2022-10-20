@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -43,6 +42,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.*
+import com.intellij.util.ui.UIUtil.setBackgroundRecursively
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.ApiStatus
@@ -731,13 +731,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    val alarm = focusAlarm
-    alarm.cancelAllRequests()
-    if (Registry.`is`("toolwindow.immediate.focus")) {
-      focusTask.run()
-    } else {
-      alarm.request(delay = 0)
-    }
+    focusAlarm.cancelAllRequests()
+    focusTask.run()
   }
 }
 
@@ -767,14 +762,22 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
 }
 
 private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
-  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
-    override fun iterator(): Iterator<JComponent> {
-      val contentManager = contentUi.contentManager
-      if (contentManager.contentCount == 0) {
-        return Collections.emptyIterator()
-      }
+  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, NotInHierarchyComponents(contentUi))
+}
 
-      return contentManager.contents
+private class NotInHierarchyComponents(val contentUi: ToolWindowContentUi) : Iterable<Component> {
+  private val oldProperty = ClientProperty.get(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS)
+
+  override fun iterator(): Iterator<Component> {
+    var result = emptySequence<Component>()
+
+    if (oldProperty != null) {
+      result += oldProperty.asSequence()
+    }
+
+    val contentManager = contentUi.contentManager
+    if (contentManager.contentCount != 0) {
+      result += contentManager.contents
         .asSequence()
         .mapNotNull { content: Content ->
           var last: JComponent? = null
@@ -788,9 +791,10 @@ private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
           }
           last
         }
-        .iterator()
     }
-  })
+
+    return result.iterator()
+  }
 }
 
 /**

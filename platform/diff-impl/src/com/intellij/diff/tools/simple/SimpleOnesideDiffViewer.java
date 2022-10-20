@@ -21,6 +21,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
@@ -29,13 +30,16 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.TextDiffType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +57,12 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
+  @NotNull private final MyMockFoldingModel myFoldingModel;
+
   public SimpleOnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
+
+    myFoldingModel = new MyMockFoldingModel(getProject(), getEditor(), this);
 
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
   }
@@ -66,6 +74,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
       highlighter.dispose();
     }
     myHighlighters.clear();
+    myFoldingModel.destroy();
     super.onDispose();
   }
 
@@ -73,6 +82,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   @Override
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
+    group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
@@ -173,6 +183,12 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   // Actions
   //
 
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    MyToggleExpandByDefaultAction() {
+      super(getTextSettings(), myFoldingModel);
+    }
+  }
+
   private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
     MyReadOnlyLockAction() {
       super(getContext(), getEditableEditors());
@@ -238,6 +254,12 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
       carets[index] = getEditor().getCaretModel().getLogicalPosition();
       carets[otherIndex] = new LogicalPosition(0, 0);
       return carets;
+    }
+  }
+
+  private static class MyMockFoldingModel extends FoldingModelSupport {
+    MyMockFoldingModel(@Nullable Project project, @NotNull EditorEx editor, @NotNull Disposable disposable) {
+      super(project, new EditorEx[]{editor}, disposable);
     }
   }
 }

@@ -12,10 +12,10 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBEmptyBorder
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -103,15 +103,14 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
         row {
           dialogPanel.border = JBEmptyBorder(10)
           scrollCell(dialogPanel)
-            .horizontalAlign(HorizontalAlign.FILL)
-            .verticalAlign(VerticalAlign.FILL)
+            .align(Align.FILL)
             .resizableColumn()
         }.resizableRow()
       }
       else {
         row {
           cell(dialogPanel)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .resizableColumn()
         }
       }

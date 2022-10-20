@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.util.ui.VcsExecutablePathSelector.ExecutableHandler
 import org.jetbrains.annotations.Nls
@@ -40,7 +40,7 @@ class HgProjectConfigurable(val project: Project)
         val pathSelector = VcsExecutablePathSelector(HgVcs.DISPLAY_NAME.get(), disposable,
                                                      ExecutableHandler { executable -> testExecutable(executable) })
         cell(pathSelector.mainPanel)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .onReset {
             pathSelector.setAutoDetectedPath(HgExecutableManager.getInstance().defaultExecutable)
             pathSelector.reset(globalSettings.hgExecutable,

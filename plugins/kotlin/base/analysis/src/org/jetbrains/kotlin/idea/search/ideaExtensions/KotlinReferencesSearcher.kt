@@ -74,18 +74,8 @@ data class KotlinReferencesSearchOptions(
             } ?: listOf(elementToSearch)
 
             return elements.fold(parameters.effectiveSearchScope) { scope, e ->
-                scope.unionSafe(parameters.effectiveSearchScope(e))
+                scope.union(parameters.effectiveSearchScope(e))
             }
-        }
-
-        private fun SearchScope.unionSafe(other: SearchScope): SearchScope {
-            if (this is LocalSearchScope && this.scope.isEmpty()) {
-                return other
-            }
-            if (other is LocalSearchScope && other.scope.isEmpty()) {
-                return this
-            }
-            return this.union(other)
         }
     }
 }

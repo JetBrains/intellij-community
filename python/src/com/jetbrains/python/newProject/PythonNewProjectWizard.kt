@@ -16,8 +16,8 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
@@ -234,7 +234,7 @@ private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
       row {
         cell(panel)
           .validationRequestor { panel.addChangeListener(it) }
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .validationOnInput { panel.validateAll().firstOrNull() }
           .validationOnApply { panel.validateAll().firstOrNull() }
       }

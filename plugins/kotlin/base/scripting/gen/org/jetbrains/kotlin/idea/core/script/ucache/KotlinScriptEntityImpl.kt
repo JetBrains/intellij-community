@@ -7,11 +7,10 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -179,12 +178,12 @@ open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : Kotl
   }
 }
 
-class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<KotlinScriptEntity>() {
+class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptEntity>() {
   lateinit var path: String
 
   fun isPathInitialized(): Boolean = ::path.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<KotlinScriptEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptEntity> {
     val modifiable = KotlinScriptEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -206,7 +205,7 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculablePersistentId<Ko
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return ScriptId(path)
   }
 

@@ -487,7 +487,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
 
-      val toolWindowPane = frameHelper.rootPane!!.toolWindowPane
+      val toolWindowPane = frameHelper.rootPane!!.getToolWindowPane()
       toolWindowPane.setDocumentComponent(editorComponent)
 
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
@@ -691,7 +691,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   internal fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
     toolWindow.setFocusedComponent(component)
     if (toolWindow.isAvailable && !toolWindow.isActive) {
-      activateToolWindow(toolWindow.id, null, autoFocusContents = !Registry.`is`("toolwindow.immediate.focus"))
+      activateToolWindow(toolWindow.id, null, autoFocusContents = false)
     }
     activeStack.push(idToEntry.get(toolWindow.id) ?: return)
     toolWindow.decorator?.headerToolbar?.component?.isVisible = true
@@ -1304,6 +1304,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else if (!item.old.isVisible && item.new.isVisible) {
         toShowWindow = true
+      } else if (item.new.isVisible && item.old.isDocked && item.new.isDocked && item.old.weight != item.new.weight) {
+        getToolWindowPane(item.entry.toolWindow).setWeight(item.entry.toolWindow, item.new.weight)
       }
 
       if (toShowWindow) {

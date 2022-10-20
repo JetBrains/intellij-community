@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
-import com.intellij.execution.Executor
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.icons.AllIcons
@@ -14,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -38,7 +38,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-private const val TOOLBAR_HEIGHT = 30
+internal const val RUN_TOOLBAR_HEIGHT = 30
+internal const val RUN_TOOLBAR_BORDER_HEIGHT = 5
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   return ActionManager.getInstance().createActionToolbar(
@@ -51,7 +52,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
     layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     if (this is ActionToolbarImpl) {
       isOpaque = false
-      setMinimumButtonSize(JBUI.size(36, TOOLBAR_HEIGHT))
+      setMinimumButtonSize(JBUI.size(36, RUN_TOOLBAR_HEIGHT))
       setActionButtonBorder(JBUI.Borders.empty())
       setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
@@ -60,11 +61,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
   }
 }
 
-private data class RunToolbarData(val project: Project,
-                                  val chosenRunConfiguration: RunnerAndConfigurationSettings?,
-                                  val isRunning: Boolean)
-
-private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
+private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -73,9 +70,9 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return createRunActionToolbar {
-      presentation.getClientProperty(runToolbarDataKey)?.isRunning ?: false
+      presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(5, 2) }
+      Wrapper(it).apply { border = JBUI.Borders.empty(RUN_TOOLBAR_BORDER_HEIGHT, 2) }
     }
   }
 
@@ -85,17 +82,35 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
       return
     }
     e.presentation.isEnabled = false
-    val project = e.project ?: return
+
+    e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
+  }
+
+  private fun isSomeRunningNow(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
     val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstanceIfCreated(project)?.selectedConfiguration
-    val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
-    val someRunning = !runningDescriptors.isEmpty()
-    e.presentation.putClientProperty(runToolbarDataKey, RunToolbarData(project, selectedConfiguration, someRunning))
+
+    if (selectedConfiguration == null) {
+      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
+        // cannot get current PSI file for the Run Current configuration in dumb mode
+        return false
+      }
+      val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
+      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
+      val runConfigsForCurrentFile = ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(psiFile, false)
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { runConfigsForCurrentFile.contains(it) }
+      return !runningDescriptors.isEmpty()
+    }
+    else {
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
+      return !runningDescriptors.isEmpty()
+    }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     val data = presentation.getClientProperty(runToolbarDataKey) ?: return
     val dataPropertyName = "old-run-toolbar-data"
-    val oldData = component.getClientProperty(dataPropertyName) as? RunToolbarData
+    val oldData = component.getClientProperty(dataPropertyName) as? Boolean
     if (oldData == null) {
       component.putClientProperty(dataPropertyName, data)
     }
@@ -260,6 +275,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     val action = ActionManager.getInstance().getAction("RunConfiguration")
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
+    e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -269,9 +285,10 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ActionButtonWithText(this, presentation, place, JBUI.size(90, TOOLBAR_HEIGHT)){
+    return object : ActionButtonWithText(this, presentation, place, JBUI.size(90, RUN_TOOLBAR_HEIGHT)){
       override fun getMargins(): Insets = JBInsets.create(0, 10)
       override fun iconTextSpace(): Int = JBUI.scale(6)
+      override fun shallPaintDownArrow() = true
     }.also {
       it.foreground = Color.WHITE
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
@@ -291,7 +308,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
     g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
 
-  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(TOOLBAR_HEIGHT))
+  override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(RUN_TOOLBAR_HEIGHT))
 }
 
 private fun Color.addAlpha(alpha: Double): Color {

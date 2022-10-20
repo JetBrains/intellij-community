@@ -27,27 +27,18 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
-import java.awt.Color
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.Rectangle
+import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    if (IdeRootPane.isMenuButtonInToolbar()) {
-      mainMenuButton = MainMenuButton()
-    }
-    else {
-      mainMenuButton = null
-    }
+    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
@@ -103,13 +94,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
 
-  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
-    bounds.forEach { fitRectangle(it) }
+  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
+    super.calculateBounds(size2Fit, bounds)
+    for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
   }
 
-  private fun fitRectangle(rect: Rectangle) {
+  private fun fitRectangle(rect: Rectangle, cmp: Component) {
     val minSize = EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
-    rect.width = Integer.max(rect.width, minSize.width)
+    if (!isSeparator(cmp)) rect.width = Integer.max(rect.width, minSize.width)
     rect.height = Integer.max(rect.height, minSize.height)
     rect.y = 0
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
 import com.intellij.model.search.SearchParameters
@@ -11,12 +11,9 @@ interface RenameUsageSearchParameters : SearchParameters<RenameUsage> {
 
   val searchScope: SearchScope
 
-  @JvmDefault
   operator fun component1(): Project = project
 
-  @JvmDefault
   operator fun component2(): RenameTarget = target
 
-  @JvmDefault
   operator fun component3(): SearchScope = searchScope
 }

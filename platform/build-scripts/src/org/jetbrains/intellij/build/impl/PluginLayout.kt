@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -19,15 +20,25 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.*
+import java.util.function.BiConsumer
+import java.util.function.BiPredicate
+import java.util.function.Consumer
+import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String, mainJarNameWithoutExtension: String): BaseLayout() {
-  constructor(mainModule: String) : this(mainModule, convertModuleNameToFileName(mainModule))
+class PluginLayout private constructor(
+  val mainModule: String,
+  mainJarNameWithoutExtension: String,
+) : BaseLayout() {
+
+  constructor(mainModule: String) : this(
+    mainModule,
+    convertModuleNameToFileName(mainModule),
+  )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
 
@@ -79,46 +90,43 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
-    fun plugin(mainModuleName: String, body: Consumer<PluginLayoutSpec>): PluginLayout {
-      if (mainModuleName.isEmpty()) {
-        error("mainModuleName must be not empty")
-      }
-
+    fun plugin(
+      mainModuleName: String,
+      body: Consumer<PluginLayoutSpec>,
+    ): PluginLayout {
       val layout = PluginLayout(mainModuleName)
+
       val spec = PluginLayoutSpec(layout)
       body.accept(spec)
+
+      layout.mainJarName = spec.mainJarName
       layout.directoryName = spec.directoryName
-      if (!layout.includedModuleNames.contains(mainModuleName)) {
-        layout.withModule(mainModuleName, layout.mainJarName)
-      }
       layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
       layout.bundlingRestrictions = spec.bundlingRestrictions.build()
+      layout.withModule(mainModuleName)
+
       return layout
     }
 
     @JvmStatic
-    fun plugin(modules: List<String>, builder: Consumer<PluginLayoutBuilder>): PluginLayout {
-      val layout = plugin(modules)
-      builder.accept(PluginLayoutSpec(layout))
+    @JvmOverloads
+    fun plugin(
+      moduleNames: List<String>,
+      body: Consumer<SimplePluginLayoutSpec>? = null,
+    ): PluginLayout {
+      val layout = PluginLayout(mainModule = moduleNames.first())
+      moduleNames.forEach(layout::withModule)
+
+      body?.accept(SimplePluginLayoutSpec(layout))
+
       return layout
     }
 
     @JvmStatic
-    fun plugin(modules: List<String>): PluginLayout {
-      val layout = PluginLayout(mainModule = modules.first())
-      layout.setModules(modules)
-      return layout
-    }
-
-    @JvmStatic
-    fun simplePlugin(mainModule: String): PluginLayout {
-      val layout = PluginLayout(mainModule)
-      layout.setModules(listOf(mainModule))
-      return layout
-    }
+    fun simplePlugin(mainModule: String): PluginLayout = plugin(listOf(mainModule))
   }
 
-  override fun toString() = "Plugin '$mainModule'"
+  override fun toString() = "Plugin '$mainModule'" + if (bundlingRestrictions != PluginBundlingRestrictions.NONE) ", restrictions: $bundlingRestrictions" else ""
 
   override fun withModule(moduleName: String) {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
@@ -126,11 +134,11 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       super.withModule(moduleName)
     }
     else {
-      withModuleImpl(moduleName, mainJarName)
+      withModule(moduleName, mainJarName)
     }
   }
 
-  open class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
+  sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root
      * @param relativeOutputPath target path relative to the plugin root directory
@@ -162,8 +170,11 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     }
   }
 
+  @ApiStatus.Experimental
+  class SimplePluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout)
+
   // as a builder for PluginLayout, that ideally should be immutable
-  class PluginLayoutSpec(layout: PluginLayout): PluginLayoutBuilder(layout) {
+  class PluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
@@ -203,7 +214,15 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
        */
       var includeInEapOnly: Boolean = false
 
+      var ephemeral: Boolean = false
+
       internal fun build(): PluginBundlingRestrictions {
+        if (ephemeral) {
+          check(supportedOs == OsFamily.ALL)
+          check(supportedArch == JvmArchitecture.ALL)
+          check(!includeInEapOnly)
+          return PluginBundlingRestrictions.EPHEMERAL
+        }
         return PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
       }
     }
@@ -396,24 +415,5 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
 
   interface VersionEvaluator {
     fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
-  }
-
-  internal fun setModules(modules: List<String>) {
-    check(moduleNameToJarPath.isEmpty())
-    check(_jarToModules.isEmpty())
-
-    for (module in modules) {
-      check(!module.isEmpty()) {
-        "module name must be not empty"
-      }
-
-      if (module.endsWith(".jps") || module.endsWith(".rt")) {
-        // must be in a separate JAR
-        withModuleImpl(module, "${convertModuleNameToFileName(module)}.jar")
-      }
-      else {
-        withModuleImpl(module, mainJarName)
-      }
-    }
   }
 }

@@ -30,10 +30,8 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.vcs.commit.CommitModeManager
@@ -118,7 +116,7 @@ internal class GitVcsPanel(private val project: Project) :
         protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
       }
       cell(protectedBranchesField)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .bind<List<String>>(
           { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
           { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },

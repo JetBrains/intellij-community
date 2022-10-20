@@ -179,11 +179,7 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING -> {
-                        if (highlightType == ProblemHighlightType.WEAK_WARNING) {
-                            CodeInsightColors.WEAK_WARNING_ATTRIBUTES
-                        } else CodeInsightColors.WARNINGS_ATTRIBUTES
-                    }
+                    Severity.WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     else -> null
                 }

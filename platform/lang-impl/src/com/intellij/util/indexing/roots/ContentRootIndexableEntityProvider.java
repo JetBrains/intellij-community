@@ -8,14 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
-import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
+import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
+import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,11 +37,11 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
                                                                                                       @NotNull EntityStorage entityStorage,
                                                                                                       @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getPersistentId(), collectRootUrls(entity.getContentRoots()));
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getSymbolicId(), collectRootUrls(entity.getContentRoots()));
   }
 
   @Override
-  public @Nullable IndexableSetSelfDependentOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
+  public @Nullable IndexableSetIterableOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
                                                                                     @NotNull EntityStorage storage,
                                                                                     @NotNull Project project) {
     ModuleEntity moduleEntity = entity.getModule();
@@ -53,20 +53,20 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     if (root == null) return null;
     List<VirtualFile> excludedFiles =
       IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
-    return new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(root), excludedFiles);
+    return new ModuleRootIterableOriginImpl(module, Collections.singletonList(root), excludedFiles);
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
                                                                                                 @NotNull Project project) {
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getPersistentId(), entity.getUrl());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getSymbolicId(), entity.getUrl());
   }
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
                                                                                                    @NotNull ContentRootEntity newEntity) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), newEntity.getUrl());
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getSymbolicId(), newEntity.getUrl());
     }
     List<VirtualFileUrl> newExcludedUrls = ContainerUtil.map(newEntity.getExcludedUrls(), o -> o.getUrl());
     List<VirtualFileUrl> oldExcludedUrls = ContainerUtil.map(oldEntity.getExcludedUrls(), o -> o.getUrl());
@@ -85,7 +85,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
           roots.add(oldUrl);
         }
       }
-      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getPersistentId(), roots);
+      return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getSymbolicId(), roots);
     }
     return Collections.emptyList();
   }
@@ -101,7 +101,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     if (!entity.getExcludedPatterns().isEmpty() || !entity.getExcludedUrls().isEmpty()) {
       VirtualFile root = ((VirtualFilePointer)entity.getUrl()).getFile();
       if (root != null && ProjectFileIndex.getInstance(project).isInContent(root)) {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getPersistentId(), entity.getUrl());
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getSymbolicId(), entity.getUrl());
       }
     }
     return Collections.emptyList();
@@ -118,6 +118,6 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
                                                                                                         @NotNull Project project) {
     List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getContentRoots());
     List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getContentRoots());
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getPersistentId(), newRoots, oldRoots);
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRoots, oldRoots);
   }
 }

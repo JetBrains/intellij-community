@@ -13,25 +13,20 @@ import com.intellij.webSymbols.html.impl.WebSymbolHtmlAttributeValueImpl
 @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
 interface WebSymbolHtmlAttributeValue {
   /** Default: PLAIN */
-  @JvmDefault
   val kind: Kind?
     get() = null
 
-  @JvmDefault
   val type: Type?
     get() = null
 
   /** Default: true */
-  @JvmDefault
   @get:JvmName("isRequired")
   val required: Boolean?
     get() = null
 
-  @JvmDefault
   val default: String?
     get() = null
 
-  @JvmDefault
   val langType: Any?
     get() = null
 

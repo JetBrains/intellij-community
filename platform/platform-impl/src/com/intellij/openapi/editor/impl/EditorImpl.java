@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -3361,8 +3358,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColorsScheme(@NotNull EditorColorsScheme scheme) {
     assertIsDispatchThread();
+    logSchemeChangeIfNeeded(scheme);
     myScheme = scheme;
     reinitSettings();
+  }
+
+  private static void logSchemeChangeIfNeeded(EditorColorsScheme scheme) {
+    if (!LOG.isDebugEnabled() || !(scheme instanceof EditorColorsSchemeImpl)) return;
+    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+    boolean isGlobal = colorsManager != null && colorsManager.getGlobalScheme() == scheme;
+
+    LOG.debug("Will set mutable scheme to editor (isGlobal=%b, presentationMode=%b)"
+                .formatted(isGlobal, UISettings.getInstance().getPresentationMode()));
+    LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
   @Override
@@ -5147,10 +5155,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void adjustGlobalFontSize(float size) {
     EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
+    resetEditorFontSize();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+  }
+
+  @ApiStatus.Internal
+  public void resetEditorFontSize() {
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

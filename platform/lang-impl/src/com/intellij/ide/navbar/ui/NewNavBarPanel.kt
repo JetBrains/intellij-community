@@ -1,22 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.ide.ItemClickEvent
-import com.intellij.ide.navbar.ide.ItemSelectType.NAVIGATE
-import com.intellij.ide.navbar.ide.ItemSelectType.OPEN_POPUP
-import com.intellij.ide.navbar.ide.UiNavBarItem
+import com.intellij.ide.navbar.vm.NavBarPopupVm
+import com.intellij.ide.navbar.vm.NavBarVm
+import com.intellij.ide.navbar.vm.NavBarVmItem
+import com.intellij.ide.navbar.vm.PopupResult
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.HintHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Point
@@ -26,11 +27,10 @@ import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-
 internal class NewNavBarPanel(
-  private val itemClickEvents: MutableSharedFlow<ItemClickEvent>,
-  private val myItems: StateFlow<List<UiNavBarItem>>,
-  cs: CoroutineScope
+  cs: CoroutineScope,
+  private val vm: NavBarVm,
+  private val myProject: Project,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)) {
 
   private val myItemComponents = arrayListOf<NavBarItemComponent>()
@@ -41,14 +41,19 @@ internal class NewNavBarPanel(
     EDT.assertIsEdt()
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      myItems.collect {
+      vm.items.collect {
         rebuild(it)
       }
     }
 
+    cs.launch(Dispatchers.EDT) {
+      vm.popup.collect { (item, popupVM) ->
+        showPopup(item, popupVM)
+      }
+    }
   }
 
-  private fun rebuild(items: List<UiNavBarItem>) {
+  private fun rebuild(items: List<NavBarVmItem>) {
     EDT.assertIsEdt()
     removeAll()
     myItemComponents.clear()
@@ -59,17 +64,20 @@ internal class NewNavBarPanel(
                          || isLast
                          || item.presentation.hasContainingFile
 
-      val itemComponent = NavBarItemComponent(item.presentation, isIconNeeded, !isLast)
+      val itemComponent = NavBarItemComponent(item, myProject, isIconNeeded, !isLast)
 
       itemComponent.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          if (!e.isConsumed) {
+          if (e.isConsumed) {
+            return
+          }
+          if (e.button == MouseEvent.BUTTON1) {
             e.consume()
             if (e.clickCount == 1) {
-              itemClickEvents.tryEmit(ItemClickEvent(OPEN_POPUP, i, item))
+              vm.selectItem(item)
             }
-            else if (e.button == MouseEvent.BUTTON1) {
-              itemClickEvents.tryEmit(ItemClickEvent(NAVIGATE, i, item))
+            else {
+              vm.activateItem(item)
             }
           }
         }
@@ -89,11 +97,23 @@ internal class NewNavBarPanel(
     }
 
     onSizeChange?.accept(preferredSize)
-
   }
 
-  fun getItemPopupLocation(i: Int, popupHint: NavigationBarPopup): Point {
-    val itemComponent = myItemComponents.getOrNull(i) ?: return Point(0, 0)
+  private fun showPopup(item: NavBarVmItem, vm: NavBarPopupVm) {
+    val itemComponent = myItemComponents.lastOrNull {
+      it.item === item
+    }
+    if (itemComponent == null) {
+      vm.popupResult(PopupResult.PopupResultCancel)
+      return
+    }
+    scrollRectToVisible(itemComponent.bounds)
+    val popupHint = NavigationBarPopup(vm, myProject)
+    val point = getItemPopupLocation(itemComponent, popupHint)
+    popupHint.show(this, point.x, point.y, this, HintHint(this, point))
+  }
+
+  private fun getItemPopupLocation(itemComponent: Component, popupHint: NavigationBarPopup): Point {
     val relativeX = 0
 
     val relativeY = if (ExperimentalUI.isNewUI() && UISettings.getInstance().showNavigationBarInBottom) {
@@ -106,11 +126,4 @@ internal class NewNavBarPanel(
     val relativePoint = RelativePoint(itemComponent, Point(relativeX, relativeY))
     return relativePoint.getPoint(this)
   }
-
-  fun scrollTo(index: Int) {
-    myItemComponents.getOrNull(index)?.let {
-      scrollRectToVisible(it.bounds)
-    }
-  }
-
 }

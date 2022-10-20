@@ -17,21 +17,30 @@ interface FullLineProposal {
   }
 }
 
-data class RawFullLineProposal(
+class RawFullLineProposal private constructor(
   override val suggestion: String,
   override val score: Double,
   override val isSyntaxCorrect: FullLineProposal.BasicSyntaxCorrectness,
-  var provider: String? = null,
-  val cacheHitLength: Int? = null
+  val details: Details
 ) : FullLineProposal {
+
+  constructor(suggestion: String, score: Double, isSyntaxCorrect: FullLineProposal.BasicSyntaxCorrectness)
+    : this(suggestion, score, isSyntaxCorrect, Details())
 
   fun withSuggestion(text: String): RawFullLineProposal {
     if (text != suggestion) {
-      return RawFullLineProposal(text, score, isSyntaxCorrect, provider, cacheHitLength)
+      return RawFullLineProposal(text, score, isSyntaxCorrect, details.copy())
     }
 
     return this
   }
+
+  data class Details(
+    var provider: String? = null,
+    var cacheHitLength: Int? = null,
+    var inferenceTime: Int? = null,
+    var checksTime: Int? = null,
+  )
 }
 
 data class AnalyzedFullLineProposal(
@@ -39,5 +48,6 @@ data class AnalyzedFullLineProposal(
   val suffix: String,
   val refCorrectness: ReferenceCorrectness
 ) : FullLineProposal by source {
-  val provider: String? = source.provider
+  val provider: String? = source.details.provider
+  val details: RawFullLineProposal.Details = source.details
 }

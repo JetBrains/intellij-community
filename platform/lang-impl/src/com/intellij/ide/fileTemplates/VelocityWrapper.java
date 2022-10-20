@@ -27,8 +27,6 @@ import java.io.*;
 
 /**
  * Initializes Velocity when it's actually needed. All interaction with Velocity should go through this class.
- *
- * @author peter
  */
 final class VelocityWrapper {
   private static final Logger LOG = Logger.getInstance(VelocityWrapper.class);

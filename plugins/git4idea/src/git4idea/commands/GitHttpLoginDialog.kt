@@ -14,10 +14,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
@@ -87,8 +87,8 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun Panel.buildCredentialsPanel() {
-    row(GitBundle.message("login.dialog.username.label")) { cell(usernameField).horizontalAlign(HorizontalAlign.FILL) }
-    row(GitBundle.message("login.dialog.password.label")) { cell(passwordField).horizontalAlign(HorizontalAlign.FILL) }
+    row(GitBundle.message("login.dialog.username.label")) { cell(usernameField).align(AlignX.FILL) }
+    row(GitBundle.message("login.dialog.password.label")) { cell(passwordField).align(AlignX.FILL) }
     row("") { cell(rememberCheckbox) }
   }
 

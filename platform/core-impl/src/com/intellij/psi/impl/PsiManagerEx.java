@@ -10,9 +10,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public abstract class PsiManagerEx extends PsiManager {
   public static PsiManagerEx getInstanceEx(Project project) {
     //noinspection SSBasedInspection

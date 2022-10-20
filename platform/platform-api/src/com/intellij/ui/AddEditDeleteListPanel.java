@@ -9,7 +9,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
- * @author peter
  * @author Konstantin Bulenkov
  */
 public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {

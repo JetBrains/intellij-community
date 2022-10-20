@@ -69,6 +69,14 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
 
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
       "intellij.sh.core" -> IntellijIconClassGeneratorModuleConfig(className = "ShIcons", packageName = "com.intellij.sh")
+      "intellij.python.django.core" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DjangoIcons",
+        packageName = "com.jetbrains.django"
+      )
+      "intellij.python.jinja2" -> IntellijIconClassGeneratorModuleConfig(
+        className = "Jinja2Icons",
+        packageName = "com.jetbrains.jinja2"
+      )
       else -> super.getConfigForModule(moduleName)
     }
   }

@@ -53,7 +53,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(11))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(15))
     assertEquals(bundledGradleVersion.version, suggestGradleVersion(17))
-    assertEquals("7.5", suggestGradleVersion(18))
+    assertEquals(bundledGradleVersion.version, suggestGradleVersion(18))
   }
 
   @Test

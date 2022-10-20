@@ -9,9 +9,6 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
 
-/**
- * @author peter
- */
 abstract class KeyedMethodVisitor extends ClassVisitor {
   private static final int STABLE_FLAGS = Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
 

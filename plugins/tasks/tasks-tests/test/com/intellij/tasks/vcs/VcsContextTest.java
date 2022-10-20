@@ -28,7 +28,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
   private TaskManagerImpl myTaskManager;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     WorkingContextManager.getInstance(getProject()).enableUntil(getTestRootDisposable());

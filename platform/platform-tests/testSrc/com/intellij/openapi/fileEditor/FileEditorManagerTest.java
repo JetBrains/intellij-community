@@ -38,8 +38,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
-
-  public void testTabOrder() throws Exception {
+  public void testTabOrder() {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
 

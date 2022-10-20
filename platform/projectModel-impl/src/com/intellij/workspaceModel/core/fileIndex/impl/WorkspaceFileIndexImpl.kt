@@ -29,8 +29,11 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean): WorkspaceFileSet? {
-    val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, null)
-    return info as? WorkspaceFileSetImpl
+    return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
+      is WorkspaceFileSetImpl -> info
+      is MultipleWorkspaceFileSets -> info.fileSets.first()
+      else -> null
+    }
   }
 
   override fun <D : WorkspaceFileSetData> findFileSetWithCustomData(file: VirtualFile,
@@ -38,20 +41,23 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                                                     includeContentSets: Boolean,
                                                                     includeExternalSets: Boolean,
                                                                     includeExternalSourceSets: Boolean,
-                                                                    customDataClass: Class<out D>?): WorkspaceFileSetWithCustomData<D>? {
-    val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, customDataClass)
+                                                                    customDataClass: Class<out D>): WorkspaceFileSetWithCustomData<D>? {
+    val result = when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)) {
+      is WorkspaceFileSetWithCustomData<*> -> info.takeIf { customDataClass.isInstance(it.data) }
+      is MultipleWorkspaceFileSets -> info.fileSets.find { customDataClass.isInstance(it.data) }
+      else -> null
+    }
     @Suppress("UNCHECKED_CAST")
-    return info as? WorkspaceFileSetWithCustomData<D>
+    return result as? WorkspaceFileSetWithCustomData<D>
   }
 
   override fun getFileInfo(file: VirtualFile,
                            honorExclusion: Boolean,
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,
-                           includeExternalSourceSets: Boolean,
-                           customDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileInternalInfo {
+                           includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     val unwrappedFile = BackedVirtualFile.getOriginFileIfBacked((file as? VirtualFileWindow)?.delegate ?: file)
-    return getOrCreateIndexData(unwrappedFile).getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, customDataClass)
+    return getOrCreateIndexData(unwrappedFile).getFileInfo(unwrappedFile, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets)
   }
 
   private fun getOrCreateIndexData(file: VirtualFile): WorkspaceFileIndexData {

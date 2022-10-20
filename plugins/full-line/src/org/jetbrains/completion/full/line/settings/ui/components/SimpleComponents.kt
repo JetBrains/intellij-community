@@ -7,6 +7,9 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.ui.layout.*
 import org.jetbrains.completion.full.line.models.ModelType
 import org.jetbrains.completion.full.line.settings.MLServerCompletionBundle.Companion.message
@@ -50,9 +53,32 @@ fun Cell.doubleTextField(binding: PropertyBinding<Double>, columns: Int? = null,
     if (value == null)
       error(message("full.line.double.text.field.error.valid.number"))
     else if (range != null && (value < range.first || value > range.last))
-      error(message("full.line.double.text.field.error.valid.number", range.first, range.last))
+      error(message("full.line.double.text.field.error.range.number", range.first, range.last))
     else null
   }
+}
+
+fun com.intellij.ui.dsl.builder.Row.doubleTextField(prop: KMutableProperty0<Double>,
+                                                    range: IntRange? = null): com.intellij.ui.dsl.builder.Cell<JTextField> {
+  return doubleTextField(prop.toMutableProperty(), range)
+}
+
+fun com.intellij.ui.dsl.builder.Row.doubleTextField(prop: MutableProperty<Double>,
+                                                    range: IntRange? = null): com.intellij.ui.dsl.builder.Cell<JTextField> {
+  return textField()
+    .bindText({ prop.get().toString() },
+              { value ->
+                value.toDoubleOrNull()
+                  ?.let { intValue -> prop.set(range?.let { intValue.coerceIn(it.first.toDouble(), it.last.toDouble()) } ?: intValue) }
+              })
+    .validationOnInput {
+      val value = it.text.toDoubleOrNull()
+      if (value == null)
+        error(message("full.line.double.text.field.error.valid.number"))
+      else if (range != null && (value < range.first || value > range.last))
+        error(message("full.line.double.text.field.error.range.number", range.first, range.last))
+      else null
+    }
 }
 
 fun Cell.doubleTextField(prop: KMutableProperty0<Double>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
@@ -108,6 +134,13 @@ fun Cell.loadingStatus(loadingIcon: LoadingComponent): List<CellBuilder<JCompone
   return listOf(
     component(loadingIcon.loadingIcon),
     component(loadingIcon.statusText),
+  )
+}
+
+fun com.intellij.ui.dsl.builder.Row.loadingStatus(loadingIcon: LoadingComponent): List<com.intellij.ui.dsl.builder.Cell<JComponent>> {
+  return listOf(
+    cell(loadingIcon.loadingIcon),
+    cell(loadingIcon.statusText),
   )
 }
 

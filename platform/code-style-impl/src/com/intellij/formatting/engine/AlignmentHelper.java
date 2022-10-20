@@ -77,7 +77,10 @@ public class AlignmentHelper {
       myBlockIndentOptions.getIndentOptions(currentBlock));
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(currentBlock);
     if (offsetResponsibleBlock != null) {
-      myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
+      if (!myCyclesDetector.registerRealignment(offsetResponsibleBlock, currentBlock)) {
+        reportAlignmentProcessingError(context);
+        return null;
+      }
     }
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     return switch (result) {
@@ -95,11 +98,6 @@ public class AlignmentHelper {
         myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(currentBlock);
         storeAlignmentMapping(currentBlock, offsetResponsibleBlock);
-        if (myCyclesDetector.isCycleDetected()) {
-          reportAlignmentProcessingError(context);
-          yield null;
-        }
-        myCyclesDetector.registerBlockRollback(currentBlock);
         yield offsetResponsibleBlock.getNextBlock();
       }
       case RECURSION_DETECTED -> {

@@ -10,8 +10,9 @@ import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
@@ -27,7 +28,10 @@ import javax.swing.Icon
 class KotlinScriptProjectModelInfoProvider : CustomEntityProjectModelInfoProvider<KotlinScriptEntity> {
     override fun getEntityClass(): Class<KotlinScriptEntity> = KotlinScriptEntity::class.java
 
-    override fun getLibraryRoots(entities: Sequence<KotlinScriptEntity>): Sequence<LibraryRoots<KotlinScriptEntity>> =
+    override fun getLibraryRoots(
+        entities: Sequence<KotlinScriptEntity>,
+        entityStorage: EntityStorage
+    ): Sequence<LibraryRoots<KotlinScriptEntity>> =
         if (!scriptsAsEntities) { // see KotlinScriptDependenciesLibraryRootProvider
             emptySequence()
         } else {

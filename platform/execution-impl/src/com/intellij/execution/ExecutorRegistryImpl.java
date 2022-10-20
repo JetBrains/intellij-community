@@ -367,7 +367,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         if (ExperimentalUI.isNewUI() &&
             needRerunPresentation(selectedSettings.getConfiguration(), getRunningDescriptors(project, selectedSettings))) {
-          text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          if (myExecutor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)) {
+            text = ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration);
+          }
+          else {
+            text = ExecutionBundle.message("run.toolbar.widget.restart.text", myExecutor.getActionName(), configuration.getName());
+          }
         }
         else {
           text = myExecutor.getStartActionText(configuration.getName());
@@ -468,7 +473,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return RunCurrentFileActionStatus.createEnabled(myExecutor.getStartActionText(psiFile.getName()), icon, runnableConfigs);
     }
 
-    private static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
+    @ApiStatus.Internal
+    public static List<RunnerAndConfigurationSettings> getRunConfigsForCurrentFile(@NotNull PsiFile psiFile, boolean resetCache) {
       if (resetCache) {
         psiFile.putUserData(CURRENT_FILE_RUN_CONFIGS_KEY, null);
       }

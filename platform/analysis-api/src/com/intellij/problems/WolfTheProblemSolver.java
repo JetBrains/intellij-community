@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.problems;
 
 import com.intellij.openapi.Disposable;
@@ -14,10 +13,10 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class WolfTheProblemSolver {
-  protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
+  protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = new ExtensionPointName<>("com.intellij.problemFileHighlightFilter");
 
   public static WolfTheProblemSolver getInstance(Project project) {
-    return project.getComponent(WolfTheProblemSolver.class);
+    return project.getService(WolfTheProblemSolver.class);
   }
 
   public abstract boolean isProblemFile(@NotNull VirtualFile virtualFile);

@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
@@ -161,7 +160,7 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
 class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<SimpleChildAbstractEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
     val modifiable = SimpleChildAbstractEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff

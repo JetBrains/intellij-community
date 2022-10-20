@@ -4,6 +4,8 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.GroupDescriptor;
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.text.paragraph.TextParagraph;
@@ -23,6 +25,7 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -66,24 +69,35 @@ public final class TipUtils {
   }
 
   public static @Nullable TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
-    if (feature == null) {
-      return null;
-    }
-    String tipFileName = feature.getTipFileName();
-    if (tipFileName == null) {
+    if (feature == null) return null;
+    String tipId = feature.getTipId();
+    if (tipId == null) {
       LOG.warn("No Tip of the day for feature " + feature.getId());
       return null;
     }
 
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
-    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
-      tip = TipAndTrickBean.findByFileName(tipFileName);
-    }
-    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+    TipAndTrickBean tip = TipAndTrickBean.findById(tipId);
+    if (tip == null && StringUtil.isNotEmpty(tipId)) {
       tip = new TipAndTrickBean();
-      tip.fileName = tipFileName;
+      tip.fileName = tipId + TipAndTrickBean.TIP_FILE_EXTENSION;
     }
     return tip;
+  }
+
+  public static @Nullable @Nls String getGroupDisplayNameForTip(@NotNull TipAndTrickBean tip) {
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry == null) return null;
+    return registry.getFeatureIds().stream()
+      .map(featureId -> registry.getFeatureDescriptor(featureId))
+      .filter(descriptor -> Objects.equals(descriptor.getTipId(), tip.getId()))
+      .findFirst()
+      .map(feature -> {
+        String groupId = feature.getGroupId();
+        if (groupId == null) return null;
+        GroupDescriptor group = registry.getGroupDescriptor(groupId);
+        return group != null ? group.getDisplayName() : null;
+      })
+      .orElse(null);
   }
 
   public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip) {

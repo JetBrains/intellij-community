@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 /**
  * See recommendations for custom entities indexing
@@ -45,5 +45,5 @@ class KotlinScriptDependencyIndexableEntityProvider : IndexableEntityProvider.Ex
 
 
     private fun createIteratorBuildersForDependency(dependency: LibraryEntity): Collection<IndexableEntityProvider.IndexableIteratorBuilder> =
-        IndexableIteratorBuilders.forLibraryEntity(dependency.persistentId, true)
+        IndexableIteratorBuilders.forLibraryEntity(dependency.symbolicId, true)
 }

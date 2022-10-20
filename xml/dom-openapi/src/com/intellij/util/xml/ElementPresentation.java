@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author peter
  * @see DomElement#getPresentation()
  * @see ElementPresentationTemplate
  */

@@ -1,0 +1,5 @@
+// WITH_STDLIB
+
+fun test() {
+    (1..9 step 2).isEmpty()
+}

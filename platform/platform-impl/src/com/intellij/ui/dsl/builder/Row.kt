@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.icons.AllIcons
@@ -88,6 +88,7 @@ enum class BottomGap {
 
 @ApiStatus.NonExtendable
 @LayoutDslMarker
+@JvmDefaultWithCompatibility
 interface Row {
 
   /**
@@ -100,7 +101,7 @@ interface Row {
    * Marks the row as resizable: the row occupies all extra vertical space in parent (for example in [Panel.group] or [Panel.panel])
    * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
    * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
-   * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
+   * Note that alignment inside the cell is managed by [CellBase.align]  method
    *
    * @see [Grid.resizableRows]
    */

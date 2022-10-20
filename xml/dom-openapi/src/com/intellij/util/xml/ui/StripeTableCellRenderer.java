@@ -19,9 +19,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author peter
- */
 public class StripeTableCellRenderer implements TableCellRenderer {
   private final TableCellRenderer myRenderer;
   private static final double FACTOR = 0.92;

@@ -386,7 +386,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
-    var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
+    var renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     var table = new ShowUsagesTable(renderer, usageView);
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());

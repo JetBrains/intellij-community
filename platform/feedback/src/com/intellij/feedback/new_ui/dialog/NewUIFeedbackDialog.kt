@@ -33,7 +33,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import java.awt.event.ActionEvent
-import java.text.SimpleDateFormat
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Action.NAME
@@ -162,7 +161,7 @@ class NewUIFeedbackDialog(
           isVisible = false
           isOpaque = true
         }.component
-      }.bottomGap(BottomGap.MEDIUM)
+      }
 
       row {
         textArea()
@@ -173,7 +172,7 @@ class NewUIFeedbackDialog(
           .applyToComponent {
             adjustBehaviourForFeedbackForm()
           }
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
         textArea()
@@ -184,7 +183,7 @@ class NewUIFeedbackDialog(
           .applyToComponent {
             adjustBehaviourForFeedbackForm()
           }
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.SMALL)
+      }.bottomGap(BottomGap.MEDIUM)
 
       row {
         checkBox(NewUIFeedbackBundle.message("dialog.email.checkbox.label"))
@@ -211,10 +210,10 @@ class NewUIFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project) {
           showNewUIFeedbackSystemInfoDialog(project, newUISystemInfoData.value)
-        })
-      }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+        }
+      }.bottomGap(BottomGap.SMALL)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
     }

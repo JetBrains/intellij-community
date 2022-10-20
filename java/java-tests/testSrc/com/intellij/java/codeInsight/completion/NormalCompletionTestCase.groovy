@@ -11,9 +11,6 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 abstract class NormalCompletionTestCase extends LightFixtureCompletionTestCase {
   @Override

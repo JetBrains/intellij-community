@@ -15,9 +15,6 @@
  */
 package com.intellij.util.xml.ui;
 
-/**
- * @author peter
- */
 public class MultiLineTextPanel extends TextPanel{
   private int myRowCount = 3;
 

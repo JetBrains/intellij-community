@@ -51,6 +51,7 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -436,9 +437,12 @@ fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCo
   getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }
 
-val Sdk.sdkSeemsValid: Boolean get() = getOrCreateAdditionalData().flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
+val Sdk.sdkSeemsValid: Boolean
+  get() = getOrCreateAdditionalData().flavorAndData
+    .sdkSeemsValid(this, (sdkAdditionalData as? PyDetectedSdkAdditionalData)?.temporaryConfiguration ?: targetEnvConfiguration)
 
 private val SDK_PYTHON_PATH = Key<FullPathOnTarget>("SDK_PYTHON_PATH")
+
 /**
  * @return path to python binary on target
  */

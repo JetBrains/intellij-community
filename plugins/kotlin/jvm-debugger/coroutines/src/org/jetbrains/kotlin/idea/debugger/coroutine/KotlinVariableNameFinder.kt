@@ -11,12 +11,12 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.idea.base.analysis.isInlinedArgument
+import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
-import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.isInlinedArgument
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -121,8 +121,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
     private fun KtAnalysisSession.isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
-        val call = getResolvedFunctionCall(parentCall) ?: return false
-        val valueArgument = parentCall.getValueArgumentForExpression(expression) ?: return false
+        val call = parentCall.resolveCall().singleFunctionCallOrNull() ?: return false
+        val valueArgument = parentCall.getContainingValueArgument(expression) ?: return false
         val argumentSymbol = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argumentSymbol.returnType.isSuspendFunctionType
     }

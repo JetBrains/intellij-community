@@ -34,7 +34,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.win32.IdeaWin32
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
@@ -80,7 +79,6 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
-import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
@@ -206,7 +204,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
-  // async - handle error separatly
+  // async - handle error separately
   val telemetryInitJob = async {
     appInfoDeferred.join()
     runActivity("opentelemetry configuration") {
@@ -315,9 +313,6 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     withContext(Dispatchers.IO) {
       runActivity("system libs loading") {
         JnaLoader.load(log)
-        if (SystemInfoRt.isWindows) {
-          IdeaWin32.isAvailable()
-        }
       }
     }
 
@@ -394,11 +389,8 @@ internal val isUsingSeparateWriteThread: Boolean
 
 // called by the app after startup
 @Synchronized
-fun addExternalInstanceListener(processor: Function<List<String>, Future<CliResult>>) {
-  if (socketLock == null) {
-    throw AssertionError("Not initialized yet")
-  }
-  socketLock!!.setCommandProcessor(processor)
+fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>) {
+  requireNotNull(socketLock) { "Not initialized yet" }.setCommandProcessor(processor)
 }
 
 // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -482,6 +474,8 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
 
       @Suppress("SpellCheckingInspection")
       System.setProperty("sun.awt.noerasebackground", "true")
+      // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
+      System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
       runActivity("awt toolkit creating") {
         Toolkit.getDefaultToolkit()

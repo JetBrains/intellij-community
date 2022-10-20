@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.application.runWriteAction
@@ -25,7 +25,6 @@ import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.test.assertFalse
 
 @SkipSlowTestLocally

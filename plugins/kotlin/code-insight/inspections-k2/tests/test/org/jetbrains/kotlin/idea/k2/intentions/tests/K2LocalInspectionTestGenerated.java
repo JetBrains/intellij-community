@@ -829,5 +829,221 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/stringTemplateWithText.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty")
+        public static class ReplaceSizeCheckWithIsNotEmpty extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/array.kt");
+            }
+
+            @TestMetadata("charSequence.kt")
+            public void testCharSequence() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/charSequence.kt");
+            }
+
+            @TestMetadata("collection.kt")
+            public void testCollection() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/collection.kt");
+            }
+
+            @TestMetadata("collectionSubtype.kt")
+            public void testCollectionSubtype() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/collectionSubtype.kt");
+            }
+
+            @TestMetadata("extensionReceiver.kt")
+            public void testExtensionReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/extensionReceiver.kt");
+            }
+
+            @TestMetadata("flexibleType.kt")
+            public void testFlexibleType() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/flexibleType.kt");
+            }
+
+            @TestMetadata("iterableCount.kt")
+            public void testIterableCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/iterableCount.kt");
+            }
+
+            @TestMetadata("iterableCountWithPredicate.kt")
+            public void testIterableCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/iterableCountWithPredicate.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/list.kt");
+            }
+
+            @TestMetadata("listCountWithPredicate.kt")
+            public void testListCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/listCountWithPredicate.kt");
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/map.kt");
+            }
+
+            @TestMetadata("mutableList.kt")
+            public void testMutableList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/mutableList.kt");
+            }
+
+            @TestMetadata("primitiveArray.kt")
+            public void testPrimitiveArray() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/primitiveArray.kt");
+            }
+
+            @TestMetadata("progressionCount.kt")
+            public void testProgressionCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/progressionCount.kt");
+            }
+
+            @TestMetadata("rangeCount.kt")
+            public void testRangeCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/rangeCount.kt");
+            }
+
+            @TestMetadata("rangeCountWithPredicate.kt")
+            public void testRangeCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/rangeCountWithPredicate.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/string.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/thisReceiver.kt");
+            }
+
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/typeAlias.kt");
+            }
+
+            @TestMetadata("unsupportedSize.kt")
+            public void testUnsupportedSize() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/unsupportedSize.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty")
+        public static class ReplaceSizeZeroCheckWithIsEmpty extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/array.kt");
+            }
+
+            @TestMetadata("charSequence.kt")
+            public void testCharSequence() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/charSequence.kt");
+            }
+
+            @TestMetadata("collection.kt")
+            public void testCollection() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/collection.kt");
+            }
+
+            @TestMetadata("collectionSubtype.kt")
+            public void testCollectionSubtype() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/collectionSubtype.kt");
+            }
+
+            @TestMetadata("extensionReceiver.kt")
+            public void testExtensionReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/extensionReceiver.kt");
+            }
+
+            @TestMetadata("flexibleType.kt")
+            public void testFlexibleType() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/flexibleType.kt");
+            }
+
+            @TestMetadata("iterableCount.kt")
+            public void testIterableCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/iterableCount.kt");
+            }
+
+            @TestMetadata("iterableCountWithPredicate.kt")
+            public void testIterableCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/iterableCountWithPredicate.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/list.kt");
+            }
+
+            @TestMetadata("listCountWithPredicate.kt")
+            public void testListCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/listCountWithPredicate.kt");
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/map.kt");
+            }
+
+            @TestMetadata("mutableList.kt")
+            public void testMutableList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/mutableList.kt");
+            }
+
+            @TestMetadata("primitiveArray.kt")
+            public void testPrimitiveArray() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/primitiveArray.kt");
+            }
+
+            @TestMetadata("progressionCount.kt")
+            public void testProgressionCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/progressionCount.kt");
+            }
+
+            @TestMetadata("rangeCount.kt")
+            public void testRangeCount() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/rangeCount.kt");
+            }
+
+            @TestMetadata("rangeCountWithPredicate.kt")
+            public void testRangeCountWithPredicate() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/rangeCountWithPredicate.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/string.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/thisReceiver.kt");
+            }
+
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/typeAlias.kt");
+            }
+
+            @TestMetadata("unsupportedSize.kt")
+            public void testUnsupportedSize() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/unsupportedSize.kt");
+            }
+        }
     }
 }

@@ -12,8 +12,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -75,8 +73,8 @@ object JavadocUIUtil {
 
     return panel {
       row {
-        cell(list).verticalAlign(VerticalAlign.FILL)
-        cell(description).horizontalAlign(HorizontalAlign.FILL).verticalAlign(VerticalAlign.TOP)
+        cell(list).align(AlignY.FILL)
+        cell(description).align(AlignX.FILL + AlignY.TOP)
       }
     }
   }
@@ -85,7 +83,7 @@ object JavadocUIUtil {
     row {
       expandableTextField()
         .label(JavaBundle.message("inspection.javadoc.label.text"), LabelPosition.TOP)
-        .horizontalAlign(HorizontalAlign.FILL)
+        .align(AlignX.FILL)
         .applyToComponent {
           text = settings.ADDITIONAL_TAGS
           document.addDocumentListener(object: DocumentAdapter() {

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.ui.popup.KeepingPopupOpenAction
 import git4idea.config.GitVcsSettings
 
 internal class GitBranchesTreePopupSettings :
@@ -42,7 +43,7 @@ internal class GitBranchesTreePopupResizeAction :
   }
 }
 
-internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction() {
+internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction(), KeepingPopupOpenAction {
   override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -56,7 +57,7 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)
 }
 
-internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY), KeepingPopupOpenAction {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.setText(DvcsBundle.messagePointer("action.text.branch.group.by.prefix"))

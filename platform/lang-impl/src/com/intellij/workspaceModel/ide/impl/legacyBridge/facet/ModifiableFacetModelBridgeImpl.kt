@@ -25,10 +25,10 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.childrenFacets
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.childrenFacets
+import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.annotations.TestOnly
 
 class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
@@ -173,7 +173,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     val entity = diff.facetMapping().getEntities(facet).singleOrNull()
     if (entity == null) return false
     return if (entity is FacetEntity) {
-      entity.persistentId !in initialStorage
+      entity.symbolicId !in initialStorage
     } else true
   }
 

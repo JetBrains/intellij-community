@@ -87,7 +87,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
     }
 
     companion object {
-        val logger: Logger = Logging.getLogger(PrepareKotlinIdeaImportTaskModelBuilder::class.java)
+        private val logger: Logger = Logging.getLogger(PrepareKotlinIdeaImportTaskModelBuilder::class.java)
     }
 
     object Messages {

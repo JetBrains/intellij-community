@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -307,5 +308,10 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   @Override
   public IndentsModel getIndentsModel() {
     return new EmptyIndentsModel();
+  }
+
+  @ApiStatus.Internal
+  public static void ensureRequiredClassesAreLoaded() {
+    new TextComponentEditorImpl(null, new JTextArea());
   }
 }

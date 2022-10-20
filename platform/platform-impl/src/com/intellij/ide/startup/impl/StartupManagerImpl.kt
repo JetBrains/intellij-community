@@ -143,7 +143,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  override fun startupActivityPassed() = isInitProjectActivitiesPassed
+  override fun startupActivityPassed(): Boolean = isInitProjectActivitiesPassed
 
   override fun postStartupActivityPassed(): Boolean {
     return when (postStartupActivitiesPassed) {
@@ -153,7 +153,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 
-  override fun getAllActivitiesPassedFuture() = allActivitiesPassed
+  override fun getAllActivitiesPassedFuture(): CompletableDeferred<Any?> = allActivitiesPassed
 
   suspend fun initProject(indicator: ProgressIndicator?) {
     // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity

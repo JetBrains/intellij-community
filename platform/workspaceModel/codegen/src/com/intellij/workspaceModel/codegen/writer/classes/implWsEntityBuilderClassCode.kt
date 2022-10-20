@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -61,7 +61,7 @@ ${
 
       section("fun checkInitialization()") {
         line("val _diff = diff")
-        list(allFields.noPersistentId().noOptional().noDefaultValue()) { lineBuilder, field ->
+        list(allFields.noSymbolicId().noOptional().noDefaultValue()) { lineBuilder, field ->
           lineBuilder.implWsBuilderIsInitializedCode(field)
         }
       }
@@ -95,7 +95,7 @@ ${
       lineComment("Relabeling code, move information from dataSource to this builder")
       section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn}, parents: Set<WorkspaceEntity>?)") {
         line("dataSource as $javaFullName")
-        list(allFields.noPersistentId().noRefs()) { lineBuilder, field ->
+        list(allFields.noSymbolicId().noRefs()) { lineBuilder, field ->
           var type = field.valueType
           var qm = ""
           if (type is ValueType.Optional<*>) {
@@ -144,7 +144,7 @@ ${
     }
   }
         
-        ${allFields.filter { it.name != "persistentId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
+        ${allFields.filter { it.name != "symbolicId" }.lines("        ") { implWsBuilderFieldCode }.trimEnd()}
         
         override fun getEntityData(): $javaDataName${if (openness.extendable) "<T>" else ""} = result ?: super.getEntityData() as $javaDataName${if (openness.extendable) "<T>" else ""}
         override fun getEntityClass(): Class<$javaFullName> = $javaFullName::class.java

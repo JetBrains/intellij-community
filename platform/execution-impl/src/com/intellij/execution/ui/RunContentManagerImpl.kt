@@ -30,11 +30,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
@@ -154,7 +157,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       stripeTitle = executor::getActionName
     ))
     toolWindow.setToHideOnEmptyContent(true)
-    if (DefaultRunExecutor.EXECUTOR_ID == executor.id) {
+    if (DefaultRunExecutor.EXECUTOR_ID == executor.id || Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
       toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
     }
     val contentManager = toolWindow.contentManager
@@ -263,6 +266,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     }
     else {
       content = oldDescriptor.attachedContent!!
+      SingleContentSupplier.removeSubContentsOfContent(content, rightNow = true)
       syncPublisher.contentRemoved(oldDescriptor, executor)
       Disposer.dispose(oldDescriptor) // is of the same category, can be reused
     }
@@ -305,6 +309,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
 
+    addRunnerContentListener(descriptor)
+
     if (oldDescriptor == null) {
       contentManager.addContent(content)
       content.putUserData(CLOSE_LISTENER_KEY, CloseListener(content, executor))
@@ -344,6 +350,27 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     return getToolWindowManager().getToolWindow(toolWindowId)?.contentManagerIfCreated
+  }
+
+  private fun addRunnerContentListener(descriptor: RunContentDescriptor) {
+    val runContentManager = descriptor.runnerLayoutUi?.contentManager
+    val mainContent = descriptor.attachedContent
+    if (runContentManager != null && mainContent != null) {
+      runContentManager.addContentManagerListener(object : ContentManagerListener {
+        // remove the toolwindow tab that is moved outside via drag and drop
+        // if corresponding run/debug tab was hidden in debugger layout settings
+        override fun contentRemoved(event: ContentManagerEvent) {
+          val toolWindowContentManager = InternalDecoratorImpl.findTopLevelDecorator(mainContent.component)?.contentManager ?: return
+          val allContents = if (toolWindowContentManager is ContentManagerImpl)
+            toolWindowContentManager.contentsRecursively else toolWindowContentManager.contents.toList()
+          val removedContent = event.content
+          val movedContent = allContents.find { it.displayName == removedContent.displayName }
+          if (movedContent != null) {
+            movedContent.manager?.removeContent(movedContent, false)
+          }
+        }
+      })
+    }
   }
 
   override fun getReuseContent(executionEnvironment: ExecutionEnvironment): RunContentDescriptor? {

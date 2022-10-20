@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 
-/**
- * @author peter
- */
 class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testParameterName() {

@@ -1,5 +1,5 @@
 suspend fun test(lhs: Foo, rhs: Foo) {
-    lhs <lineMarker text="Suspend operator call &apos;join()&apos;">join</lineMarker> rhs
+    lhs <lineMarker text="Suspend function call 'join()'">join</lineMarker> rhs
 }
 
 class Foo {

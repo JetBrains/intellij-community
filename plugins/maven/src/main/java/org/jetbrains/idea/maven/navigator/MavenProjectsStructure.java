@@ -592,7 +592,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected List<? extends MavenSimpleNode> doGetChildren() {
-      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), super.doGetChildren());
+      return ContainerUtil.concat(Collections.singletonList(myProfilesNode), new ArrayList<>(super.doGetChildren()));
     }
 
     public void updateProfiles() {
@@ -601,7 +601,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class ProfilesNode extends GroupNode {
-    private List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
+    private final List<ProfileNode> myProfileNodes = new CopyOnWriteArrayList<>();
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
@@ -628,7 +628,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         newNodes.add(node);
       }
 
-      myProfileNodes = newNodes;
+      myProfileNodes.clear();
+      myProfileNodes.addAll(newNodes);
       sort(myProfileNodes);
       childrenChanged();
     }
@@ -803,7 +804,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected List<? extends MavenSimpleNode> doGetChildren() {
       return ContainerUtil.concat(
         Arrays.asList(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode),
-        super.doGetChildren()
+        new ArrayList<>(super.doGetChildren())
       );
     }
 
@@ -1229,7 +1230,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public abstract class BaseDependenciesNode extends GroupNode {
     protected final MavenProject myMavenProject;
-    private List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
+    private final List<DependencyNode> myChildren = new CopyOnWriteArrayList<>();
 
     protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);
@@ -1292,7 +1293,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         newNodes = new ArrayList<>(myChildren.subList(0, validChildCount));
       }
 
-      myChildren = newNodes;
+      myChildren.clear();
+      myChildren.addAll(newNodes);
       childrenChanged();
     }
 

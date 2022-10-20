@@ -24,13 +24,27 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
    * Implement this function and call functions from [registrar] to specify files and directories which should be included or excluded from
    * the workspace. 
    * 
-   * The implementation may use properties from [entity] only and don't access other entities and don't use data which may
-   * change. This is necessary to ensure that [WorkspaceFileIndex] is properly updated when entities change. 
+   * The implementation may use properties from [entity] or from its parents only and don't use other data which may change.
+   * If properties from a parent entity are used for computation, its class must be registered in [dependenciesOnParentEntities].
+   * This is necessary to ensure that [WorkspaceFileIndex] is properly updated when entities change. 
    * 
    * This function is currently called synchronously under Write Action, so its implementation should run very fast.
    */
   fun registerFileSets(entity: E, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage)
+
+  /**
+   * Describes parent entities which properties may be used in [registerFileSets].
+   */
+  val dependenciesOnParentEntities: List<DependencyOnParentEntity<E, *>>
+    get() = emptyList() 
 }
+
+data class DependencyOnParentEntity<C : WorkspaceEntity, P : WorkspaceEntity>(
+  /** Type of parent entity */
+  val parentClass: Class<P>,
+  /** Function to compute child entities by the parent */
+  val childrenGetter: (P) -> Sequence<C>
+)
 
 /**
  * Describes possible kinds of files and directories in the workspace.

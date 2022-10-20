@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.conda
 
+import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
-import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,22 +36,20 @@ internal class PyCondaTest {
   @Test
   fun testCondaCreateByYaml() = runTest {
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(
-                           yamlRule.yamlFilePath)).getOrThrow().getResultStdoutStr().get().getOrThrow()
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
-      .first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
+                         LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).mapFlat { it.getResultStdoutStr() }.getOrThrow()
+    val condaEnv = PyCondaEnv.getEnvs(
+      condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
-    Assert.assertEquals("Wrong python version installed", languageLevel,
-                        LanguageLevel.fromPythonVersion(pythonVersion))
+    Assert.assertEquals("Wrong python version installed", languageLevel, LanguageLevel.fromPythonVersion(pythonVersion))
   }
 
   @Test
   fun testCondaCreateEnv(): Unit = runTest {
     val envName = "myNewEnvForTests"
-    PyCondaEnv.createEnv(condaRule.condaCommand, NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON39, envName))
-      .getOrThrow().getResultStdoutStr().get().getOrThrow()
+    PyCondaEnv.createEnv(condaRule.condaCommand,
+                         EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).mapFlat { it.getResultStdout() }
     PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
   }
 
@@ -71,7 +71,7 @@ internal class PyCondaTest {
     Assert.assertTrue("No base conda found", baseFound);
   }
 
-  private fun getPythonVersion(condaEnv: PyCondaEnv): String {
+  private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {
     val req = LocalTargetEnvironmentRequest()
     val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(it) }
     commandLine.addParameter("python")

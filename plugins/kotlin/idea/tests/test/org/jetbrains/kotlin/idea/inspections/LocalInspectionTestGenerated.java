@@ -8901,6 +8901,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantLambdaArrow/explicitType.kt");
         }
 
+        @TestMetadata("for.kt")
+        public void testFor() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/for.kt");
+        }
+
         @TestMetadata("forEach.kt")
         public void testForEach() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/forEach.kt");
@@ -9064,6 +9069,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("underscore.kt")
         public void testUnderscore() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/underscore.kt");
+        }
+
+        @TestMetadata("while.kt")
+        public void testWhile() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/while.kt");
         }
     }
 
@@ -10252,6 +10262,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public static class RemoveExplicitTypeArguments extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("builderInference.kt")
+        public void testBuilderInference() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/builderInference.kt");
+        }
+
+        @TestMetadata("builderInference2.kt")
+        public void testBuilderInference2() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/builderInference2.kt");
+        }
+
+        @TestMetadata("builderInferenceExtensionFunction.kt")
+        public void testBuilderInferenceExtensionFunction() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/builderInferenceExtensionFunction.kt");
         }
 
         @TestMetadata("functionType.kt")

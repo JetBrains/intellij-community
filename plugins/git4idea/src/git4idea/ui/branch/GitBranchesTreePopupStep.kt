@@ -4,6 +4,7 @@ package git4idea.ui.branch
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.RowIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -30,17 +32,20 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitNewBranchAction
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import icons.DvcsImplIcons
 import javax.swing.Icon
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 class GitBranchesTreePopupStep(private val project: Project,
-                               internal val repositories: List<GitRepository>) : PopupStep<Any> {
+                               internal val repositories: List<GitRepository>,
+                               private val isFirstStep: Boolean) : PopupStep<Any> {
 
   private var finalRunnable: Runnable? = null
 
@@ -53,6 +58,12 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   init {
     val topLevelItems = mutableListOf<PopupFactoryImpl.ActionItem>()
+    if (ExperimentalUI.isNewUI() && isFirstStep) {
+      val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
+      if (experimentalUIActionsGroup != null) {
+        topLevelItems.addAll(createActionItems(experimentalUIActionsGroup, project, repositories))
+      }
+    }
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
@@ -76,8 +87,10 @@ class GitBranchesTreePopupStep(private val project: Project,
     _treeModel.isPrefixGrouping = state
   }
 
-  internal fun isSeparatorAboveRequired(path: TreePath) = path.lastPathComponent == repositories.firstOrNull()
-                                                          || path.lastPathComponent == GitBranchType.LOCAL
+  internal fun isSeparatorAboveRequired(path: TreePath) =
+    ExperimentalUI.isNewUI() && isFirstStep && (path.lastPathComponent as? PopupFactoryImpl.ActionItem)?.action is GitNewBranchAction
+    || path.lastPathComponent == repositories.firstOrNull()
+    || path.lastPathComponent == GitBranchType.LOCAL
 
   private val LOCAL_SEARCH_PREFIX = "/l"
   private val REMOTE_SEARCH_PREFIX = "/r"
@@ -121,7 +134,7 @@ class GitBranchesTreePopupStep(private val project: Project,
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitRepository) {
-      return GitBranchesTreePopupStep(project, listOf(selectedValue))
+      return GitBranchesTreePopupStep(project, listOf(selectedValue), false)
     }
 
     if (selectedValue is GitBranch) {
@@ -145,14 +158,13 @@ class GitBranchesTreePopupStep(private val project: Project,
     return FINAL_CHOICE
   }
 
-  override fun getTitle(): String =
-    if (repositories.size > 1) {
-      DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
-    }
-    else {
-      val repository = repositories.single()
-      DvcsBundle.message("branch.popup.vcs.name.branches.in.repo",
-                         repository.vcs.displayName, DvcsUtil.getShortRepositoryName(repository))
+  override fun getTitle(): String? =
+    when {
+      !isFirstStep -> null
+      repositories.size > 1 -> DvcsBundle.message("branch.popup.vcs.name.branches", GitVcs.DISPLAY_NAME.get())
+      else -> repositories.single().let {
+        DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", it.vcs.displayName, DvcsUtil.getShortRepositoryName(it))
+      }
     }
 
   fun getIncomingOutgoingIcon(treeNode: Any?): Icon? {
@@ -176,6 +188,17 @@ class GitBranchesTreePopupStep(private val project: Project,
       hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
       hasIncoming -> DvcsImplIcons.Incoming
       hasOutgoing -> DvcsImplIcons.Outgoing
+      else -> null
+    }
+  }
+
+  private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
+
+  fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
+    val value = treeNode ?: return null
+    return when (value) {
+      is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
+      is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
       else -> null
     }
   }

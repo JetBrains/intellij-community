@@ -4,7 +4,7 @@ package com.intellij.ide.navbar.ui;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.navbar.ide.NavigationBar;
+import com.intellij.ide.navbar.ide.NavBarVmImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
@@ -23,6 +22,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,9 +35,9 @@ public class FloatingModeHelper {
   private static JComponent myHintContainer;
   private static RelativePoint myLocationCache;
 
-  public static LightweightHint showHint(DataContext dataContext, NavigationBar navigationBar, Project project) {
+  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavBarVmImpl navigationBar, Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
-    NewNavBarPanel component = navigationBar.getPanel();
+    NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar, project);
     panel.add(component);
     panel.setOpaque(true);
 
@@ -52,7 +53,7 @@ public class FloatingModeHelper {
       @Override
       public void hide() {
         super.hide();
-        Disposer.dispose(navigationBar);
+        CoroutineScopeKt.cancel(cs, null);
       }
     };
     myHint.setForceShowAsPopup(true);

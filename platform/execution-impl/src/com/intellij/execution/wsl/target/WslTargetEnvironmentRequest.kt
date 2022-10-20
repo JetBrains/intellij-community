@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.*
-import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.ide.IdeBundle
 
@@ -42,22 +41,6 @@ class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingR
     get() {
       throw UnsupportedOperationException("defaultVolume is not implemented")
     }
-
-  override fun createUploadRoot(remoteRootPath: String?, temporary: Boolean): TargetEnvironmentRequest.Volume {
-    throw UnsupportedOperationException("createUploadRoot is not implemented")
-  }
-
-  override fun createDownloadRoot(remoteRootPath: String?): TargetEnvironmentRequest.DownloadableVolume {
-    throw UnsupportedOperationException("createDownloadRoot is not implemented")
-  }
-
-  override fun bindTargetPort(targetPort: Int): TargetValue<Int> {
-    return TargetValue.fixed(targetPort)
-  }
-
-  override fun bindLocalPort(localPort: Int): TargetValue<HostPort> {
-    return TargetValue.fixed(HostPort("localhost", localPort))
-  }
 
   @Throws(ExecutionException::class)
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {

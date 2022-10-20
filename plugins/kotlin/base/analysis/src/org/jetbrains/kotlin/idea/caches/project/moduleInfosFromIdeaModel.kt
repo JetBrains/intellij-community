@@ -27,8 +27,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
@@ -81,7 +81,11 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
         val cachedValuesManager = CachedValuesManager.getManager(project)
         resultByPlatform = cachedValuesManager.createCachedValue {
-            CachedValueProvider.Result.create(ConcurrentHashMap<TargetPlatform, List<IdeaModuleInfo>>(), modificationTracker)
+            CachedValueProvider.Result.create(
+                ConcurrentHashMap<TargetPlatform, List<IdeaModuleInfo>>(),
+                modificationTracker,
+                LibraryInfoCache.getInstance(project).removedLibraryInfoTracker(),
+            )
         }
 
         modulesAndSdk = cachedValuesManager.createCachedValue {

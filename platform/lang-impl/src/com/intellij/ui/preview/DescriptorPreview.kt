@@ -66,7 +66,7 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
     }
     if (editor is EditorEx) {
       val scheme = EditorColorsUtil.getColorSchemeForBackground(editor.colorsScheme.defaultBackground)
-      editor.colorsScheme = scheme
+      editor.colorsScheme = editor.createBoundColorSchemeDelegate(scheme)
       editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project)
     }
     with(editor.settings) {

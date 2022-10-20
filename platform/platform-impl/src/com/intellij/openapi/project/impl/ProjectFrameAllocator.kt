@@ -15,7 +15,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.restoreOpenedFiles
 import com.intellij.openapi.progress.TaskCancellation
@@ -88,7 +87,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val deferredWindow = async(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val frameManager = createFrameManager()
         val frameHelper = frameManager.createFrameHelper(this@ProjectUiFrameAllocator)
-        frameHelper.init()
+        frameHelper.init(installPainters = false)
         val window = frameManager.getWindow()
         // implOptions == null - not via recents project - show frame immediately
         if (options.showFrameAsap || options.implOptions == null) {
@@ -164,41 +163,37 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
 
       val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
+
       // not as a part of a project modal dialog
-      project.coroutineScope.buildUi(editorSplitters = fileEditorManager.init(),
-                                     fileEditorManager = fileEditorManager,
-                                     frameHelper = frameHelper,
-                                     project = project)
-    }
-  }
-
-  private fun CoroutineScope.buildUi(editorSplitters: EditorsSplitters,
-                                     fileEditorManager: FileEditorManagerImpl,
-                                     frameHelper: ProjectFrameHelper,
-                                     project: Project): Job {
-    val reopeningEditorJob = launchAndMeasure("editor reopening") {
-      restoreOpenedFiles(fileEditorManager, editorSplitters, project)
-    }
-
-    launchAndMeasure("tool window pane creation") {
-      val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-      toolWindowManager.init(frameHelper, editorSplitters, reopeningEditorJob)
-    }
-    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val rootPane = frameHelper.rootPane!!
-      runActivity("north components updating") {
-        rootPane.updateNorthComponents()
+      val editorSplitters = fileEditorManager.init()
+      val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
+        restoreOpenedFiles(fileEditorManager = fileEditorManager,
+                           editorSplitters = editorSplitters,
+                           project = project,
+                           frameHelper = frameHelper)
       }
 
-      runActivity("toolbar updating") {
-        rootPane.initOrCreateToolbar(project)
+      project.coroutineScope.launchAndMeasure("tool window pane creation") {
+        val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
+        toolWindowManager.init(frameHelper = frameHelper,
+                               editorComponent = editorSplitters, reopeningEditorsJob = reopeningEditorJob)
       }
+      project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val rootPane = frameHelper.rootPane!!
+        runActivity("north components updating") {
+          rootPane.updateNorthComponents()
+        }
 
-      if (!options.isVisibleManaged) {
-        frameHelper.frameOrNull?.isVisible = true
+        runActivity("toolbar updating") {
+          rootPane.initOrCreateToolbar(project)
+        }
+
+        if (!options.isVisibleManaged) {
+          frameHelper.frameOrNull?.isVisible = true
+        }
       }
+      reopeningEditorJob
     }
-    return reopeningEditorJob
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {

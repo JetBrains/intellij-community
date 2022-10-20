@@ -35,9 +35,6 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class AbstractTableView<T> extends JPanel implements DataProvider {
   private final MyTableView myTable = new MyTableView();
   @NonNls private final String myHelpID;

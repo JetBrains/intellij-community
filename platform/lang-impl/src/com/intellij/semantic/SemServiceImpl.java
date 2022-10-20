@@ -34,9 +34,6 @@ import java.util.function.BiFunction;
 
 import static java.util.Collections.emptyList;
 
-/**
- * @author peter
- */
 public final class SemServiceImpl extends SemService implements Disposable {
 
   private final Object lock = ObjectUtils.sentinel(getClass().getName());

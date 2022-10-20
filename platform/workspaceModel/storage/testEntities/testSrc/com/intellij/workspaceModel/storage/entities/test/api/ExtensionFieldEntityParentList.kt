@@ -5,7 +5,7 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
@@ -17,7 +17,7 @@ interface MainEntityParentList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntityParentList, ModifiableWorkspaceEntity<MainEntityParentList>, ObjBuilder<MainEntityParentList> {
+  interface Builder : MainEntityParentList, WorkspaceEntity.Builder<MainEntityParentList>, ObjBuilder<MainEntityParentList> {
     override var entitySource: EntitySource
     override var x: String
     override var children: List<AttachedEntityParentList>
@@ -46,7 +46,7 @@ interface AttachedEntityParentList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntityParentList, ModifiableWorkspaceEntity<AttachedEntityParentList>, ObjBuilder<AttachedEntityParentList> {
+  interface Builder : AttachedEntityParentList, WorkspaceEntity.Builder<AttachedEntityParentList>, ObjBuilder<AttachedEntityParentList> {
     override var entitySource: EntitySource
     override var data: String
   }

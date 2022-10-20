@@ -773,27 +773,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return new GroupByTypeComparator(myProject, getId());
   }
 
-  @Deprecated(forRemoval = true)
   public void installComparator() {
-    installComparator(getTreeBuilder());
+    installComparator(createComparator());
   }
 
-  @Deprecated(forRemoval = true)
-  void installComparator(AbstractTreeBuilder treeBuilder) {
-    installComparator(treeBuilder, createComparator());
-  }
-
-  @TestOnly
-  @Deprecated(forRemoval = true)
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    installComparator(getTreeBuilder(), comparator);
-  }
-
-  @Deprecated(forRemoval = true)
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    if (builder != null) {
-      builder.setNodeDescriptorComparator(comparator);
-    }
   }
 
   public JTree getTree() {
@@ -1205,12 +1189,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     @Override
     protected PsiElement @NotNull [] getSelectedPSIElements(@NotNull DataContext dataContext) {
-      return AbstractProjectViewPane.this.getSelectedPSIElements();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      Object[] objects = dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (objects == null) return PsiElement.EMPTY_ARRAY;
+      return PsiUtilCore.toPsiElementArray(ContainerUtil.flatMap(Arrays.asList(objects), o -> getElementsFromNode(o)));
     }
 
     @Override

@@ -14,9 +14,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 public class ShowParameterInfoContext implements CreateParameterInfoContext {
   private final Editor myEditor;
   private final PsiFile myFile;

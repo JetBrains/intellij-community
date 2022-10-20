@@ -197,6 +197,11 @@
             description="Disables auto-completion inside expressions"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.deprioritize.flow.collect.in.completion"
+            description="Sink down Flow.collect method in auto completion list"
+            defaultValue="true"
+            restartRequired="false"/>
     <iconMapper mappingFile="KotlinIconMappings.json"/>
   </extensions>
 
@@ -351,6 +356,11 @@
 
     <registryKey key="kotlin.cache.packages.strong.map"
                  description="Hold info about packages using strong references instead of soft ones"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.resolve.cache.uses.perfile.cache"
+                 description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
                  defaultValue="true"
                  restartRequired="true"/>
   </extensions>

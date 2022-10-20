@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.executors
 
 import com.intellij.execution.Executor
@@ -116,7 +116,6 @@ interface RunExecutorSettings {
   /**
    * @see com.intellij.execution.Executor.getStartActionText
    */
-  @JvmDefault
   fun getStartActionText(@NlsSafe configurationName: String): String {
     val configName = if (StringUtil.isEmpty(configurationName)) "" else " '" + shortenNameIfNeeded(configurationName) + "'"
     return TextWithMnemonic.parse(startActionText).append(configName).toString()

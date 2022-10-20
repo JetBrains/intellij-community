@@ -1,4 +1,4 @@
-<idea-plugin require-restart="true">
+<idea-plugin require-restart="true" package="org.jetbrains.completion.full.line">
   <id>org.jetbrains.completion.full.line</id>
   <name>Full Line Code Completion</name>
   <vendor>JetBrains</vendor>
@@ -129,11 +129,11 @@
 
     ]]></description>
 
-  <depends>com.intellij.modules.platform</depends>
-  <depends optional="true" config-file="completion-ml-ranking-patch.xml">com.intellij.completion.ml.ranking</depends>
-  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="java.xml">com.intellij.java</depends>
-  <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
+  <content>
+    <module name="intellij.fullLine.python"/>
+    <module name="intellij.fullLine.java"/>
+    <module name="intellij.fullLine.kotlin"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
@@ -149,8 +149,12 @@
       serviceImplementation="org.jetbrains.completion.full.line.services.managers.LocalModelsManager"/>
     <completion.contributor language="any"
                             id="FullLineCompletionContributor"
-                            order="first, before KotlinCompletionContributor"
+                            order="first, before KotlinCompletionContributor, after ml_context"
                             implementationClass="org.jetbrains.completion.full.line.platform.FullLineContributor"/>
+    <completion.ml.contextFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineContextFeatureProvider"/>
+    <completion.ml.elementFeatures language=""
+                                   implementationClass="org.jetbrains.completion.full.line.platform.logs.FullLineElementFeatureProvider"/>
 
     <!-- HOST CONFIG BEGIN -->
     <registryKey key="full.line.server.host.python" defaultValue="https://python.flcc.iml.aws.intellij.net"

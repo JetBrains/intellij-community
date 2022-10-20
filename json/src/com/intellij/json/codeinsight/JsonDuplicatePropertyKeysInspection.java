@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
@@ -59,7 +61,6 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
   }
 
   private static final class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    @SafeFieldForPreview
     private final @NotNull Collection<SmartPsiElementPointer<PsiElement>> mySameNamedKeys;
     private final @NotNull String myEntryKey;
 
@@ -77,6 +78,16 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return getText();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override

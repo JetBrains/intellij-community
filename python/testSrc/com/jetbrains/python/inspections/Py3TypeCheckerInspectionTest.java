@@ -962,4 +962,300 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testListLiteralPassedToIter() {
     doTestByText("iter([1, 2, 3])");
   }
+
+  // PY-53104
+  public void testParameterSelf() {
+    doTestByText("from typing import Self, Callable\n" +
+                 "\n" +
+                 "class Shape:\n" +
+                 "    def difference(self, other: Self) -> float: ...\n" +
+                 "\n" +
+                 "    def apply(self, f: Callable[[Self], None]) -> None: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class Circle(Shape):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def fCircle(c: Circle):\n" +
+                 "  pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def fShape(sh: Shape):\n" +
+                 "  pass\n" +
+                 "\n" +
+                 "\n" +
+                 "sh = Shape()\n" +
+                 "cir = Circle()\n" +
+                 "\n" +
+                 "sh.difference(cir)\n" +
+                 "sh.difference(sh)\n" +
+                 "cir.difference(cir)\n" +
+                 "cir.difference(<warning descr=\"Expected type 'Circle' (matched generic type 'Self'), got 'Shape' instead\">sh</warning>)\n" +
+                 "\n" +
+                 "cir.apply(fCircle)\n" +
+                 "cir.apply(<warning descr=\"Expected type '(Circle) -> None' (matched generic type '(Self) -> None'), got '(sh: Shape) -> None' instead\">fShape</warning>)\n" +
+                 "sh.apply(fCircle)\n" +
+                 "sh.apply(fShape)");
+  }
+
+  // PY-53104
+  public void testParameterTypeSelf() {
+    doTestByText("from typing import Self, Callable\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: Type[Self]) -> None: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class SubClass(MyClass):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "myClass = MyClass()\n" +
+                 "subClass = MySubClass()\n" +
+                 "\n" +
+                 "myClass.foo(myClass)\n" +
+                 "myClass.foo(subClass)\n" +
+                 "myClass.foo(MyClass)\n" +
+                 "myClass.foo(SubClass)\n" +
+                 "\n" +
+                 "subClass.foo(myClass)\n" +
+                 "subClass.foo(subClass)\n" +
+                 "subClass.foo(MyClass)\n" +
+                 "subClass.foo(SubClass)");
+  }
+
+  // PY-53104
+  public void testParameterTypeSelfUnion() {
+    doTestByText("from typing import Self, Callable\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: Self | None | int) -> None: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class SubClass(MyClass):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "myClass = MyClass()\n" +
+                 "subClass = SubClass()\n" +
+                 "\n" +
+                 "myClass.foo(myClass)\n" +
+                 "myClass.foo(subClass)\n" +
+                 "myClass.foo(42)\n" +
+                 "myClass.foo(None)\n" +
+                 "myClass.foo(<warning descr=\"Expected type 'MyClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead\">\"\"</warning>)\n" +
+                 "\n" +
+                 "subClass.foo(<warning descr=\"Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'MyClass' instead\">myClass</warning>)\n" +
+                 "subClass.foo(subClass)\n" +
+                 "subClass.foo(42)\n" +
+                 "subClass.foo(None)\n" +
+                 "subClass.foo(<warning descr=\"Expected type 'SubClass | None | int' (matched generic type 'Self | None | int'), got 'str' instead\">\"\"</warning>)");
+  }
+
+  // PY-53104
+  public void testParameterTypeSelfReturnAsParameter() {
+    doTestByText("from typing import Self, Callable\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: Self) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class SubClass(MyClass):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "myClass = MyClass()\n" +
+                 "subClass = SubClass()\n" +
+                 "\n" +
+                 "myClass.foo(myClass.foo(myClass))\n" +
+                 "myClass.foo(subClass.foo(subClass))\n" +
+                 "myClass.foo(myClass.foo(subClass))\n" +
+                 "myClass.foo(subClass.foo(<warning descr=\"Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead\">myClass</warning>))\n" +
+                 "\n" +
+                 "subClass.foo(<warning descr=\"Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead\">myClass.foo(myClass)</warning>)\n" +
+                 "subClass.foo(subClass.foo(subClass))\n" +
+                 "subClass.foo(<warning descr=\"Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead\">myClass.foo(subClass)</warning>)\n" +
+                 "subClass.foo(subClass.foo(<warning descr=\"Expected type 'SubClass' (matched generic type 'Self'), got 'MyClass' instead\">myClass</warning>))");
+  }
+
+  // PY-53104
+  public void testProtocolSelfClass() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self, Protocol\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyProtocol(Protocol):\n" +
+                 "    def foo(self, bar: float) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: float) -> MyClass:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def accepts_protocol(obj: MyProtocol) -> None:\n" +
+                 "    print(obj)\n" +
+                 "\n" +
+                 "\n" +
+                 "obj = MyClass()\n" +
+                 "accepts_protocol(obj)\n");
+  }
+
+  // PY-53104
+  public void testProtocolSelfSubclass() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self, Protocol\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyProtocol(Protocol):\n" +
+                 "    def foo(self, bar: float) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: float) -> MySubClass:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "class MySubClass(MyClass):\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def accepts_protocol(obj: MyProtocol) -> None:\n" +
+                 "    print(obj)\n" +
+                 "\n" +
+                 "\n" +
+                 "obj = MyClass()\n" +
+                 "accepts_protocol(obj)\n");
+  }
+
+  // PY-53104
+  public void testProtocolSelfOtherClass() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self, Protocol\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyProtocol(Protocol):\n" +
+                 "    def foo(self, bar: float) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: float) -> int:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def accepts_protocol(obj: MyProtocol) -> None:\n" +
+                 "    print(obj)\n" +
+                 "\n" +
+                 "\n" +
+                 "obj = MyClass()\n" +
+                 "accepts_protocol(<warning descr=\"Expected type 'MyProtocol', got 'MyClass' instead\">obj</warning>)\n");
+  }
+
+  // PY-53104
+  public void testProtocolSelfNotSubclass() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self, Protocol\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyProtocol(Protocol):\n" +
+                 "    def foo(self, bar: float) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: float) -> MyClassNotSubclass:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClassNotSubclass:\n" +
+                 "    def foo(self, bar: float) -> int:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def accepts_protocol(obj: MyProtocol) -> None:\n" +
+                 "    print(obj)\n" +
+                 "\n" +
+                 "\n" +
+                 "obj = MyClass()\n" +
+                 "accepts_protocol(<warning descr=\"Expected type 'MyProtocol', got 'MyClass' instead\">obj</warning>)\n");
+  }
+
+  // PY-53104
+  public void testProtocolSelfSelf() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self, Protocol\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyProtocol(Protocol):\n" +
+                 "    def foo(self, bar: float) -> Self: ...\n" +
+                 "\n" +
+                 "\n" +
+                 "class MyClass:\n" +
+                 "    def foo(self, bar: float) -> Self:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def accepts_protocol(obj: MyProtocol) -> None:\n" +
+                 "    print(obj)\n" +
+                 "\n" +
+                 "\n" +
+                 "obj = MyClass()\n" +
+                 "accepts_protocol(obj)\n");
+  }
+
+  // PY-56785
+  public void testTypingSelfNoInspectionReturnSelfMethod() {
+    doTestByText("from typing import Self\n" +
+                 "\n" +
+                 "\n" +
+                 "class Builder:\n" +
+                 "    def foo(self) -> Self:\n" +
+                 "        result = self.bar()\n" +
+                 "        return result\n" +
+                 "\n" +
+                 "    def bar(self) -> Self:\n" +
+                 "        pass\n");
+  }
+
+  // PY-56785
+  public void testTypingSelfClassMethodReturnClsNoHighlighting() {
+    doTestByText("from typing import Self\n" +
+                 "\n" +
+                 "class Shape:\n" +
+                 "\n" +
+                 "    def __init__(self, scale: float):\n" +
+                 "        self.scale = None\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def from_config(cls, config: dict[str, float]) -> Self:\n" +
+                 "        return cls(config[\"scale\"])\n");
+  }
+
+  // PY-56785
+  public void _testTypingSelfAndExplicitClassReturn() {
+    doTestByText("from __future__ import annotations\n" +
+                 "from typing import Self\n" +
+                 "\n" +
+                 "class SomeClass():\n" +
+                 "    def foo(self, bar: Self) -> Self:\n" +
+                 "        return <warning descr=\"Cannot return explicit class in self annotated function\">SomeClass()</warning>\n");
+  }
+
+  // PY-56785
+  public void _testTypingSelfReturnSubClassMethod() {
+    doTestByText("from typing import Self\n" +
+                 "\n" +
+                 "\n" +
+                 "class Builder:\n" +
+                 "    def foo(self) -> Self:\n" +
+                 "        result = SubBuilder().bar()\n" +
+                 "        return <warning descr=\"Cannot return explicit class in self annotated function\">result</warning>\n" +
+                 "\n" +
+                 "    def bar(self) -> Self:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "class SubBuilder(Builder):\n" +
+                 "    pass\n");
+  }
 }

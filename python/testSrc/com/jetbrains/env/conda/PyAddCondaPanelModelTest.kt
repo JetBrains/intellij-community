@@ -69,7 +69,7 @@ class PyAddCondaPanelModelTest {
   fun testCondaUseExistingEnv(): Unit = runTest {
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
-    model.onCondaPathSetOkClicked(coroutineContext)
+    model.onLoadEnvsClicked(coroutineContext)
     model.condaActionUseExistingEnvRadioRwProp.set(true)
     model.condaActionCreateNewEnvRadioRwProp.set(false)
     model.condaEnvModel.selectedItem = model.condaEnvModel.getElementAt(0)
@@ -86,11 +86,11 @@ class PyAddCondaPanelModelTest {
     Assert.assertFalse(model.showCondaPathSetOkButtonRoProp.get())
     model.condaPathTextBoxRwProp.set("Some random path that doesn't exist")
     Assert.assertTrue(model.showCondaPathSetOkButtonRoProp.get())
-    model.onCondaPathSetOkClicked(coroutineContext)
+    model.onLoadEnvsClicked(coroutineContext)
     Assert.assertNotNull("No validation error, but path is incorrect", model.getValidationError())
 
     model.condaPathTextBoxRwProp.set(condaRule.condaPath.toString())
-    model.onCondaPathSetOkClicked(coroutineContext)
+    model.onLoadEnvsClicked(coroutineContext)
     Assert.assertNull("Unexpected validation error", model.getValidationError())
 
     Assert.assertTrue(model.showCondaActionsPanelRoProp.get())
@@ -99,6 +99,9 @@ class PyAddCondaPanelModelTest {
 
     model.condaActionCreateNewEnvRadioRwProp.set(true)
     model.condaActionUseExistingEnvRadioRwProp.set(false)
+    Assert.assertEquals("Env name not set", projectRule.project.name, model.newEnvNameRwProperty.get())
+
+    model.newEnvNameRwProperty.set("")
     Assert.assertNotNull("No validation error, but conda env name not set", model.getValidationError())
 
     model.newEnvNameRwProperty.set("SomeEnvName")

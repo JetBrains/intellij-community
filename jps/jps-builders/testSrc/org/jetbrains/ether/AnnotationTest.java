@@ -35,6 +35,10 @@ public class AnnotationTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddRecordComponentAnnotationTarget() {
+    doTest();
+  }
+
   public void testAddAnnotationTypeMemberWithDefaultValue() {
     doTest();
   }

@@ -18,6 +18,7 @@ import javax.swing.KeyStroke
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object ShortcutsRenderingUtil {
+  val SHORTCUT_PART_SEPARATOR = NON_BREAK_SPACE.repeat(3)
 
   /**
    * @param actionId
@@ -56,7 +57,7 @@ object ShortcutsRenderingUtil {
     val firstKeyStrokeData = getKeyStrokeData(shortcut.firstKeyStroke)
     val secondKeyStroke = shortcut.secondKeyStroke ?: return firstKeyStrokeData
     val secondKeyStrokeData = getKeyStrokeData(secondKeyStroke)
-    val firstPartString = firstKeyStrokeData.first + "${NON_BREAK_SPACE.repeat(3)},${NON_BREAK_SPACE.repeat(3)}"
+    val firstPartString = firstKeyStrokeData.first + "$SHORTCUT_PART_SEPARATOR,$SHORTCUT_PART_SEPARATOR"
     val firstPartLength = firstPartString.length
 
     val shiftedList = secondKeyStrokeData.second.map { IntRange(it.first + firstPartLength, it.last + firstPartLength) }
@@ -69,7 +70,6 @@ object ShortcutsRenderingUtil {
     val modifiers: List<String> = getModifiersText(keyStroke.modifiers)
     val keyString = getKeyString(keyStroke.keyCode)
 
-    val separator = NON_BREAK_SPACE.repeat(3)
     val intervals = mutableListOf<IntRange>()
     val builder = StringBuilder()
 
@@ -81,7 +81,7 @@ object ShortcutsRenderingUtil {
 
     for (m in modifiers) {
       addPart(m)
-      builder.append(separator)
+      builder.append(SHORTCUT_PART_SEPARATOR)
     }
 
     addPart(keyString)
@@ -94,7 +94,6 @@ object ShortcutsRenderingUtil {
    */
   fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
     val parts = shortcut.split(Regex(""" *\+ *""")).map(this::getPresentableModifier)
-    val separator = NON_BREAK_SPACE.repeat(3)
     val builder = StringBuilder()
     val ranges = mutableListOf<IntRange>()
     var curInd = 0
@@ -102,7 +101,7 @@ object ShortcutsRenderingUtil {
       builder.append(part.replaceSpacesWithNonBreakSpaces())
       ranges.add(curInd until builder.length)
       if (ind != parts.lastIndex) {
-        builder.append(separator)
+        builder.append(SHORTCUT_PART_SEPARATOR)
       }
       curInd = builder.length
     }

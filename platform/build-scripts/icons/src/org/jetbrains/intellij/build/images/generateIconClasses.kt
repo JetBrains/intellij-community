@@ -49,16 +49,16 @@ internal fun generateIconsClasses(dbFile: Path?, config: IconsClasses = Intellij
 
   val modules = config.modules
 
-  if (System.getenv("GENERATE_ICONS") != "false") {
-    val generator = config.generator(home, modules)
-    modules.parallelStream().forEach { generator.processModule(it, config.getConfigForModule(it.name)) }
-    generator.printStats()
-  }
-
   if (System.getenv("OPTIMIZE_ICONS") != "false") {
     val optimizer = ImageSizeOptimizer(home)
     modules.parallelStream().forEach { optimizer.optimizeIcons(it, config.getConfigForModule(it.name)) }
     optimizer.printStats()
+  }
+
+  if (System.getenv("GENERATE_ICONS") != "false") {
+    val generator = config.generator(home, modules)
+    modules.parallelStream().forEach { generator.processModule(it, config.getConfigForModule(it.name)) }
+    generator.printStats()
   }
 
   if (dbFile != null) {

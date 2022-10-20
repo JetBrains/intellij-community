@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * see https://bugs.openjdk.org/browse/JDK-8037567
- * @author peter
  */
 public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
@@ -68,11 +68,9 @@ fun interface HyperlinkEventAction {
 
   fun hyperlinkActivated(e: HyperlinkEvent)
 
-  @JvmDefault
   fun hyperlinkEntered(e: HyperlinkEvent) {
   }
 
-  @JvmDefault
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
 }

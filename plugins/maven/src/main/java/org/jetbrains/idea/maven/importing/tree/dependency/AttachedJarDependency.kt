@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing.tree.dependency
 
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 
 class AttachedJarDependency(artifactName: String,
                             val rootPaths: List<Pair<String, LibraryRootTypeId>>,

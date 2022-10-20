@@ -37,7 +37,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
     val maybeAvailableLocally: Boolean by lazy {
       val files = dir.toFile().list()
-      context.messages.info("$dir.absolutePath: $files")
+      context.messages.info("$dir: ${files.joinToString()}")
       Files.isDirectory(dir) && files != null && files.isNotEmpty()
     }
   }
@@ -66,9 +66,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private val uploader by lazy {
-    val syncFolder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS sync folder", context)
+    val s3Folder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder", context)
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit", context)
-    PortableCompilationCacheUploader(context, remoteCache.uploadUrl, remoteGitUrl, commitHash, syncFolder, jpsCaches.skipUpload, forceRebuild)
+    PortableCompilationCacheUploader(context, remoteCache.uploadUrl, remoteGitUrl, commitHash, s3Folder, jpsCaches.skipUpload, forceRebuild)
   }
 
   /**
@@ -277,5 +277,3 @@ internal class CompilationOutput(
 ) {
   val remotePath = "$type/$name/$hash"
 }
-
-internal class BuildTargetState(@JvmField val hash: String, @JvmField val relativePath: String)

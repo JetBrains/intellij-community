@@ -24,7 +24,7 @@ import java.awt.Image
 
 internal class GHAccountsDetailsProvider(
   scope: CoroutineScope,
-  private val executorSupplier: (GithubAccount) -> GithubApiRequestExecutor?
+  private val executorSupplier: suspend (GithubAccount) -> GithubApiRequestExecutor?
 ) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, GithubIcons.DefaultAvatar) {
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager, accountsModel: GHAccountsListModel)
@@ -34,7 +34,7 @@ internal class GHAccountsDetailsProvider(
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager)
     : this(scope, { getExecutor(accountManager, it) }) {
-    cancelOnRemoval(scope, accountManager.accountsState)
+    cancelOnRemoval(scope, accountManager)
   }
 
   override suspend fun loadDetails(account: GithubAccount): Result<GithubUserDetailed> {
@@ -56,7 +56,7 @@ internal class GHAccountsDetailsProvider(
     : Result<GithubAuthenticatedUser> {
 
     val (details, scopes) = try {
-      GHSecurityUtil.loadCurrentUserWithScopes(executor, ProgressManager.getInstance().progressIndicator, account.server)
+      GHSecurityUtil.loadCurrentUserWithScopes(executor, account.server)
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
@@ -75,7 +75,7 @@ internal class GHAccountsDetailsProvider(
   }
 
   companion object {
-    private fun getExecutor(accountManager: GHAccountManager, accountsModel: GHAccountsListModel, account: GithubAccount)
+    private suspend fun getExecutor(accountManager: GHAccountManager, accountsModel: GHAccountsListModel, account: GithubAccount)
       : GithubApiRequestExecutor? {
       return accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
@@ -84,7 +84,7 @@ internal class GHAccountsDetailsProvider(
       }
     }
 
-    private fun getExecutor(accountManager: GHAccountManager, account: GithubAccount)
+    private suspend fun getExecutor(accountManager: GHAccountManager, account: GithubAccount)
       : GithubApiRequestExecutor? {
       return accountManager.findCredentials(account)?.let { token ->
         service<GithubApiRequestExecutor.Factory>().create(token)

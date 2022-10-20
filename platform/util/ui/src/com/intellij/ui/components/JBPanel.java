@@ -45,66 +45,66 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
   }
 
   @Override
-  public T withBorder(Border border) {
+  public final T withBorder(Border border) {
     setBorder(border);
     return (T)this;
   }
 
   @Override
-  public T withFont(JBFont font) {
+  public final T withFont(JBFont font) {
     setFont(font);
     return (T)this;
   }
 
   @Override
-  public T andTransparent() {
+  public final T andTransparent() {
     setOpaque(false);
     return (T)this;
   }
 
   @Override
-  public T andOpaque() {
+  public final T andOpaque() {
     setOpaque(true);
     return (T)this;
   }
 
-  public T withBackground(@Nullable Color background) {
+  public final T withBackground(@Nullable Color background) {
     setBackground(background);
     return (T)this;
   }
 
-  public T withPreferredWidth(int width) {
+  public final T withPreferredWidth(int width) {
     myPreferredWidth = width;
     return (T)this;
   }
 
-  public T withPreferredHeight(int height) {
+  public final T withPreferredHeight(int height) {
     myPreferredHeight = height;
     return (T)this;
   }
 
-  public T withPreferredSize(int width, int height) {
+  public final T withPreferredSize(int width, int height) {
     myPreferredWidth = width;
     myPreferredHeight = height;
     return (T)this;
   }
 
-  public T withMaximumWidth(int width) {
+  public final T withMaximumWidth(int width) {
     myMaximumWidth = width;
     return (T)this;
   }
 
-  public T withMaximumHeight(int height) {
+  public final T withMaximumHeight(int height) {
     myMaximumHeight = height;
     return (T)this;
   }
 
-  public T withMinimumWidth(int width) {
+  public final T withMinimumWidth(int width) {
     myMinimumWidth = width;
     return (T)this;
   }
 
-  public T withMinimumHeight(int height) {
+  public final T withMinimumHeight(int height) {
     myMinimumHeight = height;
     return (T)this;
   }

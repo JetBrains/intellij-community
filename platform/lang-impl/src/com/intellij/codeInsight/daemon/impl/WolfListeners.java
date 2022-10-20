@@ -17,9 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.psi.PsiTreeChangeListener;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-class WolfListeners implements Disposable {
+final class WolfListeners implements Disposable {
   private final Project myProject;
   private final WolfTheProblemSolverImpl myWolfTheProblemSolver;
   private final MergingUpdateQueue invalidateFileQueue = new MergingUpdateQueue("WolfListeners.invalidateFileQueue", 0, true, null, this, null, false);
@@ -38,7 +36,7 @@ class WolfListeners implements Disposable {
   WolfListeners(@NotNull Project project, @NotNull WolfTheProblemSolverImpl wolfTheProblemSolver) {
     myProject = project;
     myWolfTheProblemSolver = wolfTheProblemSolver;
-    PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
+    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
@@ -68,9 +66,8 @@ class WolfListeners implements Disposable {
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         myWolfTheProblemSolver.clearSyntaxErrorFlag(event);
       }
-    };
-    PsiManager.getInstance(project).addPsiTreeChangeListener(changeListener, this);
-    MessageBusConnection busConnection = project.getMessageBus().connect();
+    }, this);
+    var busConnection = project.getMessageBus().simpleConnect();
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -138,7 +135,6 @@ class WolfListeners implements Disposable {
 
   @Override
   public void dispose() {
-
   }
 
   @TestOnly

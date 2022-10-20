@@ -6,9 +6,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
+import com.intellij.workspaceModel.storage.SymbolicEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
@@ -169,12 +168,12 @@ open class OoChildAlsoWithPidEntityImpl(val dataSource: OoChildAlsoWithPidEntity
   }
 }
 
-class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId<OoChildAlsoWithPidEntity>() {
+class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<OoChildAlsoWithPidEntity>() {
   lateinit var childProperty: String
 
   fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): ModifiableWorkspaceEntity<OoChildAlsoWithPidEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoChildAlsoWithPidEntity> {
     val modifiable = OoChildAlsoWithPidEntityImpl.Builder(null)
     modifiable.allowModifications {
       modifiable.diff = diff
@@ -196,7 +195,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
     }
   }
 
-  override fun persistentId(): PersistentEntityId<*> {
+  override fun symbolicId(): SymbolicEntityId<*> {
     return OoChildEntityId(childProperty)
   }
 

@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Path
@@ -68,7 +67,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
           toFileButton.component.isSelected = true
           cell(fileNameField)
             .columns(COLUMNS_LARGE)
-            .horizontalAlign(HorizontalAlign.FILL)
+            .align(AlignX.FILL)
             .enabledIf(toFileButton.selected)
         }.layout(RowLayout.LABEL_ALIGNED)
         row {
@@ -80,7 +79,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
       row(message("patch.creation.base.path.field")) {
         cell(basePathField)
           .columns(COLUMNS_LARGE)
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
       }.topGap(TopGap.SMALL)
       row {
         reverseCheckBox = checkBox(message("create.patch.reverse.checkbox")).component

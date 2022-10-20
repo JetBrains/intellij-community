@@ -25,10 +25,13 @@ enum class LabelPosition {
 }
 
 @ApiStatus.NonExtendable
+@JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
   override fun align(align: Align): Cell<T>

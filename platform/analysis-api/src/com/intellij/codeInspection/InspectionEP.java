@@ -35,14 +35,16 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = new ExtensionPointName<>("com.intellij.globalInspection");
 
   /**
-   * Usually generated automatically from the fully qualified class name.
-   * Must be unique among all inspections.
+   * The short name (or rather ID) of the inspection must be unique among all inspections.
+   * It is usually generated automatically from the fully qualified class name.
    * <p>
-   * The short name is used in two places:
+   * It is used in at least these places:
    * <ul>
+   *   <li>The inspection profiles in {@code .idea/inspectionProfile} identify the
+   *       inspections by their short name.
    *   <li>The resource {@code /inspectionDescriptions/<short_name>.html} usually contains
-   *       a short inspection description to be shown in the "Inspect Code..." dialog.
-   *   <li>When running the inspections in offline mode or when exporting the inspections
+   *       a short inspection description to be shown in the "Inspect Code&#x2026;" dialog.
+   *   <li>When running the inspections in offline mode or when exporting the inspection results
    *       to an HTML report, the short name is used in the filename.
    * </ul>
    */

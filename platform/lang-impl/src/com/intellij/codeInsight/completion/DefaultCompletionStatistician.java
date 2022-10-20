@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public class DefaultCompletionStatistician extends CompletionStatistician{
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -87,18 +87,18 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
     return consumer(null)
   }
 
-  override fun write(path: String, content: ByteArray, size: Int): Boolean {
+  override fun write(path: String, content: ByteArray): Boolean {
     LOG.debug { "Write $path" }
 
     try {
       lock.write {
         val file = dir.resolve(path)
-        file.write(content, 0, size)
+        file.write(content)
         if (isPathIgnored(path)) {
           LOG.debug { "$path is ignored and will be not added to index" }
         }
         else {
-          addToIndex(file, path, content, size)
+          addToIndex(file, path, content)
         }
       }
     }
@@ -112,7 +112,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
   /**
    * path relative to repository root
    */
-  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray, size: Int)
+  protected abstract fun addToIndex(file: Path, path: String, content: ByteArray)
 
   override fun delete(path: String): Boolean {
     LOG.debug { "Remove $path"}

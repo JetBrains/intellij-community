@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
@@ -120,11 +119,10 @@ public abstract class AsyncProjectViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+  public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myAsyncSupport != null) {
       myAsyncSupport.setComparator(comparator);
     }
-    super.installComparator(builder, comparator);
   }
 
   @Override

@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -124,10 +125,12 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     logCommitEvent(sessionInfo)
 
     refreshChanges {
-      val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
-      workflow.continueExecution {
-        updateWorkflow(sessionInfo) &&
-        doExecuteSession(sessionInfo, commitInfo)
+      invokeLater(ui.modalityState) {
+        val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
+        workflow.continueExecution {
+          updateWorkflow(sessionInfo) &&
+          doExecuteSession(sessionInfo, commitInfo)
+        }
       }
     }
     return true
@@ -155,7 +158,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
    * @return false if commit operation should be cancelled.
    */
   @RequiresEdt
-  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
+  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    FileDocumentManager.getInstance().saveAllDocuments()
+    return true
+  }
 
   protected open fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
@@ -186,8 +192,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected open fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(true, VcsBundle.message("commit.progress.title")) {
-      ui.refreshData()
-      callback()
+      ui.refreshData().then {
+        callback()
+      }
     }
 
   override fun dispose() = Unit
@@ -285,7 +292,11 @@ class DynamicCommitInfoImpl(
   override val commitActionText: String
     get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
 
-  override fun asStaticInfo(): CommitInfo {
+  override fun asStaticInfo(): StaticCommitInfo {
     return StaticCommitInfo(commitContext, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
   }
+}
+
+interface DynamicCommitInfo : CommitInfo {
+  fun asStaticInfo(): StaticCommitInfo
 }

@@ -19,7 +19,6 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
-import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -37,6 +36,7 @@ import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
+import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
  * @author Vladislav.Soroka
@@ -309,7 +309,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
       def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ||
                                                               (!resolveSourceSetDependencies && SourceSet.TEST_SOURCE_SET_NAME !=
-                                                               sourceSet.name) ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
+                                                               sourceSet.name) ? "production" : toCamelCase(sourceSet.name, true)))
       resourcesDirectorySet.outputDir = new File(ideaOutDir, "resources")
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 

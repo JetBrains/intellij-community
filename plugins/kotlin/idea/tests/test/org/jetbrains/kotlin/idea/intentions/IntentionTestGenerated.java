@@ -5705,6 +5705,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testSecondaryConstructor() throws Exception {
             runTest("testData/intentions/convertFunctionTypeReceiverToParameter/secondaryConstructor.kt");
         }
+
+        @TestMetadata("usagesInLambda.kt")
+        public void testUsagesInLambda() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeReceiverToParameter/usagesInLambda.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -9381,6 +9386,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testSimple() throws Exception {
             runTest("testData/intentions/convertTrimIndentToTrimMargin/simple.kt");
         }
+
+        @TestMetadata("startWithDollarSign.kt")
+        public void testStartWithDollarSign() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/startWithDollarSign.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -9433,6 +9443,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("simple2.kt")
         public void testSimple2() throws Exception {
             runTest("testData/intentions/convertTrimMarginToTrimIndent/simple2.kt");
+        }
+
+        @TestMetadata("startWithDollarSign.kt")
+        public void testStartWithDollarSign() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/startWithDollarSign.kt");
         }
     }
 

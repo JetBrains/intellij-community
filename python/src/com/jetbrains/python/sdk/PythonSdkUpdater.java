@@ -43,6 +43,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -179,6 +181,10 @@ public class PythonSdkUpdater implements StartupActivity.Background {
         indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
         indicator.setText2("");
         PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, mySdk);
+        if (manager != null) {
+          PythonPackageManagerExt.launchReload(manager);
+        }
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {

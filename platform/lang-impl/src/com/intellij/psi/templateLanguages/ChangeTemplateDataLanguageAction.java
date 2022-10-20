@@ -14,9 +14,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {

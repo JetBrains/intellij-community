@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
-import com.intellij.execution.SyntheticConfigurationTypeProvider;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.SyntheticConfigurationTypeProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +13,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -97,8 +98,8 @@ public final class DeployToServerConfigurationTypesRegistrar implements Disposab
   static final class Provider implements SyntheticConfigurationTypeProvider {
 
     @Override
-    public void initializeConfigurationTypes() {
-      getInstance();
+    public @NotNull Collection<? extends DeployToServerConfigurationType<?>> getConfigurationTypes() {
+      return getInstance().myConfigurationTypes.values();
     }
   }
 }

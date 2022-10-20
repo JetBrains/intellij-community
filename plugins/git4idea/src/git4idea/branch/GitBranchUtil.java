@@ -243,9 +243,9 @@ public final class GitBranchUtil {
   }
 
   @Nullable
-  public static GitRepository guessWidgetRepository(@NotNull Project project) {
+  public static GitRepository guessWidgetRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath());
+    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath(), selectedFile);
   }
 
   @Nullable

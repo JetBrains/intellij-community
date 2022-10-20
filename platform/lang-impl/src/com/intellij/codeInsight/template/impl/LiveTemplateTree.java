@@ -29,9 +29,6 @@ import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
 class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvider, PasteProvider, DeleteProvider {
   private final TemplateListPanel myConfigurable;
 

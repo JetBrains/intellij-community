@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides more flexible parsing capabilities for ILazyParseableElementType.
+ * One of many benefits is ability to preserve Smart Pointers during reparsing in contrast
+ * to ILazyParseableElementType.
+ * <p>
  * todo: merge with ILazyParseableElementType
  */
 public interface ILightLazyParseableElementType {

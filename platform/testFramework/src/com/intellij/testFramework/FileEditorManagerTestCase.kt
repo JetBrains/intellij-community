@@ -2,6 +2,7 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
 import com.intellij.util.ui.EDT
@@ -26,16 +28,15 @@ import java.util.concurrent.TimeoutException
 abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
   @JvmField
   protected var manager: FileEditorManagerImpl? = null
-  @JvmField
-  protected var initialContainers = 0
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
     manager = FileEditorManagerExImpl(project)
-    project.registerComponentInstance(FileEditorManager::class.java, manager!!, testRootDisposable)
+    project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
-    initialContainers = DockManager.getInstance(project).containers.size
+    check(DockManager.getInstance(project).containers.size == 1) {
+      "The previous test didn't clear the state"
+    }
   }
 
   @Throws(Exception::class)
@@ -49,9 +50,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
       {
         manager = null
         if (project != null) {
-          val dockManager = project.getServiceIfCreated(DockManager::class.java)
-          val containers = dockManager?.containers ?: emptySet()
-          assertSize(initialContainers, containers)
+          assertSize(1, project.serviceIfCreated<DockManager>()?.containers ?: emptySet<DockContainer>())
         }
       },
       { super.tearDown() }

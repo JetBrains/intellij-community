@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -435,8 +437,34 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public DefaultTreeModel build() {
     TreeUtil.sort(myModel, BROWSER_NODE_COMPARATOR);
     collapseDirectories(myModel, myRoot);
+
+    if (myProject != null) {
+      // Incrementally fill background colors
+      // read lock is required for background colors calculation as it requires project file index
+      ReadAction.nonBlocking(() -> {
+        precalculateFileColors(myProject, myRoot);
+        // skip deprecation warning about com.intellij.openapi.application.ReadAction.nonBlocking(java.lang.Runnable)
+        return 1;
+      }).executeSynchronously();
+    }
+
     myModel.nodeStructureChanged((TreeNode)myModel.getRoot());
     return myModel;
+  }
+
+  /**
+   * Unfortunately calculating file background color is a costly operation.
+   * (it requires e.g. project file index to detect whether a file in test sources or not)
+   * TreeModelBuilder calls this method on a background thread to have
+   * this calculation ready for Tree rendering
+   */
+  @RequiresReadLock
+  private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
+    root.traverse().forEach(node -> {
+      node.getBackgroundColorCached(project);
+      // Allow to interrupt read lock
+      ProgressManager.checkCanceled();
+    });
   }
 
   private static void collapseDirectories(@NotNull DefaultTreeModel model, @NotNull ChangesBrowserNode<?> node) {

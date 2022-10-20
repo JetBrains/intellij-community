@@ -18,7 +18,6 @@ interface WebSymbolsContainer : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsContainer>
 
-  @JvmDefault
   fun getSymbols(namespace: SymbolNamespace?,
                  kind: SymbolKind,
                  name: String?,
@@ -26,7 +25,6 @@ interface WebSymbolsContainer : ModificationTracker {
                  context: Stack<WebSymbolsContainer>): List<WebSymbolsContainer> =
     emptyList()
 
-  @JvmDefault
   fun getCodeCompletions(namespace: SymbolNamespace?,
                          kind: SymbolKind,
                          name: String?,
@@ -35,7 +33,6 @@ interface WebSymbolsContainer : ModificationTracker {
     getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.registry), context)
       .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, context) ?: emptyList() }
 
-  @JvmDefault
   fun isExclusiveFor(namespace: SymbolNamespace?, kind: SymbolKind): Boolean =
     false
 

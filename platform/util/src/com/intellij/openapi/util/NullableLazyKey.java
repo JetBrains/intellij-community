@@ -6,9 +6,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class NullableLazyKey<T,H extends UserDataHolder> extends Key<T>{
   private final NullableFunction<? super H, ? extends T> myFunction;
 

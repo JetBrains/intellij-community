@@ -17,12 +17,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.dsl.builder.bind
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -37,7 +34,6 @@ import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import icons.PythonIcons
@@ -125,14 +121,14 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       }
 
       row(PyBundle.message("sdk.create.venv.dialog.interpreter.label")) {
-        cell(interpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+        cell(interpreterCombobox).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected.not())
 
       row(PyBundle.message("sdk.create.venv.dialog.location.label")) {
-        cell(locationField).horizontalAlign(HorizontalAlign.FILL)
+        cell(locationField).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected)
       row(PyBundle.message("sdk.create.venv.dialog.base.interpreter.label")) {
-        cell(baseInterpreterCombobox).horizontalAlign(HorizontalAlign.FILL)
+        cell(baseInterpreterCombobox).align(AlignX.FILL)
       }.visibleIf(newEnvironmentModeSelected)
       row {
         checkBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))

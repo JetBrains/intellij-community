@@ -24,12 +24,8 @@ import com.intellij.ui.SmartExpander
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PathUtilRt
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -308,19 +304,19 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       lateinit var argumentPatternDescription: JEditorPane
 
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.group")) {
-        cell(groupField).horizontalAlign(HorizontalAlign.FILL)
+        cell(groupField).align(AlignX.FILL)
       }.visible(!isEditMode)
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.program.path")) {
-        cell(programPathField).horizontalAlign(HorizontalAlign.FILL)
+        cell(programPathField).align(AlignX.FILL)
       }
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.tool.name")) {
-        cell(toolNameField).horizontalAlign(HorizontalAlign.FILL).validationOnApply { toolFieldValidation(groupField.item, it.text) }
+        cell(toolNameField).align(AlignX.FILL).validationOnApply { toolFieldValidation(groupField.item, it.text) }
       }
       row(DiffBundle.message("settings.external.tool.tree.add.dialog.field.argument.pattern")) {
-        cell(argumentPatternField).horizontalAlign(HorizontalAlign.FILL)
+        cell(argumentPatternField).align(AlignX.FILL)
       }
       row {
-        cell(isMergeTrustExitCode).horizontalAlign(HorizontalAlign.FILL)
+        cell(isMergeTrustExitCode).align(AlignX.FILL)
           .visibleIf(object : ComponentPredicate() {
             override fun addListener(listener: (Boolean) -> Unit) {
               groupField.addItemListener {
@@ -360,8 +356,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       }.topGap(TopGap.MEDIUM)
       row {
         cell(toolOutputEditor.component)
-          .horizontalAlign(HorizontalAlign.FILL)
-          .verticalAlign(VerticalAlign.FILL)
+          .align(Align.FILL)
           .applyToComponent { preferredSize = JBUI.size(400, 150) }
       }.resizableRow()
     }

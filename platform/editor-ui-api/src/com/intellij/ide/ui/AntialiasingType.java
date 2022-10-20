@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +29,7 @@ public enum AntialiasingType {
   }
 
   public static boolean canUseSubpixelAAForIDE() {
-    return !SystemInfo.isMacOSMojave || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+    return !SystemInfoRt.isMac || Boolean.getBoolean("enable.macos.ide.subpixelAA");
   }
 
   public static boolean canUseSubpixelAAForEditor() {

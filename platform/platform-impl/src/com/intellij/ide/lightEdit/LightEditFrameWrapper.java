@@ -128,8 +128,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
     }
 
+
     @Override
-    protected @Nullable ActionGroup getMainMenuActionGroup() {
+    public @Nullable ActionGroup getMainMenuActionGroup() {
       return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
@@ -153,11 +154,11 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected void installNorthComponents(@NotNull Project project) {
+    public void installNorthComponents$intellij_platform_ide_impl(@NotNull Project project) {
     }
 
     @Override
-    protected void deinstallNorthComponents() {
+    public void deinstallNorthComponents$intellij_platform_ide_impl() {
     }
   }
 
@@ -174,7 +175,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   }
 
   @Override
-  public void setFrameTitle(String text) {
+  public void setFrameTitle(@NotNull String text) {
     if (myFrameTitleUpdateEnabled) {
       super.setFrameTitle(text);
     }

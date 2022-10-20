@@ -32,22 +32,26 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.HtmlPanel
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
 import javax.swing.BoxLayout
 import javax.swing.JComponent
+import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 import kotlin.properties.Delegates.observable
 import kotlin.properties.ReadWriteProperty
@@ -66,13 +70,21 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
   isVisible = true
 }
 
-open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
   private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
     .also { Disposer.register(this) { it.cancel() } }
 
   private val taskInfo = CommitChecksTaskInfo()
   private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
   private var progress: CommitChecksProgressIndicator? by progressFlow::value
+
+  private val panel = object : NonOpaquePanel(VerticalLayout(4)) {
+    override fun updateUI() {
+      super.updateUI()
+      background = UIUtil.getTextFieldBackground() // Yes, background in NonOpaquePanel. See JBViewport.getBackground.
+    }
+  }
+  private val scrollPane = FixedSizeScrollPanel(panel, JBDimension(400, 150))
 
   private val failuresPanel = FailuresPanel()
   private val label = JBLabel().apply { isVisible = false }
@@ -88,9 +100,12 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
   }
 
-  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) {
-    add(label)
-    add(failuresPanel)
+  val component: JComponent get() = scrollPane
+
+  fun setup(commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent, border: Border) {
+    panel.add(label)
+    panel.add(failuresPanel)
+    panel.border = border
 
     Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
@@ -98,6 +113,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
     setupProgressVisibilityDelay()
     setupProgressSpinnerTooltip()
+    MyVisibilitySynchronizer().install()
   }
 
   @Suppress("EXPERIMENTAL_API_USAGE")
@@ -105,7 +121,10 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     progressFlow
       .debounce(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
       .onEach { indicator ->
-        if (indicator?.isRunning == true && failuresPanel.isEmpty()) indicator.component.isVisible = true
+        if (indicator?.isRunning == true && failuresPanel.isEmpty()) {
+          indicator.component.isVisible = true
+          revalidatePanel()
+        }
       }
       .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
@@ -143,23 +162,30 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   private fun progressStarted(indicator: InlineCommitChecksProgressIndicator) {
     logger<CommitProgressPanel>().assertTrue(progress == indicator)
 
-    add(indicator.component)
+    panel.add(indicator.component)
     addToStatusBar(indicator.statusBarDelegate)
 
     failuresPanel.clearFailures()
-    revalidate()
+    revalidatePanel()
   }
 
   private fun progressStopped(indicator: InlineCommitChecksProgressIndicator) {
     logger<CommitProgressPanel>().assertTrue(progress == indicator)
     progress = null
 
-    remove(indicator.component)
+    panel.remove(indicator.component)
     removeFromStatusBar(indicator.statusBarDelegate)
     Disposer.dispose(indicator)
 
     failuresPanel.endProgress()
-    revalidate()
+    revalidatePanel()
+  }
+
+  private fun revalidatePanel() {
+    component.parent?.let {
+      it.revalidate()
+      it.repaint()
+    }
   }
 
   private fun addToStatusBar(progress: ProgressIndicatorEx) {
@@ -176,9 +202,13 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
   override fun addCommitCheckFailure(failure: CommitCheckFailure) {
     progress?.component?.isVisible = false
     failuresPanel.addFailure(failure)
+    revalidatePanel()
   }
 
-  override fun clearCommitCheckFailures() = failuresPanel.clearFailures()
+  override fun clearCommitCheckFailures() {
+    failuresPanel.clearFailures()
+    revalidatePanel()
+  }
 
   override fun getCommitCheckFailures(): List<CommitCheckFailure> {
     return failuresPanel.getFailures()
@@ -195,6 +225,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       isDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
       else -> label.isVisible = false
     }
+    revalidatePanel()
   }
 
   protected open fun clearError() {
@@ -210,9 +241,56 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
       isEmptyMessage -> message("error.no.commit.message")
       else -> null
     }
+
+  private inner class MyVisibilitySynchronizer : ContainerListener {
+    private val childListener = object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent) {
+        syncVisibility()
+      }
+
+      override fun componentHidden(e: ComponentEvent) {
+        syncVisibility()
+      }
+    }
+
+    fun install() {
+      panel.addContainerListener(this)
+
+      for (component in panel.components) {
+        component.addComponentListener(childListener)
+      }
+      syncVisibility()
+    }
+
+    override fun componentAdded(e: ContainerEvent) {
+      e.component.addComponentListener(childListener)
+      syncVisibility()
+    }
+
+    override fun componentRemoved(e: ContainerEvent) {
+      e.component.removeComponentListener(childListener)
+      syncVisibility()
+    }
+
+    private fun syncVisibility() {
+      val isVisible = panel.components.any { it.isVisible }
+      if (scrollPane.isVisible != isVisible) {
+        scrollPane.isVisible = isVisible
+        revalidatePanel()
+      }
+    }
+  }
 }
 
-class CommitCheckFailure(@Nls val text: String?, val detailsViewer: (() -> Unit)?)
+sealed class CommitCheckFailure {
+  object Unknown : CommitCheckFailure()
+
+  open class WithDescription(val text: @NlsContexts.NotificationContent String) : CommitCheckFailure()
+
+  class WithDetails(text: @NlsContexts.NotificationContent String,
+                    val viewDetailsActionText: @NlsContexts.NotificationContent String,
+                    val viewDetails: () -> Unit) : WithDescription(text)
+}
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -281,12 +359,10 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
     val failureLinks = formatNarrowAndList(failures.mapNotNull {
-      val text = it.value.text ?: return@mapNotNull null
-      if (it.value.detailsViewer != null) {
-        HtmlChunk.link(it.key.toString(), text)
-      }
-      else {
-        HtmlChunk.text(text)
+      when (val failure = it.value) {
+        is CommitCheckFailure.WithDetails -> HtmlChunk.link(it.key.toString(), failure.text)
+        is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
+        else -> null
       }
     })
     if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
@@ -296,8 +372,8 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
-    val failure = failures[event.description.toInt()] ?: return
-    failure.detailsViewer!!.invoke()
+    val failure = failures[event.description.toInt()] as? CommitCheckFailure.WithDetails ?: return
+    failure.viewDetails()
   }
 }
 
@@ -342,5 +418,26 @@ private class IndeterminateProgressSink(private val indicator: ProgressIndicator
       indicator.text2 = details
     }
     // ignore fraction updates
+  }
+}
+
+internal class FixedSizeScrollPanel(view: Component, private val fixedSize: Dimension) : JBScrollPane(view) {
+  init {
+    border = empty()
+    viewportBorder = empty()
+  }
+
+  override fun getPreferredSize(): Dimension {
+    val size = super.getPreferredSize()
+    if (size.width > fixedSize.width) {
+      size.width = fixedSize.width
+      if (size.height < horizontalScrollBar.height * 2) {
+        size.height = horizontalScrollBar.height * 2 // better handling of a transparent scrollbar for a single text line
+      }
+    }
+    if (size.height > fixedSize.height) {
+      size.height = fixedSize.height
+    }
+    return size
   }
 }

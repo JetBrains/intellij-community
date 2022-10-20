@@ -4,8 +4,6 @@ package com.intellij.openapi.util.io;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.win32.FileInfo;
-import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
@@ -57,9 +55,6 @@ public final class FileSystemUtil {
   static @NotNull Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
-        if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
-          return ensureSane(new IdeaWin32MediatorImpl());
-        }
         if ((SystemInfo.isLinux || SystemInfo.isMac) && CpuArch.isIntel64() && JnaLoader.isLoaded()) {
           return ensureSane(new JnaUnixMediatorImpl());
         }
@@ -147,42 +142,6 @@ public final class FileSystemUtil {
 
   public static @Nullable String resolveSymLink(@NotNull File file) {
     return resolveSymLink(file.getAbsolutePath());
-  }
-
-  private static class IdeaWin32MediatorImpl implements Mediator {
-    private final IdeaWin32 myInstance = IdeaWin32.getInstance();
-
-    @Override
-    public FileAttributes getAttributes(@NotNull String path) {
-      FileInfo fileInfo = myInstance.getInfo(path);
-      return fileInfo != null ? fileInfo.toFileAttributes() : null;
-    }
-
-    @Override
-    public String resolveSymLink(@NotNull String path) {
-      path = new File(path).getAbsolutePath();
-
-      if (!(path.length() > 3 && OSAgnosticPathUtil.isAbsoluteDosPath(path))) {
-        return path;  // unknown format
-      }
-
-      int remainder = 4;
-      while (remainder < path.length()) {
-        int next = path.indexOf('\\', remainder);
-        String subPath = next > 0 ? path.substring(0, next) : path;
-        FileAttributes attributes = getAttributes(subPath);
-        if (attributes == null) {
-          return null;
-        }
-        if (attributes.isSymLink()) {
-          return myInstance.resolveSymLink(path);
-        }
-
-        remainder = next > 0 ? next + 1 : path.length();
-      }
-
-      return path;
-    }
   }
 
   // thanks to SVNKit for the idea of platform-specific offsets

@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
+import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -30,9 +31,9 @@ import com.jetbrains.python.sdk.add.showProcessExecutionErrorDialog
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelView
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import com.jetbrains.python.sdk.poetry.createPoetryPanel
+import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
 import java.awt.Component
@@ -96,7 +97,10 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
           listOf(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel) to venvPanel
         }
       }
-      targetEnvironmentConfiguration.isMutableTarget -> listOf(venvPanel, systemWidePanel, condaPanel) to venvPanel
+      targetEnvironmentConfiguration.isMutableTarget -> mutableListOf<PyAddSdkView>(venvPanel, systemWidePanel).apply {
+        // Conda not supported for SSH (which is mutable incomplete environment)
+        if (targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) add(condaPanel)
+      } to venvPanel
       else -> listOf(venvPanel, systemWidePanel, condaPanel) to systemWidePanel
     }
   }
@@ -148,7 +152,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     }
   }
 
-  private fun createAnacondaPanel(): PyAddSdkView = PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!))
+  private fun createAnacondaPanel(): PyAddSdkView = PyAddCondaPanelView(
+    PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!))
 
   private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 

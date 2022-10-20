@@ -85,8 +85,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private final @NotNull PsiDocumentManager myPsiDocumentManager;
-  private final FileEditorManagerEx myFileEditorManager;
-  private final EditorTracker myEditorTracker;
+  private FileEditorManagerEx myFileEditorManager;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final UpdateRunnable myUpdateRunnable;
@@ -146,12 +145,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
-    myFileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    if (myFileEditorManager == null && !project.isDefault()) {
-      throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; myProject="+project);
-    }
-    myEditorTracker = EditorTracker.getInstance(project);
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
+  }
+
+  private FileEditorManagerEx getFileEditorManager() {
+    var result = myFileEditorManager;
+    if (result == null) {
+      result = FileEditorManagerEx.getInstanceEx(myProject);
+      myFileEditorManager = result;
+      if (result == null && !myProject.isDefault()) {
+        throw new IllegalStateException("FileEditorManagerEx.getInstanceEx(myProject) = null; project=" + myProject);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -189,7 +195,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     assertMyFile(file.getProject(), file);
     assertMyFile(project, file);
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
-    return Arrays.stream(myFileEditorManager.getAllEditors(vFile))
+    return Arrays.stream(getFileEditorManager().getAllEditors(vFile))
       .map(fileEditor -> fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS))
       .filter(Objects::nonNull)
       .flatMap(Collection::stream)
@@ -197,35 +203,42 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   private void assertMyFile(@NotNull Project project, @NotNull PsiFile file) {
-    if (project != myProject) throw new IllegalStateException("my project is " + myProject + " but I was called with " + project);
-    if (file.getProject() != myProject) throw new IllegalStateException("my project is " + myProject + " but I was called with file " + file +" from "+file.getProject());
+    if (project != myProject) {
+      throw new IllegalStateException("my project is " + myProject + " but I was called with " + project);
+    }
+    if (file.getProject() != myProject) {
+      throw new IllegalStateException("my project is " + myProject + " but I was called with file " + file + " from " + file.getProject());
+    }
   }
 
   @Override
   public void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
       cleanFileLevelHighlights(fileEditor, group);
     }
   }
 
   private static final int ANY_GROUP = -409423948;
   void cleanAllFileLevelHighlights() {
-    for (FileEditor fileEditor : myFileEditorManager.getAllEditors()) {
+    for (FileEditor fileEditor : getFileEditorManager().getAllEditors()) {
       cleanFileLevelHighlights(fileEditor, ANY_GROUP);
     }
   }
 
   private void cleanFileLevelHighlights(@NotNull FileEditor fileEditor, int group) {
     List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-    if (infos == null) return;
+    if (infos == null || infos.isEmpty()) {
+      return;
+    }
+
     List<HighlightInfo> infosToRemove = new ArrayList<>(infos.size());
     for (HighlightInfo info : infos) {
       if (info.getGroup() == group || group == ANY_GROUP) {
         JComponent component = info.getFileLevelComponent(fileEditor);
         if (component != null) {
-          myFileEditorManager.removeTopComponent(fileEditor, component);
+          getFileEditorManager().removeTopComponent(fileEditor, component);
           info.removeFileLeverComponent(fileEditor);
         }
         infosToRemove.add(info);
@@ -240,7 +253,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull PsiFile psiFile) {
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
+    FileEditorManagerEx fileEditorManager = getFileEditorManager();
+    for (FileEditor fileEditor : fileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
         info.findRegisteredQuickFix((descriptor, range) -> {
@@ -250,7 +264,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                 info.getGutterIconRenderer(), actionRanges,
                                                                                 psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
-        myFileEditorManager.addTopComponent(fileEditor, component);
+        fileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = new ArrayList<>();
@@ -753,6 +767,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @ApiStatus.Internal
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    assert editor.getProject() == null || editor.getProject() == file.getProject();
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     Project project = file.getProject();
@@ -1122,9 +1137,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     int focusedIndex = ContainerUtil.indexOf(fileEditors, info -> info.myFileEditor instanceof TextEditor &&
                                                                   ((TextEditor)info.myFileEditor).getEditor().getContentComponent().isFocusOwner());
     if (focusedIndex == -1) {
-      FileEditor selected = myFileEditorManager.getSelectedEditor(virtualFile);
+      FileEditor selected = getFileEditorManager().getSelectedEditor(virtualFile);
       if (selected != null) {
-        focusedIndex = ContainerUtil.indexOf(fileEditors, info->info.myFileEditor.equals(selected));
+        focusedIndex = ContainerUtil.indexOf(fileEditors, info -> info.myFileEditor.equals(selected));
       }
     }
     if (focusedIndex == -1) {
@@ -1197,16 +1212,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     application.assertIsDispatchThread();
 
     // editors in modal context
-    List<? extends Editor> editors = myEditorTracker.getActiveEditors();
+    List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
     Collection<FileEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
     }
     else {
+      TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
       activeTextEditors = new HashSet<>(editors.size());
       for (Editor editor : editors) {
-        if (editor.isDisposed()) continue;
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        if (editor.isDisposed()) {
+          continue;
+        }
+
+        TextEditor textEditor = textEditorProvider.getTextEditor(editor);
         activeTextEditors.add(textEditor);
       }
     }
@@ -1219,7 +1238,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     Set<VirtualFile> files = new HashSet<>(activeTextEditors.size());
     if (!application.isUnitTestMode()) {
       // editors in tabs
-      for (FileEditor tabEditor : myFileEditorManager.getSelectedEditorWithRemotes()) {
+      for (FileEditor tabEditor : getFileEditorManager().getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;
         VirtualFile file = tabEditor.getFile();
         if (file != null) {

@@ -32,8 +32,10 @@ class GitBranchesTreeModelImpl(
 
   private val branchManager = project.service<GitBranchManager>()
   private val branchComparator = compareBy<GitBranch> {
+    !repositories.any { repo -> repo.currentBranch == it }
+  } then compareBy {
     !repositories.all { repo -> branchManager.isFavorite(GitBranchType.of(it), repo, it.name) }
-  } then compareBy { it.name }
+  } then compareBy { !(isPrefixGrouping && it.name.contains('/')) } then compareBy { it.name }
 
   private lateinit var localBranchesTree: LazyBranchesSubtreeHolder
   private lateinit var remoteBranchesTree: LazyBranchesSubtreeHolder
@@ -69,7 +71,7 @@ class GitBranchesTreeModelImpl(
 
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
-  override fun isLeaf(node: Any?): Boolean = (node is GitRepository) || (node is GitBranch) || (node is PopupFactoryImpl.ActionItem)
+  override fun isLeaf(node: Any?): Boolean = node is GitBranch
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
 
@@ -220,7 +222,7 @@ class GitBranchesTreeModelImpl(
         else {
           groups.compute(firstPathPart) { _, currentList ->
             (currentList ?: mutableListOf()) + (restOfThePath to branch)
-          }
+          }?.let { group -> result[firstPathPart] = group }
         }
       }
 

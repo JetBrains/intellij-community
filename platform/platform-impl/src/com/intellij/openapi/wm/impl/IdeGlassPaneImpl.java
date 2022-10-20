@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,13 +8,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.Weighted;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClientProperty;
@@ -34,7 +34,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
-public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
+public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeGlassPaneImpl.class);
   private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
@@ -63,7 +63,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
-  WindowShadowPainter myWindowShadowPainter;
+  AbstractPainter windowShadowPainter;
+  private boolean paintersInstalled;
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     this(rootPane, false);
@@ -73,16 +74,27 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
-    setEnabled(false);//Workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
+    // workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
+    setEnabled(false);
     setLayout(null);
     if (installPainters) {
-      IdeBackgroundUtil.initFramePainters(this);
-      IdeBackgroundUtil.initEditorPainters(this);
+      installPainters();
+    }
+  }
+
+  void installPainters() {
+    if (paintersInstalled) {
+      return;
     }
 
-    if (SystemInfoRt.isWindows && Registry.is("ide.window.shadow.painter", false)) {
-      myWindowShadowPainter = new WindowShadowPainter();
-      getPainters().addPainter(myWindowShadowPainter, null);
+    paintersInstalled = true;
+
+    IdeBackgroundUtil.initFramePainters(this);
+    IdeBackgroundUtil.initEditorPainters(this);
+
+    if (SystemInfoRt.isWindows && Boolean.getBoolean("ide.window.shadow.painter")) {
+      windowShadowPainter = new WindowShadowPainter();
+      getPainters().addPainter(windowShadowPainter, null);
     }
   }
 

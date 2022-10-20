@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage.bridgeEntities
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 
@@ -70,14 +70,14 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
 }
 
 /**
- * [JavaSourceRootEntity] has the same entity source as [SourceRootEntity].
+ * [JavaSourceRootPropertiesEntity] has the same entity source as [SourceRootEntity].
  * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.
  */
 fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                  generated: Boolean,
-                                                 packagePrefix: String): JavaSourceRootEntity {
-  val entity = JavaSourceRootEntity(generated, packagePrefix, sourceRoot.entitySource) {
+                                                 packagePrefix: String): JavaSourceRootPropertiesEntity {
+  val entity = JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
   this.addEntity(entity)
@@ -86,8 +86,8 @@ fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
 
 fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                    generated: Boolean,
-                                                   relativeOutputPath: String): JavaResourceRootEntity {
-  val entity = JavaResourceRootEntity(generated, relativeOutputPath, sourceRoot.entitySource) {
+                                                   relativeOutputPath: String): JavaResourceRootPropertiesEntity {
+  val entity = JavaResourceRootPropertiesEntity(generated, relativeOutputPath, sourceRoot.entitySource) {
     this.sourceRoot = sourceRoot
   }
   this.addEntity(entity)
@@ -181,7 +181,7 @@ fun MutableEntityStorage.addFacetEntity(name: String,
                                         module: ModuleEntity,
                                         underlyingFacet: FacetEntity?,
                                         source: EntitySource): FacetEntity {
-  val entity = FacetEntity(name, facetType, module.persistentId, source) {
+  val entity = FacetEntity(name, facetType, module.symbolicId, source) {
     this.configurationXmlTag = configurationXmlTag
     this.module = module
     this.underlyingFacet = underlyingFacet
@@ -326,8 +326,8 @@ fun MutableEntityStorage.addCustomPackagingElementEntity(typeId: String,
   return entity
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = javaSourceRoots.firstOrNull()
-fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootEntity? = javaResourceRoots.firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
+fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()
 
 val ModuleEntity.sourceRoots: List<SourceRootEntity>
   get() = contentRoots.flatMap { it.sourceRoots }
@@ -335,11 +335,11 @@ val ModuleEntity.sourceRoots: List<SourceRootEntity>
 
 fun ModuleEntity.getModuleLibraries(storage: EntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java)
-    .filter { (it.persistentId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
+    .filter { (it.symbolicId.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }
 }
 
 val EntityStorage.projectLibraries
-  get() = entities(LibraryEntity::class.java).filter { it.persistentId.tableId == LibraryTableId.ProjectLibraryTableId }
+  get() = entities(LibraryEntity::class.java).filter { it.symbolicId.tableId == LibraryTableId.ProjectLibraryTableId }
 
 
 /**

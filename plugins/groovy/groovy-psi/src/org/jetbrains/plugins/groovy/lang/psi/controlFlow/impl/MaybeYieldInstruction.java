@@ -4,9 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
-* @author peter
-*/
 public class MaybeYieldInstruction extends InstructionImpl implements MaybeInterruptInstruction {
   MaybeYieldInstruction(GrExpression element) {
     super(element);

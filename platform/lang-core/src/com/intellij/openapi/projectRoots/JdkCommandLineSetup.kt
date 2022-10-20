@@ -623,11 +623,11 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     if (encoding == null) {
       val charset = javaParameters.charset ?: EncodingManager.getInstance().defaultCharset
       commandLine.addParameter("-Dfile.encoding=" + charset.name())
-      commandLine.setCharset(charset)
+      commandLine.charset = charset
     }
     else {
       try {
-        commandLine.setCharset(Charset.forName(encoding))
+        commandLine.charset = Charset.forName(encoding)
       }
       catch (ignore: UnsupportedCharsetException) {
       }
