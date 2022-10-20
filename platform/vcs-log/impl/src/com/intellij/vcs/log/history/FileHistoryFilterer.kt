@@ -33,6 +33,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.history.FileHistoryPaths.fileHistory
 import com.intellij.vcs.log.history.FileHistoryPaths.withFileHistory
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
@@ -117,6 +118,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
+      val start = System.currentTimeMillis()
       TraceManager.getTracer("vcs").spanBuilder("computing history").useWithScope { scope ->
         val isInitial = commitCount == CommitCountStage.INITIAL
 
@@ -125,6 +127,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         if (indexDataGetter != null && index.isIndexed(root) && dataPack.isFull) {
           cancelLastTask(false)
           val visiblePack = filterWithIndex(indexDataGetter, dataPack, oldVisiblePack, sortType, filters, isInitial)
+          LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute("type", "index")
           if (checkNotEmpty(dataPack, visiblePack, true)) {
             return Pair(visiblePack, commitCount)
@@ -136,6 +139,8 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
             try {
               val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
               scope.setAttribute("type", "history provider")
+              LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
+                        " for computing history for $filePath with history provider")
               checkNotEmpty(dataPack, visiblePack, false)
               return@filter Pair(visiblePack, commitCount)
             }
