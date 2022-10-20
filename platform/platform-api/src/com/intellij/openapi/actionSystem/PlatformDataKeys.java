@@ -13,6 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 
+/**
+ * @see PlatformCoreDataKeys
+ * @see CommonDataKeys
+ * @see com.intellij.openapi.actionSystem.LangDataKeys
+ */
 public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create("copyProvider");
