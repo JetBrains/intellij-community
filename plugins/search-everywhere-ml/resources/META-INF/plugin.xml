@@ -58,6 +58,9 @@
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="false"
+                 description="Mark position changes in Search Everywhere"
+                 key="search.everywhere.ml.show.diff"/>
 
     <registryKey defaultValue=""
                  description="Path to the local action-ranking model."

@@ -147,11 +147,27 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
 
+    myMlService = SearchEverywhereMlService.getInstance();
+    if (myMlService != null) {
+      myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
+    }
+
     init();
     myHintHelper = new HintHelper(mySearchField);
 
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     SearchListener wrapperListener = createListenerWrapper();
+
+    mySelectionTracker = new SEListSelectionTracker(myResultsList, myListModel);
+
+    if (myMlService != null) {
+      SearchListener mlListener = myMlService.buildListener(myListModel, myResultsList, mySelectionTracker);
+
+      if (mlListener != null) {
+        addSearchListener(mlListener);
+      }
+    }
+
     mySearcher = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                  ? new MixedResultsSearcher(wrapperListener, run -> ApplicationManager.getApplication().invokeLater(run),
                                             equalityProviders)
@@ -177,15 +193,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     });
 
-    mySelectionTracker = new SEListSelectionTracker(myResultsList, myListModel);
     myResultsList.addListSelectionListener(mySelectionTracker);
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
-
-    myMlService = SearchEverywhereMlService.getInstance();
-    if (myMlService != null) {
-      myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
-    }
 
     SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(() -> myHeader.getSelectedTab().getID());
     addSearchListener(performanceTracker);
@@ -223,7 +233,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return (list, value, index, isSelected, cellHasFocus) -> new JPanel();
     }
 
-    return myListFactory.createListRenderer(myListModel, myHeader);
+    ListCellRenderer<Object> renderer = myListFactory.createListRenderer(myListModel, myHeader);
+
+    if (myMlService != null) {
+      return myMlService.wrapRenderer(renderer, myListModel);
+    }
+    return renderer;
   }
 
   @NotNull
