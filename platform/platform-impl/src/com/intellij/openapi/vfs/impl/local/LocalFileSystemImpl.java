@@ -293,7 +293,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
             }
           }
           if (attrs != null) {
-            result.put(file.getFileName().toString(), FileAttributes.fromNio(file, attrs));
+            result.put(file.getFileName().toString(), copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)));
           }
         }
       }
