@@ -10,14 +10,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -566,7 +564,7 @@ public final class PathManager {
         continue;
       }
 
-      try (InputStream inputStream = Files.newInputStream(file)) {
+      try (Reader reader = Files.newBufferedReader(file, Charset.forName("UTF-8"))) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
         new Properties() {
           @Override
@@ -579,7 +577,7 @@ public final class PathManager {
             }
             return null;
           }
-        }.load(inputStream);
+        }.load(reader);
       }
       catch (NoSuchFileException | AccessDeniedException ignore) {
       }
