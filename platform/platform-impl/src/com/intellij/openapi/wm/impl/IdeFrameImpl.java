@@ -24,20 +24,19 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
-  //When this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
+  // when this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
 
-  private @Nullable FrameHelper myFrameHelper;
-  private @Nullable FrameDecorator myFrameDecorator;
+  private @Nullable FrameHelper frameHelper;
+  private @Nullable FrameDecorator frameDecorator;
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    return myFrameHelper == null ? null : myFrameHelper.getData(dataId);
+    return frameHelper == null ? null : frameHelper.getData(dataId);
   }
 
-  @Nullable
-  FrameHelper getFrameHelper() {
-    return myFrameHelper;
+  @Nullable FrameHelper getFrameHelper() {
+    return frameHelper;
   }
 
   interface FrameHelper extends DataProvider {
@@ -71,8 +70,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public void addNotify() {
     super.addNotify();
-    if (myFrameDecorator != null) {
-      myFrameDecorator.frameInit();
+    if (frameDecorator != null) {
+      frameDecorator.frameInit();
     }
   }
 
@@ -83,8 +82,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   void setFrameHelper(@Nullable FrameHelper frameHelper, @Nullable FrameDecorator frameDecorator) {
-    myFrameHelper = frameHelper;
-    myFrameDecorator = frameDecorator;
+    this.frameHelper = frameHelper;
+    this.frameDecorator = frameDecorator;
   }
 
   @Override
@@ -97,11 +96,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public void setTitle(@Nullable String title) {
-    if (myFrameHelper == null) {
+    if (frameHelper == null) {
       super.setTitle(title);
     }
     else {
-      myFrameHelper.setTitle(title);
+      frameHelper.setTitle(title);
     }
   }
 
@@ -128,13 +127,13 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   }
 
   @Override
-  @SuppressWarnings({"SSBasedInspection", "deprecation"})
+  @SuppressWarnings("deprecation")
   public void show() {
     super.show();
     SwingUtilities.invokeLater(() -> {
       setFocusableWindowState(true);
-      if (myFrameDecorator != null) {
-        myFrameDecorator.frameShow();
+      if (frameDecorator != null) {
+        frameDecorator.frameShow();
       }
     });
   }
@@ -146,16 +145,16 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public boolean isInFullScreen() {
-    return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
+    return frameDecorator != null && frameDecorator.isInFullScreen();
   }
 
   @Override
   public void dispose() {
-    if (myFrameHelper == null) {
+    if (frameHelper == null) {
       doDispose();
     }
     else {
-      myFrameHelper.dispose();
+      frameHelper.dispose();
     }
   }
 
@@ -166,7 +165,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {
     @Override
     public String getAccessibleName() {
-      return myFrameHelper == null ? super.getAccessibleName() : myFrameHelper.getAccessibleName();
+      return frameHelper == null ? super.getAccessibleName() : frameHelper.getAccessibleName();
     }
   }
 
@@ -185,25 +184,25 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   @Deprecated(forRemoval = true)
   public Project getProject() {
-    return myFrameHelper == null ? null : myFrameHelper.getProject();
+    return frameHelper == null ? null : frameHelper.getProject();
   }
 
   // deprecated stuff - as IdeFrame must be implemented (a lot of instanceof checks for JFrame)
 
   @Override
   public @Nullable StatusBar getStatusBar() {
-    return myFrameHelper == null ? null : myFrameHelper.getHelper().getStatusBar();
+    return frameHelper == null ? null : frameHelper.getHelper().getStatusBar();
   }
 
   @Override
   public @NotNull Rectangle suggestChildFrameBounds() {
-    return Objects.requireNonNull(myFrameHelper).getHelper().suggestChildFrameBounds();
+    return Objects.requireNonNull(frameHelper).getHelper().suggestChildFrameBounds();
   }
 
   @Override
   public void setFrameTitle(String title) {
-    if (myFrameHelper != null) {
-      myFrameHelper.getHelper().setFrameTitle(title);
+    if (frameHelper != null) {
+      frameHelper.getHelper().setFrameTitle(title);
     }
   }
 
@@ -214,7 +213,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public @Nullable BalloonLayout getBalloonLayout() {
-    return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
+    return frameHelper == null ? null : frameHelper.getHelper().getBalloonLayout();
   }
 
   @Override

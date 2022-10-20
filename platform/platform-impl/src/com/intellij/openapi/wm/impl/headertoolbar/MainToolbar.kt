@@ -32,19 +32,13 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
     isOpaque = true
-    if (IdeRootPane.isMenuButtonInToolbar()) {
-      mainMenuButton = MainMenuButton()
-    }
-    else {
-      mainMenuButton = null
-    }
+    mainMenuButton = if (IdeRootPane.isMenuButtonInToolbar) MainMenuButton() else null
   }
 
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,

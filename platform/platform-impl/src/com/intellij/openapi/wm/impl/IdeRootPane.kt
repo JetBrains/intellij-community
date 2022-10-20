@@ -1,639 +1,551 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBarCentralWidget;
-import com.intellij.openapi.wm.WindowInfoKt;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader;
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.toolWindow.ToolWindowButtonManager;
-import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
-import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBBox;
-import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.components.JBPanel;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
-import com.jetbrains.JBR;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettings.Companion.shadowInstance
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.openapi.wm.StatusBarCentralWidget
+import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath.Companion.createMainInstance
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
+import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
+import com.intellij.ui.*
+import com.intellij.ui.components.JBBox
+import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.JBPanel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
+import org.jetbrains.annotations.ApiStatus
+import java.awt.*
+import java.awt.event.MouseMotionAdapter
+import javax.swing.*
 
 @ApiStatus.Internal
-public class IdeRootPane extends JRootPane implements UISettingsListener {
+open class IdeRootPane internal constructor(frame: JFrame,
+                                            frameHelper: IdeFrame,
+                                            parentDisposable: Disposable) : JRootPane(), UISettingsListener {
   /**
    * Toolbar and status bar.
    */
-  private JComponent myToolbar;
-  private IdeStatusBarImpl myStatusBar;
-  private boolean myStatusBarDisposed;
+  private var toolbar: JComponent? = null
 
-  private final JBBox myNorthPanel = JBBox.createVerticalBox();
-  private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
-  private IdeRootPaneNorthExtension myStatusBarCentralWidget;
+  var statusBar: IdeStatusBarImpl? = null
+    private set
 
-  private ToolWindowPane toolWindowPane;
-  private JBPanel<?> myContentPane;
+  private var myStatusBarDisposed = false
+  private val northPanel = JBBox.createVerticalBox()
+  private val northComponents: MutableList<IdeRootPaneNorthExtension> = ArrayList()
+  private var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
+  private var toolWindowPane: ToolWindowPane? = null
+  //private var contentPane: JBPanel<*>? = null
+  private val glassPaneInitialized: Boolean
+  private var fullScreen = false
+  private var customFrameTitlePane: MainFrameCustomHeader? = null
+  private var selectedEditorFilePath: CustomDecorationPath? = null
 
-  private final boolean myGlassPaneInitialized;
-
-  private boolean myFullScreen;
-
-  private MainFrameCustomHeader myCustomFrameTitlePane;
-  private CustomDecorationPath mySelectedEditorFilePath;
-
-  protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
+  init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
-        setWindowDecorationStyle(FRAME);
+        windowDecorationStyle = FRAME
       }
-      catch (Exception e) {
-        Logger.getInstance(IdeRootPane.class).error(e);
+      catch (e: Exception) {
+        Logger.getInstance(IdeRootPane::class.java).error(e)
       }
     }
-
-    myContentPane.add(IdeFrameDecorator.wrapRootPaneNorthSide(this, myNorthPanel), BorderLayout.NORTH);
+    val contentPane = contentPane!!
+    contentPane.add(IdeFrameDecorator.wrapRootPaneNorthSide(this, northPanel), BorderLayout.NORTH)
 
     // listen to mouse motion events for a11y
-    myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
-    });
-
-    IdeMenuBar menu = IdeMenuBar.createMenuBar();
-    boolean isDecoratedMenu = isDecoratedMenu();
-    if (!isDecoratedMenu && !FrameInfoHelper.isFloatingMenuBarSupported()) {
-      setJMenuBar(menu);
+    contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
+    val menu = IdeMenuBar.createMenuBar()
+    val isDecoratedMenu = isDecoratedMenu
+    if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
+      jMenuBar = menu
     }
     else {
       if (isDecoratedMenu) {
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true);
-        ToolbarUtil.removeSystemTitleBar(this);
-
-        mySelectedEditorFilePath = CustomDecorationPath.Companion.createMainInstance(frame);
-        IdeMenuBar ideMenu = IdeMenuBar.createMenuBar();
-        if (ExperimentalUI.isNewUI()) {
-          myCustomFrameTitlePane = SystemInfoRt.isMac
-                                   ? new MacToolbarFrameHeader(frame, this, ideMenu)
-                                   : new ToolbarFrameHeader(frame, ideMenu);
+        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
+        ToolbarUtil.removeSystemTitleBar(this)
+        selectedEditorFilePath = createMainInstance(frame)
+        val ideMenu = IdeMenuBar.createMenuBar()
+        customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
+          if (SystemInfoRt.isMac) {
+            MacToolbarFrameHeader(frame = frame, root = this, ideMenu = ideMenu)
+          }
+          else {
+            ToolbarFrameHeader(frame = frame, ideMenu = ideMenu)
+          }
         }
         else {
-          myCustomFrameTitlePane = new MenuFrameHeader(frame, mySelectedEditorFilePath, ideMenu);
+          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath!!, ideMenu = ideMenu)
         }
-        getLayeredPane().add(myCustomFrameTitlePane.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
+        layeredPane.add(customFrameTitlePane!!.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2))
       }
-
-      if (FrameInfoHelper.isFloatingMenuBarSupported()) {
-        menuBar = menu;
-        getLayeredPane().add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1));
+      if (isFloatingMenuBarSupported) {
+        menuBar = menu
+        layeredPane.add(menuBar, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 1))
       }
-
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN, __ -> updateScreenState(frameHelper));
-      updateScreenState(frameHelper);
+      @Suppress("LeakingThis")
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(frameHelper) }
+      updateScreenState(frameHelper)
     }
 
-    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, false);
-    setGlassPane(glassPane);
-    myGlassPaneInitialized = true;
-    if (frame instanceof IdeFrameImpl) {
-      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, Boolean.TRUE);
+    val glassPane = IdeGlassPaneImpl(this, false)
+    setGlassPane(glassPane)
+    glassPaneInitialized = true
+    if (frame is IdeFrameImpl) {
+      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, java.lang.Boolean.TRUE)
     }
-    UIUtil.decorateWindowHeader(this);
-    glassPane.setVisible(false);
-    setBorder(UIManager.getBorder("Window.border"));
-
+    UIUtil.decorateWindowHeader(this)
+    glassPane.isVisible = false
+    border = UIManager.getBorder("Window.border")
     if (!isDecoratedMenu) {
-      ToolbarUtil.setCustomTitleBar(frame, this, runnable -> {
-        Disposer.register(parentDisposable, runnable::run);
-      });
+      ToolbarUtil.setCustomTitleBar(frame, this) { runnable: Runnable -> Disposer.register(parentDisposable) { runnable.run() } }
+    }
+    updateMainMenuVisibility()
+    @Suppress("LeakingThis")
+    contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
+  }
+
+  companion object {
+    private fun disposeIfNeeded(component: JComponent) {
+      @Suppress("DEPRECATION")
+      if (component is Disposable && !Disposer.isDisposed(component)) {
+        Disposer.dispose(component)
+      }
     }
 
-    updateMainMenuVisibility();
+    @get:ApiStatus.Internal
+    val isMenuButtonInToolbar: Boolean
+      /**
+       * Returns true if menu should be placed in toolbar instead of menu bar
+       */
+      get() {
+        val uiSettings = shadowInstance
+        return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.separateMainMenu
+      }
 
-    myContentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
+    private val isDecoratedMenu: Boolean
+      get() {
+        val osSupported = SystemInfoRt.isWindows ||
+                          (SystemInfoRt.isMac && ExperimentalUI.isNewUI() &&
+                           Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
+        return (IdeFrameDecorator.isCustomDecorationActive() || isToolbarInHeader()) && osSupported
+      }
   }
 
-  /**
-   * @return not-null action group or null to use {@link IdeActions#GROUP_MAIN_MENU} action group
-   */
-  protected @Nullable ActionGroup getMainMenuActionGroup() {
-    return null;
-  }
+  open val mainMenuActionGroup: ActionGroup?
+    /**
+     * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
+     */
+    get() = null
 
-  protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    String paneId = WindowInfoKt.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID;
-
-    final ToolWindowButtonManager toolWindowButtonManager;
+  protected open fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
+    val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+    val toolWindowButtonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {
-      toolWindowButtonManager = new ToolWindowPaneNewButtonManager(paneId);
-      toolWindowButtonManager.add(myContentPane);
+      toolWindowButtonManager = ToolWindowPaneNewButtonManager(paneId)
+      toolWindowButtonManager.add(contentPane as JComponent)
     }
     else {
-      toolWindowButtonManager = new ToolWindowPaneOldButtonManager(paneId);
+      toolWindowButtonManager = ToolWindowPaneOldButtonManager(paneId)
     }
-
-    toolWindowPane = new ToolWindowPane(frame, parentDisposable, paneId, toolWindowButtonManager);
-    return toolWindowPane;
+    toolWindowPane = ToolWindowPane(frame, parentDisposable, paneId, toolWindowButtonManager)
+    return toolWindowPane!!
   }
 
-  public @NotNull ToolWindowPane getToolWindowPane() {
-    return toolWindowPane;
-  }
+  open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
-  private void updateScreenState(@NotNull IdeFrame helper) {
-    myFullScreen = helper.isInFullScreen();
-    JMenuBar bar = getJMenuBar();
-
-    if (isDecoratedMenu()) {
+  private fun updateScreenState(helper: IdeFrame) {
+    fullScreen = helper.isInFullScreen
+    val bar = jMenuBar
+    if (isDecoratedMenu) {
       if (bar != null) {
-        bar.setVisible(myFullScreen);
+        bar.isVisible = fullScreen
       }
-
-      if (myCustomFrameTitlePane != null) {
-        myCustomFrameTitlePane.getComponent().setVisible(!myFullScreen);
+      if (customFrameTitlePane != null) {
+        customFrameTitlePane!!.getComponent().isVisible = !fullScreen
       }
-    } else if (SystemInfoRt.isXWindow) {
+    }
+    else if (SystemInfoRt.isXWindow) {
       if (bar != null) {
-        bar.setVisible(myFullScreen || !isMenuButtonInToolbar());
+        bar.isVisible = fullScreen || !isMenuButtonInToolbar
       }
-      updateToolbarVisibility(false);
+      updateToolbarVisibility(false)
     }
   }
 
-  @Override
-  protected LayoutManager createRootLayout() {
-    return FrameInfoHelper.isFloatingMenuBarSupported() || isDecoratedMenu()
-           ? new MyRootLayout() : super.createRootLayout();
+  override fun createRootLayout(): LayoutManager {
+    return if (isFloatingMenuBarSupported || isDecoratedMenu) MyRootLayout() else super.createRootLayout()
   }
 
-  @Override
-  public void setGlassPane(final Component glass) {
-    if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
-    super.setGlassPane(glass);
-  }
-
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
-  @Override
-  public final void addNotify() {
-    super.addNotify();
+  final override fun setGlassPane(glass: Component) {
+    check(!glassPaneInitialized) { "Setting of glass pane for IdeFrame is prohibited" }
+    super.setGlassPane(glass)
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
-  @Override
-  public final void removeNotify() {
+  override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (!myStatusBarDisposed) {
-        myStatusBarDisposed = true;
-        Disposer.dispose(myStatusBar);
+        myStatusBarDisposed = true
+        Disposer.dispose(statusBar!!)
       }
-      setJMenuBar(null);
-      if (myCustomFrameTitlePane != null) {
-        layeredPane.remove(myCustomFrameTitlePane.getComponent());
-        Disposer.dispose(myCustomFrameTitlePane);
+      jMenuBar = null
+      val customFrameTitlePane = customFrameTitlePane
+      if (customFrameTitlePane != null) {
+        layeredPane.remove(customFrameTitlePane.getComponent())
+        Disposer.dispose(customFrameTitlePane)
       }
     }
-    super.removeNotify();
+    super.removeNotify()
   }
 
-  @Override
-  protected final JLayeredPane createLayeredPane() {
-    JLayeredPane p = new JBLayeredPane();
-    p.setName(getName() + ".layeredPane");
-    return p;
+  override fun createLayeredPane(): JLayeredPane {
+    val result = JBLayeredPane()
+    result.name = "$name.layeredPane"
+    return result
   }
 
-  @Override
-  protected final Container createContentPane() {
-    myContentPane = new JBPanel<>(new BorderLayout());
-    myContentPane.setBackground(IdeBackgroundUtil.getIdeBackgroundColor());
-    return myContentPane;
+  override fun createContentPane(): Container {
+    val contentPane = JBPanel<JBPanel<*>>(BorderLayout())
+    contentPane.background = IdeBackgroundUtil.getIdeBackgroundColor()
+    return contentPane
   }
 
-  public final void prepareToolbar() {
-    ToolbarHolder delegate = getToolbarHolderDelegate();
+  fun prepareToolbar() {
+    val delegate = toolbarHolderDelegate
     if (delegate == null && ExperimentalUI.isNewUI()) {
-      MainToolbar toolbar = new MainToolbar();
-      toolbar.setBorder(JBUI.Borders.empty());
-
-      removeToolbar();
-      myToolbar = toolbar;
-      myNorthPanel.add(myToolbar, 0);
-      updateToolbarVisibility(true);
-      myContentPane.revalidate();
+      val toolbar = MainToolbar()
+      toolbar.border = JBUI.Borders.empty()
+      removeToolbar()
+      this.toolbar = toolbar
+      northPanel.add(this.toolbar, 0)
+      updateToolbarVisibility(true)
+      contentPane!!.revalidate()
     }
   }
 
-  public final void initOrCreateToolbar(@NotNull Project project) {
-    ToolbarHolder delegate = getToolbarHolderDelegate();
+  fun initOrCreateToolbar(project: Project) {
+    val delegate = toolbarHolderDelegate
     if (delegate == null) {
       if (ExperimentalUI.isNewUI()) {
-        JComponent toolbar = myToolbar;
+        val toolbar = toolbar
         // null if frame is reused (open project in an existing frame)
         if (toolbar != null) {
-          ((MainToolbar)toolbar).init(project);
-          return;
+          (toolbar as MainToolbar).init(project)
+          return
         }
       }
-      doUpdateToolbarWithoutDelegate();
+      doUpdateToolbarWithoutDelegate()
     }
     else {
-      delegate.initToolbar();
+      delegate.initToolbar()
     }
   }
 
-  final void updateToolbar() {
-    ToolbarHolder delegate = getToolbarHolderDelegate();
+  fun updateToolbar() {
+    val delegate = toolbarHolderDelegate
     if (delegate == null) {
-      doUpdateToolbarWithoutDelegate();
+      doUpdateToolbarWithoutDelegate()
     }
     else {
-      delegate.updateToolbar();
+      delegate.updateToolbar()
     }
   }
 
-  private void doUpdateToolbarWithoutDelegate() {
-    removeToolbar();
-    myToolbar = createToolbar();
-    myNorthPanel.add(myToolbar, 0);
-    updateToolbarVisibility(true);
-    myContentPane.revalidate();
+  private fun doUpdateToolbarWithoutDelegate() {
+    removeToolbar()
+    toolbar = createToolbar()
+    northPanel.add(toolbar, 0)
+    updateToolbarVisibility(true)
+    contentPane!!.revalidate()
   }
 
-  final void removeToolbar() {
-    ToolbarHolder delegate = getToolbarHolderDelegate();
+  fun removeToolbar() {
+    val delegate = toolbarHolderDelegate
     if (delegate != null) {
-      delegate.removeToolbar();
-      return;
+      delegate.removeToolbar()
+      return
     }
-
-    if (myToolbar != null) {
-      disposeIfNeeded(myToolbar);
-      myNorthPanel.remove(myToolbar);
-      myToolbar = null;
-    }
-  }
-
-  private @Nullable ToolbarHolder getToolbarHolderDelegate() {
-    if (MainToolbarKt.isToolbarInHeader() && ExperimentalUI.isNewUI()) {
-      return (ToolbarHolder)myCustomFrameTitlePane;
-    }
-    return null;
-  }
-
-  private static void disposeIfNeeded(@NotNull JComponent component) {
-    if (!(component instanceof Disposable)) {
-      return;
-    }
-
-    Disposable d = (Disposable)component;
-    if (!Disposer.isDisposed(d)) {
-      Disposer.dispose(d);
+    if (toolbar != null) {
+      disposeIfNeeded(toolbar!!)
+      northPanel.remove(toolbar)
+      toolbar = null
     }
   }
 
-  public void updateNorthComponents() {
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      northComponent.revalidate();
+  private val toolbarHolderDelegate: ToolbarHolder?
+    get() = if (isToolbarInHeader() && ExperimentalUI.isNewUI()) customFrameTitlePane as ToolbarHolder? else null
+
+  open fun updateNorthComponents() {
+    for (northComponent in northComponents) {
+      northComponent.revalidate()
     }
-    myContentPane.revalidate();
+    contentPane!!.revalidate()
   }
 
-  void updateMainMenuActions() {
-    if (myCustomFrameTitlePane != null) {
+  fun updateMainMenuActions() {
+    val customFrameTitlePane = customFrameTitlePane
+    if (customFrameTitlePane != null) {
       // The menu bar is decorated, we update it indirectly.
-      myCustomFrameTitlePane.updateMenuActions(false);
-      myCustomFrameTitlePane.getComponent().repaint();
-    } else if (menuBar != null) {
-      // No decorated menu bar, but there is a regular one, update it directly.
-      ((IdeMenuBar)menuBar).updateMenuActions(false);
-      menuBar.repaint();
+      customFrameTitlePane.updateMenuActions(false)
+      customFrameTitlePane.getComponent().repaint()
     }
-
+    else if (menuBar != null) {
+      // no decorated menu bar, but there is a regular one, update it directly
+      (menuBar as IdeMenuBar).updateMenuActions(false)
+      menuBar.repaint()
+    }
   }
 
-  private @NotNull JComponent createToolbar() {
+  private fun createToolbar(): JComponent {
     if (ExperimentalUI.isNewUI()) {
-      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
-      MainToolbar toolbar = new MainToolbar();
-      toolbar.init(frame == null ? null : frame.getProject());
-      toolbar.setBorder(JBUI.Borders.empty());
-      return toolbar;
+      val frame = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this)
+      val toolbar = MainToolbar()
+      toolbar.init(frame?.frameHelper?.project)
+      toolbar.border = JBUI.Borders.empty()
+      return toolbar
     }
 
-    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
-      .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
-    toolBar.setTargetComponent(null);
-    toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
-
-    PopupHandler.installPopupMenu(toolBar.getComponent(), "MainToolbarPopupActions", "MainToolbarPopup");
-
-    return toolBar.getComponent();
+    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR) as ActionGroup
+    val toolBar = getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
+    toolBar.targetComponent = null
+    toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+    PopupHandler.installPopupMenu(toolBar.component, "MainToolbarPopupActions", "MainToolbarPopup")
+    return toolBar.component
   }
 
-  public void createAndConfigureStatusBar(@NotNull IdeFrame frame, @NotNull Disposable parentDisposable) {
-    myStatusBar = createStatusBar(frame);
-    Disposer.register(parentDisposable, myStatusBar);
-
-    updateStatusBarVisibility();
-    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
+  fun createAndConfigureStatusBar(frame: IdeFrame, parentDisposable: Disposable) {
+    val statusBar = createStatusBar(frame)
+    this.statusBar = statusBar
+    Disposer.register(parentDisposable, statusBar)
+    updateStatusBarVisibility()
+    contentPane!!.add(statusBar, BorderLayout.SOUTH)
   }
 
-  protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders();
-    return new IdeStatusBarImpl(frame, addToolWindowsWidget);
+  protected open fun createStatusBar(frame: IdeFrame): IdeStatusBarImpl {
+    val addToolWindowsWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders
+    return IdeStatusBarImpl(frame, addToolWindowsWidget)
   }
 
-  final @Nullable IdeStatusBarImpl getStatusBar() {
-    return myStatusBar;
-  }
-
-  public int getStatusBarHeight() {
-    IdeStatusBarImpl statusBar = myStatusBar;
-    return (statusBar != null && statusBar.isVisible()) ? statusBar.getHeight() : 0;
-  }
-
-  private void updateToolbarVisibility(boolean hideInPresentationMode) {
-    if (myToolbar == null) {
-      myToolbar = createToolbar();
-      myNorthPanel.add(myToolbar, 0);
+  val statusBarHeight: Int
+    get() {
+      val statusBar = statusBar
+      return if (statusBar != null && statusBar.isVisible) statusBar.height else 0
     }
 
-    UISettings uiSettings = UISettings.getShadowInstance();
-    boolean isNewToolbar = ExperimentalUI.isNewUI();
-    boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
-                       || (!isNewToolbar && uiSettings.getShowMainToolbar()))
-                      && (hideInPresentationMode ? !uiSettings.getPresentationMode() : !myFullScreen);
-    myToolbar.setVisible(visible);
+  private fun updateToolbarVisibility(hideInPresentationMode: Boolean) {
+    if (toolbar == null) {
+      toolbar = createToolbar()
+      northPanel.add(toolbar, 0)
+    }
+    val uiSettings = shadowInstance
+    val isNewToolbar = ExperimentalUI.isNewUI()
+    val visible = ((isNewToolbar && !isToolbarInHeader(uiSettings) || !isNewToolbar && uiSettings.showMainToolbar)
+                   && if (hideInPresentationMode) !uiSettings.presentationMode else !fullScreen)
+    toolbar!!.isVisible = visible
   }
 
-  private void updateStatusBarVisibility() {
-    UISettings uiSettings = UISettings.getShadowInstance();
-    myStatusBar.setVisible(uiSettings.getShowStatusBar() && !uiSettings.getPresentationMode());
+  private fun updateStatusBarVisibility() {
+    val uiSettings = shadowInstance
+    statusBar!!.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
   }
 
-  private void updateMainMenuVisibility() {
-    UISettings uiSettings = UISettings.getShadowInstance();
-    if (uiSettings.getPresentationMode() || IdeFrameDecorator.isCustomDecorationActive()) {
-      return;
+  private fun updateMainMenuVisibility() {
+    val uiSettings = shadowInstance
+    if (uiSettings.presentationMode || IdeFrameDecorator.isCustomDecorationActive()) {
+      return
     }
 
-    boolean globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented();
+    val globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()
     // don't show swing-menu when global (system) menu presented
-    boolean visible = SystemInfo.isMacSystemMenu ||
-                      (!globalMenuVisible && uiSettings.getShowMainMenu() && !isMenuButtonInToolbar());
-    if (menuBar != null && visible != menuBar.isVisible()) {
-      menuBar.setVisible(visible);
+    val visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && uiSettings.showMainMenu && !isMenuButtonInToolbar
+    if (menuBar != null && visible != menuBar.isVisible) {
+      menuBar.isVisible = visible
     }
   }
 
-  void setProject(Project project) {
-    if (mySelectedEditorFilePath != null) {
-      mySelectedEditorFilePath.setProject(project);
+  fun setProject(project: Project?) {
+    selectedEditorFilePath?.project = project
+  }
+
+  internal open fun installNorthComponents(project: Project) {
+    val uiSettings = shadowInstance
+    statusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project) { it is StatusBarCentralWidget }
+    northComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project))
+    if (northComponents.isEmpty()) {
+      return
+    }
+
+    for (northComponent in northComponents) {
+      northPanel.add(northComponent.component)
+      northComponent.uiSettingsChanged(uiSettings)
     }
   }
 
-  protected void installNorthComponents(@NotNull Project project) {
-    UISettings uiSettings = UISettings.getShadowInstance();
-    myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
-
-    myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
-    if (myNorthComponents.isEmpty()) {
-      return;
-    }
-
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(uiSettings);
-    }
-  }
-
-  protected void deinstallNorthComponents() {
-    int count = myNorthPanel.getComponentCount();
-    for (int i = count - 1; i >= 0; i--) {
-      if (myNorthPanel.getComponent(i) != myToolbar) {
-        myNorthPanel.remove(i);
+  internal open fun deinstallNorthComponents() {
+    val count = northPanel.componentCount
+    for (i in count - 1 downTo 0) {
+      if (northPanel.getComponent(i) !== toolbar) {
+        northPanel.remove(i)
       }
     }
-
-    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      if (northComponent instanceof Disposable && !Disposer.isDisposed((Disposable)northComponent)) {
-        Disposer.dispose((Disposable)northComponent);
+    for (northComponent in northComponents) {
+      @Suppress("DEPRECATION")
+      if (northComponent is Disposable && !Disposer.isDisposed(northComponent)) {
+        Disposer.dispose((northComponent as Disposable))
       }
     }
-    myNorthComponents.clear();
+    northComponents.clear()
   }
 
-  public @Nullable IdeRootPaneNorthExtension findByName(@NotNull String name) {
-    return ExperimentalUI.isNewUI() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY.equals(name)
-           ? myStatusBarCentralWidget
-           : ContainerUtil.find(myNorthComponents, c -> c.getKey().equals(name));
+  fun findByName(name: String): IdeRootPaneNorthExtension? {
+    if (ExperimentalUI.isNewUI() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY == name) {
+      return statusBarCentralWidget
+    }
+    else {
+      return northComponents.firstOrNull { it.key == name }
+    }
   }
 
-  @Override
-  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    UIUtil.decorateWindowHeader(this);
-    updateToolbarVisibility(true);
-    updateStatusBarVisibility();
-    updateMainMenuVisibility();
-
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    UIUtil.decorateWindowHeader(this)
+    updateToolbarVisibility(true)
+    updateStatusBarVisibility()
+    updateMainMenuVisibility()
     if (!ExperimentalUI.isNewUI()) {
-      for (IdeRootPaneNorthExtension component : myNorthComponents) {
-        component.uiSettingsChanged(uiSettings);
+      for (component in northComponents) {
+        component.uiSettingsChanged(uiSettings)
       }
     }
-
-    IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
-    if (frame == null) {
-      return;
-    }
-
-    frame.setBackground(UIUtil.getPanelBackground());
-
-    if (frame.getBalloonLayout() instanceof BalloonLayoutImpl balloonLayout) {
-      balloonLayout.queueRelayout();
-    }
+    val frame = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this) ?: return
+    frame.background = UIUtil.getPanelBackground()
+    (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
   }
 
-  private final class MyRootLayout extends RootLayout {
-    @Override
-    public Dimension preferredLayoutSize(Container parent) {
-      Dimension rd;
-      Insets i = getInsets();
-
-      if (contentPane != null) {
-        rd = contentPane.getPreferredSize();
+  private inner class MyRootLayout : RootLayout() {
+    override fun preferredLayoutSize(parent: Container): Dimension {
+      val i = insets
+      val rd = if (contentPane == null) parent.size else contentPane.preferredSize
+      val dimension = if (customFrameTitlePane != null && customFrameTitlePane!!.getComponent().isVisible) {
+        customFrameTitlePane!!.getComponent().preferredSize
       }
       else {
-        rd = parent.getSize();
+        JBUI.emptySize()
       }
-
-      Dimension dimension;
-      if (myCustomFrameTitlePane != null && myCustomFrameTitlePane.getComponent().isVisible()) {
-        dimension = myCustomFrameTitlePane.getComponent().getPreferredSize();
+      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
+        menuBar.preferredSize
       }
       else {
-        dimension = JBUI.emptySize();
+        JBUI.emptySize()
       }
-
-      Dimension mbd;
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
-        mbd = menuBar.getPreferredSize();
-      }
-      else {
-        mbd = JBUI.emptySize();
-      }
-      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + dimension.width,
-                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
+      return Dimension(rd.width.coerceAtLeast(mbd.width) + i.left + i.right + dimension.width,
+                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
     }
 
-    @Override
-    public Dimension minimumLayoutSize(Container parent) {
-      Dimension rd;
-      Insets i = getInsets();
-      if (contentPane != null) {
-        rd = contentPane.getMinimumSize();
+    override fun minimumLayoutSize(parent: Container): Dimension {
+      val i = insets
+      val rd = if (contentPane == null) parent.size else contentPane.minimumSize
+      val dimension = if (isDecoratedMenu && customFrameTitlePane != null && customFrameTitlePane!!.getComponent().isVisible) {
+        customFrameTitlePane!!.getComponent().preferredSize
       }
       else {
-        rd = parent.getSize();
+        JBUI.emptySize()
       }
-
-      Dimension dimension;
-      if (isDecoratedMenu() && myCustomFrameTitlePane != null && myCustomFrameTitlePane.getComponent().isVisible()) {
-        dimension = myCustomFrameTitlePane.getComponent().getPreferredSize();
+      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
+        menuBar.minimumSize
       }
       else {
-        dimension = JBUI.emptySize();
+        JBUI.emptySize()
       }
-
-      Dimension mbd;
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
-        mbd = menuBar.getMinimumSize();
-      }
-      else {
-        mbd = JBUI.emptySize();
-      }
-      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right + dimension.width,
-                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
+      return Dimension(rd.width.coerceAtLeast(mbd.width) + i.left + i.right + dimension.width,
+                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
     }
 
-    @Override
-    public Dimension maximumLayoutSize(Container target) {
-      Dimension mbd;
-      Insets i = getInsets();
-      if (menuBar != null && menuBar.isVisible() && !myFullScreen && !isDecoratedMenu()) {
-        mbd = menuBar.getMaximumSize();
+    override fun maximumLayoutSize(target: Container): Dimension {
+      val i = insets
+      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
+        menuBar.maximumSize
       }
       else {
-        mbd = JBUI.emptySize();
+        JBUI.emptySize()
       }
-
-      Dimension dimension;
-      if (isDecoratedMenu() && myCustomFrameTitlePane != null && myCustomFrameTitlePane.getComponent().isVisible()) {
-        dimension = myCustomFrameTitlePane.getComponent().getPreferredSize();
+      val dimension = if (isDecoratedMenu && customFrameTitlePane != null && customFrameTitlePane!!.getComponent().isVisible) {
+        customFrameTitlePane!!.getComponent().preferredSize
       }
       else {
-        dimension = JBUI.emptySize();
+        JBUI.emptySize()
       }
-
-      Dimension rd;
-      if (contentPane != null) {
-        rd = contentPane.getMaximumSize();
+      val rd = if (contentPane != null) {
+        contentPane.maximumSize
       }
       else {
-        rd = new Dimension(Integer.MAX_VALUE,
-                           Integer.MAX_VALUE - i.top - i.bottom - mbd.height - 1);
+        Dimension(Int.MAX_VALUE,
+                  Int.MAX_VALUE - i.top - i.bottom - mbd.height - 1)
       }
-      return new Dimension(Math.min(rd.width, mbd.width) + i.left + i.right + dimension.width,
-                           rd.height + mbd.height + i.top + i.bottom + dimension.height);
+      return Dimension(rd.width.coerceAtMost(mbd.width) + i.left + i.right + dimension.width,
+                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
     }
 
-    @Override
-    public void layoutContainer(Container parent) {
-      Rectangle b = parent.getBounds();
-      Insets i = getInsets();
-      int w = b.width - i.right - i.left;
-      int h = b.height - i.top - i.bottom;
-
+    override fun layoutContainer(parent: Container) {
+      val b = parent.bounds
+      val i = insets
+      val w = b.width - i.right - i.left
+      val h = b.height - i.top - i.bottom
       if (layeredPane != null) {
-        layeredPane.setBounds(i.left, i.top, w, h);
+        layeredPane.setBounds(i.left, i.top, w, h)
       }
-      if (glassPane != null) {
-        glassPane.setBounds(i.left, i.top, w, h);
-      }
-      int contentY = 0;
-      if (menuBar != null && menuBar.isVisible()) {
-        Dimension mbd = menuBar.getPreferredSize();
-        menuBar.setBounds(0, 0, w, mbd.height);
-        if (!myFullScreen && !isDecoratedMenu()) {
-          contentY += mbd.height;
+      glassPane?.setBounds(i.left, i.top, w, h)
+      var contentY = 0
+      if (menuBar != null && menuBar.isVisible) {
+        val mbd = menuBar.preferredSize
+        menuBar.setBounds(0, 0, w, mbd.height)
+        if (!fullScreen && !isDecoratedMenu) {
+          contentY += mbd.height
         }
       }
-
-      if (myCustomFrameTitlePane != null && myCustomFrameTitlePane.getComponent().isVisible()) {
-        Dimension tpd = myCustomFrameTitlePane.getComponent().getPreferredSize();
+      val customFrameTitlePane = customFrameTitlePane
+      if (customFrameTitlePane != null && customFrameTitlePane.getComponent().isVisible) {
+        val tpd = customFrameTitlePane.getComponent().preferredSize
         if (tpd != null) {
-          int tpHeight = tpd.height;
-
-          myCustomFrameTitlePane.getComponent().setBounds(0, 0, w, tpHeight);
-          contentY += tpHeight;
+          val tpHeight = tpd.height
+          customFrameTitlePane.getComponent().setBounds(0, 0, w, tpHeight)
+          contentY += tpHeight
         }
       }
-
-      if (contentPane != null) {
-        contentPane.setBounds(0, contentY, w, h - contentY);
-      }
+      contentPane?.setBounds(0, contentY, w, h - contentY)
     }
-  }
-
-  /**
-   * Returns true if menu should be placed in toolbar instead of menu bar
-   */
-  @ApiStatus.Internal
-  public static boolean isMenuButtonInToolbar() {
-    UISettings uiSettings = UISettings.getShadowInstance();
-    return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.getSeparateMainMenu();
-  }
-
-  private static boolean isDecoratedMenu() {
-    boolean osSupported = SystemInfoRt.isWindows ||
-      (SystemInfoRt.isMac && ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.title.toolbar.in.macos"));
-    return (IdeFrameDecorator.isCustomDecorationActive() || MainToolbarKt.isToolbarInHeader()) && osSupported;
   }
 }

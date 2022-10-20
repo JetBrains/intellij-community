@@ -173,7 +173,7 @@ open class ProjectFrameHelper(
     rootPane.prepareToolbar()
   }
 
-  protected open fun createIdeRootPane(): IdeRootPane = IdeRootPane(frame!!, this, this)
+  protected open fun createIdeRootPane(): IdeRootPane = IdeRootPane(frame = frame!!, frameHelper = this, parentDisposable = this)
 
   fun releaseFrame() {
     rootPane!!.removeToolbar()

@@ -487,7 +487,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
 
-      val toolWindowPane = frameHelper.rootPane!!.toolWindowPane
+      val toolWindowPane = frameHelper.rootPane!!.getToolWindowPane()
       toolWindowPane.setDocumentComponent(editorComponent)
 
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
