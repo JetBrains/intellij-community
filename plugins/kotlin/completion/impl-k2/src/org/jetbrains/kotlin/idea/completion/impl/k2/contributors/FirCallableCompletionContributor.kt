@@ -362,6 +362,7 @@ internal class FirCallableReferenceCompletionContributor(
 
                 resolved.getMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
                 resolved.companionObject?.getMemberScope()?.getCallableSymbols(scopeNameFilter)?.forEach(::process)
+                resolved.getStaticMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
             }
 
             else -> {

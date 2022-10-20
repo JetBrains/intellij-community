@@ -84,6 +84,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/callableReference/EmptyQualifier.kt");
         }
 
+        @TestMetadata("JavaMethod.kt")
+        public void testJavaMethod() throws Exception {
+            runTest("../testData/handlers/basic/callableReference/JavaMethod.kt");
+        }
+
+        @TestMetadata("JavaStaticMethod.kt")
+        public void testJavaStaticMethod() throws Exception {
+            runTest("../testData/handlers/basic/callableReference/JavaStaticMethod.kt");
+        }
+
         @TestMetadata("NonEmptyQualifier.kt")
         public void testNonEmptyQualifier() throws Exception {
             runTest("../testData/handlers/basic/callableReference/NonEmptyQualifier.kt");
