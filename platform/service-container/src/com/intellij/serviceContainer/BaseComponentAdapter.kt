@@ -10,8 +10,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.*
+import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
@@ -97,7 +97,16 @@ internal sealed class BaseComponentAdapter(
       throw PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    val result = (deferred as Deferred<T>).asCompletableFuture().join()
+    while (!deferred.isCompleted) {
+      ProgressManager.checkCanceled()
+      try {
+        Thread.sleep(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+      }
+      catch (e: InterruptedException) {
+        throw ProcessCanceledException(e)
+      }
+    }
+    val result = deferred.getCompleted() as T
     if (activityCategory != null) {
       val end = StartUpMeasurer.getCurrentTime()
       if ((end - beforeLockTime) > 100) {
