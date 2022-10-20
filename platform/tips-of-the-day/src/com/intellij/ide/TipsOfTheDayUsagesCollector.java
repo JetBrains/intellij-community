@@ -19,7 +19,7 @@ import static com.intellij.ide.util.TipsOrderUtil.SHUFFLE_ALGORITHM;
 import static com.intellij.ide.util.TipsOrderUtil.SORTING_ALGORITHM;
 
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 11);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 12);
 
   public enum DialogType {automatically, manually}
 
