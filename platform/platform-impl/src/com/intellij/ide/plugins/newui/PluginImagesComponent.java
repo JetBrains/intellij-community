@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -490,11 +491,11 @@ public class PluginImagesComponent extends JPanel {
 
       for (int i = 0; i < count; i++) {
         if (i == current) {
-          g2.setColor(Gray.x6E);
+          g2.setColor(new JBColor(Gray.x6E, JBUI.CurrentTheme.Button.buttonColorStart()));
           g2.fillOval(ovalX, ovalY, ovalSize, ovalSize);
         }
         else {
-          g2.setColor(Gray.xD1);
+          g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
           g2.drawOval(ovalX, ovalY, ovalSize - 1, ovalSize - 1);
         }
         ovalX += ovalSize + ovalGap;
@@ -526,9 +527,9 @@ public class PluginImagesComponent extends JPanel {
 
     int actionY = y + (height - offset - actionSize) / 2;
 
-    g2.setColor(Gray.xF8);
+    g2.setColor(JBUI.CurrentTheme.Button.buttonColorStart());
     g2.fillOval(actionX, actionY, actionSize, actionSize);
-    g2.setColor(Gray.xD1);
+    g2.setColor(JBUI.CurrentTheme.Button.buttonOutlineColorStart(false));
     g2.drawOval(actionX, actionY, actionSize, actionSize);
 
     Icon icon = left ? AllIcons.Actions.ArrowCollapse : AllIcons.Actions.ArrowExpand;
