@@ -1,18 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastCallKind;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
@@ -91,5 +94,37 @@ public class UseGrayInspection extends DevKitUastInspectionBase {
   @Override
   public String getShortName() {
     return "InspectionUsingGrayColors";
+  }
+
+  private static class ConvertToGrayQuickFix implements LocalQuickFix {
+    private final int myGrayValue;
+
+    private ConvertToGrayQuickFix(int grayValue) {
+      myGrayValue = grayValue;
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return DevKitBundle.message("inspections.use.gray.fix.convert.name", myGrayValue);
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.use.gray.fix.convert.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      UCallExpression awtGrayColorConstructor = UastContextKt.toUElement(element, UCallExpression.class);
+      if (awtGrayColorConstructor == null) return;
+      UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+      if (generationPlugin == null) return;
+      UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+      String grayConstant = Gray.class.getName() + "._" + myGrayValue;
+      UQualifiedReferenceExpression grayConstantReference = pluginElementFactory.createQualifiedReference(grayConstant, element);
+      if (grayConstantReference == null) return;
+      generationPlugin.replace(awtGrayColorConstructor, grayConstantReference, UQualifiedReferenceExpression.class);
+    }
   }
 }
