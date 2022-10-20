@@ -112,7 +112,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
         else {
           MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath!!, ideMenu = ideMenu)
         }
-        layeredPane.add(customFrameTitlePane!!.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2))
+        layeredPane.add(customFrameTitlePane!!.getComponent(), (JLayeredPane.DEFAULT_LAYER - 2) as Any)
       }
       if (isFloatingMenuBarSupported) {
         menuBar = IdeMenuBar.createMenuBar()
