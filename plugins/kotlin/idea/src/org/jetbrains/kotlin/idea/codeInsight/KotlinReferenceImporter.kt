@@ -78,7 +78,7 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
                 }
             }
         }.firstNotNullOfOrNull { action ->
-            val suggestions = filterSuggestions(file, action.collectSuggestions())
+            val suggestions = filterSuggestions(file, action.suggestions())
             val singlePackage = suggestions.groupBy { it.parentOrNull() ?: FqName.ROOT }.size == 1
             if (!singlePackage) {
                 null
