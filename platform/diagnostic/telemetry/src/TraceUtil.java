@@ -13,14 +13,14 @@ public class TraceUtil {
 
   @NotNull
   public static <T, E extends Throwable> T computeWithSpanThrows(@NotNull Tracer tracer,
-                                                                 @NotNull String scopeName,
+                                                                 @NotNull String spanName,
                                                                  @NotNull ThrowableNotNullFunction<Span, T, E> operation) throws E {
-    return TraceKt.computeWithSpanIgnoreThrows(tracer, scopeName, operation);
+    return TraceKt.computeWithSpanIgnoreThrows(tracer, spanName, operation);
   }
 
   public static <E extends Throwable> void runWithSpanThrows(@NotNull Tracer tracer,
-                                                             @NotNull String scopeName,
+                                                             @NotNull String spanName,
                                                              @NotNull ThrowableConsumer<Span, E> operation) throws E {
-    TraceKt.runWithSpanIgnoreThrows(tracer, scopeName, operation);
+    TraceKt.runWithSpanIgnoreThrows(tracer, spanName, operation);
   }
 }
