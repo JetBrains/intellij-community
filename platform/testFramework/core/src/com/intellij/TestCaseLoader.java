@@ -246,12 +246,6 @@ public class TestCaseLoader {
   }
 
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
-    if (!IS_FAIR_BUCKETING) {
-      System.err.printf(
-        "Unexpected fair bucketing method call. Either property '%s' should be set, or invoking this method must not be performed%n",
-        FAIR_BUCKETING_FLAG
-      );
-    }
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
