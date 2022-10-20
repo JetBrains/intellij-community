@@ -33,6 +33,7 @@ public abstract class AbstractUseDPIAwareEmptyBorderTestBase extends JavaCodeIns
                          package javax.swing.border;
                          public interface Border {}
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBUI with Border added with addClass()
     myFixture.addClass("""
                          package com.intellij.util.ui;
                          import java.awt.Insets;

@@ -16,6 +16,7 @@ public abstract class AbstractUseDPIAwareInsetsTestBase extends JavaCodeInsightF
                            public Insets(int top, int left, int bottom, int right) {}
                          }
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBInsets/JBUI with Border added with addClass()
     myFixture.addClass("""
                          package com.intellij.util.ui;
                          import java.awt.Insets;
