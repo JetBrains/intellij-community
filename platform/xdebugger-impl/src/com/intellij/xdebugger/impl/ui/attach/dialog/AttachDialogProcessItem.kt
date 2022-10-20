@@ -34,6 +34,9 @@ data class AttachDialogProcessItem(
 
   val commandLineTextAttributes: SimpleTextAttributes?
     get() = presentationInfo.value.commandLineTextAttributes
+
+  val indexedString: String
+    get() = presentationInfo.value.indexedString
 }
 
 data class AttachItemsInfo(
