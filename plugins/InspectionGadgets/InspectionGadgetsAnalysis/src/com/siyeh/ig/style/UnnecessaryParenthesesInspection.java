@@ -80,7 +80,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
         final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
         element.replace(expression.getParameterList());
       } else {
-        ParenthesesUtils.removeParentheses((PsiExpression)element, ignoreClarifyingParentheses);
+        ParenthesesUtils.removeParentheses((PsiCaseLabelElement)element, ignoreClarifyingParentheses);
       }
     }
   }
@@ -100,6 +100,18 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
           registerError(list);
         }
       }
+    }
+
+    @Override
+    public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
+      final PsiElement parent = pattern.getParent();
+      if (parent instanceof PsiParenthesizedPattern) {
+        return;
+      }
+      if (!ErrorUtil.containsDeepError(pattern)) {
+        registerError(pattern);
+      }
+      super.visitParenthesizedPattern(pattern);
     }
 
     @Override
