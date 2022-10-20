@@ -88,13 +88,13 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
   public static final @NonNls String LIBRARY_ROOTS = "LIBRARY_ROOTS";
   public static final @NonNls String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
-  @SuppressWarnings("SpellCheckingInspection")
   public static final @NonNls String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static final @NonNls String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final @NonNls String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
   public static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
 
   private static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
@@ -663,7 +663,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                           @NotNull PythonCommandLineState pyState,
                                           @NotNull GeneralCommandLine cmd) {
     if (pyState.isMultiprocessDebug()) {
-      //noinspection SpellCheckingInspection
       debugParams.addParameter(getMultiprocessDebugParameter());
     }
 
@@ -679,7 +678,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     if (pyState.isMultiprocessDebug() && !debuggerScriptInServerMode) {
-      //noinspection SpellCheckingInspection
       debuggerScript.addParameter(getMultiprocessDebugParameter());
     }
 
