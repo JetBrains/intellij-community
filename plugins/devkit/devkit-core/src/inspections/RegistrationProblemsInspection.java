@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
@@ -32,9 +32,6 @@ import javax.swing.event.ChangeListener;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author swr
- */
 public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
   public boolean CHECK_PLUGIN_XML = true;
@@ -95,17 +92,24 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
-      return checkPluginXml((XmlFile)file, manager, isOnTheFly);
+      return inspectPluginXml((XmlFile)file, manager, isOnTheFly);
     }
     return null;
   }
 
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
+    if (CHECK_JAVA_CODE) {
+      return inspectClass(checkedClass, manager, isOnTheFly);
+    }
+    return null;
+  }
 
-    if (CHECK_JAVA_CODE &&
-        nameIdentifier != null &&
+  private ProblemDescriptor @Nullable [] inspectClass(@NotNull PsiClass checkedClass,
+                                                      @NotNull InspectionManager manager,
+                                                      boolean isOnTheFly) {
+    final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
+    if (nameIdentifier != null &&
         checkedClass.getQualifiedName() != null &&
         checkedClass.getContainingFile().getVirtualFile() != null &&
         !checkedClass.isInterface() &&
@@ -119,16 +123,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (componentClasses != null && !componentClasses.isEmpty()) {
         List<ProblemDescriptor> problems = new SmartList<>();
 
-        for (PsiClass compClass : componentClasses) {
-          if (ActionType.ACTION.myClassName.equals(compClass.getQualifiedName()) &&
-              !checkedClass.isInheritor(compClass, true)) {
+        for (PsiClass componentClass : componentClasses) {
+          if (ActionType.ACTION.myClassName.equals(componentClass.getQualifiedName()) &&
+              !checkedClass.isInheritor(componentClass, true)) {
             problems.add(manager.createProblemDescriptor(nameIdentifier,
                                                          DevKitBundle.message("inspections.registration.problems.incompatible.message",
-                                                                              compClass.isInterface() ?
-                                                                              DevKitBundle.message("keyword.implement") :
-                                                                              DevKitBundle.message("keyword.extend"),
-                                                                              compClass.getQualifiedName()), isOnTheFly,
-                                                         ImplementOrExtendFix.createFixes(nameIdentifier, compClass, checkedClass, isOnTheFly),
+                                                                              componentClass.getQualifiedName()), isOnTheFly,
+                                                         ImplementOrExtendFix.createFixes(nameIdentifier, componentClass, checkedClass,
+                                                                                          isOnTheFly),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -151,7 +153,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  private static ProblemDescriptor @Nullable [] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
+  private static ProblemDescriptor @Nullable [] inspectPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
     final XmlDocument document = xmlFile.getDocument();
     if (document == null) {
       return null;
@@ -161,29 +163,13 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     assert rootTag != null;
 
     final RegistrationChecker checker = new RegistrationChecker(manager, xmlFile, isOnTheFly);
-
     DescriptorUtil.processComponents(rootTag, checker);
-
     DescriptorUtil.processActions(rootTag, checker);
-
     return checker.getProblems();
   }
 
   private static boolean isAbstract(PsiModifierListOwner checkedClass) {
     return checkedClass.hasModifierProperty(PsiModifier.ABSTRACT);
-  }
-
-  @Nullable
-  private static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
-    final XmlAttributeValue valueElement = attribute.getValueElement();
-    if (valueElement == null) return null;
-
-    final PsiElement[] children = valueElement.getChildren();
-    if (children.length == 3 && children[1] instanceof XmlToken) {
-      return children[1];
-    }
-    if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
-    return valueElement;
   }
 
   private static final class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
@@ -311,40 +297,56 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (attribute != null) {
         final PsiElement token = getAttValueToken(attribute);
         if (token != null) {
-          final String actionClassName = attribute.getValue().trim();
-          final PsiClass actionClass = findClass(actionClassName);
-          if (actionClass == null) {
-            addProblem(token,
-                       DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
-                                            DevKitBundle.message("class.action")),
-                       ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
-                .createCreateClassOrInterfaceFix(token, actionClassName, true, AnAction.class.getName())));
-          }
-          else {
-            if (!type.isOfType(actionClass)) {
-              final PsiClass psiClass = findClass(type.myClassName);
-              if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
-                addProblem(token,
-                           DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly,
-                           ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
+          String attributeValue = attribute.getValue();
+          if (attributeValue != null) {
+            final String actionClassName = attributeValue.trim();
+            final PsiClass actionClass = findClass(actionClassName);
+            if (actionClass == null) {
+              addProblem(token,
+                         DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
+                                              DevKitBundle.message("class.action")),
+                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
+                  .createCreateClassOrInterfaceFix(token, actionClassName, true, AnAction.class.getName())));
+            }
+            else {
+              if (!type.isOfType(actionClass)) {
+                final PsiClass psiClass = findClass(type.myClassName);
+                if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
+                  addProblem(token,
+                             DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly,
+                             ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
+                }
               }
-            }
-            final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
-            if (noArgCtor == null) {
-              addProblem(token,
-                         DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
-                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
-            }
-            if (isAbstract(actionClass)) {
-              addProblem(token,
-                         DevKitBundle.message("inspections.registration.problems.abstract"),
-                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+              final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
+              if (noArgCtor == null) {
+                addProblem(token,
+                           DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
+              }
+              if (isAbstract(actionClass)) {
+                addProblem(token,
+                           DevKitBundle.message("inspections.registration.problems.abstract"),
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+              }
             }
           }
         }
       }
       return true;
+    }
+
+    @Nullable
+    private static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
+      final XmlAttributeValue valueElement = attribute.getValueElement();
+      if (valueElement == null) return null;
+
+      final PsiElement[] children = valueElement.getChildren();
+      if (children.length == 3 && children[1] instanceof XmlToken) {
+        return children[1];
+      }
+      if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
+      return valueElement;
     }
 
     private void addProblem(XmlTagValue impl,
