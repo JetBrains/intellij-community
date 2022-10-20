@@ -130,5 +130,9 @@ object TraceManager {
     return wrapTracer(scopeName, sdk.getTracer(scopeName), verbose, verboseMode)
   }
 
+  fun noopTracer(): IJTracer {
+    return IJNoopTracer
+  }
+
   fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
 }
