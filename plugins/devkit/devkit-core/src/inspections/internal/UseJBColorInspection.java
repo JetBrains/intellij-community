@@ -2,18 +2,26 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorConstantQuickFix;
-import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBColorQuickFix;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.generate.UastElementFactory;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
@@ -120,5 +128,75 @@ public class UseJBColorInspection extends DevKitInspectionBase {
         return false;
       }
     }, HINTS);
+  }
+
+  private static class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.constant.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      UReferenceExpression awtColorConstantReference = getReferenceExpression(element);
+      if (awtColorConstantReference == null) return;
+      UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(element.getLanguage());
+      if (generationPlugin == null) return;
+      UastElementFactory pluginElementFactory = generationPlugin.getElementFactory(project);
+      String jbColorConstant = JBColor.class.getName() + '.' + buildColorConstantName(element);
+      UQualifiedReferenceExpression jbColorConstantReference = pluginElementFactory.createQualifiedReference(jbColorConstant, element);
+      if (jbColorConstantReference != null) {
+        generationPlugin.replace(awtColorConstantReference, jbColorConstantReference, UQualifiedReferenceExpression.class);
+      }
+    }
+
+    @Nullable
+    private static UReferenceExpression getReferenceExpression(PsiElement element) {
+      UReferenceExpression expression = UastContextKt.toUElement(element, UQualifiedReferenceExpression.class);
+      if (expression == null) {
+        expression = UastContextKt.toUElement(element, USimpleNameReferenceExpression.class);
+      }
+      return expression;
+    }
+
+    @NotNull
+    private static @NonNls String buildColorConstantName(@NotNull PsiElement expression) {
+      @NonNls String text = expression.getText();
+      if (text.contains(".")) {
+        text = text.substring(text.lastIndexOf('.'));
+      }
+      text = StringUtil.trimStart(text, ".");
+      if (text.equalsIgnoreCase("lightGray")) {
+        text = "LIGHT_GRAY";
+      }
+      else if (text.equalsIgnoreCase("darkGray")) {
+        text = "DARK_GRAY";
+      }
+      return StringUtil.toUpperCase(text);
+    }
+  }
+
+  private static class ConvertToJBColorQuickFix implements LocalQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return DevKitBundle.message("inspections.awt.color.used.fix.use.jb.color.fix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final String newJBColor = String.format("new %s(%s, new java.awt.Color())", JBColor.class.getName(), element.getText());
+      final PsiExpression expression = factory.createExpressionFromText(newJBColor, element.getContext());
+      final PsiElement newElement = element.replace(expression);
+      final PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
+      final int offset = el.getTextOffset() + el.getText().length() - 2;
+      final Editor editor = PsiEditorUtil.findEditor(el);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
+    }
   }
 }
