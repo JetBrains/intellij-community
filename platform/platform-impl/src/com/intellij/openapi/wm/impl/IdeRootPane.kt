@@ -132,9 +132,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     UIUtil.decorateWindowHeader(this)
     glassPane.isVisible = false
+
     border = UIManager.getBorder("Window.border")
+
     if (!isDecoratedMenu) {
-      ToolbarUtil.setCustomTitleBar(frame, this) { runnable: Runnable -> Disposer.register(parentDisposable) { runnable.run() } }
+      ToolbarUtil.setCustomTitleBar(frame, this) { runnable -> Disposer.register(parentDisposable) { runnable.run() } }
     }
     updateMainMenuVisibility()
     @Suppress("LeakingThis")
