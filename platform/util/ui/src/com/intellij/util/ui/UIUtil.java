@@ -1700,11 +1700,25 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void setFosterParent(@NotNull JComponent component, @Nullable Component parent) {
+    WeakReference<Component> ref = validateFosterParent(component, parent);
+    ClientProperty.put(component, FOSTER_PARENT, ref);
+  }
+
+  /**
+   * An overload of {@link UIUtil#setFosterParent(JComponent, Component)} for windows.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull Window window, @Nullable Component parent) {
+    WeakReference<Component> ref = validateFosterParent(window, parent);
+    ClientProperty.put(window, FOSTER_PARENT, ref);
+  }
+
+  private static @Nullable WeakReference<Component> validateFosterParent(@NotNull Component component, @Nullable Component parent) {
     if (parent != null && isGeneralizedAncestor(component, parent)) {
       throw new IllegalArgumentException("Setting this component as a foster parent will form a cycle in a hierarchy graph");
     }
-    WeakReference<Component> ref = parent != null ? new WeakReference<>(parent) : null;
-    ClientProperty.put(component, FOSTER_PARENT, ref);
+    return parent != null ? new WeakReference<>(parent) : null;
   }
 
   private static boolean isGeneralizedAncestor(@NotNull Component ancestor, @NotNull Component descendant) {
