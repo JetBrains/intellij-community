@@ -8,16 +8,14 @@ class AttachDialogPresentationService {
   private val providers = XAttachDialogItemPresentationProvider.EP.extensions.sortedBy { it.getPriority() }
 
   fun getItemPresentationInfo(item: AttachDialogProcessItem): AttachDialogItemPresentationInfo {
-    val provider = providers.firstOrNull { it.isApplicableFor(item) } ?: return AttachDialogItemPresentationInfo(
-      item.processInfo.executableDisplayName,
-      null,
-      item.processInfo.commandLine,
-      null)
+    val provider = providers.firstOrNull { it.isApplicableFor(item) } ?:
+    throw IllegalStateException("${AttachDialogDefaultItemPresentationProvider::class.java.simpleName} should always be available")
 
     return AttachDialogItemPresentationInfo(provider.getProcessExecutableText(item),
                                             provider.getProcessExecutableTextAttributes(item),
                                             provider.getProcessCommandLineText(item),
-                                            provider.getProcessCommandLineTextAttributes(item))
+                                            provider.getProcessCommandLineTextAttributes(item),
+                                            provider.getIndexedString(item))
   }
 }
 
@@ -25,5 +23,12 @@ data class AttachDialogItemPresentationInfo(
   @Nls val executableText: String,
   val executableTextAttributes: SimpleTextAttributes?,
   @Nls val commandLineText: String,
-  val commandLineTextAttributes: SimpleTextAttributes?
+  val commandLineTextAttributes: SimpleTextAttributes?,
+  val indexedString: String
 )
+
+class AttachDialogDefaultItemPresentationProvider: XAttachDialogItemPresentationProvider {
+  override fun isApplicableFor(item: AttachDialogProcessItem): Boolean = true
+
+  override fun getPriority(): Int = Int.MAX_VALUE
+}

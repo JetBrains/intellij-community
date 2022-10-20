@@ -93,6 +93,8 @@
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory"/>
 
+    <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
+
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>

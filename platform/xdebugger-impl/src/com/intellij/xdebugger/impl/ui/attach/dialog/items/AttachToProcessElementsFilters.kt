@@ -33,9 +33,7 @@ internal class AttachToProcessElementsFilters(private val selectedFilter: Atomic
   }
 
   fun accept(item: AttachDialogProcessItem): Boolean {
-    return accept(item.getGroups()) &&
-           speedSearch.shouldBeShowing(item.processInfo.pid.toString()) ||
-           speedSearch.shouldBeShowing(item.processInfo.commandLine)
+    return accept(item.getGroups()) && speedSearch.shouldBeShowing(item.indexedString)
   }
 
   fun accept(item: Set<XAttachPresentationGroup<*>>): Boolean {
