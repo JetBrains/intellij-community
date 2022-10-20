@@ -884,6 +884,8 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void updateTabActions(final boolean validateNow) {
+    if (isHideTabs()) return;
+
     final Ref<Boolean> changed = new Ref<>(Boolean.FALSE);
     for (final TabInfo eachInfo : myInfo2Label.keySet()) {
         final boolean changes = myInfo2Label.get(eachInfo).updateTabActions();
@@ -1737,6 +1739,7 @@ public class JBTabsImpl extends JComponent
     }
 
     final Toolbar toolbar = createToolbarComponent(tabInfo);
+    toolbar.setVisible(!isHideTabs());
     myInfo2Toolbar.put(tabInfo, toolbar);
     add(toolbar);
   }
@@ -2753,9 +2756,9 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = forced;
     }
     if (myMoreToolbar != null) {
-      myMoreToolbar.getComponent().setVisible(!isWithScrollBar() &&
+      myMoreToolbar.getComponent().setVisible(!isHideTabs() && !isWithScrollBar() &&
                                               (getEffectiveLayout() instanceof ScrollableSingleRowLayout ||
-                                              getEffectiveLayout() instanceof TableLayout));
+                                               getEffectiveLayout() instanceof TableLayout));
     }
     revalidateAndRepaint(layoutNow);
   }
@@ -2863,6 +2866,11 @@ public class JBTabsImpl extends JComponent
     if (isHideTabs() == hideTabs) return;
 
     myHideTabs = hideTabs;
+
+    myInfo2Toolbar.values().forEach(toolbar -> toolbar.setVisible(!myHideTabs));
+    if (myEntryPointToolbar != null) {
+      myEntryPointToolbar.getComponent().setVisible(!myHideTabs);
+    }
 
     relayout(true, false);
   }
