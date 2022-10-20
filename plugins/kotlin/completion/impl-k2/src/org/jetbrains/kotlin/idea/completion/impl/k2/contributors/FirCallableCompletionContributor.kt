@@ -170,6 +170,9 @@ internal open class FirCallableCompletionContributor(
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, context, visibilityChecker)
 
             symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> {
+                if (symbol.classKind == KtClassKind.ENUM_CLASS) {
+                    collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                }
                 collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
