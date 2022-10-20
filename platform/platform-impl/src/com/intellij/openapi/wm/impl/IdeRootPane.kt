@@ -92,10 +92,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
     // listen to mouse motion events for a11y
     contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
 
-    val menu = IdeMenuBar.createMenuBar()
     val isDecoratedMenu = isDecoratedMenu
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
-      jMenuBar = menu
+      jMenuBar = IdeMenuBar.createMenuBar()
     }
     else {
       if (isDecoratedMenu) {
@@ -117,10 +116,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
         layeredPane.add(customFrameTitlePane!!.getComponent(), Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2))
       }
       if (isFloatingMenuBarSupported) {
-        menuBar = menu
+        menuBar = IdeMenuBar.createMenuBar()
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }
-      @Suppress("LeakingThis")
       addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(frameHelper) }
       updateScreenState(frameHelper)
     }
@@ -166,7 +164,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
         val osSupported = SystemInfoRt.isWindows ||
                           (SystemInfoRt.isMac && ExperimentalUI.isNewUI() &&
                            Registry.`is`("ide.experimental.ui.title.toolbar.in.macos", true))
-        return (IdeFrameDecorator.isCustomDecorationActive() || isToolbarInHeader()) && osSupported
+        return osSupported && (IdeFrameDecorator.isCustomDecorationActive() || isToolbarInHeader())
       }
   }
 
