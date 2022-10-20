@@ -171,6 +171,9 @@
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
+    <extensionPoint name="openapi.vcs.history.actions.GetVersionAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="vcsRepositoryInitializer"
                     interface="com.intellij.vcs.VcsRepositoryInitializer"

@@ -90,6 +90,9 @@
 
     <productivityFeaturesProvider implementation="com.intellij.dvcs.featureStatistics.VcsProductivityFeaturesProvider"/>
     <featureStatisticsBundle qualifiedName="messages.VcsProductivityFeatures"/>
+
+    <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
+      implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
   </extensions>
 </idea-plugin>
 

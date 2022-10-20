@@ -3,15 +3,13 @@ package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.ExtendableAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.TriggerAdditionOrDeletion;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -22,11 +20,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -42,50 +37,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class GetVersionAction extends AnAction implements DumbAware {
+public class GetVersionAction extends ExtendableAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(GetVersionAction.class);
 
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.GetVersionAction.ExtensionProvider");
+
   public GetVersionAction() {
-    super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
-          VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-
-    if (e.getProject() == null || filePath == null || revision == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(isContentAvailable(filePath, revision, e));
-    }
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  protected boolean isContentAvailable(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull AnActionEvent e) {
-    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
-    if (historySession == null) {
-      return false;
-    }
-    return historySession.isContentAvailable(revision) && !filePath.isDirectory();
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
-
-    VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-
-    doGet(project, revision, filePath);
+    super(EP_NAME);
   }
 
   public static void doGet(@NotNull Project project, @NotNull VcsFileRevision revision, @NotNull FilePath filePath) {
