@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -28,7 +29,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import java.util.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -37,6 +40,11 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 private val LOG = logger<AbstractCommitWorkflow>()
+
+@Nls
+internal fun String.removeEllipsisSuffix() = StringUtil.removeEllipsisSuffix(this)
+
+internal fun cleanActionText(text: @Nls String): @Nls String = UIUtil.removeMnemonic(text).removeEllipsisSuffix()
 
 fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
