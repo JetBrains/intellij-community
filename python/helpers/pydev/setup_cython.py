@@ -8,15 +8,17 @@ python setup_cython build_ext --inplace
 Note: the .c file and other generated files are regenerated from
 the .pyx file by running "python build_tools/build.py"
 """
+from __future__ import with_statement
 
 import os
+import shutil
 import sys
 from setuptools import setup
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+_pydevd_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(_pydevd_dir)
 
 IS_PY36_OR_GREATER = sys.version_info > (3, 6)
-IS_PY39_OR_GREATER = sys.version_info > (3, 9)
 
 
 def process_args():
@@ -57,7 +59,6 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
     if target_pydevd_name != extension_name:
         # It MUST be there in this case! (Otherwise we'll have unresolved externals
         # because the .c file had another name initially).
-        import shutil
 
         # We must force Cython in this case (but only in this case -- for the regular
         # setup in the user machine, we should always compile the .c file).
@@ -113,7 +114,7 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             )]
 
         setup(
-            name='Cythonize',
+            name="Cythonize",
             ext_modules=ext_modules
         )
     finally:
@@ -137,6 +138,62 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
                 except:  # noqa: 722
                     import traceback
                     traceback.print_exc()
+        else:
+            if force_cython and extension_name == "pydevd_frame_evaluator":
+                # Store the updated version-specific C file.
+                new_c_file = os.path.join(os.path.dirname(__file__), dir_name,
+                                          "%s.c" % (extension_name,))
+                shutil.copy(new_c_file, os.path.join(
+                    _find_cython_module_dir(), "pydevd_frame_evaluator.c"))
+
+
+_frame_evaluator_cython_mod_dir = None
+
+
+def _find_cython_module_dir():
+    """Finds the version-specific frame evaluator Cython module directory."""
+    global _frame_evaluator_cython_mod_dir
+    if _frame_evaluator_cython_mod_dir:
+        return _frame_evaluator_cython_mod_dir
+    cython_modules_dir = os.path.join(_pydevd_dir, "_pydevd_frame_eval", "cython")
+    major_version, minor_version = sys.version_info[:2]
+    for subdir in os.listdir(cython_modules_dir):
+        if not os.path.isdir(os.path.join(cython_modules_dir, subdir)):
+            continue
+        start, end = subdir.split('_')
+        start, end = int(start[1:]), int(end[1:])
+        if start <= minor_version <= end:
+            _frame_evaluator_cython_mod_dir =  os.path.join(cython_modules_dir, subdir)
+            return _frame_evaluator_cython_mod_dir
+    raise RuntimeError("Failed to find a compatible frame evaluator module"
+                       " for Python %d.%d" % (major_version, minor_version))
+
+
+class FrameEvalModuleBuildContext:
+    def __init__(self):
+        pydevd_frame_eval_dir_name = "_pydevd_frame_eval"
+        self.cython_modules_dir_path = os.path.join(
+            _pydevd_dir, pydevd_frame_eval_dir_name, "cython")
+        self._pxd_file = os.path.join(
+            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.pxd")
+        self._pyx_file = os.path.join(
+            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.pyx")
+        self._c_file = os.path.join(
+            _pydevd_dir, pydevd_frame_eval_dir_name, "pydevd_frame_evaluator.c")
+
+    def __enter__(self):
+        module_dir = _find_cython_module_dir()
+        compatible_c = os.path.join(module_dir, "pydevd_frame_evaluator.c")
+        shutil.copy(compatible_c, self._c_file)
+        compatible_pxd = os.path.join(module_dir, "pydevd_frame_evaluator.pxd")
+        compatible_pyx = os.path.join(module_dir, "pydevd_frame_evaluator.pyx")
+        shutil.copy(compatible_pxd, self._pxd_file)
+        shutil.copy(compatible_pyx, self._pyx_file)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.remove(self._c_file)
+        os.remove(self._pxd_file)
+        os.remove(self._pyx_file)
 
 
 def main():
@@ -154,18 +211,11 @@ def main():
         extension_name = "pydevd_frame_evaluator"
         frame_eval_dir_name = "_pydevd_frame_eval"
 
-        target_frame_eval_common = "%s_%s" % (extension_name, "common")
-        build_extension(frame_eval_dir_name, target_frame_eval_common,
-                        target_frame_eval_common, force_cython, target_arch,
-                        extended)
-
-        if IS_PY39_OR_GREATER:
-            extension_name += "_py39_and_above"
-
         target_frame_eval = target_frame_eval or extension_name
 
-        build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
-                        force_cython, target_arch, extended)
+        with FrameEvalModuleBuildContext():
+            build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
+                            force_cython, target_arch, extended)
 
 
 if __name__ == "__main__":

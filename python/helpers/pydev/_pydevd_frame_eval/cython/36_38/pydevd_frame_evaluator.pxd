@@ -2,6 +2,8 @@
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from _pydevd_bundle.pydevd_cython cimport PyDBAdditionalThreadInfo
 
+
+# noinspection DuplicatedCode
 cdef extern from *:
     ctypedef void PyObject
     ctypedef struct PyCodeObject:
@@ -26,6 +28,8 @@ cdef extern from *:
         PyObject *co_weakreflist;   # to support weakrefs to code objects */
         void *co_extra;
 
+
+# noinspection DuplicatedCode
 cdef extern from "frameobject.h":
     ctypedef struct PyFrameObject:
         PyCodeObject *f_code       # code segment
@@ -46,13 +50,16 @@ cdef extern from "frameobject.h":
         char f_executing;           #/* whether the frame is still executing */
         PyObject *f_localsplus[1];
 
+
 cdef extern from "release_mem.h":
     void release_co_extra(void *)
+
 
 cdef extern from "code.h":
     ctypedef void freefunc(void *)
     int _PyCode_GetExtra(PyObject *code, Py_ssize_t index, void **extra)
     int _PyCode_SetExtra(PyObject *code, Py_ssize_t index, void *extra)
+
 
 cdef extern from "Python.h":
     void Py_INCREF(object o)
@@ -61,14 +68,18 @@ cdef extern from "Python.h":
     PyObject* PyObject_CallFunction(PyObject *callable, const char *format, ...)
     object PyObject_GetAttrString(object o, char *attr_name)
 
-# To include the forward-declared structures used in `pystate.h` and set the `Py_BUILD_CORE` sentinel macro.
+# To include the forward-declared structures used in `pystate.h` and set
+# the `Py_BUILD_CORE` sentinel macro.
 cdef extern from "internal_pycore.h":
     pass
+
 
 cdef extern from "ceval.h":
     int _PyEval_RequestCodeExtraIndex(freefunc)
     PyFrameObject *PyEval_GetFrame()
     PyObject* PyEval_CallFunction(PyObject *callable, const char *format, ...)
+    PyObject* _PyEval_EvalFrameDefault(PyFrameObject *frame, int exc)
+
 
 cdef class ThreadInfo:
     cdef public PyDBAdditionalThreadInfo additional_info
@@ -76,6 +87,7 @@ cdef class ThreadInfo:
     cdef public int inside_frame_eval
     cdef public bint fully_initialized
     cdef public object thread_trace_func
+
 
 cdef class FuncCodeInfo:
     cdef public str co_filename
@@ -92,6 +104,43 @@ cdef class FuncCodeInfo:
     # tracing can't be disabled for the related frames).
     cdef public int breakpoints_mtime
 
+
 cdef ThreadInfo get_thread_info()
 cdef FuncCodeInfo get_func_code_info(PyCodeObject *code_obj)
 cdef clear_thread_local_info()
+
+
+# noinspection DuplicatedCode
+cdef extern from "pystate.h":
+    ctypedef PyObject* _PyFrameEvalFunction(PyFrameObject *frame, int exc)
+    ctypedef struct PyInterpreterState:
+        PyInterpreterState *next
+        PyInterpreterState *tstate_head
+
+        PyObject *modules
+
+        PyObject *modules_by_index
+        PyObject *sysdict
+        PyObject *builtins
+        PyObject *importlib
+
+        PyObject *codec_search_path
+        PyObject *codec_search_cache
+        PyObject *codec_error_registry
+        int codecs_initialized
+        int fscodec_initialized
+
+        int dlopenflags
+
+        PyObject *builtins_copy
+        PyObject *import_func
+        # Initialized to PyEval_EvalFrameDefault().
+        _PyFrameEvalFunction eval_frame
+
+    ctypedef struct PyThreadState:
+        PyThreadState *prev
+        PyThreadState *next
+        PyInterpreterState *interp
+    # ...
+
+    PyThreadState *PyThreadState_Get()

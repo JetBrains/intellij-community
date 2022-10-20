@@ -1,24 +1,10 @@
 import sys
 
-# If no common frame evaluator library is found, there is no point to continue looking the version dependent
-# frame evaluator extension, and we let the exception to be propagated to the upper context.
 try:
-    from _pydevd_frame_eval_ext import pydevd_frame_evaluator_common
-except ImportError:
-    from _pydevd_frame_eval import pydevd_frame_evaluator_common
-
-try:
-    if sys.version_info[:2] < (3, 9):  # Python 3.9's extension has a different name.
-        try:
-            from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
-        except ImportError:
-            from _pydevd_frame_eval import pydevd_frame_evaluator as mod
-    else:
-        try:
-            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_py39_and_above as mod
-        except ImportError:
-            from _pydevd_frame_eval import pydevd_frame_evaluator_py39_and_above as mod
-
+    try:
+        from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
+    except ImportError:
+        from _pydevd_frame_eval import pydevd_frame_evaluator as mod
 except ImportError:
     try:
         try:
