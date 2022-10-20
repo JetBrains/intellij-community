@@ -100,7 +100,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   @Override
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    return ReadAction.compute(() -> findTargetImpl(name, AntBuildModelImpl.this));
+    return ReadAction.nonBlocking(() -> findTargetImpl(name, this)).expireWhen(myFile.getProject()::isDisposed).executeSynchronously();
   }
 
   @Override
@@ -121,7 +121,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
-    return ReadAction.compute(() -> myTargets.getValue());
+    return ReadAction.nonBlocking(() -> myTargets.getValue()).expireWhen(myFile.getProject()::isDisposed).executeSynchronously();
   }
 
   @Nullable
