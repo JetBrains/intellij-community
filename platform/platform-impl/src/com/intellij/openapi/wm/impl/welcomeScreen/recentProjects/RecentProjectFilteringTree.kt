@@ -214,6 +214,7 @@ internal class RecentProjectFilteringTree(
     override fun mouseMoved(mouseEvent: MouseEvent) {
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      tree.repaint(getCloseIconRect(row))
 
       projectActionButtonViewModel.hoveredRow = row
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
