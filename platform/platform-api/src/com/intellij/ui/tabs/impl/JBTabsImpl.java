@@ -1967,7 +1967,8 @@ public class JBTabsImpl extends JComponent
 
     myScrollBarModel.setMaximum(maximum);
     myScrollBarModel.setValue(value);
-    myScrollBarModel.setExtent(extent);
+    // If extent is 0, that means the layout is in improper state, so we don't show the scrollbar.
+    myScrollBarModel.setExtent(extent == 0 ? value + maximum : extent);
   }
 
   private void updateTabsOffsetFromScrollBar() {
