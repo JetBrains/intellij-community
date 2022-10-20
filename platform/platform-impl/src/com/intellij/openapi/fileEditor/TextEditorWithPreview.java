@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -613,7 +614,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private class ChangeEditorSplitAction extends DumbAwareAction {
+  private class ChangeEditorSplitAction extends DumbAwareToggleAction {
     private final boolean myVerticalSplit;
 
     protected ChangeEditorSplitAction(@Nls String text, boolean isVerticalSplit) {
@@ -622,17 +623,16 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      if (TextEditorWithPreview.this.myIsVerticalSplit != myVerticalSplit) {
-        TextEditorWithPreview.this.myIsVerticalSplit = myVerticalSplit;
-        mySplitter.setOrientation(myVerticalSplit);
-      }
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return TextEditorWithPreview.this.myIsVerticalSplit == myVerticalSplit;
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      Icon icon = TextEditorWithPreview.this.myIsVerticalSplit == myVerticalSplit ? AllIcons.Actions.Checked : null;
-      e.getPresentation().setIcon(icon);
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      if (state) {
+        TextEditorWithPreview.this.myIsVerticalSplit = myVerticalSplit;
+        mySplitter.setOrientation(myVerticalSplit);
+      }
     }
 
     @Override
