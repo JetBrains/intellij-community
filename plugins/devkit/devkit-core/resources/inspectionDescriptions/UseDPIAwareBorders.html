@@ -10,9 +10,9 @@ Reports usages of <code>javax.swing.border.EmptyBorder</code> and <code>JBUI.Bor
 <p>Example:</p>
 <pre>
 // bad:
-Border border1 = new EmptyBorders(1, 2, 3, 4);
-Border border2 = new EmptyBorders(1, 2, 1, 2);
-Border border3 = new EmptyBorders(1, 0, 0, 0);
+Border border1 = new EmptyBorder(1, 2, 3, 4);
+Border border2 = new EmptyBorder(1, 2, 1, 2);
+Border border3 = new EmptyBorder(1, 0, 0, 0);
 
 // good:
 Border border1 = JBUI.Borders.empty(1, 2, 3, 4);
