@@ -105,68 +105,54 @@ public final class ParenthesesUtils {
   }
 
   public static void removeParentheses(@NotNull PsiExpression expression, boolean ignoreClarifyingParentheses) {
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCall) {
       removeParensFromMethodCallExpression(methodCall, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    else if (expression instanceof PsiReferenceExpression referenceExpression) {
       removeParensFromReferenceExpression(referenceExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    else if (expression instanceof PsiNewExpression newExpression) {
       removeParensFromNewExpression(newExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       removeParensFromAssignmentExpression(assignmentExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiArrayInitializerExpression) {
-      final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+    else if (expression instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
       removeParensFromArrayInitializerExpression(arrayInitializerExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    else if (expression instanceof PsiTypeCastExpression typeCastExpression) {
       removeParensFromTypeCastExpression(typeCastExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiArrayAccessExpression) {
-      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)expression;
+    else if (expression instanceof PsiArrayAccessExpression arrayAccessExpression) {
       removeParensFromArrayAccessExpression(arrayAccessExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+    else if (expression instanceof PsiPrefixExpression prefixExpression) {
       removeParensFromPrefixExpression(prefixExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)expression;
+    else if (expression instanceof PsiPostfixExpression postfixExpression) {
       removeParensFromPostfixExpression(postfixExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       removeParensFromPolyadicExpression(polyadicExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiInstanceOfExpression) {
-      final PsiInstanceOfExpression instanceofExpression = (PsiInstanceOfExpression)expression;
+    else if (expression instanceof PsiInstanceOfExpression instanceofExpression) {
       removeParensFromInstanceOfExpression(instanceofExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+    else if (expression instanceof PsiConditionalExpression conditionalExpression) {
       removeParensFromConditionalExpression(conditionalExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       removeParensFromParenthesizedExpression(parenthesizedExpression, ignoreClarifyingParentheses);
     }
-    else if (expression instanceof PsiLambdaExpression) {
-      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)expression;
+    else if (expression instanceof PsiLambdaExpression lambdaExpression) {
       removeParensFromLambdaExpression(lambdaExpression, ignoreClarifyingParentheses);
     }
   }
 
   private static void removeParensFromLambdaExpression(PsiLambdaExpression lambdaExpression, boolean ignoreClarifyingParentheses) {
     final PsiElement body = lambdaExpression.getBody();
-    if (body  instanceof PsiExpression) {
-      removeParentheses((PsiExpression)body, ignoreClarifyingParentheses);
+    if (body instanceof PsiExpression expression) {
+      removeParentheses(expression, ignoreClarifyingParentheses);
     }
   }
 
@@ -185,7 +171,7 @@ public final class ParenthesesUtils {
     // E.g. ()+=foo is correct PSI, but removing () will yield an assignment without LExpression which is invalid.
     if (body == null) return;
     final PsiElement parent = parenthesizedExpression.getParent();
-    if (!(parent instanceof PsiExpression) || !areParenthesesNeeded(body, (PsiExpression)parent, ignoreClarifyingParentheses)) {
+    if (!(parent instanceof PsiExpression expression) || !areParenthesesNeeded(body, expression, ignoreClarifyingParentheses)) {
       CommentTracker commentTracker = new CommentTracker();
       commentTracker.markUnchanged(body);
       PsiExpression newExpression = (PsiExpression)commentTracker.replaceAndRestoreComments(parenthesizedExpression, body);

@@ -74,9 +74,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiParameterList) {
+      if (element instanceof PsiParameterList parameterList) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-        final PsiParameterList parameterList = (PsiParameterList)element;
         final String text = Objects.requireNonNull(parameterList.getParameter(0)).getName() + "->{}";
         final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
         element.replace(expression.getParameterList());
@@ -109,8 +108,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression condition = conditionalExpression.getCondition();
         if (expression == condition) {
           return;
