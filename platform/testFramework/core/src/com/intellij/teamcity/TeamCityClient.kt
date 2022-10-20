@@ -53,12 +53,14 @@ object TeamCityClient {
   val buildParams by lazy { loadProperties(systemProperties["teamcity.configuration.properties.file"]) }
 
   fun getExistingParameter(name: String, impreciseNameMatch: Boolean = false): String {
+    val totalParams = systemProperties.plus(buildParams)
+
     val paramValue = if (impreciseNameMatch) {
-      val paramCandidates = buildParams.filter { it.key.contains(name) }
+      val paramCandidates = totalParams.filter { it.key.contains(name) }
       if (paramCandidates.size > 1) System.err.println("Found many parameters matching $name. Candidates: $paramCandidates")
       paramCandidates[paramCandidates.toSortedMap().firstKey()]
     }
-    else buildParams[name]
+    else totalParams[name]
 
     return paramValue ?: error("Parameter $name is not specified in the build!")
   }
@@ -66,8 +68,8 @@ object TeamCityClient {
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
 
-  private val userName: String by lazy { getExistingParameter(name = "teamcity.auth.userId", impreciseNameMatch = true) }
-  private val password: String by lazy { getExistingParameter(name = "teamcity.auth.password", impreciseNameMatch = true) }
+  private val userName: String by lazy { getExistingParameter("teamcity.auth.userId") }
+  private val password: String by lazy { getExistingParameter("teamcity.auth.password") }
 
   private fun <T : HttpRequest> T.withAuth(): T = this.apply {
     addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(userName, password), this, null))
