@@ -47,22 +47,22 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
           .readTimeout(3000)
           .readString()
       }
-      if (result.isFailure) {
-        thisLogger().debug("Request failed for package $it.name")
+      if (result.isFailure) thisLogger().debug("Request failed for package $it.name")
 
-        val versions = tryParsingVersionsFromPage(it.name, repositoryUrl)
-        if (versions != null) return@build PythonSimplePackageDetails(it.name,
-                                                  versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
-                                                  it.repository!!,
-                                                  description = PyBundle.message("python.packaging.no.package.info"))
-        else return@build EmptyPythonPackageDetails(it.name, PyBundle.message("python.packages.request.failed"))
-      }
-
-      buildPackageDetails(result.getOrThrow(), it)
+      buildPackageDetails(result.getOrNull(), it)
     }
 
 
-  override fun buildPackageDetails(rawInfo: String, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
+    if (rawInfo == null) {
+      val versions = tryParsingVersionsFromPage(spec.name, spec.repository?.repositoryUrl)
+      if (versions != null) return PythonSimplePackageDetails(spec.name,
+                                                              versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
+                                                              spec.repository!!,
+                                                              description = PyBundle.message("python.packaging.no.package.info"))
+      else return EmptyPythonPackageDetails(spec.name, PyBundle.message("python.packages.request.failed"))
+    }
+
     try {
       val packageDetails = gson.fromJson(rawInfo, PyPIPackageUtil.PackageDetails::class.java)
       return PythonSimplePackageDetails(spec.name,
@@ -80,9 +80,10 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
     }
   }
 
-  private fun tryParsingVersionsFromPage(name: String, repositoryUrl: String): List<String>? {
+  private fun tryParsingVersionsFromPage(name: String, repositoryUrl: String?): List<String>? {
+    val actualUrl = repositoryUrl ?: PyPIPackageRepository.repositoryUrl!!
     val versions = runCatching {
-      val url = StringUtil.trimEnd(repositoryUrl, "/") + "/" + name
+      val url = StringUtil.trimEnd(actualUrl, "/") + "/" + name
       PyPIPackageUtil.parsePackageVersionsFromArchives(url, name)
     }
     return versions.getOrNull()
