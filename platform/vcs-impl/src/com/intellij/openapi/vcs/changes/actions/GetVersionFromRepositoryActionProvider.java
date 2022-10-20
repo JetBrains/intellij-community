@@ -1,0 +1,76 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.changes.actions;
+
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.actions.GetVersionAction;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
+
+public class GetVersionFromRepositoryActionProvider implements AnActionExtensionProvider {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS) != null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+
+    boolean isEnabled = project != null && changes.length > 0;
+    e.getPresentation().setEnabledAndVisible(isEnabled);
+    e.getPresentation().setText(VcsBundle.message("action.name.get.file.content.from.repository"));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = Objects.requireNonNull(e.getProject());
+    Change[] changes = e.getRequiredData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+
+    List<GetVersionAction.FileRevisionProvider> fileContentProviders = ContainerUtil.map(changes, change -> {
+      return new MyFileContentProvider(change);
+    });
+    GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders, null);
+  }
+
+  private static class MyFileContentProvider implements GetVersionAction.FileRevisionProvider {
+    @NotNull private final Change myChange;
+
+    private MyFileContentProvider(@NotNull Change change) {
+      myChange = change;
+    }
+
+    @NotNull
+    @Override
+    public FilePath getFilePath() {
+      return ChangesUtil.getFilePath(myChange);
+    }
+
+    @Override
+    public byte @Nullable [] getContent() throws VcsException {
+      ContentRevision revision = myChange.getAfterRevision();
+      if (revision == null) return null;
+
+      return ChangesUtil.loadContentRevision(revision);
+    }
+  }
+}

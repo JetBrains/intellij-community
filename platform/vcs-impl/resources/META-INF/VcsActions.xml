@@ -328,6 +328,7 @@
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
+      <reference ref="Vcs.GetVersion"/>
       <reference ref="Vcs.ShowHistoryForRevision"/>
     </group>
 
