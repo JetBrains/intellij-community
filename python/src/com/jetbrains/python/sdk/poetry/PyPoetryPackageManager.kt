@@ -109,7 +109,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
       requirements = allPackage.second
 
       val outputOutdatedPackages = try {
-        runPoetry(sdk, "show", "--outdated")
+        runPoetry(sdk, "show", "--all", "--outdated")
       }
       catch (e: ExecutionException) {
         outdatedPackages = emptyMap()

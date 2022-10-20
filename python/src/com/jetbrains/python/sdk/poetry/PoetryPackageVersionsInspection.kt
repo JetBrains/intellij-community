@@ -37,7 +37,10 @@ class PoetryPackageVersionsInspection : LocalInspectionTool() {
       if (file.virtualFile != module.pyProjectToml) return
       file.children
         .filter { element ->
-          (element as? TomlTable)?.header?.key?.text in listOf("tool.poetry.dependencies", "tool.poetry.dev-dependencies")
+          (element as? TomlTable)?.header?.key?.text?.let { key ->
+              key in listOf("tool.poetry.dependencies", "tool.poetry.dev-dependencies") ||
+              Regex("^tool\\.poetry\\.group\\.[^.]*\\.dependencies$") matches key
+          }
         }.flatMap {
           it.children.mapNotNull { line -> line as? TomlKeyValue }
         }.forEach { keyValue ->
