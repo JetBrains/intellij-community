@@ -54,11 +54,6 @@ interface BuildTasks {
     }
   }
 
-  /**
-   * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
-   */
-  suspend fun generateProjectStructureMapping(targetFile: Path)
-
   fun compileProjectAndTests(includingTestsInModules: List<String>)
 
   fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>)
