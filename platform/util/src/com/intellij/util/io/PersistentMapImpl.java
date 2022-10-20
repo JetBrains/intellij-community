@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import com.intellij.util.io.stats.PersistentHashMapStatistics;
 import com.intellij.util.io.stats.StorageStatsRegistrar;
 import org.jetbrains.annotations.*;
@@ -27,61 +28,75 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
-/** Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
- <li> Particular key is translated via myEnumerator into an int. </li>
- <li> As part of enumeration process for the new key, additional space is reserved in
- myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored. </li>
- <li> Once new value is written the offset storage is updated. </li>
- <li> When the key is removed from PHM, offset storage is set to zero. </li>
- </ul>
-<p>
- It is important to note that offset
- is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
- PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
- of previously calculated chunk.
- For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
- direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
- key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
- Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
- directly in storage used for offset and in case of btree enumerator directly in btree leaf.
+/**
+ * Thread-safe implementation of persistent hash map (PHM). The implementation works in the following (generic) way:<ul>
+ * <li> Particular key is translated via myEnumerator into an int. </li>
+ * <li> As part of enumeration process for the new key, additional space is reserved in
+ * myEnumerator.myStorage for offset in ".values" file (myValueStorage) where (serialized) value is stored. </li>
+ * <li> Once new value is written the offset storage is updated. </li>
+ * <li> When the key is removed from PHM, offset storage is set to zero. </li>
+ * </ul>
+ * <p>
+ * It is important to note that offset
+ * is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
+ * PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
+ * of previously calculated chunk.
+ * For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
+ * direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
+ * key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.
+ * Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
+ * directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
 public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
   private static final Logger LOG = Logger.getInstance(PersistentMapImpl.class);
+
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
+  private static final boolean doHardConsistencyChecks = false;
+
   private static final long DEAD_KEY_NUMBER_MASK = 0xFFFFFFFFL;
+  private static final long LIVE_KEY_MASK = 1L << 32;
+
+  private static final long USED_LONG_VALUE_MASK = 1L << 62;
+  private static final int POSITIVE_VALUE_SHIFT = 1;
+
+  private static final long NULL_ADDR = 0;
+  private static final int DEFAULT_INDEX_INITIAL_SIZE = SystemProperties.getIntProperty("idea.initialIndexSize", 4 * 1024);
+
+  private static final int MAX_RECYCLED_BUFFER_SIZE = 4096;
+
+  @NonNls
+  static final String DATA_FILE_EXTENSION = PersistentHashMap.DATA_FILE_EXTENSION;
+
+
+  //2 fields below fully describe PMap configuration:
+  private final @NotNull PersistentMapBuilder<Key, Value> myBuilder;
+  private final @NotNull CreationTimeOptions myOptions;
 
   private final Path myStorageFile;
   private final boolean myIsReadOnly;
   private final KeyDescriptor<Key> myKeyDescriptor;
+  private final boolean myInlineValues;
+  private final int myVersion;
+  private final int myInitialSize;
+  private final @Nullable StorageLockContext myLockContext;
+
 
   private PersistentHashMapValueStorage myValueStorage;
   private final SLRUCache<Key, BufferExposingByteArrayOutputStream> myAppendCache;
   private final LowMemoryWatcher myAppendCacheFlusher;
 
   private final DataExternalizer<Value> myValueExternalizer;
-  private static final long NULL_ADDR = 0;
-  private static final int INITIAL_INDEX_SIZE;
 
-  static {
-    String property = System.getProperty("idea.initialIndexSize");
-    INITIAL_INDEX_SIZE = property == null ? 4 * 1024 : Integer.parseInt(property);
-  }
-
-  @NonNls
-  static final String DATA_FILE_EXTENSION = PersistentHashMap.DATA_FILE_EXTENSION;
   private long myLiveAndGarbageKeysCounter;
   // first four bytes contain live keys count (updated via LIVE_KEY_MASK), last four bytes - number of dead keys
   private int myReadCompactionGarbageSize;
-  private static final long LIVE_KEY_MASK = 1L << 32;
-  private static final long USED_LONG_VALUE_MASK = 1L << 62;
-  private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
   private final boolean myIntMapping;
   private final boolean myDirectlyStoreLongFileOffsetMode;
   private final boolean myCanReEnumerate;
   private int myLargeIndexWatermarkId;  // starting with this id we store offset in adjacent file in long format
   private boolean myIntAddressForNewRecord;
-  private static final boolean doHardConsistencyChecks = false;
+
   private final PersistentEnumeratorBase<Key> myEnumerator;
   private final boolean myCompactOnClose;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -121,36 +136,49 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
-  public PersistentMapImpl(@NotNull PersistentMapBuilder<Key, Value> builder) throws IOException {
-    @NotNull Path file = builder.getFile();
-    @NotNull KeyDescriptor<Key> keyDescriptor = builder.getKeyDescriptor();
-    @NotNull DataExternalizer<Value> valueExternalizer = builder.getValueExternalizer();
-    final int initialSize = builder.getInitialSize(INITIAL_INDEX_SIZE);
-    int version = builder.getVersion(0);
-    @Nullable StorageLockContext lockContext = builder.getLockContext();
-    myCompactOnClose = builder.getCompactOnClose(false);
-    @NotNull PersistentHashMapValueStorage.CreationTimeOptions options = PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions();
+  public PersistentMapImpl(final @NotNull PersistentMapBuilder<Key, Value> builder) throws IOException {
+    this.myBuilder = builder.copy();
+
+    final Path file = myBuilder.getFile();
+    final KeyDescriptor<Key> keyDescriptor = myBuilder.getKeyDescriptor();
+    final DataExternalizer<Value> valueExternalizer = myBuilder.getValueExternalizer();
+
+    myInitialSize = myBuilder.getInitialSize(DEFAULT_INDEX_INITIAL_SIZE);
+    myVersion = myBuilder.getVersion(0);
+    myLockContext = myBuilder.getLockContext();
+    myCompactOnClose = myBuilder.getCompactOnClose(false);
 
     // it's important to initialize it as early as possible
-    myIsReadOnly = builder.getReadOnly(false);
-    if (myIsReadOnly) options = options.setReadOnly();
+    myIsReadOnly = myBuilder.getReadOnly(false);
+
+    CreationTimeOptions options = CreationTimeOptions.threadLocalOptions();
+    if (myIsReadOnly) {
+      //FIXME RC: the only use of options.isReadOnly() is in this ctor, below: if(!options.isReadOnly... -> compact()
+      //          it is better to just set myIsReadOnly = options.isReadOnly || builder.getReadOnly()
+      options = options.setReadOnly();
+    }
+    this.myOptions = options;
 
     myEnumerator = PersistentEnumerator.createDefaultEnumerator(checkDataFiles(file),
                                                                 keyDescriptor,
-                                                                initialSize,
-                                                                lockContext,
-                                                                modifyVersionDependingOnOptions(version, options),
+                                                                myInitialSize,
+                                                                myLockContext,
+                                                                modifyVersionDependingOnOptions(myVersion, myOptions),
                                                                 false);
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
 
     Path walFile = myStorageFile.resolveSibling(myStorageFile.getFileName().toString() + ".wal");
-    myWal = builder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, options.useCompression(), walFile, builder.getWalExecutor(), true) : null;
+    myWal = myBuilder.isEnableWal() ? new PersistentMapWal<>(keyDescriptor, valueExternalizer, myOptions.useCompression(), walFile,
+                                                             myBuilder.getWalExecutor(), true) : null;
 
-    final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
+    final @NotNull PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler =
+      myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
-    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && builder.getInlineValues(false);
+
+    myInlineValues = myBuilder.getInlineValues(false);
+    myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && myInlineValues;
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
     myEnumerator.setRecordHandler(new MyEnumeratorRecordHandler(recordHandler));
@@ -164,7 +192,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(myStorageFile), options);
+      myValueStorage = myIntMapping ? null : new PersistentHashMapValueStorage(getDataFile(myStorageFile), myOptions);
       myAppendCache = myIntMapping ? null : createAppendCache(keyDescriptor);
       myAppendCacheFlusher = myIntMapping ? null : LowMemoryWatcher.register(() -> {
         try {
@@ -180,7 +208,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       myReadCompactionGarbageSize = (int)(data2 >>> 32);
       myCanReEnumerate = myEnumerator.canReEnumerate();
 
-      if (!options.isReadOnly() && makesSenseToCompact()) {
+      if (!myOptions.isReadOnly() && makesSenseToCompact()) {
         compact();
       }
     }
@@ -205,16 +233,32 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     }
   }
 
+  /**
+   * @return empty map with exactly the same configuration as this map was created with, but based on the given path
+   */
+  public PersistentMapImpl<Key, Value> deriveEmptyMap(final Path path) throws IOException {
+    return myOptions.with(() -> {
+      return new PersistentMapImpl<>(myBuilder.copyWithFile(path));
+    });
+  }
+
   @Override
   public @NotNull DataExternalizer<Value> getValuesExternalizer() {
     return myValueExternalizer;
   }
 
-  private static int modifyVersionDependingOnOptions(int version, @NotNull PersistentHashMapValueStorage.CreationTimeOptions options) {
-    return version + options.getVersion();
+  public @NotNull KeyDescriptor<Key> getKeyDescriptor(){
+    return myKeyDescriptor;
   }
 
-  private static final int MAX_RECYCLED_BUFFER_SIZE = 4096;
+  public @NotNull PersistentMapBuilder<Key, Value> builder(){
+    //builder is mutable, so return a copy of it:
+    return myBuilder.copy();
+  }
+
+  private static int modifyVersionDependingOnOptions(int version, @NotNull CreationTimeOptions options) {
+    return version + options.getVersion();
+  }
 
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
     return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, keyDescriptor) {
@@ -305,14 +349,16 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     try {
       this.close(true);
     }
-    catch (IOException ignored) {}
+    catch (IOException ignored) {
+    }
     IOUtil.deleteAllFilesStartingWith(baseFile.toFile());
     try {
       if (myWal != null) {
         myWal.closeAndDelete();
       }
     }
-    catch (IOException ignored) {}
+    catch (IOException ignored) {
+    }
   }
 
   @Override
@@ -561,7 +607,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
     if (!myStorageFile.getFileSystem().isReadOnly()) {
       try {
         myEnumerator.markCorrupted();
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.warn(e);
       }
     }
@@ -765,7 +812,9 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   private void close(boolean emergency) throws IOException {
-    if (myDoTrace) LOG.info("Closed " + myStorageFile + "." + (myAppendCache == null ? "" : ("Append cache stats: " + myAppendCache.dumpStats())));
+    if (myDoTrace) {
+      LOG.info("Closed " + myStorageFile + "." + (myAppendCache == null ? "" : ("Append cache stats: " + myAppendCache.dumpStats())));
+    }
     StorageStatsRegistrar.INSTANCE.unregisterMap(myStorageFile);
 
     getWriteLock().lock();
@@ -855,7 +904,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
       final File[] oldFiles = getFilesInDirectoryWithNameStartingWith(oldDataFile);
 
       final Path newPath = oldDataFile.resolveSibling(oldDataFile.getFileName() + ".new");
-      PersistentHashMapValueStorage.CreationTimeOptions options = myValueStorage.getOptions();
+      CreationTimeOptions options = myValueStorage.getOptions();
       final PersistentHashMapValueStorage newStorage = new PersistentHashMapValueStorage(newPath, options);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
@@ -1022,7 +1071,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void updateValueId(int keyId, long value, long oldValue, @Nullable Key key, int processingKey) throws IOException {
     if (myDirectlyStoreLongFileOffsetMode) {
-      ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt(processingKey), value);
+      ((PersistentBTreeEnumerator<Key>)myEnumerator).putNonNegativeValue(((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt(processingKey),
+                                                                         value);
       return;
     }
     final boolean newKey = oldValue == NULL_ADDR;

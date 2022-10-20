@@ -8,6 +8,9 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.io.DataOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * A base interface for custom persistent map implementations.
@@ -50,7 +53,7 @@ public interface PersistentMapBase<Key, Value> {
 
   /**
    * Process only existing keys in a map.
-   * TODO: do we have constraint on ordering? Deterministic ordering?
+   * TODO: do we have a constraint on ordering? Deterministic ordering?
    */
   boolean processExistingKeys(@NotNull Processor<? super Key> processor) throws IOException;
 
@@ -104,8 +107,39 @@ public interface PersistentMapBase<Key, Value> {
    */
   void closeAndDelete() throws IOException;
 
-  /**@return keys count, or -1 if implementation doesn't provide this info */
+  /** @return keys count, or -1 if implementation doesn't provide this info */
   default int keysCount(){
     return -1;
+  }
+
+  /**
+   * Method creates 'canonical' PMap by copying content of originalMap into canonicalMap (which assumed to be
+   * empty).
+   * <br/>
+   * PHMap binary (on-disk) representation could be different even for the same key-value content because
+   * of different order of inserts/deletes/updates. This method tries to generate PMap with 'canonical'
+   * binary content. It is done by copying entries to canonicalMap in some stable order, defined by
+   * stableKeysSorter, which guarantees canonicalMap to have fixed binary representation on disk.
+   *
+   * @param stableKeysSorter function to sort List of keys. Must provide stable sort -- i.e. same set
+   *                         of keys must always come out sorted in the same order, regardless of their
+   *                         original order
+   * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
+   *                     receiver of keys-values from originalMap)
+   */
+  static <K, V, M extends PersistentMapBase<? super K, ? super V>> M canonicalize(
+    final @NotNull PersistentMapBase<K, V> originalMap,
+    /* @OutParam */
+    final @NotNull M targetCanonicalMap,
+    final @NotNull Function<List<K>, List<K>> stableKeysSorter
+  ) throws IOException {
+    final List<K> keys = new ArrayList<>();
+    originalMap.processExistingKeys(keys::add);
+    final List<K> sortedKeys = stableKeysSorter.apply(keys);
+    for (K key : sortedKeys) {
+      final V value = originalMap.get(key);
+      targetCanonicalMap.put(key, value);
+    }
+    return targetCanonicalMap;
   }
 }

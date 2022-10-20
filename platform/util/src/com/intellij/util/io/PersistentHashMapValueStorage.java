@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.MathUtil;
@@ -41,6 +42,7 @@ public final class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
+  //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -84,7 +86,7 @@ public final class PersistentHashMapValueStorage {
     }
 
     @NotNull
-    CreationTimeOptions setReadOnly() {
+    public CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
         myIOCancellationCallback,
         true,
@@ -94,14 +96,47 @@ public final class PersistentHashMapValueStorage {
       );
     }
 
+    public CreationTimeOptions setCompactChunksWithValueDeserialization(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     true,
+                                     myHasNoChunks, myUseCompression);
+    }
+
+    public CreationTimeOptions setHasNoChunks(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     myCompactChunksWithValueDeserialization,
+                                     true,
+                                     myUseCompression);
+    }
+
+    public <T, E extends Throwable> T with(final @NotNull ThrowableComputable<T, E> func) throws E {
+      final CreationTimeOptions previousOptions = setThreadLocalOptions(this);
+      try {
+        return func.compute();
+      }
+      finally {
+        setThreadLocalOptions(previousOptions);
+      }
+    }
+
     @NotNull
-    static CreationTimeOptions threadLocalOptions() {
+    public static CreationTimeOptions threadLocalOptions() {
       return new CreationTimeOptions(
         IOCancellationCallbackHolder.INSTANCE.getUsedIoCallback(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
+    }
+
+    @NotNull
+    public static CreationTimeOptions setThreadLocalOptions(final CreationTimeOptions options){
+      final CreationTimeOptions currentOptions = threadLocalOptions();
+      READONLY.set(options.myReadOnly);
+      COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(options.myCompactChunksWithValueDeserialization);
+      HAS_NO_CHUNKS.set(options.myHasNoChunks);
+      DO_COMPRESSION.set(options.myUseCompression);
+      return currentOptions;
     }
   }
 

@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.*;
 import java.io.DataOutputStream;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -190,22 +191,6 @@ public class PersistentHashMapCanonicalizationTest {
 
   private final Map<PersistentHashMap<?, ?>, PHMEntry> mapsEntries = new HashMap<>();
 
-  @NotNull
-  private PersistentHashMap<String, String> createPHMap() throws IOException {
-    //RC: PHM uses >1 file to store data, but doesn't provide methods to get all files it is used. Hence,
-    //    the workaround here: create dedicated folder for each PHM, and treat all files in that folder
-    //    as apt PHM content
-    final File folder = tmpDirectory.newFolder();
-    final File mainFile = new File(folder, "map");
-    final PersistentHashMap<String, String> persistentMap = new PersistentHashMap<>(
-      mainFile,
-      EnumeratorStringDescriptor.INSTANCE,
-      EnumeratorStringDescriptor.INSTANCE
-    );
-    mapsEntries.put(persistentMap, new PHMEntry(folder));
-    return persistentMap;
-  }
-
   private String hashOfContent(final PersistentHashMap<String, String> map) {
     map.force();
     final PHMEntry entry = mapsEntries.get(map);
@@ -227,6 +212,48 @@ public class PersistentHashMapCanonicalizationTest {
     // deterministic order (natural string order in this case).
     final PersistentHashMap<String, String> canonicalMap = createPHMap();
     return PersistentHashMap.canonicalize(originalMap, canonicalMap, stableSorter);
+  }
+
+  private PersistentMapBase<String, String> canonicalize(
+    final @NotNull PersistentMapBase<String, String> originalMap,
+    final @NotNull Function<List<String>, List<String>> stableSorter) throws IOException {
+    //'Canonical' version of PersistentMap is the map with the same key-values, but added in strict
+    // deterministic order (natural string order in this case).
+    final PersistentMapBase<String, String> canonicalMap = createPHMapBase();
+    return PersistentMapBase.canonicalize(originalMap, canonicalMap, stableSorter);
+  }
+
+  @NotNull
+  private PersistentHashMap<String, String> createPHMap() throws IOException {
+    //RC: PHM uses >1 file to store data, but doesn't provide methods to get all files it is used. Hence,
+    //    the workaround here: create dedicated folder for each PHM, and treat all files in that folder
+    //    as apt PHM content
+    final File folder = tmpDirectory.newFolder();
+    final File mainFile = new File(folder, "map");
+    final PersistentHashMap<String, String> persistentMap = new PersistentHashMap<>(
+      mainFile,
+      EnumeratorStringDescriptor.INSTANCE,
+      EnumeratorStringDescriptor.INSTANCE
+    );
+    mapsEntries.put(persistentMap, new PHMEntry(folder));
+    return persistentMap;
+  }
+
+  private PersistentMapBase<String, String> createPHMapBase() throws IOException {
+    final PersistentHashMap<String, String> map = createPHMap();
+    return stealTheImpl(map);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static PersistentMapBase<String, String> stealTheImpl(final PersistentHashMap<String, String> map) {
+    try {
+      final Field impl = map.getClass().getDeclaredField("myImpl");
+      impl.setAccessible(true);
+      return (PersistentMapBase<String, String>)impl.get(map);
+    }
+    catch (Throwable t) {
+      throw new AssertionError("Can't steal PersistentHashMap.myImpl field", t);
+    }
   }
 
   private static Map<String, String> generateKeyValues(final int keysCount,

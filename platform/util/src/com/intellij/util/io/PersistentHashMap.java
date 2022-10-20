@@ -42,6 +42,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
     myImpl = impl;
   }
 
+
+
   @Override
   public final void closeAndClean() throws IOException {
     myImpl.closeAndDelete();
@@ -91,6 +93,10 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   @Override
   public final void put(Key key, Value value) throws IOException {
     myImpl.put(key, value);
+  }
+
+  public @NotNull PersistentMapBase<Key, Value> getImpl() {
+    return myImpl;
   }
 
   /**
@@ -216,20 +222,14 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * @param stableKeysSorter function to sort List of keys. Must provide stable sort -- i.e. same set
    *                         of keys must always come out sorted in the same order, regardless of their
    *                         original order
-   * @param canonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
+   * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
    *                     receiver of keys-values from originalMap)
    */
-  public static <K, V> PersistentHashMap<K, V> canonicalize(final PersistentHashMap<K, V> originalMap,
+  public static <K, V> PersistentHashMap<K, V> canonicalize(final @NotNull PersistentHashMap<K, V> originalMap,
                                                             /* @OutParam */
-                                                            final PersistentHashMap<K, V> canonicalMap,
-                                                            final Function<List<K>, List<K>> stableKeysSorter) throws IOException {
-    final List<K> keys = new ArrayList<>();
-    originalMap.processKeysWithExistingMapping(keys::add);
-    final List<K> sortedKeys = stableKeysSorter.apply(keys);
-    for (K key : sortedKeys) {
-      final V value = originalMap.get(key);
-      canonicalMap.put(key, value);
-    }
-    return canonicalMap;
+                                                            final @NotNull PersistentHashMap<K, V> targetCanonicalMap,
+                                                            final @NotNull Function<List<K>, List<K>> stableKeysSorter) throws IOException {
+    PersistentMapBase.canonicalize(originalMap.myImpl, targetCanonicalMap.myImpl, stableKeysSorter);
+    return targetCanonicalMap;
   }
 }
