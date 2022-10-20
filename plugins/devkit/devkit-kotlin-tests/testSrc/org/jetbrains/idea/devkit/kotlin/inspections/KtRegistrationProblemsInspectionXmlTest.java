@@ -1,24 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections;
+package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspectionXmlTestBase;
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml")
-public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsInspectionXmlTestBase {
+public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblemsInspectionXmlTestBase {
   @Override
   protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
   }
 
   public void testComponentAbstractImplementation() {
     myFixture.testHighlighting("ComponentAbstractImplementation.xml",
-                               "AbstractApplicationComponent.java");
+                               "AbstractApplicationComponent.kt");
   }
 
   public void testComponentClassNotAssignableToInterface() {
     myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
-                               "ApplicationComponent.java");
+                               "ApplicationComponent.kt");
   }
 
   public void testComponentMissingImplementation() {
@@ -29,10 +30,10 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
     myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 
     myFixture.testHighlighting("ComponentMultipleWithSameInterface.xml",
-                               "ApplicationComponent.java",
-                               "ApplicationComponentInterface.java",
-                               "MyModuleComponent.java",
-                               "MyModuleComponentInterface.java");
+                               "ApplicationComponent.kt",
+                               "ApplicationComponentInterface.kt",
+                               "MyModuleComponent.kt",
+                               "MyModuleComponentInterface.kt");
   }
 
   public void testComponentUnresolvedClass() {
@@ -41,7 +42,7 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
 
   public void testActionAbstractClass() {
     myFixture.testHighlighting("ActionAbstractClass.xml",
-                               "MyAbstractAction.java");
+                               "MyAbstractAction.kt");
   }
 
   public void testActionUnresolvedClass() {
@@ -50,7 +51,7 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
 
   public void testActionWithoutDefaultCtor() {
     myFixture.testHighlighting("ActionWithoutDefaultCtor.xml",
-                               "MyActionWithoutDefaultCtor.java");
+                               "MyActionWithoutDefaultCtor.kt");
   }
 
   public void testActionWrongClass() {
