@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -37,7 +39,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
 
-
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
 
@@ -50,16 +51,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   }
 
   companion object {
-    @JvmField
     val PROJECT_OPENED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
 
-    @JvmField
-    val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
+    private val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
 
-    @JvmField
     val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPENED")
 
-    @JvmField
     val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
 
     fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
@@ -98,7 +95,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         runConfigurators = callback != null
         this.line = line
       }
-      return doOpenProject(Path.of(virtualFile.path), openProjectOptions)
+      return doOpenProject(virtualFile.toNioPath(), openProjectOptions)
     }
 
     private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
@@ -154,15 +151,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       )
       TrustedPaths.getInstance().setProjectPathTrusted(path = baseDir, value = true)
       val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = baseDir, options = copy) ?: return null
-      openFileFromCommandLine(project, file, copy.line, copy.column)
+      openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
       return project
     }
 
     @ApiStatus.Internal
-    @JvmStatic
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
-      LOG.info("Opening $file")
-
       if (Files.isDirectory(file)) {
         return ProjectManagerEx.getInstanceEx().openProject(file,
                                                             createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
@@ -360,8 +354,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose).copy(
-      forceOpenInNewFrame = forceOpenInNewFrame))
+    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
+      .copy(forceOpenInNewFrame = forceOpenInNewFrame))
   }
 
   // force open in a new frame if temp project
