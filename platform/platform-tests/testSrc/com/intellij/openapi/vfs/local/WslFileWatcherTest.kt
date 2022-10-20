@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.local
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil.*
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class WslFileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
   companion object {
-    private val LOG: Logger by lazy { Logger.getInstance(WslFileWatcher::class.java) }
+    private val LOG = logger<WslFileWatcherTest>()
     private val WSL: String? by lazy { enumerateWslDistributions().firstOrNull() }
   }
 
@@ -71,6 +71,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
     wsl = WSL!!
     assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
 
+    TestLoggerFactory.enableTraceLogging(testRootDisposable, WslFileWatcher::class.java, FileWatcherTest::class.java)
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     tempDir = createWslTempDir(wsl, getTestName(false))

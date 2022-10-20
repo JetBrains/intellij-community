@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local
 
-import com.intellij.openapi.diagnostic.LogLevel
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
-import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
@@ -16,7 +13,10 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TimeoutUtil
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -28,7 +28,6 @@ private const val NUM_FILES = 1000
 class FileWatcherPerformanceTest : BareTestFixtureTestCase() {
   @Rule @JvmField val tempDir: TempDirectory = TempDirectory()
 
-  private var tracing: Boolean = false
   private lateinit var watcher: FileWatcher
   private val events = AtomicInteger(0)
   private val resets = AtomicInteger(0)
@@ -42,15 +41,7 @@ class FileWatcherPerformanceTest : BareTestFixtureTestCase() {
   }
 
   @Before fun setUp() {
-    val logger = Logger.getInstance(NativeFileWatcherImpl::class.java)
-    tracing = logger.isTraceEnabled
-    if (tracing) logger.setLevel(LogLevel.WARNING)
     watcher = (LocalFileSystem.getInstance() as LocalFileSystemImpl).fileWatcher
-  }
-
-  @After
-  fun tearDown() {
-    if (tracing) Logger.getInstance(NativeFileWatcherImpl::class.java).setLevel(LogLevel.TRACE)
   }
 
   @Test fun watcherOverhead() {

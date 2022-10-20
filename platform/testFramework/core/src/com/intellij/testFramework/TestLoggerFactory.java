@@ -164,6 +164,17 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static void enableTraceLogging(@NotNull Disposable parentDisposable, Class<?> @NotNull ... classes) {
+    for (var klass : classes) {
+      var category = '#' + klass.getName();
+      var logger = Logger.getInstance(category);
+      if (!logger.isTraceEnabled()) {
+        logger.setLevel(LogLevel.TRACE);
+        Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
+      }
+    }
+  }
+
   private void buffer(LogLevel level, String category, @Nullable String message, @Nullable Throwable t) {
     var source = category.substring(Math.max(category.length() - 30, 0));
     var format = String.format("%1$tH:%1$tM:%1$tS,%1$tL %2$-6s %3$30s - ", System.currentTimeMillis(), level.getLevelName(), source);

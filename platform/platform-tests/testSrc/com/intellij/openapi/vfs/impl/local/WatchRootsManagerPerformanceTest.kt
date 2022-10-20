@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,7 +30,7 @@ import kotlin.test.assertFalse
 @SkipSlowTestLocally
 class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
+  private val LOG = logger<WatchRootsManagerPerformanceTest>()
 
   @Rule @JvmField val tempDir = TempDirectory()
 

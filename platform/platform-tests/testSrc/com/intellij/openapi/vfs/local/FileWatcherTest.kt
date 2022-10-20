@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.local
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -28,12 +28,9 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.watch
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -54,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
+  private val LOG = logger<FileWatcherTest>()
 
   @Rule @JvmField val tempDir = TempDirectory()
 
@@ -68,6 +65,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
+    TestLoggerFactory.enableTraceLogging(testRootDisposable, NativeFileWatcherImpl::class.java, FileWatcherTest::class.java)
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
