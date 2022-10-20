@@ -697,10 +697,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+      if (fileType != null) {
+        if (toLog()) {
+          log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+        }
+        return fileType.equals(requestedFileType);
       }
-      return fileType.equals(requestedFileType);
     }
 
     if (file instanceof LightVirtualFile) {
