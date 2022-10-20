@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.tree.BaseTreeModel
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -31,11 +30,7 @@ internal class AttachToProcessTree(
   dialogState: AttachDialogState) : TreeTable(
   FilteringTreeTableModel(AttachTreeModel(rootNode))), AttachToProcessItemsListBase {
 
-  private val speedSearch = SpeedSearch().apply {
-    updatePattern("")
-  }
-
-  val filters = AttachToProcessElementsFilters(speedSearch, dialogState.selectedDebuggersFilter)
+  val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
 
   init {
 
@@ -83,7 +78,7 @@ internal class AttachToProcessTree(
   }
 
   override fun updateFilter(searchFilterValue: String) {
-    speedSearch.updatePattern(searchFilterValue)
+    filters.updatePattern(searchFilterValue)
     refilterSaveSelection()
   }
 
