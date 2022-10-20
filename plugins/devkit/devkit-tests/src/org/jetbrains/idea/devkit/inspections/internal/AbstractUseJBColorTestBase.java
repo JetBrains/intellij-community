@@ -37,6 +37,7 @@ public abstract class AbstractUseJBColorTestBase extends JavaCodeInsightFixtureT
                              public Color(int r, int g, int b) {}
                          }
                          """);
+    // adding it via 'PsiTestUtil.addLibrary()' causes issues in Kotlin tests (it can't link JBColor with Color added with addClass()
     myFixture.addClass("""
                          package com.intellij.ui;
                          import java.awt.Color;
