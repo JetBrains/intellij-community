@@ -130,10 +130,10 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
     }
     catch (e: Exception) {
       // fallback in case of any failure (just to get aggregator running)
-      System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple shuffle sorting")
+      System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple reverse sorting")
       System.err.println(e)
       var rank = 1
-      unsortedClasses.shuffled().associateWith { rank++ }
+      unsortedClasses.sortedByDescending { it.name }.associateWith { rank++ }
     }
   }
 }
