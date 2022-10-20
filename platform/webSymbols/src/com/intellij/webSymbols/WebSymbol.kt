@@ -157,8 +157,6 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   fun adjustNameForRefactoring(registry: WebSymbolsRegistry, newName: String, occurence: String): String =
     registry.namesProvider.adjustRename(namespace, kind, matchedName, newName, occurence)
 
-  fun validateName(name: String): String? = null
-
   enum class Priority(val value: Double) {
     LOWEST(0.0),
     LOW(1.0),
