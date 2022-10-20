@@ -472,7 +472,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (t instanceof JBRCrash) {
       info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"));
     }
-    else {
+    else if (t instanceof KotlinCompilerCrash) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash") + " " + ((KotlinCompilerCrash)t).getVersion());
+    } else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().getProductName()));
     }
 
