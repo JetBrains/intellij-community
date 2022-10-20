@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
@@ -286,7 +287,7 @@ object GHGQLRequests {
                                  mapOf("reviewId" to reviewId),
                                  Any::class.java)
 
-      fun pendingReviews(server: GithubServerPath, pullRequestId: String): GQLQuery<GHNodes<GHPullRequestPendingReview>> {
+      fun pendingReviews(server: GithubServerPath, pullRequestId: String): GQLQuery<GraphQLNodesDTO<GHPullRequestPendingReview>> {
         return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pendingReview,
                                         mapOf("pullRequestId" to pullRequestId),
                                         PendingReviewNodes::class.java,
@@ -294,7 +295,7 @@ object GHGQLRequests {
       }
 
       private class PendingReviewNodes(nodes: List<GHPullRequestPendingReview>) :
-        GHNodes<GHPullRequestPendingReview>(nodes)
+        GraphQLNodesDTO<GHPullRequestPendingReview>(nodes)
 
       fun addComment(server: GithubServerPath,
                      reviewId: String,

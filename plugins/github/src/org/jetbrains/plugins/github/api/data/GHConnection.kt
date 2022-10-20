@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 
 open class GHConnection<out T>(override val pageInfo: GraphQLCursorPageInfoDTO, nodes: List<T>)
-  : GHNodes<T>(nodes), GraphQLPagedResponseDataDTO<T>
+  : GraphQLNodesDTO<T>(nodes), GraphQLPagedResponseDataDTO<T>

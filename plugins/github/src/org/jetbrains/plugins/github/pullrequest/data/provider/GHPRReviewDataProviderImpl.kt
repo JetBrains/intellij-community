@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
@@ -11,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.data.GHNode
-import org.jetbrains.plugins.github.api.data.GHNodes
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -137,7 +137,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine, GHNodes(comments))
+          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine, GraphQLNodesDTO(comments))
       }
     }
 
@@ -150,7 +150,7 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
         GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine,
-                                  GHNodes(it.comments.map { comment ->
+                                  GraphQLNodesDTO(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,
                                                                  newComment.body, comment.createdAt,
