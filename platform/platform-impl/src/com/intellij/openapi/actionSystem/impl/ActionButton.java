@@ -206,15 +206,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
-    WizardPopup parent = getPopupContainer(this);
     PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      parent, null, actionGroup, event.getDataContext(), false,
+      null, null, actionGroup, event.getDataContext(), false,
       false, true, false,
       null, -1, null,
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
       createPresentationFactory(), false);
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
+    popup.setActiveRoot(getPopupContainer(this) == null);
     PopupImplUtil.setPopupToggleButton(popup, this);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;
