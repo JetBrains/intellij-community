@@ -22,6 +22,6 @@ class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection :
     }
 
     override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *> =
-        ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.errorFactory
+        with(ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR) { languageVersionSettings.chooseFactory() }
 }
 
