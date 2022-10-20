@@ -50,7 +50,7 @@ import java.util.StringTokenizer;
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
 /**
- * @deprecated use {@link AsyncProjectViewPane} instead.
+ * @deprecated use {@link AbstractProjectViewPaneWithAsyncSupport} instead.
  */
 @Deprecated(forRemoval = true)
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
