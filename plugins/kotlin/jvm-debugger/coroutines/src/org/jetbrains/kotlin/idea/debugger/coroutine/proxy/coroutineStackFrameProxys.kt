@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableVal
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
 import org.jetbrains.kotlin.idea.debugger.base.util.wrapEvaluateException
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameProxyImpl
 
 class SkipCoroutineStackFrameProxyImpl(
     threadProxy: ThreadReferenceProxyImpl,
@@ -28,7 +29,7 @@ class CoroutineStackFrameProxyImpl(
     threadProxy: ThreadReferenceProxyImpl,
     stackFrame: StackFrame,
     indexFromBottom: Int
-) : StackFrameProxyImpl(threadProxy, stackFrame, indexFromBottom) {
+) : KotlinStackFrameProxyImpl(threadProxy, stackFrame, indexFromBottom) {
     val continuation = wrapEvaluateException { super.thisObject() }
     private val coroutineScope by lazy { extractCoroutineScope() }
 
@@ -44,6 +45,8 @@ class CoroutineStackFrameProxyImpl(
 
     override fun thisObject() =
         coroutineScope ?: continuation
+
+    override fun dispatchReceiver() = continuation
 
     private fun extractCoroutineScope(): ObjectReference? {
         if (continuation == null) {
