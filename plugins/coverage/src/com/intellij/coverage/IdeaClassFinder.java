@@ -45,7 +45,6 @@ final class IdeaClassFinder extends ClassFinder {
     final CoverageDataManager coverageManager = CoverageDataManager.getInstance(myProject);
     for (Module module : modules) {
       final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(coverageManager, module, myCurrentSuite.isTrackTestFolders());
-      if (roots == null) continue;
       for (VirtualFile root : roots) {
         entries.add(new ClassPathEntry(root.getPath()));
       }
