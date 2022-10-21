@@ -6,6 +6,7 @@ import com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -63,6 +64,7 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
   @NotNull
   public static HgRepository getInstance(@NotNull VirtualFile root, @NotNull Project project,
                                          @NotNull Disposable parentDisposable) {
+    ProgressManager.checkCanceled();
     HgVcs vcs = HgVcs.getInstance(project);
     if (vcs == null) {
       throw new IllegalArgumentException("Vcs not found for project " + project);

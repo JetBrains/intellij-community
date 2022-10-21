@@ -6,6 +6,7 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -112,6 +113,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
                                       @NotNull VirtualFile gitDir,
                                       @NotNull Project project,
                                       @NotNull Disposable parentDisposable) {
+    ProgressManager.checkCanceled();
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
     repository.setupUpdater();
     GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
