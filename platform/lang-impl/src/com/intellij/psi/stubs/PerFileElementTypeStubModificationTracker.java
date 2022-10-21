@@ -86,7 +86,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
-      if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
+      if (wereModificationsInCurrentBatch(info.type) ||
+          (info.project != null && info.project.isDisposed())) continue;
       try {
         var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
           .getDiffBuilder(
