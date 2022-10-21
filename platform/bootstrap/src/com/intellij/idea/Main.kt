@@ -9,7 +9,9 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
+import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -70,6 +72,10 @@ private fun initProjectorIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
+    val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
+    val projectorEnvInstance = projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
+    JBR.getProjectorUtils().overrideGraphicsEnvironment(projectorEnvInstance)
+
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
       projectorMainClass, "runProjectorServer", MethodType.methodType(Boolean::class.javaPrimitiveType)
