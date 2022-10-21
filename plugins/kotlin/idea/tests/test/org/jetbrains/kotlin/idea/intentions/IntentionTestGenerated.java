@@ -15004,6 +15004,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeEmptyPrimaryConstructor/annotation.kt");
         }
 
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("testData/intentions/removeEmptyPrimaryConstructor/dataClass.kt");
+        }
+
         @TestMetadata("expectClassExplicitConstructor.kt")
         public void testExpectClassExplicitConstructor() throws Exception {
             runTest("testData/intentions/removeEmptyPrimaryConstructor/expectClassExplicitConstructor.kt");
@@ -15012,6 +15017,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("expectClassPrimaryConstructor.kt")
         public void testExpectClassPrimaryConstructor() throws Exception {
             runTest("testData/intentions/removeEmptyPrimaryConstructor/expectClassPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("testData/intentions/removeEmptyPrimaryConstructor/inlineClass.kt");
         }
 
         @TestMetadata("keyword.kt")
@@ -15037,6 +15047,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/intentions/removeEmptyPrimaryConstructor/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/intentions/removeEmptyPrimaryConstructor/valueClass.kt");
         }
     }
 
