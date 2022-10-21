@@ -181,12 +181,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("refactorings/rename.k2") {
-        testClass<AbstractFirSimpleRenameTest> {
-            model("refactoring/rename", pattern = KT_WITHOUT_DOTS)
-        }
-    }
-
     testGroup("refactorings/rename.k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractFirRenameTest> {
             model("refactoring/rename", pattern = Patterns.TEST, flatten = true)

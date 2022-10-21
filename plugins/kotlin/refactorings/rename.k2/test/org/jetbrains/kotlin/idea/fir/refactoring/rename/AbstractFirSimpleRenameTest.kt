@@ -14,6 +14,10 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
+/**
+ * Not used at the moment, since [org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameUsageSearcher]
+ * is disabled.
+ */
 abstract class AbstractFirSimpleRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     private val NEW_NAME_DIRECTIVE = "NEW_NAME"
 
