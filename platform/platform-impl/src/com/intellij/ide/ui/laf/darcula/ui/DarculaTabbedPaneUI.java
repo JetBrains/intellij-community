@@ -11,6 +11,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,6 +53,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
   private boolean tabBackgroundOnlyForHover;
+  private Color myTabHoverColor;
 
   private static final JBValue OFFSET = new JBValue.Float(1);
 
@@ -74,6 +76,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       tabPane.add(myShowHiddenTabsButton = new ShowHiddenTabsButton());
     }
     tabBackgroundOnlyForHover = Boolean.TRUE.equals(tabPane.getClientProperty("TabbedPane.tabBackgroundOnlyForHover"));
+
+    if (tabPane.getClientProperty("TabbedPane.hoverColor") instanceof Color color) {
+      myTabHoverColor = color;
+    }
   }
 
   @Override
@@ -294,7 +300,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     switch (tabStyle) {
       case fill -> {
         if (tabPane.isEnabled()) {
-          g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
+          g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? getHoverColor() : tabPane.getBackground());
         }
         else {
           g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
@@ -308,7 +314,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
             c = FOCUS_COLOR;
           }
           else if (tabIndex == hoverTab) {
-            c = HOVER_COLOR;
+            c = getHoverColor();
           }
         }
 
@@ -330,6 +336,10 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
 
     g.fillRect(x, y, w, h);
+  }
+
+  private @NotNull Color getHoverColor() {
+    return myTabHoverColor == null ? HOVER_COLOR : myTabHoverColor;
   }
 
   @Override

@@ -541,6 +541,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       @Override
       public void setUI(TabbedPaneUI ui) {
         putClientProperty("TabbedPane.tabBackgroundOnlyForHover", Boolean.TRUE);
+        putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR);
 
         boolean contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque");
         UIManager.getDefaults().put("TabbedPane.contentOpaque", Boolean.FALSE);
