@@ -86,7 +86,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
     while (!myProbablyExpensiveUpdates.isEmpty()) {
       FileInfo info = myProbablyExpensiveUpdates.poll();
-      if (wereModificationsInCurrentBatch(info.type)) continue;
+      if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
       try {
         var diffBuilder = (StubCumulativeInputDiffBuilder)myStubUpdatingIndexStorage.getValue().getForwardIndexAccessor()
           .getDiffBuilder(
@@ -94,7 +94,13 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
           );
         FileContent fileContent = FileContentImpl.createByFile(info.file, info.project);
-        Stub stub = StubTreeBuilder.buildStubTree(fileContent);
+        Stub stub;
+        try {
+          FileBasedIndexImpl.markFileIndexed(info.file, fileContent);
+          stub = StubTreeBuilder.buildStubTree(fileContent);
+        } finally {
+          FileBasedIndexImpl.unmarkBeingIndexed();
+        }
         Map<Integer, SerializedStubTree> serializedStub = stub == null ? Collections.emptyMap() : stubIndexer.map(fileContent);
         if (diffBuilder.differentiate(serializedStub, (__, ___, ____) -> { }, (__, ___, ____) -> { }, (__, ___) -> { }, true)) {
           registerModificationFor(info.type);

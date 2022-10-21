@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,9 +80,7 @@ public class StubBuilderType {
         }
       }
 
-      String baseVersion = myElementType.getClass().getName() +
-                           ":" + elementTypeStubVersion +
-                           ":" + myElementType; // toString() -> debugName
+      String baseVersion = myElementType.getExternalId() + ":" + elementTypeStubVersion;
       return myProperties.isEmpty() ? baseVersion : (baseVersion + ":" + StringUtil.join(myProperties, ","));
     } else {
       assert myBinaryFileStubBuilder != null;
@@ -103,26 +100,16 @@ public class StubBuilderType {
   public static Class<? extends IStubFileElementType> getStubFileElementTypeFromVersion(@NotNull String version) {
     int delimPos = version.indexOf(':');
     if (delimPos == -1) return null;
-    String className = version.substring(0, delimPos);
+    String externalId = version.substring(0, delimPos);
     List<IElementType> matches = Arrays.asList(IElementType.enumerate(p -> {
-      return p.getClass().getName().equals(className);
+      return (p instanceof IStubFileElementType && ((IStubFileElementType<?>)p).getExternalId().equals(externalId)) ||
+             p.getClass().getName().equals(externalId);
     }));
-    if (matches.size() > 1) {
-      int stubVersionDelimPos = version.indexOf(':', delimPos + 1);
-      if (stubVersionDelimPos == -1) {
-        LOG.error("Impossible to distinguish FileElementTypes. Version info is incomplete: " + version);
-        return null;
-      }
-      String debugName = version.substring(stubVersionDelimPos + 1);
-      matches = ContainerUtil.filter(matches, p -> {
-        return p.getDebugName().equals(debugName);
-      });
-    }
+    if (matches.isEmpty()) return null;
     if (matches.size() > 1) {
       LOG.error("Impossible to distinguish FileElementTypes. Version: " + version);
       return null;
     }
-    if (matches.isEmpty()) return null;
     return (Class<? extends IStubFileElementType>)matches.get(0).getClass();
   }
 
