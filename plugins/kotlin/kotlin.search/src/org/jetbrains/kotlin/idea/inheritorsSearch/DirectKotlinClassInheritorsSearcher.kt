@@ -36,9 +36,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
             KotlinTypeAliasByExpansionShortNameIndex
                 .get(typeName, project, scope)
                 .asSequence()
-                .map { it.name }
-                .filterNotNull()
-                .filter { it !in names }
+                .mapNotNull { it.name }
                 .onEach { names.add(it) }
                 .forEach(::searchForTypeAliasesRecursively)
         }
@@ -53,7 +51,8 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                     names.forEach { name ->
                         ProgressManager.checkCanceled()
                         KotlinSuperClassIndex
-                            .get(name, project, noLibrarySourceScope).asSequence()
+                            .get(name, project, noLibrarySourceScope)
+                            .asSequence()
                             .map { ktClassOrObject ->
                                 ProgressManager.checkCanceled()
                                 analyze(ktClassOrObject) {

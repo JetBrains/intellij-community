@@ -8,7 +8,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import org.jetbrains.kotlin.psi.KtClass
 
-class DirectKotlinClassInheritorsSearch {
+object DirectKotlinClassInheritorsSearch {
 
     data class SearchParameters(
         val ktClass: KtClass,
@@ -23,19 +23,17 @@ class DirectKotlinClassInheritorsSearch {
             return ktClass.isValid
         }
     }
-    
-    companion object {
 
-        fun search(klass: KtClass): Query<PsiElement> {
-            return search(SearchParameters(klass, klass.useScope))
-        }
-
-        fun search(klass: KtClass, searchScope: SearchScope): Query<PsiElement> {
-            return search(SearchParameters(klass, searchScope))
-        }
-
-        fun search(parameters: SearchParameters): Query<PsiElement> {
-            return SearchService.getInstance().searchParameters(parameters)
-        }
+    fun search(klass: KtClass): Query<PsiElement> {
+        return search(SearchParameters(klass, klass.useScope))
     }
+
+    fun search(klass: KtClass, searchScope: SearchScope): Query<PsiElement> {
+        return search(SearchParameters(klass, searchScope))
+    }
+
+    fun search(parameters: SearchParameters): Query<PsiElement> {
+        return SearchService.getInstance().searchParameters(parameters)
+    }
+  
 }
