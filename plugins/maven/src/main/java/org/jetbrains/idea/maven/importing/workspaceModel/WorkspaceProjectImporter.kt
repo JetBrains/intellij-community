@@ -417,6 +417,7 @@ internal class WorkspaceProjectImporter(
       var attempts = 0
       var durationInBackground = 0L
       var durationInWriteAction = 0L
+      var durationOfWorkspaceUpdate = 0L
 
       var updated = false
       if (!WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE) {
@@ -436,6 +437,7 @@ internal class WorkspaceProjectImporter(
             }
             else {
               updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+              durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
             }
             if (updated) afterApplyInWriteAction(workspaceModel.entityStorage.current)
             durationInWriteAction += System.nanoTime() - beforeWA
@@ -452,6 +454,7 @@ internal class WorkspaceProjectImporter(
         MavenUtil.invokeAndWaitWriteAction(project) {
           val beforeWA = System.nanoTime()
           workspaceModel.updateProjectModel { builder -> prepareInBackground(builder) }
+          durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
           afterApplyInWriteAction(workspaceModel.entityStorage.current)
           durationInWriteAction += System.nanoTime() - beforeWA
         }
@@ -459,6 +462,7 @@ internal class WorkspaceProjectImporter(
 
       stats.recordCommitPhaseStats(durationInBackgroundNano = durationInBackground,
                                    durationInWriteActionNano = durationInWriteAction,
+                                   durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
     }
   }
