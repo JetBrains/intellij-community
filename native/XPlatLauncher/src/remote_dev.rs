@@ -339,10 +339,6 @@ pub struct RemoteDevArgs {
     pub ij_args: Vec<String>
 }
 
-fn register_backend() {
-    todo!("")
-}
-
 fn print_help() {
     todo!("")
 }

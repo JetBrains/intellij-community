@@ -28,11 +28,10 @@ mod tests {
 
         let dump = &result.dump.expect("Exit status was successful, but no dump was received");
 
-        assert_eq!(&dump.cmdArguments[0], test.launcher_path.to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[1], "dump-launch-parameters");
-        assert_eq!(&dump.cmdArguments[2], test.test_root_dir.to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[3], "--output");
-        assert_eq!(&dump.cmdArguments[4], test.test_root_dir.join(TEST_OUTPUT_FILE_NAME).to_string_lossy().as_ref());
-        assert_eq!(&dump.cmdArguments[5], args[0]);
+        assert_eq!(&dump.cmdArguments[0], "dump-launch-parameters");
+        assert_eq!(&dump.cmdArguments[1], test.test_root_dir.to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[2], "--output");
+        assert_eq!(&dump.cmdArguments[3], test.test_root_dir.join(TEST_OUTPUT_FILE_NAME).to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[4], args[0]);
     }
 }
