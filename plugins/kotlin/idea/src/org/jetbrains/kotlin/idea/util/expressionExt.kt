@@ -15,10 +15,8 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
@@ -32,18 +30,6 @@ fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArg
         calleeExpression,
     )
 }
-
-fun KtClass.mustHaveOnlyPropertiesInPrimaryConstructor(): Boolean = isData() || isAnnotation() || isInlineOrValue()
-
-fun KtClass.mustHaveOnlyValPropertiesInPrimaryConstructor(): Boolean = isAnnotation() || isInlineOrValue()
-
-fun KtClass.isInlineOrValue(): Boolean = isInline() || isValue()
-
-fun KtModifierListOwner.hasInlineModifier() = hasModifier(KtTokens.INLINE_KEYWORD)
-
-fun KtModifierListOwner.hasPrivateModifier() = hasModifier(KtTokens.PRIVATE_KEYWORD)
-
-fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean = containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
 
 // TODO: add cases
 fun KtExpression.hasNoSideEffects(): Boolean = when (this) {

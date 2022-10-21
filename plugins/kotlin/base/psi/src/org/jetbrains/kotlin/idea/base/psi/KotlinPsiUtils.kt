@@ -11,10 +11,12 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
@@ -185,3 +187,21 @@ fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtVal
 
     return null
 }
+
+fun KtClass.mustHaveNonEmptyPrimaryConstructor(): Boolean =
+    isData() || isInlineOrValue()
+
+fun KtClass.mustHaveOnlyPropertiesInPrimaryConstructor(): Boolean =
+    isData() || isAnnotation() || isInlineOrValue()
+
+fun KtClass.mustHaveOnlyValPropertiesInPrimaryConstructor(): Boolean =
+    isAnnotation() || isInlineOrValue()
+
+fun KtClass.isInlineOrValue(): Boolean =
+    isInline() || isValue()
+
+fun KtModifierListOwner.hasInlineModifier(): Boolean =
+    hasModifier(KtTokens.INLINE_KEYWORD)
+
+fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
+    containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
