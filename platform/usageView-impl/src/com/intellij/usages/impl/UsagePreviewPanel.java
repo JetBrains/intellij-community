@@ -216,25 +216,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
       if (psiElement == null || !psiElement.isValid()) continue;
-      int offsetInFile = psiElement.getTextOffset();
 
-      TextRange elementRange = psiElement.getTextRange();
       TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null
-                            || infoRange.getStartOffset() > elementRange.getLength()
-                            || infoRange.getEndOffset() > elementRange.getLength() ? null
-                                                                                   : elementRange.cutOut(infoRange);
-      if (textRange == null) textRange = elementRange;
-      // hack to determine element range to highlight
-      if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
-        PsiFile psiFile = psiElement.getContainingFile();
-        PsiElement nameElement = psiFile.findElementAt(offsetInFile);
-        if (nameElement != null) {
-          textRange = nameElement.getTextRange();
-        }
-      }
-      // highlight injected element in host document text range
-      textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
+      TextRange textRange = calculateHighlightingRange(project, highlightOnlyNameElements, psiElement, infoRange);
 
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
                                                                      textRange.getStartOffset(),
@@ -262,6 +246,30 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       }
     }
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+  }
+
+  public static @NotNull TextRange calculateHighlightingRange(@NotNull Project project,
+                                                              boolean highlightOnlyNameElements,
+                                                              @NotNull PsiElement psiElement,
+                                                              @Nullable TextRange infoRange) {
+    int offsetInFile = psiElement.getTextOffset();
+    TextRange elementRange = psiElement.getTextRange();
+    TextRange textRange = infoRange == null
+                          || infoRange.getStartOffset() > elementRange.getLength()
+                          || infoRange.getEndOffset() > elementRange.getLength() ? null
+                                                                                 : elementRange.cutOut(infoRange);
+    if (textRange == null) textRange = elementRange;
+    // hack to determine element range to highlight
+    if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
+      PsiFile psiFile = psiElement.getContainingFile();
+      PsiElement nameElement = psiFile.findElementAt(offsetInFile);
+      if (nameElement != null) {
+        textRange = nameElement.getTextRange();
+      }
+    }
+    // highlight injected element in host document text range
+    textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
+    return textRange;
   }
 
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");

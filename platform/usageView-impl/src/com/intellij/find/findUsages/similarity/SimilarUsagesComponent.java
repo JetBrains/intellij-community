@@ -51,7 +51,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   private void renderUsage(@NotNull UsageInfo info) {
     PsiElement element = info.getElement();
     if (element == null) return;
-    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement());
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(info.getElement(), info.getRangeInElement());
     Disposer.register(this, codeSnippet);
     Color color = codeSnippet.getEditor().getBackgroundColor();
     add(getHeaderPanelForUsage(myOriginalUsage, info, color));
