@@ -1739,7 +1739,6 @@ public class JBTabsImpl extends JComponent
     }
 
     final Toolbar toolbar = createToolbarComponent(tabInfo);
-    toolbar.setVisible(!isHideTabs());
     myInfo2Toolbar.put(tabInfo, toolbar);
     add(toolbar);
   }
@@ -2867,7 +2866,6 @@ public class JBTabsImpl extends JComponent
 
     myHideTabs = hideTabs;
 
-    myInfo2Toolbar.values().forEach(toolbar -> toolbar.setVisible(!myHideTabs));
     if (myEntryPointToolbar != null) {
       myEntryPointToolbar.getComponent().setVisible(!myHideTabs);
     }
