@@ -247,7 +247,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       if (WindowRoundedCornersManager.isAvailable()) {
         WindowRoundedCornersManager.setRoundedCorners(myDialog.getWindow());
       }
-      ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      ApplicationManager.getApplication().getMessageBus().connect(myDialog.getDisposable()).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           closeImmediately();

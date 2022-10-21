@@ -14,6 +14,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
@@ -47,7 +48,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   public CompletionServiceImpl() {
     super();
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration

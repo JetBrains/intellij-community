@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -221,7 +221,7 @@ public final class VcsInitialization {
     }
   }
 
-  static final class ShutDownProjectListener implements ProjectManagerListener {
+  static final class ShutDownProjectListener implements ProjectCloseListener {
     @Override
     public void projectClosing(@NotNull Project project) {
       if (project.isDefault()) return;

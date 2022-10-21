@@ -34,7 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -753,7 +753,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
   
-  public static class CoverageProjectManagerListener implements ProjectManagerListener {
+  public static class CoverageProjectManagerListener implements ProjectCloseListener {
     @Override
     public void projectClosing(@NotNull Project project) {
       CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);

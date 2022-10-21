@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.MessageType;
@@ -169,7 +170,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }, this);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
           if (project == myProject) {

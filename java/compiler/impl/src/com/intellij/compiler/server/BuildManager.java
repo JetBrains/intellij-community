@@ -307,7 +307,7 @@ public final class BuildManager implements Disposable {
     }
 
     MessageBusConnection connection = application.getMessageBus().connect(this);
-    connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -2062,7 +2062,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private final class ProjectWatcher implements ProjectManagerListener {
+  private final class ProjectWatcher implements ProjectCloseListener {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override

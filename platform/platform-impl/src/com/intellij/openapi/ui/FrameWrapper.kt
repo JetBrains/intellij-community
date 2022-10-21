@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -69,7 +70,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
   fun setProject(project: Project) {
     this.project = project
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(project: Project) {
         if (project === this@FrameWrapper.project) {
           close()

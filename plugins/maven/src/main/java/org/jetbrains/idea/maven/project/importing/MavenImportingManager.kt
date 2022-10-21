@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
@@ -69,7 +70,7 @@ class MavenImportingManager(val project: Project) {
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(disposable)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(p: Project) {
         Disposer.dispose(disposable)
         forceStopImport()

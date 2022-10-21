@@ -16,8 +16,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
@@ -130,7 +129,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
         autoSyncManager.autoSync(true)
       }
     })
-    messageBusConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    messageBusConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           autoSyncManager.autoSync()

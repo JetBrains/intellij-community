@@ -280,7 +280,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       FocusUtil.addFocusOwnerListener(ApplicationManager.getApplication(), focusListener)
 
       val connection = ApplicationManager.getApplication().messageBus.connect()
-      connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosingBeforeSave(project: Project) {
           val manager = (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?) ?: return
           for (entry in manager.idToEntry.values) {

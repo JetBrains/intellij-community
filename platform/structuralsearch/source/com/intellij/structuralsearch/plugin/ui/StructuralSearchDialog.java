@@ -224,7 +224,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         close(CANCEL_EXIT_CODE);
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (project == myProject) {

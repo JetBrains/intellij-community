@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.*
@@ -361,7 +362,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   @Internal
   @VisibleForTesting
-  class MyProjectListener : ProjectManagerListener {
+  class MyProjectListener : ProjectCloseListener {
     override fun projectClosing(project: Project) {
       val app = ApplicationManagerEx.getApplicationEx()
       if (app.isExitInProgress) {

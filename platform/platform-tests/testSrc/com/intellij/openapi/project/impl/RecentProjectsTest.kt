@@ -5,7 +5,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
@@ -200,7 +200,7 @@ internal class RecentProjectManagerListenerRule : ExternalResource() {
 
   override fun before() {
     connection = ApplicationManager.getApplication().messageBus.simpleConnect()
-    connection!!.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
     connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
   }
 

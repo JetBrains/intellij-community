@@ -144,9 +144,9 @@
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
+              topic="com.intellij.openapi.project.ProjectCloseListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
-    <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectManagerListener"
+    <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectCloseListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.ide.lightEdit.LightEditServiceListener"
               activeInHeadlessMode="false"/>

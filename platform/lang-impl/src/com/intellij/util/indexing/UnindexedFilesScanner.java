@@ -492,7 +492,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
     if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
       var sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
       var connection = app.getMessageBus().connect();
-      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
         public void projectClosed(@NotNull Project project) {
           if (project == myProject) {

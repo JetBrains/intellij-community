@@ -192,7 +192,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         ApplicationManager.getApplication().invokeLater(() -> dumbModeFinished(myProject), myProject.getDisposed());
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (project == myProject) {
@@ -986,7 +986,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (!ClientId.isCurrentlyUnderLocalId()) {
       ClientFileEditorManager clientManager = getClientFileEditorManager();
       if (clientManager == null) {
-        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+        return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
       }
 
       List<FileEditorWithProvider> result = clientManager.openFile(_file, false);
@@ -1006,7 +1006,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     AsyncFileEditorProvider.Builder[] builders;
     if (compositeRef.isNull()) {
       if (!canOpenFile(file)) {
-        return EditorComposite.retrofit(null);
+        return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
       }
 
       // File is not opened yet. In this case we have to create editors
