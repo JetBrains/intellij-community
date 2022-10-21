@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.vcs.VcsSymlinkResolver;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -568,6 +569,24 @@ public final class VcsUtil {
     }
     mappings.add(newMapping);
     return mappings;
+  }
+
+  @NotNull
+  public static VirtualFile resolveSymlinkIfNeeded(@NotNull Project project, @NotNull VirtualFile file) {
+    VirtualFile symlink = resolveSymlink(project, file);
+    return symlink != null ? symlink : file;
+  }
+
+  @Nullable
+  public static VirtualFile resolveSymlink(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file == null) return null;
+    for (VcsSymlinkResolver resolver : VcsSymlinkResolver.EP_NAME.getExtensionList(project)) {
+      if (resolver.isEnabled()) {
+        VirtualFile symlink = resolver.resolveSymlink(file);
+        if (symlink != null) return symlink;
+      }
+    }
+    return null;
   }
 
   /**
