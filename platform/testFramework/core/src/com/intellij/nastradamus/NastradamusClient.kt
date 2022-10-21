@@ -71,7 +71,7 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
       .addParameter("build_id", TeamCityClient.buildId)
       .build()
 
-    val stringJson = jacksonObjectMapper().writeValueAsString(testResultRequestEntity)
+    val stringJson = jacksonObjectMapper().writeValueAsString(testResultRequestEntity.testRunResults)
 
     val httpPost = HttpPost(uri).apply {
       addHeader("Content-Type", "application/json")
@@ -86,12 +86,12 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
     }
 
     withRetry {
-      HttpClient.sendRequest(httpPost) {
-        if (it.statusLine.statusCode != 200) {
+      HttpClient.sendRequest(httpPost) { response ->
+        if (response.statusLine.statusCode != 200) {
           if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
             System.err.apply {
-              println(it)
-              println(it.entity.content.reader().readText())
+              println(response)
+              println(response.entity.content.reader().readText())
             }
           }
 
