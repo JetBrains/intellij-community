@@ -30,7 +30,7 @@ import java.time.Duration
 abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
-    get() = listOf(PyPIPackageRepository) + PythonSimpleRepositoryCache.repositories
+    get() = listOf(PyPIPackageRepository) + service<PythonSimpleRepositoryCache>().repositories
 
   private val gson = Gson()
   private val packageDetailsCache = Caffeine.newBuilder()
@@ -91,19 +91,20 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
 
 
   override suspend fun initCaches() {
-    if (PypiPackageCache.isEmpty()) {
-      PypiPackageCache.loadCache()
+    service<PypiPackageCache>().apply {
+      if (isEmpty()) loadCache()
     }
 
-    val service = service<PyPackageRepositories>()
-    if (service.repositories.isNotEmpty() && PythonSimpleRepositoryCache.isEmpty()) {
-      PythonSimpleRepositoryCache.refresh()
+    val repositoryService = service<PyPackageRepositories>()
+    val repositoryCache = service<PythonSimpleRepositoryCache>()
+    if (repositoryService.repositories.isNotEmpty() && repositoryCache.isEmpty()) {
+      repositoryCache.refresh()
     }
   }
 
   override suspend fun refreshCashes() {
-    PypiPackageCache.refresh()
-    PythonSimpleRepositoryCache.refresh()
+    service<PypiPackageCache>().refresh()
+    service<PythonSimpleRepositoryCache>().refresh()
   }
 
   override fun allPackages(): List<String> {
@@ -112,8 +113,8 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   }
 
   override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
-    return if (repository is PyPIPackageRepository) PypiPackageCache.packages
-    else PythonSimpleRepositoryCache[repository] ?: error("No packages for requested repository in cache")
+    return if (repository is PyPIPackageRepository) service<PypiPackageCache>().packages
+    else service<PythonSimpleRepositoryCache>()[repository] ?: error("No packages for requested repository in cache")
   }
 
   override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {

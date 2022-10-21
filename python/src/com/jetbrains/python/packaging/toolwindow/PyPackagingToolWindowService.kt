@@ -52,7 +52,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      PyPIPackageRanking.reload()
+      service<PyPIPackageRanking>().reload()
       initForSdk(project.modules.firstOrNull()?.pythonSdk)
     }
     subscribeToChanges()
@@ -286,7 +286,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       }
 
       if (PyPIPackageUtil.isPyPIRepository(url)) {
-        val ranking = PyPIPackageRanking.packageRank
+        val ranking = service<PyPIPackageRanking>().packageRank
         return Comparator { p1, p2 ->
           val rank1 = ranking[p1.lowercase()]
           val rank2 = ranking[p2.lowercase()]
