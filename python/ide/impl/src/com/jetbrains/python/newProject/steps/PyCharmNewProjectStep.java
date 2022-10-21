@@ -66,9 +66,4 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
         .toArray(EMPTY_ARRAY);
     }
   }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
 }
