@@ -316,6 +316,6 @@ private fun Color.addAlpha(alpha: Double): Color {
 }
 
 private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)
-  JBColor.namedColor("Green5", 0x599E5E)
+  JBUI.CurrentTheme.RunWidget.RUNNING_BACKGROUND
 else
   JBUI.CurrentTheme.RunWidget.BACKGROUND

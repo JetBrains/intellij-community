@@ -608,7 +608,8 @@
     },
     "RunWidget" : {
       "foreground": "Grey13",
-      "background": "Blue5"
+      "background": "Blue5",
+      "runningBackground": "Green5"
     }
   },
 
