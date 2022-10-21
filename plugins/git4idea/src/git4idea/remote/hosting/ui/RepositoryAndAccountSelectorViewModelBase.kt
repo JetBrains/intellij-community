@@ -8,6 +8,7 @@ import com.intellij.collaboration.util.URIUtil
 import com.intellij.util.childScope
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.HostedGitRepositoryMapping
+import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -18,7 +19,7 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
   private val onSelected: suspend (M, A) -> Unit
 ) : RepositoryAndAccountSelectorViewModel<M, A> {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(Dispatchers.Main)
 
   final override val repositoriesState = repositoriesManager.knownRepositoriesState
 
@@ -36,29 +37,62 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
   final override val accountSelectionState = MutableStateFlow<A?>(null)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  final override val missingCredentialsState: StateFlow<Boolean> =
+  final override val missingCredentialsState: StateFlow<Boolean?> =
     accountSelectionState.transformLatest {
-      if(it == null) {
+      if (it == null) {
         emit(false)
-      } else {
+      }
+      else {
+        emit(null)
         coroutineScope {
           accountManager.getCredentialsState(this, it).collect { creds ->
             emit(creds == null)
           }
         }
       }
-    }.stateIn(cs, SharingStarted.Eagerly, false)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  private val submissionErrorState = MutableStateFlow<Error.SubmissionError?>(null)
+  final override val errorState: StateFlow<Error?> =
+    combineState(cs, missingCredentialsState, submissionErrorState) { missingCredentials, submissionError ->
+      if (missingCredentials == true) {
+        Error.MissingCredentials
+      }
+      else {
+        submissionError
+      }
+    }
+
+  private val submittingState = MutableStateFlow(false)
+
+  final override val busyState: StateFlow<Boolean> =
+    combineState(cs, missingCredentialsState, submittingState) { missingCredentials, submitting ->
+      missingCredentials == null || submitting
+    }
 
   final override val submitAvailableState: StateFlow<Boolean> =
     combine(repoSelectionState, accountSelectionState, missingCredentialsState) { repo, acc, credsMissing ->
-      repo != null && acc != null && !credsMissing
+      repo != null && acc != null && credsMissing == false
     }.stateIn(cs, SharingStarted.Eagerly, false)
 
   override fun submitSelection() {
     val repo = repoSelectionState.value ?: return
     val account = accountSelectionState.value ?: return
     cs.launch {
-      onSelected(repo, account)
+      submittingState.value = true
+      try {
+        onSelected(repo, account)
+        submissionErrorState.value = null
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Throwable) {
+        submissionErrorState.value = Error.SubmissionError(repo, account, e)
+      }
+      finally {
+        submittingState.value = false
+      }
     }
   }
 }

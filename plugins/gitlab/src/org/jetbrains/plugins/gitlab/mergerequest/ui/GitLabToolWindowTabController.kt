@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
+import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
@@ -104,6 +105,7 @@ internal class GitLabToolWindowTabController(private val project: Project,
           vm.requestTokenLogin(false, true)
         }
 
+        bindDisabled(scope, vm.busyState)
         bindVisibility(scope, vm.tokenLoginAvailableState)
       }
     )

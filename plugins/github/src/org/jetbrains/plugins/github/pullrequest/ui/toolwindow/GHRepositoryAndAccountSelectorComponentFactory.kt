@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
+import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -52,7 +54,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
+        isVisible = false
         bindVisibility(scope, vm.githubLoginAvailableState)
+        bindDisabled(scope, vm.busyState)
       },
 
       ActionLink(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
@@ -60,7 +64,10 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           vm.submitSelection()
         }
       }.apply {
+        isVisible = false
         bindVisibility(scope, vm.githubLoginAvailableState)
+        autoHideOnDisable = false
+        bindDisabled(scope, vm.busyState)
       },
       JButton(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")).apply {
         isDefault = true
@@ -73,7 +80,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
+        isVisible = false
         bindVisibility(scope, vm.gheLoginAvailableState)
+        bindDisabled(scope, vm.busyState)
       }
     )
   }
@@ -109,7 +118,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
         vm.accountSelectionState.value = it
       } != null
     }
-    else if (vm.missingCredentialsState.value) {
+    else if (vm.missingCredentialsState.value == true) {
       return GHAccountsUtil.requestReLogin(account, project, authType = authType) != null
     }
     return false
@@ -123,7 +132,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
         vm.accountSelectionState.value = it.account
       } != null
     }
-    else if (vm.missingCredentialsState.value) {
+    else if (vm.missingCredentialsState.value == true) {
       return GHAccountsUtil.requestReLogin(account, project, authType = AuthorizationType.TOKEN) != null
     }
     return false

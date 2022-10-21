@@ -24,17 +24,17 @@ internal class GHRepositoryAndAccountSelectorViewModel(
   val githubLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isGithubLoginAvailable)
 
-  private fun isGithubLoginAvailable(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean): Boolean {
+  private fun isGithubLoginAvailable(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean?): Boolean {
     if (repo == null) return false
-    return repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing)
+    return repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing == true)
   }
 
   val gheLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isGheLoginVisible)
 
 
-  private fun isGheLoginVisible(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean): Boolean {
+  private fun isGheLoginVisible(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean?): Boolean {
     if (repo == null) return false
-    return !repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing)
+    return !repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing == true)
   }
 }

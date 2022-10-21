@@ -7,17 +7,28 @@ import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
+import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
+import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
+import com.intellij.collaboration.ui.util.bindDisabled
+import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.util.ui.*
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.AnimatedIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
+import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.HostedGitRepositoryMapping
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.map
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import javax.swing.*
 
 private const val AVATAR_SIZE = 20
@@ -44,6 +55,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       )
     }).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
+      bindDisabled(scope, vm.busyState)
     }
 
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
@@ -55,6 +67,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       vm.repoSelectionState.mapState(scope) { if (it == null) emptyList() else accountsPopupActionsSupplier(it) }
     ).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
+      bindDisabled(scope, vm.busyState)
     }
 
     val submitButton = JButton(submitActionText).apply {
@@ -65,14 +78,44 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         vm.submitSelection()
       }
 
+      isVisible = false
       bindVisibility(scope, vm.submitAvailableState)
+      bindDisabled(scope, vm.busyState)
     }
 
-    val credsMissingLabel = JLabel(credsMissingText).apply {
-      foreground = NamedColorUtil.getErrorForeground()
+    val errorPanel = JPanel(BorderLayout()).apply {
+      val iconPanel = JPanel(BorderLayout()).apply {
+        val iconLabel = JLabel(AllIcons.Ide.FatalError)
+        border = JBUI.Borders.emptyRight(iconLabel.iconTextGap)
+        add(iconLabel, BorderLayout.NORTH)
+      }
+
+      val errorTextPane = BaseHtmlEditorPane().apply {
+        bindText(scope, vm.errorState.map {
+          when (it) {
+            is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> credsMissingText
+            is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> {
+              HtmlBuilder()
+                .append(CollaborationToolsBundle.message("review.list.connection.failed", it.repo.repository.toString(), it.account))
+                .br()
+                .append(ExceptionUtil.getPresentableMessage(it.exception))
+                .toString()
+            }
+            null -> ""
+          }
+        })
+      }
+      add(iconPanel, BorderLayout.WEST)
+      add(errorTextPane, BorderLayout.CENTER)
+
       isVisible = false
-      bindVisibility(scope, vm.missingCredentialsState)
+      bindVisibility(scope, vm.errorState.map { it != null })
     }
+    val busyLabel = JLabel(AnimatedIcon.Default()).apply {
+      isVisible = false
+      bindVisibility(scope, vm.busyState)
+    }
+
 
     val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {
       isOpaque = false
@@ -80,6 +123,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       loginButtons.forEach {
         add(it)
       }
+      add(busyLabel)
 
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, submitButton.insets)
     }
@@ -92,9 +136,8 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       add(repoCombo, CC().growX().push())
       add(accountCombo, CC())
 
-      add(credsMissingLabel, CC().newline())
-
       add(actionsPanel, CC().newline())
+      add(errorPanel, CC().newline())
       add(JLabel(CollaborationToolsBundle.message("review.login.note")).apply {
         foreground = UIUtil.getContextHelpForeground()
       }, CC().newline().minWidth("0"))
