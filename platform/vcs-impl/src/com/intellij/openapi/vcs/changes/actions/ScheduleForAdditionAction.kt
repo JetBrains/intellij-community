@@ -209,7 +209,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       }
 
       if (changesConsumer != null) {
-        ApplicationManager.getApplication().invokeLater {
+        ApplicationManager.getApplication().invokeAndWait {
           notifyChangesConsumer(project, changesConsumer, targetList, newChanges, rereadChanges = changesMoved)
         }
       }
