@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.Variance
-import kotlin.math.PI
 
 internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
@@ -181,7 +180,6 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         firstTypeParamOwner: KtTypeParameterListOwner,
         secondTypeParamOwner: KtTypeParameterListOwner
     ): Boolean {
-        val a = PI
         val firstTypeParameters = firstTypeParamOwner.typeParameters
         val secondTypeParameters = secondTypeParamOwner.typeParameters
         if (firstTypeParameters.size != secondTypeParameters.size) return false
