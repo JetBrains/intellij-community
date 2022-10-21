@@ -268,7 +268,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   private fun Sequence<String>.limitDisplayableResult(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .map { pkg -> installedPackages.find { it.name == pkg } ?: InstallablePackage(pkg, repository) }
+      .map { pkg -> installedPackages.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
       .toList()
   }
 
