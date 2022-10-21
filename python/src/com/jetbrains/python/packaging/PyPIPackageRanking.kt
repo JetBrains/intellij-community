@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging
 
 import com.google.common.io.Resources
 import com.google.gson.Gson
+import com.intellij.openapi.components.Service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -10,7 +11,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-object PyPIPackageRanking {
+@Service
+class PyPIPackageRanking {
   private val lock = ReentrantReadWriteLock()
   private var myPackageRank: Map<String, Int> = emptyMap()
     get() = lock.read { field }
