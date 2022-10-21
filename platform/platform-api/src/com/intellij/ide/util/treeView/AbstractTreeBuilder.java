@@ -57,6 +57,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected AbstractTreeBuilder() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     Logger.getInstance(getClass()).error(PluginException.createByClass(
       "'AbstractTreeBuilder' is going to be dropped soon and must not be used", null, getClass()));
   }
