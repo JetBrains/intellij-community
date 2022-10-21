@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import java.lang.reflect.Field;
@@ -29,6 +29,9 @@ final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? exte
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
+      }
+      catch (ClassCastException e) {
+        throw new IllegalArgumentException(myField + " is not assignable to 'ObjectStubSerializer'", e);
       }
       if (!delegate.getExternalId().equals(externalId)) {
         throw new IllegalStateException(
