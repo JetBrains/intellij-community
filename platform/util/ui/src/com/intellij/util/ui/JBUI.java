@@ -1516,6 +1516,7 @@ public final class JBUI {
       public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
       public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
+      public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
 
       // these colors will be applied over background color
       public static final Color HOVER_BACKGROUND = JBColor.namedColor("RunWidget.hoverBackground", new Color(0, 0, 0, 25));
