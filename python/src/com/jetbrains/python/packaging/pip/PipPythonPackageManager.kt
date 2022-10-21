@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.runPackagingTool
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -18,23 +19,32 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
 
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
-  override suspend fun reloadPackages() {
-    withContext(Dispatchers.IO) {
-      val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
+  override suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    return withContext(Dispatchers.IO) {
+      val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+        val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
 
-      val packages = output.lines().filter { it.isNotBlank() }.map {
-        val line = it.split("\t")
-        PythonPackage(line[0], line[1])
+        val packages = output.lineSequence()
+          .filter { it.isNotBlank() }
+          .map {
+            val line = it.split("\t")
+            PythonPackage(line[0], line[1])
+          }.toList()
+        Result.success(packages)
       }
 
+      if (result.isFailure) return@withContext result
+
       withContext(Dispatchers.Main) {
-        installedPackages = packages
+        installedPackages = result.getOrThrow()
       }
 
       ApplicationManager.getApplication()
         .messageBus
         .syncPublisher(PACKAGE_MANAGEMENT_TOPIC)
         .packagesChanged(sdk)
+
+      result
     }
   }
 

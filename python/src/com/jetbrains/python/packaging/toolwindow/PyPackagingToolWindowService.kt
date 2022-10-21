@@ -93,14 +93,13 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   }
 
   suspend fun installPackage(specification: PythonPackageSpecification) {
-    manager.installPackage(specification)
-
-    showPackagingNotification(message("python.packaging.notification.installed", specification.name))
+    val result = manager.installPackage(specification)
+    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
-    manager.uninstallPackage(selectedPackage.instance)
-    showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
+    val result = manager.uninstallPackage(selectedPackage.instance)
+    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
   private suspend fun initForSdk(sdk: Sdk?) {

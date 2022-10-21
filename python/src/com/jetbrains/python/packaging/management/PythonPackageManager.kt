@@ -16,10 +16,10 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   abstract val repositoryManager: PythonRepositoryManager
 
-  abstract suspend fun installPackage(specification: PythonPackageSpecification)
-  abstract suspend fun uninstallPackage(pkg: PythonPackage)
+  abstract suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>>
+  abstract suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>>
 
-  abstract suspend fun reloadPackages()
+  abstract suspend fun reloadPackages(): Result<List<PythonPackage>>
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
