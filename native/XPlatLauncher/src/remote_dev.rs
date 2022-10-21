@@ -140,6 +140,7 @@ impl RemoteDevLaunchConfiguration {
             ("registerBackendLocationForGateway", ("", false)),
             ("run", ("cwmHostNoLobby", true)),
             ("status", ("cwmHostStatus", false)),
+            ("cwmHostStatus", ("cwmHostStatus", false)),
             ("dumpLaunchParameters", ("dump-launch-parameters", false)),
             ("warmup", ("warmup", true)),
             ("warm-up", ("warmup", true)),
