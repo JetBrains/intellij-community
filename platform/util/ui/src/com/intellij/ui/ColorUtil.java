@@ -226,5 +226,29 @@ public final class ColorUtil {
     if (balance >= 1) return c2;
     Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
     return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
+    }
+
+  /**
+   * Returns the color that is the result of having a foreground color on top of a background color
+   */
+  @NotNull
+  public static Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
+    return new Color(
+      alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
+      alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
+      alphaBlendingComponent(foreground.getBlue(), foreground.getAlpha(), background.getBlue(), background.getAlpha()),
+      (255 * 255 - (255 - background.getAlpha()) * (255 - foreground.getAlpha())) / 255);
+  }
+
+  private static int alphaBlendingComponent(int foregroundComponent,
+                                            int foregroundAlpha,
+                                            int backgroundComponent,
+                                            int backgroundAlpha) {
+
+    int denominator = 255 * 255 - (255 - foregroundAlpha) * (255 - backgroundAlpha);
+    if (denominator == 0) {
+      return 0;
+    }
+    return (255 * foregroundAlpha * foregroundComponent + (255 - foregroundAlpha) * backgroundAlpha * backgroundComponent) / denominator;
   }
 }
