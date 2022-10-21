@@ -1790,6 +1790,16 @@
       "key": "RunWidget.runningBackground",
       "description": "Background for run widget in running state",
       "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.hoverBackground",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.pressedBackground",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "since": "2022.3"
     }
   ]
 }
