@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -139,8 +140,8 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
-      ActionButtonComponent.PUSHED -> color.addAlpha(0.9)
-      else -> color.addAlpha(0.9)
+      ActionButtonComponent.PUSHED -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.PRESSED_BACKGROUND, color)
+      else -> ColorUtil.alphaBlending(JBUI.CurrentTheme.RunWidget.HOVER_BACKGROUND, color)
     }
   }
 

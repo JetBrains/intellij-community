@@ -606,7 +606,9 @@
     "RunWidget" : {
       "foreground": "#ffffff",
       "background": "#3369d6",
-      "runningBackground": "#599e5e"
+      "runningBackground": "#599e5e",
+      "hoverBackground": "#00000019",
+      "pressedBackground": "#00000028"
     }
   },
 
