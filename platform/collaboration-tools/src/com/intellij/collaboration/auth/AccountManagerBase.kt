@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth
 
-import com.intellij.collaboration.async.disposingScope
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +17,7 @@ import kotlinx.coroutines.withContext
  */
 abstract class AccountManagerBase<A : Account, Cred : Any>(
   private val logger: Logger
-) : AccountManager<A, Cred>, Disposable {
+) : AccountManager<A, Cred> {
 
   private val persistentAccounts get() = accountsRepository()
   protected abstract fun accountsRepository(): AccountsRepository<A>
@@ -27,10 +25,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   private val persistentCredentials get() = credentialsRepository()
   protected abstract fun credentialsRepository(): CredentialsRepository<A, Cred>
 
-  private val _accountsState = MutableSharedFlow<Set<A>>()
-  override val accountsState: StateFlow<Set<A>> by lazy {
-    _accountsState.stateIn(disposingScope(), SharingStarted.Eagerly, persistentAccounts.accounts)
-  }
+  private val _accountsState = MutableStateFlow(persistentAccounts.accounts)
+  override val accountsState: StateFlow<Set<A>> = _accountsState.asStateFlow()
 
   private val accountsEventsFlow = MutableSharedFlow<Event<A, Cred>>()
   private val mutex = Mutex()
@@ -53,7 +49,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
           val added = accountsWithCredentials.keys - currentSet
           if (added.isNotEmpty() || removed.isNotEmpty()) {
             persistentAccounts.accounts = accountsWithCredentials.keys
-            _accountsState.emit(accountsWithCredentials.keys)
+            _accountsState.value = accountsWithCredentials.keys
             logger.debug("Account list changed to: ${persistentAccounts.accounts}")
           }
           accountsEventsFlow.emit(Event.AccountsRemoved(removed))
@@ -79,7 +75,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
           }
           persistentAccounts.accounts = newSet
           saveCredentialsSafe(account, credentials)
-          _accountsState.emit(newSet)
+          _accountsState.value = newSet
           accountsEventsFlow.emit(Event.AccountsAddedOrUpdated(mapOf(account to credentials)))
           logger.debug("Updated credentials for account: $account")
         }
@@ -96,7 +92,7 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
           if (newSet.size != currentSet.size) {
             persistentAccounts.accounts = newSet
             saveCredentialsSafe(account, null)
-            _accountsState.emit(newSet)
+            _accountsState.value = newSet
             accountsEventsFlow.emit(Event.AccountsRemoved(setOf(account)))
             logger.debug("Removed account: $account")
           }
@@ -138,8 +134,6 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
         }
       }
     }.flowOn(Dispatchers.Default)
-
-  override fun dispose() = Unit
 
   private sealed interface Event<A, Cred> {
     class AccountsRemoved<A, Cred>(val accounts: Set<A>) : Event<A, Cred>

@@ -47,11 +47,6 @@ class AccountManagerBaseTest {
     }
   }
 
-  @After
-  fun tearDown() {
-    Disposer.dispose(manager)
-  }
-
   @Test
   fun `test list state`() = runTest {
     val state = manager.accountsState
