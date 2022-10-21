@@ -36,6 +36,11 @@ public abstract class TextComponentEditorAction extends EditorAction {
     ensureHandlerChainIsLoaded();
   }
 
+  @Override
+  public synchronized void setInjectedContext(boolean worksInInjected) {
+    throw new UnsupportedOperationException("TextComponentEditorAction is updated on EDT only and must not work in injected context");
+  }
+
   private void ensureHandlerChainIsLoaded() {
     getHandler().runForAllCarets(); // triggers DynamicEditorActionHandler.getHandlerChain
   }
