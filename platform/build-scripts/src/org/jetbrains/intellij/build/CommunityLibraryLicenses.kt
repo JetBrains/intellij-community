@@ -877,6 +877,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "zstd-jni", libraryName = "zstd-jni",
                    url = "https://github.com/luben/zstd-jni")
       .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE"),
+    LibraryLicense(name = "zstd-jni-windows-aarch64", libraryName = "zstd-jni-windows-aarch64",
+                   url = "https://github.com/VladRassokhin/zstd-jni")
+      .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("completion-log-events"),
