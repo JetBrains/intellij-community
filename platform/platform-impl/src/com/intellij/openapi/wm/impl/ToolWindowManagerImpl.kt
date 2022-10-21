@@ -474,22 +474,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
   }
 
-  suspend fun init(frameHelper: ProjectFrameHelper, editorComponent: JComponent, reopeningEditorsJob: Job) {
+  suspend fun init(frameHelper: ProjectFrameHelper, reopeningEditorsJob: Job) {
     // Make sure we haven't already created the root tool window pane. We might have created panes for secondary frames, as they get
     // registered differently, but we shouldn't have the main pane yet
     LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
-    doInit(frameHelper, project.messageBus.connect(this), editorComponent, reopeningEditorsJob)
+    doInit(frameHelper, project.messageBus.connect(this), reopeningEditorsJob)
   }
 
   @VisibleForTesting
-  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, editorComponent: JComponent, reopeningEditorsJob: Job) {
+  suspend fun doInit(frameHelper: ProjectFrameHelper, connection: MessageBusConnection, reopeningEditorsJob: Job) {
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       frameState = frameHelper
 
       val toolWindowPane = frameHelper.rootPane!!.getToolWindowPane()
-      toolWindowPane.setDocumentComponent(editorComponent)
-
       // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor. If we're
       // reopening other frames, their tool window panes will be already added, but we still need to initialise the tool windows themselves.
       toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -106,11 +106,11 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     FileEditor[] editors = editorComposite == null ? FileEditor.EMPTY_ARRAY : editorComposite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
     FileEditorProvider[] oldProviders = editorComposite == null ? FileEditorProvider.EMPTY_ARRAY : editorComposite.getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
     LOG.assertTrue(editors.length == oldProviders.length, "Different number of editors and providers");
-    if (editors.length <= 0 && fallbackEditor != null && fallbackProvider != null) {
+    if (editors.length == 0 && fallbackEditor != null && fallbackProvider != null) {
       editors = new FileEditor[] { fallbackEditor };
       oldProviders = new FileEditorProvider[] { fallbackProvider };
     }
-    if (editors.length <= 0) {
+    if (editors.length == 0) {
       // fileOpened notification is asynchronous, file could have been closed by now due to some reason
       return;
     }
@@ -127,20 +127,20 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       moveOnTop(entry);
     }
     else {
-      FileEditorState[] states = new FileEditorState[editors.length];
-      FileEditorProvider[] providers = new FileEditorProvider[editors.length];
-      for (int i = states.length - 1; i >= 0; i--) {
+      List<FileEditorState> states = new ArrayList<>(editors.length);
+      List<FileEditorProvider> providers = new ArrayList<>(editors.length);
+      for (int i = editors.length - 1; i >= 0; i--) {
         FileEditorProvider provider = oldProviders[i];
         LOG.assertTrue(provider != null);
-        providers[i] = provider;
+        providers.set(i, provider);
         FileEditor editor = editors[i];
         if (editor.isValid()) {
-          states[i] = editor.getState(FileEditorStateLevel.FULL);
+          states.set(i, editor.getState(FileEditorStateLevel.FULL));
         }
       }
       //noinspection SynchronizeOnThis
       synchronized (this) {
-        myEntriesList.add(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex],
+        myEntriesList.add(HistoryEntry.createHeavy(myProject, file, providers, states, providers.get(selectedProviderIndex),
                                                    editorComposite != null && editorComposite.isPreview()));
       }
       trimToSize();

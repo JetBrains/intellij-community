@@ -165,18 +165,17 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
 
       // not as a part of a project modal dialog
-      val editorSplitters = fileEditorManager.init()
+      val editorComponent = fileEditorManager.init()
       val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
         restoreOpenedFiles(fileEditorManager = fileEditorManager,
-                           editorSplitters = editorSplitters,
+                           editorComponent = editorComponent,
                            project = project,
                            frameHelper = frameHelper)
       }
 
       project.coroutineScope.launchAndMeasure("tool window pane creation") {
         val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
-        toolWindowManager.init(frameHelper = frameHelper,
-                               editorComponent = editorSplitters, reopeningEditorsJob = reopeningEditorJob)
+        toolWindowManager.init(frameHelper = frameHelper, reopeningEditorsJob = reopeningEditorJob)
       }
       project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val rootPane = frameHelper.rootPane!!

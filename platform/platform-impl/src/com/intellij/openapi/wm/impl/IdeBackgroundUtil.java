@@ -76,16 +76,25 @@ public final class IdeBackgroundUtil {
                                                        @NotNull String paintersName,
                                                        @NotNull JComponent component) {
     Boolean noBackground = ClientProperty.get(component, NO_BACKGROUND);
-    if (Boolean.TRUE.equals(noBackground)) return MyGraphics.unwrap(g);
+    if (Boolean.TRUE.equals(noBackground)) {
+      return MyGraphics.unwrap(g);
+    }
+
     boolean checkLayer = !Boolean.FALSE.equals(noBackground);
     JRootPane rootPane = null;
     for (Component c = component, p = null; c != null && rootPane == null; p = c, c = c.getParent()) {
-      if (c instanceof JRootPane) rootPane = (JRootPane)c;
-      if (checkLayer && c instanceof JLayeredPane && p != null && ((JLayeredPane)c).getLayer(p) == JLayeredPane.POPUP_LAYER) break;
+      if (c instanceof JRootPane) {
+        rootPane = (JRootPane)c;
+      }
+      if (checkLayer && c instanceof JLayeredPane && p != null && ((JLayeredPane)c).getLayer(p) == JLayeredPane.POPUP_LAYER) {
+        break;
+      }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
     PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
-    if (helper == null || !helper.needsRepaint()) return MyGraphics.unwrap(g);
+    if (helper == null || !helper.needsRepaint()) {
+      return MyGraphics.unwrap(g);
+    }
     return MyGraphics.wrap(g, helper, component);
   }
 

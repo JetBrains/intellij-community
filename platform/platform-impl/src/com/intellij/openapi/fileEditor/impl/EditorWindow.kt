@@ -79,12 +79,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     @JvmStatic
     val tabLimit: Int
       get() {
-        var limit = UISettings.getInstance().editorTabLimit
         if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
             && ToggleDistractionFreeModeAction.getStandardTabPlacement() == UISettings.TABS_NONE) {
-          limit = 1
+          return 1
         }
-        return limit
+        else {
+          return UISettings.getInstance().editorTabLimit
+        }
       }
   }
 

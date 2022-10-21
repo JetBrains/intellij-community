@@ -30,14 +30,14 @@ public interface DockContainer {
   /**
    * This area is used when nothing was found with getAcceptArea
    */
-  @NotNull
-  default RelativeRectangle getAcceptAreaFallback() {
+  default @NotNull RelativeRectangle getAcceptAreaFallback() {
     return getAcceptArea();
   }
 
   @NotNull
   ContentResponse getContentResponse(@NotNull DockableContent<?> content, RelativePoint point);
 
+  @NotNull
   JComponent getContainerComponent();
 
   void add(@NotNull DockableContent<?> content, @Nullable RelativePoint dropTarget);
@@ -53,13 +53,11 @@ public interface DockContainer {
 
   boolean isEmpty();
 
-  @Nullable
-  default Image startDropOver(@SuppressWarnings("unused") @NotNull DockableContent<?> content, @SuppressWarnings("unused") RelativePoint point) {
+  default @Nullable Image startDropOver(@SuppressWarnings("unused") @NotNull DockableContent<?> content, @SuppressWarnings("unused") RelativePoint point) {
     return null;
   }
 
-  @Nullable
-  default Image processDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
+  default @Nullable Image processDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
     return null;
   }
 

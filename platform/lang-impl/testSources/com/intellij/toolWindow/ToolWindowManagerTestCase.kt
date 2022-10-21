@@ -2,7 +2,6 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -40,7 +39,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
       }
 
       val reopeningEditorsJob = Job().also { it.complete() }
-      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), FileEditorManagerEx.getInstanceEx(project).component, reopeningEditorsJob)
+      manager!!.doInit(frame, project.messageBus.connect(testRootDisposable), reopeningEditorsJob)
     }
   }
 

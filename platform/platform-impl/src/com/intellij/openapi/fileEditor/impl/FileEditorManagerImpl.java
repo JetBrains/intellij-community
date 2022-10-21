@@ -81,6 +81,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -169,7 +170,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    * Removes invalid myEditor and updates "modified" status.
    */
   private final PropertyChangeListener myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
-  private DockableEditorContainerFactory myContentFactory;
+  private DockableEditorContainerFactory contentFactory;
   private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
 
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
@@ -329,13 +330,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     updateFileName(null);
   }
 
+  @RequiresEdt
   public void initDockableContentFactory() {
-    if (myContentFactory != null) {
+    if (contentFactory != null) {
       return;
     }
 
-    myContentFactory = new DockableEditorContainerFactory(this);
-    DockManager.getInstance(myProject).register(DockableEditorContainerFactory.TYPE, myContentFactory, this);
+    contentFactory = new DockableEditorContainerFactory(this);
+    DockManager.getInstance(myProject).register(DockableEditorContainerFactory.TYPE, contentFactory, this);
   }
 
   public static boolean isDumbAware(@NotNull FileEditor editor) {
@@ -1748,13 +1750,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public @Nullable Element getState() {
     Element state = new Element("state");
-    getMainSplitters().writeExternal(state);
+    splitters.writeExternal(state);
     return state;
   }
 
   @Override
   public void loadState(@NotNull Element state) {
-    getMainSplitters().readExternal(state);
+    splitters.readExternal(state);
   }
 
   public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {

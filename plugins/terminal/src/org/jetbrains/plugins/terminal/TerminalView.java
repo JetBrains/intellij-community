@@ -563,7 +563,7 @@ public final class TerminalView implements Disposable {
     }
 
     @Override
-    public JComponent getContainerComponent() {
+    public @NotNull JComponent getContainerComponent() {
       return myToolWindow.getComponent();
     }
 

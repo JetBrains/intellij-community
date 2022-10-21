@@ -271,7 +271,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   @Override
-  public JComponent getContainerComponent() {
+  public @NotNull JComponent getContainerComponent() {
     return splitters;
   }
 

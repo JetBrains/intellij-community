@@ -504,7 +504,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 }
 
-data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : FileEditorComposite() {
+private data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : FileEditorComposite {
   override val allEditors: List<FileEditor>
     get() = listOf(editor)
   override val allProviders: List<FileEditorProvider>

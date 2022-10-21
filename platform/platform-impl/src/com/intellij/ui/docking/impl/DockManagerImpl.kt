@@ -45,7 +45,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jdom.Element
@@ -138,7 +137,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   override fun getIdeFrame(container: DockContainer): IdeFrame? {
-    return ComponentUtil.findUltimateParent(container.containerComponent ?: return null) as? IdeFrame
+    return ComponentUtil.findUltimateParent(container.containerComponent) as? IdeFrame
   }
 
   override fun getDimensionKeyForFocus(key: String): String {
@@ -147,6 +146,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     return if (window == null) key else "$key#${window.id}"
   }
 
+  @Suppress("OVERRIDE_DEPRECATION", "removal")
   override fun getContainerFor(c: Component): DockContainer? {
     return getContainerFor(c) { true }
   }
@@ -162,9 +162,9 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         return eachContainer
       }
     }
-    val parent = UIUtil.findUltimateParent(c)
+    val parent = ComponentUtil.findUltimateParent(c)
     for (eachContainer in allContainers) {
-      if (parent === UIUtil.findUltimateParent(eachContainer.containerComponent) && filter.test(eachContainer)) {
+      if (parent === ComponentUtil.findUltimateParent(eachContainer.containerComponent) && filter.test(eachContainer)) {
         return eachContainer
       }
     }
@@ -213,6 +213,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       window = JDialog(ComponentUtil.getWindow(mouseEvent.component))
       window.isUndecorated = true
       this.content = content
+      @Suppress("DEPRECATION")
       startDragContainer = getContainerFor(mouseEvent.component)
       val buffer = ImageUtil.toBufferedImage(content.previewImage)
       val requiredSize = 220.0

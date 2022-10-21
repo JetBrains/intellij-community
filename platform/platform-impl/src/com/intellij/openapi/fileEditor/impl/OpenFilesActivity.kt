@@ -13,21 +13,31 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.isNotificationSilentMode
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl,
-                                        editorSplitters: EditorsSplitters,
+                                        editorComponent: EditorsSplitters,
                                         project: Project,
                                         frameHelper: ProjectFrameHelper) {
   val hasOpenFiles = withContext(ModalityState.any().asContextElement()) {
-    editorSplitters.restoreEditors(requestFocus = true)
+    coroutineScope {
+      launch {
+        editorComponent.restoreEditors(requestFocus = true)
+      }
+      withContext(Dispatchers.EDT) {
+        frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
+        // read state of dockable editors
+        fileEditorManager.initDockableContentFactory()
+      }
+    }
 
     withContext(Dispatchers.EDT) {
-      fileEditorManager.initDockableContentFactory()
-
       frameHelper.installPainters()
 
       fileEditorManager.hasOpenFiles()

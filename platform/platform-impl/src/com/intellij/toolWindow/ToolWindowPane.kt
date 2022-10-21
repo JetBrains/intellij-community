@@ -842,7 +842,7 @@ private class Surface(private val myTopImage: Image,
       }
       val onePaintTime = timeSpent.toDouble() / count
       var iterations = ((desiredTimeToComplete - timeSpent) / onePaintTime).toInt()
-      iterations = Math.max(1, iterations)
+      iterations = 1.coerceAtLeast(iterations)
       offset += (distance - offset) / iterations
     }
   }

@@ -30,7 +30,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -43,10 +42,8 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -55,7 +52,7 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite extends FileEditorComposite implements Disposable {
+public class EditorComposite extends UserDataHolderBase implements Disposable, FileEditorComposite {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -297,8 +294,7 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
   }
 
   /**
-   * @return editors which are opened in the composite. <b>Do not modify
-   * this array</b>.
+   * @return editors which are opened in the composite. <b>Do not modify this array</b>.
    * @deprecated use {@link #getAllEditors()}
    */
   @Deprecated
@@ -537,11 +533,13 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
     public void requestFocus() {
       JComponent focusComponent = myFocusComponent.get();
       if (focusComponent != null) {
-        IdeFocusManager.getGlobalInstance()
-          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(focusComponent, true));
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(focusComponent, true);
+        });
       }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public boolean requestDefaultFocus() {
       JComponent focusComponent = myFocusComponent.get();
@@ -645,23 +643,25 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
   }
 
   @NotNull HistoryEntry currentStateAsHistoryEntry() {
-    final FileEditor[] editors = getEditors();
-    final FileEditorState[] states = new FileEditorState[editors.length];
-    for (int j = 0; j < states.length; j++) {
-      states[j] = editors[j].getState(FileEditorStateLevel.FULL);
-      LOG.assertTrue(states[j] != null);
+    List<FileEditor> editors = getAllEditors();
+    List<FileEditorState> states = new ArrayList<>(editors.size());
+    for (FileEditor editor : editors) {
+      states.add(editor.getState(FileEditorStateLevel.FULL));
     }
-    final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
+
+    int selectedProviderIndex = editors.indexOf(getSelectedEditor());
     LOG.assertTrue(selectedProviderIndex != -1);
-    final FileEditorProvider[] providers = getProviders();
-    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex], myPreview);
+    List<FileEditorProvider> providers = getAllProviders();
+    return HistoryEntry.createLight(getFile(), providers, states, providers.get(selectedProviderIndex), myPreview);
   }
 
   /**
    * A mapper for old API with arrays and pairs
    */
   public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable FileEditorComposite composite) {
-    if (composite == null) return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+    if (composite == null) {
+      return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+    }
 
     FileEditor[] editors = composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
     FileEditorProvider[] providers = composite.getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
