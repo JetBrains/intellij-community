@@ -49,6 +49,7 @@ internal class RunToolbarMainSlotActive : SegmentedCustomAction(),
         presentation.isEnabledAndVisible = presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+    presentation.isEnabled = presentation.isEnabled && e.isFromActionToolbar
 
     presentation.description = e.runToolbarData()?.let {
       RunToolbarData.prepareDescription(presentation.text,

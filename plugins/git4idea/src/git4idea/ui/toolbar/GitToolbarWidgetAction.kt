@@ -52,6 +52,7 @@ internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
     e.presentation.text = repository?.calcText() ?: GitBundle.message("git.toolbar.widget.no.repo")
     e.presentation.icon = repository.calcIcon()
     e.presentation.description = repository?.calcTooltip() ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
+    e.presentation.isEnabled = e.isFromActionToolbar
 
     val changes = repository?.currentBranchName?.let { branch ->
       val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)

@@ -40,6 +40,7 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
         e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+    e.presentation.isEnabled = e.presentation.isEnabled && e.isFromActionToolbar
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

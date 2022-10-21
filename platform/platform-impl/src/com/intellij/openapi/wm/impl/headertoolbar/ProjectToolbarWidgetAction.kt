@@ -37,6 +37,7 @@ class ProjectToolbarWidgetAction : AnAction(), CustomComponentAction {
     e.presentation.setText(cutName.toString(), false)
     e.presentation.description = if (cutName.toString() == fullName.toString()) null else fullName.toString()
     e.presentation.putClientProperty(projectKey, project)
+    e.presentation.isEnabled = e.isFromActionToolbar
   }
 
   private fun cutFile(value: String, maxLength: Int): String {
