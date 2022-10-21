@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public abstract class ExperimentalUI {
   private IconPathPatcher iconPathPatcher;
   public static final String KEY = "ide.experimental.ui";
 
+  @Contract(pure = true)
   public static boolean isNewUI() {
     // CWM-7348 thin client does not support new UI
     return (EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported()) || Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
