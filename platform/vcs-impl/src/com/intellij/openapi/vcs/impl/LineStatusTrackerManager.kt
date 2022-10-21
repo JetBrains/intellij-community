@@ -1391,6 +1391,16 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
 }
 
 private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader() {
+  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+    return super.isTrackedFile(project, vcsFile)
+  }
+
+  override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+    return super.getContentInfo(project, vcsFile)
+  }
+
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is SimpleLocalLineStatusTracker
 
   override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
