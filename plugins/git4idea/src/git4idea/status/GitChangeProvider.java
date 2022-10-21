@@ -164,11 +164,12 @@ public final class GitChangeProvider implements ChangeProvider {
         if (!fileDocumentManager.isFileModified(vf)) continue;
         if (myAddGate.getStatus(vf) != null) continue;
 
-        FilePath filePath = VcsUtil.getFilePath(vf);
+        VirtualFile vcsFile = VcsUtil.resolveSymlinkIfNeeded(myProject, vf);
+        FilePath filePath = VcsUtil.getFilePath(vcsFile);
         if (myProcessedPaths.contains(filePath)) continue;
         if (!dirtyScope.belongsTo(filePath)) continue;
 
-        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vcsFile);
         if (repository == null) continue;
         if (repository.getUntrackedFilesHolder().containsFile(filePath)) continue;
 

@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
 import org.jetbrains.annotations.TestOnly
@@ -314,29 +315,31 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       )
     }
 
-    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return
-    val cachedStatus = cachedStatuses[file]
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vcsFile) ?: return
+    val cachedStatus = cachedStatuses[vcsFile]
     if (cachedStatus === FileStatus.MODIFIED && !isDocumentModified) {
       val unlockWithPrompt = (ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl).state.SHOW_DIALOG
       if (!unlockWithPrompt) {
         val rollbackEnvironment = vcs.rollbackEnvironment
-        rollbackEnvironment?.rollbackIfUnchanged(file)
+        rollbackEnvironment?.rollbackIfUnchanged(vcsFile)
       }
     }
 
     if (cachedStatus != null) {
       val isStatusChanged = cachedStatus !== FileStatus.NOT_CHANGED
       if (isStatusChanged != isDocumentModified) {
-        fileStatusChanged(file)
+        fileStatusChanged(vcsFile)
       }
     }
 
     val cp = vcs.changeProvider
     if (cp != null && cp.isModifiedDocumentTrackingRequired) {
-      val status = ChangeListManager.getInstance(project).getStatus(file)
+      val status = ChangeListManager.getInstance(project).getStatus(vcsFile)
       val isClmStatusChanged = status !== FileStatus.NOT_CHANGED
       if (isClmStatusChanged != isDocumentModified) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file)
+        VcsDirtyScopeManager.getInstance(project).fileDirty(vcsFile)
       }
     }
   }
