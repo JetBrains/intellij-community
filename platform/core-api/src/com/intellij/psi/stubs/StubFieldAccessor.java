@@ -5,18 +5,17 @@ import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
-  private final Field myField;
   final String externalId;
+  private final Field myField;
   private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 
   StubFieldAccessor(String externalId, Field field) {
     this.externalId = externalId;
-    myField = field;
+    this.myField = field;
     try {
       field.setAccessible(true);
     }
-    catch (SecurityException ignore) {
-    }
+    catch (SecurityException ignore) { }
   }
 
   @Override
@@ -24,8 +23,8 @@ final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? exte
     ObjectStubSerializer<?, Stub> delegate = myFieldValue;
     if (delegate == null) {
       try {
-        //noinspection unchecked
-        myFieldValue = delegate = (ObjectStubSerializer<?, Stub>)myField.get(null);
+        @SuppressWarnings("unchecked") ObjectStubSerializer<?, Stub> value = (ObjectStubSerializer<?, Stub>)myField.get(null);
+        myFieldValue = delegate = value;
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
