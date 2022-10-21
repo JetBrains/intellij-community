@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LO
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 
 internal class ModuleVcsDetector(private val project: Project) {
@@ -29,7 +29,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null) {
-      queue.queue(Update.create("initial scan") { autoDetectDefaultRoots() })
+      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") { autoDetectDefaultRoots() })
     }
   }
 
@@ -117,7 +117,7 @@ internal class ModuleVcsDetector(private val project: Project) {
             dirtyContentRoots.addAll(added)
             dirtyContentRoots.removeAll(removed.toSet())
           }
-          queue.queue(Update.create("modules scan") { runScanForNewContentRoots() })
+          queue.queue(DisposableUpdate.createDisposable(queue, "modules scan") { runScanForNewContentRoots() })
         }
       }
 
