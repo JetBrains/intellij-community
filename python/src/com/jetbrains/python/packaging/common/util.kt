@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
@@ -39,7 +40,7 @@ interface PythonPackageManagementListener {
 }
 
 internal val RANKING_AWARE_PACKAGE_NAME_COMPARATOR: java.util.Comparator<String> = Comparator { name1, name2 ->
-  val ranking = PyPIPackageRanking.packageRank
+  val ranking = service<PyPIPackageRanking>().packageRank
   val rank1 = ranking[name1.lowercase()]
   val rank2 = ranking[name2.lowercase()]
   return@Comparator when {
