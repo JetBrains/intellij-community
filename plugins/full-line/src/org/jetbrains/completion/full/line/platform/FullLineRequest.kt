@@ -86,24 +86,18 @@ sealed class FullLineRequest {
       if (settings.isGreyTextMode()) return "Grey text mode is enabled"
 
       if (!ApplicationManager.getApplication().isUnitTestMode) {
-        if (!isInMainEditor()) return "Editor is not a main one"
+        if (!isHeadless() && !isInMainEditor()) return "Editor is not a main one"
         if (!isBasicCompletion()) return "Full line available only for Basic completion"
       }
 
       return null
     }
 
-    private fun isInMainEditor(): Boolean {
-      return parameters.editor.editorKind == EditorKind.MAIN_EDITOR
-    }
+    private fun isHeadless() = ApplicationManager.getApplication().isHeadlessEnvironment
+    private fun isInMainEditor() = parameters.editor.editorKind == EditorKind.MAIN_EDITOR
+    private fun isBasicCompletion() = parameters.completionType == CompletionType.BASIC
 
-    private fun isBasicCompletion(): Boolean {
-      return parameters.completionType == CompletionType.BASIC
-    }
-
-    private fun CompletionParameters.language(): Language {
-      return originalFile.language
-    }
+    private fun CompletionParameters.language() = originalFile.language
   }
 }
 
