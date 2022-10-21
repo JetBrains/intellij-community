@@ -51,6 +51,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @NotNull final Project myProject;
+  private @NotNull final JPanel myContentPanel;
   private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
@@ -68,9 +69,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     setLayout(new BorderLayout());
     myProject = project;
 
-    JPanel contentPanel = new JPanel();
-    contentPanel.setBackground(TipUiSettings.getPanelBackground());
-    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+    myContentPanel = new JPanel();
+    myContentPanel.setBackground(TipUiSettings.getPanelBackground());
+    myContentPanel.setLayout(new BoxLayout(myContentPanel, BoxLayout.Y_AXIS));
 
     mySubSystemLabel = new JLabel() {
       @Override
@@ -82,14 +83,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
     mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
     mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    contentPanel.add(mySubSystemLabel);
+    myContentPanel.add(mySubSystemLabel);
 
     myTextPane = new StyledTextPane();
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
     myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
-    contentPanel.add(myTextPane);
+    myContentPanel.add(myTextPane);
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -100,7 +101,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
     // scroll will not be shown in a regular case
     // it is required only for technical writers to test whether the content of the new do not exceed the bounds
-    JBScrollPane scrollPane = new JBScrollPane(contentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    JBScrollPane scrollPane = new JBScrollPane(myContentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(JBUI.Borders.empty());
     centerPanel.add(scrollPane);
 
@@ -356,6 +357,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       return myTipIdToLikenessState.get(tipId);
     }
     return TipsFeedback.getInstance().getLikenessState(tipId);
+  }
+
+  @NotNull JPanel getContentPanel() {
+    return myContentPanel;
   }
 
   @Override
