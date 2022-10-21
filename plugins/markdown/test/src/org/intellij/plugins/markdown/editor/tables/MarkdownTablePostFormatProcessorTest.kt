@@ -1,14 +1,11 @@
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.idea.TestFor
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RegistryKeyRule
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
+import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.runWithTemporaryStyleSettings
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.junit.Rule
 import org.junit.Test
@@ -33,31 +30,19 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   private fun doTest() {
     val before = getTestName(true) + ".before.md"
     val after = getTestName(true) + ".after.md"
-    runWithTemporaryStyleSettings { settings ->
+    runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           FORMAT_TABLES = true
         }
       }
       configureByFile(before)
-      performReformatting()
+      performReformatting(project, file)
       checkResultByFile(after)
       //check idempotence of formatter
-      performReformatting()
+      performReformatting(project, file)
       checkResultByFile(after)
     }
-  }
-
-  private fun runWithTemporaryStyleSettings(block: (CodeStyleSettings) -> Unit) {
-    val settings = CodeStyle.getSettings(project)
-    CodeStyle.doWithTemporarySettings(project, settings, block)
-  }
-
-  private fun performReformatting() {
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
-    }
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
   override fun getTestDataPath(): String {
