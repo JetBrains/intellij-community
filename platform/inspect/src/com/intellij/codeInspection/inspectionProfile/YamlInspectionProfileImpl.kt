@@ -58,7 +58,7 @@ class CompositeGroupProvider : InspectionGroupProvider {
   }
 }
 
-class YamlInspectionProfileImpl private constructor(override val profileName: String,
+class YamlInspectionProfileImpl private constructor(override val profileName: String?,
                                                     override val baseProfile: InspectionProfileImpl,
                                                     override val configurations: List<YamlBaseConfig>,
                                                     override val groups: List<YamlInspectionGroup>,
@@ -68,8 +68,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     @JvmStatic
     fun loadFrom(project: Project, filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml"): YamlInspectionProfileImpl {
       val profile = readConfig(project, filepath)
-      val baseProfile = ProjectInspectionProfileManager.getInstance(project).getProfile(profile.baseProfile, false)
-                        ?: InspectionProfileImpl("Default")
+      val baseProfile = findBaseProfile(project, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
@@ -82,6 +81,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       }
       groupProvider.addProvider(customGroupProvider)
       return YamlInspectionProfileImpl(profile.name, baseProfile, configurations, groups, groupProvider)
+    }
+
+    private fun findBaseProfile(project: Project, profileName: String?): InspectionProfileImpl {
+      return profileName
+        ?.let { ProjectInspectionProfileManager.getInstance(project).getProfile(profileName, false) }
+        ?: InspectionProfileImpl("Default")
     }
 
     @JvmStatic
@@ -115,9 +120,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl(profileName).also { profile ->
+    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default").also { profile ->
       profile.copyFrom(baseProfile)
-      profile.name = profileName
+      profile.name = profileName ?: "Default"
     }
     configurations.forEach { configuration ->
       val tools = findTools(configuration)

@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
 interface YamlInspectionProfile: InspectionGroupProvider {
-  val profileName: String
+  val profileName: String?
   val baseProfile: InspectionProfileImpl
   val configurations: List<YamlBaseConfig>
   val groups: List<YamlInspectionGroup>

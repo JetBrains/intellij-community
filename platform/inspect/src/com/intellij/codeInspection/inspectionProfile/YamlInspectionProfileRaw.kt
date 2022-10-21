@@ -9,8 +9,8 @@ import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 
 class YamlInspectionProfileRaw(
-  val baseProfile: String = "Default",
-  val name: String = "Yaml profile",
+  val baseProfile: String? = null,
+  val name: String? = null,
   val groups: List<YamlInspectionGroupRaw> = emptyList(),
   val inspections: List<YamlInspectionConfigRaw> = emptyList()
 )

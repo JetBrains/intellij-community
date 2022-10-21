@@ -12,7 +12,7 @@ class UpdateToYamlProfileAction: AnAction() {
     val yamlProfile = YamlInspectionProfileImpl.loadFrom(project)
     val manager = ProjectInspectionProfileManager.getInstance(project)
     val profile = yamlProfile.buildEffectiveProfile()
-    manager.deleteProfile(yamlProfile.profileName)
+    manager.deleteProfile(profile)
     manager.addProfile(profile)
     manager.setRootProfile(profile.name)
     Disposer.register(project) { manager.deleteProfile(profile.name) }
