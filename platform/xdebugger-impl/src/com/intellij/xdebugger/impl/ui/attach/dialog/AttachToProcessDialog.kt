@@ -552,7 +552,12 @@ open class AttachToProcessDialog(
     }
 
     override fun actionPerformed(e: ActionEvent?) {
-      AttachDialogStatisticsCollector.attachButtonPressed(isMainAction)
+      AttachDialogStatisticsCollector.attachButtonPressed(
+        debugger.javaClass,
+        isMainAction,
+        state.selectedViewType.get(),
+        state.selectedDebuggersFilter.get() != AttachDialogAllDebuggersFilter,
+        state.searchFieldValue.get().isNotBlank())
       attach(debugger, item)
     }
   }
