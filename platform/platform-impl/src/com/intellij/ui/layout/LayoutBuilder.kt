@@ -63,6 +63,7 @@ fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFi
                          fileChosen)
 }
 
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Row.attachSubRowsEnabled(component: AbstractButton) {
   subRowsEnabled = component.selected()
   component.selected.addListener { subRowsEnabled = it }
