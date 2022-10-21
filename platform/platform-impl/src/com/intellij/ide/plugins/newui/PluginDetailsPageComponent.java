@@ -1314,20 +1314,38 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     repaint();
   }
 
-  public void hideProgress(boolean success) {
-    hideProgress(success, true);
-  }
-
-  private void hideProgress(boolean success, boolean repaint) {
+  public void hideProgress(boolean success, boolean restartRequired) {
     myIndicator = null;
     myNameAndButtons.removeProgressComponent();
 
     if (success) {
-      updateButtons();
+      if (restartRequired) {
+        updateAfterUninstall(true);
+      }
+      else {
+        if (myInstallButton != null) {
+          myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
+          if (myMultiTabs && myInstallButton.isVisible()) {
+            myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+            if (myInstalledDescriptorForMarketplace != null) {
+              myInstallButton.setVisible(false);
+              myEnableDisableButton.setVisible(true);
+              myVersion1.setText(myInstalledDescriptorForMarketplace.getVersion());
+              myVersion1.setVisible(true);
+              updateEnabledState();
+              return;
+            }
+          }
+        }
+        if (myUpdateButton.isVisible()) {
+          myUpdateButton.setEnabled(false);
+          myUpdateButton.setText(IdeBundle.message("plugin.status.installed"));
+        }
+        myEnableDisableButton.setVisible(false);
+      }
     }
-    if (repaint) {
-      fullRepaint();
-    }
+
+    fullRepaint();
   }
 
   private void updateEnableForNameAndIcon() {
@@ -1343,8 +1361,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       return;
     }
 
-    if (myMultiTabs) {
-      updateButtons();
+    if (!myPluginModel.isUninstalled(getDescriptorForActions())) {
+      if (myEnableDisableController != null) {
+        myEnableDisableController.update();
+      }
+      if (myMultiTabs) {
+        boolean bundled = myPlugin.isBundled();
+        myGearButton.setVisible(!bundled);
+        myEnableDisableButton.setVisible(bundled);
+      }
+      else {
+        myGearButton.setVisible(true);
+      }
     }
 
     updateEnableForNameAndIcon();
@@ -1354,6 +1382,21 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myUpdateButton.setVisible(myUpdateDescriptor != null);
 
     fullRepaint();
+  }
+
+  public void updateAfterUninstall(boolean showRestart) {
+    myInstallButton.setVisible(false);
+    myUpdateButton.setVisible(false);
+    myGearButton.setVisible(false);
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setVisible(false);
+    }
+    myRestartButton.setVisible(myIsPluginAvailable && showRestart);
+
+    if (!showRestart && InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(getDescriptorForActions().getPluginId())) {
+      myInstallButton.setVisible(true);
+      myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+    }
   }
 
   private void updateEnabledForProject() {
