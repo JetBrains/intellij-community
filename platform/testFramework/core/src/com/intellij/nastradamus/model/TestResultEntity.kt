@@ -11,7 +11,7 @@ enum class TestStatus(status: String) {
 
   companion object {
     fun fromString(input: String): TestStatus {
-      return valueOf(input.lowercase())
+      return values().single { input.lowercase() == it.status }
     }
   }
 }

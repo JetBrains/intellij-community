@@ -50,9 +50,16 @@ class NastradamusClientTest {
   @Test
   @Ignore("Do not use TC. Use mocks / test data")
   fun collectingTestResultsFromTC() {
-    val tests = TeamCityClient.getTestRunInfo("219794017")
+    val tests = TeamCityClient.getTestRunInfo("225920558")
 
-    println(tests)
+    val testResultEntities = tests.map {
+      TestResultEntity(
+        name = it.findValue("name").asText(),
+        status = TestStatus.fromString(it.findValue("status").asText())
+      )
+    }
+
+    println(testResultEntities)
   }
 
   @Test
