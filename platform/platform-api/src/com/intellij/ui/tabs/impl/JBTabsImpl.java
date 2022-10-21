@@ -1417,6 +1417,8 @@ public class JBTabsImpl extends JComponent
       setComponentZOrder(myScrollBar, 0);
     }
 
+    myInfo2Toolbar.forEach((tabInfo, toolbar) -> toolbar.setVisible(Objects.equals(newInfo, tabInfo)));
+
     fireBeforeSelectionChanged(oldInfo, newInfo);
     boolean oldValue = myMouseInsideTabsArea;
     try {
