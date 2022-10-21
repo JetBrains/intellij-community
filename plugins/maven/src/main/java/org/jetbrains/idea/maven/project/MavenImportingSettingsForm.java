@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -66,6 +67,10 @@ public class MavenImportingSettingsForm {
     mySearchRecursivelyCheckBox.setVisible(project.isDefault());
 
     myWorkspaceImportCheckBox.addItemListener(e -> updateImportControls(project));
+    myStoreProjectFilesUnderProjectRoot.addItemListener(e -> {
+      Icon icon = myStoreProjectFilesUnderProjectRoot.isSelected() ? AllIcons.General.Warning : null;
+      myStoreProjectFilesUnderProjectRootHint.setIcon(icon);
+    });
     mySeparateModulesDirCheckBox.addActionListener(e -> updateModuleDirControls());
 
     mySeparateModulesDirChooser.addBrowseFolderListener(MavenProjectBundle.message("maven.import.title.module.dir"), "", null,
