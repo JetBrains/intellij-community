@@ -48,6 +48,54 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantConstructorKeyword")
+    public static class RedundantConstructorKeyword extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/abstractClass.kt");
+        }
+
+        @TestMetadata("annotatedParam.kt")
+        public void testAnnotatedParam() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/annotatedParam.kt");
+        }
+
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/annotationClass.kt");
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/comments.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/dataClass.kt");
+        }
+
+        @TestMetadata("inParameters.kt")
+        public void testInParameters() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/inParameters.kt");
+        }
+
+        @TestMetadata("varargVal.kt")
+        public void testVarargVal() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/varargVal.kt");
+        }
+
+        @TestMetadata("withProperties.kt")
+        public void testWithProperties() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantConstructorKeyword/withProperties.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantEmptyInitializerBlock")
     public static class RedundantEmptyInitializerBlock extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
