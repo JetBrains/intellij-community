@@ -56,7 +56,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       if (!ReadAction.compute(() -> PsiSearchScopeUtil.isInScope(searchScope, subMethod))) {
         continue;
       }
-      if (!consumer.process(subMethod) || !parameters.isCheckDeep()) {
+      if (!consumer.process(subMethod)) {
+        return false;
+      }
+      if (!parameters.isCheckDeep()) {
         return true;
       }
     }
