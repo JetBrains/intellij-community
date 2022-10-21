@@ -13,8 +13,16 @@ interface RepositoryAndAccountSelectorViewModel<M : HostedGitRepositoryMapping, 
   val accountsState: StateFlow<List<A>>
   val accountSelectionState: MutableStateFlow<A?>
 
-  val missingCredentialsState: StateFlow<Boolean>
+  val errorState: StateFlow<Error?>
+  val missingCredentialsState: StateFlow<Boolean?>
+
+  val busyState: StateFlow<Boolean>
 
   val submitAvailableState: StateFlow<Boolean>
   fun submitSelection()
+
+  sealed interface Error {
+    class SubmissionError(val repo: HostedGitRepositoryMapping, val account: ServerAccount, val exception: Throwable) : Error
+    object MissingCredentials : Error
+  }
 }

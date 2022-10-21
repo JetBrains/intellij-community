@@ -7,11 +7,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import javax.swing.Action
 import javax.swing.ComboBoxModel
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+import javax.swing.text.JTextComponent
 
 //TODO: generalise
 fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
@@ -65,6 +67,22 @@ fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolea
   scope.launch {
     visibilityFlow.collect {
       isVisible = it
+    }
+  }
+}
+
+fun JComponent.bindDisabled(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
+  scope.launch {
+    disabledFlow.collect {
+      isEnabled = !it
+    }
+  }
+}
+
+fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
+  scope.launch {
+    textFlow.collect {
+      text = it
     }
   }
 }

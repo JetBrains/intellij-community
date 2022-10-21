@@ -31,8 +31,8 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
 
-  private fun isTokenLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean): Boolean =
-    repo != null && (account == null || tokenMissing)
+  private fun isTokenLoginAvailable(repo: GitLabProjectMapping?, account: GitLabAccount?, tokenMissing: Boolean?): Boolean =
+    repo != null && (account == null || tokenMissing == true)
 
   private val _loginRequestsFlow = MutableSharedFlow<TokenLoginRequest>()
   val loginRequestsFlow: Flow<TokenLoginRequest> = _loginRequestsFlow.asSharedFlow()
