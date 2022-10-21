@@ -20,7 +20,13 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
   private val connectionManager: GitLabProjectConnectionManager,
   projectsManager: GitLabProjectsManager,
   private val accountManager: GitLabAccountManager)
-  : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(scope, projectsManager, accountManager) {
+  : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(
+  scope,
+  projectsManager,
+  accountManager,
+  onSelected = { repo, account ->
+    connectionManager.tryConnect(repo, account)
+  }) {
 
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)
@@ -36,14 +42,6 @@ internal class GitLabRepositoryAndAccountSelectorViewModel(
     val account = if (forceNewAccount) null else accountSelectionState.value
     scope.launch {
       _loginRequestsFlow.emit(TokenLoginRequest(repo, account, submit))
-    }
-  }
-
-  override fun submitSelection() {
-    val repo = repoSelectionState.value ?: return
-    val account = accountSelectionState.value ?: return
-    scope.launch {
-      connectionManager.tryConnect(repo, account)
     }
   }
 
