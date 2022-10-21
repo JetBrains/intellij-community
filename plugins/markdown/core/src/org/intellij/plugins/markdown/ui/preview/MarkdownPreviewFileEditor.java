@@ -60,6 +60,8 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   private Editor mainEditor;
 
+  private boolean isDisposed = false;
+
   public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
@@ -188,9 +190,14 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     return myFile;
   }
 
+  public boolean isDisposed() {
+    return this.isDisposed;
+  }
+
   @Override
   public void dispose() {
     if (myPanel != null) {
+      this.isDisposed = true;
       Disposer.dispose(myPanel);
     }
   }
@@ -225,7 +232,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   // Is always run from pooled thread
   private void updateHtml() {
-    if (myPanel == null || myDocument == null || !myFile.isValid() || Disposer.isDisposed(this)) {
+    if (myPanel == null || myDocument == null || !myFile.isValid() || isDisposed()) {
       return;
     }
 
@@ -234,7 +241,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     });
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
-    if (!myFile.isValid() || Disposer.isDisposed(this)) {
+    if (!myFile.isValid() || isDisposed()) {
       return;
     }
 
