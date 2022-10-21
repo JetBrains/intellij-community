@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.pip.PipBasedPackageManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -31,36 +33,44 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
 
   override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
 
-  override suspend fun installPackage(specification: PythonPackageSpecification) {
-    if (specification is CondaPackageSpecification) withContext(Dispatchers.IO) {
-      runConda("install", specification.buildInstallationString() + "-y", PyBundle.message("conda.packaging.install.progress", specification.name))
-      reloadPackages()
+  override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    return if (specification is CondaPackageSpecification) withContext(Dispatchers.IO) {
+      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+        runConda("install", specification.buildInstallationString() + "-y", PyBundle.message("conda.packaging.install.progress", specification.name))
+        reloadPackages()
+      }
     }
-    else super.installPackage(specification)
-
+    else return super.installPackage(specification)
   }
 
-  override suspend fun uninstallPackage(pkg: PythonPackage) {
-    if (pkg is CondaPackage && !pkg.installedWithPip) withContext(Dispatchers.IO) {
-      runConda("uninstall", listOf(pkg.name, "-y"), PyBundle.message("conda.packaging.uninstall.progress", pkg.name))
-      reloadPackages()
+  override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
+    return if (pkg is CondaPackage && !pkg.installedWithPip) withContext(Dispatchers.IO) {
+      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+        runConda("uninstall", listOf(pkg.name, "-y"), PyBundle.message("conda.packaging.uninstall.progress", pkg.name))
+        reloadPackages()
+      }
     }
     else super.uninstallPackage(pkg)
   }
 
-  override suspend fun reloadPackages() {
-    withContext(Dispatchers.IO) {
-      val result = runConda("list", emptyList(), PyBundle.message("conda.packaging.list.progress"))
-      val packages = parseCondaPackageList(result)
+  override suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    return withContext(Dispatchers.IO) {
+      val result = runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+        val output = runConda("list", emptyList(), PyBundle.message("conda.packaging.list.progress"))
+        Result.success(parseCondaPackageList(output))
+      }
+      if (result.isFailure) return@withContext result
 
       withContext(Dispatchers.Main) {
-        installedPackages = packages
+        installedPackages = result.getOrThrow()
       }
 
       ApplicationManager.getApplication()
         .messageBus
         .syncPublisher(PACKAGE_MANAGEMENT_TOPIC)
         .packagesChanged(sdk)
+
+      result
     }
   }
 
@@ -98,7 +108,12 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       }
 
       result.checkSuccess(thisLogger())
-      result.stdout
+      if (result.isTimeout) throw PyExecutionException("Time out", operation, arguments, result)
+      if (result.exitCode != 0) {
+        throw PyExecutionException("Non-zero exit code", operation, arguments, result)
+      }
+
+      else result.stdout
     }
   }
 
