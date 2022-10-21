@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.downloader
 
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
@@ -9,8 +10,10 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.withFragment
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
+import java.util.zip.GZIPInputStream
 
 /**
  * Lightweight implementation of LobbyServerAPI to avoid obfuscation issues
@@ -19,6 +22,12 @@ import java.net.URI
 object ThinClientSessionInfoFetcher {
 
   private val objectMapper = lazy { ObjectMapper() }
+
+  private fun getErrorPayload(connection: HttpURLConnection): ByteArray {
+    val errorStream = connection.errorStream ?: throw IOException("Connection errorStream is null")
+    val stream = if (connection.contentEncoding == "gzip") GZIPInputStream(errorStream) else errorStream
+    return stream.use { it.readAllBytes() }
+  }
 
   fun getSessionUrl(joinLinkUrl: URI): CodeWithMeSessionInfoProvider {
     val url = createUrl(joinLinkUrl)
@@ -30,17 +39,47 @@ object ThinClientSessionInfoFetcher {
     return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE)
       .throwStatusCodeException(false)
       .productNameAsUserAgent()
+      .tuner {
+        it.setRequestProperty("Accept", HttpRequests.JSON_CONTENT_TYPE)
+      }
       .connect { request ->
         request.write(requestString)
 
         val connection = request.connection as HttpURLConnection
-        val responseString = request.readString()
+        val jsonResponseString = try {
+          request.readString()
+        } catch (ioException: IOException) {
+          val errorPayload = getErrorPayload(connection)
+          String(errorPayload, Charsets.UTF_8)
+        }
 
+        if (connection.responseCode == 403) {
+          try {
+            val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
+            if (sessionInfo["messageId"]?.textValue() == "FORBIDDEN_BY_REGION_RESTRICTION") {
+              val learnMoreLink = sessionInfo["learnMoreLink"]?.textValue()
+              val message = sessionInfo["message"]?.textValue() ?: "Forbidden"
+              val reason = sessionInfo["forbiddenReasonText"]?.textValue()
+              val allTogetherText = StringBuilder()
+                .append(message)
+              if (learnMoreLink != null) {
+                allTogetherText.append("\n" + learnMoreLink)
+              }
+              if (reason != null) {
+                allTogetherText.append("\n" + reason)
+              }
+              throw Exception(allTogetherText.toString())
+            }
+          } catch (ex: JacksonException) {
+            // ignore
+          }
+
+        }
         if (connection.responseCode >= 400) {
           throw Exception("Request to $url failed with status code ${connection.responseCode}")
         }
 
-        val sessionInfo = objectMapper.value.reader().readTree(responseString)
+        val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
         val jreUrlNode = sessionInfo["compatibleJreUrl"]
         return@connect object : CodeWithMeSessionInfoProvider {
           override val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
