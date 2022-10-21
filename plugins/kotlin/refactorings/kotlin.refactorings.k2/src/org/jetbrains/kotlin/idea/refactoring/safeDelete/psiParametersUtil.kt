@@ -10,7 +10,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
-import org.jetbrains.kotlin.idea.inheritorsSearch.findFullHierarchy
+import org.jetbrains.kotlin.idea.inheritorsSearch.findHierarchyWithSiblings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFunction
@@ -43,12 +43,15 @@ private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
     val function = parameter.ownerFunction as? KtFunction ?: return emptySet()
     val parameterIndex = parameter.parameterIndex()
     val parametersToDelete = HashSet<PsiElement>()
-    findFullHierarchy(function).forEach {
-        if (it is KtFunction) {
-            parametersToDelete.add(it.valueParameters[parameterIndex])
-        }
-        else if (it is PsiMethod) {
-            parametersToDelete.add(it.parameterList.parameters[parameterIndex])
+    function.findHierarchyWithSiblings().forEach {
+        when (it) {
+            is KtFunction -> {
+                parametersToDelete.add(it.valueParameters[parameterIndex])
+            }
+
+            is PsiMethod -> {
+                parametersToDelete.add(it.parameterList.parameters[parameterIndex])
+            }
         }
     }
     return parametersToDelete

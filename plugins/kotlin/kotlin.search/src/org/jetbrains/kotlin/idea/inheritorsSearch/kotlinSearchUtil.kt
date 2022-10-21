@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inheritorsSearch
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -14,12 +15,12 @@ import java.util.*
 /**
  * Returns a set of PsiMethods/KtFunctions/KtProperties which "deep" override current [function].
  */
-fun findAllOverridings(function: KtCallableDeclaration): Set<PsiElement> {
-    return findAllOverridings(function, false)
+fun KtCallableDeclaration.findAllOverridings(): Set<PsiElement> {
+    return findAllOverridings(withFullHierarchy = false)
 }
 
 /**
- * Returns a set of PsiMethods/KtFunctions/KtProperties which belong to the hierarchy of [function].
+ * Returns a set of PsiMethods/KtFunctions/KtProperties which belong to the hierarchy of a function and all its siblings.
  * 
  * Example:
  * ```
@@ -29,44 +30,49 @@ fun findAllOverridings(function: KtCallableDeclaration): Set<PsiElement> {
  * ```
  * Hierarchy for B.f contains both A.f and C.f
  */
-fun findFullHierarchy(function: KtCallableDeclaration) : Set<PsiElement> {
-    return findAllOverridings(function, true)
+fun KtCallableDeclaration.findHierarchyWithSiblings() : Set<PsiElement> {
+    return findAllOverridings(withFullHierarchy = true)
 } 
 
-private fun findAllOverridings(function: KtCallableDeclaration, withFullHierarchy : Boolean): Set<PsiElement> {
+private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean): Set<PsiElement> {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+
     val queue = ArrayDeque<PsiElement>()
     val visited = HashSet<PsiElement>()
 
-    queue.add(function)
+    queue.add(this)
     while (!queue.isEmpty()) {
         val currentMethod = queue.poll()
         visited += currentMethod
-        if (currentMethod is KtCallableDeclaration) {
-            DirectKotlinOverridingCallableSearch.search(currentMethod).forEach {
-                queue.offer(it)
-            }
-            if (withFullHierarchy) {
-                analyze(currentMethod) {
-                    val ktCallableSymbol = currentMethod.getSymbol() as? KtCallableSymbol ?: return@analyze
-                    ktCallableSymbol.getDirectlyOverriddenSymbols()
-                        .mapNotNull {
-                            it.psi
-                        }
+        when (currentMethod) {
+          is KtCallableDeclaration -> {
+              DirectKotlinOverridingCallableSearch.search(currentMethod).forEach {
+                  queue.offer(it)
+              }
+              if (withFullHierarchy) {
+                  analyze(currentMethod) {
+                      val ktCallableSymbol = currentMethod.getSymbol() as? KtCallableSymbol ?: return@analyze
+                      ktCallableSymbol.getDirectlyOverriddenSymbols()
+                          .mapNotNull {
+                              it.psi
+                          }
+                          .filter { it !in visited }
+                          .forEach { queue.offer(it) }
+                  }
+              }
+          }
+
+            is PsiMethod -> {
+                OverridingMethodsSearch.search(currentMethod, true)
+                    .mappingNotNull { it.unwrapped }
+                    .filter { it !in visited }
+                    .forEach { queue.offer(it) }
+                if (withFullHierarchy) {
+                    currentMethod.findSuperMethods(true)
+                        .mapNotNull { it.unwrapped }
                         .filter { it !in visited }
                         .forEach { queue.offer(it) }
                 }
-            }
-        }
-        else if (currentMethod is PsiMethod) {
-            OverridingMethodsSearch.search(currentMethod, true)
-                .mappingNotNull { it.unwrapped }
-                .filter { it !in visited }
-                .forEach { queue.offer(it) }
-            if (withFullHierarchy) {
-                currentMethod.findSuperMethods(true)
-                    .mapNotNull { it.unwrapped }
-                    .filter { it !in visited }
-                    .forEach { queue.offer(it) }
             }
         }
     }

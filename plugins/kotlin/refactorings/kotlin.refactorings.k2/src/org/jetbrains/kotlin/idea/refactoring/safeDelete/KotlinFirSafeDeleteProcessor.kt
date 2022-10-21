@@ -123,7 +123,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     }
                 }
 
-                findAllOverridings(element).forEach { m ->
+                element.findAllOverridings().forEach { m ->
                     val original = m.unwrapped
                     if (original != null && !allElementsToDelete.contains(original)) {
                         val oSymbol = when (original) {
