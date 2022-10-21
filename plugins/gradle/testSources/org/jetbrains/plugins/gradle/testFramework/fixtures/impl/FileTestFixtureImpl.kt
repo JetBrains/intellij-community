@@ -262,13 +262,16 @@ internal class FileTestFixtureImpl(
       override fun isProcessRecursively(): Boolean = true
 
       override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
-        val path = file.toNioPath()
         return !file.isDirectory &&
                file != fixtureStateFile &&
                VfsUtil.isAncestor(root, file, false) &&
-               path !in snapshots &&
-               path !in excludedFiles &&
-               excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+               run {
+                 val path = file.toNioPath() // file can have no nio.Path, check root is its ancestor firstly
+
+                 path !in snapshots &&
+                 path !in excludedFiles &&
+                 excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+               }
       }
 
       override fun updateFile(file: VirtualFile, event: VFileEvent) {
