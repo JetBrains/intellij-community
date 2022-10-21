@@ -68,11 +68,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
-      val inLibraries = ReadAction.nonBlocking(
-        Callable {
-          FileIndexFacade.getInstance(project).isInLibraryClasses(file) || FileIndexFacade.getInstance(project).isInLibrarySource(file)
-        })
-        .submit(AppExecutorUtil.getAppExecutorService()).get()
+      val inLibraries = isInLibraryReadSafe(project, file)
 
       val isWritable = file.isWritable
 
@@ -81,6 +77,24 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
         ReaderMode.LIBRARIES -> inLibraries
         ReaderMode.READ_ONLY -> !isWritable
       }
+    }
+
+    private fun isInLibraryReadSafe(project: Project, file: VirtualFile): Boolean {
+      val callable = Callable {
+        val fileIndexFacade = FileIndexFacade.getInstance(project)
+
+        fileIndexFacade.isInLibraryClasses(file)
+        || fileIndexFacade.isInLibrarySource(file)
+      }
+
+      if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+        // we cannot start non-blocking read action, deadlock is coming
+        return callable.call()
+      }
+
+      return ReadAction.nonBlocking(callable)
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .get()
     }
   }
 
