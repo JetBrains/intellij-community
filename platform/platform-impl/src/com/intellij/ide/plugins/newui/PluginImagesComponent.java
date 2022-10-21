@@ -444,24 +444,21 @@ public class PluginImagesComponent extends JPanel {
 
     int imageWidth = image.getWidth();
     int imageHeight = image.getHeight();
+    int paintWidth = width - x - 2 * offset;
+    int paintHeight = height - y - offset;
 
-    if (myShowFullContent) {
-      int paintWidth = width - x - 2 * offset;
-      int paintHeight = height - y - offset;
+    if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
+      g.drawImage(image, x + offset + (paintWidth - imageWidth) / 2, y + (paintHeight - imageHeight) / 2, null);
+    }
+    else if (myShowFullContent) {
+      int newHeight = paintWidth / 2;
 
-      if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-        g.drawImage(image, x + offset + (paintWidth - imageWidth) / 2, y + (paintHeight - imageHeight) / 2, null);
+      if (newHeight < paintHeight) {
+        int newY = y + (paintHeight - newHeight) / 2;
+        g.drawImage(image, x + offset, newY, x + offset + paintWidth, newY + newHeight, 0, 0, imageWidth, imageHeight, null);
       }
       else {
-        int newHeight = paintWidth / 2;
-
-        if (newHeight < paintHeight) {
-          int newY = y + (paintHeight - newHeight) / 2;
-          g.drawImage(image, x + offset, newY, x + offset + paintWidth, newY + newHeight, 0, 0, imageWidth, imageHeight, null);
-        }
-        else {
-          g.drawImage(image, x + offset, y, x + offset + paintWidth, y + imageHeight, 0, 0, imageWidth, imageHeight, null);
-        }
+        g.drawImage(image, x + offset, y, x + offset + paintWidth, y + imageHeight, 0, 0, imageWidth, imageHeight, null);
       }
     }
     else {
