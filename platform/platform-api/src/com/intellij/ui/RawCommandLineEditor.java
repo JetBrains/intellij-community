@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.execution.ui.FragmentWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
@@ -28,7 +29,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
 
-public class RawCommandLineEditor extends JPanel implements TextAccessor {
+public class RawCommandLineEditor extends JPanel implements TextAccessor, FragmentWrapper {
   private final ExpandableTextField myEditor;
   private String myDialogCaption = "";
 
@@ -102,5 +103,10 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
   public @NotNull RawCommandLineEditor withMonospaced(boolean monospaced) {
     myEditor.setMonospaced(monospaced);
     return this;
+  }
+
+  @Override
+  public JComponent getComponentToRegister() {
+    return getEditorField();
   }
 }
