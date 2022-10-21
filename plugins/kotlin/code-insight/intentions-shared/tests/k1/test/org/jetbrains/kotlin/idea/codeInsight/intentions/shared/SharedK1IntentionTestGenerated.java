@@ -782,4 +782,52 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/removeConstructorKeyword")
+    public static class RemoveConstructorKeyword extends AbstractSharedK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/abstractClass.kt");
+        }
+
+        @TestMetadata("annotatedParam.kt")
+        public void testAnnotatedParam() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/annotatedParam.kt");
+        }
+
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/annotationClass.kt");
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/comments.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/dataClass.kt");
+        }
+
+        @TestMetadata("inParameters.kt")
+        public void testInParameters() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/inParameters.kt");
+        }
+
+        @TestMetadata("varargVal.kt")
+        public void testVarargVal() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/varargVal.kt");
+        }
+
+        @TestMetadata("withProperties.kt")
+        public void testWithProperties() throws Exception {
+            runTest("../testData/intentions/removeConstructorKeyword/withProperties.kt");
+        }
+    }
 }
