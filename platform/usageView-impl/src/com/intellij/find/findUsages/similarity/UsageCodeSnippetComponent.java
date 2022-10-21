@@ -10,20 +10,26 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextFieldCellRenderer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.usages.impl.UsagePreviewPanel.calculateHighlightingRange;
+
 public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent {
   public static final int CONTEXT_LINE_NUMBER = 3;
+  private final ProperTextRange myInfoRange;
 
-  public UsageCodeSnippetComponent(@NotNull PsiElement element) {
+  public UsageCodeSnippetComponent(@NotNull PsiElement element, @Nullable ProperTextRange infoRange) {
     super(element.getProject(), element.getLanguage(), false);
+    myInfoRange = infoRange;
     setupEditor();
     addUsagePreview(element);
   }
@@ -54,8 +60,9 @@ public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.Simpl
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(element.getProject());
     Document doc = docManager.getDocument(element.getContainingFile());
     if (doc == null) return;
-    int usageStartLineNumber = doc.getLineNumber(element.getTextRange().getStartOffset());
-    int usageEndLineNumber = doc.getLineNumber(element.getTextRange().getEndOffset());
+    TextRange selectionRange = calculateHighlightingRange(element.getProject(), false, element, myInfoRange);
+    int usageStartLineNumber = doc.getLineNumber(selectionRange.getStartOffset());
+    int usageEndLineNumber = doc.getLineNumber(selectionRange.getEndOffset());
     final int contextStartLineNumber = Math.max(0, usageStartLineNumber - CONTEXT_LINE_NUMBER);
     int startOffset = doc.getLineStartOffset(contextStartLineNumber);
     int endOffset = doc.getLineEndOffset(Math.min(usageEndLineNumber + CONTEXT_LINE_NUMBER, doc.getLineCount() - 1));
@@ -68,7 +75,7 @@ public class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.Simpl
       });
     setText(doc.getText(new TextRange(startOffset, endOffset)));
     getEditor().getGutterComponentEx().updateUI();
-    highlightRange(element.getTextRange().shiftLeft(startOffset));
+    highlightRange(selectionRange.shiftLeft(startOffset));
   }
 }
 

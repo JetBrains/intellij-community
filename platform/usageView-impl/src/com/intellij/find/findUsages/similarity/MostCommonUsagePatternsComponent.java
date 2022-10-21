@@ -256,7 +256,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     PsiElement element = usageInfo.getElement();
     UsageCodeSnippetComponent summaryRendererComponent = null;
     if (element != null) {
-      summaryRendererComponent = new UsageCodeSnippetComponent(element);
+      summaryRendererComponent = new UsageCodeSnippetComponent(element, usageInfo.getRangeInElement());
       if (!Disposer.tryRegister(this, summaryRendererComponent)) {
         Disposer.dispose(summaryRendererComponent);
       }
