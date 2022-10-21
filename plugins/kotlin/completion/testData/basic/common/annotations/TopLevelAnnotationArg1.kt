@@ -1,5 +1,4 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
+/* TODO: this test should be enabled for K2 after KTIJ-23008 is fixed */
 import java.lang.annotation.*
 
 @Retention(<caret>

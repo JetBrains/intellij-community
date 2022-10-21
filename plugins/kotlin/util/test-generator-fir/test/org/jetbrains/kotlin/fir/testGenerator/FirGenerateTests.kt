@@ -6,10 +6,7 @@ import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightT
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractK2MultiPlatformCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.*
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
@@ -178,6 +175,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 isRecursive = false,
                 pattern = KT_WITHOUT_FIR_PREFIX
             )
+        }
+        testClass<AbstractFirWithLibBasicCompletionTest> {
+            model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
     }
 

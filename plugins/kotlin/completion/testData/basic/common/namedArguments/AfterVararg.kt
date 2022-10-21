@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(vararg strings: String, option: String = ""){ }
 
 fun bar(s: String){

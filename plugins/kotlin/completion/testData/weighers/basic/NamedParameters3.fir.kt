@@ -11,6 +11,5 @@ fun test(insa: Any) {
     f(ins<caret>)
 }
 
-// ORDER: instance
 // ORDER: "insp ="
 // ORDER: insa

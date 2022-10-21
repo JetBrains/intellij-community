@@ -1252,6 +1252,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/namedArguments/OnlyNamedArguments.kt");
             }
 
+            @TestMetadata("ParamsFromSingleUnapplicableOverload.kt")
+            public void testParamsFromSingleUnapplicableOverload() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
+            }
+
             @TestMetadata("WithParameterExpression.kt")
             public void testWithParameterExpression() throws Exception {
                 runTest("../testData/basic/common/namedArguments/WithParameterExpression.kt");

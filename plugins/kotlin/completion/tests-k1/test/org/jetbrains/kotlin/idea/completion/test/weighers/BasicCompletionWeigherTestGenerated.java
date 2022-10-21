@@ -465,6 +465,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/LocalsPropertiesKeywords.kt");
         }
 
+        @TestMetadata("NamedArgumentNonTypableVariables.kt")
+        public void testNamedArgumentNonTypableVariables() throws Exception {
+            runTest("../testData/weighers/basic/NamedArgumentNonTypableVariables.kt");
+        }
+
+        @TestMetadata("NamedArgumentNotMatches.kt")
+        public void testNamedArgumentNotMatches() throws Exception {
+            runTest("../testData/weighers/basic/NamedArgumentNotMatches.kt");
+        }
+
         @TestMetadata("NamedParameters.kt")
         public void testNamedParameters() throws Exception {
             runTest("../testData/weighers/basic/NamedParameters.kt");

@@ -12,9 +12,13 @@ import java.io.File
 
 abstract class AbstractCompletionWeigherTest(val completionType: CompletionType, val relativeTestDataPath: String) :
     KotlinLightCodeInsightFixtureTestCase() {
+
+    protected open fun handleTestPath(path: String): File = File(path)
+
     fun doTest(path: String) {
+        val actualTestFile = handleTestPath(dataFilePath(fileName()))
         myFixture.configureWithExtraFile(
-            File(path).toRelativeString(File(testDataPath)),
+            actualTestFile.toRelativeString(File(testDataPath)),
             ".Data", ".Data1", ".Data2", ".Data3", ".Data4", ".Data5", ".Data6"
         )
 

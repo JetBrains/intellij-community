@@ -22,5 +22,8 @@ fun test(listParam: Int) {
 // ORDER: listThisFileFun
 // ORDER: listImportedFun
 // ORDER: "listMatch ="
+// ORDER: "listMatch = false"
+// ORDER: "listMatch = true"
 // ORDER: "listNew ="
 // ORDER: listFunNotMatchingType
+
