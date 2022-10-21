@@ -63,6 +63,10 @@ public final class TipDialog extends DialogWrapper {
     Dimension minSize = getRootPane().getMinimumSize();
     int height = Math.max(prefSize.height, minSize.height);
     setSize(prefSize.width, height);
+    // Hack to free space occupied by JBScrollBar
+    // For some reason insets are recalculated inside JBViewport.ViewBorder#getBorderInsets()
+    // but do not update during validation after dialog size change
+    SwingUtilities.invokeLater(() -> myTipPanel.getContentPanel().getInsets());
   }
 
   @NotNull
