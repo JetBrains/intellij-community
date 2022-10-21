@@ -988,7 +988,8 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
-      "background": "#3369d6"
+      "background": "#3369d6",
+      "runningBackground": "#599e5e"
     }
   }
 }

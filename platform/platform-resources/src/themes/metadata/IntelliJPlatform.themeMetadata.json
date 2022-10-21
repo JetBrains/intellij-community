@@ -1785,6 +1785,11 @@
       "key": "RunWidget.background",
       "description": "Background for run widget in non-running state",
       "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.runningBackground",
+      "description": "Background for run widget in running state",
+      "since": "2022.3"
     }
   ]
 }
