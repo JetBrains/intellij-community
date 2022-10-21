@@ -403,6 +403,12 @@
       "selectedPressedBackground": "Blue4"
     },
 
+    "SpeedSearch": {
+      "background": "Grey1",
+      "borderColor": "Grey3",
+      "errorForeground": "Red6"
+    },
+
     "StatusBar": {
       "Widget": {
         "foreground": "Grey9",
