@@ -36,10 +36,10 @@ class YamlCompositeGroupImpl(override val groupId: String,
                              private val groupRules: List<String>) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     for (groupRule in groupRules.asReversed()) {
-      val isExcluded = groupRule.startsWith("!")
-      val groupId = if (isExcluded) groupRule.drop(1) else groupRule
-      val matches = groupProvider.findGroup(groupId).includesInspection(tool)
-      if (matches) return !isExcluded
+      val groupId = groupRule.removePrefix("!")
+      if (groupProvider.findGroup(groupId).includesInspection(tool)) {
+        return groupId == groupRule
+      }
     }
     return false
   }
