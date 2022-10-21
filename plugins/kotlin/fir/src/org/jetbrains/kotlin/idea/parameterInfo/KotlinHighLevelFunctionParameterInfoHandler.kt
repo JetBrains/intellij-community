@@ -18,11 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtElementParameterInfoFromKtFunctionCallProvider.firstArgumentInNamedMode
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtElementParameterInfoFromKtFunctionCallProvider.getArgumentOrIndexExpressions
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtElementParameterInfoFromKtFunctionCallProvider.hasTypeMismatchBeforeCurrent
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtElementParameterInfoFromKtFunctionCallProvider.isArraySetCall
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtElementParameterInfoFromKtFunctionCallProvider.mapArgumentsToParameterIndices
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
@@ -148,7 +144,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         analyze(callElement) {
             if (callElement !is KtCallElement && callElement !is KtArrayAccessExpression) return@analyze
 
-            val arguments = callElement.getArgumentOrIndexExpressions()
+            val arguments = CallParameterInfoProvider.getArgumentOrIndexExpressions(callElement)
             val valueArguments = (callElement as? KtCallElement)?.valueArgumentList?.arguments
 
             val candidates = collectCallCandidates(callElement)
@@ -164,7 +160,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidates[index].withMapping
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
-                val isArraySetCall = callElement.isArraySetCall(candidateSignature)
+                val isArraySetCall = CallParameterInfoProvider.isArraySetCall(callElement, candidateSignature)
                 val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
@@ -185,7 +181,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
-                val argumentToParameterIndex = callElement.mapArgumentsToParameterIndices(candidateSignature, argumentMapping)
+                val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(
+                    callElement,
+                    candidateSignature,
+                    argumentMapping
+                )
 
                 // Determine the parameter to be highlighted.
                 val highlightParameterIndex = calculateHighlightParameterIndex(
@@ -196,17 +196,26 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     parameterToIndex
                 )
 
-                val hasTypeMismatchBeforeCurrent = callElement.hasTypeMismatchBeforeCurrent(argumentMapping, currentArgumentIndex)
+                val hasTypeMismatchBeforeCurrent = CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(
+                    callElement,
+                    argumentMapping,
+                    currentArgumentIndex
+                )
 
                 // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
                 // However, if there is only one candidate available, we want to highlight it green regardless of its applicability.
                 val shouldHighlightGreen = (isApplicableBestCandidate && !hasMultipleApplicableBestCandidates) || candidates.size == 1
 
-                val firstArgumentInNamedMode = (callElement as? KtCallElement)?.firstArgumentInNamedMode(
-                    candidateSignature,
-                    argumentMapping,
-                    callElement.languageVersionSettings
-                )
+                val firstArgumentInNamedMode = when (callElement) {
+                    is KtCallElement -> CallParameterInfoProvider.firstArgumentInNamedMode(
+                        callElement,
+                        candidateSignature,
+                        argumentMapping,
+                        callElement.languageVersionSettings
+                    )
+
+                    else -> null
+                }
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,

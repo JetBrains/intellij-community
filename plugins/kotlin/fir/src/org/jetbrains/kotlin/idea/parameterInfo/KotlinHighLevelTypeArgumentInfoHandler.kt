@@ -59,7 +59,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val symbols = callElement.collectCallCandidates()
             .mapNotNull { (it.candidate as? KtCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KtFunctionLikeSignature<*>>()
-            .filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
+            .filter { filterCandidateByReceiverTypeAndVisibility(it, callElement, fileSymbol, explicitReceiver) }
 
         // Multiple overloads may have the same type parameters (see Overloads.kt test), so we select the distinct ones.
         return symbols.distinctBy { buildPresentation(fetchCandidateInfo(it.symbol), -1).first }.map { it.symbol }

@@ -13,13 +13,17 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-object KtElementParameterInfoFromKtFunctionCallProvider {
+object CallParameterInfoProvider {
+    /**
+     * Returns true when there is an argument before current that is mapped to a parameter with different type.
+     */
     context(KtAnalysisSession)
-    fun KtElement.hasTypeMismatchBeforeCurrent(
+    fun hasTypeMismatchBeforeCurrent(
+        sourceElement: KtElement,
         argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
         currentArgumentIndex: Int,
     ): Boolean {
-        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions().take(currentArgumentIndex + 1).filterNotNull()
+        val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
             val argumentType = argumentExpression.getKtType() ?: error("Argument should have a KtType")
@@ -30,31 +34,43 @@ object KtElementParameterInfoFromKtFunctionCallProvider {
         return false
     }
 
-    /* Returns argument expressions mapped to parameter indices. In case of array set call the value to set is ignored. */
+    /**
+     * Returns argument expressions mapped to parameter indices. In case of array set call the value to set is ignored.
+     */
     context(KtAnalysisSession)
-    fun KtElement.mapArgumentsToParameterIndices(
+    fun mapArgumentsToParameterIndices(
+        sourceElement: KtElement,
         signature: KtFunctionLikeSignature<*>,
         argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>
     ): Map<KtExpression, Int> {
-        val isArraySetCall = isArraySetCall(signature)
+        val isArraySetCall = isArraySetCall(sourceElement, signature)
         val parameterToIndex = mapParametersToIndices(signature, isArraySetCall)
-        return argumentMapping.entries.mapNotNull { (argument, parameter) ->
+        return argumentMapping.mapNotNull { (argument, parameter) ->
             if (parameter in parameterToIndex) argument to parameterToIndex.getValue(parameter) else null
         }.toMap()
     }
 
+    /**
+     * Returns true in case of array access which resolves to set operator.
+     * ```
+     * class A {
+     *     operator fun set(x: String, value: Int) {}
+     * }
+     * val a = A()
+     * a[""] = 1 // array set call
+     * ```
+     */
     context(KtAnalysisSession)
-    fun KtElement.isArraySetCall(signature: KtFunctionLikeSignature<*>) = signature.symbol.callableIdIfNonLocal?.let {
-        val isSet = it.callableName == OperatorNameConventions.SET
-        isSet && this is KtArrayAccessExpression
-    } ?: false
+    fun isArraySetCall(sourceElement: KtElement, signature: KtFunctionLikeSignature<*>): Boolean {
+        val callableId = signature.symbol.callableIdIfNonLocal ?: return false
+        val isSet = callableId.callableName == OperatorNameConventions.SET
+        return isSet && sourceElement is KtArrayAccessExpression
+    }
 
-    fun KtElement.getArgumentOrIndexExpressions(): List<KtExpression?> {
-        return when (this) {
-            is KtCallElement -> valueArgumentList?.arguments?.map { it.getArgumentExpression() } ?: listOf()
-            is KtArrayAccessExpression -> this.indexExpressions
-            else -> listOf()
-        }
+    fun getArgumentOrIndexExpressions(sourceElement: KtElement): List<KtExpression?> = when (sourceElement) {
+        is KtCallElement -> sourceElement.valueArgumentList?.arguments?.map { it.getArgumentExpression() }.orEmpty()
+        is KtArrayAccessExpression -> sourceElement.indexExpressions
+        else -> listOf()
     }
 
     /**
@@ -65,12 +81,13 @@ object KtElementParameterInfoFromKtFunctionCallProvider {
      * 4. An argument is after non-named vararg.
      */
     context(KtAnalysisSession)
-    fun KtCallElement.firstArgumentInNamedMode(
+    fun firstArgumentInNamedMode(
+        sourceCallElement: KtCallElement,
         signature: KtFunctionLikeSignature<*>,
         argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
         languageVersionSettings: LanguageVersionSettings
     ): KtValueArgument? {
-        val valueArguments = valueArgumentList?.arguments ?: return null
+        val valueArguments = sourceCallElement.valueArgumentList?.arguments ?: return null
         val parameterToIndex = mapParametersToIndices(signature, false)
         val supportsMixedNamedArguments = languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
 
@@ -91,7 +108,9 @@ object KtElementParameterInfoFromKtFunctionCallProvider {
         return null
     }
 
-    /* Returns parameters mapped to their indices. In case of array set call last parameter is ignored. */
+    /**
+     * Returns parameters mapped to their indices. In case of array set call last parameter is ignored.
+     */
     context(KtAnalysisSession)
     private fun mapParametersToIndices(
         signature: KtFunctionLikeSignature<*>,

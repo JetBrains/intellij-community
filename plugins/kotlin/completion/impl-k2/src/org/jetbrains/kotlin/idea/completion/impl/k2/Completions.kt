@@ -3,9 +3,15 @@
 package org.jetbrains.kotlin.idea.completion
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
     fun KtAnalysisSession.complete(
@@ -13,10 +19,13 @@ internal object Completions {
         positionContext: FirRawPositionCompletionContext,
     ) {
         when (positionContext) {
-            is FirExpressionNameReferencePositionContext -> {
+            is FirExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
+                complete(factory.namedArgumentContributor(0), positionContext)
+            } else {
                 complete(factory.keywordContributor(0), positionContext)
                 complete(factory.callableContributor(0), positionContext)
                 complete(factory.classifierContributor(0), positionContext)
+                complete(factory.namedArgumentContributor(0), positionContext)
                 complete(factory.packageCompletionContributor(1), positionContext)
             }
 
@@ -93,4 +102,25 @@ internal object Completions {
             }
         }
     }
+}
+
+context(KtAnalysisSession)
+private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
+    if (explicitReceiver != null) return false
+
+    val valueArgument = findValueArgument(nameExpression) ?: return false
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return false
+    val callElement = valueArgumentList.parent as? KtCallElement ?: return false
+
+    if (valueArgument.getArgumentName() != null) return false
+
+    val call = callElement.resolveCall().singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
+        callElement,
+        call.partiallyAppliedSymbol.signature,
+        call.argumentMapping,
+        callElement.languageVersionSettings
+    ) ?: return false
+
+    return with(valueArgumentList.arguments) { indexOf(valueArgument) >= indexOf(firstArgumentInNamedMode) }
 }

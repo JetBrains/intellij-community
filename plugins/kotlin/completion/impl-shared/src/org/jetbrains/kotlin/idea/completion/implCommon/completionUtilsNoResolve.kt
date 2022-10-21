@@ -155,3 +155,9 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
 
 fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
     JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
+
+fun findValueArgument(expression: KtExpression): KtValueArgument? {
+    // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231
+    return expression.parent as? KtValueArgument
+        ?: expression.parent.parent as? KtValueArgument
+}

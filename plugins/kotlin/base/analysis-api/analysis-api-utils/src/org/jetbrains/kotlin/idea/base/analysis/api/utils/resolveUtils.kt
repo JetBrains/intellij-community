@@ -41,10 +41,10 @@ private fun KtAnalysisSession.filterCandidate(
     val candidateCall = candidateInfo.candidate
     if (candidateCall !is KtFunctionCall<*>) return false
     val signature = candidateCall.partiallyAppliedSymbol.signature
-    return filterCandidate(signature, callElement, fileSymbol, explicitReceiver)
+    return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
 }
 
-fun KtAnalysisSession.filterCandidate(
+fun KtAnalysisSession.filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
