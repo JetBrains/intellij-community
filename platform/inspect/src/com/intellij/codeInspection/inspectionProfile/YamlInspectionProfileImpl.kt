@@ -91,7 +91,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
     @JvmStatic
     fun isYamlFile(filepath: String): Boolean {
-      val extension = File(filepath).extension.lowercase()
+      val extension = File(filepath).extension
       return extension == "yaml" || extension == "yml"
     }
 
