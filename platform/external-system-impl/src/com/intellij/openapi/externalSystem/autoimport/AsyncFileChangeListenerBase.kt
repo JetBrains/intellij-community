@@ -10,18 +10,29 @@ import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use VirtualFileChangesListener instead")
 @ApiStatus.ScheduledForRemoval
-abstract class AsyncFileChangeListenerBase : AsyncFileListener, VirtualFileChangesListener {
+abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
   protected open val processRecursively: Boolean = true
 
+  protected abstract fun init()
+
+  protected abstract fun apply()
+
   protected open fun isRelevant(path: String): Boolean = false
 
-  override fun isProcessRecursively(): Boolean = processRecursively
+  protected open fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = isRelevant(file.path)
 
-  override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = isRelevant(file.path)
+  protected abstract fun updateFile(file: VirtualFile, event: VFileEvent)
 
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
-    val separator = VirtualFileChangesSeparator(this, events)
+    val listener = object : VirtualFileChangesListener {
+      override fun isProcessRecursively() = processRecursively
+      override fun init() = this@AsyncFileChangeListenerBase.init()
+      override fun apply() = this@AsyncFileChangeListenerBase.apply()
+      override fun isRelevant(file: VirtualFile, event: VFileEvent) = this@AsyncFileChangeListenerBase.isRelevant(file, event)
+      override fun updateFile(file: VirtualFile, event: VFileEvent) = this@AsyncFileChangeListenerBase.updateFile(file, event)
+    }
+    val separator = VirtualFileChangesSeparator(listener, events)
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         init()
