@@ -23,12 +23,26 @@ class NastradamusClientTest {
   @Test
   @Ignore("Do not use TC. Use mocks / test data")
   fun collectingChangesetOnTC() {
-    val changes = TeamCityClient.getChanges("219794017")
+    val changes = TeamCityClient.getChanges("225659992").take(3)
 
-    val x = runBlocking {
-      changes.mapConcurrently(maxConcurrency = 5) { change ->
+    runBlocking {
+      changes.mapConcurrently(maxConcurrency = 2) { change ->
         val modificationId = change.findValue("id").asText()
-        TeamCityClient.downloadChangesPatch(buildTypeId = "bt1921931", modificationId = modificationId)
+
+        val isPersonal = change.findValue("personal")?.asBoolean() ?: false
+        TeamCityClient.downloadChangesPatch(buildTypeId = "ijplatform_master_IdeaSmokeTestsNostradamus",
+                                            modificationId = modificationId,
+                                            isPersonal = isPersonal)
+      }
+    }
+
+    runBlocking {
+      changes.mapConcurrently(maxConcurrency = 2) { change ->
+        val modificationId = change.findValue("id").asText()
+        val isPersonal = change.findValue("personal")?.asBoolean() ?: false
+        TeamCityClient.downloadChangesPatch(buildTypeId = "ijplatform_master_IdeaSmokeTestsNostradamus",
+                                            modificationId = modificationId,
+                                            isPersonal = isPersonal)
       }
     }
   }

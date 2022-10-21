@@ -13,10 +13,51 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URI
+import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.*
 
 
 object TeamCityClient {
+  private val downloadedDataCache: MutableMap<String, String> = mutableMapOf()
+  private val cacheDir = Paths.get("TeamCityClientCache").apply {
+    createDirectories()
+    if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED)
+      println("Init TeamCityClient cache dir ${this.toRealPath()}")
+  }.toRealPath()
+
+  private fun putDataToCache(uri: URI, value: String) {
+    val hash = uri.toString().hashCode().toString()
+    putDataToCache(key = hash, value = value)
+  }
+
+  private fun putDataToCache(key: String, value: String) {
+    downloadedDataCache[key] = value
+    cacheDir.resolve(key).apply {
+      createFile()
+      writeText(value)
+    }
+  }
+
+  // try to initialize cache from cache directory
+  private fun initCache() {
+    if (downloadedDataCache.isEmpty()) {
+      cacheDir.listDirectoryEntries().forEach { filePath ->
+        downloadedDataCache[filePath.nameWithoutExtension] = filePath.readText()
+      }
+    }
+  }
+
+  private fun getDataFromCache(uri: URI): String? {
+    return getDataFromCache(uri.toString().hashCode().toString())
+  }
+
+  private fun getDataFromCache(key: String): String? {
+    initCache()
+
+    return downloadedDataCache[key]
+  }
+
   private fun loadProperties(file: String?) =
     try {
       File(file ?: throw Error("No file!")).bufferedReader().use {
@@ -41,10 +82,10 @@ object TeamCityClient {
       .plus(System.getProperties().map { it.key.toString() to it.value.toString() })
   }
 
-  private val baseUrl = URI("https://buildserver.labs.intellij.net").normalize()
+  private val baseUri = URI("https://buildserver.labs.intellij.net").normalize()
 
-  private val restUrl = baseUrl.resolve("/app/rest/")
-  private val guestAuthUrl = baseUrl.resolve("/guestAuth/app/rest/")
+  private val restUri = baseUri.resolve("/app/rest/")
+  private val guestAuthUri = baseUri.resolve("/guestAuth/app/rest/")
 
   val buildNumber by lazy { System.getenv("BUILD_NUMBER") ?: "" }
 
@@ -100,23 +141,40 @@ object TeamCityClient {
     return requireNotNull(result) { "Request ${request.uri} failed" }
   }
 
-  fun downloadChangesPatch(buildTypeId: String, modificationId: String): String {
-    val url = baseUrl.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}")
-    val outputStream = ByteArrayOutputStream()
+  fun downloadChangesPatch(buildTypeId: String, modificationId: String, useCachedResult: Boolean = true, isPersonal: Boolean): String {
+    val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
 
-    if (!HttpClient.download(request = HttpGet(url).withAuth(), outStream = outputStream, retries = 3)) {
-      throw RuntimeException("Couldn't download $url in 3 attempts")
+    if (useCachedResult) {
+      val changesPatch = getDataFromCache(uri)
+      if (changesPatch != null) {
+        if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+          println("Returning cached result for $uri")
+        }
+        return changesPatch
+      }
     }
 
-    println("Downloading of $url finished")
+    val outputStream = ByteArrayOutputStream()
 
-    return outputStream.toString("UTF-8")
+    if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
+      throw RuntimeException("Couldn't download patch $uri in 3 attempts")
+    }
+
+    val changesPatch = outputStream.toString("UTF-8")
+    cacheDir.createDirectories()
+
+    putDataToCache(uri, changesPatch)
+    return changesPatch
   }
 
-  fun downloadChangesPatch(modificationId: String) = downloadChangesPatch(buildTypeId, modificationId)
+  fun downloadChangesPatch(modificationId: String, useCachedResult: Boolean = true, isPersonal: Boolean): String =
+    downloadChangesPatch(buildTypeId = buildTypeId,
+                         modificationId = modificationId,
+                         useCachedResult = useCachedResult,
+                         isPersonal = isPersonal)
 
   fun getChanges(buildId: String): List<JsonNode> {
-    val fullUrl = restUrl.resolve("changes?locator=build:(id:$buildId)")
+    val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
     val changes = get(fullUrl).fields().asSequence()
       .filter { it.key == "change" }
       .flatMap { it.value }
@@ -137,7 +195,7 @@ object TeamCityClient {
     println("Getting test run info from TC ...")
 
     do {
-      val fullUrl = restUrl.resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition")
+      val fullUrl = restUri.resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition")
 
       currentTests = get(fullUrl).fields().asSequence()
         .filter { it.key == "testOccurrence" }

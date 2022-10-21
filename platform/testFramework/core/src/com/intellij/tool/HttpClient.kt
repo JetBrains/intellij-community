@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tool
 
+import com.intellij.TestCaseLoader
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.impl.client.HttpClientBuilder
@@ -61,7 +62,9 @@ object HttpClient {
     var isSuccessful = false
 
     return try {
-      println("Downloading ${request.uri} to $outPath")
+      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+        println("Downloading ${request.uri} to $outPath")
+      }
 
       withRetry(retries = retries) {
         sendRequest(request) { response ->
@@ -79,7 +82,9 @@ object HttpClient {
       isSuccessful
     }
     finally {
-      println("Download of ${request.uri} ${if (isSuccessful) "successful" else "failed"}")
+      if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
+        println("Downloading ${request.uri} ${if (isSuccessful) "is successful" else "failed"}")
+      }
       lock.release()
     }
   }

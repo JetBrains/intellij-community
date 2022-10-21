@@ -104,9 +104,10 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
   private fun getTeamCityChangeset(): List<String> = runBlocking {
     println("Fetching changesets patches from TeamCity ...")
 
-    val changesets = TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 10) { change ->
+    val changesets = TeamCityClient.getChanges().mapConcurrently(maxConcurrency = 15) { change ->
       val modificationId = change.findValue("id").asText()
-      TeamCityClient.downloadChangesPatch(modificationId)
+      val isPersonal = change.findValue("personal")?.asBoolean() ?: false
+      TeamCityClient.downloadChangesPatch(modificationId = modificationId, isPersonal = isPersonal)
     }
 
     println("Fetching changesets patches completed")
