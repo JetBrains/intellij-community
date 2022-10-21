@@ -96,7 +96,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveToFacade", ::checkResolveToFacade)
     }
 
-
     fun testMultiConstructorResolve() {
         doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
     }
@@ -137,10 +136,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
     }
 
-    fun testAssigningArrayElementType() {
-        doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
-    }
-
     fun testMapFunctions() {
         doCheck("MapFunctions", ::checkMapFunctions)
     }
@@ -151,10 +146,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testStringJVM() {
         doCheck("StringJVM", ::checkStringJVM)
-    }
-
-    fun testDivByZero() {
-        doCheck("DivByZero", ::checkDivByZero)
     }
 
     fun testArgumentMappingDefaultValue() {
@@ -173,24 +164,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ArgumentMappingOOBE", ::checkArgumentMappingOOBE)
     }
 
-    fun testDetailsOfDeprecatedHidden() {
-        doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
-    }
-
     fun testSyntheticEnumMethods() {
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
-    }
-
-    fun testImplicitReceiverType() {
-        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
-    }
-
-    fun testSubstitutedReceiverType() {
-        doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
-    }
-
-    fun testCallKindOfSamConstructor() {
-        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
     }
 
     fun testArrayAccessOverloads() {
@@ -215,6 +190,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveEnumEntrySuperType() {
         doCheck("TypeReferenceFromEnumEntry", ::checkResolveEnumEntrySuperType)
+    }
+
+    fun testResolveLambdaInvoke() {
+        doCheck("LambdaInvoke", ::checkLambdaInvoke)
     }
 
 }
