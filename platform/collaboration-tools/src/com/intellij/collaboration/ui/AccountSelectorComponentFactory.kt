@@ -78,8 +78,6 @@ class AccountSelectorComponentFactory<A : Account>(
     private fun updateLabel() {
       val selectedAccount = accountsModel.selectedItem?.wrappee
       with(label) {
-        isVisible = accountsModel.items.isNotEmpty()
-
         icon = avatarIconsProvider.getIcon(selectedAccount, avatarSize)
         toolTipText = selectedAccount?.name ?: emptyStateTooltip
       }
