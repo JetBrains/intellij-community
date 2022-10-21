@@ -11,6 +11,6 @@
     <extensionPoint name="inspectionGroupProvider" interface="com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider" dynamic="true"/>
   </extensionPoints>
   <actions>
-      <action id="ReloadYamlProfile" internal="true" class="com.intellij.codeInspection.inspectionProfile.UpdateToYamlProfileAction"/>
+      <action id="LoadDefaultYamlProfile" internal="true" class="com.intellij.codeInspection.inspectionProfile.LoadDefaultYamlProfile"/>
   </actions>
 </idea-plugin>

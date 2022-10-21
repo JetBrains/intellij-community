@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 
-class UpdateToYamlProfileAction: AnAction() {
+class LoadDefaultYamlProfile: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val yamlProfile = YamlInspectionProfileImpl.loadFrom(project)
