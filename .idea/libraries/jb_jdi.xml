@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="jb-jdi" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.22" />
+    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.23" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.22/jb-jdi-2.22.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.23/jb-jdi-2.23.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.22/jb-jdi-2.22-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.23/jb-jdi-2.23-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
