@@ -86,6 +86,7 @@ class AccountSelectorComponentFactory<A : Account>(
     }
 
     private fun showPopup() {
+      if (!label.isEnabled) return
       popup = object : ComboBoxPopup<ComboBoxWithActionsModel.Item<A>>(this, accountsModel.selectedItem, {
         accountsModel.setSelectedItem(it)
       }) {
