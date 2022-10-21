@@ -335,7 +335,7 @@ object PlatformModules {
     }
     layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
       val name = lib.name
-      if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+      if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
         return@collectProjectLibrariesFromIncludedModules
       }
 
