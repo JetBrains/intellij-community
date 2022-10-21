@@ -2,7 +2,8 @@
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -17,8 +18,6 @@ import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.util.concurrency.AppExecutorUtil
-import java.util.concurrent.Callable
 
 @Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [
@@ -68,8 +67,8 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
-      val inLibraries = isInLibraryReadSafe(project, file)
-
+      val inLibraries = FileIndexFacade.getInstance(project).isInLibraryClasses(file)
+                        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
       val isWritable = file.isWritable
 
       return when (mode) {
@@ -77,24 +76,6 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
         ReaderMode.LIBRARIES -> inLibraries
         ReaderMode.READ_ONLY -> !isWritable
       }
-    }
-
-    private fun isInLibraryReadSafe(project: Project, file: VirtualFile): Boolean {
-      val callable = Callable {
-        val fileIndexFacade = FileIndexFacade.getInstance(project)
-
-        fileIndexFacade.isInLibraryClasses(file)
-        || fileIndexFacade.isInLibrarySource(file)
-      }
-
-      if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-        // we cannot start non-blocking read action, deadlock is coming
-        return callable.call()
-      }
-
-      return ReadAction.nonBlocking(callable)
-        .submit(AppExecutorUtil.getAppExecutorService())
-        .get()
     }
   }
 
