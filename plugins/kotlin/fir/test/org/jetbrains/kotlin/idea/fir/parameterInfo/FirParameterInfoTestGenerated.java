@@ -502,6 +502,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/Vararg.kt");
         }
 
+        @TestMetadata("VarargBeforeArgs.kt")
+        public void testVarargBeforeArgs() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/VarargBeforeArgs.kt");
+        }
+
         @TestMetadata("VarargFirstArgTrailingComma.kt")
         public void testVarargFirstArgTrailingComma() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/VarargFirstArgTrailingComma.kt");

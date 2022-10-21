@@ -502,6 +502,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/Vararg.kt");
         }
 
+        @TestMetadata("VarargBeforeArgs.kt")
+        public void testVarargBeforeArgs() throws Exception {
+            runTest("testData/parameterInfo/functionCall/VarargBeforeArgs.kt");
+        }
+
         @TestMetadata("VarargFirstArgTrailingComma.kt")
         public void testVarargFirstArgTrailingComma() throws Exception {
             runTest("testData/parameterInfo/functionCall/VarargFirstArgTrailingComma.kt");
