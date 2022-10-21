@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -535,31 +534,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue(resolved.hasAnnotation("kotlin.jvm.JvmSynthetic"))
     }
 
-    fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.configureByText(
-            "MyClass.kt", """ 
-            fun foo() {
-                val arr = arrayOfNulls<List<*>>(10)
-                arr[0] = emptyList<Any>()
-                
-                val lst = mutableListOf<List<*>>()
-                lst[0] = emptyList<Any>()
-            }
-        """
-        )
-
-        val uFile = myFixture.file.toUElement()!!
-
-        TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("arr[0]").getExpressionType().toString()
-        )
-        TestCase.assertEquals(
-            "PsiType:List<?>",
-            uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
-        )
-    }
-
     fun checkMapFunctions(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -802,58 +776,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
     }
 
-    fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.configureByText(
-            "MyClass.kt", """
-            val p = 1 / 0
-        """
-        )
-
-        val uFile = myFixture.file.toUElement()!!
-        val p = uFile.findElementByTextFromPsi<UVariable>("p", strict = false)
-        TestCase.assertNotNull("can't convert property p", p)
-        TestCase.assertNotNull("can't find property initializer", p.uastInitializer)
-        TestCase.assertNull("Should not see ArithmeticException", p.uastInitializer?.evaluate())
-    }
-
-    fun checkDetailsOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.configureByText(
-            "MyClass.kt", """
-            @Deprecated(level = DeprecationLevel.WARNING, message="subject to change")
-            fun test1() { }
-            @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
-            fun test2() { }
-            
-            class Test(private val parameter: Int)  {
-                @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-                constructor() : this(42)
-            }
-        """
-        )
-
-        val uFile = myFixture.file.toUElement()!!
-
-        val test1 = uFile.findElementByTextFromPsi<UMethod>("test1", strict = false)
-        TestCase.assertNotNull("can't convert function test1", test1)
-        TestCase.assertTrue("Warning level, hasAnnotation", test1.javaPsi.hasAnnotation("kotlin.Deprecated"))
-        TestCase.assertTrue("Warning level, isDeprecated", test1.javaPsi.isDeprecated)
-        TestCase.assertTrue("Warning level, public", test1.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
-
-        val test2 = uFile.findElementByTextFromPsi<UMethod>("test2", strict = false)
-        TestCase.assertNotNull("can't convert function test2", test2)
-        TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
-        TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
-        TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
-
-        val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
-        TestCase.assertNotNull("can't convert class Test", testClass)
-        testClass.methods.forEach { mtd ->
-            if (mtd.sourcePsi is KtConstructor<*>) {
-                TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
-            }
-        }
-    }
-
     fun checkSyntheticEnumMethods(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
@@ -924,64 +846,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         get() {
             return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
         }
-
-    fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.addClass(
-            """
-            public class MyBundle {
-              public void putString(String key, String value) { }
-            }
-            """.trimIndent()
-        )
-        myFixture.configureByText(
-            "main.kt", """
-                fun foo() {
-                  MyBundle().apply {
-                    <caret>putString("k", "v")
-                  }
-                }
-            """.trimIndent()
-        )
-
-        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
-            .orFail("cant convert to UCallExpression")
-        TestCase.assertEquals("putString", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:MyBundle", uCallExpression.receiverType?.toString())
-    }
-
-    fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.configureByText(
-            "main.kt", """
-                inline fun <T, R> T.use(block: (T) -> R): R {
-                  return block(this)
-                }
-                
-                fun foo() {
-                  // T: String, R: Int
-                  val len = "42".u<caret>se { it.length }
-                }
-            """.trimIndent()
-        )
-
-        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
-            .orFail("cant convert to UCallExpression")
-        TestCase.assertEquals("use", uCallExpression.methodName)
-        TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
-    }
-
-    fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
-        myFixture.configureByText(
-            "main.kt", """
-                val r = java.lang.Runnable { }
-            """.trimIndent()
-        )
-
-        val uFile = myFixture.file.toUElement()!!
-        val uCallExpression = uFile.findElementByTextFromPsi<UCallExpression>("Runnable", strict = false)
-            .orFail("cant convert to UCallExpression")
-        TestCase.assertEquals("Runnable", uCallExpression.methodName)
-        TestCase.assertEquals(UastCallKind.CONSTRUCTOR_CALL, uCallExpression.kind)
-    }
 
     fun checkArrayAccessOverloads(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
@@ -1256,6 +1120,44 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                     // Enum entry ENUM_ENTRY_1 is the only one that has an explicit super type: its containing enum class
                     TestCase.assertEquals("MyEnum", psiClass?.name)
                     return false
+                }
+            }
+        )
+    }
+
+    fun checkLambdaInvoke(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                val lambda = {}
+
+                fun box() {
+                  lambda()
+                  lambda.invoke()
+
+                  val lambda_local = {}
+                  lambda_local()
+                  lambda_local.invoke()
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertEquals("invoke", resolved!!.name)
+
+                    val receiver = node.receiver
+                    TestCase.assertNotNull(receiver)
+                    val resolvedReceiverName = (node.receiver as? UReferenceExpression)?.resolvedName
+                    TestCase.assertNotNull(resolvedReceiverName)
+                    TestCase.assertTrue(
+                        resolvedReceiverName!!.startsWith("lambda") ||
+                                resolvedReceiverName.startsWith("getLambda")
+                    )
+
+                    return super.visitCallExpression(node)
                 }
             }
         )

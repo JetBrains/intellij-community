@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.uast
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
@@ -21,6 +22,8 @@ abstract class FirUastResolveApiTest : AbstractFirUastTest() {
     }
 
     private val whitelist : Set<String> = setOf(
+        // TODO: resolve to inline and stdlib
+        FileUtil.toSystemDependentName("uast-kotlin/tests/testData/Resolve.kt"),
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {
@@ -75,6 +78,11 @@ abstract class FirUastResolveApiTest : AbstractFirUastTest() {
 
         fun testReceiverFun() {
             doCheck("uast-kotlin/tests/testData/ReceiverFun.kt", ::checkCallbackForReceiverFun)
+        }
+
+        @TestMetadata("Resolve.kt")
+        fun testResolve() {
+            doCheck("uast-kotlin/tests/testData/Resolve.kt", ::checkCallbackForResolve)
         }
     }
 }
