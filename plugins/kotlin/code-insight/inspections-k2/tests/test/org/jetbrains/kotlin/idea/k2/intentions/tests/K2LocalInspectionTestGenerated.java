@@ -576,6 +576,355 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment")
+    public static class IfToAssignment extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterRightBrace.kt")
+        public void testAfterRightBrace() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
+        }
+
+        @TestMetadata("afterRightBrace2.kt")
+        public void testAfterRightBrace2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
+        }
+
+        @TestMetadata("afterRightBrace3.kt")
+        public void testAfterRightBrace3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
+        }
+
+        @TestMetadata("afterRightParenthesis.kt")
+        public void testAfterRightParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
+        }
+
+        @TestMetadata("cascadeIf.kt")
+        public void testCascadeIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/cascadeIf.kt");
+        }
+
+        @TestMetadata("elseIfOnly.kt")
+        public void testElseIfOnly() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/elseIfOnly.kt");
+        }
+
+        @TestMetadata("hasNull.kt")
+        public void testHasNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull.kt");
+        }
+
+        @TestMetadata("hasNull2.kt")
+        public void testHasNull2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull2.kt");
+        }
+
+        @TestMetadata("hasNull3.kt")
+        public void testHasNull3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull3.kt");
+        }
+
+        @TestMetadata("hasNull4.kt")
+        public void testHasNull4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull4.kt");
+        }
+
+        @TestMetadata("hasNull5.kt")
+        public void testHasNull5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull5.kt");
+        }
+
+        @TestMetadata("hasNull6.kt")
+        public void testHasNull6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/hasNull6.kt");
+        }
+
+        @TestMetadata("ifElseIf.kt")
+        public void testIfElseIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIf.kt");
+        }
+
+        @TestMetadata("ifElseIfElse.kt")
+        public void testIfElseIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIfElse.kt");
+        }
+
+        @TestMetadata("ifElseifElseInconsistent.kt")
+        public void testIfElseifElseInconsistent() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/ifElseifElseInconsistent.kt");
+        }
+
+        @TestMetadata("innerIfTransformed.kt")
+        public void testInnerIfTransformed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/innerIfTransformed.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/lambda.kt");
+        }
+
+        @TestMetadata("lambda2.kt")
+        public void testLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/lambda2.kt");
+        }
+
+        @TestMetadata("multipleAssignments.kt")
+        public void testMultipleAssignments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/multipleAssignments.kt");
+        }
+
+        @TestMetadata("nullableMutableList.kt")
+        public void testNullableMutableList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/nullableMutableList.kt");
+        }
+
+        @TestMetadata("operatorFunWithTypeParam.kt")
+        public void testOperatorFunWithTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/operatorFunWithTypeParam.kt");
+        }
+
+        @TestMetadata("plusAssignOperator.kt")
+        public void testPlusAssignOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/plusAssignOperator.kt");
+        }
+
+        @TestMetadata("simpleIf.kt")
+        public void testSimpleIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIf.kt");
+        }
+
+        @TestMetadata("simpleIfWithAugmentedAssignment.kt")
+        public void testSimpleIfWithAugmentedAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithAugmentedAssignment.kt");
+        }
+
+        @TestMetadata("simpleIfWithBlocks.kt")
+        public void testSimpleIfWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithBlocks.kt");
+        }
+
+        @TestMetadata("simpleIfWithShadowedVar.kt")
+        public void testSimpleIfWithShadowedVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithShadowedVar.kt");
+        }
+
+        @TestMetadata("simpleIfWithUnmatchedAssignmentOps.kt")
+        public void testSimpleIfWithUnmatchedAssignmentOps() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignmentOps.kt");
+        }
+
+        @TestMetadata("simpleIfWithUnmatchedAssignments.kt")
+        public void testSimpleIfWithUnmatchedAssignments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithUnmatchedAssignments.kt");
+        }
+
+        @TestMetadata("simpleIfWithoutElse.kt")
+        public void testSimpleIfWithoutElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutElse.kt");
+        }
+
+        @TestMetadata("simpleIfWithoutTerminatingAssignment.kt")
+        public void testSimpleIfWithoutTerminatingAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/simpleIfWithoutTerminatingAssignment.kt");
+        }
+
+        @TestMetadata("subTypes.kt")
+        public void testSubTypes() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/subTypes.kt");
+        }
+
+        @TestMetadata("typeMismatch.kt")
+        public void testTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch.kt");
+        }
+
+        @TestMetadata("typeMismatch2.kt")
+        public void testTypeMismatch2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch2.kt");
+        }
+
+        @TestMetadata("typeMismatch3.kt")
+        public void testTypeMismatch3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatch3.kt");
+        }
+
+        @TestMetadata("typeMismatchMutableList.kt")
+        public void testTypeMismatchMutableList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList.kt");
+        }
+
+        @TestMetadata("typeMismatchMutableList2.kt")
+        public void testTypeMismatchMutableList2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/typeMismatchMutableList2.kt");
+        }
+
+        @TestMetadata("usedAsExpression.kt")
+        public void testUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/ifToAssignment/usedAsExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment")
+    public static class TryToAssignment extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/basic.kt");
+        }
+
+        @TestMetadata("block.kt")
+        public void testBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/block.kt");
+        }
+
+        @TestMetadata("cascade.kt")
+        public void testCascade() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/cascade.kt");
+        }
+
+        @TestMetadata("finally.kt")
+        public void testFinally() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/finally.kt");
+        }
+
+        @TestMetadata("finallyWithAssignment.kt")
+        public void testFinallyWithAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/finallyWithAssignment.kt");
+        }
+
+        @TestMetadata("finallyWithCascadeAssignment.kt")
+        public void testFinallyWithCascadeAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/finallyWithCascadeAssignment.kt");
+        }
+
+        @TestMetadata("finallyWithCascadeUnmatchedAssignment.kt")
+        public void testFinallyWithCascadeUnmatchedAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/finallyWithCascadeUnmatchedAssignment.kt");
+        }
+
+        @TestMetadata("finallyWithUnmatchedAssignments.kt")
+        public void testFinallyWithUnmatchedAssignments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/finallyWithUnmatchedAssignments.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/inner.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/lambda.kt");
+        }
+
+        @TestMetadata("usedAsExpression.kt")
+        public void testUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/usedAsExpression.kt");
+        }
+
+        @TestMetadata("withUnmatchedAssignments.kt")
+        public void testWithUnmatchedAssignments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/withUnmatchedAssignments.kt");
+        }
+
+        @TestMetadata("withoutTerminatingAssignment.kt")
+        public void testWithoutTerminatingAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/tryToAssignment/withoutTerminatingAssignment.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment")
+    public static class WhenToAssignment extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cascadeWhen.kt")
+        public void testCascadeWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/cascadeWhen.kt");
+        }
+
+        @TestMetadata("differentVariablesWithSame.kt")
+        public void testDifferentVariablesWithSame() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/differentVariablesWithSame.kt");
+        }
+
+        @TestMetadata("innerWhenTransformed.kt")
+        public void testInnerWhenTransformed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/innerWhenTransformed.kt");
+        }
+
+        @TestMetadata("insideLoop.kt")
+        public void testInsideLoop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/insideLoop.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/lambda.kt");
+        }
+
+        @TestMetadata("lambda2.kt")
+        public void testLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/lambda2.kt");
+        }
+
+        @TestMetadata("simpleWhen.kt")
+        public void testSimpleWhen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/simpleWhen.kt");
+        }
+
+        @TestMetadata("simpleWhenWithBlocks.kt")
+        public void testSimpleWhenWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/simpleWhenWithBlocks.kt");
+        }
+
+        @TestMetadata("simpleWhenWithShadowedVar.kt")
+        public void testSimpleWhenWithShadowedVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/simpleWhenWithShadowedVar.kt");
+        }
+
+        @TestMetadata("simpleWhenWithUnmatchedAssignments.kt")
+        public void testSimpleWhenWithUnmatchedAssignments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/simpleWhenWithUnmatchedAssignments.kt");
+        }
+
+        @TestMetadata("simpleWhenWithoutTerminatingAssignment.kt")
+        public void testSimpleWhenWithoutTerminatingAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/simpleWhenWithoutTerminatingAssignment.kt");
+        }
+
+        @TestMetadata("usedAsExpression.kt")
+        public void testUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/usedAsExpression.kt");
+        }
+
+        @TestMetadata("whenHasMissingCase.kt")
+        public void testWhenHasMissingCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/whenHasMissingCase.kt");
+        }
+
+        @TestMetadata("whenHasNoMissingCase.kt")
+        public void testWhenHasNoMissingCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/whenHasNoMissingCase.kt");
+        }
+
+        @TestMetadata("whenHasNoMissingCaseWithElse.kt")
+        public void testWhenHasNoMissingCaseWithElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/liftOut/whenToAssignment/whenHasNoMissingCaseWithElse.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -628,6 +977,33 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("wrongNameForSyntheticComponent.kt")
             public void testWrongNameForSyntheticComponent() throws Exception {
                 runTest("testData/inspectionsLocal/destructuringWrongNameInspection/wrongNameForSyntheticComponent.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/liftOut")
+        public abstract static class LiftOut extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/liftOut/liftToAssignment")
+            public static class LiftToAssignment extends AbstractK2LocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("hasNull7.kt")
+                public void testHasNull7() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/liftToAssignment/hasNull7.kt");
+                }
+
+                @TestMetadata("operatorFunWithTypeParam.kt")
+                public void testOperatorFunWithTypeParam() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/liftToAssignment/operatorFunWithTypeParam.kt");
+                }
+
+                @TestMetadata("plusAssignOperatorForNullArgument.kt")
+                public void testPlusAssignOperatorForNullArgument() throws Exception {
+                    runTest("testData/inspectionsLocal/liftOut/liftToAssignment/plusAssignOperatorForNullArgument.kt");
+                }
             }
         }
 

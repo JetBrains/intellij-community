@@ -6130,6 +6130,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull5.kt");
             }
 
+            @TestMetadata("hasNull6.kt")
+            public void testHasNull6() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/hasNull6.kt");
+            }
+
             @TestMetadata("ifElseIf.kt")
             public void testIfElseIf() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/ifElseIf.kt");
@@ -6168,6 +6173,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("nullableMutableList.kt")
             public void testNullableMutableList() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/nullableMutableList.kt");
+            }
+
+            @TestMetadata("operatorFunWithTypeParam.kt")
+            public void testOperatorFunWithTypeParam() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/operatorFunWithTypeParam.kt");
+            }
+
+            @TestMetadata("plusAssignOperator.kt")
+            public void testPlusAssignOperator() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/plusAssignOperator.kt");
             }
 
             @TestMetadata("simpleIf.kt")

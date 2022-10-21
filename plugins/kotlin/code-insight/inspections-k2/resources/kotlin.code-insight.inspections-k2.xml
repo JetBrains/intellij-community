@@ -158,5 +158,13 @@
                      language="kotlin"
                      key="inspection.replace.size.zero.check.with.is.empty.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.LiftReturnOrAssignmentInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.lift.return.or.assignment.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
