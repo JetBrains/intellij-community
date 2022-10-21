@@ -168,7 +168,9 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       myCacheLoadManager = null;
       if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
-        LOG.info("Cache download settings: disableDownload=" + myCacheDownloadSettings.getDisableDownload() + "; forceUpdate=" + myCacheDownloadSettings.getForceDownload());
+        LOG.info("Cache download settings: disableDownload=" + myCacheDownloadSettings.getDisableDownload() +
+                 "; forceUpdate=" + myCacheDownloadSettings.getForceDownload() +
+                 "; cleanupAsynchronously=" + myCacheDownloadSettings.getCleanupAsynchronously());
         if (myCacheDownloadSettings.getDisableDownload()) {
           LOG.info("Cache download is disabled");
         } else {
