@@ -705,8 +705,7 @@ public final class ListPluginComponent extends JPanel {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
           if (PluginDetailsPageComponent.isMultiTabs() && myInstallButton.isVisible()) {
-            PluginId pluginId = myPlugin.getPluginId();
-            myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(pluginId);
+            myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
             if (myInstalledDescriptorForMarketplace != null) {
               myInstallButton.setVisible(false);
               myEnableDisableButton.setVisible(true);
@@ -789,6 +788,12 @@ public final class ListPluginComponent extends JPanel {
     myPluginModel.addUninstalled(getDescriptorForActions());
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
+
+    if (!needRestartForUninstall &&
+        InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(getDescriptorForActions().getPluginId())) {
+      myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+      myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
+    }
   }
 
   public void updatePlugin() {
