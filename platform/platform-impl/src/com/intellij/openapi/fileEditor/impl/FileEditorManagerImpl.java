@@ -1005,7 +1005,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     List<FileEditorProvider> newProviders;
     AsyncFileEditorProvider.Builder[] builders;
     if (compositeRef.isNull()) {
-      if (!canOpenFile(file)) return EditorComposite.retrofit(null);
+      if (!canOpenFile(file)) {
+        return EditorComposite.retrofit(null);
+      }
 
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.

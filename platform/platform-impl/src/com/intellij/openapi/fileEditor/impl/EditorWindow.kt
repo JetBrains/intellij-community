@@ -290,7 +290,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     val isNewEditor = findCompositeIndex(composite) == -1
     val isPreviewMode = (isNewEditor || composite.isPreview) && shouldReservePreview(composite.file, options, owner.manager.project)
     val wasPinned = composite.isPinned
-    composite.setPreview(isPreviewMode)
+    composite.isPreview = isPreviewMode
     if (isNewEditor) {
       var indexToInsert = options.index
       if (indexToInsert == -1 && isPreviewMode) {
@@ -1064,7 +1064,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     val wasPinned = composite.isPinned
     composite.isPinned = pinned
     if (composite.isPreview && pinned) {
-      composite.setPreview(false)
+      composite.isPreview = false
       owner.updateFileColor(file)
     }
     if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread) {
