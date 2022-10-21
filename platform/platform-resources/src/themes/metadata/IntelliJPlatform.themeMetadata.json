@@ -1800,6 +1800,11 @@
       "key": "RunWidget.pressedBackground",
       "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
       "since": "2022.3"
+    },
+    {
+      "key": "RunWidget.separatorColor",
+      "description": "The color for separator in run widget",
+      "since": "2022.3"
     }
   ]
 }

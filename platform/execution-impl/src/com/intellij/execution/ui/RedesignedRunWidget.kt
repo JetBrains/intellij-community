@@ -304,7 +304,7 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
     val g2 = g.create() as Graphics2D
     g2.color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
     g2.fill(Rectangle(size))
-    g2.color = JBUI.CurrentTheme.RunWidget.FOREGROUND.addAlpha(0.4)
+    g2.color = JBUI.CurrentTheme.RunWidget.SEPARATOR
     g2.stroke = BasicStroke(JBUIScale.scale(1f))
     g2.drawLine(0, JBUI.scale(5), 0, JBUI.scale(25))
   }
