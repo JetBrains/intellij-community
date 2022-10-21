@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -54,8 +55,9 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
           .align(AlignX.FILL)
       }
       row {
+        resizableRow()
         scrollCell(actionsTree)
-          .align(AlignX.FILL)
+          .align(Align.FILL)
       }
       row(IdeBundle.message("label.icon.path")) {
         cell(browseComboBox)
