@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,9 +61,7 @@ public class SvnRollbackTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     testRootDisposable = Disposer.newDisposable("SvnRollbackTest");
-    TestLoggerFactory.enableDebugLogging(testRootDisposable,
-                                         "#com.intellij.openapi.vfs.newvfs.RefreshSession"
-    );
+    TestLoggerFactory.enableDebugLogging(testRootDisposable, RefreshSession.class);
   }
 
   @Override

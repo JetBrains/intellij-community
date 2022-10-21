@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains
 
 import com.intellij.openapi.Disposable
@@ -14,7 +14,6 @@ class LoggingRule : TestRule by TestLoggerFactory.createTestWatcher() {
    * @param disposable logging will be stopped when [disposable] is disposed
    * @param classes classes to enable debug for
    */
-  fun startLogging(disposable: Disposable, classes: Iterable<Class<*>>) {
-    TestLoggerFactory.enableDebugLogging(disposable, *classes.map { "#" + it.`package`.name }.toTypedArray())
-  }
+  fun startLogging(disposable: Disposable, classes: Collection<Class<*>>) =
+    TestLoggerFactory.enableDebugLogging(disposable, *classes.toTypedArray())
 }

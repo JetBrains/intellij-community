@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.StreamHandler;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
 import static java.util.Objects.requireNonNullElse;
@@ -154,20 +155,24 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static void enableDebugLogging(@NotNull Disposable parentDisposable, Class<?> @NotNull ... classes) {
+    enableDebugLogging(parentDisposable, Stream.of(classes).map(klass -> '#' + klass.getName()));
+  }
+
   public static void enableDebugLogging(@NotNull Disposable parentDisposable, String @NotNull ... categories) {
-    for (var category : categories) {
-      var logger = Logger.getInstance(category);
-      if (!logger.isDebugEnabled()) {
-        logger.setLevel(LogLevel.DEBUG);
-        Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
-      }
-    }
+    enableDebugLogging(parentDisposable, Stream.of(categories));
+  }
+
+  private static void enableDebugLogging(Disposable parentDisposable, Stream<String> categories) {
+    categories.map(Logger::getInstance).filter(logger -> !logger.isDebugEnabled()).forEach(logger -> {
+      logger.setLevel(LogLevel.DEBUG);
+      Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
+    });
   }
 
   public static void enableTraceLogging(@NotNull Disposable parentDisposable, Class<?> @NotNull ... classes) {
     for (var klass : classes) {
-      var category = '#' + klass.getName();
-      var logger = Logger.getInstance(category);
+      var logger = Logger.getInstance('#' + klass.getName());
       if (!logger.isTraceEnabled()) {
         logger.setLevel(LogLevel.TRACE);
         Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
