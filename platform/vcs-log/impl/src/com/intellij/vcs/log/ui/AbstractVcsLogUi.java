@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
@@ -142,7 +143,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
             handleCommitNotFound(commitId, result == JumpResult.COMMIT_DOES_NOT_MATCH, rowGetter);
           }
         }
-        catch (InterruptedException | ExecutionException ignore) {
+        catch (InterruptedException | ExecutionException | CancellationException ignore) {
         }
       }, MoreExecutors.directExecutor());
     }
