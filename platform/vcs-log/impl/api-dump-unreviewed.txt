@@ -2756,15 +2756,15 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:isRegexp(java.lang.String):Z
 - s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.Runnable):V
 - s:runWhenVcsAndLogIsReady(com.intellij.openapi.project.Project,com.intellij.util.Consumer):V
-c:com.intellij.vcs.log.visible.CommitCountStage
+f:com.intellij.vcs.log.visible.CommitCountStage
 - sf:ALL:com.intellij.vcs.log.visible.CommitCountStage
 - sf:Companion:com.intellij.vcs.log.visible.CommitCountStage$Companion
-- sf:FIRST_STEP:com.intellij.vcs.log.visible.CommitCountStage
 - sf:INITIAL:com.intellij.vcs.log.visible.CommitCountStage
-- sf:SECOND_STEP:com.intellij.vcs.log.visible.CommitCountStage
-- <init>(I):V
+- <init>(I[]):V
 - f:getCount():I
-- next():com.intellij.vcs.log.visible.CommitCountStage
+- f:isInitial():Z
+- f:last():com.intellij.vcs.log.visible.CommitCountStage
+- f:next():com.intellij.vcs.log.visible.CommitCountStage
 - toString():java.lang.String
 f:com.intellij.vcs.log.visible.CommitCountStage$Companion
 f:com.intellij.vcs.log.visible.CommitCountStageKt
@@ -2785,6 +2785,7 @@ f:com.intellij.vcs.log.visible.VcsLogFilterUtilKt
 com.intellij.vcs.log.visible.VcsLogFilterer
 - canFilterEmptyPack(com.intellij.vcs.log.VcsLogFilterCollection):Z
 - a:filter(com.intellij.vcs.log.data.DataPack,com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.graph.PermanentGraph$Options,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.visible.CommitCountStage):kotlin.Pair
+- getInitialCommitCount():com.intellij.vcs.log.visible.CommitCountStage
 f:com.intellij.vcs.log.visible.VcsLogFiltererImpl
 - com.intellij.vcs.log.visible.VcsLogFilterer
 - <init>(com.intellij.vcs.log.data.VcsLogData):V
