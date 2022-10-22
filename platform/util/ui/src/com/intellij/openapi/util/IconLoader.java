@@ -76,6 +76,8 @@ public final class IconLoader {
 
   private static boolean isActivated = !GraphicsEnvironment.isHeadless();
 
+  static final JComponent fakeComponent = new JComponent() {};
+
   private IconLoader() {}
 
   @ApiStatus.Internal
@@ -696,7 +698,7 @@ public final class IconLoader {
   @NotNull
   static JBImageIcon renderFilteredIcon(@NotNull Icon icon,
                                         @NotNull Supplier<? extends RGBImageFilter> filterSupplier,
-                                        @NotNull Component ancestor) {
+                                        @Nullable Component ancestor) {
     double scale;
     ScaleContextSupport ctxSupport = getScaleContextSupport(icon);
     if (ctxSupport == null) {
@@ -713,7 +715,7 @@ public final class IconLoader {
     graphics.setColor(Gray.TRANSPARENT);
     graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
     graphics.scale(scale, scale);
-    icon.paintIcon(ancestor, graphics, 0, 0);
+    icon.paintIcon(ancestor != null ? ancestor : fakeComponent, graphics, 0, 0);
 
     graphics.dispose();
 
