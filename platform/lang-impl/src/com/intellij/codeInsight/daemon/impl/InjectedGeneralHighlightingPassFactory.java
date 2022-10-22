@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,24 +32,25 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
   @NotNull
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = computeRestrictRange(file, editor);
-    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
+    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
+    if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
+    TextRange adjustedRange = computeRestrictRange(file, editor, fileRange);
     ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    return new InjectedGeneralHighlightingPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor,
-                                               new DefaultHighlightInfoProcessor());
+
+    return new InjectedGeneralHighlightingPass(file, editor.getDocument(), adjustedRange.getStartOffset(), adjustedRange.getEndOffset(),
+                                               fileRange.equalsToRange(adjustedRange.getStartOffset(), adjustedRange.getEndOffset()),
+                                               visibleRange, editor, new DefaultHighlightInfoProcessor());
   }
 
-  @Nullable
-  private TextRange computeRestrictRange(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
-    if (textRange == null) return null;
+  @NotNull
+  private TextRange computeRestrictRange(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange fileRange) {
     for (InjectedLanguageHighlightingRangeReducer reducer : myLanguageHighlightingRangeReducers) {
       TextRange reduced = reducer.reduceRange(file, editor);
       if (reduced != null) {
         return reduced;
       }
     }
-    return textRange;
+    return fileRange;
   }
 
   @Override

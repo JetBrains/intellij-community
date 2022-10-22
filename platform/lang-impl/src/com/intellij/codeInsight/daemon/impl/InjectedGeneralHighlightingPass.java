@@ -138,7 +138,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       if (context != null
           && context.isValid()
           && !file.getProject().isDisposed()
-          && (myUpdateAll || myRestrictRange.intersects(context.getTextRange()))) {
+          && (myUpdateAll || myRestrictRange.contains(context.getTextRange()))) { // consider strict if partial update
         hosts.add(context);
       }
     }
