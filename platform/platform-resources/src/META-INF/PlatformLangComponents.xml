@@ -219,7 +219,7 @@
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.editorActions.ReaderModeFileEditorListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>
 

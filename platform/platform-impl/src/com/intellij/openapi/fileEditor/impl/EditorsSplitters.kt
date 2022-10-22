@@ -869,29 +869,24 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
     }
 
     val files = state.files
-    val children: List<EditorSplittersState.FileEntry>
-    if (files.isEmpty()) {
-      children = emptyList()
+    val trimmedFiles: List<EditorSplittersState.FileEntry>
+    var toRemove = files.size - EditorWindow.tabLimit
+    if (toRemove <= 0) {
+      trimmedFiles = files
     }
     else {
-      var toRemove = files.size - EditorWindow.tabLimit
-      if (toRemove <= 0) {
-        children = files
-      }
-      else {
-        children = ArrayList(files.size)
-        // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-        for (fileElement in files) {
-          if (toRemove <= 0 || fileElement.pinned) {
-            children.add(fileElement)
-          }
-          else {
-            toRemove--
-          }
+      trimmedFiles = ArrayList(files.size)
+      // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
+      for (fileElement in files) {
+        if (toRemove <= 0 || fileElement.pinned) {
+          trimmedFiles.add(fileElement)
+        }
+        else {
+          toRemove--
         }
       }
     }
-    return processFiles(fileEntries = children, tabSizeLimit = state.tabSizeLimit, context = context)
+    return processFiles(fileEntries = trimmedFiles, tabSizeLimit = state.tabSizeLimit, context = context)
   }
 
   private suspend fun processFiles(fileEntries: List<EditorSplittersState.FileEntry>, tabSizeLimit: Int, context: JPanel?): JPanel {
@@ -911,12 +906,13 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
 
     var focusedFile: VirtualFile? = null
     val fileEditorManager = splitters.manager
+    val fileDocumentManager = FileDocumentManager.getInstance()
     for (i in fileEntries.indices) {
       val fileEntry = fileEntries.get(i)
       val fileName = fileEntry.history.getAttributeValue(HistoryEntry.FILE_ATTR)
       val activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR)
       val entry = HistoryEntry.createLight(fileEditorManager.project, fileEntry.history)
-      val virtualFile = entry.file
+      val virtualFile = entry.filePointer.file
       if (virtualFile == null) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           LOG.error(InvalidDataException("No file exists: ${entry.filePointer.url}"))
@@ -929,13 +925,13 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         pin = fileEntry.pinned,
         index = i,
         isReopeningOnStartup = true,
+        usePreviewTab = entry.isPreview,
       )
 
-      val fileDocumentManager = FileDocumentManager.getInstance()
       try {
         virtualFile.putUserData(OPENED_IN_BULK, true)
         val document = readAction {
-          if (virtualFile.isValid) fileDocumentManager.getDocument(virtualFile) else null
+          fileDocumentManager.getDocument(virtualFile)
         }
         (fileEditorManager as FileEditorManagerExImpl).openFileOnStartup(window = window,
                                                                          virtualFile = virtualFile,

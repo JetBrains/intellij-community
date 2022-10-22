@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -108,6 +109,13 @@ internal class ActionsRecorder(private val project: Project,
         commandListener?.undoTransparentActionFinished()
       }
     })
+    busConnection.subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+      override fun fileOpenedSync(source: FileEditorManager,
+                                  file: VirtualFile,
+                                  editorsWithProviders: List<FileEditorWithProvider>) {
+        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
+      }
+    })
     busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileClosed(source, file)
@@ -115,12 +123,6 @@ internal class ActionsRecorder(private val project: Project,
 
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
         editorListener?.fileOpened(source, file)
-      }
-
-      override fun fileOpenedSync(source: FileEditorManager,
-                                  file: VirtualFile,
-                                  editorsWithProviders: List<FileEditorWithProvider>) {
-        editorListener?.fileOpenedSync(source, file, editorsWithProviders)
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {

@@ -1072,6 +1072,15 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       options = options.clone().withUsePreviewTab();
     }
 
+    return doOpenInEdtImpl(window, file, entry, options, newProviders, builders);
+  }
+
+  protected final @Nullable EditorComposite doOpenInEdtImpl(@NotNull EditorWindow window,
+                                                            @NotNull VirtualFile file,
+                                                            @Nullable HistoryEntry entry,
+                                                            @NotNull FileEditorOpenOptions options,
+                                                            @Nullable List<FileEditorProvider> newProviders,
+                                                            @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
     if (newEditor) {
@@ -1092,7 +1101,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     for (FileEditorWithProvider editorWithProvider : editorsWithProviders) {
       restoreEditorState(file, editorWithProvider, entry, newEditor, options.isExactState);
     }
-    // Restore selected editor
+
+    // restore selected editor
     FileEditorProvider provider = entry == null
                                   ? FileEditorProviderManagerImpl.Companion.getInstanceImpl().getSelectedFileEditorProvider(composite)
                                   : entry.getSelectedProvider();
@@ -1101,7 +1111,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       composite.setSelectedEditor(provider.getEditorTypeId());
     }
 
-    // Notify editors about selection changes
+    // notify editors about selection changes
     EditorsSplitters splitters = window.getOwner();
     splitters.setCurrentWindow(window, options.requestFocus);
     splitters.afterFileOpen(file);
@@ -1146,10 +1156,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     IdeDocumentHistory ideDocumentHistory = IdeDocumentHistory.getInstance(myProject);
     ((IdeDocumentHistoryImpl)ideDocumentHistory).onSelectionChanged();
 
-    // Update frame and tab title
+    // update frame and tab title
     updateFileName(file);
 
-    // Make back/forward work
+    // make back/forward work
     ideDocumentHistory.includeCurrentCommandAsNavigation();
 
     if (options.pin != null) {
@@ -1157,6 +1167,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     if (newEditor) {
+      myProject.getMessageBus().syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders);
       myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
         .fileOpenedSync(this, file, editorsWithProviders);
 
@@ -1242,12 +1253,12 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
     if (state != null) {
       FileEditor editor = editorWithProvider.getFileEditor();
-      if (!isDumbAware(editor)) {
-        FileEditorState finalState = state;
-        DumbService.getInstance(getProject()).runWhenSmart(() -> editor.setState(finalState, exactState));
+      if (isDumbAware(editor)) {
+        editor.setState(state, exactState);
       }
       else {
-        editor.setState(state, exactState);
+        FileEditorState finalState = state;
+        DumbService.getInstance(getProject()).runWhenSmart(() -> editor.setState(finalState, exactState));
       }
     }
   }

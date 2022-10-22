@@ -213,7 +213,7 @@ public final class HistoryEntry {
       if (file != null) {
         Element stateElement = providerElement.getChild(STATE_ELEMENT);
         FileEditorState state = provider.readState(stateElement == null ? EMPTY_ELEMENT : stateElement, project, file);
-        providerStates.add(Pair.create(provider, state));
+        providerStates.add(new Pair<>(provider, state));
       }
     }
 

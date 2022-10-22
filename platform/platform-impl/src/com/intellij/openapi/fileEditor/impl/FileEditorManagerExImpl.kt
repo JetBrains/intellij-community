@@ -5,8 +5,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -30,8 +28,7 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
     assert(options.isReopeningOnStartup)
 
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return
-      clientManager.openFile(file = virtualFile, forceCreate = false)
+      (clientFileEditorManager ?: return).openFile(file = virtualFile, forceCreate = false)
       return
     }
 
@@ -77,17 +74,13 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
         return@withContext
       }
 
-      // execute as part of project open process - maybe under modal progress, maybe not,
-      // so, we cannot use NON_MODAL to get write-safe context, because it will lead to a deadlock
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performActivity(true) {
-        val splitters = window.owner
-        splitters.insideChange++
-        try {
-          openFileImpl4Edt(window, file, entry, options, newProviders, builders)
-        }
-        finally {
-          splitters.insideChange--
-        }
+      val splitters = window.owner
+      splitters.insideChange++
+      try {
+        doOpenInEdtImpl(window, file, entry, options, newProviders, builders)
+      }
+      finally {
+        splitters.insideChange--
       }
     }
   }
