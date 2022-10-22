@@ -100,8 +100,8 @@ object FullLineNotifications {
   }
 
   private fun Project.showBalloon(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent content: String, type: NotificationType, vararg actions: AnAction): Notification {
-    return group.createNotification(title, content, type, null).also {
-      if (actions.isNotEmpty()) it.actions.addAll(actions)
+    return group.createNotification(title, content, type).also {
+      if (actions.isNotEmpty()) it.addActions(actions.toList() as Collection<AnAction>)
       it.notify(this)
     }
   }
