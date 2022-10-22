@@ -54,6 +54,8 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
 
   private var fileHistoryTask: FileHistoryTask? = null
 
+  private val vcsLogObjectsFactory: VcsLogObjectsFactory get() = project.service()
+
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
                       sortType: PermanentGraph.SortType,
@@ -87,22 +89,26 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
 
     cancelLastTask(false)
 
-    val factory = project.service<VcsLogObjectsFactory>()
+    val factory = vcsLogObjectsFactory
     val newHistoryTask = object : FileHistoryTask(vcs, filePath, hash, createProgressIndicator()) {
       override fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath {
-        val revisionEx = revision as VcsFileRevisionEx
-        val commitHash = factory.createHash(revisionEx.revisionNumber.asString())
-        val metadata = factory.createCommitMetadata(commitHash, emptyList(), revisionEx.revisionDate.time, root,
-                                                    CommitPresentationUtil.getSubject(revisionEx.commitMessage!!),
-                                                    revisionEx.author!!, revisionEx.authorEmail!!,
-                                                    revisionEx.commitMessage!!,
-                                                    revisionEx.committerName!!, revisionEx.committerEmail!!, revisionEx.authorDate!!.time)
-        return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
-                                      MaybeDeletedFilePath(revisionEx.path, revisionEx.isDeleted))
+        return factory.createCommitMetadataWithPath(revision as VcsFileRevisionEx, root)
       }
     }
     fileHistoryTask = newHistoryTask
     return newHistoryTask
+  }
+
+  private fun VcsLogObjectsFactory.createCommitMetadataWithPath(revision: VcsFileRevisionEx,
+                                                                root: VirtualFile): CommitMetadataWithPath {
+    val commitHash = createHash(revision.revisionNumber.asString())
+    val metadata = createCommitMetadata(commitHash, emptyList(), revision.revisionDate.time, root,
+                                        CommitPresentationUtil.getSubject(revision.commitMessage!!),
+                                        revision.author!!, revision.authorEmail!!,
+                                        revision.commitMessage!!,
+                                        revision.committerName!!, revision.committerEmail!!, revision.authorDate!!.time)
+    return CommitMetadataWithPath(storage.getCommitIndex(commitHash, root), metadata,
+                                  MaybeDeletedFilePath(revision.path, revision.isDeleted))
   }
 
   private fun createProgressIndicator(): ProgressIndicator {
@@ -141,7 +147,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
         ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
           if (vcs.vcsHistoryProvider != null) {
             try {
-              val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, isInitial)
+              val visiblePack = filterWithProvider(vcs, dataPack, sortType, filters, commitCount)
               scope.setAttribute("type", "history provider")
               LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                         " for computing history for $filePath with history provider")
@@ -177,8 +183,19 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
                                    filters: VcsLogFilterCollection,
-                                   isInitial: Boolean): VisiblePack {
-      val (revisions, isDone) = createFileHistoryTask(vcs, root, filePath, hash, isInitial).waitForRevisions()
+                                   commitCount: CommitCountStage): VisiblePack {
+      val historyHandler = logProviders[root]?.fileHistoryHandler
+      val (revisions, isDone) = if (commitCount == CommitCountStage.INITIAL && historyHandler != null) {
+        cancelLastTask(false)
+        historyHandler.getHistoryFast(root, filePath, hash, commitCount.count).map {
+          vcsLogObjectsFactory.createCommitMetadataWithPath(it, root)
+        } to false
+      }
+      else {
+        createFileHistoryTask(vcs, root, filePath, hash,
+                              (commitCount == CommitCountStage.FIRST_STEP && historyHandler != null) ||
+                              commitCount == CommitCountStage.INITIAL).waitForRevisions()
+      }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
