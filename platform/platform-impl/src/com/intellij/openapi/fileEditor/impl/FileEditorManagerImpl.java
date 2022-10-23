@@ -1737,6 +1737,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @ApiStatus.Internal
+  @RequiresEdt
   public final @NotNull EditorsSplitters init() {
     EditorsSplitters splitters = this.splitters;
     splitters.startListeningFocus();
