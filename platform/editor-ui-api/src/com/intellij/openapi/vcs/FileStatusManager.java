@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
@@ -33,15 +33,18 @@ public abstract class FileStatusManager {
    * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
    */
   @Deprecated(forRemoval = true)
-  public abstract void addFileStatusListener(@NotNull FileStatusListener listener);
+  public void addFileStatusListener(@NotNull FileStatusListener listener) {
+  }
 
-  public abstract void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable);
+  public void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable) {
+  }
 
   /**
    * @deprecated Please use {@link #addFileStatusListener(FileStatusListener, Disposable)} instead
    */
   @Deprecated(forRemoval = true)
-  public abstract void removeFileStatusListener(@NotNull FileStatusListener listener);
+  public void removeFileStatusListener(@NotNull FileStatusListener listener) {
+  }
 
   public abstract Color getNotChangedDirectoryColor(@NotNull VirtualFile file);
 
