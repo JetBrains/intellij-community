@@ -87,11 +87,13 @@
       "nodes/tabAlert.svg"
     ],
     "fileTypes": {
+      "actionScript.svg": "fileTypes/as.svg",
       "angularJS.svg": "icons/AngularJS.svg",
       "archive.svg": [
         "fileTypes/archive.svg",
         "nodes/ppJar.svg"
       ],
+      "aspectJ.svg": "fileTypes/aspectj.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "docker.svg": [
@@ -109,6 +111,7 @@
       ],
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
+      "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": "fileTypes/java.svg",
       "javascript.svg": [
@@ -116,8 +119,11 @@
         "icons/JavaScript_debug_configuration.svg"
       ],
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
+      "jfr.svg": "fileTypes/jfr.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
       "json.svg": "fileTypes/json.svg",
+      "jsp.svg": "fileTypes/jsp.svg",
+      "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
@@ -153,10 +159,13 @@
       "unknown.svg": "fileTypes/unknown.svg",
       "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",
+      "wsdl.svg": "fileTypes/wsdlFile.svg",
+      "xhtml.svg": "fileTypes/xhtml.svg",
       "xml.svg": [
         "fileTypes/dtd.svg",
         "fileTypes/xml.svg"
       ],
+      "xsd.svg": "fileTypes/xsdFile.svg",
       "yaml.svg": "fileTypes/yaml.svg",
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
