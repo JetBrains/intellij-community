@@ -109,6 +109,10 @@ public interface Project extends ComponentManager, AreaInstance {
 
   void save();
 
+  default void scheduleSave() {
+    save();
+  }
+
   boolean isOpen();
 
   boolean isInitialized();
