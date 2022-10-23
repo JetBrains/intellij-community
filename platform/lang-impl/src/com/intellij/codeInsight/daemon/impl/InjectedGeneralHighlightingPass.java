@@ -32,10 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
 
 public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
+  private final Predicate<PsiFile> myInjectedFilesFilter;
+
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
                                   int startOffset,
@@ -43,8 +46,10 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                  @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                                  @NotNull Predicate<PsiFile> injectedFilesFilter) {
     super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
+    myInjectedFilesFilter = injectedFilesFilter;
   }
 
   @Override
@@ -65,7 +70,6 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     // all infos for the "injected fragment for the host which is inside" are indeed inside
     // but some infos for the "injected fragment for the host which is outside" can be still inside
     Set<PsiFile> injected = getInjectedPsiFiles(allInsideElements, allOutsideElements, progress);
-
     Set<HighlightInfo> injectedResult = new HashSet<>();
     if (!addInjectedPsiHighlights(injected, progress, Collections.synchronizedSet(injectedResult))) {
       throw new ProcessCanceledException();
@@ -160,6 +164,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
 
     Set<PsiFile> outInjected = new HashSet<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+      if (!myInjectedFilesFilter.test(injectedPsi)) return;
       synchronized (outInjected) {
         ProgressManager.checkCanceled();
         outInjected.add(injectedPsi);
