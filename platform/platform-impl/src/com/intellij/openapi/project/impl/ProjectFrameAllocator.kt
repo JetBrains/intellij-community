@@ -157,7 +157,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   override suspend fun projectLoaded(project: Project): Job? {
     val windowManager = WindowManager.getInstance() as WindowManagerImpl
     val frameHelper = deferredProjectFrameHelper.await()
-    return withContext(Dispatchers.EDT) {
+    return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
       }
