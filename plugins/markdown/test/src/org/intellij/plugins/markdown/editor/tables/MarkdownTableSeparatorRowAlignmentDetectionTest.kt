@@ -106,7 +106,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
 
   private fun doTest(content: String, expectedAlignments: List<MarkdownTableSeparatorRow.CellAlignment>) {
     configureFromFileText("some.md", content)
-    val table = file.firstChild?.firstChild as? MarkdownTable
+    val table = file.firstChild as? MarkdownTable
     assertNotNull(table)
     requireNotNull(table)
     val separator = requireNotNull(table.separatorRow)

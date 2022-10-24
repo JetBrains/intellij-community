@@ -6,7 +6,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 
 open class MarkdownHeaderAnchorTextTest: LightPlatformCodeInsightTestCase() {
   protected val firstElement
-    get() = file.firstChild?.firstChild!!
+    get() = file.firstChild!!
 
   fun `test simple`() {
     // language=Markdown

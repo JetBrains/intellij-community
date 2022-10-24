@@ -33,7 +33,7 @@ class HeaderAnchorReference(
 
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
     val file = resolveFile()
-    val header = file?.firstChild?.children().orEmpty().filterIsInstance<MarkdownHeader>().find { it.anchorText == canonicalText } ?: return emptyArray()
+    val header = file?.children().orEmpty().filterIsInstance<MarkdownHeader>().find { it.anchorText == canonicalText } ?: return emptyArray()
     return PsiElementResolveResult.createResults(header)
   }
 

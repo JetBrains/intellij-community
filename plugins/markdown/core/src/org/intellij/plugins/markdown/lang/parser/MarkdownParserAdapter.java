@@ -18,6 +18,7 @@ package org.intellij.plugins.markdown.lang.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -36,16 +37,12 @@ public class MarkdownParserAdapter implements PsiParser {
   @Override
   @NotNull
   public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
-
-    PsiBuilder.Marker rootMarker = builder.mark();
-
-    final org.intellij.markdown.ast.ASTNode parsedTree = MarkdownParserManager.parseContent(builder.getOriginalText(), myFlavour);
-
-    new PsiBuilderFillingVisitor(builder).visitNode(parsedTree);
+    final var rootMarker = builder.mark();
+    rootMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+    final var parsedTree = MarkdownParserManager.parseContent(builder.getOriginalText(), myFlavour);
+    new PsiBuilderFillingVisitor(builder, true).visitNode(parsedTree);
     assert builder.eof();
-
     rootMarker.done(root);
-
     return builder.getTreeBuilt();
   }
 }
