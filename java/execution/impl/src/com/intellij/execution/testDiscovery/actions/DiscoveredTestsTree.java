@@ -184,8 +184,9 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
       return result.toArray(PsiElement.EMPTY_ARRAY);
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      PsiElement element = getSelectedElement();
-      return (DataProvider)slowId -> getSlowData(slowId, element);
+      TreePath path = getSelectionModel().getSelectionPath();
+      Object obj = path == null ? null : path.getLastPathComponent();
+      return (DataProvider)slowId -> getSlowData(slowId, obj);
     }
     else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
@@ -193,9 +194,9 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @Nullable PsiElement element) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, Object obj) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return element;
+      return obj2psi(obj);
     }
     return null;
   }
