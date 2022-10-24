@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 
@@ -26,6 +27,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     ourHightlighters.add(new TextHighlighter());
     ourHightlighters.add(new ErrorTextHighlighter());
     ourHightlighters.add(new VerticalLinesHighlighter());
+    ourHightlighters.add(new BottomGradientHighlighter());
   }
 
   static void show(int aType, JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -274,4 +276,33 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       return V_ARROWS;
     }
   }
+
+  private static class BottomGradientHighlighter extends AbstractComponentHighlighter {
+    BottomGradientHighlighter() {
+      super();
+      setOpaque(false);
+      setBackground(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
+    }
+
+    @Override
+    protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
+      setBounds(aRectangle);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      int height = getHeight();
+      if (g instanceof Graphics2D) {
+        Color bg = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR;
+        ((Graphics2D)g).setPaint(new GradientPaint(0, height/2.f, ColorUtil.toAlpha(bg, 0), 0, height, bg));
+      }
+      g.fillRect(0, 0, getWidth(), height);
+    }
+
+    @Override
+    public int getMask() {
+      return BOTTOM_GRADIENT;
+    }
+  }
+
 }

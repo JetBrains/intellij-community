@@ -95,5 +95,6 @@ public interface DnDEvent extends Transferable, UserDataHolder {
 
     int TEXT = 16;
     int ERROR_TEXT = 32;
+    int BOTTOM_GRADIENT = 64;
   }
 }
