@@ -129,7 +129,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   public ChangeListManagerImpl(@NotNull Project project) {
     myProject = project;
-    myChangesViewManager = myProject.isDefault() ? new DummyChangesView() : ChangesViewManager.getInstanceEx(myProject);
+    myChangesViewManager = ChangesViewManager.getInstanceEx(myProject);
     myConflictTracker = new ChangelistConflictTracker(project, this);
 
     myComposite = FileHolderComposite.create(project);
@@ -1269,10 +1269,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void loadState(@NotNull Element element) {
-    if (myProject.isDefault()) {
-      return;
-    }
-
     synchronized (myDataLock) {
       boolean areChangeListsEnabled = shouldEnableChangeLists();
       myWorker.setChangeListsEnabled(areChangeListsEnabled);
@@ -1291,10 +1287,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
-    if (myProject.isDefault()) {
-      return element;
-    }
-
     synchronized (myDataLock) {
       boolean areChangeListsEnabled = myWorker.areChangeListsEnabled();
       List<LocalChangeListImpl> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
