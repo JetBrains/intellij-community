@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -26,11 +25,6 @@ public class SelectWordAtCaretAction extends EditorAction implements DumbAware {
   public SelectWordAtCaretAction() {
     super(new DefaultHandler());
     setInjectedContext(true);
-  }
-
-  @Override
-  public final @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
   }
 
   @Override
