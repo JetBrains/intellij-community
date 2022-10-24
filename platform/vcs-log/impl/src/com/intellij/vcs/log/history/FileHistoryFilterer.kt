@@ -185,9 +185,10 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
                                    filters: VcsLogFilterCollection,
                                    commitCount: CommitCountStage): VisiblePack {
       val historyHandler = logProviders[root]?.fileHistoryHandler
-      val (revisions, isDone) = if (commitCount == CommitCountStage.INITIAL && historyHandler != null) {
+      val isFastStart = commitCount == CommitCountStage.INITIAL && historyHandler != null
+      val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
-        historyHandler.getHistoryFast(root, filePath, hash, commitCount.count).map {
+        historyHandler!!.getHistoryFast(root, filePath, hash, commitCount.count).map {
           vcsLogObjectsFactory.createCommitMetadataWithPath(it, root)
         } to false
       }
@@ -199,7 +200,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
-      if (dataPack.isFull) {
+      if (dataPack.isFull && !isFastStart) {
         val pathsMap = revisions.associate { Pair(it.commit, it.path) }
         val visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
         return VisiblePack(dataPack, visibleGraph, !isDone, filters)
