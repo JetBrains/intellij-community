@@ -23,6 +23,8 @@ internal interface GitLabMergeRequestsListViewModel {
   val loadingState: StateFlow<Boolean>
   val errorState: StateFlow<Throwable?>
 
+  val repository: String
+
   fun requestMore()
 
   fun reset()
@@ -36,6 +38,7 @@ internal interface GitLabMergeRequestsListViewModel {
 internal class GitLabMergeRequestsListViewModelImpl(
   parentCs: CoroutineScope,
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
+  override val repository: String,
   private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
   : GitLabMergeRequestsListViewModel {
 

@@ -51,10 +51,14 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
         projectDetailsLoader = GitLabProjectDetailsLoader(connection.apiClient, connection.repo.repository)
       )
 
-      val listVm: GitLabMergeRequestsListViewModel =
-        GitLabMergeRequestsListViewModelImpl(scope, filterVm) { filtersValue ->
+      val listVm: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(
+        scope,
+        filterVm = filterVm,
+        repository = connection.repo.repository.projectPath.name,
+        loaderSupplier = { filtersValue ->
           GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
         }
+      )
     }
   }
 }

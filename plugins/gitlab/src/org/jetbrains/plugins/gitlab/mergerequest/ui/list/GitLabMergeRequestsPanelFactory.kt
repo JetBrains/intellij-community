@@ -7,14 +7,20 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
@@ -23,10 +29,12 @@ internal class GitLabMergeRequestsPanelFactory {
 
   fun create(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
     val listModel = collectMergeRequests(scope, listVm)
-    val list = createMergeRequestListComponent(listModel)
+    val listMergeRequests = createMergeRequestListComponent(listModel)
 
-    val listLoaderPanel = createListLoaderPanel(scope, listVm, list)
+    val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
     val searchPanel = createSearchPanel(scope, listVm)
+
+    MergeRequestsListEmptyStateController(scope, listVm, listMergeRequests.emptyText)
 
     return JBUI.Panels.simplePanel(listLoaderPanel)
       .addToTop(searchPanel)
@@ -53,7 +61,7 @@ internal class GitLabMergeRequestsPanelFactory {
     return listModel
   }
 
-  private fun createMergeRequestListComponent(listModel: CollectionListModel<GitLabMergeRequestShortDTO>): JComponent {
+  private fun createMergeRequestListComponent(listModel: CollectionListModel<GitLabMergeRequestShortDTO>): JBList<GitLabMergeRequestShortDTO> {
     return ReviewListComponentFactory(listModel).create {
       ReviewListItemPresentation.Simple(
         title = it.title,
@@ -119,5 +127,40 @@ internal class GitLabMergeRequestsPanelFactory {
 
   private fun createSearchPanel(scope: CoroutineScope, listVm: GitLabMergeRequestsListViewModel): JComponent {
     return GitLabFiltersPanelFactory(listVm.filterVm).create(scope)
+  }
+
+  private class MergeRequestsListEmptyStateController(
+    scope: CoroutineScope,
+    private val listVm: GitLabMergeRequestsListViewModel,
+    private val emptyText: StatusText
+  ) {
+    init {
+      scope.launch {
+        combine(listVm.loadingState, listVm.filterVm.searchState) { isLoading, searchState ->
+          updateEmptyState(isLoading, searchState, listVm.repository)
+        }
+      }
+    }
+
+    private fun updateEmptyState(isLoading: Boolean, searchState: GitLabMergeRequestsFiltersValue, repository: String) {
+      emptyText.clear()
+
+      if (isLoading) {
+        emptyText.appendText(GitLabBundle.message("merge.request.list.empty.state.loading"))
+        return
+      }
+
+      if (searchState.filterCount == 0) {
+        emptyText
+          .appendText(GitLabBundle.message("merge.request.list.empty.state.matching.nothing", repository))
+      }
+      else {
+        emptyText
+          .appendText(GitLabBundle.message("merge.request.list.empty.state.matching.nothing.with.filters"))
+          .appendSecondaryText(GitLabBundle.message("merge.request.list.empty.state.clear.filters"), SimpleTextAttributes.LINK_ATTRIBUTES) {
+            listVm.filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
+          }
+      }
+    }
   }
 }

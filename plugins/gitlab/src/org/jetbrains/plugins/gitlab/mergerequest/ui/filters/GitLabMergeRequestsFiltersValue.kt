@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class GitLabMergeRequestsFiltersValue(
@@ -15,8 +16,21 @@ data class GitLabMergeRequestsFiltersValue(
 ) : ReviewListSearchValue {
   private val filters: List<FilterValue?> = listOf(state, author, assignee, reviewer)
 
+  @Transient
+  override val filterCount: Int = calcFilterCount()
+
   fun toSearchQuery(): String = filters.mapNotNull { it }.joinToString(separator = "&") { filter ->
     "${filter.queryField()}=${filter.queryValue()}"
+  }
+
+  private fun calcFilterCount(): Int {
+    var count = 0
+    if (searchQuery != null) count++
+    if (state != null) count++
+    if (author != null) count++
+    if (assignee != null) count++
+    if (reviewer != null) count++
+    return count
   }
 
   private interface FilterValue {
