@@ -91,7 +91,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   final override fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (!projectModelUpdating.compareAndSet(false, true)) {
-      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+      // Temporally disabled due to IDEA-303876
+      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
 
     val result: R
@@ -151,7 +152,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   @Synchronized
   final override fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R {
     if (!projectModelUpdating.compareAndSet(false, true)) {
-      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+      // Temporally disabled due to IDEA-303876
+      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
     log.info("-------------------------------------------------------")
     log.info("Updating project model silently. Version before update ${entityStorage.pointer.version}.")
