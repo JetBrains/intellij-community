@@ -319,6 +319,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private double getMaxGraphElementIndex(@NotNull Collection<? extends PrintElement> printElements) {
+      if (printElements.isEmpty()) return 0;
+
       double maxIndex = 0;
       for (PrintElement printElement : printElements) {
         maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());

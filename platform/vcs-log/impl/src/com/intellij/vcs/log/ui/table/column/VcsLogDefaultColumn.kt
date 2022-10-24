@@ -25,6 +25,7 @@ import com.intellij.vcs.log.ui.table.RootCellRenderer
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.VcsLogStringCellRenderer
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -74,12 +75,16 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
 
 internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),
                          VcsLogMetadataColumn {
-  override fun getValue(model: GraphTableModel, row: Int) =
-    GraphCommitCell(
+  override fun getValue(model: GraphTableModel, row: Int): GraphCommitCell {
+    val printElements = if (VisiblePack.NO_GRAPH_INFORMATION.get(model.visiblePack, false)) emptyList()
+    else model.visiblePack.visibleGraph.getRowInfo(row).printElements
+
+    return GraphCommitCell(
       getValue(model, model.getCommitMetadata(row, true)),
       model.getRefsAtRow(row),
-      model.visiblePack.visibleGraph.getRowInfo(row).printElements
+      printElements
     )
+  }
 
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String = commit.subject
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -219,7 +218,7 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
       return VisiblePack(fakeDataPack, visibleGraph, !isDone, filters)
         .withFileHistory(FileHistory(revisions.associate { Pair(it.commit, it.path) }))
         .apply {
-          putUserData(NO_PARENTS_INFO, true)
+          putUserData(VisiblePack.NO_GRAPH_INFORMATION, true)
           putUserData(FileHistorySpeedSearch.COMMIT_METADATA, revisions.associate { Pair(it.commit, it.metadata) })
         }
     }
@@ -316,9 +315,6 @@ class FileHistoryFilterer(private val logData: VcsLogData, private val logId: St
 
   companion object {
     private val LOG = logger<FileHistoryFilterer>()
-
-    @JvmField
-    val NO_PARENTS_INFO = Key.create<Boolean>("NO_PARENTS_INFO")
 
     private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
 

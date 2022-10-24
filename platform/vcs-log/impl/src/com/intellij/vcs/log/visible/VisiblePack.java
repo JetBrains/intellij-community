@@ -30,6 +30,9 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
       }
     };
 
+  @NotNull
+  public static final Key<Boolean> NO_GRAPH_INFORMATION = Key.create("NO_GRAPH_INFORMATION");
+
   @NotNull private final DataPackBase myDataPack;
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;
   private final boolean myCanRequestMore;
