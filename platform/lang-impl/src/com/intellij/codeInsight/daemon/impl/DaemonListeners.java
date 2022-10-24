@@ -141,6 +141,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void bulkUpdateStarting(@NotNull Document document) {
         if (worthBothering(document, myProject)) {
+          // avoid restarts until bulk mode is finished and daemon restarted
           stopDaemon(false, "Document bulk modifications started");
         }
       }
@@ -374,7 +375,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         PsiManager.getInstance(myProject).dropPsiCaches();
-        myDaemonCodeAnalyzer.cancelUpdateProgress(false, "plugin unload: " + pluginDescriptor);
+        myDaemonCodeAnalyzer.cancelAllUpdateProgresses(false, "plugin unload: " + pluginDescriptor);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
