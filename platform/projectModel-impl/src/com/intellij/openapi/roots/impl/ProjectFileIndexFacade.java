@@ -14,8 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
 import com.intellij.workspaceModel.core.fileIndex.impl.MultipleWorkspaceFileSets;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
@@ -111,13 +109,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
       if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
         return false;
       }
-      if (fileInfo instanceof WorkspaceFileSetWithCustomData<?> && ((WorkspaceFileSetWithCustomData<?>)fileInfo).getData() instanceof ModuleSourceRootData
-         || fileInfo instanceof MultipleWorkspaceFileSets && ContainerUtil.exists(((MultipleWorkspaceFileSets)fileInfo).getFileSets(), fileSet -> fileSet.getData() instanceof ModuleSourceRootData)) {
-        return true;
-      }
       if (fileInfo instanceof WorkspaceFileSet && ((WorkspaceFileSet)fileInfo).getKind() == WorkspaceFileKind.EXTERNAL
           || fileInfo instanceof MultipleWorkspaceFileSets && ContainerUtil.exists(((MultipleWorkspaceFileSets)fileInfo).getFileSets(), fileSet -> fileSet.getKind() == WorkspaceFileKind.EXTERNAL)) {
-        return false;
+        if (!myFileIndex.isInSourceContent(file)) {
+          return false;
+        }
       }
       return true;
     }
