@@ -9,27 +9,26 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel
-import com.jetbrains.python.packaging.conda.CondaPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.pip.PipPythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 object PackageManagerHolder {
-  private val cache = mutableMapOf<String, PythonPackageManager>()
+  private val cache = mutableMapOf<UUID, PythonPackageManager>()
 
   fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-    if (sdk.homePath in cache) return cache[sdk.homePath] // todo[akniazev] replace with sdk key
+    val cacheKey = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid ?: return null
+    if (cacheKey in cache) return cache[cacheKey]
 
-    val manager = when {
-      PythonSdkUtil.isConda(sdk) -> CondaPackageManager(project, sdk) // todo[akniazev] extract to an extension point
-      else -> PipPythonPackageManager(project, sdk)
-    }
-    cache[sdk.homePath!!] = manager
+    val manager = PythonPackageManagerProvider.EP_NAME.extensionList
+      .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
 
+    cache[cacheKey] = manager
     return manager
   }
 }
