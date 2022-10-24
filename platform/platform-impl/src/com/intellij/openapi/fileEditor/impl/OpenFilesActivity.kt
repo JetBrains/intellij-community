@@ -64,7 +64,12 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
 private fun findAndOpenReadmeIfNeeded(project: Project) {
   if (AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
     RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
-      val readme = project.guessProjectDir()?.findChild("README.md") ?: return@runOnceForProject
+      val projectDir = project.guessProjectDir() ?: return@runOnceForProject
+      val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
+      if (SystemInfoRt.isFileSystemCaseSensitive) {
+        files += files.map { it.lowercase() }
+      }
+      val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
       if (!readme.isDirectory) {
         ApplicationManager.getApplication().invokeLater({ TextEditorWithPreview.openPreviewForFile(project, readme) }, project.disposed)
       }
