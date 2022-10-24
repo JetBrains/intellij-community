@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
@@ -268,6 +269,7 @@ internal class CellImpl<T : JComponent>(
           property != null -> AFTER_PROPERTY_CHANGE(property)
           origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
           origin is ItemSelectable -> WHEN_STATE_CHANGED(origin)
+          origin is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(origin)
           else -> null
         }
         if (requestor != null) {

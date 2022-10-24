@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
@@ -19,11 +16,7 @@ import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.validators.GitRefNameValidator
-import git4idea.validators.checkRefNameEmptyOrHead
-import git4idea.validators.conflictsWithLocalBranch
-import git4idea.validators.conflictsWithRemoteBranch
-import git4idea.validators.conflictsWithLocalBranchDirectory
+import git4idea.validators.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
@@ -84,8 +77,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
         .focused()
-        .validationOnApply(validateBranchName())
-        .apply { startTrackingValidationIfNeeded() }
+        .validationOnApply(validateBranchName(true))
+        .validationOnInput(validateBranchName(false))
     }
     row {
       if (showCheckOutOption) {
@@ -127,7 +120,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         while (index < branchName.length) {
           val end = branchName.indexOf(NAME_SEPARATOR, index)
           if (end == -1) break
-          directories += if(withTrailingSlash) branchName.substring(0, end + 1) else branchName.substring(0, end)
+          directories += if (withTrailingSlash) branchName.substring(0, end + 1) else branchName.substring(0, end)
           index = end + 1
         }
       }
@@ -135,10 +128,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     return directories
   }
 
-  private fun validateBranchName(): ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
+  private fun validateBranchName(onApply: Boolean): ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
     it.cleanBranchNameAndAdjustCursorIfNeeded()
     val branchName = validator.cleanUpBranchName(it.text).trim()
-    val errorInfo = checkRefNameEmptyOrHead(branchName)
+    val errorInfo = (if (onApply) checkRefNameEmptyOrHead(branchName) else null)
                     ?: conflictsWithRemoteBranch(repositories, branchName)
                     ?: conflictsWithLocalBranchDirectory(localBranchDirectories, branchName)
     if (errorInfo != null) error(errorInfo.message)
@@ -174,20 +167,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
     text = fixedText
     caretModel.moveToOffset(fixedCaret)
-  }
-
-  private fun Cell<TextFieldWithCompletion>.startTrackingValidationIfNeeded() {
-    if (branchName.isEmpty()) {
-      component.document.addDocumentListener(object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) {
-          startTrackingValidation()
-          component.document.removeDocumentListener(this)
-        }
-      })
-    }
-    else {
-      startTrackingValidation()
-    }
   }
 
   private class BranchNamesCompletion(branches: List<String>) : ValuesCompletionProvider.ValuesCompletionProviderDumbAware<String>(
