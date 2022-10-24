@@ -13,6 +13,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
+import net.schmizz.sshj.PatchedSSHClient
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.connection.channel.Channel
 import net.schmizz.sshj.sftp.SFTPClient
@@ -316,7 +317,7 @@ private inline fun executeTask(host: String,
     retryWithExponentialBackOff(attempts = 10, action = {
       val config = DefaultConfig()
       config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
-      val ssh = SSHClient(config)
+      val ssh = PatchedSSHClient(config)
       ssh.addHostKeyVerifier(PromiscuousVerifier())
       ssh.connect(host)
       ssh
