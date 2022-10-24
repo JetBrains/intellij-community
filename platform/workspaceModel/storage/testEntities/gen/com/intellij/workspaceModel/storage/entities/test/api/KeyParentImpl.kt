@@ -44,6 +44,9 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
   override val children: List<KeyChild>
     get() = snapshot.extractOneToManyChildren<KeyChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -203,7 +206,6 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -212,7 +214,6 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
   override fun createEntity(snapshot: EntityStorage): KeyParent {
     return getCached(snapshot) {
       val entity = KeyParentImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

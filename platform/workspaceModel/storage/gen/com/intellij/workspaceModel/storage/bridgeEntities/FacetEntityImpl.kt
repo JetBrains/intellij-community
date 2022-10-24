@@ -59,6 +59,9 @@ open class FacetEntityImpl(val dataSource: FacetEntityData) : FacetEntity, Works
   override val underlyingFacet: FacetEntity?
     get() = snapshot.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -319,7 +322,6 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -328,7 +330,6 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
   override fun createEntity(snapshot: EntityStorage): FacetEntity {
     return getCached(snapshot) {
       val entity = FacetEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

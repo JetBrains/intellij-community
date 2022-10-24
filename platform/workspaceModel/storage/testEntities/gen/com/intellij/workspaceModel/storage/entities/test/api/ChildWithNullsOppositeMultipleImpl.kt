@@ -41,6 +41,9 @@ open class ChildWithNullsOppositeMultipleImpl(val dataSource: ChildWithNullsOppo
   override val parentEntity: ParentWithNullsOppositeMultiple?
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -172,7 +175,6 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -181,7 +183,6 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
   override fun createEntity(snapshot: EntityStorage): ChildWithNullsOppositeMultiple {
     return getCached(snapshot) {
       val entity = ChildWithNullsOppositeMultipleImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

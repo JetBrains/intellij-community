@@ -58,6 +58,9 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
   override val nullableData: String?
     get() = dataSource.nullableData
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -289,7 +292,6 @@ class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymboli
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -298,7 +300,6 @@ class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymboli
   override fun createEntity(snapshot: EntityStorage): SampleWithSymbolicIdEntity {
     return getCached(snapshot) {
       val entity = SampleWithSymbolicIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

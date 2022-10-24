@@ -56,6 +56,9 @@ open class LeftEntityImpl(val dataSource: LeftEntityData) : LeftEntity, Workspac
   override val parent: HeadAbstractionEntity?
     get() = snapshot.extractOneToAbstractOneParent(PARENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -265,7 +268,6 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -274,7 +276,6 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun createEntity(snapshot: EntityStorage): LeftEntity {
     return getCached(snapshot) {
       val entity = LeftEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

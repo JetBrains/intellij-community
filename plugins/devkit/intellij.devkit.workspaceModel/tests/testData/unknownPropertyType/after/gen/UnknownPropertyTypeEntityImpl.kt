@@ -29,6 +29,9 @@ open class UnknownPropertyTypeEntityImpl(val dataSource: UnknownPropertyTypeEnti
   override val date: Date
     get() = dataSource.date
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -118,7 +121,6 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -127,7 +129,6 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   override fun createEntity(snapshot: EntityStorage): UnknownPropertyTypeEntity {
     return getCached(snapshot) {
       val entity = UnknownPropertyTypeEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

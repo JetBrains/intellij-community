@@ -39,6 +39,9 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -175,7 +178,6 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -184,7 +186,6 @@ class AttachedEntityData : WorkspaceEntityData<AttachedEntity>() {
   override fun createEntity(snapshot: EntityStorage): AttachedEntity {
     return getCached(snapshot) {
       val entity = AttachedEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

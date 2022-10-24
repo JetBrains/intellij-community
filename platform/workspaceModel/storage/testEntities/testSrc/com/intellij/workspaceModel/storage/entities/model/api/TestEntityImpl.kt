@@ -1,14 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entity
 
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.entities.model.api.*
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -40,7 +33,10 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
         return connections
     }
 
-    class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
+  override val entitySource: EntitySource
+    get() = TODO("Not yet implemented")
+
+  class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
         constructor(): this(TestEntityData())
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,7 +143,6 @@ class TestEntityData : WorkspaceEntityData<TestEntity>() {
         entity._name = name
         entity.count = count
         entity._anotherField = anotherField
-        entity.entitySource = entitySource
         entity.snapshot = snapshot
         entity.id = createEntityId()
         return entity

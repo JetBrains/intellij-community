@@ -32,6 +32,9 @@ open class SecondEntityWithPIdImpl(val dataSource: SecondEntityWithPIdData) : Se
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -120,7 +123,6 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Sec
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -129,7 +131,6 @@ class SecondEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Sec
   override fun createEntity(snapshot: EntityStorage): SecondEntityWithPId {
     return getCached(snapshot) {
       val entity = SecondEntityWithPIdImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

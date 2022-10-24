@@ -42,6 +42,9 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
   override val contentRoot: ContentRootTestEntity
     get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -179,7 +182,6 @@ class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTestOrderEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -188,7 +190,6 @@ class SourceRootTestOrderEntityData : WorkspaceEntityData<SourceRootTestOrderEnt
   override fun createEntity(snapshot: EntityStorage): SourceRootTestOrderEntity {
     return getCached(snapshot) {
       val entity = SourceRootTestOrderEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

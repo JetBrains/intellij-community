@@ -71,6 +71,9 @@ open class ArtifactEntityImpl(val dataSource: ArtifactEntityData) : ArtifactEnti
   override val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
     get() = snapshot.extractOneToOneChild(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -325,7 +328,6 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Artifact
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -334,7 +336,6 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Artifact
   override fun createEntity(snapshot: EntityStorage): ArtifactEntity {
     return getCached(snapshot) {
       val entity = ArtifactEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

@@ -39,6 +39,9 @@ open class ParentNullableEntityImpl(val dataSource: ParentNullableEntityData) : 
   override val child: ChildNullableEntity?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -162,7 +165,6 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -171,7 +173,6 @@ class ParentNullableEntityData : WorkspaceEntityData<ParentNullableEntity>() {
   override fun createEntity(snapshot: EntityStorage): ParentNullableEntity {
     return getCached(snapshot) {
       val entity = ParentNullableEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

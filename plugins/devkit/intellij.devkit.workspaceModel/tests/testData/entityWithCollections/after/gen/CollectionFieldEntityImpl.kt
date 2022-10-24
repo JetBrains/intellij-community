@@ -35,6 +35,9 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
   override val names: List<String>
     get() = dataSource.names
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -176,7 +179,6 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -185,7 +187,6 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   override fun createEntity(snapshot: EntityStorage): CollectionFieldEntity {
     return getCached(snapshot) {
       val entity = CollectionFieldEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

@@ -41,6 +41,9 @@ open class XChildWithOptionalParentEntityImpl(val dataSource: XChildWithOptional
   override val optionalParent: XParentEntity?
     get() = snapshot.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -172,7 +175,6 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -181,7 +183,6 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
   override fun createEntity(snapshot: EntityStorage): XChildWithOptionalParentEntity {
     return getCached(snapshot) {
       val entity = XChildWithOptionalParentEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

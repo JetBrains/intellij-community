@@ -40,6 +40,9 @@ open class SoftLinkReferencedChildImpl(val dataSource: SoftLinkReferencedChildDa
   override val parentEntity: EntityWithSoftLinks
     get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -167,7 +170,6 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -176,7 +178,6 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   override fun createEntity(snapshot: EntityStorage): SoftLinkReferencedChild {
     return getCached(snapshot) {
       val entity = SoftLinkReferencedChildImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

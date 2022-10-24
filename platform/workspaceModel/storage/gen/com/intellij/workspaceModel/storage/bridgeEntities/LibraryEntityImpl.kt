@@ -77,6 +77,9 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
   override val libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
     get() = snapshot.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -479,7 +482,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -488,7 +490,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
   override fun createEntity(snapshot: EntityStorage): LibraryEntity {
     return getCached(snapshot) {
       val entity = LibraryEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

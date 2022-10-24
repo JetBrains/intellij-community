@@ -63,6 +63,9 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
   override val directoryName: String
     get() = dataSource.directoryName
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -289,7 +292,6 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -298,7 +300,6 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
   override fun createEntity(snapshot: EntityStorage): DirectoryPackagingElementEntity {
     return getCached(snapshot) {
       val entity = DirectoryPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

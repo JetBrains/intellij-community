@@ -45,6 +45,9 @@ open class NamedEntityImpl(val dataSource: NamedEntityData) : NamedEntity, Works
   override val children: List<NamedChildEntity>
     get() = snapshot.extractOneToManyChildren<NamedChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -200,7 +203,6 @@ class NamedEntityData : WorkspaceEntityData.WithCalculableSymbolicId<NamedEntity
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -209,7 +211,6 @@ class NamedEntityData : WorkspaceEntityData.WithCalculableSymbolicId<NamedEntity
   override fun createEntity(snapshot: EntityStorage): NamedEntity {
     return getCached(snapshot) {
       val entity = NamedEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

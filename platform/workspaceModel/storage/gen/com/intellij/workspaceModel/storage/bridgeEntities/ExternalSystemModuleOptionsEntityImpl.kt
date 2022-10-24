@@ -62,6 +62,9 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
   override val externalSystemModuleType: String?
     get() = dataSource.externalSystemModuleType
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -257,7 +260,6 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -266,7 +268,6 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   override fun createEntity(snapshot: EntityStorage): ExternalSystemModuleOptionsEntity {
     return getCached(snapshot) {
       val entity = ExternalSystemModuleOptionsEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

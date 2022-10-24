@@ -43,6 +43,9 @@ open class ArtifactExternalSystemIdEntityImpl(val dataSource: ArtifactExternalSy
   override val artifactEntity: ArtifactEntity
     get() = snapshot.extractOneToOneParent(ARTIFACTENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -180,7 +183,6 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -189,7 +191,6 @@ class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalS
   override fun createEntity(snapshot: EntityStorage): ArtifactExternalSystemIdEntity {
     return getCached(snapshot) {
       val entity = ArtifactExternalSystemIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

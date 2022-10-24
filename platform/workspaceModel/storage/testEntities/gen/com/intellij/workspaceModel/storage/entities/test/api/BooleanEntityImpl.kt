@@ -31,6 +31,9 @@ open class BooleanEntityImpl(val dataSource: BooleanEntityData) : BooleanEntity,
 
   override val data: Boolean get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -115,7 +118,6 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -124,7 +126,6 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   override fun createEntity(snapshot: EntityStorage): BooleanEntity {
     return getCached(snapshot) {
       val entity = BooleanEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

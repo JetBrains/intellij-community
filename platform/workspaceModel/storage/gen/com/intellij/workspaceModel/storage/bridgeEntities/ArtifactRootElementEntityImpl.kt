@@ -60,6 +60,9 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -270,7 +273,6 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -279,7 +281,6 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   override fun createEntity(snapshot: EntityStorage): ArtifactRootElementEntity {
     return getCached(snapshot) {
       val entity = ArtifactRootElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

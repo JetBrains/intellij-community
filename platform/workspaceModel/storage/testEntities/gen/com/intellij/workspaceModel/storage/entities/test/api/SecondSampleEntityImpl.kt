@@ -35,6 +35,9 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
 
   override val intProperty: Int get() = dataSource.intProperty
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -119,7 +122,6 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -128,7 +130,6 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   override fun createEntity(snapshot: EntityStorage): SecondSampleEntity {
     return getCached(snapshot) {
       val entity = SecondSampleEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

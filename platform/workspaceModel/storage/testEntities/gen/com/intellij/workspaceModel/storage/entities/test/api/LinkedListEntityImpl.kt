@@ -37,6 +37,9 @@ open class LinkedListEntityImpl(val dataSource: LinkedListEntityData) : LinkedLi
   override val next: LinkedListEntityId
     get() = dataSource.next
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -177,7 +180,6 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -186,7 +188,6 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
   override fun createEntity(snapshot: EntityStorage): LinkedListEntity {
     return getCached(snapshot) {
       val entity = LinkedListEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

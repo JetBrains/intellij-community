@@ -44,6 +44,9 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
   override val homeUrl: VirtualFileUrl
     get() = dataSource.homeUrl
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -184,7 +187,6 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -193,7 +195,6 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   override fun createEntity(snapshot: EntityStorage): SdkEntity {
     return getCached(snapshot) {
       val entity = SdkEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

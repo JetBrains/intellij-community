@@ -42,6 +42,9 @@ open class OoChildWithPidEntityImpl(val dataSource: OoChildWithPidEntityData) : 
   override val parentEntity: OoParentWithoutPidEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -179,7 +182,6 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Oo
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -188,7 +190,6 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Oo
   override fun createEntity(snapshot: EntityStorage): OoChildWithPidEntity {
     return getCached(snapshot) {
       val entity = OoChildWithPidEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

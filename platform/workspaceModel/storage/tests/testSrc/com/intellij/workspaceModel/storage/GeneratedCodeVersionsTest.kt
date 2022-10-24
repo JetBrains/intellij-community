@@ -192,6 +192,9 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
     }
 
     override fun getEntityClass(): Class<SuperSimpleEntity> = SuperSimpleEntity::class.java
+    override var entitySource: EntitySource
+      get() = TODO("Not yet implemented")
+      set(value) {}
   }
 
   // TODO: Fill with the data from the current entity
@@ -199,6 +202,9 @@ open class SuperSimpleEntityImpl: SuperSimpleEntity, WorkspaceEntityBase() {
   override fun connectionIdList(): List<ConnectionId> {
     TODO("Not yet implemented")
   }
+
+  override val entitySource: EntitySource
+    get() = TODO("Not yet implemented")
 }
 
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
@@ -221,7 +227,6 @@ class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): SuperSimpleEntity {
     val entity = SuperSimpleEntityImpl()
-    entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity

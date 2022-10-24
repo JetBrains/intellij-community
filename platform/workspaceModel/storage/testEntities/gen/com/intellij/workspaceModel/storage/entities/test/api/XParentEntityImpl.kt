@@ -53,6 +53,9 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
   override val childChild: List<XChildChildEntity>
     get() = snapshot.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -313,7 +316,6 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -322,7 +324,6 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
   override fun createEntity(snapshot: EntityStorage): XParentEntity {
     return getCached(snapshot) {
       val entity = XParentEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

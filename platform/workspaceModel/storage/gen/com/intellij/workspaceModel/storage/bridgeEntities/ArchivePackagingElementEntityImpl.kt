@@ -63,6 +63,9 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
   override val fileName: String
     get() = dataSource.fileName
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -287,7 +290,6 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -296,7 +298,6 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   override fun createEntity(snapshot: EntityStorage): ArchivePackagingElementEntity {
     return getCached(snapshot) {
       val entity = ArchivePackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

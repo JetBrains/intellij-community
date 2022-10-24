@@ -39,6 +39,9 @@ open class ComposedIdSoftRefEntityImpl(val dataSource: ComposedIdSoftRefEntityDa
   override val link: NameId
     get() = dataSource.link
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -179,7 +182,6 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -188,7 +190,6 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
   override fun createEntity(snapshot: EntityStorage): ComposedIdSoftRefEntity {
     return getCached(snapshot) {
       val entity = ComposedIdSoftRefEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

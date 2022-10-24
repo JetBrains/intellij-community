@@ -32,6 +32,9 @@ open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, Wo
 
   override val isSimple: Boolean get() = dataSource.isSimple
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -142,7 +145,6 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -151,7 +153,6 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   override fun createEntity(snapshot: EntityStorage): SimpleEntity {
     return getCached(snapshot) {
       val entity = SimpleEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

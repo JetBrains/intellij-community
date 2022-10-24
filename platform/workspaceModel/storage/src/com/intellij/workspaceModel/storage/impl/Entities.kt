@@ -95,8 +95,8 @@ import kotlin.reflect.KClass
 
 
 abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
-  override lateinit var entitySource: EntitySource
-    internal set
+  //override lateinit var entitySource: EntitySource
+  //  internal set
 
   var id: EntityId = invalidEntityId
 

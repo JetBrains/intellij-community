@@ -38,6 +38,9 @@ open class VFUEntityImpl(val dataSource: VFUEntityData) : VFUEntity, WorkspaceEn
   override val fileProperty: VirtualFileUrl
     get() = dataSource.fileProperty
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -143,7 +146,6 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -152,7 +154,6 @@ class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
   override fun createEntity(snapshot: EntityStorage): VFUEntity {
     return getCached(snapshot) {
       val entity = VFUEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

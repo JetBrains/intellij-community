@@ -37,6 +37,9 @@ open class FinalFieldsEntityImpl(val dataSource: FinalFieldsEntityData) : FinalF
 
   override var anotherVersion: Int = dataSource.anotherVersion
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -146,7 +149,6 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -155,7 +157,6 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   override fun createEntity(snapshot: EntityStorage): FinalFieldsEntity {
     return getCached(snapshot) {
       val entity = FinalFieldsEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

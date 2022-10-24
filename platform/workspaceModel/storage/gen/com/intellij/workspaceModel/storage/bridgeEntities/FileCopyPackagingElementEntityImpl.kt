@@ -47,6 +47,9 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
   override val renamedOutputFileName: String?
     get() = dataSource.renamedOutputFileName
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -190,7 +193,6 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -199,7 +201,6 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   override fun createEntity(snapshot: EntityStorage): FileCopyPackagingElementEntity {
     return getCached(snapshot) {
       val entity = FileCopyPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

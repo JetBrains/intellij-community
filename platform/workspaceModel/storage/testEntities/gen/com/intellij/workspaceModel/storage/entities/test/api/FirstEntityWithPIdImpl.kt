@@ -32,6 +32,9 @@ open class FirstEntityWithPIdImpl(val dataSource: FirstEntityWithPIdData) : Firs
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -120,7 +123,6 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Firs
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -129,7 +131,6 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Firs
   override fun createEntity(snapshot: EntityStorage): FirstEntityWithPId {
     return getCached(snapshot) {
       val entity = FirstEntityWithPIdImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

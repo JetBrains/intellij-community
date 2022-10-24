@@ -40,6 +40,9 @@ open class WithListSoftLinksEntityImpl(val dataSource: WithListSoftLinksEntityDa
   override val links: List<NameId>
     get() = dataSource.links
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -214,7 +217,6 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -223,7 +225,6 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId
   override fun createEntity(snapshot: EntityStorage): WithListSoftLinksEntity {
     return getCached(snapshot) {
       val entity = WithListSoftLinksEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

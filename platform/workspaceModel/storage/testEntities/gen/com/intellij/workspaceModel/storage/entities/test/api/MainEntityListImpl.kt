@@ -31,6 +31,9 @@ open class MainEntityListImpl(val dataSource: MainEntityListData) : MainEntityLi
   override val x: String
     get() = dataSource.x
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -119,7 +122,6 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -128,7 +130,6 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
   override fun createEntity(snapshot: EntityStorage): MainEntityList {
     return getCached(snapshot) {
       val entity = MainEntityListImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

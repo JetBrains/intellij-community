@@ -30,6 +30,9 @@ open class AssertConsistencyEntityImpl(val dataSource: AssertConsistencyEntityDa
 
   override val passCheck: Boolean get() = dataSource.passCheck
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -114,7 +117,6 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -123,7 +125,6 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
   override fun createEntity(snapshot: EntityStorage): AssertConsistencyEntity {
     return getCached(snapshot) {
       val entity = AssertConsistencyEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

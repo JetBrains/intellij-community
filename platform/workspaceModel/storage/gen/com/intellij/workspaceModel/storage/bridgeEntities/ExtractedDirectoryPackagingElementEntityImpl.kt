@@ -47,6 +47,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
   override val pathInArchive: String
     get() = dataSource.pathInArchive
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -196,7 +199,6 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -205,7 +207,6 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   override fun createEntity(snapshot: EntityStorage): ExtractedDirectoryPackagingElementEntity {
     return getCached(snapshot) {
       val entity = ExtractedDirectoryPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
