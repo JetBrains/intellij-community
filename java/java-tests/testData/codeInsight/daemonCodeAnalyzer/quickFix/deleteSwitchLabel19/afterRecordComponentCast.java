@@ -6,7 +6,7 @@ class Test {
             default -> { return; }
         }
 
-        ((A) ((Rec) rec).i()).doA();
+        ((A) rec.i()).doA();
     }
 }
 

@@ -1,4 +1,6 @@
 // "Remove unreachable branches" "true"
+import org.jetbrains.annotations.*;
+
 class Test {
     void foo(Object obj) {
         switch (obj) {
@@ -13,4 +15,4 @@ class Test {
     }
 }
 
-record X(X x) { }
+record X(@NotNull X x) { }
