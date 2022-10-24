@@ -72,7 +72,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   override fun createCenterPanel() = panel {
     row {
-      cell(TextFieldWithCompletion(project, createBranchNameCompletion(), branchName, true, false, true))
+      cell(TextFieldWithCompletion(project, createBranchNameCompletion(), branchName, true, false, false, true))
         .bind({ c -> c.text }, { c, v -> c.text = v }, ::branchName.toMutableProperty())
         .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
