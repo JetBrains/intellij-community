@@ -581,6 +581,18 @@ public abstract class VcsVFSListener implements Disposable {
     return selectedFilePaths != null ? selectedFilePaths : emptyList();
   }
 
+  /**
+   * @return whether {@link #beforeContentsChange} is overridden.
+   */
+  protected boolean processBeforeContentsChange() {
+    return false;
+  }
+
+  /**
+   * This is a very expensive operation and shall be avoided whenever possible.
+   *
+   * @see #processBeforeContentsChange()
+   */
   protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
   }
 
@@ -704,9 +716,11 @@ public abstract class VcsVFSListener implements Disposable {
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         if (event instanceof VFileContentChangeEvent contentChangeEvent) {
-          VirtualFile file = contentChangeEvent.getFile();
-          if (isUnderMyVcs(file)) {
-            contentChangedEvents.add(contentChangeEvent);
+          if (processBeforeContentsChange()) {
+            VirtualFile file = contentChangeEvent.getFile();
+            if (isUnderMyVcs(file)) {
+              contentChangedEvents.add(contentChangeEvent);
+            }
           }
         }
         else if (isEventAccepted(event)) {
