@@ -761,14 +761,12 @@ public class FileUtilRt {
   }
 
   /**
-   * <b>IMPORTANT</b>: the method is not symlinks- or junction-aware when invoked on Java 6 or earlier.
-   *
    * @param file file or directory to delete
    * @return {@code true} if the file did not exist or was successfully deleted
    */
   public static boolean delete(@NotNull File file) {
     try {
-      deleteRecursively(file.toPath(), null);
+      deleteRecursively(file.toPath());
       return true;
     }
     catch (IOException e) {
@@ -778,6 +776,10 @@ public class FileUtilRt {
       logger().info(e);
       return false;
     }
+  }
+
+  public static void deleteRecursively(@NotNull Path path) throws IOException {
+    deleteRecursively(path, null);
   }
 
   static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
