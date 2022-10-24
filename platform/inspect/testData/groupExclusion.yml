@@ -1,0 +1,30 @@
+$schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
+
+name: Custom name
+
+groups:
+  - groupId: GeneralGroup
+    groups:
+      - First
+      - Second
+  - groupId: Exclusion
+    inspections:
+      - SpellCheckingInspection
+  - groupId: GeneralWithExclusion
+    groups:
+      - GeneralGroup
+      - "!Exclusion"
+  - groupId: First
+    inspections:
+      - TodoComment
+  - groupId: Second
+    inspections:
+      - SpellCheckingInspection
+
+inspections:
+  - group: GeneralWithExclusion
+    enabled: true
+    severity: ERROR
+    ignore:
+      - "!file:*.*"
+      - "file:*.java"
