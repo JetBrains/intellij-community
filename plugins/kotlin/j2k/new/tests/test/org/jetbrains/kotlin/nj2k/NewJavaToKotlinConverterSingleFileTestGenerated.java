@@ -5187,6 +5187,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testSuperTypeQualifier2() throws Exception {
             runTest("testData/newJ2k/superExpression/superTypeQualifier2.java");
         }
+
+        @TestMetadata("superTypeQualifierLocal.java")
+        public void testSuperTypeQualifierLocal() throws Exception {
+            runTest("testData/newJ2k/superExpression/superTypeQualifierLocal.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
