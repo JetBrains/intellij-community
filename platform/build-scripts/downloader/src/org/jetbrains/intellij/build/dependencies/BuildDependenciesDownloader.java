@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesNoopTracer;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan;
@@ -123,12 +124,12 @@ public final class BuildDependenciesDownloader {
     return path;
   }
 
-  public static synchronized Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
+  public static synchronized Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri, @Nullable String bearerToken) {
     cleanUpIfRequired(communityRoot);
     String uriString = uri.toString();
     try {
       Path targetFile = getTargetFile(communityRoot, uriString);
-      downloadFile(uri, targetFile);
+      downloadFile(uri, targetFile, bearerToken);
       return targetFile;
     }
     catch (HttpStatusException e) {
@@ -137,6 +138,10 @@ public final class BuildDependenciesDownloader {
     catch (Exception e) {
       throw new RuntimeException("Cannot download " + uriString, e);
     }
+  }
+
+  public static Path downloadFileToCacheLocation(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull URI uri) {
+    return downloadFileToCacheLocation(communityRoot, uri, null);
   }
 
   public static @NotNull Path getTargetFile(@NotNull BuildDependenciesCommunityRoot communityRoot, @NotNull String uriString) throws IOException {
@@ -308,7 +313,7 @@ public final class BuildDependenciesDownloader {
     }
   }
 
-  private static void downloadFile(URI uri, Path target) throws Exception {
+  private static void downloadFile(URI uri, Path target, String bearerToken) throws Exception {
     Lock lock = fileLocks.get(target);
     lock.lock();
     try {
@@ -340,7 +345,7 @@ public final class BuildDependenciesDownloader {
           LOG.info(" * Downloading " + uri + " -> " + target);
           Retry.withExponentialBackOff(() -> {
             Files.deleteIfExists(tempFile);
-            tryToDownloadFile(uri, tempFile);
+            tryToDownloadFile(uri, tempFile, bearerToken);
           });
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         }
@@ -362,12 +367,15 @@ public final class BuildDependenciesDownloader {
     }
   }
 
-  private static void tryToDownloadFile(URI uri, Path tempFile) throws Exception {
-    HttpRequest request = HttpRequest.newBuilder()
+  private static void tryToDownloadFile(URI uri, Path tempFile, String bearerToken) throws Exception {
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
       .GET()
       .uri(uri)
-      .setHeader("User-Agent", "Build Script Downloader")
-      .build();
+      .setHeader("User-Agent", "Build Script Downloader");
+    if (bearerToken != null) {
+      requestBuilder = requestBuilder.setHeader("Authorization", "Bearer " + bearerToken);
+    }
+    HttpRequest request = requestBuilder.build();
 
     HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
     int statusCode = response.statusCode();
