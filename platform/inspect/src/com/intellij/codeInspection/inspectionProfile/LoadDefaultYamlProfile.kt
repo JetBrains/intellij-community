@@ -6,6 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 
+/**
+ * Internal action for debug purposes.
+ * Action loads default yaml inspection profile from '.idea/inspectionProfile/profile.yml' file and sets loaded profile as a current one.
+ */
 class LoadDefaultYamlProfile: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
