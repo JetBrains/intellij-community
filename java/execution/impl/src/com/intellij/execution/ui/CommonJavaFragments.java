@@ -246,7 +246,6 @@ public final class CommonJavaFragments {
           ExtendableTextComponent.Extension extension = ExtendableTextComponent.Extension.create(
             AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
             () -> MacrosDialog.show(editor, MacrosDialog.Filters.ALL, MacrosDialog.getPathMacros(hasModule.compute())));
-          //TODO: button does not appear
           ExtendableEditorSupport.setupExtension(e, editor.getBackground(), extension);
         });
       }
