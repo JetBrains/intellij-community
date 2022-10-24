@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.function.Function
 
 private const val VERSION = "1.0"
-private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
+const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 private val defaultSchemeDigest = JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
@@ -45,7 +45,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
 
   private var state = ProjectInspectionProfileManagerState()
 
-  private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
+  protected val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
   override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
