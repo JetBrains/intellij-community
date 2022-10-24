@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.runInEdtAndGet
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import java.io.File
@@ -39,13 +39,10 @@ abstract class LibraryTest : UsefulTestCase() {
   }
 
   override fun tearDown() {
-    try {
-      runInEdtAndWait {
-        myFixture.tearDown()
-      }
-    } finally {
-      super.tearDown()
-    }
+    RunAll(
+      { myFixture.tearDown() },
+      { super.tearDown() },
+    ).run()
   }
 
   protected fun createLibrary(): LibraryEx {
