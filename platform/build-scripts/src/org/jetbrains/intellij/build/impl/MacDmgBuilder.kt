@@ -153,11 +153,16 @@ private suspend fun buildLocally(sitFile: Path,
                                  customizer: MacDistributionCustomizer,
                                  context: BuildContext) {
   val tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
-  spanBuilder("bundle JBR and sign sit locally")
-    .setAttribute("sitFile", sitFile.toString()).useWithScope {
-      Files.createDirectories(tempDir)
-      signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
-    }
+  if (SystemInfoRt.isWindows) {
+    Span.current().addEvent("Currently sit cannot be signed on Windows")
+  }
+  else {
+    spanBuilder("bundle JBR and sign sit locally")
+      .setAttribute("sitFile", sitFile.toString()).useWithScope {
+        Files.createDirectories(tempDir)
+        signSitLocally(sitFile, tempDir, sign, notarize, customizer, context)
+      }
+  }
   if (context.publishSitArchive) {
     context.notifyArtifactBuilt(sitFile)
   }
