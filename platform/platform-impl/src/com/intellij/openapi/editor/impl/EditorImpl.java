@@ -5155,15 +5155,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void adjustGlobalFontSize(float size) {
     EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-    resetEditorFontSize();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
-  }
-
-  @ApiStatus.Internal
-  public void resetEditorFontSize() {
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {
