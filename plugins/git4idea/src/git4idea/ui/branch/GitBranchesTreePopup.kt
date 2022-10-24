@@ -124,7 +124,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       Disposer.register(this) {
         it.model = null
       }
-      it.border = JBUI.Borders.emptyLeft(JBUIScale.scale(10))
+      val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
+      it.border = JBUI.Borders.empty(topBorder, JBUIScale.scale(10), 0, 0)
     }
     searchPatternStateFlow = MutableStateFlow(null)
     speedSearch.installSupplyTo(tree, false)
