@@ -18,9 +18,8 @@ import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.providers.FullLineCompletionProvider
 import org.jetbrains.completion.full.line.services.TestFullLineCompletionProvider
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.function.Executable
 
 @Suppress("MemberVisibilityCanBePrivate")
 abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Boolean = true) : BasePlatformTestCase() {
@@ -124,7 +123,7 @@ abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Bo
       lookupElements!!.filterIsInstance<FullLineLookupElement>()
         .also { assertEquals(suggestions.toList().size, it.size) }
         .map {
-          {
+          Executable {
             assertEquals(
               refCorrectness,
               it.proposal.refCorrectness,

@@ -1,7 +1,7 @@
 package org.jetbrains.completion.full.line.python.features
 
 import org.jetbrains.completion.full.line.python.tests.FullLinePythonCompletionTestCase
-import org.junit.jupiter.api.assertAll
+import org.junit.jupiter.api.Assertions.assertAll
 
 class CompletionInStringTests : FullLinePythonCompletionTestCase() {
   override fun getBasePath() = "testData/completion/strings"
