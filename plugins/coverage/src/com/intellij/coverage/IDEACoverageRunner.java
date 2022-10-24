@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
+  private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
@@ -65,7 +66,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean isSampling,
                                      @Nullable String sourceMapPath,
                                      @Nullable final Project project) {
-    String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
+    final String agentPath = getAgentPath();
     if (agentPath == null) return;
     final String[] excludeAnnotations = getExcludeAnnotations(project);
     List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> targetParameters =
@@ -91,6 +92,14 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
       }
     }
+  }
+
+  @Nullable
+  private static String getAgentPath() {
+    final String userDefinedAgentPath = System.getProperty(COVERAGE_AGENT_PATH_PROPERTY);
+    final String bundledAgentPath = PathUtil.getJarPathForClass(ProjectData.class);
+    final String agentPath = userDefinedAgentPath != null ? userDefinedAgentPath : bundledAgentPath;
+    return handleSpacesInAgentPath(agentPath);
   }
 
   @Nullable
