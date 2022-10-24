@@ -1,6 +1,6 @@
 class Test implements Comparable<Test> {
   @Override
-  public int <warning descr="Comparator never returns negative value">compareTo</warning>(Test <warning descr="'compareTo()' parameter 'o' is not used">o</warning>) {
+  public int <warning descr="Comparator never returns negative values">compareTo</warning>(Test <warning descr="'compareTo()' parameter 'o' is not used">o</warning>) {
     return <warning descr="Comparator does not return 0 for equal elements">1</warning>;
   }
 }
