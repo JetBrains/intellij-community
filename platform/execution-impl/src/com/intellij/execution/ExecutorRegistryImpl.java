@@ -345,6 +345,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             presentation.setDisabledIcon(spinningIcon);
           } else {
             presentation.putClientProperty(spinningIconKey, null);
+            presentation.setDisabledIcon(null);
           }
         }
 
