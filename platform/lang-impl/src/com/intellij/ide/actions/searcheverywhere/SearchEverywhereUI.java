@@ -105,7 +105,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
-  public static final int THROTTLING_TIMEOUT = 100;
 
   private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
     ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
@@ -191,10 +190,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private BufferingListenerWrapper createListener() {
     SearchListener wrapped = SearchListener.combine(mySearchListener, new SearchProcessLogger());
     if (Registry.is("search.everywhere.wait.for.contributors")) {
-      return new WaitForContributorsListenerWrapper(wrapped, myListModel);
+      return new SwitchSEListener(wrapped, myListModel);
     }
 
-    return new ThrottlingListenerWrapper(THROTTLING_TIMEOUT, wrapped);
+    return new ThrottlingListenerWrapper(wrapped);
   }
 
   @Override
