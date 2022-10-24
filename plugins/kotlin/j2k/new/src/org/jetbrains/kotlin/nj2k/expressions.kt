@@ -362,7 +362,7 @@ fun JKInheritanceInfo.supertypeCount(): Int =
     extends.size + implements.size
 
 fun JKClass.isLocalClass(): Boolean =
-    parent !is JKClassBody && parent !is JKFile
+    parent !is JKClassBody && parent !is JKFile && parent !is JKTreeRoot
 
 val JKClass.declarationList: List<JKDeclaration>
     get() = classBody.declarations

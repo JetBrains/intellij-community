@@ -28,8 +28,10 @@ class InternalDeclarationConversion(context: NewJ2kConverterContext) : Recursive
                 PUBLIC
             containingClassKind == ENUM && element is JKConstructor ->
                 PRIVATE
-            element is JKClass && !element.isLocalClass() ->
-                defaultVisibility
+
+            element is JKClass && element.isLocalClass() ->
+                PUBLIC
+
             element is JKConstructor && containingClassVisibility != INTERNAL ->
                 defaultVisibility
             element is JKField || element is JKMethod ->

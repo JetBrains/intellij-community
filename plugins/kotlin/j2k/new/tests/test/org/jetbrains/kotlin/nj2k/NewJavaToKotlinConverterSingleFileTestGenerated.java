@@ -2965,6 +2965,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/interface/internalInterface.java");
         }
 
+        @TestMetadata("localInterface.java")
+        public void testLocalInterface() throws Exception {
+            runTest("testData/newJ2k/interface/localInterface.java");
+        }
+
         @TestMetadata("privateInterface.java")
         public void testPrivateInterface() throws Exception {
             runTest("testData/newJ2k/interface/privateInterface.java");
