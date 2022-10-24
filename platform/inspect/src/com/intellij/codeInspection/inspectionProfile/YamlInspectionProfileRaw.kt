@@ -46,7 +46,7 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   return (first.keys + second.keys).associateWith { key ->
     val firstValue = first[key]
     val secondValue = second[key]
-    val value = if (firstValue is Map<*,*> && secondValue is Map<*,*>) {
+    val value = if (firstValue is Map<*, *> && secondValue is Map<*, *>) {
       @Suppress("UNCHECKED_CAST")
       merge(firstValue as Map<String, *>, secondValue as Map<String, *>)
     }

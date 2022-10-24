@@ -3,16 +3,17 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
-class InspectionPathGroupProvider: InspectionGroupProvider {
+class InspectionPathGroupProvider : InspectionGroupProvider {
 
-  override fun findGroup(groupId: String): YamlInspectionGroup = object: YamlInspectionGroup {
+  override fun findGroup(groupId: String): YamlInspectionGroup = object : YamlInspectionGroup {
 
     override val groupId: String = groupId
 
     override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
       return try {
         tool.groupPath.firstOrNull() == groupId
-      } catch (e: AssertionError) {
+      }
+      catch (e: AssertionError) {
         false
       }
     }

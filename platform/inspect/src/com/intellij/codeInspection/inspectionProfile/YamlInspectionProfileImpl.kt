@@ -26,7 +26,7 @@ class YamlGroupConfigImpl(override val group: String,
                           override val ignore: List<String>) : YamlGroupConfig
 
 class YamlInspectionGroupImpl(override val groupId: String, val inspections: Set<String>) : YamlInspectionGroup {
-  override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.shortName in inspections
   }
 }
@@ -72,8 +72,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
-      val groups = profile.groups.map{ group -> createGroup(groupProvider, group) }
-      val customGroupProvider = object: InspectionGroupProvider {
+      val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
+      val customGroupProvider = object : InspectionGroupProvider {
         val groupMap = groups.associateBy { group -> group.groupId }
         override fun findGroup(groupId: String): YamlInspectionGroup? {
           return groupMap[groupId]
@@ -98,7 +98,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     private fun createGroup(groupProvider: InspectionGroupProvider, group: YamlInspectionGroupRaw): YamlInspectionGroup {
       return if (group.groups.isNotEmpty()) {
         YamlCompositeGroupImpl(group.groupId, groupProvider, group.groups)
-      } else {
+      }
+      else {
         YamlInspectionGroupImpl(group.groupId, group.inspections.toSet())
       }
     }
@@ -129,7 +130,8 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val scopes = configuration.ignore.map { pattern ->
         if (pattern.startsWith("!")) {
           Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(1))), true)
-        } else {
+        }
+        else {
           Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern)), false)
         }
       }
@@ -149,7 +151,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
         scopes.forEach { (scope, enabled) ->
-            inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
+          inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
         }
       }
     }
@@ -157,7 +159,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   private fun findTools(configuration: YamlBaseConfig): List<InspectionToolWrapper<*, *>> {
-    return when(configuration) {
+    return when (configuration) {
       is YamlGroupConfig -> baseProfile.getInspectionTools(null).filter { findGroup(configuration.group).includesInspection(it) }
       is YamlInspectionConfig -> listOfNotNull(baseProfile.getInspectionTool(configuration.inspection, null as PsiElement?))
     }

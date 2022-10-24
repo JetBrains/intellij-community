@@ -5,26 +5,26 @@ import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
-private object AllGroup: YamlInspectionGroup {
+private object AllGroup : YamlInspectionGroup {
   override val groupId: String = "ALL"
-  override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean = true
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean = true
 }
 
-private object GlobalGroup: YamlInspectionGroup {
+private object GlobalGroup : YamlInspectionGroup {
   override val groupId: String = "GLOBAL"
-  override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.tool is GlobalInspectionTool
   }
 }
 
-private object LocalGroup: YamlInspectionGroup {
+private object LocalGroup : YamlInspectionGroup {
   override val groupId: String = "LOCAL"
-  override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.tool is LocalInspectionTool
   }
 }
 
-class InspectionBasicGroupProvider: InspectionGroupProvider {
+class InspectionBasicGroupProvider : InspectionGroupProvider {
   private val commonGroups: Map<String, YamlInspectionGroup> by lazy {
     listOf(LocalGroup, GlobalGroup, AllGroup).associateBy(YamlInspectionGroup::groupId)
   }
