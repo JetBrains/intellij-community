@@ -3,6 +3,7 @@ package com.intellij.remoteDev.downloader
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
@@ -22,6 +23,7 @@ import java.util.zip.GZIPInputStream
 object ThinClientSessionInfoFetcher {
 
   private val objectMapper = lazy { ObjectMapper() }
+  private val logger by lazy { logger<ThinClientSessionInfoFetcher>() }
 
   private fun getErrorPayload(connection: HttpURLConnection): ByteArray {
     val errorStream = connection.errorStream ?: throw IOException("Connection errorStream is null")
@@ -53,7 +55,7 @@ object ThinClientSessionInfoFetcher {
           String(errorPayload, Charsets.UTF_8)
         }
 
-        if (connection.responseCode == 403) {
+        if (connection.responseCode == 403 || connection.responseCode == 451) {
           try {
             val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
             if (sessionInfo["messageId"]?.textValue() == "FORBIDDEN_BY_REGION_RESTRICTION") {
@@ -68,15 +70,15 @@ object ThinClientSessionInfoFetcher {
               if (reason != null) {
                 allTogetherText.append("\n" + reason)
               }
+              // todo: dialog
               throw Exception(allTogetherText.toString())
             }
           } catch (ex: JacksonException) {
-            // ignore
+            logger.warn("Failed to decode response", ex)
           }
-
         }
         if (connection.responseCode >= 400) {
-          throw Exception("Request to $url failed with status code ${connection.responseCode}")
+          error("Request to $url failed with status code ${connection.responseCode}")
         }
 
         val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
