@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.data
+package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.api.page.SequentialListLoader.ListBatch
