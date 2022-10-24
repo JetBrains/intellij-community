@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.diagnostic.launchAndMeasure
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.IdeBundle
@@ -13,6 +14,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.withModalContext
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -59,7 +62,7 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
    * But start-up and post start-up activities are not yet executed.
    * Executed under a modal progress dialog.
    */
-  open suspend fun projectLoaded(project: Project): Job? = null
+  open fun projectLoaded(project: Project): Job? = null
 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
@@ -154,17 +157,18 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     }
   }
 
-  override suspend fun projectLoaded(project: Project): Job? {
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
+  override fun projectLoaded(project: Project): Job = project.coroutineScope.async {
+    val windowManager = project.serviceAsync<WindowManager>().await() as WindowManagerImpl
     val frameHelper = deferredProjectFrameHelper.await()
-    return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+
+    val fileEditorManager = project.serviceAsync<FileEditorManager>().await() as? FileEditorManagerImpl ?: return@async null
+
+    service<StartUpPerformanceService>().addActivityListener(project)
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       runActivity("project frame assigning") {
         windowManager.assignFrame(frameHelper, project)
       }
 
-      val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return@withContext null
-
-      // not as a part of a project modal dialog
       val editorComponent = fileEditorManager.init()
       val reopeningEditorJob = project.coroutineScope.launchAndMeasure("editor reopening") {
         restoreOpenedFiles(fileEditorManager = fileEditorManager,
@@ -172,6 +176,10 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
                            project = project,
                            frameHelper = frameHelper)
       }
+
+      val frame = frameHelper.frameOrNull!!
+      // set only if not previously set (we remember previous project name and set it on frame creation)
+      frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
 
       project.coroutineScope.launchAndMeasure("tool window pane creation") {
         val toolWindowManager = ToolWindowManager.getInstance(project = project) as? ToolWindowManagerImpl ?: return@launchAndMeasure
@@ -192,7 +200,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         }
       }
       reopeningEditorJob
-    }
+    }.join()
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {

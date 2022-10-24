@@ -1,72 +1,59 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.project.*
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
+import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 
-import java.util.Arrays;
-
-
-public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
-  @Override
-  public String getProjectTitle(@NotNull Project project) {
-    String basePath = project.getBasePath();
-    if (basePath == null) return project.getName();
-
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    int sameNamedProjects = ContainerUtil.count(Arrays.asList(projects), (it) -> it.getName().equals(project.getName()));
-    if (sameNamedProjects == 1 && !UISettings.getInstance().getFullPathsInWindowHeader()) {
-      return project.getName();
+open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
+  override fun getProjectTitle(project: Project): String {
+    val basePath: @SystemIndependent @NonNls String = project.basePath ?: return project.name
+    val projects = ProjectManager.getInstance().openProjects
+    val sameNamedProjects = projects.count { it.name == project.name }
+    if (sameNamedProjects == 1 && !UISettings.getInstance().fullPathsInWindowHeader) {
+      return project.name
     }
 
-    basePath = FileUtil.toSystemDependentName(basePath);
-    if (basePath.equals(project.getName()) && !UISettings.getInstance().getFullPathsInWindowHeader()) {
-      return "[" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
+    return if (basePath == project.name && !UISettings.getInstance().fullPathsInWindowHeader) {
+      "[${FileUtil.getLocationRelativeToUserHome(basePath)}]"
     }
     else {
-      return project.getName() + " [" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
+      "${project.name} [${FileUtil.getLocationRelativeToUserHome(basePath)}]"
     }
   }
 
-  @Override
-  public String getFileTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    String overriddenTitle = VfsPresentationUtil.getCustomPresentableNameForUI(project, file);
-    if (overriddenTitle != null) {
-      return overriddenTitle;
-    }
-
-    if (file.getParent() == null) {
-      return file.getPresentableName();
-    }
-
-    if (UISettings.getInstance().getFullPathsInWindowHeader()) {
-      return ProjectUtilCore.displayUrlRelativeToProject(file, file.getPresentableUrl(), project, true, false);
-    }
-
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (!fileIndex.isInContent(file)) {
-      String pathWithLibrary = ProjectUtilCore.decorateWithLibraryName(file, project, file.getPresentableName());
-      if (pathWithLibrary != null) {
-        return pathWithLibrary;
+  override fun getFileTitle(project: Project, file: VirtualFile): String {
+    val overriddenTitle = VfsPresentationUtil.getCustomPresentableNameForUI(project, file)
+    return when {
+      overriddenTitle != null -> overriddenTitle
+      file.parent == null -> file.presentableName
+      UISettings.getInstance().fullPathsInWindowHeader -> {
+        displayUrlRelativeToProject(file = file,
+                                    url = file.presentableUrl,
+                                    project = project,
+                                    isIncludeFilePath = true,
+                                    moduleOnTheLeft = false)
       }
-      return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+      else -> {
+        val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+        if (!fileIndex.isInContent(file)) {
+          val pathWithLibrary = decorateWithLibraryName(file, project, file.presentableName)
+          return pathWithLibrary ?: FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+        }
+        val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
+        if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
+          fileTitle
+        }
+        else {
+          appendModuleName(file = file, project = project, result = fileTitle, moduleOnTheLeft = false)
+        }
+      }
     }
-
-    String fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file);
-    if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
-      return fileTitle;
-    }
-
-    return ProjectUtilCore.appendModuleName(file, project, fileTitle, false);
   }
 }

@@ -38,7 +38,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   private var state = UISettingsState()
 
-  private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
+  private val treeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
   var ideAAType: AntialiasingType
     get() = notRoamableOptions.state.ideAAType
@@ -581,12 +581,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val defFontSize: Float
       get() = UISettingsState.defFontSize
 
-    @Deprecated("Use {@link #restoreFontSize(Float, Float?)} instead")
-    @JvmStatic
-    fun restoreFontSize(readSize: Int, readScale: Float?): Int {
-      return restoreFontSize(readSize.toFloat(), readScale).toInt()
-    }
-
     @JvmStatic
     fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize
@@ -631,7 +625,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
     if (this === cachedInstance) {
-      myTreeDispatcher.multicaster.uiSettingsChanged(this)
+      treeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
   }

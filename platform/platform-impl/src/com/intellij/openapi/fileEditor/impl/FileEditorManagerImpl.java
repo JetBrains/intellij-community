@@ -51,7 +51,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -1739,9 +1742,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @ApiStatus.Internal
   @RequiresEdt
   public final @NotNull EditorsSplitters init() {
-    EditorsSplitters splitters = this.splitters;
-    splitters.startListeningFocus();
-
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       // updates tabs colors
@@ -1750,8 +1750,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyRootsListener());
+    if (!LightEdit.owns(myProject)) {
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
+      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyRootsListener());
+    }
 
     // updates tabs names
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new MyVirtualFileListener());
@@ -2079,15 +2081,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
   }
 
-  private class MyRootsListener implements ModuleRootListener, AdditionalLibraryRootsListener {
-
+  private final class MyRootsListener implements ModuleRootListener, AdditionalLibraryRootsListener {
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
       changeHappened();
     }
 
     private void changeHappened() {
-      if (LightEdit.owns(myProject)) return;
       AppUIExecutor
         .onUiThread(ModalityState.any())
         .expireWith(myProject)
@@ -2114,7 +2114,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     private void replaceEditors(Map<EditorComposite, Pair<VirtualFile, Integer>> replacements) {
-      if (replacements.isEmpty()) return;
+      if (replacements.isEmpty()) {
+        return;
+      }
 
       for (EditorWindow eachWindow : getWindows()) {
         EditorComposite selected = eachWindow.getSelectedComposite();

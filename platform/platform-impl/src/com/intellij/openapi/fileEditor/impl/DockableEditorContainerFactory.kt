@@ -43,8 +43,7 @@ internal class DockableEditorContainerFactory(private val fileEditorManager: Fil
       splitters.createCurrentWindow()
     }
     container = DockableEditorTabbedContainer(splitters, true)
-    container.splitters.startListeningFocus()
-    return container
+    return DockableEditorTabbedContainer(splitters, true)
   }
 
   override fun loadContainerFrom(element: Element): DockContainer {

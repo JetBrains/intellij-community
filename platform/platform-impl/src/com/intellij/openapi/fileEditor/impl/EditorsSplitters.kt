@@ -152,7 +152,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   @JvmField
   internal var insideChange: Int = 0
 
-  private val focusWatcher: MyFocusWatcher
   private val iconUpdaterAlarm = Alarm(this)
 
   val currentFile: VirtualFile?
@@ -189,14 +188,17 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     background = JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor())
     val l = PropertyChangeListener { e ->
       val propName = e.propertyName
-      if ("Editor.background" == propName || "Editor.foreground" == propName || "Editor.shortcutForeground" == propName) {
+      if (propName == "Editor.background" || propName == "Editor.foreground" || propName == "Editor.shortcutForeground") {
         repaint()
       }
     }
     UIManager.getDefaults().addPropertyChangeListener(l)
     Disposer.register(this) { UIManager.getDefaults().removePropertyChangeListener(l) }
-    focusWatcher = MyFocusWatcher()
+
+    val focusWatcher = MyFocusWatcher()
+    focusWatcher.install(this)
     Disposer.register(this) { focusWatcher.deinstall(this) }
+
     focusTraversalPolicy = MyFocusTraversalPolicy(this)
     isFocusTraversalPolicyProvider = true
     transferHandler = MyTransferHandler(this)
@@ -223,10 +225,6 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     currentWindow = null
     // revalidate doesn't repaint correctly after "Close All"
     repaint()
-  }
-
-  fun startListeningFocus() {
-    focusWatcher.install(this)
   }
 
   override fun paintComponent(g: Graphics) {

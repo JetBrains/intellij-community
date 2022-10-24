@@ -56,6 +56,12 @@ inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): L
 }
 
 @ApiStatus.Internal
+@ApiStatus.Experimental
+suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): Deferred<T> {
+  return (this as ComponentManagerEx).getServiceAsync(T::class.java)
+}
+
+@ApiStatus.Internal
 interface ComponentManagerEx {
   @ApiStatus.Experimental
   @ApiStatus.Internal
