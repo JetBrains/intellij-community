@@ -139,6 +139,10 @@
                  description="Lessons logic will be changed like using not native localization."
                  defaultValue="FALSE"
                  restartRequired="false"/>
+    <registryKey key="ift.enable.in.new.ui"
+                 description="Whether IFT lessons and promoters should be enabled in new UI."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
   </extensions>
 
 
