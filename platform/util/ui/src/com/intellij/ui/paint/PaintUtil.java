@@ -14,8 +14,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
@@ -158,6 +157,42 @@ public final class PaintUtil {
       devValue += rm == FLOOR ? -1 : 1;
     }
     return devValue / scale;
+  }
+
+  /**
+   * Returns the value in the user space aligned to an integer value in both user and device spaces
+   * <p>
+   *   Doesn't work if scaling is not a multiple of 0.25, returns the original value in such a case.
+   * </p>
+   *
+   * @param usrValue the original value
+   * @param ctx the scaling context to determine the system scale
+   * @param rm the rounding mode, only FLOOR and CEIL are supported
+   * @param pm the parity mode to align with in the device space
+   * @return the aligned value or the original value if scaling is impossible to align (weird custom scaling)
+   */
+  public static int alignIntToInt(int usrValue, @NotNull ScaleContext ctx, @NotNull RoundingMode rm, @Nullable ParityMode pm) {
+    if (rm != FLOOR && rm != CEIL) {
+      throw new IllegalArgumentException("Invalid value of rounding mode: " + rm + ", only FLOOR and CEIL are supported");
+    }
+    int result = usrValue;
+    int attempts = 0;
+    final int maxAttempts = pm == null ? 4 : 8; // should be enough if scaling is a multiple of 0.25
+    while (result >= 0 && isNotSuitablyAlignedToInt(result, ctx, pm)) {
+      result += rm == FLOOR ? -1 : 1;
+      if (++attempts > maxAttempts) {
+        return usrValue; // unusual scaling (not a multiple of 0.25)
+      }
+    }
+    return result;
+  }
+
+  private static boolean isNotSuitablyAlignedToInt(int value, @NotNull ScaleContext ctx, @Nullable ParityMode pm) {
+    double scaled = devValue(value, ctx);
+    int rounded = (int) Math.round(scaled);
+    boolean aligned = Math.abs(rounded - scaled) < 0.0001;
+    boolean parityMatches = pm == null || ParityMode.of(rounded) == pm;
+    return !(aligned && parityMatches);
   }
 
   /**

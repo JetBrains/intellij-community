@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
@@ -184,18 +185,40 @@ final class PaintersHelper implements Painter.Listener {
 
     final Map<GraphicsConfiguration, Cached> cachedMap = new HashMap<>();
 
-    void executePaint(@NotNull Graphics2D g,
-                      @NotNull Component component,
-                      @NotNull Image image,
-                      @NotNull IdeBackgroundUtil.Fill fillType,
-                      @NotNull IdeBackgroundUtil.Anchor anchor,
-                      float alpha,
-                      @NotNull Insets insets) {
-      int cw0 = component.getWidth();
-      int ch0 = component.getHeight();
-      Insets i = JBUI.insets(insets.top * ch0 / 100, insets.left * cw0 / 100, insets.bottom * ch0 / 100, insets.right * cw0 / 100);
-      int cw = cw0 - i.left - i.right;
-      int ch = ch0 - i.top - i.bottom;
+    void executePaint(
+      @NotNull Graphics2D g,
+      @NotNull Component component,
+      @NotNull Image image,
+      @NotNull IdeBackgroundUtil.Fill fillType,
+      @NotNull IdeBackgroundUtil.Anchor anchor,
+      float alpha,
+      @NotNull Insets insets
+    ) {
+      final var ctx = ScaleContext.create(g);
+      // Round up because we'd rather have the image clipped by 1 pixel than leave one pixel without background.
+      final int componentWidth = PaintUtil.alignIntToInt(component.getWidth(), ctx, PaintUtil.RoundingMode.CEIL, null);
+      final int componentHeight = PaintUtil.alignIntToInt(component.getHeight(), ctx, PaintUtil.RoundingMode.CEIL, null);
+      executePaint(g, componentWidth, componentHeight, image, fillType, anchor, alpha, insets);
+    }
+
+    private void executePaint(
+      @NotNull Graphics2D g,
+      int componentWidth,
+      int componentHeight,
+      @NotNull Image image,
+      @NotNull IdeBackgroundUtil.Fill fillType,
+      @NotNull IdeBackgroundUtil.Anchor anchor,
+      float alpha,
+      @NotNull Insets insets
+    ) {
+      Insets i = JBUI.insets(
+        insets.top * componentHeight / 100,
+        insets.left * componentWidth / 100,
+        insets.bottom * componentHeight / 100,
+        insets.right * componentWidth / 100
+      );
+      int cw = componentWidth - i.left - i.right;
+      int ch = componentHeight - i.top - i.bottom;
       int w = image.getWidth(null);
       int h = image.getHeight(null);
       if (w <= 0 || h <= 0) return;
