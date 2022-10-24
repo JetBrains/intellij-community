@@ -1,6 +1,7 @@
 package org.jetbrains.completion.full.line.platform
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -54,7 +55,7 @@ class FullLineContributor : CompletionContributor(), DumbAware {
     }
     val head = firstTokenStorage.prefixFromPreviousSession().removeSuffix(prefix)
 
-    val fullLineResultSet = result.withPrefixMatcher(PlainPrefixMatcher(head + prefix)).apply {
+    val fullLineResultSet = result.withPrefixMatcher(CamelHumpMatcher(head + prefix)).apply {
       addLookupAdvertisement(message("full.line.lookup.advertisement.tab"))
       restartCompletionWhenNothingMatches()
     }
