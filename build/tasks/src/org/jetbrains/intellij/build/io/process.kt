@@ -5,11 +5,11 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.BufferedReader
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -99,7 +99,7 @@ suspend fun runJava(mainClass: String,
           }
         }
         finally {
-          toDelete.forEach(Files::deleteIfExists)
+          toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }
     }
@@ -242,7 +242,7 @@ suspend fun runProcess(args: List<String>,
           }
         }
         finally {
-          toDelete.forEach(Files::deleteIfExists)
+          toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }
     }
