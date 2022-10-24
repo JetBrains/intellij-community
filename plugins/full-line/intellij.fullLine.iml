@@ -20,10 +20,9 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.fullLine.core" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
-    <orderEntry type="module" module-name="intellij.fullLine.core" />
     <orderEntry type="module-library">
       <library name="fl-inference" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.21">
