@@ -3,12 +3,14 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
@@ -16,14 +18,15 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 
 internal interface GitLabMergeRequestsListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+
+  val repository: String
 
   val listDataFlow: Flow<ListDataUpdate>
   val canLoadMoreState: StateFlow<Boolean>
 
   val loadingState: StateFlow<Boolean>
   val errorState: StateFlow<Throwable?>
-
-  val repository: String
 
   fun requestMore()
 
@@ -39,6 +42,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
   parentCs: CoroutineScope,
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
   override val repository: String,
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
   : GitLabMergeRequestsListViewModel {
 

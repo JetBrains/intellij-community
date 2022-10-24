@@ -55,6 +55,7 @@ internal class GitLabToolWindowTabViewModel(scope: CoroutineScope,
         scope,
         filterVm = filterVm,
         repository = connection.repo.repository.projectPath.name,
+        avatarIconsProvider = avatarIconsProvider,
         loaderSupplier = { filtersValue ->
           GitLabMergeRequestsListLoader(connection.apiClient, connection.repo.repository, filtersValue.toSearchQuery())
         }
