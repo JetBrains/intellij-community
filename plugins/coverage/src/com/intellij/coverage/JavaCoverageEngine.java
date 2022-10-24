@@ -21,12 +21,13 @@ import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -37,7 +38,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
@@ -64,9 +64,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -332,22 +334,19 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
-    CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-    if (compilerModuleExtension == null) {
-      return false;
-    }
-
-    final @Nullable File outputpath = getOutputpath(compilerModuleExtension);
-    final @Nullable File testOutputpath = getTestOutputpath(compilerModuleExtension);
-
-    if (isModuleOutputNeededAndisMissing(module, JavaSourceRootType.SOURCE, outputpath)
-        || suite.isTrackTestFolders() && isModuleOutputNeededAndisMissing(module, JavaSourceRootType.TEST_SOURCE, testOutputpath)) {
+    final CoverageDataManager dataManager = CoverageDataManager.getInstance(module.getProject());
+    final boolean includeTests = suite.isTrackTestFolders();
+    final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
+    final boolean rootsExist = roots.length >= (includeTests ? 2 : 1) && ContainerUtil.all(roots, (root) -> root != null && root.exists());
+    if (!rootsExist) {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
-      LOG.debug("Going to ask to rebuild project. Module output was [" + outputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrl() + "]\n" +
-                "Test output was [" + testOutputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrlForTests() + "] and  suite.isTrackTestFolders() is " + suite.isTrackTestFolders(),
-                new Throwable("trace"));
+      LOG.debug("Going to ask to rebuild project. Include tests:" + includeTests +
+                ". Module: " + module.getName() + ".  Output roots are: ");
+      for (VirtualFile root : roots) {
+        LOG.debug(root.getPath() + " exists: " + root.exists());
+      }
       final Notification notification = new Notification("Coverage",
                                                          JavaCoverageBundle.message("project.is.out.of.date"),
                                                          JavaCoverageBundle.message("project.class.files.are.out.of.date"),
@@ -378,16 +377,6 @@ public class JavaCoverageEngine extends CoverageEngine {
     final @Nullable String outputpathUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
     final @Nullable File outputpath = outputpathUrl != null ? new File(VfsUtilCore.urlToPath(outputpathUrl)) : null;
     return outputpath;
-  }
-
-  private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
-    CompilerManager compilerManager = CompilerManager.getInstance(module.getProject());
-    return ContainerUtil.exists(ModuleRootManager.getInstance(module).getSourceRoots(rootType),
-                                vFile -> !compilerManager.isExcludedFromCompilation(vFile));
-  }
-
-  private static boolean isModuleOutputNeededAndisMissing(Module module, final JavaSourceRootType rootType, @Nullable File outputPath) {
-    return (outputPath == null || !outputPath.exists()) && isModuleOutputNeeded(module, rootType);
   }
 
   @Override
