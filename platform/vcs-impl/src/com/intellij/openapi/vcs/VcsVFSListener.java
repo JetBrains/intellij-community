@@ -683,14 +683,13 @@ public abstract class VcsVFSListener implements Disposable {
 
   private class MyAsyncVfsListener implements AsyncFileListener {
 
-    private boolean isBeforeEvent(@NotNull VFileEvent event) {
-      return event instanceof VFileContentChangeEvent
-             || event instanceof VFileDeleteEvent
+    private static boolean isBeforeEvent(@NotNull VFileEvent event) {
+      return event instanceof VFileDeleteEvent
              || event instanceof VFileMoveEvent
              || event instanceof VFilePropertyChangeEvent;
     }
 
-    private boolean isAfterEvent(@NotNull VFileEvent event) {
+    private static boolean isAfterEvent(@NotNull VFileEvent event) {
       return event instanceof VFileCreateEvent
              || event instanceof VFileCopyEvent
              || event instanceof VFileMoveEvent;
@@ -699,14 +698,15 @@ public abstract class VcsVFSListener implements Disposable {
     @Nullable
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      List<VFileContentChangeEvent> contentChangedEvents = new ArrayList<>();
       List<VFileEvent> beforeEvents = new ArrayList<>();
       List<VFileEvent> afterEvents = new ArrayList<>();
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
-        if (event instanceof VFileContentChangeEvent) {
-          VirtualFile file = Objects.requireNonNull(event.getFile());
+        if (event instanceof VFileContentChangeEvent contentChangeEvent) {
+          VirtualFile file = contentChangeEvent.getFile();
           if (isUnderMyVcs(file)) {
-            beforeEvents.add(event);
+            contentChangedEvents.add(contentChangeEvent);
           }
         }
         else if (isEventAccepted(event)) {
@@ -718,14 +718,14 @@ public abstract class VcsVFSListener implements Disposable {
           }
         }
       }
-      return beforeEvents.isEmpty() && afterEvents.isEmpty() ? null : new ChangeApplier() {
+      return contentChangedEvents.isEmpty() && beforeEvents.isEmpty() && afterEvents.isEmpty() ? null : new ChangeApplier() {
         @Override
         public void beforeVfsChange() {
-          for (VFileEvent event : beforeEvents) {
-            if (event instanceof VFileContentChangeEvent) {
-              beforeContentsChange((VFileContentChangeEvent)event);
-            }
+          for (VFileContentChangeEvent event : contentChangedEvents) {
+            beforeContentsChange(event);
+          }
 
+          for (VFileEvent event : beforeEvents) {
             if (isEventIgnored(event)) {
               continue;
             }
