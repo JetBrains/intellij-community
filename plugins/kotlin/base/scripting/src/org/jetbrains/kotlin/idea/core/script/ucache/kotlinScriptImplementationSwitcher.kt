@@ -14,8 +14,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 
+const val KOTLIN_SCRIPTS_AS_ENTITIES = "kotlin.scripts.as.entities"
+
 val scriptsAsEntities: Boolean
-    get() = Registry.`is`("kotlin.scripts.as.entities", false)
+    get() = Registry.`is`(KOTLIN_SCRIPTS_AS_ENTITIES, false)
 
 
 /**
