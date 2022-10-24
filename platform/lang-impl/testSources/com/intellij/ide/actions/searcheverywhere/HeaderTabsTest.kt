@@ -54,17 +54,4 @@ class HeaderTabsTest {
       Assert.assertEquals(expected, actual)
     }
   }
-
-  private fun createDumbContributor(id: String, showTab: Boolean): SearchEverywhereContributor<Unit> =
-    object : SearchEverywhereContributor<Unit> {
-      override fun getSearchProviderId(): String = id
-      override fun getGroupName(): String = id
-      override fun getSortWeight(): Int = 0
-      override fun showInFindResults(): Boolean = false
-      override fun isShownInSeparateTab(): Boolean = showTab
-      override fun getElementsRenderer(): ListCellRenderer<in Unit> = ListCellRenderer { _, _, _, _, _ -> JPanel() }
-      override fun getDataForItem(element: Unit, dataId: String): Any? = null
-      override fun processSelectedItem(selected: Unit, modifiers: Int, searchText: String): Boolean = false
-      override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in Unit>) {}
-    }
 }
