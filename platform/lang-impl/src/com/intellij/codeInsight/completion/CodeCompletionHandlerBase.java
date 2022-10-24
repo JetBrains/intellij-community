@@ -55,6 +55,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -360,16 +361,18 @@ public class CodeCompletionHandlerBase {
       return null;
     }
 
-    return indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
-      OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
-      indicator.registerChildDisposable(finalOffsets::getOffsets);
+    return indicator.getCompletionThreading()
+      .startThread(indicator, Context.current().wrap(() -> AsyncCompletion.tryReadOrCancel(indicator, Context.current().wrap(() -> {
+        OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
+        indicator.registerChildDisposable(finalOffsets::getOffsets);
 
-      CompletionParameters parameters = CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
-      parameters.setIsTestingMode(isTestingMode());
-      indicator.setParameters(parameters);
+        CompletionParameters parameters =
+          CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
+        parameters.setIsTestingMode(isTestingMode());
+        indicator.setParameters(parameters);
 
-      indicator.runContributors(initContext);
-    }));
+        indicator.runContributors(initContext);
+      }))));
   }
 
   private static void checkForExceptions(Future<?> future) {
