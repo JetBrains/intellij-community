@@ -459,7 +459,7 @@ public final class ListPluginComponent extends JPanel {
         myMetricsPanel.remove(myVendor);
       }
       if (myVersion != null) {
-        myMetricsPanel.remove(myVendor);
+        myMetricsPanel.remove(myVersion);
       }
 
       String version = NewUiUtil.getVersion(descriptor, myPlugin);
