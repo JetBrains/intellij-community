@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -182,11 +183,19 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
       }
       return result.toArray(PsiElement.EMPTY_ARRAY);
     }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return getSelectedElement();
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      PsiElement element = getSelectedElement();
+      return (DataProvider)slowId -> getSlowData(slowId, element);
     }
     else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
+    }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @Nullable PsiElement element) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return element;
     }
     return null;
   }
