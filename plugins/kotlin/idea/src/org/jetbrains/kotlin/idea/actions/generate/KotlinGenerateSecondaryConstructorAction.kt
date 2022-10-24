@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.orEmpty
 import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
@@ -163,7 +164,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             for (parameter in superConstructor.valueParameters) {
                 val isVararg = parameter.varargElementType != null
 
-                val paramName = Fe10KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator).quoteIfNeeded()
 
                 val typeToUse = parameter.varargElementType ?: parameter.type
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(
