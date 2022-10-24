@@ -45,6 +45,9 @@ open class ChildSingleFirstEntityImpl(val dataSource: ChildSingleFirstEntityData
   override val firstData: String
     get() = dataSource.firstData
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -196,7 +199,6 @@ class ChildSingleFirstEntityData : WorkspaceEntityData<ChildSingleFirstEntity>()
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -205,7 +207,6 @@ class ChildSingleFirstEntityData : WorkspaceEntityData<ChildSingleFirstEntity>()
   override fun createEntity(snapshot: EntityStorage): ChildSingleFirstEntity {
     return getCached(snapshot) {
       val entity = ChildSingleFirstEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

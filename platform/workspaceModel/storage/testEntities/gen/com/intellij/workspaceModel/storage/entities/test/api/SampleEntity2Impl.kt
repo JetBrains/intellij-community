@@ -36,6 +36,9 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
   override val optionalData: String?
     get() = dataSource.optionalData
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -145,7 +148,6 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -154,7 +156,6 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   override fun createEntity(snapshot: EntityStorage): SampleEntity2 {
     return getCached(snapshot) {
       val entity = SampleEntity2Impl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

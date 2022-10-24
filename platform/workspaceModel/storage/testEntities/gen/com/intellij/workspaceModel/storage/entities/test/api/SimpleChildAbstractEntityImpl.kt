@@ -39,6 +39,9 @@ open class SimpleChildAbstractEntityImpl(val dataSource: SimpleChildAbstractEnti
   override val parentInList: CompositeAbstractEntity
     get() = snapshot.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -166,7 +169,6 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -175,7 +177,6 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
   override fun createEntity(snapshot: EntityStorage): SimpleChildAbstractEntity {
     return getCached(snapshot) {
       val entity = SimpleChildAbstractEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

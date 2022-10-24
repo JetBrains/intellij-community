@@ -38,6 +38,9 @@ open class NullableVFUEntityImpl(val dataSource: NullableVFUEntityData) : Nullab
   override val fileProperty: VirtualFileUrl?
     get() = dataSource.fileProperty
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -139,7 +142,6 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -148,7 +150,6 @@ class NullableVFUEntityData : WorkspaceEntityData<NullableVFUEntity>() {
   override fun createEntity(snapshot: EntityStorage): NullableVFUEntity {
     return getCached(snapshot) {
       val entity = NullableVFUEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

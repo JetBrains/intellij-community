@@ -39,6 +39,9 @@ open class SimpleSymbolicIdEntityImpl(val dataSource: SimpleSymbolicIdEntityData
   override val sealedClassWithLinks: SealedClassWithLinks
     get() = dataSource.sealedClassWithLinks
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -168,7 +171,6 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -177,7 +179,6 @@ class SimpleSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<
   override fun createEntity(snapshot: EntityStorage): SimpleSymbolicIdEntity {
     return getCached(snapshot) {
       val entity = SimpleSymbolicIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

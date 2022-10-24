@@ -70,6 +70,9 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
   override val sourceRootOrder: SourceRootOrderEntity?
     get() = snapshot.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -398,7 +401,6 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -407,7 +409,6 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
     return getCached(snapshot) {
       val entity = ContentRootEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

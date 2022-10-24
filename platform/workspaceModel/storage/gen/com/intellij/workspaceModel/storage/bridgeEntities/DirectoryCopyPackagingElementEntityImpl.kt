@@ -44,6 +44,9 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
   override val filePath: VirtualFileUrl
     get() = dataSource.filePath
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -179,7 +182,6 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -188,7 +190,6 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   override fun createEntity(snapshot: EntityStorage): DirectoryCopyPackagingElementEntity {
     return getCached(snapshot) {
       val entity = DirectoryCopyPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

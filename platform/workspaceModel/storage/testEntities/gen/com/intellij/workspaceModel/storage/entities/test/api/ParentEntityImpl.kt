@@ -40,6 +40,9 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
   override val child: ChildEntity?
     get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -162,7 +165,6 @@ class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -171,7 +173,6 @@ class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
   override fun createEntity(snapshot: EntityStorage): ParentEntity {
     return getCached(snapshot) {
       val entity = ParentEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

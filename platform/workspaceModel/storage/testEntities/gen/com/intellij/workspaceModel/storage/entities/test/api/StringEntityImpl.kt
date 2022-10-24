@@ -32,6 +32,9 @@ open class StringEntityImpl(val dataSource: StringEntityData) : StringEntity, Wo
   override val data: String
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -120,7 +123,6 @@ class StringEntityData : WorkspaceEntityData<StringEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -129,7 +131,6 @@ class StringEntityData : WorkspaceEntityData<StringEntity>() {
   override fun createEntity(snapshot: EntityStorage): StringEntity {
     return getCached(snapshot) {
       val entity = StringEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

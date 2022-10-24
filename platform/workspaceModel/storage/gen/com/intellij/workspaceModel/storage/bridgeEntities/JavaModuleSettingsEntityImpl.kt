@@ -51,6 +51,9 @@ open class JavaModuleSettingsEntityImpl(val dataSource: JavaModuleSettingsEntity
   override val languageLevelId: String?
     get() = dataSource.languageLevelId
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -230,7 +233,6 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -239,7 +241,6 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   override fun createEntity(snapshot: EntityStorage): JavaModuleSettingsEntity {
     return getCached(snapshot) {
       val entity = JavaModuleSettingsEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

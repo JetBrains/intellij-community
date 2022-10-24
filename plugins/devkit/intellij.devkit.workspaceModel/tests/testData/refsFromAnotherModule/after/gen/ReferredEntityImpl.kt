@@ -39,6 +39,9 @@ open class ReferredEntityImpl(val dataSource: ReferredEntityData) : ReferredEnti
   override val contentRoot: ContentRootEntity?
     get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -173,7 +176,6 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -182,7 +184,6 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
   override fun createEntity(snapshot: EntityStorage): ReferredEntity {
     return getCached(snapshot) {
       val entity = ReferredEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

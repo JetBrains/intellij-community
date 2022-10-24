@@ -33,6 +33,9 @@ open class ChildWithNullsMultipleImpl(val dataSource: ChildWithNullsMultipleData
   override val childData: String
     get() = dataSource.childData
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -121,7 +124,6 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -130,7 +132,6 @@ class ChildWithNullsMultipleData : WorkspaceEntityData<ChildWithNullsMultiple>()
   override fun createEntity(snapshot: EntityStorage): ChildWithNullsMultiple {
     return getCached(snapshot) {
       val entity = ChildWithNullsMultipleImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

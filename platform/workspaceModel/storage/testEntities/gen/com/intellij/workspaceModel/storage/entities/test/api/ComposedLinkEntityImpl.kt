@@ -36,6 +36,9 @@ open class ComposedLinkEntityImpl(val dataSource: ComposedLinkEntityData) : Comp
   override val link: ComposedId
     get() = dataSource.link
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -162,7 +165,6 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -171,7 +173,6 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
   override fun createEntity(snapshot: EntityStorage): ComposedLinkEntity {
     return getCached(snapshot) {
       val entity = ComposedLinkEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

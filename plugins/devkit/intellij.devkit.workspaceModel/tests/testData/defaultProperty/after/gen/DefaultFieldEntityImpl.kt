@@ -34,6 +34,9 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
 
   override var description: String = dataSource.description
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -154,7 +157,6 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -163,7 +165,6 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
   override fun createEntity(snapshot: EntityStorage): DefaultFieldEntity {
     return getCached(snapshot) {
       val entity = DefaultFieldEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

@@ -33,6 +33,9 @@ open class ExcludeUrlEntityImpl(val dataSource: ExcludeUrlEntityData) : ExcludeU
   override val url: VirtualFileUrl
     get() = dataSource.url
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -124,7 +127,6 @@ class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -133,7 +135,6 @@ class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   override fun createEntity(snapshot: EntityStorage): ExcludeUrlEntity {
     return getCached(snapshot) {
       val entity = ExcludeUrlEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

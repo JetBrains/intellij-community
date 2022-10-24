@@ -41,6 +41,9 @@ open class MiddleEntityImpl(val dataSource: MiddleEntityData) : MiddleEntity, Wo
   override val property: String
     get() = dataSource.property
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -172,7 +175,6 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -181,7 +183,6 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   override fun createEntity(snapshot: EntityStorage): MiddleEntity {
     return getCached(snapshot) {
       val entity = MiddleEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

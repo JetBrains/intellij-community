@@ -32,6 +32,9 @@ open class OptionalStringEntityImpl(val dataSource: OptionalStringEntityData) : 
   override val data: String?
     get() = dataSource.data
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -116,7 +119,6 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -125,7 +127,6 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
   override fun createEntity(snapshot: EntityStorage): OptionalStringEntity {
     return getCached(snapshot) {
       val entity = OptionalStringEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

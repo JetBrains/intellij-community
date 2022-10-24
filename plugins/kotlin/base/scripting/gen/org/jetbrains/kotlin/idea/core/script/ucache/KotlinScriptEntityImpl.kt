@@ -44,6 +44,9 @@ open class KotlinScriptEntityImpl(val dataSource: KotlinScriptEntityData) : Kotl
   override val dependencies: List<LibraryEntity>
     get() = snapshot.extractOneToManyChildren<LibraryEntity>(DEPENDENCIES_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -189,7 +192,6 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Kotl
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -198,7 +200,6 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Kotl
   override fun createEntity(snapshot: EntityStorage): KotlinScriptEntity {
     return getCached(snapshot) {
       val entity = KotlinScriptEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

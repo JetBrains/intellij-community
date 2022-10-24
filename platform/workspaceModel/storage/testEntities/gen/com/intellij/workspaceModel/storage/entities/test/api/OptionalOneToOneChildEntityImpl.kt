@@ -42,6 +42,9 @@ open class OptionalOneToOneChildEntityImpl(val dataSource: OptionalOneToOneChild
   override val parent: OptionalOneToOneParentEntity?
     get() = snapshot.extractOneToOneParent(PARENT_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -169,7 +172,6 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -178,7 +180,6 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
   override fun createEntity(snapshot: EntityStorage): OptionalOneToOneChildEntity {
     return getCached(snapshot) {
       val entity = OptionalOneToOneChildEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

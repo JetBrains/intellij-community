@@ -47,6 +47,9 @@ open class ArtifactPropertiesEntityImpl(val dataSource: ArtifactPropertiesEntity
   override val propertiesXmlTag: String?
     get() = dataSource.propertiesXmlTag
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -198,7 +201,6 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -207,7 +209,6 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun createEntity(snapshot: EntityStorage): ArtifactPropertiesEntity {
     return getCached(snapshot) {
       val entity = ArtifactPropertiesEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

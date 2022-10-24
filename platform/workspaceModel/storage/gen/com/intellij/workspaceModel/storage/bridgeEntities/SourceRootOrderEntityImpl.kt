@@ -45,6 +45,9 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
   override val orderOfSourceRoots: List<VirtualFileUrl>
     get() = dataSource.orderOfSourceRoots
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -205,7 +208,6 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -214,7 +216,6 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   override fun createEntity(snapshot: EntityStorage): SourceRootOrderEntity {
     return getCached(snapshot) {
       val entity = SourceRootOrderEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

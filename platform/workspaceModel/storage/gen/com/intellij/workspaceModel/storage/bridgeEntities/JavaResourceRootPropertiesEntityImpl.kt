@@ -45,6 +45,9 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
   override val relativeOutputPath: String
     get() = dataSource.relativeOutputPath
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -199,7 +202,6 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -208,7 +210,6 @@ class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRoo
   override fun createEntity(snapshot: EntityStorage): JavaResourceRootPropertiesEntity {
     return getCached(snapshot) {
       val entity = JavaResourceRootPropertiesEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

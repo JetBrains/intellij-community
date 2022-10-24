@@ -66,6 +66,9 @@ open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingEleme
   override val propertiesXmlTag: String
     get() = dataSource.propertiesXmlTag
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -304,7 +307,6 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -313,7 +315,6 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   override fun createEntity(snapshot: EntityStorage): CustomPackagingElementEntity {
     return getCached(snapshot) {
       val entity = CustomPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

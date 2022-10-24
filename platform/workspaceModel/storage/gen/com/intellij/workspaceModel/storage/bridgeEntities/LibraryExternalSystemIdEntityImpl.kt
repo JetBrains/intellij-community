@@ -43,6 +43,9 @@ open class LibraryExternalSystemIdEntityImpl(val dataSource: LibraryExternalSyst
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -180,7 +183,6 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -189,7 +191,6 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
   override fun createEntity(snapshot: EntityStorage): LibraryExternalSystemIdEntity {
     return getCached(snapshot) {
       val entity = LibraryExternalSystemIdEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

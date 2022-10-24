@@ -58,6 +58,9 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
   override val children: List<TreeMultiparentLeafEntity>
     get() = snapshot.extractOneToManyChildren<TreeMultiparentLeafEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -288,7 +291,6 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -297,7 +299,6 @@ class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEnt
   override fun createEntity(snapshot: EntityStorage): TreeMultiparentLeafEntity {
     return getCached(snapshot) {
       val entity = TreeMultiparentLeafEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

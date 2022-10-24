@@ -42,6 +42,9 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
   override val children: List<ChildWithNullsMultiple>
     get() = snapshot.extractOneToManyChildren<ChildWithNullsMultiple>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -186,7 +189,6 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -195,7 +197,6 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
   override fun createEntity(snapshot: EntityStorage): ParentWithNullsMultiple {
     return getCached(snapshot) {
       val entity = ParentWithNullsMultipleImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

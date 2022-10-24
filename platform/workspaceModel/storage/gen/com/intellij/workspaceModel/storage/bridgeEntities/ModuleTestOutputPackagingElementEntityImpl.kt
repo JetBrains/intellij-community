@@ -47,6 +47,9 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
   override val module: ModuleId?
     get() = dataSource.module
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -229,7 +232,6 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -238,7 +240,6 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   override fun createEntity(snapshot: EntityStorage): ModuleTestOutputPackagingElementEntity {
     return getCached(snapshot) {
       val entity = ModuleTestOutputPackagingElementEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

@@ -46,6 +46,9 @@ open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEnti
   override val customModuleOptions: Map<String, String>
     get() = dataSource.customModuleOptions
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -193,7 +196,6 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -202,7 +204,6 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   override fun createEntity(snapshot: EntityStorage): ModuleCustomImlDataEntity {
     return getCached(snapshot) {
       val entity = ModuleCustomImlDataEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

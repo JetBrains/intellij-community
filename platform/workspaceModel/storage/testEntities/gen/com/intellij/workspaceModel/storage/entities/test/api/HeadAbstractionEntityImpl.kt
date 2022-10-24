@@ -42,6 +42,9 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
   override val child: CompositeBaseEntity?
     get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -165,7 +168,6 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -174,7 +176,6 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
   override fun createEntity(snapshot: EntityStorage): HeadAbstractionEntity {
     return getCached(snapshot) {
       val entity = HeadAbstractionEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

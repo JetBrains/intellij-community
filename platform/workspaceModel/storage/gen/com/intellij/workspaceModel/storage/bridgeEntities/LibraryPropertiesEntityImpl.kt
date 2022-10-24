@@ -47,6 +47,9 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
   override val propertiesXmlTag: String?
     get() = dataSource.propertiesXmlTag
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -194,7 +197,6 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -203,7 +205,6 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   override fun createEntity(snapshot: EntityStorage): LibraryPropertiesEntity {
     return getCached(snapshot) {
       val entity = LibraryPropertiesEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

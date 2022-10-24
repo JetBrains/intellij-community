@@ -35,6 +35,9 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
   override val descriptor: Descriptor
     get() = dataSource.descriptor
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -138,7 +141,6 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -147,7 +149,6 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   override fun createEntity(snapshot: EntityStorage): ProjectModelTestEntity {
     return getCached(snapshot) {
       val entity = ProjectModelTestEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

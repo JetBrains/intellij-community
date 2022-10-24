@@ -44,6 +44,9 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
   override val path: List<String>
     get() = dataSource.path
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -202,7 +205,6 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -211,7 +213,6 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
     return getCached(snapshot) {
       val entity = ModuleGroupPathEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

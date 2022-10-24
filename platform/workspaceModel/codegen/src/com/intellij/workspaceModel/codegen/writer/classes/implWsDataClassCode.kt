@@ -55,7 +55,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line("  modifiable.diff = diff")
         line("  modifiable.snapshot = diff")
         line("  modifiable.id = createEntityId()")
-        line("  modifiable.entitySource = this.entitySource")
         line("}")
         line("modifiable.changedProperty.clear()")
         line("return modifiable")
@@ -65,7 +64,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       sectionNl("override fun createEntity(snapshot: ${EntityStorage::class.fqn}): $javaFullName") {
         section("return getCached(snapshot)") {
           line("val entity = $javaImplName(this)")
-          line("entity.entitySource = entitySource")
           line("entity.snapshot = snapshot")
           line("entity.id = createEntityId()")
           line("entity")

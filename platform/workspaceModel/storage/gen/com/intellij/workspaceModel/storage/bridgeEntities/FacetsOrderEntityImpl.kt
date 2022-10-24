@@ -43,6 +43,9 @@ open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : Facets
   override val moduleEntity: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this)!!
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -201,7 +204,6 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -210,7 +212,6 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   override fun createEntity(snapshot: EntityStorage): FacetsOrderEntity {
     return getCached(snapshot) {
       val entity = FacetsOrderEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity

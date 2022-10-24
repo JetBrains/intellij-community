@@ -38,6 +38,9 @@ open class OoChildWithNullableParentEntityImpl(val dataSource: OoChildWithNullab
   override val parentEntity: OoParentEntity?
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)
 
+  override val entitySource: EntitySource
+    get() = dataSource.entitySource
+
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
@@ -153,7 +156,6 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
       modifiable.diff = diff
       modifiable.snapshot = diff
       modifiable.id = createEntityId()
-      modifiable.entitySource = this.entitySource
     }
     modifiable.changedProperty.clear()
     return modifiable
@@ -162,7 +164,6 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
   override fun createEntity(snapshot: EntityStorage): OoChildWithNullableParentEntity {
     return getCached(snapshot) {
       val entity = OoChildWithNullableParentEntityImpl(this)
-      entity.entitySource = entitySource
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
