@@ -97,5 +97,7 @@
     <string>An application in @@bundle_name@@ requests access to files on a removable volume.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>An application in @@bundle_name@@ requests the ability to send Apple events.</string>
   </dict>
 </plist>
