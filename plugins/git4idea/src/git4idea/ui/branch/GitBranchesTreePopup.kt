@@ -39,6 +39,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -100,7 +101,13 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       warnThatBranchesDivergedIfNeeded()
     }
     installBranchSettingsListener()
-    DataManager.registerDataProvider(component, DataProvider { dataId -> if (POPUP_KEY.`is`(dataId)) this else null })
+    DataManager.registerDataProvider(component, DataProvider { dataId ->
+      when {
+        POPUP_KEY.`is`(dataId) -> this
+        GitBranchActionsUtil.REPOSITORIES_KEY.`is`(dataId) -> treeStep.repositories
+        else -> null
+      }
+    })
   }
 
   private fun warnThatBranchesDivergedIfNeeded() {

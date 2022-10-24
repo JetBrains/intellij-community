@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.popup.KeepingPopupOpenAction
+import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
 
 internal class GitBranchesTreePopupSettings :
@@ -49,7 +50,10 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
     if (projectExist) {
       super.update(e)
     }
-    e.presentation.isEnabledAndVisible = projectExist
+
+    val repositories = e.getData(GitBranchActionsUtil.REPOSITORIES_KEY)
+
+    e.presentation.isEnabledAndVisible = projectExist && repositories.orEmpty().size > 1
   }
 
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)
