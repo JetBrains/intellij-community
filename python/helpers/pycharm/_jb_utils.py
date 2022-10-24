@@ -28,7 +28,7 @@ class FileChangesTracker(object):
     def _get_changes_from(folder, patterns):
         result = {}
         for tmp_folder, sub_dirs, files in os.walk(folder):
-            sub_dirs[:] = [s for s in sub_dirs if not s.startswith(".")]
+            sub_dirs[:] = [s for s in sub_dirs if not s.startswith(".") and s != 'node_modules']
             if any(fnmatch.fnmatch(os.path.basename(tmp_folder), p) for p in patterns):
                 for file in map(lambda f: os.path.join(tmp_folder, f), files):
                     try:
