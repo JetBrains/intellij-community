@@ -223,7 +223,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       String newVarName = generator.byType(JavaPsiPatternUtil.getPatternType(label)).generate(true);
       declarationStatementText += newVarName + "=";
     }
-    if (!JavaPsiPatternUtil.isTotalForType(pattern, selectorType)) {
+    if (!type.isAssignableFrom(selectorType)) {
       declarationStatementText += "(" + type.getPresentableText() + ")";
     }
     declarationStatementText += selector.getText() + ";";
@@ -273,7 +273,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
         String newVarName = generator.byType(type).generate(true);
         declarationStatementText += newVarName + "=";
       }
-      if (!JavaPsiPatternUtil.isTotalForType(deconstructionComponent, components[i].getType())) {
+      if (!type.isAssignableFrom(components[i].getType())) {
         declarationStatementText += "(" + type.getPresentableText() + ")";
       }
       declarationStatementText += variable.getName() + "." + components[i].getName() + "();";

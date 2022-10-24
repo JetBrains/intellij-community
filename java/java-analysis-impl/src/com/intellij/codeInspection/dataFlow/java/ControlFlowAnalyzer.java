@@ -1777,8 +1777,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
     CFGBuilder builder = new CFGBuilder(this);
     DfaVariableValue expressionValue;
-    PsiPatternVariable patternVariable = pattern == null ? null : JavaPsiPatternUtil.getPatternVariable(pattern);
-    if (patternVariable == null) {
+    if (pattern == null) {
       if (checkType == null) {
         pushUnknown();
       }

@@ -30,14 +30,14 @@ public class Basic {
   Generic<C> genericC;
 
   <T extends Super> void testGenerics(T p, Pair<T> pair1, Pair<? extends Super> pair2) {
-    switch(p) {
-      case SuperChild sc -> {}
-      case SuperRecord sr -> {}
-    }
     switch (p) {
       case SuperChild superChild -> {}
       case SuperRecord(C i) -> {}
       case SuperRecord(D i) -> {}
+    }
+    switch(p) {
+      case SuperChild sc -> {}
+      case SuperRecord sr -> {}
     }
     switch (pair1.x()) {
       case SuperChild sc -> {}
