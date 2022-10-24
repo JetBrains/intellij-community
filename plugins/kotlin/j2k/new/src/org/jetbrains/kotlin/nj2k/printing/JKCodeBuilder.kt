@@ -427,7 +427,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitSuperExpressionRaw(superExpression: JKSuperExpression) {
             printer.print("super")
-            if (superExpression.superTypeQualifier != null) {
+            val numberOfDirectSupertypes = superExpression.parentOfType<JKClass>()?.inheritance?.supertypeCount() ?: 0
+            if (superExpression.superTypeQualifier != null && numberOfDirectSupertypes > 1) {
                 printer.par(ParenthesisKind.ANGLE) {
                     printer.renderSymbol(superExpression.superTypeQualifier, superExpression)
                 }

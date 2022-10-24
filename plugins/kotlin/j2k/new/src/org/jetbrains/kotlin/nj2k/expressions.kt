@@ -358,6 +358,9 @@ fun JKStatement.isEmpty(): Boolean = when (this) {
 fun JKInheritanceInfo.present(): Boolean =
     extends.isNotEmpty() || implements.isNotEmpty()
 
+fun JKInheritanceInfo.supertypeCount(): Int =
+    extends.size + implements.size
+
 fun JKClass.isLocalClass(): Boolean =
     parent !is JKClassBody && parent !is JKFile
 
