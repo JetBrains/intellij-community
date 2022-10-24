@@ -20,6 +20,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -115,7 +116,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
-      String name = Executor.shortenNameIfNeeded(settings.getName());
+      String name = shortenNameIfNeeded(settings.getName());
       if (!ExperimentalUI.isNewUI()) { // there's a separate combo-box for execution targets in new UI
         if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
           name += " | " + target.getDisplayName();
@@ -357,7 +358,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", shortenNameIfNeeded(settings.getName())));
         //noinspection DialogTitleCapitalization
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
@@ -495,7 +496,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       getTemplatePresentation().setPerformGroup(true);
 
       String fullName = configuration.getName();
-      String name = Executor.shortenNameIfNeeded(fullName);
+      String name = shortenNameIfNeeded(fullName);
       if (name.isEmpty()) {
         name = " ";
       }
@@ -563,6 +564,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+  }
+
+  private static @NotNull @NlsSafe String shortenNameIfNeeded(@NotNull @NlsSafe String fullName) {
+    if (ExperimentalUI.isNewUI()) {
+      return StringUtil.shortenTextWithEllipsis(fullName, 25, 8, true);
+    }
+    else {
+      return Executor.shortenNameIfNeeded(fullName);
     }
   }
 }
