@@ -1956,6 +1956,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/enum/enumImplementsSeveralInterfaces.java");
         }
 
+        @TestMetadata("enumValueOf.java")
+        public void testEnumValueOf() throws Exception {
+            runTest("testData/newJ2k/enum/enumValueOf.java");
+        }
+
         @TestMetadata("enumWithNameField.java")
         public void testEnumWithNameField() throws Exception {
             runTest("testData/newJ2k/enum/enumWithNameField.java");

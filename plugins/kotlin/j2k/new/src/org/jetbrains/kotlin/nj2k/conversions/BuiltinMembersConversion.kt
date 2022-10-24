@@ -346,6 +346,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.Enum.name") convertTo Field("kotlin.Enum.name"),
             Method("java.lang.Enum.ordinal") convertTo Field("kotlin.Enum.ordinal"),
+            Method("java.lang.Enum.valueOf") convertTo CustomExpression { expression ->
+                val arguments = (expression as JKCallExpression).arguments.arguments
+                if (arguments.size != 2) return@CustomExpression expression
+                val classLiteral = arguments[0]::value.detached() as? JKClassLiteralExpression ?: return@CustomExpression expression
+                val enumEntryName = arguments[1]::value.detached()
+                val typeElement = classLiteral::classType.detached()
+                JKCallExpressionImpl(
+                    symbolProvider.provideMethodSymbol("kotlin.enumValueOf"),
+                    JKArgumentList(enumEntryName),
+                    JKTypeArgumentList(listOf(typeElement)),
+                    typeElement.type
+                )
+            } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Throwable.getCause") convertTo Field("kotlin.Throwable.cause"),
             Method("java.lang.Throwable.getMessage") convertTo Field("kotlin.Throwable.message"),
