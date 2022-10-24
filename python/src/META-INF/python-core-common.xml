@@ -586,6 +586,10 @@
     <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
                     interface="com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
+                    interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -675,6 +679,10 @@
 
     <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
+
+
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
