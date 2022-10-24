@@ -105,9 +105,8 @@ public final class Mock {
     }
 
     @Override
-    public @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable) {
+    public void notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-      return ActionCallback.DONE;
     }
 
     @Override
@@ -210,18 +209,16 @@ public final class Mock {
     }
 
     @Override
-    public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
-      return VirtualFile.EMPTY_ARRAY;
+    public @NotNull List<VirtualFile> getSiblings(@NotNull VirtualFile file) {
+      return Collections.emptyList();
     }
 
     @Override
     public void createSplitter(int orientation, @Nullable EditorWindow window) {
-
     }
 
     @Override
     public void changeSplitterOrientation() {
-
     }
 
     @Override

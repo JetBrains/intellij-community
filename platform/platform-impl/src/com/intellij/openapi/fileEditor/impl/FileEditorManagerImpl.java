@@ -87,6 +87,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -111,6 +112,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WINDOW;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
@@ -167,7 +170,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
   }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL);
 
-  private final BusyObject.Impl.Simple myBusyObject = new BusyObject.Impl.Simple();
+  private final SimpleBusyObject myBusyObject = new SimpleBusyObject();
 
   /**
    * Removes invalid myEditor and updates "modified" status.
@@ -273,7 +276,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
                   splitter.getProportion() == splitter.getMinimumProportion())) ||
                 (splitter.getProportion() == splitter.getMinProportion(false) ||
                  splitter.getProportion() == splitter.getMaximumProportion())) {
-              Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
+              var pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
               for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
                 Splitter s = pair.getFirst();
                 s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
@@ -310,8 +313,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   private void dumbModeFinished(@NotNull Project project) {
-    VirtualFile[] files = getOpenFiles();
-    for (VirtualFile file : files) {
+    for (VirtualFile file : getOpenedFiles()) {
       List<EditorComposite> composites = getAllComposites(file);
       List<FileEditorProvider> existingProviders = ContainerUtil.flatMap(composites, EditorComposite::getAllProviders);
       Set<String> existingIds = ContainerUtil.map2Set(existingProviders, FileEditorProvider::getEditorTypeId);
@@ -322,8 +324,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       // need to open additional non dumb-aware editors
       for (EditorComposite composite : composites) {
         for (FileEditorProvider provider : toOpen) {
-          FileEditor editor = provider.createEditor(myProject, file);
-          composite.addEditor(editor, provider);
+          composite.addEditor(provider.createEditor(myProject, file), provider);
         }
       }
       updateFileBackgroundColor(file);
@@ -443,9 +444,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    */
   public @NotNull Color getFileColor(@NotNull VirtualFile file) {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
-    if (statusColor == null) statusColor = UIUtil.getLabelForeground();
-    return statusColor;
+    Color statusColor = fileStatusManager == null ? UIUtil.getLabelForeground() : fileStatusManager.getStatus(file).getColor();
+    return statusColor == null ? UIUtil.getLabelForeground() : statusColor;
   }
 
   public boolean isProblem(@NotNull VirtualFile file) {
@@ -470,7 +470,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public void updateFilePresentation(@NotNull VirtualFile file) {
-    if (!isFileOpen(file)) return;
+    if (!isFileOpen(file)) {
+      return;
+    }
 
     updateFileName(file);
     queueUpdateFile(file);
@@ -482,16 +484,16 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    */
   @Override
   public void updateFileColor(@NotNull VirtualFile file) {
-    Set<EditorsSplitters> all = getAllSplitters();
-    for (EditorsSplitters each : all) {
+    for (EditorsSplitters each : getAllSplitters()) {
       each.updateFileColor(file);
     }
   }
 
   private void updateFileBackgroundColor(@NotNull VirtualFile file) {
-    if (ExperimentalUI.isNewUI()) return;
-    Set<EditorsSplitters> all = getAllSplitters();
-    for (EditorsSplitters each : all) {
+    if (ExperimentalUI.isNewUI()) {
+      return;
+    }
+    for (EditorsSplitters each : getAllSplitters()) {
       each.updateFileBackgroundColorAsync(file);
     }
   }
@@ -512,9 +514,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       return;
     }
     for (EditorsSplitters splitter : getAllSplitters()) {
-      splitter.getAllComposites(file).stream()
-        .filter(EditorComposite::isPreview)
-        .forEach(c -> c.setPreview(false));
+      for (EditorComposite c : splitter.getAllComposites(file)) {
+        if (c.isPreview()) {
+          c.setPreview(false);
+        }
+      }
       splitter.updateFileColor(file);
     }
   }
@@ -739,7 +743,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       if (ClientId.isCurrentlyUnderLocalId()) {
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ourOpenFilesSetModificationCount.incrementAndGet();
-          runChange(splitters -> splitters.closeFile(file, moveFocus), getActiveSplittersSync());
+          EditorsSplitters activeSplitters = getActiveSplittersSync();
+          runBulkTabChange(activeSplitters, () -> activeSplitters.closeFile(file, moveFocus));
         }, "", null);
       } else {
         ClientFileEditorManager clientManager = getClientFileEditorManager();
@@ -752,7 +757,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ourOpenFilesSetModificationCount.incrementAndGet();
-          runChange(splitters -> splitters.closeFile(file, moveFocus), null);
+          for (EditorsSplitters each : getAllSplitters()) {
+            runBulkTabChange(each, () -> each.closeFile(file, moveFocus));
+          }
         }, "", null);
       }
       for (ClientFileEditorManager manager: getAllClientFileEditorManagers()) {
@@ -787,20 +794,20 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withRequestFocus(focusEditor)
       .withReuseOpen(searchForSplitter);
-    return openFileWithProviders(file, null, openOptions);
+    return openFileWithProviders(file, null, openOptions).retrofit();
   }
 
   @Override
   public final @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                  boolean focusEditor,
                                                                                  @NotNull EditorWindow window) {
-    return openFileWithProviders(file, window, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    return openFileWithProviders(file, window, new FileEditorOpenOptions().withRequestFocus(focusEditor)).retrofit();
   }
 
   @Override
-  public final @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                 @Nullable EditorWindow window,
-                                                                                 @NotNull FileEditorOpenOptions options) {
+  public final @NotNull FileEditorComposite openFileWithProviders(@NotNull VirtualFile file,
+                                                                  @Nullable EditorWindow window,
+                                                                  @NotNull FileEditorOpenOptions options) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -812,11 +819,16 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (window == null) {
       OpenMode mode = getOpenMode(IdeEventQueue.getInstance().getTrueCurrentEvent());
       if (mode == OpenMode.NEW_WINDOW) {
-        return openFileInNewWindow(file);
+        if (forbidSplitFor(file)) {
+          closeFile(file);
+        }
+        return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
       }
       if (mode == OpenMode.RIGHT_SPLIT) {
-        Pair<FileEditor[], FileEditorProvider[]> pair = openInRightSplit(file);
-        if (pair != null) return pair;
+        var result = openInRightSplit(file);
+        if (result != null) {
+          return result;
+        }
       }
     }
 
@@ -835,9 +847,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     if (activeCurrentWindow != null && isFileOpenInWindow(file, activeCurrentWindow)) {
       return activeCurrentWindow;
     }
+
     for (EditorsSplitters splitters : getAllSplitters()) {
-      EditorWindow[] windows = splitters.getWindows();
-      for (EditorWindow window : windows) {
+      for (EditorWindow window : splitters.getWindows()) {
         if (isFileOpenInWindow(file, window)) {
           if (AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
             return window;
@@ -853,55 +865,67 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   private static boolean isFileOpenInWindow(@NotNull VirtualFile file, @NotNull EditorWindow window) {
     boolean shouldFileBeSelected = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
-    return shouldFileBeSelected ? file.equals(window.getSelectedFile())
-                                : window.isFileOpen(file);
+    return shouldFileBeSelected ? file.equals(window.getSelectedFile()) : window.isFileOpen(file);
   }
 
   private @NotNull EditorWindow getOrCreateCurrentWindow(@NotNull VirtualFile file) {
     boolean useMainWindow = UISettings.getInstance().getOpenTabsInMainWindow() ||
                             SINGLETON_EDITOR_IN_WINDOW.get(getSelectedEditor(), false);
     EditorsSplitters splitters = useMainWindow ? getMainSplitters() : getSplitters();
-
     EditorWindow currentWindow = splitters.getCurrentWindow();
-    return currentWindow != null && UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE
-           ? currentWindow
-           : splitters.getOrCreateCurrentWindow(file);
+    if (currentWindow == null || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+      return splitters.getOrCreateCurrentWindow(file);
+    }
+    else {
+      return currentWindow;
+    }
   }
 
   public final Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
     if (forbidSplitFor(file)) {
       closeFile(file);
     }
-    return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
+    return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this).retrofit();
   }
 
-  private @Nullable Pair<FileEditor[], FileEditorProvider[]> openInRightSplit(@NotNull VirtualFile file) {
+  private @Nullable FileEditorComposite openInRightSplit(@NotNull VirtualFile file) {
     EditorsSplitters active = getSplitters();
     EditorWindow window = active.getCurrentWindow();
-    if (window != null) {
-      if (window.inSplitter() &&
-          file.equals(window.getSelectedFile()) &&
-          file.equals(ArrayUtil.getLastElement(window.getFiles()))) {
-        //already in right splitter
-        return null;
-      }
-
-      EditorWindow split = active.openInRightSplit(file);
-      if (split != null) {
-        Ref<Pair<FileEditor[], FileEditorProvider[]>> ref = Ref.create();
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          List<EditorComposite> composites = split.getAllComposites();
-          List<FileEditorWithProvider> editorsWithProviders = ContainerUtil.flatMap(composites, EditorComposite::getAllEditorsWithProviders);
-          FileEditor[] editors = ContainerUtil.map2Array(editorsWithProviders, FileEditor.class, FileEditorWithProvider::getFileEditor);
-          FileEditorProvider[] providers = ContainerUtil.map2Array(editorsWithProviders, FileEditorProvider.class,
-                                                                   FileEditorWithProvider::getProvider);
-          ref.set(Pair.create(editors, providers));
-        }, "", null);
-
-        return ref.get();
-      }
+    if (window == null ||
+        window.inSplitter() && file.equals(window.getSelectedFile()) && file.equals(ArrayUtil.getLastElement(window.getFiles()))) {
+      // already in right splitter
+      return null;
     }
-    return null;
+
+    EditorWindow split = active.openInRightSplit(file);
+    if (split == null) {
+      return null;
+    }
+
+    Ref<FileEditorComposite> ref = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      List<EditorComposite> composites = split.getAllComposites();
+      List<FileEditorWithProvider> editorsWithProviders = ContainerUtil.flatMap(composites, EditorComposite::getAllEditorsWithProviders);
+      var editors = ContainerUtil.map(editorsWithProviders, FileEditorWithProvider::getFileEditor);
+      var providers = ContainerUtil.map(editorsWithProviders, FileEditorWithProvider::getProvider);
+      ref.set(new FileEditorComposite() {
+        @Override
+        public @NotNull List<FileEditor> getAllEditors() {
+          return editors;
+        }
+
+        @Override
+        public @NotNull List<FileEditorProvider> getAllProviders() {
+          return providers;
+        }
+
+        @Override
+        public boolean isPreview() {
+          return false;
+        }
+      });
+    }, "", null);
+    return ref.get();
   }
 
   public static @NotNull OpenMode getOpenMode(@NotNull AWTEvent event) {
@@ -914,8 +938,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         return OpenMode.NEW_WINDOW;
       }
     }
-
-    if (event instanceof KeyEvent ke) {
+    else if (event instanceof KeyEvent ke) {
       KeymapManager keymapManager = KeymapManager.getInstance();
       if (keymapManager != null) {
         Keymap keymap = keymapManager.getActiveKeymap();
@@ -925,7 +948,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         if (strings.contains(ACTION_OPEN_IN_RIGHT_SPLIT)) return OpenMode.RIGHT_SPLIT;
       }
     }
-
     return OpenMode.DEFAULT;
   }
 
@@ -933,23 +955,26 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return Boolean.TRUE.equals(file.getUserData(SplitAction.FORBID_TAB_SPLIT));
   }
 
+  /**
+   * @deprecated Use public API.
+   */
+  @Deprecated
   public final @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
-                                                                         @NotNull VirtualFile file,
-                                                                         boolean focusEditor) {
-    return openFileImpl2(window, file, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+                                                                               @NotNull VirtualFile file,
+                                                                               boolean focusEditor) {
+    return openFileImpl2(window, file, new FileEditorOpenOptions().withRequestFocus(focusEditor)).retrofit();
   }
 
-  public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
-                                                                         @NotNull VirtualFile file,
-                                                                         @NotNull FileEditorOpenOptions options) {
+  public @NotNull FileEditorComposite openFileImpl2(@NotNull EditorWindow window,
+                                                    @NotNull VirtualFile file,
+                                                    @NotNull FileEditorOpenOptions options) {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file);
     }
 
-    Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
+    Ref<FileEditorComposite> result = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      Pair<FileEditor[], FileEditorProvider[]> editorsProvidersPair = openFileImpl4(window, file, null, options);
-      result.set(editorsProvidersPair);
+      result.set(openFileImpl4(window, file, null, options));
     }, "", null);
     return result.get();
   }
@@ -962,10 +987,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
    *                passed file is valid.
    * @param entry   map between FileEditorProvider and FileEditorState. If this parameter
    */
-  final @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull EditorWindow window,
-                                                                  @NotNull VirtualFile file,
-                                                                  boolean focusEditor,
-                                                                  @Nullable HistoryEntry entry) {
+  final @NotNull FileEditorComposite openFileImpl3(@NotNull EditorWindow window,
+                                                   @NotNull VirtualFile file,
+                                                   boolean focusEditor,
+                                                   @Nullable HistoryEntry entry) {
     return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
@@ -979,27 +1004,42 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
-  protected @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> openFileImpl4(@NotNull EditorWindow window,
-                                                                                                @NotNull VirtualFile _file,
-                                                                                                @Nullable HistoryEntry entry,
-                                                                                                @NotNull FileEditorOpenOptions options) {
+  protected final @NotNull FileEditorComposite openFileImpl4(@NotNull EditorWindow window,
+                                                             @NotNull VirtualFile _file,
+                                                             @Nullable HistoryEntry entry,
+                                                             @NotNull FileEditorOpenOptions options) {
     assert ApplicationManager.getApplication().isDispatchThread() ||
            !ApplicationManager.getApplication().isReadAccessAllowed() : "must not attempt opening files under read action";
 
     if (!ClientId.isCurrentlyUnderLocalId()) {
       ClientFileEditorManager clientManager = getClientFileEditorManager();
       if (clientManager == null) {
-        return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+        return FileEditorComposite.Companion.getEMPTY();
       }
 
       List<FileEditorWithProvider> result = clientManager.openFile(_file, false);
-      FileEditor[] fileEditors = result.stream().map(FileEditorWithProvider::getFileEditor).toArray(FileEditor[]::new);
-      FileEditorProvider[] providers = result.stream().map(FileEditorWithProvider::getProvider).toArray(FileEditorProvider[]::new);
-      return Pair.createNonNull(fileEditors, providers);
+      var fileEditors = ContainerUtil.map(result, FileEditorWithProvider::getFileEditor);
+      var providers = ContainerUtil.map(result, FileEditorWithProvider::getProvider);
+      return new FileEditorComposite() {
+        @Override
+        public @NotNull List<FileEditor> getAllEditors() {
+          return fileEditors;
+        }
+
+        @Override
+        public @NotNull List<FileEditorProvider> getAllProviders() {
+          return providers;
+        }
+
+        @Override
+        public boolean isPreview() {
+          return options.usePreviewTab;
+        }
+      };
     }
 
     VirtualFile file = getOriginalFile(_file);
-    Ref<EditorComposite> compositeRef = new Ref<>();
+    Ref<FileEditorComposite> compositeRef = new Ref<>();
 
     if (!options.isReopeningOnStartup) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> compositeRef.set(window.getComposite(file)));
@@ -1009,7 +1049,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     AsyncFileEditorProvider.Builder[] builders;
     if (compositeRef.isNull()) {
       if (!canOpenFile(file)) {
-        return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+        return FileEditorComposite.Companion.getEMPTY();
       }
 
       // File is not opened yet. In this case we have to create editors
@@ -1019,13 +1059,15 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       for (int i = 0; i < newProviders.size(); i++) {
         try {
           FileEditorProvider provider = newProviders.get(i);
-          LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+newProviders);
+          LOG.assertTrue(provider != null, "Provider for file " + file + " is null. All providers: " + newProviders);
           builders[i] = ReadAction.compute(() -> {
             if (myProject.isDisposed() || !file.isValid()) {
               return null;
             }
             LOG.assertTrue(provider.accept(myProject, file), "Provider " + provider + " doesn't accept file " + file);
-            return provider instanceof AsyncFileEditorProvider ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file) : null;
+            return provider instanceof AsyncFileEditorProvider
+                   ? ((AsyncFileEditorProvider)provider).createEditorAsync(myProject, file)
+                   : null;
           });
         }
         catch (ProcessCanceledException e) {
@@ -1046,21 +1088,21 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         return;
       }
 
-      runBulkTabChange(window.getOwner(), splitters -> {
+      runBulkTabChange(window.getOwner(), () -> {
         compositeRef.set(openFileImpl4Edt(window, file, entry, options, newProviders,
                                           builders == null ? Collections.emptyList() : Arrays.asList(builders)));
       });
     });
 
-    return EditorComposite.retrofit(compositeRef.get());
+    return compositeRef.get();
   }
 
-  protected final @Nullable EditorComposite openFileImpl4Edt(@NotNull EditorWindow window,
-                                                             @NotNull VirtualFile file,
-                                                             @Nullable HistoryEntry entry,
-                                                             @NotNull FileEditorOpenOptions options,
-                                                             @Nullable List<FileEditorProvider> newProviders,
-                                                             @NotNull List<AsyncFileEditorProvider. @Nullable Builder> builders) {
+  protected final @NotNull FileEditorComposite openFileImpl4Edt(@NotNull EditorWindow window,
+                                                                @NotNull VirtualFile file,
+                                                                @Nullable HistoryEntry entry,
+                                                                @NotNull FileEditorOpenOptions options,
+                                                                @Nullable List<FileEditorProvider> newProviders,
+                                                                @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
     LOG.assertTrue(file.isValid(), "Invalid file: " + file);
 
@@ -1078,19 +1120,19 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return doOpenInEdtImpl(window, file, entry, options, newProviders, builders);
   }
 
-  protected final @Nullable EditorComposite doOpenInEdtImpl(@NotNull EditorWindow window,
-                                                            @NotNull VirtualFile file,
-                                                            @Nullable HistoryEntry entry,
-                                                            @NotNull FileEditorOpenOptions options,
-                                                            @Nullable List<FileEditorProvider> newProviders,
-                                                            @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
+  protected final @NotNull FileEditorComposite doOpenInEdtImpl(@NotNull EditorWindow window,
+                                                                @NotNull VirtualFile file,
+                                                                @Nullable HistoryEntry entry,
+                                                                @NotNull FileEditorOpenOptions options,
+                                                                @Nullable List<FileEditorProvider> newProviders,
+                                                                @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
     if (newEditor) {
       LOG.assertTrue(newProviders != null);
       composite = createComposite(file, newProviders, builders);
       if (composite == null) {
-        return null;
+        return FileEditorComposite.Companion.getEMPTY();
       }
 
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
@@ -1170,9 +1212,10 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
 
     if (newEditor) {
-      myProject.getMessageBus().syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders);
-      myProject.getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-        .fileOpenedSync(this, file, editorsWithProviders);
+      MessageBus messageBus = myProject.getMessageBus();
+      messageBus.syncPublisher(FileOpenedSyncListener.TOPIC).fileOpenedSync(this, file, editorsWithProviders);
+      //noinspection deprecation
+      messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpenedSync(this, file, editorsWithProviders);
 
       notifyPublisher(() -> {
         if (isFileOpen(file)) {
@@ -1267,18 +1310,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
-  public @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable) {
-    IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-    ActionCallback done = new ActionCallback();
-    return myBusyObject.execute(new ActiveRunnable() {
-      @Override
-      public @NotNull ActionCallback run() {
-        focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(myProject, () -> {
-          runnable.run();
-          done.setDone();
-        }), ModalityState.current());
-        return done;
-      }
+  public void notifyPublisher(@NotNull Runnable runnable) {
+    CompletableFuture<?> done = new CompletableFuture<>();
+    myBusyObject.execute(() -> {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(ExpirableRunnable.forProject(myProject, () -> {
+        runnable.run();
+        done.complete(null);
+      }), ModalityState.current());
+      return done;
     });
   }
 
@@ -1291,8 +1330,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
       return;
     }
+
     EditorComposite composite = getComposite(file);
-    if (composite == null) return;
+    if (composite == null) {
+      return;
+    }
 
     composite.setSelectedEditor(fileEditorProviderId);
     // todo move to setSelectedEditor()?
@@ -1353,8 +1395,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         .withReuseOpen(!realDescriptor.isUseCurrentWindow())
         .withUsePreviewTab(realDescriptor.isUsePreviewTab())
         .withRequestFocus(focusEditor);
-      FileEditor[] editors = openFileWithProviders(file, null, openOptions).getFirst();
-      ContainerUtil.addAll(result, editors);
+      var editors = openFileWithProviders(file, null, openOptions).getAllEditors();
+      result.addAll(editors);
 
       boolean navigated = false;
       for (FileEditor editor : editors) {
@@ -1509,24 +1551,28 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public VirtualFile @NotNull [] getOpenFiles() {
+    return VfsUtilCore.toVirtualFileArray(getOpenedFiles());
+  }
+
+  public @NotNull List<VirtualFile> getOpenedFiles() {
     if (!ClientId.isCurrentlyUnderLocalId()) {
       ClientFileEditorManager clientManager = getClientFileEditorManager();
-      if (clientManager == null) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return clientManager.getAllFiles().toArray(VirtualFile.EMPTY_ARRAY);
+      return clientManager == null ? Collections.emptyList() : clientManager.getAllFiles();
     }
-    Set<VirtualFile> files = new LinkedHashSet<>();
+
+    List<VirtualFile> files = new ArrayList<>();
     for (EditorComposite composite : myOpenedComposites) {
-      files.add(composite.getFile());
+      VirtualFile file = composite.getFile();
+      if (!files.contains(file)) {
+        files.add(file);
+      }
     }
-    return VfsUtilCore.toVirtualFileArray(files);
+    return files;
   }
 
   @Override
   public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
-    List<VirtualFile> result = new ArrayList<>();
-    Collections.addAll(result, getOpenFiles());
+    List<VirtualFile> result = new ArrayList<>(getOpenedFiles());
     for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
       result.addAll(m.getAllFiles());
     }
@@ -1610,14 +1656,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   @Override
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    EditorComposite composite = getComposite(file);
-    return EditorComposite.retrofit(composite);
+    return EditorComposite.Companion.retrofit(getComposite(file));
   }
 
   @Override
+  @RequiresEdt
   public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return getEditorsWithProviders(file).getFirst();
+    EditorComposite composite = getComposite(file);
+    return composite == null ? FileEditor.EMPTY_ARRAY : composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
   @Override
@@ -1637,13 +1683,12 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   @Override
+  @RequiresEdt
   public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!ClientId.isCurrentlyUnderLocalId()) {
       ClientFileEditorManager clientManager = getClientFileEditorManager();
       return clientManager == null ? null : clientManager.getComposite(file);
     }
-    VirtualFile originalFile = getOriginalFile(file);
 
     EditorWindow editorWindow = getSplitters().getCurrentWindow();
     if (editorWindow != null) {
@@ -1652,6 +1697,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         return composite;
       }
     }
+
+    VirtualFile originalFile = getOriginalFile(file);
     for (EditorsSplitters each : getAllSplitters()) {
       EditorComposite composite = ContainerUtil.find(each.getAllComposites(originalFile), it -> it.getFile().equals(originalFile));
       if (composite != null) {
@@ -1729,11 +1776,13 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.add(listener);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.remove(listener);
@@ -1886,31 +1935,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return null;
   }
 
-  /**
-   * @param splitters - taken getAllSplitters() value if parameter is null
-   */
-  private void runChange(@NotNull FileEditorManagerChange change, @Nullable EditorsSplitters splitters) {
-    Set<EditorsSplitters> target = new HashSet<>();
-    if (splitters == null) {
-      target.addAll(getAllSplitters());
-    }
-    else {
-      target.add(splitters);
-    }
-
-    for (EditorsSplitters each : target) {
-      runBulkTabChange(each, change);
-    }
-  }
-
-  static void runBulkTabChange(@NotNull EditorsSplitters splitters, @NotNull FileEditorManagerChange change) {
+  static void runBulkTabChange(@NotNull EditorsSplitters splitters, @NotNull Runnable task) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      change.run(splitters);
+      task.run();
     }
     else {
       splitters.insideChange++;
       try {
-        change.run(splitters);
+        task.run();
       }
       finally {
         splitters.insideChange--;
@@ -1987,7 +2019,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     private void fileMoved(@NotNull VFileMoveEvent e) {
       VirtualFile file = e.getFile();
-      for (VirtualFile openFile : getOpenFiles()) {
+      for (VirtualFile openFile : getOpenedFiles()) {
         if (VfsUtilCore.isAncestor(file, openFile, false)) {
           updateFileName(openFile);
           updateFileBackgroundColor(openFile);
@@ -2038,9 +2070,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     public void fileStatusesChanged() { // update color of all open files
       assertDispatchThread();
       LOG.debug("FileEditorManagerImpl.MyFileStatusListener.fileStatusesChanged()");
-      VirtualFile[] openFiles = getOpenFiles();
-      for (int i = openFiles.length - 1; i >= 0; i--) {
-        VirtualFile file = openFiles[i];
+      var openFiles = getOpenedFiles();
+      for (int i = openFiles.size() - 1; i >= 0; i--) {
+        VirtualFile file = openFiles.get(i);
         LOG.assertTrue(file != null);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (LOG.isDebugEnabled()) {
@@ -2072,9 +2104,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent event) {
       assertDispatchThread();
-      VirtualFile[] openFiles = getOpenFiles();
-      for (int i = openFiles.length - 1; i >= 0; i--) {
-        VirtualFile file = openFiles[i];
+      var openFiles = getOpenedFiles();
+      for (int i = openFiles.size() - 1; i >= 0; i--) {
+        VirtualFile file = openFiles.get(i);
         LOG.assertTrue(file != null);
         updateFileIcon(file, true);
       }
@@ -2138,10 +2170,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
             .withIndex(i)
             .withRequestFocus(composite == selected);
-          Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, openOptions);
-
+          var openResult = openFileImpl2(eachWindow, newFile, openOptions);
           if (newFilePair.second != null) {
-            TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
+            TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(openResult.getAllEditors());
             if (openedEditor != null) {
               openedEditor.getEditor().getCaretModel().moveToOffset(newFilePair.second);
               openedEditor.getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -2184,9 +2215,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
       }
 
       // "Mark modified files with asterisk"
-      VirtualFile[] openFiles = getOpenFiles();
-      for (int i = openFiles.length - 1; i >= 0; i--) {
-        VirtualFile file = openFiles[i];
+      var openFiles = getOpenedFiles();
+      for (int i = openFiles.size() - 1; i >= 0; i--) {
+        VirtualFile file = openFiles.get(i);
         updateFileIcon(file);
         updateFileName(file);
         updateFileBackgroundColor(file);
@@ -2203,13 +2234,14 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       ourOpenFilesSetModificationCount.incrementAndGet();
-      runBulkTabChange(getSplitters(), EditorsSplitters::closeAllFiles);
+      EditorsSplitters splitters = getSplitters();
+      runBulkTabChange(splitters, splitters::closeAllFiles);
     }, "", null);
   }
 
   @Override
-  public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
-    return getOpenFiles();
+  public @NotNull Collection<VirtualFile> getSiblings(@NotNull VirtualFile file) {
+    return getOpenedFiles();
   }
 
   void queueUpdateFile(@NotNull VirtualFile file) {
@@ -2247,7 +2279,8 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
             copy.add(p);
           }
         }
-      } else {
+      }
+      else {
         if (!copy.contains(pair)) {
           copy.add(pair);
         }
@@ -2259,18 +2292,47 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   public void addSelectionRecord(@NotNull VirtualFile file, @NotNull EditorWindow window) {
-    Pair<VirtualFile, EditorWindow> record = Pair.create(file, window);
+    Pair<VirtualFile, EditorWindow> record = new Pair<>(file, window);
     mySelectionHistory.remove(record);
     mySelectionHistory.add(0, record);
   }
 
   void removeSelectionRecord(@NotNull VirtualFile file, @NotNull EditorWindow window) {
-    mySelectionHistory.remove(Pair.create(file, window));
+    mySelectionHistory.remove(new Pair<>(file, window));
     updateFileName(file);
   }
 
   @Override
   public @NotNull ActionCallback getReady(@NotNull Object requestor) {
     return myBusyObject.getReady(requestor);
+  }
+
+  @Override
+  public void refreshIcons() {
+    var openFiles = getOpenedFiles();
+    for (EditorsSplitters each : getAllSplitters()) {
+      for (VirtualFile file : openFiles) {
+        each.updateFileIcon(file);
+      }
+    }
+  }
+}
+
+final class SimpleBusyObject extends BusyObject.Impl {
+  private final LongAdder busyCount = new LongAdder();
+
+  @Override
+  public boolean isReady() {
+    return busyCount.sum() == 0;
+  }
+
+  public void execute(@NotNull Supplier<CompletableFuture<?>> runnable) {
+    busyCount.increment();
+    runnable.get().whenComplete((o, throwable) -> {
+      busyCount.decrement();
+      if (isReady()) {
+        onReady();
+      }
+    });
   }
 }

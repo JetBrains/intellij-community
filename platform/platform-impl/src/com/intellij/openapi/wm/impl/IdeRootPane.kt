@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.GeneralSettings
@@ -41,6 +43,7 @@ import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -49,6 +52,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
 import javax.swing.*
+
+private const val EXTENSION_KEY = "extensionKey"
 
 @Suppress("LeakingThis")
 @ApiStatus.Internal
@@ -62,13 +67,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private var statusBarDisposed = false
   private val northPanel = JBBox.createVerticalBox()
-  private val northComponents: MutableList<IdeRootPaneNorthExtension> = ArrayList()
-  private var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
+  private var northExtensions: List<IdeRootPaneNorthExtension> = emptyList()
+  internal var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
+    private set
+
   private var toolWindowPane: ToolWindowPane? = null
   private val glassPaneInitialized: Boolean
   private var fullScreen = false
   private var customFrameTitlePane: MainFrameCustomHeader? = null
-  private var selectedEditorFilePath: CustomDecorationPath? = null
+  private val selectedEditorFilePath: CustomDecorationPath?
 
   init {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -94,6 +101,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     val isDecoratedMenu = isDecoratedMenu
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
       jMenuBar = IdeMenuBar.createMenuBar()
+      selectedEditorFilePath = null
     }
     else {
       if (isDecoratedMenu) {
@@ -110,10 +118,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
           }
         }
         else {
-          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath!!, ideMenu = ideMenu)
+          MenuFrameHeader(frame = frame, headerTitle = selectedEditorFilePath, ideMenu = ideMenu)
         }
         layeredPane.add(customFrameTitlePane!!.getComponent(), (JLayeredPane.DEFAULT_LAYER - 2) as Any)
       }
+      else {
+        selectedEditorFilePath = null
+      }
+
       if (isFloatingMenuBarSupported) {
         menuBar = IdeMenuBar.createMenuBar()
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
@@ -319,8 +331,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
     get() = if (isToolbarInHeader() && ExperimentalUI.isNewUI()) customFrameTitlePane as ToolbarHolder? else null
 
   open fun updateNorthComponents() {
-    for (northComponent in northComponents) {
-      northComponent.revalidate()
+    for (i in 0 until northPanel.componentCount) {
+      val component = northPanel.getComponent(i)
+      if (component !== toolbar) {
+        component.revalidate()
+      }
     }
     contentPane!!.revalidate()
   }
@@ -410,43 +425,41 @@ open class IdeRootPane internal constructor(frame: JFrame,
     selectedEditorFilePath?.project = project
   }
 
+  @RequiresEdt
   internal open fun installNorthComponents(project: Project) {
-    val uiSettings = UISettings.shadowInstance
-    statusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project) { it is StatusBarCentralWidget }
-    northComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project))
-    if (northComponents.isEmpty()) {
+    northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
+    statusBarCentralWidget = northExtensions.firstOrNull { it is StatusBarCentralWidget }
+    if (northExtensions.isEmpty()) {
       return
     }
 
-    for (northComponent in northComponents) {
-      northPanel.add(northComponent.component)
-      northComponent.uiSettingsChanged(uiSettings)
+    for (extension in northExtensions) {
+      val component = extension.createComponent(project, false) ?: continue
+      component.putClientProperty(EXTENSION_KEY, extension.key)
+      northPanel.add(component)
     }
   }
 
-  internal open fun deinstallNorthComponents() {
+  internal open fun deinstallNorthComponents(project: Project) {
     val count = northPanel.componentCount
     for (i in count - 1 downTo 0) {
       if (northPanel.getComponent(i) !== toolbar) {
         northPanel.remove(i)
       }
     }
-    for (northComponent in northComponents) {
-      @Suppress("DEPRECATION")
-      if (northComponent is Disposable && !Disposer.isDisposed(northComponent)) {
-        Disposer.dispose((northComponent as Disposable))
-      }
-    }
-    northComponents.clear()
   }
 
-  fun findByName(name: String): IdeRootPaneNorthExtension? {
-    if (ExperimentalUI.isNewUI() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY == name) {
+  internal fun findNorthComponentByKey(key: String): IdeRootPaneNorthExtension? {
+    if (ExperimentalUI.isNewUI() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY == key) {
       return statusBarCentralWidget
     }
     else {
-      return northComponents.firstOrNull { it.key == name }
+      return northExtensions.firstOrNull { it.key == key }
     }
+  }
+
+  fun findNorthUiComponentByKey(key: String): JComponent? {
+    return northPanel.components.firstOrNull { (it as? JComponent)?.getClientProperty(EXTENSION_KEY) == key } as? JComponent
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -454,13 +467,8 @@ open class IdeRootPane internal constructor(frame: JFrame,
     updateToolbarVisibility(true)
     updateStatusBarVisibility()
     updateMainMenuVisibility()
-    if (!ExperimentalUI.isNewUI()) {
-      for (component in northComponents) {
-        component.uiSettingsChanged(uiSettings)
-      }
-    }
     val frame = ComponentUtil.getParentOfType(IdeFrameImpl::class.java, this) ?: return
-    frame.background = UIUtil.getPanelBackground()
+    frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
   }
 
@@ -474,14 +482,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
       else {
         JBUI.emptySize()
       }
-      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
-        menuBar.preferredSize
-      }
-      else {
-        JBUI.emptySize()
-      }
-      return Dimension(rd.width.coerceAtLeast(mbd.width) + i.left + i.right + dimension.width,
-                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
+      val menuBarDimension = getMenuBarDimension { it.preferredSize }
+      return Dimension(rd.width.coerceAtLeast(menuBarDimension.width) + i.left + i.right + dimension.width,
+                       rd.height + menuBarDimension.height + i.top + i.bottom + dimension.height)
     }
 
     override fun minimumLayoutSize(parent: Container): Dimension {
@@ -493,24 +496,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
       else {
         JBUI.emptySize()
       }
-      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
-        menuBar.minimumSize
-      }
-      else {
-        JBUI.emptySize()
-      }
-      return Dimension(rd.width.coerceAtLeast(mbd.width) + i.left + i.right + dimension.width,
-                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
+      val menuBarDimension = getMenuBarDimension { it.minimumSize }
+      return Dimension(rd.width.coerceAtLeast(menuBarDimension.width) + i.left + i.right + dimension.width,
+                       rd.height + menuBarDimension.height + i.top + i.bottom + dimension.height)
     }
 
     override fun maximumLayoutSize(target: Container): Dimension {
       val i = insets
-      val mbd = if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
-        menuBar.maximumSize
-      }
-      else {
-        JBUI.emptySize()
-      }
+      val menuBarDimension = getMenuBarDimension { it.maximumSize }
       val dimension = if (isDecoratedMenu && customFrameTitlePane != null && customFrameTitlePane!!.getComponent().isVisible) {
         customFrameTitlePane!!.getComponent().preferredSize
       }
@@ -522,10 +515,19 @@ open class IdeRootPane internal constructor(frame: JFrame,
       }
       else {
         Dimension(Int.MAX_VALUE,
-                  Int.MAX_VALUE - i.top - i.bottom - mbd.height - 1)
+                  Int.MAX_VALUE - i.top - i.bottom - menuBarDimension.height - 1)
       }
-      return Dimension(rd.width.coerceAtMost(mbd.width) + i.left + i.right + dimension.width,
-                       rd.height + mbd.height + i.top + i.bottom + dimension.height)
+      return Dimension(rd.width.coerceAtMost(menuBarDimension.width) + i.left + i.right + dimension.width,
+                       rd.height + menuBarDimension.height + i.top + i.bottom + dimension.height)
+    }
+
+    private inline fun getMenuBarDimension(getter: (menuBar: JMenuBar) -> Dimension): Dimension {
+      if (menuBar != null && menuBar.isVisible && !fullScreen && !isDecoratedMenu) {
+        return getter(menuBar)
+      }
+      else {
+        return JBUI.emptySize()
+      }
     }
 
     override fun layoutContainer(parent: Container) {

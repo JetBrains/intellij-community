@@ -58,8 +58,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PR
 public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
   protected final TextEditor myEditor;
   protected final FileEditor myPreview;
-  @NotNull
-  private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
+  private final @NotNull MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
   private final Layout myDefaultLayout;
   private Layout myLayout;
   private boolean myIsVerticalSplit;
@@ -96,21 +95,18 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     this(editor, preview, "TextEditorWithPreview");
   }
 
-  @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
     return myEditor.getBackgroundHighlighter();
   }
 
-  @Nullable
   @Override
-  public FileEditorLocation getCurrentLocation() {
+  public @Nullable FileEditorLocation getCurrentLocation() {
     return myEditor.getCurrentLocation();
   }
 
-  @Nullable
   @Override
-  public StructureViewBuilder getStructureViewBuilder() {
+  public @Nullable StructureViewBuilder getStructureViewBuilder() {
     return myEditor.getStructureViewBuilder();
   }
 
@@ -132,9 +128,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myPreview.deselectNotify();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     if (myComponent != null) {
       return myComponent;
     }
@@ -204,8 +199,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     mySplitter.setOrientation(verticalSplit);
   }
 
-  @NotNull
-  private SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
+  private @NotNull SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
     if (leftToolbar != null) {
       leftToolbar.setTargetComponent(targetComponentForActions);
@@ -263,29 +257,25 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @NotNull
-  protected String getSplitterProportionKey() {
+  protected @NotNull String getSplitterProportionKey() {
     return "TextEditorWithPreview.SplitterProportionKey";
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return switch (myLayout) {
       case SHOW_EDITOR_AND_PREVIEW, SHOW_EDITOR -> myEditor.getPreferredFocusedComponent();
       case SHOW_PREVIEW -> myPreview.getPreferredFocusedComponent();
     };
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return new MyFileEditorState(myLayout, myEditor.getState(level), myPreview.getState(level));
   }
 
@@ -311,13 +301,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @NotNull
-  public TextEditor getTextEditor() {
+  public @NotNull TextEditor getTextEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public FileEditor getPreviewEditor() {
+  public @NotNull FileEditor getPreviewEditor() {
     return myPreview;
   }
 
@@ -336,18 +324,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       mySecondState = secondState;
     }
 
-    @Nullable
-    public Layout getSplitLayout() {
+    public @Nullable Layout getSplitLayout() {
       return mySplitLayout;
     }
 
-    @Nullable
-    public FileEditorState getFirstState() {
+    public @Nullable FileEditorState getFirstState() {
       return myFirstState;
     }
 
-    @Nullable
-    public FileEditorState getSecondState() {
+    public @Nullable FileEditorState getSecondState() {
       return mySecondState;
     }
 
@@ -370,8 +355,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   private final class DoublingEventListenerDelegate implements PropertyChangeListener {
-    @NotNull
-    private final PropertyChangeListener myDelegate;
+    private final @NotNull PropertyChangeListener myDelegate;
 
     private DoublingEventListenerDelegate(@NotNull PropertyChangeListener delegate) {
       myDelegate = delegate;
@@ -387,8 +371,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   private class MyListenersMultimap {
     private final Map<PropertyChangeListener, Pair<Integer, DoublingEventListenerDelegate>> myMap = new HashMap<>();
 
-    @NotNull
-    public DoublingEventListenerDelegate addListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
+    public @NotNull DoublingEventListenerDelegate addListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
       if (!myMap.containsKey(listener)) {
         myMap.put(listener, Pair.create(1, new DoublingEventListenerDelegate(listener)));
       }
@@ -400,8 +383,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myMap.get(listener).getSecond();
     }
 
-    @Nullable
-    public DoublingEventListenerDelegate removeListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
+    public @Nullable DoublingEventListenerDelegate removeListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
       final Pair<Integer, DoublingEventListenerDelegate> oldPair = myMap.get(listener);
       if (oldPair == null) {
         return null;
@@ -417,8 +399,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @Nullable
-  protected ActionToolbar createToolbar() {
+  protected @Nullable ActionToolbar createToolbar() {
     ActionGroup actionGroup = createLeftToolbarActionGroup();
     if (actionGroup != null) {
       return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, actionGroup, true);
@@ -428,13 +409,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @Nullable
-  protected ActionGroup createLeftToolbarActionGroup() {
+  protected @Nullable ActionGroup createLeftToolbarActionGroup() {
     return null;
   }
 
-  @NotNull
-  private ActionToolbar createRightToolbar() {
+  private @NotNull ActionToolbar createRightToolbar() {
     final ActionGroup viewActions = createViewActionGroup();
     final ActionGroup group = createRightToolbarActionGroup();
     final ActionGroup rightToolbarActions = group == null
@@ -443,8 +422,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, rightToolbarActions, true);
   }
 
-  @NotNull
-  protected ActionGroup createViewActionGroup() {
+  protected @NotNull ActionGroup createViewActionGroup() {
     return new DefaultActionGroup(
       getShowEditorAction(),
       getShowEditorAndPreviewAction(),
@@ -452,14 +430,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     );
   }
 
-  @Nullable
-  protected ActionGroup createRightToolbarActionGroup() {
+  protected @Nullable ActionGroup createRightToolbarActionGroup() {
     return null;
   }
 
   @Override
-  @Nullable
-  public ActionGroup getTabActions() {
+  public @Nullable ActionGroup getTabActions() {
     if (!isShowActionsInTabs()) return null;
     return new DefaultActionGroup(
       getSingleChangeViewModeAction(),
@@ -468,8 +444,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     );
   }
 
-  @NotNull
-  private ActionGroup createTabViewModesPopupActionGroup() {
+  private @NotNull ActionGroup createTabViewModesPopupActionGroup() {
     ActionGroup group = createTabViewModesActionGroup();
     group.setPopup(true);
     Presentation presentation = group.getTemplatePresentation();
@@ -479,8 +454,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return group;
   }
 
-  @NotNull
-  protected ActionGroup createTabViewModesActionGroup() {
+  protected @NotNull ActionGroup createTabViewModesActionGroup() {
     return new DefaultActionGroup(
       createViewActionGroup(),
       Separator.create(),
@@ -489,23 +463,19 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     );
   }
 
-  @NotNull
-  protected AnAction getSingleChangeViewModeAction() {
+  protected @NotNull AnAction getSingleChangeViewModeAction() {
     return new SingleChangeViewModeAction();
   }
 
-  @NotNull
-  protected ToggleAction getShowEditorAction() {
+  protected @NotNull ToggleAction getShowEditorAction() {
     return new ChangeViewModeAction(Layout.SHOW_EDITOR);
   }
 
-  @NotNull
-  protected ToggleAction getShowPreviewAction() {
+  protected @NotNull ToggleAction getShowPreviewAction() {
     return new ChangeViewModeAction(Layout.SHOW_PREVIEW);
   }
 
-  @NotNull
-  protected ToggleAction getShowEditorAndPreviewAction() {
+  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
     return new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
@@ -599,8 +569,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       presentation.setDescription(targetLayout.getName());
     }
 
-    @NotNull
-    private Layout getTargetLayout() {
+    private @NotNull Layout getTargetLayout() {
       Layout curLayout = getLayout();
       return switch (curLayout) {
         case SHOW_EDITOR, SHOW_PREVIEW -> Layout.SHOW_EDITOR_AND_PREVIEW;
@@ -641,8 +610,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  @NotNull
-  private String getLayoutPropertyName() {
+  private @NotNull String getLayoutPropertyName() {
     return myName + "Layout";
   }
 
@@ -675,12 +643,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myComponent.repaint();
   }
 
-  @Nullable
-  private static Layout getLayoutForFile(@Nullable VirtualFile file) {
-    if (file != null) {
-      return file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
-    }
-    return null;
+  private static @Nullable Layout getLayoutForFile(@Nullable VirtualFile file) {
+    return file == null ? null : file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
   }
 
   public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {

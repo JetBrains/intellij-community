@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public interface BusyObject {
   @NotNull
@@ -24,19 +23,20 @@ public interface BusyObject {
     }
 
     public final void onReady(@Nullable Object readyRequestor) {
-      if (!isReady()) return;
+      if (!isReady()) {
+        return;
+      }
 
-      if (readyRequestor != null) {
+      if (readyRequestor == null) {
+        for (ActionCallback each : getReadyCallbacks()) {
+          each.setDone();
+        }
+      }
+      else {
         Pair<ActionCallback, List<ActionCallback>> callbacks = getReadyCallbacks(readyRequestor);
         callbacks.getFirst().setDone();
         for (ActionCallback each : callbacks.getSecond()) {
           each.setRejected();
-        }
-      }
-      else {
-        ActionCallback[] callbacks = getReadyCallbacks();
-        for (ActionCallback each : callbacks) {
-          each.setDone();
         }
       }
 
@@ -47,16 +47,11 @@ public interface BusyObject {
     }
 
     @Override
-    @NotNull
-    public final ActionCallback getReady(@NotNull Object requestor) {
-      if (isReady()) {
-        return ActionCallback.DONE;
-      }
-      return addReadyCallback(requestor);
+    public final @NotNull ActionCallback getReady(@NotNull Object requestor) {
+      return isReady() ? ActionCallback.DONE : addReadyCallback(requestor);
     }
 
-    @NotNull
-    private ActionCallback addReadyCallback(Object requestor) {
+    private @NotNull ActionCallback addReadyCallback(Object requestor) {
       synchronized (myReadyCallbacks) {
         ActionCallback cb = myReadyCallbacks.get(requestor);
         if (cb == null) {
@@ -76,8 +71,7 @@ public interface BusyObject {
       }
     }
 
-    @NotNull
-    private Pair<ActionCallback, List<ActionCallback>> getReadyCallbacks(Object readyRequestor) {
+    private @NotNull Pair<ActionCallback, List<ActionCallback>> getReadyCallbacks(Object readyRequestor) {
       synchronized (myReadyCallbacks) {
         ActionCallback done = myReadyCallbacks.get(readyRequestor);
         if (done == null) {
@@ -88,28 +82,6 @@ public interface BusyObject {
         ArrayList<ActionCallback> rejected = new ArrayList<>(myReadyCallbacks.values());
         myReadyCallbacks.clear();
         return new Pair<>(done, rejected);
-      }
-    }
-
-    public static final class Simple extends Impl {
-      private final AtomicInteger myBusyCount = new AtomicInteger();
-
-      @Override
-      public boolean isReady() {
-        return myBusyCount.get() == 0;
-      }
-
-      @NotNull
-      public ActionCallback execute(@NotNull ActiveRunnable runnable) {
-        myBusyCount.addAndGet(1);
-        ActionCallback cb = runnable.run();
-        cb.doWhenProcessed(() -> {
-          myBusyCount.addAndGet(-1);
-          if (isReady()) {
-            onReady();
-          }
-        });
-        return cb;
       }
     }
   }

@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
@@ -724,10 +725,10 @@ public final class Switcher extends BaseSwitcherAction {
                 manager.openFileInNewWindow(file);
               }
               else if (item.getWindow() != null) {
-                EditorWindow wnd = findAppropriateWindow(item.getWindow());
-                if (wnd != null) {
-                  manager.openFileImpl2(wnd, file, true);
-                  manager.addSelectionRecord(file, wnd);
+                EditorWindow editorWindow = findAppropriateWindow(item.getWindow());
+                if (editorWindow != null) {
+                  manager.openFileImpl2(editorWindow, file, new FileEditorOpenOptions().withRequestFocus(true));
+                  manager.addSelectionRecord(file, editorWindow);
                 }
               }
               else {

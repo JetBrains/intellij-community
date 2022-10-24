@@ -5,10 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -332,7 +329,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
     manager.closeFile(file, secondaryWindow, true);
 
     // default behavior is to reuse the existing splitter
@@ -350,7 +347,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
     manager.closeFile(file, secondaryWindow, true);
 
     // with the changed setting, we want to open the file in the current splitter (
@@ -368,7 +365,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertNotNull(primaryWindow);
     manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
     EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
-    manager.openFileImpl2(secondaryWindow, file2, true);
+    manager.openFileImpl2(secondaryWindow, file2, new FileEditorOpenOptions().withRequestFocus(true));
     manager.closeFile(file, secondaryWindow, true);
 
     // with the changed setting, we want to open the file in the current splitter (

@@ -157,7 +157,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   val currentFile: VirtualFile?
     get() = if (currentWindow != null) currentWindow!!.selectedFile else null
 
-  private fun showEmptyText(): Boolean = currentWindow == null || currentWindow!!.files.isEmpty()
+  private fun showEmptyText(): Boolean = (currentWindow?.fileSequence ?: emptySequence()).none()
 
   val openFileList: List<VirtualFile>
     get() {
@@ -357,7 +357,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     val windows = windows.toList()
     clear()
     for (window in windows) {
-      for (file in window.files) {
+      for (file in window.fileList) {
         window.closeFile(file = file, disposeIfNeeded = false, transferFocus = false)
       }
     }
@@ -461,7 +461,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   fun updateFileName(updatedFile: VirtualFile?) {
     for (window in getWindows()) {
-      for (file in window.files) {
+      for (file in window.fileSequence) {
         if (updatedFile == null || file.name == updatedFile.name) {
           window.updateFileName(file, window)
         }
@@ -536,11 +536,9 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     get() = getWindows().all { it.isEmptyVisible }
 
   private fun findNextFile(file: VirtualFile): VirtualFile? {
-    val windows = getWindows() // TODO: use current file as base
-    for (i in windows.indices) {
-      val files = windows[i].files
-      for (fileAt in files) {
-        if (!Comparing.equal(fileAt, file)) {
+    for (window in windows) {
+      for (fileAt in window.fileSequence) {
+        if (fileAt != file) {
           return fileAt
         }
       }
@@ -550,10 +548,11 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   fun closeFile(file: VirtualFile, moveFocus: Boolean) {
     val windows = findWindows(file)
-    val isProjectOpen = manager.project.isOpen
     if (windows.isEmpty()) {
       return
     }
+
+    val isProjectOpen = manager.project.isOpen
 
     val nextFile = findNextFile(file)
     for (window in windows) {

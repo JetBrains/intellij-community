@@ -17,7 +17,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,54 +24,48 @@ internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl
                                         editorComponent: EditorsSplitters,
                                         project: Project,
                                         frameHelper: ProjectFrameHelper) {
-  val hasOpenFiles = withContext(ModalityState.any().asContextElement()) {
-    coroutineScope {
-      launch {
-        editorComponent.restoreEditors(requestFocus = true)
-      }
-      withContext(Dispatchers.EDT) {
-        frameHelper.rootPane!!.getToolWindowPane().setDocumentComponent(editorComponent)
-        // read state of dockable editors
-        fileEditorManager.initDockableContentFactory()
-      }
+  withContext(ModalityState.any().asContextElement()) {
+    launch {
+      editorComponent.restoreEditors(requestFocus = true)
     }
-
     withContext(Dispatchers.EDT) {
-      frameHelper.installPainters()
-
-      fileEditorManager.hasOpenFiles()
+      // read state of dockable editors
+      fileEditorManager.initDockableContentFactory()
     }
+  }
+
+  val hasOpenFiles = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    frameHelper.installPainters()
+    fileEditorManager.hasOpenFiles()
   }
 
   if (!hasOpenFiles) {
     EditorsSplitters.stopOpenFilesActivity(project)
-  }
-
-  if (!hasOpenFiles && !isNotificationSilentMode(project)) {
-    project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
-    findAndOpenReadmeIfNeeded(project)
-  }
-
-  // later
-  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
+    if (!isNotificationSilentMode(project)) {
+      project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true)
+      findAndOpenReadmeIfNeeded(project)
     }
+  }
+
+  project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+    LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime))
   }
 }
 
 private fun findAndOpenReadmeIfNeeded(project: Project) {
-  if (AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
-    RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
-      val projectDir = project.guessProjectDir() ?: return@runOnceForProject
-      val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
-      if (SystemInfoRt.isFileSystemCaseSensitive) {
-        files += files.map { it.lowercase() }
-      }
-      val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
-      if (!readme.isDirectory) {
-        ApplicationManager.getApplication().invokeLater({ TextEditorWithPreview.openPreviewForFile(project, readme) }, project.disposed)
-      }
+  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
+    return
+  }
+
+  RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
+    val projectDir = project.guessProjectDir() ?: return@runOnceForProject
+    val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      files += files.map { it.lowercase() }
+    }
+    val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
+    if (!readme.isDirectory) {
+      ApplicationManager.getApplication().invokeLater({ TextEditorWithPreview.openPreviewForFile(project, readme) }, project.disposed)
     }
   }
 }

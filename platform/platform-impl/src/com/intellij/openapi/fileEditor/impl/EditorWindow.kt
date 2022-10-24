@@ -189,8 +189,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   @get:Deprecated("{@link #getAllComposites()}", ReplaceWith("allComposites)"))
   val editors: Array<EditorWithProviderComposite>
     get() = composites.filterIsInstance<EditorWithProviderComposite>().toList().toTypedArray()
+
   val files: Array<VirtualFile>
     get() = composites.map { it.file }.toList().toTypedArray()
+
+  val fileList: List<VirtualFile>
+    get() = composites.map { it.file }.toList()
+
+  val fileSequence: Sequence<VirtualFile>
+    get() = composites.map { it.file }
 
   private var painter: MySplitPainter? = null
 
@@ -351,8 +358,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       val siblings = getSiblings()
       val target = siblings[0]
       if (virtualFile != null) {
-        val editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first
-        syncCaretIfPossible(editors)
+        syncCaretIfPossible(fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).allEditors)
       }
       return target
     }
@@ -390,7 +396,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
     val nextFile = virtualFile ?: selectedComposite!!.file
     val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file != nextFile }
     val openOptions = FileEditorOpenOptions(requestFocus = focusNew, isExactState = true)
-    val editors = fileEditorManager.openFileImpl4(result, nextFile, currentState, openOptions).first
+    val editors = fileEditorManager.openFileImpl4(result, nextFile, currentState, openOptions).allEditors
     syncCaretIfPossible(editors)
     if (isFileOpen(nextFile)) {
       result.setFilePinned(nextFile, isFilePinned(nextFile))
@@ -445,7 +451,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   /**
    * Tries to set up caret and viewport for the given editor from the selected one.
    */
-  private fun syncCaretIfPossible(toSync: Array<FileEditor>) {
+  private fun syncCaretIfPossible(toSync: List<FileEditor>) {
     val from = selectedComposite ?: return
     val caretSource = from.selectedEditor as? TextEditor ?: return
     val editorFrom = caretSource.editor
@@ -459,6 +465,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
       if (fileEditor !is TextEditor) {
         continue
       }
+
       val editor = fileEditor.editor
       if (editorFrom.document === editor.document) {
         editor.caretModel.moveToOffset(offset)
@@ -536,8 +543,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
   @JvmOverloads
   fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true, transferFocus: Boolean = true) {
     val editorManager = manager
-    FileEditorManagerImpl.runBulkTabChange(owner) { splitters ->
-      val composites = splitters.getAllComposites(file)
+    FileEditorManagerImpl.runBulkTabChange(owner) {
+      val composites = owner.getAllComposites(file)
       if (!isDisposed && composites.isEmpty()) {
         return@runBulkTabChange
       }
@@ -548,7 +555,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
         beforePublisher.beforeFileClosed(editorManager, file)
         if (composite != null) {
           val componentIndex = findComponentIndex(composite.component)
-          if (componentIndex >= 0) { // composite could close itself on decomposition
+          // composite could close itself on decomposition
+          if (componentIndex >= 0) {
             val indexToSelect = calcIndexToSelect(file, componentIndex)
             val options = FileEditorOpenOptions().withIndex(componentIndex).withPin(composite.isPinned)
             val pair = Pair(file.url, options)
@@ -579,11 +587,10 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, parentDispo
         editorManager.notifyPublisher {
           val project = editorManager.project
           if (!project.isDisposed) {
-            val afterPublisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-            afterPublisher.fileClosed(editorManager, file)
+            project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileClosed(editorManager, file)
           }
         }
-        splitters.afterFileClosed(file)
+        owner.afterFileClosed(file)
       }
     }
   }

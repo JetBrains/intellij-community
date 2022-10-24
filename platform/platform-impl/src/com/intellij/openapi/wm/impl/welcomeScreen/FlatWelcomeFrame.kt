@@ -54,6 +54,7 @@ import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.dnd.*
 import java.awt.event.*
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -236,7 +237,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   override fun getStatusBar(): StatusBar? = null
 
-  override fun getCurrentAccessibleContext() = accessibleContext
+  override fun getCurrentAccessibleContext(): AccessibleContext? = accessibleContext
 
   private val welcomeFrameTitle: String
     get() = WelcomeScreenComponentFactory.getApplicationTitle()

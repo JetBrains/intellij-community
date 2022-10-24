@@ -40,6 +40,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
   public void setProject() {
   }
+
   /**
    * Returns applied state or rejected promise if it cannot be applied.
    */
@@ -201,6 +202,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();
+
   public static boolean isCustomDecorationActive() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings == null) {

@@ -641,7 +641,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     var module: Module? = null
     var result: Project? = null
-    var reopeningEditorJob: Job? = null
+    var reopeningEditorJob: Deferred<Job?>? = null
     var projectOpenActivity: Activity? = null
     try {
       frameAllocator.run { saveTemplateJob ->
@@ -667,7 +667,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
 
-        reopeningEditorJob = frameAllocator.projectLoaded(project)
+        reopeningEditorJob = with(frameAllocator) { projectLoaded(project) }
 
         if (!addToOpened(project)) {
           throw CancellationException("project is already opened")
@@ -729,7 +729,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     // 1. part of open project task
     // 2. runStartupActivities can consume a lot of CPU and editor restoring can be delayed, but it is a bad UX
     runActivity("editor reopening waiting") {
-      reopeningEditorJob?.join()
+      reopeningEditorJob?.await()?.join()
     }
 
     if (isRunStartUpActivitiesEnabled(project)) {

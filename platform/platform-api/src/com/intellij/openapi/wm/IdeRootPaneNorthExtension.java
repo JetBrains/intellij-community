@@ -1,24 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class IdeRootPaneNorthExtension {
-  public static final ProjectExtensionPointName<IdeRootPaneNorthExtension> EP_NAME =
-    new ProjectExtensionPointName<>("com.intellij.ideRootPaneNorth");
+public interface IdeRootPaneNorthExtension {
+  ExtensionPointName<IdeRootPaneNorthExtension> EP_NAME = new ExtensionPointName<>("com.intellij.ideRootPaneNorth");
 
-  public abstract @NotNull String getKey();
+  @NotNull String getKey();
 
-  public abstract @NotNull JComponent getComponent();
-
-  public abstract void uiSettingsChanged(UISettings settings);
-
-  public abstract IdeRootPaneNorthExtension copy();
-
-  public void revalidate() {
-  }
+  @Nullable JComponent createComponent(@NotNull Project project, boolean isDocked);
 }

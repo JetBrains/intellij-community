@@ -185,9 +185,8 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
 
   override fun isInsideChange() = false
 
-  override fun notifyPublisher(runnable: Runnable): ActionCallback {
+  override fun notifyPublisher(runnable: Runnable) {
     runnable.run()
-    return ActionCallback.DONE
   }
 
   override fun getSplittersFor(c: Component): EditorsSplitters? = null
@@ -317,8 +316,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return (openFiles.asSequence() + allClientFileEditorManagers.asSequence().flatMap { it.getAllFiles() }).toList()
   }
 
-  @Throws(UnsupportedOperationException::class)
-  override fun getSiblings(file: VirtualFile): Array<VirtualFile> = throw UnsupportedOperationException()
+  override fun getSiblings(file: VirtualFile): List<VirtualFile> = throw UnsupportedOperationException()
 
   override fun dispose() {
     closeAllFiles()

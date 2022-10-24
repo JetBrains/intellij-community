@@ -86,7 +86,7 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
-    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
+    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension"/>
 
     <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                     area="IDEA_PROJECT"/>

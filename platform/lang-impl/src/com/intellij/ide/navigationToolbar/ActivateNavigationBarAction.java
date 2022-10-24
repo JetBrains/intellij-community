@@ -8,14 +8,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author Anna Kozlova
@@ -34,12 +31,7 @@ final class ActivateNavigationBarAction extends AnAction implements DumbAware {
       return;
     }
 
-    IdeRootPaneNorthExtension navBar = ideRootPane.findByName(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
-    if (navBar == null) {
-      return;
-    }
-
-    JComponent component = navBar.getComponent();
+    var component = ideRootPane.findNorthUiComponentByKey(IdeStatusBarImpl.NAVBAR_WIDGET_KEY);
     if (component instanceof NavBarPanel) {
       ((NavBarPanel)component).rebuildAndSelectTail(true);
     }

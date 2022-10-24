@@ -189,7 +189,6 @@ open class EditorComposite internal constructor(
     /**
      * A mapper for old API with arrays and pairs
      */
-    @JvmStatic
     fun retrofit(composite: FileEditorComposite?): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
       if (composite == null) {
         return Pair(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY)
@@ -199,7 +198,6 @@ open class EditorComposite internal constructor(
       }
     }
   }
-
 
   @get:Deprecated("use {@link #getAllEditorsWithProviders()}", ReplaceWith("allProviders"))
   val providers: Array<FileEditorProvider>
@@ -307,7 +305,7 @@ open class EditorComposite internal constructor(
   val fileEditorManager: FileEditorManager
     get() = fileEditorManagerImpl
 
-  @get:Deprecated("use {@link #getAllEditors()}", ReplaceWith("allEditors"))
+  @get:Deprecated("use {@link #getAllEditors()}", ReplaceWith("allEditors"), level = DeprecationLevel.ERROR)
   val editors: Array<FileEditor>
     get() = allEditors.toTypedArray()
 
@@ -325,23 +323,23 @@ open class EditorComposite internal constructor(
     get() = if (tabbedPaneWrapper == null) null else (tabbedPaneWrapper as AsJBTabs).tabs
 
   fun addTopComponent(editor: FileEditor, component: JComponent) {
-    manageTopOrBottomComponent(editor, component, true, false)
+    manageTopOrBottomComponent(editor = editor, component = component, top = true, remove = false)
   }
 
   fun removeTopComponent(editor: FileEditor, component: JComponent) {
-    manageTopOrBottomComponent(editor, component, true, true)
+    manageTopOrBottomComponent(editor = editor, component = component, top = true, remove = true)
   }
 
   fun addBottomComponent(editor: FileEditor, component: JComponent) {
-    manageTopOrBottomComponent(editor, component, false, false)
+    manageTopOrBottomComponent(editor = editor, component = component, top = false, remove = false)
   }
 
   fun removeBottomComponent(editor: FileEditor, component: JComponent) {
-    manageTopOrBottomComponent(editor, component, false, true)
+    manageTopOrBottomComponent(editor = editor, component = component, top = false, remove = true)
   }
 
   private fun manageTopOrBottomComponent(editor: FileEditor, component: JComponent, top: Boolean, remove: Boolean) {
-    val container = (if (top) topComponents[editor] else bottomComponents[editor])!!
+    val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {
       container.remove(component.parent)
@@ -358,10 +356,8 @@ open class EditorComposite internal constructor(
       if (java.lang.Boolean.TRUE != component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED)) {
         val border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER)
         selfBorder = border != null
-        wrapper.border = border
-                         ?: createTopBottomSideBorder(top,
-                                                      ClientProperty.get(
-                                                        component, FileEditorManager.SEPARATOR_COLOR))
+        wrapper.border = border ?: createTopBottomSideBorder(top = top,
+                                                             borderColor = ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR))
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)

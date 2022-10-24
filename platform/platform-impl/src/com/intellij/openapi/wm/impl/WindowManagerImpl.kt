@@ -217,7 +217,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   @ApiStatus.Internal
-  fun getProjectFrameRootPane(project: Project?) = projectToFrame.get(project)?.rootPane
+  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.rootPane
 
   override fun getIdeFrame(project: Project?): IdeFrame? {
     if (project != null) {
@@ -244,36 +244,28 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
     LOG.assertTrue(!projectToFrame.containsKey(project))
     projectToFrame.put(project, frameHelper)
-    frameHelper.setProject(project)
     frameHelper.frameOrNull!!.addComponentListener(FrameStateListener(defaultFrameInfoHelper, frameHelper))
   }
 
   /**
    * This method is not used in a normal conditions. Only for light edit.
    */
-  fun allocateFrame(project: Project, projectFrameHelperFactory: Supplier<out ProjectFrameHelper>): ProjectFrameHelper {
-    var frame = getFrameHelper(project)
-    if (frame != null) {
+  fun allocateLightEditFrame(project: Project, projectFrameHelperFactory: Supplier<out ProjectFrameHelper>): ProjectFrameHelper {
+    getFrameHelper(project)?.let {
+      return it
+    }
+
+    removeAndGetRootFrame()?.let { frame ->
+      projectToFrame.put(project, frame)
+      frame.setProject(project)
+      frame.updateTitle()
       return frame
     }
 
-    frame = removeAndGetRootFrame()
-    if (frame == null) {
-      frame = projectFrameHelperFactory.get()
-      allocateNewFrame(project, frame)
-    }
-    else {
-      projectToFrame.put(project, frame)
-      frame.setProject(project)
-    }
-    return frame
-  }
-
-  private fun allocateNewFrame(project: Project, frameHelper: ProjectFrameHelper) {
-    frameHelper.init()
-
+    val frame = projectFrameHelperFactory.get()
+    frame.init()
     var frameInfo: FrameInfo? = null
-    val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let { getFrameHelper(it) }
+    val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let(::getFrameHelper)
     if (lastFocusedProjectFrame != null) {
       frameInfo = getFrameInfoByFrameHelper(lastFocusedProjectFrame)
       if (frameInfo?.bounds == null) {
@@ -286,25 +278,25 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       if (frameInfo !== defaultFrameInfoHelper.info) {
         defaultFrameInfoHelper.copyFrom(frameInfo)
       }
-      val bounds = frameInfo.bounds
-      if (bounds != null) {
-        frameHelper.frameOrNull!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
+      frameInfo.bounds?.let {
+        frame.frameOrNull!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)
       }
     }
 
-    projectToFrame.put(project, frameHelper)
-    frameHelper.setProject(project)
-    val uiFrame = frameHelper.frameOrNull!!
+    projectToFrame.put(project, frame)
+    frame.setProject(project)
+    frame.updateTitle()
+    val uiFrame = frame.frameOrNull!!
     if (frameInfo != null) {
       uiFrame.extendedState = frameInfo.extendedState
     }
     uiFrame.isVisible = true
     if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-      frameHelper.toggleFullScreen(true)
+      frame.toggleFullScreen(true)
     }
-
-    uiFrame.addComponentListener(FrameStateListener(defaultFrameInfoHelper, frameHelper))
+    uiFrame.addComponentListener(FrameStateListener(defaultFrameInfoHelper, frame))
     IdeMenuBar.installAppMenuIfNeeded(uiFrame)
+    return frame
   }
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {

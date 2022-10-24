@@ -12,12 +12,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -40,7 +41,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.*
 
-open class FrameWrapper @JvmOverloads constructor(project: Project?,
+open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
                                                   @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
                                                   @NlsContexts.DialogTitle var title: String = "",
@@ -50,7 +51,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanGetter? = null
   private var frame: Window? = null
-  private var project: Project? = null
   private var isDisposing = false
 
   var isDisposed = false
@@ -65,18 +65,19 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
   init {
-    project?.let { setProject(it) }
+    if (project != null) {
+      ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+        override fun projectClosing(project: Project) {
+          if (project === this@FrameWrapper.project) {
+            close()
+          }
+        }
+      })
+    }
   }
 
-  fun setProject(project: Project) {
-    this.project = project
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosing(project: Project) {
-        if (project === this@FrameWrapper.project) {
-          close()
-        }
-      }
-    })
+  @Deprecated("Pass project to constructor")
+  fun setProject(@Suppress("UNUSED_PARAMETER") project: Project) {
   }
 
   open fun show() {
@@ -127,17 +128,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       component?.let {
-
-
-        component = /*UIUtil.findComponentOfType(it, EditorsSplitters::class.java)?.let {
-          if(frame !is JFrame) null else {
-            val header = CustomHeader.createMainFrameHeader(frame, IdeMenuBar.createMenuBar())
-            getCustomContentHolder(frame, it, header)
-          }
-
-        } ?:*/
-
-          CustomFrameDialogContent.getCustomContentHolder(frame, it)
+        component = CustomFrameDialogContent.getCustomContentHolder(frame, it)
       }
     }
 
@@ -254,7 +245,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
-  protected open fun getNorthExtension(key: String?): IdeRootPaneNorthExtension? = null
+  protected open fun getNorthExtension(key: String?): JComponent? = null
 
   override fun getData(@NonNls dataId: String): Any? {
     return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
@@ -347,9 +338,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       updateTitle()
     }
 
-    override fun getNorthExtension(key: String): IdeRootPaneNorthExtension? {
-      return owner.getNorthExtension(key)
-    }
+    override fun getNorthExtension(key: String): JComponent? = owner.getNorthExtension(key)
 
     override fun getBalloonLayout(): BalloonLayout? {
       return null

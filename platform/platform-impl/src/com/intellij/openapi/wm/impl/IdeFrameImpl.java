@@ -45,8 +45,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     void dispose();
 
-    void setTitle(@Nullable String title);
-
     @Nullable
     Project getProject();
 
@@ -92,20 +90,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
       accessibleContext = new AccessibleIdeFrameImpl();
     }
     return accessibleContext;
-  }
-
-  @Override
-  public void setTitle(@Nullable String title) {
-    if (frameHelper == null) {
-      super.setTitle(title);
-    }
-    else {
-      frameHelper.setTitle(title);
-    }
-  }
-
-  void doSetTitle(String value) {
-    super.setTitle(value);
   }
 
   @Override
