@@ -208,9 +208,8 @@ private abstract class TogglePopupAction : ToggleAction {
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val presentation = e.presentation
-    Toggleable.setSelected(presentation, state)
     if (!state) return
+    val presentation = e.presentation
     val component = e.inputEvent?.component as? JComponent ?: return
     val actionGroup = getActionGroup(e) ?: return
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
@@ -255,12 +254,12 @@ private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationS
 }
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun actionPerformed(e: AnActionEvent) {
     if (e.inputEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
       return
     }
-    super.setSelected(e, state)
+    super.actionPerformed(e)
   }
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
