@@ -11,6 +11,7 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -156,6 +157,15 @@ public abstract class VcsVFSListener implements Disposable {
         Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(myCopyFromMap);
         myCopyFromMap.clear();
         return copyFromMap;
+      });
+    }
+
+    private void clearAllPendingTasks() {
+      withLock(PROCESSING_LOCK.writeLock(), () -> {
+        myAddedFiles.clear();
+        myDeletedFiles.clear();
+        myDeletedWithoutConfirmFiles.clear();
+        myMovedFiles.clear();
       });
     }
 
@@ -794,9 +804,14 @@ public abstract class VcsVFSListener implements Disposable {
       new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          indicator.checkCanceled();
-          myProcessor.processAfterEvents(events);
-          myProcessor.executePendingTasks();
+          try {
+            indicator.checkCanceled();
+            myProcessor.processAfterEvents(events);
+            myProcessor.executePendingTasks();
+          }
+          catch (ProcessCanceledException e) {
+            myProcessor.clearAllPendingTasks();
+          }
         }
       }.queue();
     }
