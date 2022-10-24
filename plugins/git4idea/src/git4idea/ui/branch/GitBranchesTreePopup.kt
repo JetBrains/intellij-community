@@ -83,7 +83,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   private lateinit var searchPatternStateFlow: MutableStateFlow<String?>
 
-  private var userResized: Boolean
+  internal var userResized: Boolean
+    private set
 
   init {
     setMinimumSize(JBDimension(300, 200))
@@ -172,18 +173,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun installResizeListener() {
-    val popupWindow = popupWindow ?: return
-    val windowListener: ComponentListener = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        userResized = true
-      }
-    }
-    popupWindow.addComponentListener(windowListener)
-    addListener(object : JBPopupListener {
-      override fun onClosed(event: LightweightWindowEvent) {
-        popupWindow.removeComponentListener(windowListener)
-      }
-    })
+    addResizeListener({ userResized = true }, this)
   }
 
   private fun installBranchSettingsListener() {
