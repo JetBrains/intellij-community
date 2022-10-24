@@ -44,7 +44,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
   private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';  // used in `FailedTestDebugLogConsoleFolding#shouldFoldLine`
-  private static final int MAX_BUFFER_LENGTH = 10_000_000;
+  private static final int MAX_BUFFER_LENGTH = Integer.getInteger("idea.single.test.log.max.length", 10_000_000);
 
   private final StringBuilder myBuffer = new StringBuilder();
   private long myTestStartedMillis;
