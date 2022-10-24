@@ -104,11 +104,9 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
 
   override fun onSelected() {
-    invokeLater { // We must free AWT to redraw screen (remove selection etc.) before entering modal state
       runBlockingModal(model.project, PyBundle.message("python.add.sdk.conda.detecting")) {
         model.detectConda(Dispatchers.EDT, progressSink)
       }
-    }
   }
 
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean> = emptyMap()
