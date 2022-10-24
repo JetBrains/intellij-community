@@ -123,6 +123,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                     }
                 }
 
+                overridden.add(element)
                 element.findAllOverridings().forEach { m ->
                     val original = m.unwrapped
                     if (original != null && !allElementsToDelete.contains(original)) {

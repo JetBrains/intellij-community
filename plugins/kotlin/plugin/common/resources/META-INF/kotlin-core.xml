@@ -438,7 +438,6 @@
 
     <directClassInheritorsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher"/>
 
-    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithFlexibleTypesSearcher"/>
     <indexPatternSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher"/>
 

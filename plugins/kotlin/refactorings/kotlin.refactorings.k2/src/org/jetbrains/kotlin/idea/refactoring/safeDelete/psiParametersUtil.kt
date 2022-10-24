@@ -43,7 +43,7 @@ private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
     val function = parameter.ownerFunction as? KtFunction ?: return emptySet()
     val parameterIndex = parameter.parameterIndex()
     val parametersToDelete = HashSet<PsiElement>()
-    function.findHierarchyWithSiblings().forEach {
+    val processElement: (PsiElement) -> Unit = {
         when (it) {
             is KtFunction -> {
                 parametersToDelete.add(it.valueParameters[parameterIndex])
@@ -54,5 +54,7 @@ private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
             }
         }
     }
+    processElement(function)
+    function.findHierarchyWithSiblings().forEach(processElement)
     return parametersToDelete
 }

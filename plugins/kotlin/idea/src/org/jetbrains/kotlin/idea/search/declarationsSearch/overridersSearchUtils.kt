@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.search.declarationsSearch
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
@@ -67,6 +68,14 @@ fun forEachKotlinOverride(
 
     return true
 }
+
+fun PsiMethod.forEachImplementation(
+    scope: SearchScope = runReadAction { useScope() },
+    processor: (PsiElement) -> Boolean
+): Boolean = forEachOverridingMethod(scope, processor) && FunctionalExpressionSearch.search(
+    this,
+    scope.excludeKotlinSources(project)
+).forEach(Processor { processor(it) })
 
 fun PsiMethod.forEachOverridingMethod(
     scope: SearchScope = runReadAction { useScope() },

@@ -1,1 +1,1 @@
-SymbolLightSimpleMethod: B.foo
+KtNamedFunction: B.foo

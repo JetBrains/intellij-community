@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search
 
@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.actualsForExpected
@@ -88,9 +87,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
             searchDeeply,
             processor
         )
-
-    override fun forEachOverridingMethod(method: PsiMethod, scope: SearchScope, processor: (PsiMethod) -> Boolean): Boolean =
-        method.forEachOverridingMethod(scope, processor)
 
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
         org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping(method)

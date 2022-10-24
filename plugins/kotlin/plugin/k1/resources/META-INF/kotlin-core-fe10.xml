@@ -101,6 +101,7 @@
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.kotlin.idea.KotlinDocumentationProvider" order="first"/>
     <documentationProvider implementation="org.jetbrains.kotlin.idea.KotlinDocumentationProvider"/>
 
+    <definitionsScopedSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDefinitionsSearcher"/>
 
   </extensions>
 

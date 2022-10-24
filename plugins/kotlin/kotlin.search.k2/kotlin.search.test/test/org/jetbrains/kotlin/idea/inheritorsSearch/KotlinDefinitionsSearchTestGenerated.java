@@ -17,58 +17,58 @@ import org.junit.runner.RunWith;
 @TestRoot("kotlin.search.k2/kotlin.search.test")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class DirectKotlinInheritorsSearcherTestGenerated extends AbstractDirectKotlinInheritorsSearcherTest {
+public abstract class KotlinDefinitionsSearchTestGenerated extends AbstractKotlinDefinitionsSearchTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inheritorsSearch/kotlinClass")
-    public static class KotlinClass extends AbstractDirectKotlinInheritorsSearcherTest {
+    @TestMetadata("../testData/definitionsSearch/kotlinClass")
+    public static class KotlinClass extends AbstractKotlinDefinitionsSearchTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestKotlinClass, this, testDataFilePath);
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("../testData/inheritorsSearch/kotlinClass/simple.kt");
+            runTest("../testData/definitionsSearch/kotlinClass/simple.kt");
         }
 
         @TestMetadata("withJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
-            runTest("../testData/inheritorsSearch/kotlinClass/withJavaInheritor.kt");
+            runTest("../testData/definitionsSearch/kotlinClass/withJavaInheritor.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inheritorsSearch/javaClass")
-    public static class JavaClass extends AbstractDirectKotlinInheritorsSearcherTest {
+    @TestMetadata("../testData/definitionsSearch/javaClass")
+    public static class JavaClass extends AbstractKotlinDefinitionsSearchTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestJavaClass, this, testDataFilePath);
         }
 
         @TestMetadata("fromJava.java")
         public void testFromJava() throws Exception {
-            runTest("../testData/inheritorsSearch/javaClass/fromJava.java");
+            runTest("../testData/definitionsSearch/javaClass/fromJava.java");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
-    public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
+    @TestMetadata("../testData/definitionsSearch/kotlinFunction")
+    public static class KotlinFunction extends AbstractKotlinDefinitionsSearchTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestKotlinFunction, this, testDataFilePath);
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("../testData/inheritorsSearch/kotlinFunction/simple.kt");
+            runTest("../testData/definitionsSearch/kotlinFunction/simple.kt");
         }
 
         @TestMetadata("withJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
-            runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritor.kt");
+            runTest("../testData/definitionsSearch/kotlinFunction/withJavaInheritor.kt");
         }
 
         @TestMetadata("withJavaInheritorTypeParameters.kt")
         public void testWithJavaInheritorTypeParameters() throws Exception {
-            runTest("../testData/inheritorsSearch/kotlinFunction/withJavaInheritorTypeParameters.kt");
+            runTest("../testData/definitionsSearch/kotlinFunction/withJavaInheritorTypeParameters.kt");
         }
     }
 }

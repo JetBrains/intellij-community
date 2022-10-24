@@ -2,49 +2,38 @@
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.search.searches.DefinitionsScopedSearch
-import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.MethodSignatureUtil
-import com.intellij.util.Processor
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
-import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
-import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
 
-class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSearchUsagesSupport {
+class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
         return emptySet()
     }
@@ -190,70 +179,6 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
 
     override fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
         return emptyList()
-    }
-
-    override fun forEachOverridingMethod(method: PsiMethod, scope: SearchScope, processor: (PsiMethod) -> Boolean): Boolean {
-        if (!findNonKotlinMethodInheritors(method, scope, processor)) return false
-
-        return findKotlinInheritors(method, scope, processor)
-    }
-
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun findKotlinInheritors(
-        method: PsiMethod,
-        scope: SearchScope,
-        processor: (PsiMethod) -> Boolean
-    ): Boolean {
-        val ktMember = method.unwrapped as? KtNamedDeclaration ?: return true
-        val ktClass = runReadAction { ktMember.containingClassOrObject as? KtClass } ?: return true
-
-        return DefinitionsScopedSearch.search(ktClass, scope, true).forEach(Processor { psiClass ->
-            val inheritor = psiClass.unwrapped as? KtClassOrObject ?: return@Processor true
-            allowAnalysisOnEdt {
-                analyzeWithReadAction(inheritor) {
-                    findMemberInheritors(ktMember, inheritor, processor)
-                }
-            }
-        })
-    }
-
-    private fun KtAnalysisSession.findMemberInheritors(
-        superMember: KtNamedDeclaration,
-        targetClass: KtClassOrObject,
-        processor: (PsiMethod) -> Boolean
-    ): Boolean {
-        val originalMemberSymbol = superMember.getSymbol()
-        val inheritorSymbol = targetClass.getClassOrObjectSymbol()
-        val inheritorMembers = inheritorSymbol.getDeclaredMemberScope()
-            .getCallableSymbols { it == superMember.nameAsSafeName }
-            .filter { candidate ->
-                // todo find a cheaper way
-                candidate.getAllOverriddenSymbols().any { it == originalMemberSymbol }
-            }
-        for (member in inheritorMembers) {
-            val lightInheritorMembers = member.psi?.toPossiblyFakeLightMethods()?.distinctBy { it.unwrapped }.orEmpty()
-            for (lightMember in lightInheritorMembers) {
-                if (!processor(lightMember)) {
-                    return false
-                }
-            }
-        }
-        return true
-    }
-
-    private fun findNonKotlinMethodInheritors(
-        method: PsiMethod,
-        scope: SearchScope,
-        processor: (PsiMethod) -> Boolean
-    ): Boolean {
-        if (method !is KtFakeLightMethod) {
-            val query = OverridingMethodsSearch.search(method, scope.excludeKotlinSources(method.project), true)
-            val continueSearching = query.forEach(Processor { processor(it) })
-            if (!continueSearching) {
-                return false
-            }
-        }
-        return true
     }
 
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {

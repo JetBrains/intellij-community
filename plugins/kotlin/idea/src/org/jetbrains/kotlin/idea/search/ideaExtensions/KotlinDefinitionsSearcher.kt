@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.actualsForExpected
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachImplementation
+import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*

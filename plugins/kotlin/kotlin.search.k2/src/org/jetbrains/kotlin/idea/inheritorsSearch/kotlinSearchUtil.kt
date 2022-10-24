@@ -2,21 +2,25 @@
 package org.jetbrains.kotlin.idea.inheritorsSearch
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.mappingNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClass
 import java.util.*
 
 /**
  * Returns a set of PsiMethods/KtFunctions/KtProperties which "deep" override current [function].
  */
-fun KtCallableDeclaration.findAllOverridings(): Set<PsiElement> {
-    return findAllOverridings(withFullHierarchy = false)
+fun KtCallableDeclaration.findAllOverridings(searchScope: SearchScope = useScope): Set<PsiElement> {
+    return findAllOverridings(withFullHierarchy = false, searchScope)
 }
 
 /**
@@ -34,7 +38,7 @@ fun KtCallableDeclaration.findHierarchyWithSiblings() : Set<PsiElement> {
     return findAllOverridings(withFullHierarchy = true)
 } 
 
-private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean): Set<PsiElement> {
+private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean, searchScope : SearchScope = useScope): Set<PsiElement> {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val queue = ArrayDeque<PsiElement>()
@@ -46,7 +50,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean
         visited += currentMethod
         when (currentMethod) {
           is KtCallableDeclaration -> {
-              DirectKotlinOverridingCallableSearch.search(currentMethod).forEach {
+              DirectKotlinOverridingCallableSearch.search(currentMethod, searchScope).forEach {
                   queue.offer(it)
               }
               if (withFullHierarchy) {
@@ -63,7 +67,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean
           }
 
             is PsiMethod -> {
-                OverridingMethodsSearch.search(currentMethod, true)
+                OverridingMethodsSearch.search(currentMethod, searchScope,true)
                     .mappingNotNull { it.unwrapped }
                     .filter { it !in visited }
                     .forEach { queue.offer(it) }
@@ -76,5 +80,35 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy : Boolean
             }
         }
     }
+    visited.remove(this)
+    return visited
+}
+
+fun KtClass.findAllInheritors(searchScope : SearchScope = useScope): Set<PsiElement> {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+
+    val queue = ArrayDeque<PsiElement>()
+    val visited = HashSet<PsiElement>()
+
+    queue.add(this)
+    while (!queue.isEmpty()) {
+        val currentClass = queue.poll()
+        visited += currentClass
+        when (currentClass) {
+          is KtClass -> {
+              DirectKotlinClassInheritorsSearch.search(currentClass, searchScope).forEach {
+                  queue.offer(it)
+              }
+          }
+
+            is PsiClass -> {
+                ClassInheritorsSearch.search(currentClass, searchScope, /* checkDeep = */ false)
+                    .mappingNotNull { it.unwrapped }
+                    .filter { it !in visited }
+                    .forEach { queue.offer(it) }
+            }
+        }
+    }
+    visited.remove(this)
     return visited
 }
