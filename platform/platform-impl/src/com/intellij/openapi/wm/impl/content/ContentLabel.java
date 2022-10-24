@@ -13,9 +13,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -235,8 +233,10 @@ public abstract class ContentLabel extends BaseLabel {
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
     if (ExperimentalUI.isNewUI()) {
-      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
-      myIconWithInsetsWidth = rightIconWidth;
+      JBInsets insets = JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets();
+      insets.left = Math.max(left, insets.left);
+      setBorder(new JBEmptyBorder(insets));
+      myIconWithInsetsWidth = rightIconWidth + right + left;
     }
 
     return new Dimension(rightIconWidth + size.width, size.height);
