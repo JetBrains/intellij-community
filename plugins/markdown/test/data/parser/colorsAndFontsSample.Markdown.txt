@@ -77,7 +77,7 @@ Markdown file
       PsiElement(Markdown:Markdown:TEXT)('Autolink')
       PsiElement(Markdown:Markdown::)(':')
       PsiWhiteSpace(' ')
-      MarkdownCompositeAutoLink(Markdown:Markdown:AUTOLINK)
+      MarkdownWrappedAutoLink(Markdown:Markdown:AUTOLINK)
         PsiElement(Markdown:Markdown:<)('<')
         MarkdownAutoLink(Markdown:Markdown:AUTOLINK)('http://example.com')
         PsiElement(Markdown:Markdown:>)('>')
