@@ -41,6 +41,7 @@ suspend fun runJava(mainClass: String,
     .useWithScope2 { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
+        var process: Process? = null
         try {
           val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
           val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
@@ -53,7 +54,7 @@ suspend fun runJava(mainClass: String,
           val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
           val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
                            ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
-          val process = ProcessBuilder(processArgs)
+          process = ProcessBuilder(processArgs)
             .directory(workingDir?.toFile())
             .redirectError(errorOutputFile.toFile())
             .redirectOutput(outputFile.toFile())
@@ -99,6 +100,7 @@ suspend fun runJava(mainClass: String,
           }
         }
         finally {
+          process?.waitFor()
           toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }
