@@ -3,6 +3,7 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.PROFILE_DIR
@@ -53,8 +54,13 @@ class CompositeGroupProvider : InspectionGroupProvider {
     providers.add(groupProvider)
   }
 
-  override fun findGroup(groupId: String): YamlInspectionGroup? {
-    return providers.asSequence().map { provider -> provider.findGroup(groupId) }.find { group -> group != null }
+  override fun findGroup(groupId: String): YamlInspectionGroup {
+    return object: YamlInspectionGroup {
+      override val groupId: String = groupId
+      override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
+        return providers.any { it.findGroup(groupId)?.includesInspection(tool) == true }
+      }
+    }
   }
 }
 
@@ -121,9 +127,11 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default").also { profile ->
-      profile.copyFrom(baseProfile)
-      profile.name = profileName ?: "Default"
+    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", InspectionToolRegistrar.getInstance(), baseProfile)
+      .also { profile ->
+        profile.initInspectionTools()
+        profile.copyFrom(baseProfile)
+        profile.name = profileName ?: "Default"
     }
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
@@ -142,7 +150,9 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         }
         val severity = HighlightDisplayLevel.find(configuration.severity)
         if (severity != null) {
-          inspectionTools.level = severity
+          inspectionTools.tools.forEach {
+            it.level = severity
+          }
         }
         val options = (configuration as? YamlInspectionConfig)?.options
         if (options != null) {

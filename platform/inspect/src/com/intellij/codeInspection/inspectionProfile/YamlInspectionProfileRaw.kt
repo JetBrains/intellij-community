@@ -51,7 +51,7 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
       merge(firstValue as Map<String, *>, secondValue as Map<String, *>)
     }
     else if (firstValue is List<*> && secondValue is List<*>) {
-      firstValue + secondValue
+      secondValue + firstValue
     }
     else {
       secondValue ?: firstValue
