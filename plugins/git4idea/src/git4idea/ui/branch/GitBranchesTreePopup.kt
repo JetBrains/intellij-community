@@ -569,12 +569,12 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
       private val textPanel = JBUI.Panels.simplePanel()
         .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
-        .addToCenter(secondaryLabel)
+        .addToCenter(JBUI.Panels.simplePanel(incomingOutgoingLabel).addToRight(secondaryLabel).andTransparent())
         .andTransparent()
 
       private val mainPanel = JBUI.Panels.simplePanel()
         .addToCenter(textPanel)
-        .addToRight(JBUI.Panels.simplePanel(incomingOutgoingLabel).addToRight(arrowLabel).andTransparent())
+        .addToRight(arrowLabel)
         .andTransparent()
 
       override fun getTreeCellRendererComponent(tree: JTree?,
