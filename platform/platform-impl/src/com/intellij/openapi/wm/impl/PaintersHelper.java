@@ -567,8 +567,8 @@ final class PaintersHelper implements Painter.Listener {
           image,
           flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
           ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
-          true,
-          !isSvg,
+          false, // we scale and handle HiDPI later
+          false,
           1,
           isSvg);
       }
