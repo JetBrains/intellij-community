@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -115,18 +116,20 @@ class ProjectFileIndexPerformanceTest {
     val filesWithoutId = arrayOf(noId1, noId2, noId3)
     val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
     PlatformTestUtil.startPerformanceTest("Checking status of source files in ProjectFileIndex", 2500) {
-      repeat(100) {
-        assertFalse(fileIndex.isInContent(fsRoot))
-        for (file in filesWithoutId) {
-          assertFalse(file is VirtualFileWithId)
-          assertFalse(fileIndex.isInContent(file))
-          assertFalse(fileIndex.isInSource(file))
-          assertFalse(fileIndex.isInLibrary(file))
-        }
-        for (file in ourSourceFilesToTest) {
-          assertTrue(fileIndex.isInContent(file))
-          assertTrue(fileIndex.isInSource(file))
-          assertFalse(fileIndex.isInLibrary(file))
+      runReadAction {
+        repeat(100) {
+          assertFalse(fileIndex.isInContent(fsRoot))
+          for (file in filesWithoutId) {
+            assertFalse(file is VirtualFileWithId)
+            assertFalse(fileIndex.isInContent(file))
+            assertFalse(fileIndex.isInSource(file))
+            assertFalse(fileIndex.isInLibrary(file))
+          }
+          for (file in ourSourceFilesToTest) {
+            assertTrue(fileIndex.isInContent(file))
+            assertTrue(fileIndex.isInSource(file))
+            assertFalse(fileIndex.isInLibrary(file))
+          }
         }
       }
     }.assertTiming()
@@ -135,11 +138,13 @@ class ProjectFileIndexPerformanceTest {
   @Test
   fun `access to excluded files`() {
     PlatformTestUtil.startPerformanceTest("Checking status of excluded files in ProjectFileIndex", 250) {
-      repeat(10) {
-        for (file in ourExcludedFilesToTest) {
-          assertFalse(fileIndex.isInContent(file))
-          assertFalse(fileIndex.isInSource(file))
-          assertTrue(fileIndex.isExcluded(file))
+      runReadAction {
+        repeat(10) {
+          for (file in ourExcludedFilesToTest) {
+            assertFalse(fileIndex.isInContent(file))
+            assertFalse(fileIndex.isInSource(file))
+            assertTrue(fileIndex.isExcluded(file))
+          }
         }
       }
     }.assertTiming()
@@ -148,17 +153,19 @@ class ProjectFileIndexPerformanceTest {
   @Test
   fun `access to library files`() {
     PlatformTestUtil.startPerformanceTest("Checking status of library files in ProjectFileIndex", 600) {
-      repeat(10) {
-        for (file in ourLibraryFilesToTest) {
-          assertTrue(fileIndex.isInContent(file))
-          assertFalse(fileIndex.isInSource(file))
-          assertFalse(fileIndex.isInTestSourceContent(file))
-          assertTrue(fileIndex.isInProject(file))
-          assertTrue(fileIndex.isInLibrary(file))
-          assertTrue(fileIndex.isInLibraryClasses(file))
-          assertFalse(fileIndex.isInLibrarySource(file))
-          assertFalse(fileIndex.isUnderIgnored(file))
-          assertFalse(fileIndex.isExcluded(file))
+      runReadAction {
+        repeat(10) {
+          for (file in ourLibraryFilesToTest) {
+            assertTrue(fileIndex.isInContent(file))
+            assertFalse(fileIndex.isInSource(file))
+            assertFalse(fileIndex.isInTestSourceContent(file))
+            assertTrue(fileIndex.isInProject(file))
+            assertTrue(fileIndex.isInLibrary(file))
+            assertTrue(fileIndex.isInLibraryClasses(file))
+            assertFalse(fileIndex.isInLibrarySource(file))
+            assertFalse(fileIndex.isUnderIgnored(file))
+            assertFalse(fileIndex.isExcluded(file))
+          }
         }
       }
     }.assertTiming()
@@ -167,17 +174,19 @@ class ProjectFileIndexPerformanceTest {
   @Test
   fun `access to library source files`() {
     PlatformTestUtil.startPerformanceTest("Checking status of library source files in ProjectFileIndex", 600) {
-      repeat(10) {
-        for (file in ourLibrarySourceFilesToTest) {
-          assertTrue(fileIndex.isInContent(file))
-          assertTrue(fileIndex.isInSource(file))
-          assertFalse(fileIndex.isInTestSourceContent(file))
-          assertTrue(fileIndex.isInProject(file))
-          assertTrue(fileIndex.isInLibrary(file))
-          assertFalse(fileIndex.isInLibraryClasses(file))
-          assertTrue(fileIndex.isInLibrarySource(file))
-          assertFalse(fileIndex.isUnderIgnored(file))
-          assertFalse(fileIndex.isExcluded(file))
+      runReadAction {
+        repeat(10) {
+          for (file in ourLibrarySourceFilesToTest) {
+            assertTrue(fileIndex.isInContent(file))
+            assertTrue(fileIndex.isInSource(file))
+            assertFalse(fileIndex.isInTestSourceContent(file))
+            assertTrue(fileIndex.isInProject(file))
+            assertTrue(fileIndex.isInLibrary(file))
+            assertFalse(fileIndex.isInLibraryClasses(file))
+            assertTrue(fileIndex.isInLibrarySource(file))
+            assertFalse(fileIndex.isUnderIgnored(file))
+            assertFalse(fileIndex.isExcluded(file))
+          }
         }
       }
     }.assertTiming()

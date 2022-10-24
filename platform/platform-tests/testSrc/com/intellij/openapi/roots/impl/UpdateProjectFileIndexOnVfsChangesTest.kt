@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -59,7 +60,9 @@ class UpdateProjectFileIndexOnVfsChangesTest {
     }
     projectModel.project.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)
     val excluded = HeavyPlatformTestCase.createChildDirectory(root, excludedName)
-    fileIndex.assertInModule(excluded, module, root, EXCLUDED)
+    runReadAction {
+      fileIndex.assertInModule(excluded, module, root, EXCLUDED)
+    }
     assertEquals(1, created.size, created.toString())
     listener.assertNoErrors()
   }
