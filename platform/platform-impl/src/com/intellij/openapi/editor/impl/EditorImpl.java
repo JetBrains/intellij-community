@@ -4499,6 +4499,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private final class MyColorSchemeDelegate extends DelegateColorScheme {
+    private final static float FONT_SIZE_TO_IGNORE = -1f;
     private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final FontPreferencesImpl myConsoleFontPreferences = new FontPreferencesImpl();
     private final Map<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
@@ -4506,8 +4507,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap;
     private float myMaxFontSize = EditorFontsConstants.getMaxEditorFontSize();
-    private float myFontSize = -1f;
-    private float myConsoleFontSize = -1f;
+    private float myFontSize = FONT_SIZE_TO_IGNORE;
+    private float myConsoleFontSize = FONT_SIZE_TO_IGNORE;
     private String myFaceName;
     private Float myLineSpacing;
     private boolean myFontPreferencesAreSetExplicitly;
@@ -4624,7 +4625,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myFontPreferencesAreSetExplicitly) {
         return myFontPreferences.getSize2D(myFontPreferences.getFontFamily());
       }
-      if (myFontSize == -1f) {
+      if (myFontSize == FONT_SIZE_TO_IGNORE) {
         return getDelegate().getEditorFontSize2D();
       }
       return myFontSize;
@@ -4644,12 +4645,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         LOG.debug("Font size overridden for " + EditorImpl.this, new Throwable());
       }
       myFontPreferencesAreSetExplicitly = false;
-      myFontSize = fontSize;
+
+      if (fontSize == super.getEditorFontSize2D()) myFontSize = FONT_SIZE_TO_IGNORE;
+      else myFontSize = fontSize;
+
       reinitFontsAndSettings();
     }
 
     void resetEditorFontSize() {
-      myFontSize = -1f;
+      myFontSize = FONT_SIZE_TO_IGNORE;
       reinitFonts();
     }
 
@@ -4668,7 +4672,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = true;
       myFaceName = null;
-      myFontSize = -1f;
+      myFontSize = FONT_SIZE_TO_IGNORE;
       preferences.copyTo(myFontPreferences);
       reinitFontsAndSettings();
     }
@@ -4744,7 +4748,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setConsoleFontSize(float fontSize) {
-      myConsoleFontSize = fontSize;
+      if (fontSize == super.getConsoleFontSize2D()) myConsoleFontSize = FONT_SIZE_TO_IGNORE;
+      else myConsoleFontSize = fontSize;
+
       reinitFontsAndSettings();
     }
 
@@ -4755,7 +4761,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public float getConsoleFontSize2D() {
-      return myConsoleFontSize == -1f ? super.getConsoleFontSize2D() : myConsoleFontSize;
+      return myConsoleFontSize == FONT_SIZE_TO_IGNORE ? super.getConsoleFontSize2D() : myConsoleFontSize;
     }
 
     @Override
