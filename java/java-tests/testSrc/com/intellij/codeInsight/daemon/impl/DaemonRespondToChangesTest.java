@@ -449,8 +449,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               action.run();
             }
           };
-          myDaemonCodeAnalyzer
-            .runPasses(getFile(), getDocument(getFile()), Collections.singletonList(textEditor), toIgnore, true, callbackWhileWaiting);
+          myDaemonCodeAnalyzer.runPasses(getFile(), getDocument(getFile()), textEditor, toIgnore, true, callbackWhileWaiting);
           break;
         }
         catch (ProcessCanceledException ignored) { }
@@ -1570,7 +1569,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         checked[0] = true;
         typeInAlienEditor(alienEditor, 'x');
       };
-      di.runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+      di.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
     }
     catch (ProcessCanceledException ignored) {
       //DaemonProgressIndicator.setDebug(true);
@@ -1728,8 +1727,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
       Runnable callbackWhileWaiting = () -> type(' ');
-      codeAnalyzer
-        .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+      codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -1799,7 +1797,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
     TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
 
-    myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), Arrays.asList(textEditor1,textEditor2), new int[0], false, null);
+    myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor1, new int[0], false, null);
+    myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor2, new int[0], false, null);
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor1.getDocument(), null, myProject);
     assertEmpty(errors);
 
@@ -1825,7 +1824,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
       EditorTracker.getInstance(myProject).setActiveEditors(Arrays.asList(editor1, editor2));
 
-      myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), Arrays.asList(textEditor1,textEditor2), new int[0], false, null);
+      myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor1, new int[0], false, null);
+      myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor2, new int[0], false, null);
 
       assertSameElements(collected, Arrays.asList(editor1, editor2));
       assertSameElements(applied, Arrays.asList(editor1, editor2));
@@ -2047,31 +2047,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", errors.get(0).getDescription());
   }
 
-  public void _testCaretMovementDoesNotRestartHighlighting() {
-    configureByText(JavaFileType.INSTANCE, "class X { int f = \"error\"; int f() { int gg<caret> = 11; return 0;} }");
-
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-    DaemonCodeAnalyzerImpl di = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    AtomicReference<ProgressIndicator> indicator = new AtomicReference<>();
-    Runnable callbackWhileWaiting = () -> {
-      if (indicator.get() == null) {
-        indicator.set(di.getUpdateProgress());
-      }
-      assertSame(indicator.get(), di.getUpdateProgress());
-      caretRight();
-      if (getEditor().getCaretModel().getOffset() == getEditor().getDocument().getTextLength()-1) {
-        getEditor().getCaretModel().moveToOffset(0);
-      }
-    };
-    di.runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false,
-                 callbackWhileWaiting);
-    List<HighlightInfo> errors = filter(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), null, myProject), HighlightSeverity.ERROR);
-
-    assertEquals(1, errors.size());
-    assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", errors.get(0).getDescription());
-  }
-
-
   public void testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() {
     configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
     AtomicBoolean run = new AtomicBoolean();
@@ -2189,12 +2164,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
-        DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
+        Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
         long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
+        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
-        if (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) {
+        if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
@@ -2318,15 +2293,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private void waitForDaemon() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    long deadline = System.currentTimeMillis() + 60_000;
+    long start = System.currentTimeMillis();
+    long deadline = start + 60_000;
     while (!daemonIsWorkingOrPending()) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to start");
+      }
     }
     while (daemonIsWorkingOrPending()) {
       if (System.currentTimeMillis() > deadline) {
         DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
-        fail("Too long waiting for daemon to finish");
+        fail("Too long waiting for daemon to finish ("+(System.currentTimeMillis()-start)+"ms already)");
       }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
@@ -2792,8 +2770,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       long start = System.currentTimeMillis();
-      myDaemonCodeAnalyzer
-        .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
+      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
       List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
 
