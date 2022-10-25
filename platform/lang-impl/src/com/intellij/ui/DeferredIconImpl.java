@@ -193,23 +193,15 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
       final Icon[] evaluated = new Icon[1];
 
       final long startTime = System.currentTimeMillis();
+      boolean success = true;
       if (myNeedReadAction) {
-        boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+        success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
           IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
           if (myAutoUpdatable) {
             myLastCalcTime = System.currentTimeMillis();
             myLastTimeSpent = myLastCalcTime - startTime;
           }
         });
-        if (!result) {
-          myIsScheduled = false;
-          EdtScheduledExecutorService.getInstance().schedule(() -> {
-            if (needScheduleEvaluation()) {
-              scheduleEvaluation(c, x, y);
-            }
-          }, MIN_AUTO_UPDATE_MILLIS, TimeUnit.MILLISECONDS);
-          return;
-        }
       }
       else {
         IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
@@ -219,6 +211,16 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
         }
       }
       final Icon result = evaluated[0];
+      if (!success || result == null) {
+        myIsScheduled = false;
+        EdtScheduledExecutorService.getInstance().schedule(() -> {
+          if (needScheduleEvaluation()) {
+            scheduleEvaluation(c, x, y);
+          }
+        }, MIN_AUTO_UPDATE_MILLIS, TimeUnit.MILLISECONDS);
+        return;
+      }
+
       myScaledDelegateIcon = result;
       myModificationCount.incrementAndGet();
       checkDelegationDepth();
