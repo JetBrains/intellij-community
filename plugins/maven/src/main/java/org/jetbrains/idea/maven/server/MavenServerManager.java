@@ -56,7 +56,7 @@ public final class MavenServerManager implements Disposable {
 
   //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
   private MavenIndexingConnectorImpl myIndexingConnector = null;
-  private MavenIndexerWrapper myWrapper = null;
+  private MavenIndexerWrapper myIndexerWrapper = null;
 
   private File eventListenerJar;
 
@@ -281,6 +281,7 @@ public final class MavenServerManager implements Disposable {
     synchronized (myMultimoduleDirToConnectorMap) {
       if (myIndexingConnector == connector) {
         myIndexingConnector = null;
+        myIndexerWrapper = null;
         return connector;
       }
       if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
@@ -428,11 +429,11 @@ public final class MavenServerManager implements Disposable {
   }
 
   private MavenIndexerWrapper createDedicatedIndexer() {
-    if (myWrapper != null) return myWrapper;
+    if (myIndexerWrapper != null) return myIndexerWrapper;
     synchronized (myMultimoduleDirToConnectorMap) {
-      if (myWrapper != null) return myWrapper;
+      if (myIndexerWrapper != null) return myIndexerWrapper;
       String workingDir = SystemUtils.getUserHome().getAbsolutePath();
-      myWrapper =
+      myIndexerWrapper =
         new MavenIndexerWrapper(null) {
 
           @Override
@@ -457,7 +458,7 @@ public final class MavenServerManager implements Disposable {
           }
         };
     }
-    return myWrapper;
+    return myIndexerWrapper;
   }
 
   private MavenIndexerWrapper createLegacyIndexer(@NotNull Project project) {
