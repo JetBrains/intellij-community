@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.*
 class SimplifyNegatedBinaryExpressionInspection : AbstractApplicabilityBasedInspection<KtPrefixExpression>(KtPrefixExpression::class.java) {
 
     override fun inspectionHighlightType(element: KtPrefixExpression): ProblemHighlightType =
-        if (element.canBeSimplifiedWithoutChangingSemantics()) GENERIC_ERROR_OR_WARNING else INFORMATION
+        if (element.canBeSimplifiedWithoutChangingSemantics()) super.inspectionHighlightType(element) else INFORMATION
 
     override fun inspectionText(element: KtPrefixExpression): String =
         KotlinBundle.message("negated.operation.can.be.simplified")

@@ -17,7 +17,7 @@ Reports negated boolean expressions that can be simplified.
 <p>Please note that this action may change code semantics if IEEE-754 NaN values are involved:</p>
 <pre><code>
     fun main() {
-        println(!(Double.NaN >= 0)) // true
+        println(!(Double.NaN &gt;= 0)) // true
     }
 </code></pre>
 <p>After the quick-fix is applied:</p>

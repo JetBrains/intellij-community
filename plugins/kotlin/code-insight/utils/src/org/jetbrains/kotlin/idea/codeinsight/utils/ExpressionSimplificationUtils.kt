@@ -18,7 +18,7 @@ object NegatedBinaryExpressionSimplificationUtils {
     fun KtPrefixExpression.canBeSimplifiedWithoutChangingSemantics(): Boolean {
         if (!canBeSimplified()) return false
         val expression = KtPsiUtil.deparenthesize(baseExpression) as? KtBinaryExpression ?: return true
-        val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return true
+        val operation = expression.operationReference.getReferencedNameElementType()
         if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
 
         @OptIn(KtAllowAnalysisOnEdt::class)
