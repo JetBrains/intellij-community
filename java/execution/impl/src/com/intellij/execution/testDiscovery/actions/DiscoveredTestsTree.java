@@ -159,8 +159,22 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      TreePath[] paths = getSelectionModel().getSelectionPaths();
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      return (DataProvider)slowId -> getSlowData(slowId, paths);
+    }
+    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+      return PopupUtil.getPopupContainerFor(this);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] paths) {
+    if (paths == null || paths.length == 0) return null;
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return obj2psi(paths[0].getLastPathComponent());
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> result = new SmartList<>();
       TreeModel model = getModel();
       for (TreePath p : paths) {
@@ -182,21 +196,6 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
         }
       }
       return result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TreePath path = getSelectionModel().getSelectionPath();
-      Object obj = path == null ? null : path.getLastPathComponent();
-      return (DataProvider)slowId -> getSlowData(slowId, obj);
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return PopupUtil.getPopupContainerFor(this);
-    }
-    return null;
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId, Object obj) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return obj2psi(obj);
     }
     return null;
   }
