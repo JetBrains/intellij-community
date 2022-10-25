@@ -5,7 +5,6 @@ import com.intellij.openapi.util.ClassExtension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 public final class ItemPresentationProviders extends ClassExtension<ItemPresentationProvider> {
   public static final ItemPresentationProviders INSTANCE = new ItemPresentationProviders();
 
@@ -15,13 +14,14 @@ public final class ItemPresentationProviders extends ClassExtension<ItemPresenta
 
   @Nullable
   @SuppressWarnings({"unchecked"})
-  public static <T extends NavigationItem> ItemPresentationProvider<T> getItemPresentationProvider(@NotNull T element) {
-    return (ItemPresentationProvider<T>)INSTANCE.forClass(element.getClass());
-  }
-
-  @Nullable
   public static ItemPresentation getItemPresentation(@NotNull NavigationItem element) {
-    final ItemPresentationProvider<NavigationItem> provider = getItemPresentationProvider(element);
-    return provider == null ? null : provider.getPresentation(element);
+    for (ItemPresentationProvider<NavigationItem> provider : INSTANCE.forKey(element.getClass())) {
+      ItemPresentation presentation = provider.getPresentation(element);
+      if (presentation != null) {
+        return presentation;
+      }
+    }
+
+    return null;
   }
 }
