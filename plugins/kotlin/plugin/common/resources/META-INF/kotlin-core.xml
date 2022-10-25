@@ -517,26 +517,6 @@
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
 
-    <group id="KotlinGenerateGroup">
-      <action id="KotlinGenerateTestMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Test"/>
-      <action id="KotlinGenerateSetUpMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$SetUp"/>
-      <action id="KotlinGenerateTearDownMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$TearDown"/>
-      <action id="KotlinGenerateDataMethod"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase$Data"/>
-      <separator />
-      <action id="KotlinGenerateSecondaryConstructor"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction"/>
-      <action id="KotlinGenerateEqualsAndHashCode"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction"/>
-      <action id="KotlinGenerateToString"
-              class="org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateToStringAction"/>
-
-      <add-to-group group-id="GenerateGroup" anchor="first"/>
-    </group>
-
     <group id="InternalKotlin" internal="true">
       <separator/>
 
