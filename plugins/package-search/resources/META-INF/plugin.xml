@@ -106,7 +106,7 @@ Supports Maven and Gradle projects.
                      key="packagesearch.plugin.debug.logging"
                      defaultValue="false"
                      description="Emit in-depth debug logging (warning: very spammy, only useful for debugging data flow issues). Make sure you have this line in Help | Diagnostic Tools | Debug Log Settings: '#com.jetbrains.packagesearch.intellij-plugin:trace'."
-                     restartRequired="true"/>
+                     restartRequired="false"/>
 
         <registryKey id="packagesearch.plugin.repositories.tab"
                      key="packagesearch.plugin.repositories.tab"

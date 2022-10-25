@@ -17,45 +17,78 @@
 package org.jetbrains.idea.packagesearch.api
 
 import com.intellij.openapi.components.service
-import com.intellij.util.io.URLUtil
-import kotlinx.serialization.decodeFromString
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.accept
+import io.ktor.http.ContentType
+import io.ktor.http.appendEncodedPathSegments
+import io.ktor.http.path
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
 import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
-import org.jetbrains.idea.packagesearch.http.HttpWrapper
 import org.jetbrains.idea.reposearch.DependencySearchBundle
 import org.jetbrains.packagesearch.api.statistics.ApiStatisticsResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackageResponse
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import java.io.Closeable
 
-
-internal object PackageSearchApiContentTypes {
-  const val StandardV2 = "application/vnd.jetbrains.packagesearch.standard.v2+json"
-  const val MinimalV2 = "application/vnd.jetbrains.packagesearch.minimal.v2+json"
-  const val Json = "application/json"
-  const val Html = "text/html"
-}
-
-private val emptyStandardV2PackagesWithRepos = ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>(
-  packages = emptyList(),
-  repositories = emptyList()
-)
 
 class PackageSearchApiClient(
-  private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
-) {
-  private val httpWrapper = HttpWrapper()
+  private val config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
+  engine: HttpClientEngine? = null,
+) : Closeable {
+
+  private val clientConfig: HttpClientConfig<*>.() -> Unit
+    get() = {
+      install(ContentNegotiation) {
+        val json = Json {
+          ignoreUnknownKeys = true
+          encodeDefaults = false
+        }
+        packageSearch(json)
+        json(json)
+      }
+      install(Logging) {
+        logger = config.logger
+        level = config.logLevel
+      }
+      install(UserAgent) {
+        agent = config.userAgent
+      }
+      install(DefaultRequest) {
+        url {
+          protocol = config.protocol
+          host = config.host
+          path("api/")
+        }
+      }
+      install(HttpTimeout) {
+        requestTimeout = config.timeout
+      }
+      install(HttpRequestRetry) {
+        retryOnServerErrors(5)
+        constantDelay()
+      }
+      if (config.useCache) install(HttpCache)
+    }
+
+  private val httpClient = if (engine != null) HttpClient(engine, clientConfig) else HttpClient(CIO, clientConfig)
 
   private val maxRequestResultsCount = 25
   private val maxMavenCoordinatesParts = 3
-
-  private val json = Json {
-    ignoreUnknownKeys = true
-    encodeDefaults = false
-  }
 
   suspend fun packagesByQuery(
     searchQuery: String,
@@ -67,29 +100,19 @@ class PackageSearchApiClient(
       return emptyStandardV2PackagesWithRepos
     }
 
-    val joinedRepositoryIds = repositoryIds.joinToString(",") { URLUtil.encodeQuery(it) }
-    val requestUrl = buildString {
-      append(config.baseUrl)
-      append("/package?query=")
-      append(URLUtil.encodeQuery(searchQuery))
-      append("&onlyStable=")
-      append(onlyStable.toString())
-      append("&onlyMpp=")
-      append(onlyMpp.toString())
-
-      if (repositoryIds.isNotEmpty()) {
-        append("&repositoryIds=")
-        append(joinedRepositoryIds)
+    return httpClient.getBody {
+      url {
+        appendEncodedPathSegments("package")
+        parameters {
+          append("query", searchQuery)
+          append("onlyStable", onlyStable)
+          append("onlyMpp", onlyMpp)
+          if (repositoryIds.isNotEmpty()) {
+            append("repositoryIds", repositoryIds)
+          }
+        }
       }
     }
-
-    return httpWrapper.requestString(
-      requestUrl,
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
   }
 
   suspend fun suggestPackages(
@@ -102,29 +125,19 @@ class PackageSearchApiClient(
       return emptyStandardV2PackagesWithRepos
     }
 
-    val joinedRepositoryIds = repositoryIds.joinToString(",") { URLUtil.encodeQuery(it) }
-    val requestUrl = buildString {
-      append(config.baseUrl)
-      append("/package?groupid=")
-      append(URLUtil.encodeQuery(groupId ?: ""))
-      append("&artifactid=")
-      append(URLUtil.encodeQuery(artifactId ?: ""))
-      append("&onlyMpp=")
-      append(onlyMpp.toString())
-
-      if (repositoryIds.isNotEmpty()) {
-        append("&repositoryIds=")
-        append(joinedRepositoryIds)
+    return httpClient.getBody {
+      url {
+        appendEncodedPathSegments("packages")
+        parameters {
+          append("groupid", groupId ?: "")
+          append("artifactid", artifactId ?: "")
+          append("onlyMpp", onlyMpp)
+          if (repositoryIds.isNotEmpty()) {
+            append("repositoryIds", repositoryIds)
+          }
+        }
       }
     }
-
-    return httpWrapper.requestString(
-      requestUrl,
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
   }
 
   suspend fun packagesByRange(range: List<String>): ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
@@ -140,73 +153,57 @@ class PackageSearchApiClient(
       DependencySearchBundle.message("reposearch.search.client.error.no.versions.for.range")
     }
 
-    val joinedRange = range.joinToString(",") { URLUtil.encodeQuery(it) }
-    val requestUrl = "${config.baseUrl}/package?range=$joinedRange"
-
-    return httpWrapper.requestString(
-      requestUrl,
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
+    return httpClient.getBody {
+      url {
+        appendEncodedPathSegments("package")
+        parameters {
+          append("range", range)
+        }
+      }
+    }
   }
 
   suspend fun packageByHash(
     hash: String,
     hashingAlgorithm: HashingAlgorithm
-  ): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
-    val urlParam = when (hashingAlgorithm) {
-      HashingAlgorithm.SHA1 -> "sha1=$hash"
-      HashingAlgorithm.MD5 -> "md5=$hash"
+  ): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> = httpClient.getBody {
+    url {
+      appendEncodedPathSegments("package")
+      parameters {
+        append(hashingAlgorithm.name.lowercase(), hash)
+      }
+    }
+  }
+
+  suspend fun packageById(id: String): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> =
+    httpClient.getBody {
+      url {
+        appendEncodedPathSegments("package", id)
+      }
     }
 
-    return httpWrapper.requestString(
-      "${config.baseUrl}/package?$urlParam",
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
-  }
+  suspend fun readmeByPackageId(id: String): String =
+    httpClient.getBody {
+      url {
+        appendEncodedPathSegments("package", id, "readme")
+      }
+      accept(ContentType.Text.Html)
+    }
 
-  suspend fun packageById(id: String): ApiPackageResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> {
-    return httpWrapper.requestString(
-      "${config.baseUrl}/package/$id",
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
-  }
+  suspend fun statistics(): ApiStatisticsResponse =
+    httpClient.getBody {
+      url {
+        appendEncodedPathSegments("statistics")
+      }
+    }
 
-  suspend fun readmeByPackageId(id: String): String {
-    return httpWrapper.requestString(
-      "${config.baseUrl}/package/$id/readme",
-      PackageSearchApiContentTypes.Html,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    )
-  }
+  suspend fun repositories(): ApiRepositoriesResponse =
+    httpClient.getBody {
+      url {
+        appendEncodedPathSegments("repositories")
+      }
+    }
 
-  suspend fun statistics(): ApiStatisticsResponse {
-    return httpWrapper.requestString(
-      "${config.baseUrl}/api/statistics",
-      PackageSearchApiContentTypes.Json,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
-  }
-
-  suspend fun repositories(): ApiRepositoriesResponse {
-    return httpWrapper.requestString(
-      "${config.baseUrl}/repositories",
-      PackageSearchApiContentTypes.StandardV2,
-      config.timeoutInSeconds,
-      config.headers,
-      config.useCache
-    ).let { json.decodeFromString(it) }
-  }
+  override fun close() = httpClient.close()
 }
+

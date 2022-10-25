@@ -104,7 +104,8 @@ class DependencySearchService(private val project: Project) : Disposable {
                     consumer: ResultConsumer): Promise<Int> {
     val cacheKey = "_$groupId:$artifactId"
     return performSearch(cacheKey, parameters, consumer) { p, c ->
-      p.suggestPrefix(groupId, artifactId, c)
+      p.suggestPrefix(groupId, artifactId).get()
+        .forEach(c) // TODO A consumer here is used synchronously...
     }
   }
 
@@ -118,7 +119,8 @@ class DependencySearchService(private val project: Project) : Disposable {
                      parameters: SearchParameters,
                      consumer: ResultConsumer): Promise<Int> {
     return performSearch(searchString, parameters, consumer) { p, c ->
-      p.fulltextSearch(searchString, c)
+      p.fulltextSearch(searchString).get()
+        .forEach(c) // TODO A consumer here is used synchronously...
     }
   }
 

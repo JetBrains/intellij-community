@@ -17,8 +17,13 @@
 package org.jetbrains.idea.packagesearch.api
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import kotlinx.coroutines.runBlocking
+import com.intellij.openapi.project.Project
+import io.ktor.client.engine.HttpClientEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
@@ -29,32 +34,31 @@ import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.util.function.Consumer
 
 /**
- * If you need to access Package Search API only, it is generally recommended to use [PackageSearchApiClient] directly.
+ * If you need to access Package Search API only, it is generally recommended to use [PackageSearchApiClient] or [AsyncPackageSearchApiClient] directly.
  *
  * This class is needed to support the [DependencySearchProvider] interface, used by Maven plugin.
  */
 class PackageSearchProvider(
-  config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>()
+  private val scope: CoroutineScope,
+  config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
+  engine: HttpClientEngine? = null
 ) : DependencySearchProvider {
 
-  private val myClient = PackageSearchApiClient(config)
+  private val myClient = PackageSearchApiClient(config, engine)
+    .also { client -> scope.coroutineContext[Job]?.invokeOnCompletion { client.close() } }
 
-  override fun fulltextSearch(searchString: String, consumer: Consumer<RepositoryArtifactData>) = runBlocking {
-    ProgressManager.checkCanceled()
-    val pkgsResponse = myClient.packagesByQuery(searchString)
-    pkgsResponse.packages
+  override fun fulltextSearch(searchString: String) = scope.future {
+    myClient.packagesByQuery(searchString)
+      .packages
       .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
       .map { convertApiStandardPackage2RepositoryArtifactData(it) }
-      .forEach { consumer.accept(it) }
   }
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?, consumer: Consumer<RepositoryArtifactData>) = runBlocking {
-    ProgressManager.checkCanceled()
-    val pkgsResponse = myClient.suggestPackages(groupId, artifactId)
-    pkgsResponse.packages
+  override fun suggestPrefix(groupId: String?, artifactId: String?) = scope.future {
+    myClient.suggestPackages(groupId, artifactId)
+      .packages
       .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }
       .map { convertApiStandardPackage2RepositoryArtifactData(it) }
-      .forEach { consumer.accept(it) }
   }
 
   override fun isLocal(): Boolean = false
@@ -74,3 +78,9 @@ class PackageSearchProvider(
     )
   }
 }
+
+fun PackageSearchProvider(
+  project: Project,
+  config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
+  engine: HttpClientEngine? = null
+): PackageSearchProvider = PackageSearchProvider(project.service<LifecycleScope>(), config, engine)

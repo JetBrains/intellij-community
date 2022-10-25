@@ -18,6 +18,7 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.dependencytoolwindow.DependencyToolWindowFactory
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -33,6 +34,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectD
 import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
 import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo.TraceSource.INSTALLED_PACKAGES
+import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo.TraceSource.PACKAGE_UPGRADES
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
@@ -87,12 +90,14 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-internal class PackageSearchProjectService(private val project: Project) {
+internal class PackageSearchProjectService(private val project: Project) : Disposable {
 
     private val retryFromErrorChannel = Channel<Unit>()
+    private val apiClient = PackageSearchApiClient()
+
     val dataProvider = ProjectDataProvider(
-        PackageSearchApiClient(),
-        project.packageSearchProjectCachesService.installedDependencyCache
+        apiClient,
+      project.packageSearchProjectCachesService.installedDependencyCache
     )
 
     private val projectModulesLoadingFlow = MutableStateFlow(false)
@@ -259,10 +264,10 @@ internal class PackageSearchProjectService(private val project: Project) {
         .pauseOn(editingFilesState.map { !it })
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
             installedPackages(
-                it,
-                project,
-                dataProvider,
-                TraceInfo(TraceInfo.TraceSource.INIT)
+                dependenciesByModule = it,
+                project = project,
+                dataProvider = dataProvider,
+                traceInfo = TraceInfo(INSTALLED_PACKAGES)
             )
         }
         .catchAndLog(
@@ -276,6 +281,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         moduleModelsStateFlow,
         knownRepositoriesFlow
     ) { (installedPackages, moduleModels, repos) ->
+            val trace = TraceInfo(PACKAGE_UPGRADES)
             availableUpgradesLoadingFlow.emit(true)
             val result = PackageUpgradeCandidates(
                 computePackageUpgrades(
@@ -283,7 +289,8 @@ internal class PackageSearchProjectService(private val project: Project) {
                     onlyStable = false,
                     normalizer = packageVersionNormalizer,
                     repos = allKnownRepositoryModels(moduleModels, repos),
-                    nativeModulesMap = moduleModels.associateBy { it.projectModule }
+                    nativeModulesMap = moduleModels.associateBy { it.projectModule },
+                    trace = trace
                 )
             )
             availableUpgradesLoadingFlow.emit(false)
@@ -354,4 +361,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         computationStartedChannel.trySend()
     }
 
+    override fun dispose() {
+        apiClient.close()
+    }
 }

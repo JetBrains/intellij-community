@@ -35,6 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
@@ -73,6 +74,7 @@ internal suspend fun installedPackages(
     traceInfo: TraceInfo
 ): List<PackageModel.Installed> {
     val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
+    logTrace(traceInfo) { "installedPackages started" }
     for (module in dependenciesByModule.keys) {
         dependenciesByModule[module]?.forEach { (dependency, resolvedVersion, declarationIndexInBuildFile) ->
             yield()
@@ -86,14 +88,16 @@ internal suspend fun installedPackages(
                 declarationIndexInBuildFile = declarationIndexInBuildFile
             )
             val usageInfoList = usageInfoByDependency.getOrPut(dependency) { mutableListOf() }
+            if (usageInfoByDependency.size % 100 == 0) logTrace(traceInfo) { "usageInfoByDependency.size = ${usageInfoByDependency.size}" }
             usageInfoList.add(usageInfo)
         }
     }
-
+    logTrace(traceInfo) { "usageInfoByDependency.size = ${usageInfoByDependency.size}" }
     val installedDependencies = dependenciesByModule.values.flatten()
         .mapNotNull { InstalledDependency.from(it.dependency) }
 
     val dependencyRemoteInfoMap = dataProvider.fetchInfoFor(installedDependencies, traceInfo)
+    logTrace(traceInfo) { "dependencyRemoteInfoMap.size = ${dependencyRemoteInfoMap.size}" }
 
     return usageInfoByDependency.parallelMap { (dependency, usageInfo) ->
         val installedDependency = InstalledDependency.from(dependency)

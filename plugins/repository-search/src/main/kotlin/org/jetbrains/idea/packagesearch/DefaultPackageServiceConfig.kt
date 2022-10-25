@@ -18,14 +18,17 @@ package org.jetbrains.idea.packagesearch
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
+import kotlin.time.Duration.Companion.seconds
 
 internal object ServerURLs {
-  const val base = "https://package-search.services.jetbrains.com/api"
+  const val base = "package-search.services.jetbrains.com"
 }
 
 @Service(Service.Level.APP)
 class DefaultPackageServiceConfig : PackageSearchServiceConfig {
-  override val baseUrl: String = ServerURLs.base
+  override val host: String = ServerURLs.base
 
-  override val timeoutInSeconds: Int = Registry.intValue("packagesearch.timeout")
+  override val timeout = Registry.intValue("packagesearch.timeout").seconds
+
+  override val useCache = true
 }

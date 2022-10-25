@@ -3,12 +3,13 @@ package org.jetbrains.idea.reposearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface DependencySearchProvider {
-  void fulltextSearch(@NotNull String searchString, @NotNull Consumer<RepositoryArtifactData> consumer);
+  CompletableFuture<List<RepositoryArtifactData>> fulltextSearch(@NotNull String searchString);
 
-  void suggestPrefix(@Nullable String groupId, @Nullable String artifactId, @NotNull Consumer<RepositoryArtifactData> consumer);
+  CompletableFuture<List<RepositoryArtifactData>> suggestPrefix(@Nullable String groupId, @Nullable String artifactId);
 
   boolean isLocal();
 }

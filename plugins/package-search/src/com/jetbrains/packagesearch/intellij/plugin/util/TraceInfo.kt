@@ -39,7 +39,9 @@ data class TraceInfo(
         TARGET_MODULES_SELECTION_CHANGE,
         STATUS_CHANGES,
         EXECUTE_OPS,
-        DATA_CHANGED
+        DATA_CHANGED,
+        PACKAGE_UPGRADES,
+        INSTALLED_PACKAGES
     }
 
     companion object {
