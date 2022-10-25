@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -13,6 +13,8 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.ClassSetsWrapper
 
 class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority: Int = 10
@@ -39,6 +41,13 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         if (!element.isJvmElement) return null
         return convertDeclarationOrElement(element, null, elementTypes(requiredType))
     }
+
+    override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
+        when (uastTypes.size) {
+            0 -> getPossibleSourceTypes(UElement::class.java)
+            1 -> getPossibleSourceTypes(uastTypes.single())
+            else -> ClassSetsWrapper(Array(uastTypes.size) { getPossibleSourceTypes(uastTypes[it]) })
+        }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : UElement> convertElementWithParent(element: PsiElement, requiredTypes: Array<out Class<out T>>): T? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -20,7 +20,7 @@ import org.jetbrains.uast.util.emptyClassSet
 
 private val checkCanConvert = Registry.`is`("kotlin.uast.use.psi.type.precheck", true)
 
-internal fun canConvert(element: PsiElement, targets: Array<out Class<out UElement>>): Boolean {
+fun canConvert(element: PsiElement, targets: Array<out Class<out UElement>>): Boolean {
     if (!checkCanConvert) return true
     val psiElementClass = element.javaClass
 
@@ -31,7 +31,7 @@ internal fun canConvert(element: PsiElement, targets: Array<out Class<out UEleme
     return targets.any { getPossibleSourceTypes(it).let { ktOriginalCls in it } }
 }
 
-internal fun getPossibleSourceTypes(uastType: Class<out UElement>) =
+fun getPossibleSourceTypes(uastType: Class<out UElement>) =
     possibleSourceTypes[uastType] ?: emptyClassSet()
 
 /**
