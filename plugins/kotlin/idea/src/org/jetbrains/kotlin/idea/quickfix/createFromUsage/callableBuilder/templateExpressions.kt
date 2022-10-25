@@ -8,13 +8,19 @@ import com.intellij.codeInsight.template.Expression
 import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -130,6 +136,17 @@ internal class TypeParameterListExpression(
 ) : Expression() {
     private val prefix = if (insertLeadingSpace) " <" else "<"
 
+    private fun extractProperKtFile(document: Document, elementAt: PsiElement?, psiDocumentManager: PsiDocumentManager): PsiFile? {
+        val containingFile = psiDocumentManager.getPsiFile(document)
+        if (containingFile is KtFile) return containingFile
+
+        return elementAt?.parentOfType<PsiLanguageInjectionHost>()?.let { host ->
+            val injectedManager = InjectedLanguageManager.getInstance(elementAt.project)
+            val injectionInfo = injectedManager.getInjectedPsiFiles(host)?.firstOrNull()
+            injectionInfo?.first as? KtFile
+        }
+    }
+
     var currentTypeParameters: List<TypeParameterDescriptor> = Collections.emptyList()
         private set
 
@@ -142,7 +159,7 @@ internal class TypeParameterListExpression(
         val document = editor.document
         val documentManager = PsiDocumentManager.getInstance(project)
         documentManager.commitDocument(document)
-        val file = documentManager.getPsiFile(document) as KtFile
+        val file = extractProperKtFile(document, context.psiElementAtStartOffset, documentManager) as KtFile
         val elementAt = file.findElementAt(offset)
         val declaration = elementAt?.getStrictParentOfType<KtNamedDeclaration>() ?: return TextResult("")
 
