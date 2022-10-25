@@ -68,6 +68,14 @@ open class ProjectImpl(filePath: Path, projectName: String?)
 
     private val CREATION_TRACE = Key.create<String>("ProjectImpl.CREATION_TRACE")
 
+    @TestOnly
+    @JvmField
+    val CREATION_TEST_NAME = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
+
+    @TestOnly
+    @JvmField
+    val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
+
     internal fun CoroutineScope.preloadServicesAndCreateComponents(project: ProjectImpl, preloadServices: Boolean) {
       if (preloadServices) {
         launch {
@@ -362,7 +370,11 @@ open class ProjectImpl(filePath: Path, projectName: String?)
   }
 
   @TestOnly
-  override fun getCreationTrace(): String? = getUserData(CREATION_TRACE)
+  override fun getCreationTrace(): String? {
+    val trace = getUserData(CREATION_TRACE)
+    val testName = getUserData(CREATION_TEST_NAME) ?: return trace
+    return "created in test: $testName, used in tests: ${getUserData(USED_TEST_NAMES)}\n $trace"
+  }
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
