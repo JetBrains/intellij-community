@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -239,20 +239,6 @@ public final class IoTestUtil {
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public static void assertTimestampsEqual(long expected, long actual) {
-    long roundedExpected = (expected / 1000) * 1000;
-    long roundedActual = (actual / 1000) * 1000;
-    assertEquals("expected: " + expected + ", actual: " + actual,
-                 roundedExpected, roundedActual);
-  }
-
-  public static void assertTimestampsNotEqual(long expected, long actual) {
-    long roundedExpected = (expected / 1000) * 1000;
-    long roundedActual = (actual / 1000) * 1000;
-    assertTrue("(un)expected: " + expected + ", actual: " + actual,
-               roundedExpected != roundedActual);
   }
 
   public static @NotNull File createTestJar(@NotNull File jarFile) {

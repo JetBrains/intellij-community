@@ -92,7 +92,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
     assertEquals(file.length(), attributes.length);
-    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertEquals(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
 
     String target = resolveSymLink(file);
@@ -170,7 +170,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(attributes.isWritable());
 
     assertEquals(myTestData.length, attributes.length);
-    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertEquals(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
 
     String target = resolveSymLink(link);
@@ -197,7 +197,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(attributes.isWritable());
 
     assertEquals(myTestData.length, attributes.length);
-    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertEquals(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
 
     String target = resolveSymLink(link2);
@@ -220,7 +220,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(attributes.isHidden());
     assertEquals(SystemInfo.isUnix, !attributes.isWritable());
     assertEquals(dir.length(), attributes.length);
-    assertTimestampsEqual(dir.lastModified(), attributes.lastModified);
+    assertEquals(dir.lastModified(), attributes.lastModified);
     if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
 
     String target = resolveSymLink(link);
@@ -260,7 +260,7 @@ public abstract class FileAttributesReadingTest {
     assertTrue(attributes.isSymLink());
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
-    assertTimestampsEqual(0, attributes.lastModified);
+    assertEquals(0, attributes.lastModified);
     assertNull(resolveSymLink(link));
   }
 
@@ -373,7 +373,7 @@ public abstract class FileAttributesReadingTest {
     assertTrue(attributes.isHidden());
     assertTrue(attributes.isWritable());
     assertEquals(file.length(), attributes.length);
-    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertEquals(file.lastModified(), attributes.lastModified);
   }
 
   @Test
@@ -441,12 +441,12 @@ public abstract class FileAttributesReadingTest {
     FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
     assertEquals(target.length(), attributes.length);
-    assertTimestampsEqual(target.lastModified(), attributes.lastModified);
+    assertEquals(target.lastModified(), attributes.lastModified);
 
     Files.write(target.toPath(), myTestData);
     assertTrue(target.setLastModified(attributes.lastModified - 5000));
     assertTrue(target.length() > 0);
-    assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
+    assertEquals(attributes.lastModified - 5000, target.lastModified());
 
     if (SystemInfo.isWindows) {
       byte[] bytes = Files.readAllBytes(link.toPath());
@@ -456,7 +456,7 @@ public abstract class FileAttributesReadingTest {
     attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.getType());
     assertEquals(target.length(), attributes.length);
-    assertTimestampsEqual(target.lastModified(), attributes.lastModified);
+    assertEquals(target.lastModified(), attributes.lastModified);
 
     String resolved = resolveSymLink(link);
     assertEquals(link.getPath(), resolved);
@@ -554,7 +554,7 @@ public abstract class FileAttributesReadingTest {
     assertFalse(attributes.isHidden());
     assertTrue(attributes.isWritable());
     assertEquals(file.length(), attributes.length);
-    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertEquals(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
   }
 
