@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil.*
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -102,7 +103,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
           if (this::fs.isInitialized) (fs as LocalFileSystemImpl).cleanupForNextTest()
         }
       },
-      { if (this::tempDir.isInitialized) FileUtil.delete(tempDir) }
+      { if (this::tempDir.isInitialized) NioFiles.deleteRecursively(tempDir) }
     ).run()
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
