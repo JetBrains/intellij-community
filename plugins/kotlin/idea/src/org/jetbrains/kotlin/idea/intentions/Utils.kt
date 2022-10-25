@@ -208,15 +208,6 @@ val FunctionDescriptor.isOperatorOrCompatible: Boolean
         return isOperator
     }
 
-fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
-    val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
-        it!!.node.elementType in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    }
-    if (previousElement != null && previousElement is KtExpression) {
-        previousElement.parent.addAfter(createSemicolon(), previousElement)
-    }
-}
-
 internal fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
     var lastElement: PsiElement? = null
     var checked = false

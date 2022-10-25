@@ -782,4 +782,227 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/removeUnnecessaryParentheses")
+    public static class RemoveUnnecessaryParentheses extends AbstractSharedK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("binaryExpressionInAssignment.kt")
+        public void testBinaryExpressionInAssignment() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInAssignment.kt");
+        }
+
+        @TestMetadata("binaryExpressionInBlock.kt")
+        public void testBinaryExpressionInBlock() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInBlock.kt");
+        }
+
+        @TestMetadata("binaryExpressionInElseBranch.kt")
+        public void testBinaryExpressionInElseBranch() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInElseBranch.kt");
+        }
+
+        @TestMetadata("binaryExpressionInExpressionBodyFunction.kt")
+        public void testBinaryExpressionInExpressionBodyFunction() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInExpressionBodyFunction.kt");
+        }
+
+        @TestMetadata("binaryExpressionInForBody.kt")
+        public void testBinaryExpressionInForBody() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInForBody.kt");
+        }
+
+        @TestMetadata("binaryExpressionInForHeader.kt")
+        public void testBinaryExpressionInForHeader() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInForHeader.kt");
+        }
+
+        @TestMetadata("binaryExpressionInFunctionArgument.kt")
+        public void testBinaryExpressionInFunctionArgument() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInFunctionArgument.kt");
+        }
+
+        @TestMetadata("binaryExpressionInFunctionParameter.kt")
+        public void testBinaryExpressionInFunctionParameter() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInFunctionParameter.kt");
+        }
+
+        @TestMetadata("binaryExpressionInIfBranch.kt")
+        public void testBinaryExpressionInIfBranch() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInIfBranch.kt");
+        }
+
+        @TestMetadata("binaryExpressionInIndexOperator.kt")
+        public void testBinaryExpressionInIndexOperator() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInIndexOperator.kt");
+        }
+
+        @TestMetadata("binaryExpressionInLambda.kt")
+        public void testBinaryExpressionInLambda() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInLambda.kt");
+        }
+
+        @TestMetadata("binaryExpressionInStringTemplate.kt")
+        public void testBinaryExpressionInStringTemplate() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInStringTemplate.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhenEntry.kt")
+        public void testBinaryExpressionInWhenEntry() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhenEntry.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhileBody.kt")
+        public void testBinaryExpressionInWhileBody() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhileBody.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhileCondition.kt")
+        public void testBinaryExpressionInWhileCondition() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhileCondition.kt");
+        }
+
+        @TestMetadata("callInsideCallWithLambdaOnly.kt")
+        public void testCallInsideCallWithLambdaOnly() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/callInsideCallWithLambdaOnly.kt");
+        }
+
+        @TestMetadata("condition.kt")
+        public void testCondition() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/condition.kt");
+        }
+
+        @TestMetadata("condition2.kt")
+        public void testCondition2() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/condition2.kt");
+        }
+
+        @TestMetadata("elvisRhs.kt")
+        public void testElvisRhs() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/elvisRhs.kt");
+        }
+
+        @TestMetadata("elvisRhsEmptyReturn.kt")
+        public void testElvisRhsEmptyReturn() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/elvisRhsEmptyReturn.kt");
+        }
+
+        @TestMetadata("infixFunctionCall.kt")
+        public void testInfixFunctionCall() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/infixFunctionCall.kt");
+        }
+
+        @TestMetadata("interfaceDelegation.kt")
+        public void testInterfaceDelegation() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/interfaceDelegation.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/lambda.kt");
+        }
+
+        @TestMetadata("lambda2.kt")
+        public void testLambda2() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/lambda2.kt");
+        }
+
+        @TestMetadata("lambda3.kt")
+        public void testLambda3() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/lambda3.kt");
+        }
+
+        @TestMetadata("necessaryParentheses1.kt")
+        public void testNecessaryParentheses1() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses1.kt");
+        }
+
+        @TestMetadata("necessaryParentheses2.kt")
+        public void testNecessaryParentheses2() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses2.kt");
+        }
+
+        @TestMetadata("necessaryParentheses3.kt")
+        public void testNecessaryParentheses3() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses3.kt");
+        }
+
+        @TestMetadata("necessaryParentheses4.kt")
+        public void testNecessaryParentheses4() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses4.kt");
+        }
+
+        @TestMetadata("necessaryParentheses5.kt")
+        public void testNecessaryParentheses5() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses5.kt");
+        }
+
+        @TestMetadata("necessaryParentheses6.kt")
+        public void testNecessaryParentheses6() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses6.kt");
+        }
+
+        @TestMetadata("necessaryParentheses7.kt")
+        public void testNecessaryParentheses7() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/necessaryParentheses7.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses1.kt")
+        public void testUnnecessaryParentheses1() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses1.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses10.kt")
+        public void testUnnecessaryParentheses10() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses10.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses2.kt")
+        public void testUnnecessaryParentheses2() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses2.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses3.kt")
+        public void testUnnecessaryParentheses3() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses3.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses4.kt")
+        public void testUnnecessaryParentheses4() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses4.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses5.kt")
+        public void testUnnecessaryParentheses5() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses5.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses6.kt")
+        public void testUnnecessaryParentheses6() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses6.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses7.kt")
+        public void testUnnecessaryParentheses7() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses7.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses8.kt")
+        public void testUnnecessaryParentheses8() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses8.kt");
+        }
+
+        @TestMetadata("unnecessaryParentheses9.kt")
+        public void testUnnecessaryParentheses9() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParentheses9.kt");
+        }
+
+        @TestMetadata("unnecessaryParenthesesWithComment.kt")
+        public void testUnnecessaryParenthesesWithComment() throws Exception {
+            runTest("../testData/intentions/removeUnnecessaryParentheses/unnecessaryParenthesesWithComment.kt");
+        }
+    }
 }
