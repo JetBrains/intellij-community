@@ -15,11 +15,11 @@ kotlin {
             kotlinOptions.jvmTarget = "1.8"
         }
     }
-    jvm("jvm16") {
-        attributes { attribute(complexLibAttribute, 'jvm16') }
+    jvm("jvm11") {
+        attributes { attribute(complexLibAttribute, 'jvm11') }
 
         compilations.all {
-            kotlinOptions.jvmTarget = "1.6"
+            kotlinOptions.jvmTarget = "11"
         }
     }
     // This is for iPhone emulator
@@ -59,14 +59,14 @@ kotlin {
         }
 
         // creating a diamond
-        jvmJavaJvm16Main {
+        jvmJavaJvm11Main {
             dependsOn commonMain
             dependencies {
                 api project(":api-jvm")
             }
         }
 
-        jvmJavaJvm16Test {
+        jvmJavaJvm11Test {
             dependsOn commonTest
         }
 
@@ -82,30 +82,30 @@ kotlin {
         }
 
         // setting up the targets source sets
-        jvm16Main {
+        jvm11Main {
             dependencies {}
 
             // connecting to the diamond
-            dependsOn jvmJavaJvm16Main
+            dependsOn jvmJavaJvm11Main
         }
-        jvm16Test {
+        jvm11Test {
             dependencies {}
 
             // connecting to the diamond
-            dependsOn jvmJavaJvm16Test
+            dependsOn jvmJavaJvm11Test
         }
         jvmWithJavaMain {
             dependencies {}
 
             // connecting to the diamond
-            dependsOn jvmJavaJvm16Main
+            dependsOn jvmJavaJvm11Main
             dependsOn jvmWithJavaiOSMain
         }
         jvmWithJavaTest {
             dependencies {}
 
             // connecting to the diamond
-            dependsOn jvmJavaJvm16Test
+            dependsOn jvmJavaJvm11Test
             dependsOn jvmWithJavaiOSTest
         }
 
