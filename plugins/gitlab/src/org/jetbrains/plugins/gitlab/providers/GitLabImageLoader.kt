@@ -18,7 +18,8 @@ internal class GitLabImageLoader(
 ) : AsyncImageIconsProvider.AsyncImageLoader<GitLabUserDTO> {
   override suspend fun load(key: GitLabUserDTO): Image? {
     return key.avatarUrl?.let { avatarUrl ->
-      apiClient.loadImage(server.uri + avatarUrl)
+      val actualUrl = if (avatarUrl.startsWith(server.uri)) avatarUrl else server.uri + avatarUrl
+      apiClient.loadImage(actualUrl)
     }
   }
 
