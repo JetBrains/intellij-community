@@ -23,7 +23,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
@@ -33,16 +32,16 @@ public final class TipDialog extends DialogWrapper {
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;
 
-  TipDialog(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips) {
+  TipDialog(@NotNull final Project project, @NotNull final TipsSortingResult sortingResult) {
     super(project, true);
     setModal(false);
     setTitle(IdeBundle.message("title.tip.of.the.day"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myTipPanel = new TipPanel(project, tips, getDisposable());
+    myTipPanel = new TipPanel(project, sortingResult, getDisposable());
     myTipPanel.addPropertyChangeListener(TipPanel.CURRENT_TIP_KEY.toString(), event -> {
       SwingUtilities.invokeLater(() -> adjustSizeToContent());
     });
-    myShowActions = tips.size() > 1;
+    myShowActions = sortingResult.getTips().size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
     }
@@ -149,7 +148,7 @@ public final class TipDialog extends DialogWrapper {
           tips.add(tip);
           propertiesComponent.setValue(LAST_OPENED_TIP_PATH, file.getPath());
         }
-        myTipPanel.setTips(tips);
+        myTipPanel.setTips(new TipsSortingResult(tips));
       }
     }
   }
