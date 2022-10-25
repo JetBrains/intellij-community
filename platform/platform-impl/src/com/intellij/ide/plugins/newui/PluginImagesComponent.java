@@ -63,8 +63,7 @@ public class PluginImagesComponent extends JPanel {
   private Object myLoadingState;
   private JBPopup myFullScreenPopup;
 
-  public PluginImagesComponent(@NotNull JComponent parent) {
-    myParent = parent;
+  public PluginImagesComponent() {
     myShowFullContent = false;
 
     MouseAdapter listener = new MouseAdapter() {
@@ -114,6 +113,10 @@ public class PluginImagesComponent extends JPanel {
     };
     addMouseListener(listener);
     addMouseMotionListener(listener);
+  }
+
+  public void setParent(@NotNull JComponent parent) {
+    myParent = parent;
   }
 
   public void show(@NotNull IdeaPluginDescriptor descriptor) {
@@ -210,20 +213,22 @@ public class PluginImagesComponent extends JPanel {
         isImages = !ContainerUtil.isEmpty(myImages);
       }
       if (isImages) {
-        int fullWidth = parent.getWidth();
-        if (fullWidth > 0) {
-          if (myParent != null) {
-            fullWidth = Math.min(fullWidth, myParent.getWidth());
-          }
-          width = fullWidth;
-          //height = (int)(width / 1.58) + JBUI.scale(28);
-          height = (int)(width / 1.33) + JBUI.scale(28);
-          //height = width / 2 + JBUI.scale(28);
-        }
+        width = getFullWidth();
+        //height = (int)(width / 1.58) + JBUI.scale(28);
+        height = (int)(width / 1.33) + JBUI.scale(28);
+        //height = width / 2 + JBUI.scale(28);
       }
     }
 
     return new Dimension(width, height);
+  }
+
+  private int getFullWidth() {
+    Container parent = getParent();
+    if (parent != null && myParent != null) {
+      return myParent.getWidth() - parent.getInsets().left;
+    }
+    return getWidth();
   }
 
   private void handleMMove(@NotNull MouseEvent e) {
@@ -509,14 +514,6 @@ public class PluginImagesComponent extends JPanel {
     finally {
       g2.dispose();
     }
-  }
-
-  private int getFullWidth() {
-    int fullWidth = getWidth();
-    if (myParent != null) {
-      fullWidth = Math.min(fullWidth, myParent.getWidth());
-    }
-    return fullWidth;
   }
 
   private void paintAction(Graphics2D g2, int x, int y, int width, int height, int offset, boolean left) {
