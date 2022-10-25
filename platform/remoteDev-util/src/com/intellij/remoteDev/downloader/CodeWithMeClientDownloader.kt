@@ -177,7 +177,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
-    val clientBuildNumber = if (isSnapshot) getLatestBuild(hostBuildNumber) else hostBuildNumber
+    val clientBuildNumber = if (isSnapshot && config.downloadLatestBuildFromCDNForSnapshotHost) getLatestBuild(hostBuildNumber) else hostBuildNumber
     val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$clientBuildNumber$platformSuffix"
 
     val jreDownloadUrl = if (jreBuildToDownload != null) {
