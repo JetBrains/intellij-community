@@ -7,4 +7,10 @@
         <address>Some street 23</address>
     </shipto>
   <russian_with_newline>Не удалось авторизоваться.\nПопробуйте ещё раз. И <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.</russian_with_newline>
+  <code>
+    Defined field String name = "John"
+
+    System.out.println("Hello " + name)
+    Hello John
+  </code>
 </shiporder>
