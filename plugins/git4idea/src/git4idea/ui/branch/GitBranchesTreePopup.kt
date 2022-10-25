@@ -37,7 +37,6 @@ import com.intellij.util.FontUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.CurrentTheme
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -316,7 +315,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
     ClientProperty.put(this, DefaultTreeUI.LARGE_MODEL_ALLOWED, true)
-    rowHeight = JBUIScale.scale(20)
+    rowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
     isLargeModel = true
     expandsSelectedPaths = true
   }
@@ -579,7 +578,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     private class BranchesTree(model: TreeModel): Tree(model) {
 
       init {
-        background = CurrentTheme.Popup.BACKGROUND
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
       //Change visibility of processEvent to be able to delegate key events dispatched in WizardPopup directly to tree
