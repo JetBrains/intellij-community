@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
+import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.config.SourceKotlinRootType
@@ -25,6 +26,10 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
             .toList()
     }
 
+    override fun sdk(): Sdk? = module.cacheByClassInvalidatingOnRootModifications(KeyForSdks::class.java) {
+        super.sdk()
+    }
+
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
         return module.cacheByClassInvalidatingOnRootModifications(KeyForModulesWhoseInternalsAreVisible::class.java) {
             module.additionalVisibleModules.mapNotNull { if (forProduction) it.productionSourceInfo else it.testSourceInfo }
@@ -32,4 +37,5 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
     }
 
     private object KeyForModulesWhoseInternalsAreVisible
+    private object KeyForSdks
 }
