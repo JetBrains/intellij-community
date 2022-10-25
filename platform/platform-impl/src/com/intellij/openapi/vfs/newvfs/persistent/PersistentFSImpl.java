@@ -778,9 +778,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         long oldLength = getLastRecordedLength(file);
         VFileContentChangeEvent event = new VFileContentChangeEvent(
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count, false);
-        List<VFileEvent> events = new ArrayList<>();
-        events.add(event);
-        events.addAll(AdditionalVfsEventsProvider.getAllAdditionalEvents(event));
+        List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
 
         NewVirtualFileSystem fs = getFileSystem(file);
@@ -795,18 +793,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           finally {
             closed = true;
 
+            FileAttributes attributes = fs.getAttributes(file);
             // due to FS rounding, the timestamp of the file can significantly differ from the current time
-            for (VFileEvent fileEvent : events) {
-              if (fileEvent instanceof VFileContentChangeEvent ce) {
-                // copy event to omit length and timestamp and force FS to load them
-                applyEvent(
-                  new VFileContentChangeEvent(
-                    fileEvent.getRequestor(), ce.getFile(), ce.getOldModificationStamp(), ce.getModificationStamp(), ce.isFromRefresh()
-                  )
-                );
-              }
-            }
-
+            long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+            long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+            executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
             fireAfterEvents(getPublisher(), events);
           }
         }
@@ -846,10 +837,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
     outValidatedEvents.add(event);
     List<Runnable> outApplyActions = new ArrayList<>();
-    List<VFileEvent> additionalEvents = new ArrayList<>(VfsImplUtil.getJarInvalidationEvents(event, outApplyActions));
-    additionalEvents.addAll(AdditionalVfsEventsProvider.getAllAdditionalEvents(event));
+    List<VFileEvent> jarDeleteEvents = VfsImplUtil.getJarInvalidationEvents(event, outApplyActions);
     BulkFileListener publisher = getPublisher();
-    if (additionalEvents.isEmpty() && outApplyActions.isEmpty()) {
+    if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
       fireBeforeEvents(publisher, outValidatedEvents);
       applyEvent(event);
@@ -858,9 +848,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     else {
       outApplyActions.add(() -> applyEvent(event));
       // there are a number of additional jar events generated
-      for (VFileEvent additonalEvent : additionalEvents) {
-        outApplyActions.add(() -> applyEvent(additonalEvent));
-        outValidatedEvents.add(additonalEvent);
+      for (VFileEvent jarDeleteEvent : jarDeleteEvents) {
+        outApplyActions.add(() -> applyEvent(jarDeleteEvent));
+        outValidatedEvents.add(jarDeleteEvent);
       }
       applyMultipleEvents(publisher, outApplyActions, outValidatedEvents, false);
     }

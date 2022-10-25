@@ -74,11 +74,6 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   @NotNull
   @Override
   protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myClearReadOnlyInTests) {
-      // there can be non-writable files from non-local file systems which read-only status should be cleared
-      processFiles(ContainerUtil.mapNotNull(files, vf -> vf != null && !vf.isWritable() ? new FileInfo(vf, myProject) : null), null);
-    }
-
     List<FileInfo> fileInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))
@@ -90,6 +85,9 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (myClearReadOnlyInTests) {
+        processFiles(new ArrayList<>(fileInfos), null);
+      }
       return createResultStatus(originalFiles, files);
     }
 
