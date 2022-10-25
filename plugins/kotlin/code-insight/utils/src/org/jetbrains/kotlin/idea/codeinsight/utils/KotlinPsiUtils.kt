@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
@@ -194,4 +195,13 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
     }
 
     return replacedExpression
+}
+
+fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
+    val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
+        it!!.node.elementType in KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
+    }
+    if (previousElement != null && previousElement is KtExpression) {
+        previousElement.parent.addAfter(createSemicolon(), previousElement)
+    }
 }

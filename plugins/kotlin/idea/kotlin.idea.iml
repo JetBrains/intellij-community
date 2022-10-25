@@ -104,5 +104,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared" />
   </component>
 </module>
