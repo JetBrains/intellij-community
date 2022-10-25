@@ -104,6 +104,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
   }
 
+  public List<FilteringNode> getVisibleLeaves() {
+    return ContainerUtil.filter(myLeaves, node -> node.state == State.VISIBLE);
+  }
+
   private State getState(@NotNull FilteringNode node) {
     return myFilter.shouldBeShowing(node.getDelegate()) ? State.VISIBLE : State.HIDDEN;
   }

@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructure> {
 
@@ -29,16 +32,26 @@ public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructur
       getTreeStructure().refilter();
       invalidateAsync().thenRun(() -> {
         if (expand) {
-          TreeUtil.promiseExpandAll(tree).then(o -> adjustSelection(tree, preferredSelection));
+          List<FilteringTreeStructure.FilteringNode> leaves = getTreeStructure().getVisibleLeaves();
+          Set<FilteringTreeStructure.FilteringNode> set = new HashSet<>(leaves);
+          for (FilteringTreeStructure.FilteringNode node : leaves) {
+            do {
+              node = node.getParentNode();
+            }
+            while (node != null && set.add(node));
+          }
+          TreeUtil.promiseExpand(tree, set.stream().map(node -> path -> {
+            Object object = TreeUtil.getLastUserObject(path);
+            if (!(object instanceof FilteringTreeStructure.FilteringNode)) return TreeVisitor.Action.CONTINUE;
+            return set.contains(object) ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.SKIP_CHILDREN;
+          }));
         }
-        else {
-          adjustSelection(tree, preferredSelection);
-        }
+        adjustSelection(tree, preferredSelection);
       });
     });
   }
 
-  private boolean adjustSelection(JTree tree, @Nullable Object preferredSelection) {
+  private void adjustSelection(JTree tree, @Nullable Object preferredSelection) {
     TreePath selectionPath = tree.getSelectionPath();
     if (selectionPath == null || preferredSelection != null) {
       TreeUtil.promiseSelect(tree, path -> {
@@ -56,6 +69,5 @@ public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructur
     else {
       TreeUtil.scrollToVisible(tree, selectionPath, false);
     }
-    return true;
   }
 }
