@@ -41,4 +41,5 @@ fun calcButtonIndex(list: JList<*>, buttonsCount: Int, point: Point): Int? {
   return buttonsCount - buttonsToRight - 1
 }
 
+@JvmOverloads
 fun buttonWidth(leftRightInsets: Int = JBUI.CurrentTheme.List.buttonLeftRightInsets()) : Int = JBUIScale.scale(INLINE_BUTTON_WIDTH + leftRightInsets * 2)
