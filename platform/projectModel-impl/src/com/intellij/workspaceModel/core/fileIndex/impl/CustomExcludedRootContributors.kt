@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 internal class CustomExcludedRootContributors(private val project: Project,
                                               private val rootFileSupplier: RootFileSupplier,
-                                              private val excludedFileSets: MultiMap<VirtualFile, ExcludedFileSet>) {
+                                              private val fileSets: MultiMap<VirtualFile, StoredFileSet>) {
   private val allRoots = HashSet<VirtualFile>()
   private var upToDate = false
 
@@ -28,7 +28,7 @@ internal class CustomExcludedRootContributors(private val project: Project,
   
   private fun updateCustomExcludedRoots() {
     for (root in allRoots) {
-      excludedFileSets.removeValueIf(root) { it.entityReference === CustomExcludedRootsEntityReference }
+      fileSets.removeValueIf(root) { it.entityReference === CustomExcludedRootsEntityReference }
     }
     allRoots.clear()
 
@@ -36,7 +36,7 @@ internal class CustomExcludedRootContributors(private val project: Project,
       policy.excludeUrlsForProject.forEach { url ->
         val file = rootFileSupplier.findFileByUrl(url)
         if (file != null && RootFileSupplier.ensureValid(file, project, policy)) {
-          excludedFileSets.putValue(file, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, CustomExcludedRootsEntityReference))
+          fileSets.putValue(file, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, CustomExcludedRootsEntityReference))
           allRoots.add(file)
         }
       }
@@ -48,8 +48,8 @@ internal class CustomExcludedRootContributors(private val project: Project,
             if (root !in sdkClasses) {
               val correctedRoot = rootFileSupplier.correctRoot(root, sdk, policy)
               if (correctedRoot != null) {
-                excludedFileSets.putValue(correctedRoot, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL,
-                                                                                    CustomExcludedRootsEntityReference))
+                fileSets.putValue(correctedRoot, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL,
+                                                                            CustomExcludedRootsEntityReference))
                 allRoots.add(correctedRoot)
               }
             }
@@ -62,8 +62,8 @@ internal class CustomExcludedRootContributors(private val project: Project,
           if (file != null) {
             val correctedRoot = rootFileSupplier.correctRoot(file, module, policy)
             if (correctedRoot != null) {
-              excludedFileSets.putValue(correctedRoot,
-                                        ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.CONTENT, CustomExcludedRootsEntityReference))
+              fileSets.putValue(correctedRoot,
+                                ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.CONTENT, CustomExcludedRootsEntityReference))
               allRoots.add(correctedRoot)
             }
           }
