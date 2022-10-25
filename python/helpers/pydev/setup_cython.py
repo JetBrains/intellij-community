@@ -46,7 +46,7 @@ def process_args():
             sys.argv.remove(arg)
             target_arch = arg[len('--target='):]
 
-    return bool(extension_folder), target_pydevd_name, target_frame_eval, \
+    return extension_folder, target_pydevd_name, target_frame_eval, \
         force_cython, target_arch
 
 
@@ -196,9 +196,26 @@ class FrameEvalModuleBuildContext:
         os.remove(self._pyx_file)
 
 
+def create_init_py_files(extension_folder, subdir_names_to_ignore=None):
+    """
+    Create `__init__.py` files in every subdirectory of :param:`extension_folder` to
+    make sure Python 2 will be able to import from them.
+    """
+    os.chdir(extension_folder)
+    subdir_names_to_ignore = subdir_names_to_ignore or []
+    for folder in (f for f in os.listdir(extension_folder)
+                   if f not in subdir_names_to_ignore
+                   and os.path.isdir(os.path.join(extension_folder, f))):
+        file = os.path.join(folder, "__init__.py")
+        if not os.path.exists(file):
+            open(file, 'a').close()
+
+
 def main():
-    extended, target_pydevd_name, target_frame_eval, force_cython, target_arch \
+    extension_folder, target_pydevd_name, target_frame_eval, force_cython, target_arch \
         = process_args()
+
+    extended = bool(extension_folder)
 
     extension_name = "pydevd_cython"
     target_pydevd_name = target_pydevd_name or extension_name
@@ -216,6 +233,9 @@ def main():
         with FrameEvalModuleBuildContext():
             build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
                             force_cython, target_arch, extended)
+
+    if extension_folder:
+        create_init_py_files(extension_folder, subdir_names_to_ignore=["build"])
 
 
 if __name__ == "__main__":
