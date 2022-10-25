@@ -286,7 +286,8 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
       if (Disposer.isDisposed(inlay)) {
         disposable.dispose()
-      } else {
+      }
+      else {
         Disposer.register(inlay, disposable)
       }
     }
@@ -333,7 +334,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
           textAttributesForHighlighter(),
           HighlighterTargetArea.LINES_IN_RANGE
         )
-          highlighter.customRenderer = NotebookCellHighlighterRenderer
+        highlighter.customRenderer = NotebookCellHighlighterRenderer
       }
     }
   }
@@ -406,7 +407,7 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
                                pointers: Collection<NotebookIntervalPointer>? = null,
                                private var updateAll: Boolean = false) : Update(Any()) {
-  private val pointersSet = pointers?.let{ SmartHashSet(pointers) } ?: SmartHashSet()
+  private val pointersSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
     if (updateAll) {
@@ -414,7 +415,7 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
       return
     }
 
-    val linesList = pointersSet.mapNotNullTo(mutableListOf()){ it.get()?.lines }
+    val linesList = pointersSet.mapNotNullTo(mutableListOf()) { it.get()?.lines }
     linesList.sortBy { it.first }
     linesList.mergeAndJoinIntersections(listOf())
 
