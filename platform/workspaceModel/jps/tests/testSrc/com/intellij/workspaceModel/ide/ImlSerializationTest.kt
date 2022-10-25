@@ -56,12 +56,6 @@ class ImlSerializationTest {
   }
 
   @Test
-  fun ultimateProject() {
-    val projectDir = File("/Users/Alex.Plate/Develop/Work/intellij")
-    loadProjectAndCheck(projectDir)
-  }
-
-  @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
     val entity = SampleEntity2("Test", true, Source)
