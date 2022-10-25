@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -97,7 +96,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
-          addRenameXmlAttributeQuickFixes(name, quickfixes);
+          addRenameXmlAttributeQuickFixes(tag, name, quickfixes);
 
           registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -121,9 +120,9 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static void addRenameXmlAttributeQuickFixes(String name, ArrayList<? super LocalQuickFix> quickfixes) {
+  private static void addRenameXmlAttributeQuickFixes(XmlTag tag, String name, ArrayList<? super LocalQuickFix> quickfixes) {
     for (XmlAttributeRenameProvider renameProvider : XmlAttributeRenameProvider.EP_NAME.getExtensionList()) {
-      Collections.addAll(quickfixes, renameProvider.getAttributeFixes(name));
+      quickfixes.addAll(renameProvider.getAttributeFixes(tag, name));
     }
   }
 }
