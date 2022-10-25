@@ -29,7 +29,7 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     //noinspection AbstractMethodCallInConstructor
     mySchemeManager =
       factory.create(schemePath, createProcessor(), presentableName, RoamingType.DISABLED, name -> FileUtil.sanitizeFileName(name, false),
-                     null, null, true, SettingsCategory.TOOLS);
+                     null, null, true, SettingsCategory.OTHER);
     mySchemeManager.loadSchemes();
   }
 
