@@ -16,6 +16,7 @@ import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 import org.cef.network.CefRequest;
+import org.cef.security.CefSSLInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -623,9 +624,10 @@ public final class JBCefClient implements JBCefDisposable {
         public boolean onCertificateError(CefBrowser browser,
                                           CefLoadHandler.ErrorCode cert_error,
                                           String request_url,
+                                          CefSSLInfo sslInfo,
                                           CefCallback callback) {
           return myRequestHandler.handleBoolean(browser, handler -> {
-            return handler.onCertificateError(browser, cert_error, request_url, callback);
+            return handler.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
           });
         }
 
