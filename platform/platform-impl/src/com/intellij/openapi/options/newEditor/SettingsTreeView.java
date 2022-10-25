@@ -163,7 +163,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     myTree.getSelectionModel().addTreeSelectionListener(event -> {
       MyNode node = extractNode(event.getNewLeadSelectionPath());
-      select(node == null ? null : node.myConfigurable);
+      fireSelected(node == null ? null : node.myConfigurable);
     });
     myRoot = new MyRoot(groups);
     SimpleTreeStructure.Impl structure = new SimpleTreeStructure.Impl(myRoot);
