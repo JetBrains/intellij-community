@@ -44,7 +44,7 @@ class AddNamesToCallArgumentsIntention : SelfTargetingRangeIntention<KtCallEleme
         val resolvedCall = element.resolveToCall() ?: return
         for (argument in arguments) {
             if (argument !is KtValueArgument || argument is KtLambdaArgument) continue
-            AddNameToArgumentIntention.apply(argument, resolvedCall, editor)
+            AddNameToArgumentIntention.apply(argument, resolvedCall)
         }
     }
 }

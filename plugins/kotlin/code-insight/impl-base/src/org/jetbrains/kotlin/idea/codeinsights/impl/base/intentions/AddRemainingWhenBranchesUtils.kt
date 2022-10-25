@@ -1,49 +1,44 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
+package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.renderer.render
 
-object AddRemainingWhenBranchesApplicator {
-    class Input(val whenMissingCases: List<WhenMissingCase>, val enumToStarImport: ClassId?) : KotlinApplicatorInput
+object AddRemainingWhenBranchesUtils {
+    class Context(
+        val whenMissingCases: List<WhenMissingCase>,
+        val enumToStarImport: ClassId?,
+    )
 
-    val applicator: KotlinApplicator<KtWhenExpression, Input> = getApplicator(false)
-    val applicatorUsingStarImport: KotlinApplicator<KtWhenExpression, Input> = getApplicator(true)
+    fun familyAndActionName(useStarImport: Boolean): @IntentionFamilyName String =
+        if (useStarImport) KotlinBundle.message("fix.add.remaining.branches.with.star.import")
+        else KotlinBundle.message("fix.add.remaining.branches")
 
-    private fun getApplicator(useStarImport: Boolean = false) = applicator<KtWhenExpression, Input> {
-        familyAndActionName(
-            if (useStarImport) KotlinBundle.lazyMessage("fix.add.remaining.branches.with.star.import")
-            else KotlinBundle.lazyMessage("fix.add.remaining.branches")
-        )
-        applyTo { whenExpression, input ->
-            if (useStarImport) assert(input.enumToStarImport != null)
-            @Suppress("DEPRECATION")
-            generateWhenBranches(whenExpression, input.whenMissingCases)
-            shortenReferences(
-                whenExpression,
-                callableShortenOption = {
-                    if (useStarImport && it.callableIdIfNonLocal?.classId == input.enumToStarImport) {
-                        ShortenOption.SHORTEN_AND_STAR_IMPORT
-                    } else {
-                        ShortenOption.DO_NOT_SHORTEN
-                    }
+    fun addRemainingWhenBranches(
+        whenExpression: KtWhenExpression,
+        context: Context,
+    ) {
+        generateWhenBranches(whenExpression, context.whenMissingCases)
+        shortenReferences(
+            whenExpression,
+            callableShortenOption = {
+                if (it.callableIdIfNonLocal?.classId == context.enumToStarImport) {
+                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+                } else {
+                    ShortenOption.DO_NOT_SHORTEN
                 }
-            )
-        }
+            }
+        )
     }
 
-    @Deprecated("Please use AddRemainingWhenBranchesApplicator.applicator")
     fun generateWhenBranches(element: KtWhenExpression, missingCases: List<WhenMissingCase>) {
         val psiFactory = KtPsiFactory(element)
         val whenCloseBrace = element.closeBrace ?: run {
@@ -84,5 +79,4 @@ object AddRemainingWhenBranchesApplicator {
             }
         }
     }
-
 }

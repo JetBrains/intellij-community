@@ -26,7 +26,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
         if (canFoldToFunctionCall(element)) element.ifKeyword.textRange else null
 
     override fun applyTo(element: KtIfExpression, editor: Editor?) {
-        foldToFunctionCall(element, editor)
+        foldToFunctionCall(element)
     }
 
     companion object {
@@ -59,7 +59,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
             }
         }
 
-        private fun foldToFunctionCall(element: KtExpression, editor: Editor?) {
+        private fun foldToFunctionCall(element: KtExpression) {
             val branches = branches(element) ?: return
 
             val callExpressions = branches.mapNotNull { it.callExpression() }
@@ -76,7 +76,7 @@ class FoldIfToFunctionCallIntention : SelfTargetingRangeIntention<KtIfExpression
             headCall.valueArguments[argumentIndex].getArgumentExpression()?.replace(copiedIf)
             if (hasNamedArgument) {
                 headCall.valueArguments.forEach {
-                    if (it.getArgumentName() == null) AddNameToArgumentIntention.apply(it, givenResolvedCall = null, editor)
+                    if (it.getArgumentName() == null) AddNameToArgumentIntention.apply(it, givenResolvedCall = null)
                 }
             }
             element.replace(headCall.getQualifiedExpressionForSelectorOrThis()).reformatted()

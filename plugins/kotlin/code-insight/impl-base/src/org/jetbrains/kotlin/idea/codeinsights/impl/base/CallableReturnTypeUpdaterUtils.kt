@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
+package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -17,12 +17,10 @@ import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.CallableReturnTypeUpdaterApplicator.TypeInfo.Companion.createByKtTypes
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
@@ -30,16 +28,12 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.util.bfs
 
-object CallableReturnTypeUpdaterApplicator {
-    val applicator = applicator<KtCallableDeclaration, TypeInfo> {
-        familyAndActionName(KotlinBundle.lazyMessage("fix.change.return.type.family"))
-
-        applyTo { declaration, typeInfo, project, editor ->
-            if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-                declaration.setType(typeInfo.defaultType, project)
-            } else {
-                setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
-            }
+object CallableReturnTypeUpdaterUtils {
+    fun updateType(declaration: KtCallableDeclaration, typeInfo: TypeInfo, project: Project, editor: Editor?) {
+        if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
+            declaration.setType(typeInfo.defaultType, project)
+        } else {
+            setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
     }
 
@@ -56,12 +50,11 @@ object CallableReturnTypeUpdaterApplicator {
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =
         type.isUnit && this is KtFunction && hasBlockBody()
 
-
     /**
      * @param declarationAndTypes multiple declarations and types that need to be updated. If multiple pairs are passed, the IDE will guide
      * user to modify them one by one.
      */
-    // TODO: add applicator that passes multiple declarations and types, for example, for specifying types of destructuring declarations.
+    // TODO: add `updateType` that passes multiple declarations and types, for example, for specifying types of destructuring declarations.
     private fun setTypeWithTemplate(
         declarationAndTypes: Iterator<Pair<KtCallableDeclaration, TypeInfo>>,
         project: Project,
@@ -109,7 +102,8 @@ object CallableReturnTypeUpdaterApplicator {
         override fun getResult(element: TypeInfo.Type): String = element.longTypeRepresentation
     }
 
-    fun KtAnalysisSession.getTypeInfo(declaration: KtCallableDeclaration): CallableReturnTypeUpdaterApplicator.TypeInfo {
+    context(KtAnalysisSession)
+    fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
         val declarationType = declaration.getReturnKtType()
         val overriddenTypes = (declaration.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols()
             ?.map { it.returnType }
@@ -135,7 +129,7 @@ object CallableReturnTypeUpdaterApplicator {
                 }
             }.toList()
 
-        return with(CallableReturnTypeUpdaterApplicator.TypeInfo) {
+        return with(TypeInfo) {
             if (ApplicationManager.getApplication().isUnitTestMode) {
                 selectForUnitTest(declaration, allTypes)?.let { return it }
             }
@@ -154,10 +148,11 @@ object CallableReturnTypeUpdaterApplicator {
 
     // The following logic is copied from FE1.0 at
     // org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention.Companion#createTypeExpressionForTemplate
-    private fun KtAnalysisSession.selectForUnitTest(
+    context(KtAnalysisSession)
+    private fun selectForUnitTest(
         declaration: KtCallableDeclaration,
         allTypes: List<KtType>
-    ): CallableReturnTypeUpdaterApplicator.TypeInfo? {
+    ): TypeInfo? {
         // This helps to be sure no nullable types are suggested
         if (declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
                 it.text == "// CHOOSE_NULLABLE_TYPE_IF_EXISTS"

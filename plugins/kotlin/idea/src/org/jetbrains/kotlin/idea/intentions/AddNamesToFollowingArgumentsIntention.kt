@@ -37,7 +37,7 @@ class AddNamesToFollowingArgumentsIntention : SelfTargetingIntention<KtValueArgu
         val callElement = argumentList.parent as? KtCallElement ?: return
         val resolvedCall = callElement.resolveToCall() ?: return
         for (argument in argumentList.arguments.dropWhile { it != element }) {
-            AddNameToArgumentIntention.apply(argument, resolvedCall, editor)
+            AddNameToArgumentIntention.apply(argument, resolvedCall)
         }
     }
 }
