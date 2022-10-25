@@ -18,6 +18,7 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
@@ -349,6 +350,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       }
 
       ExternalProjectsManagerImpl.setupCreatedProject(project)
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
   }

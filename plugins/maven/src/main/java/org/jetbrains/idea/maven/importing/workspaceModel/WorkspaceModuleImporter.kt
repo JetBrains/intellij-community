@@ -14,9 +14,6 @@ import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -245,6 +242,10 @@ internal class WorkspaceModuleImporter(
 
     companion object {
       const val VERSION = "223-2"
+
+      fun isFromLegacyImport(entity: ExternalSystemModuleOptionsEntity): Boolean {
+        return entity.externalSystem == EXTERNAL_SOURCE_ID && entity.externalSystemModuleVersion == null
+      }
 
       fun tryRead(entity: ExternalSystemModuleOptionsEntity): ExternalSystemData? {
         if (entity.externalSystem != EXTERNAL_SOURCE_ID || entity.externalSystemModuleVersion != VERSION) return null

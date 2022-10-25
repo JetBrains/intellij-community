@@ -42,7 +42,6 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
-import org.jetbrains.idea.maven.project.importing.RootPath;
 import org.jetbrains.idea.maven.server.MavenWrapperSupport;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -450,7 +449,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      ExternalProjectsManagerImpl.setupCreatedProject(project);
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+    }
+    return project;
   }
 
   @NotNull
