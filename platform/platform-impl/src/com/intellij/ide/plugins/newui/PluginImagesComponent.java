@@ -44,6 +44,9 @@ import java.util.Objects;
  * @author Alexander Lobas
  */
 public class PluginImagesComponent extends JPanel {
+  private static final Color CURRENT_IMAGE_FILL_COLOR =
+    JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
+
   private static final int None = -1;
   private static final int NextImage = -2;
   private static final int PrevImage = -3;
@@ -488,7 +491,7 @@ public class PluginImagesComponent extends JPanel {
 
       for (int i = 0; i < count; i++) {
         if (i == current) {
-          g2.setColor(new JBColor(Gray.x6E, JBUI.CurrentTheme.Button.buttonColorStart()));
+          g2.setColor(CURRENT_IMAGE_FILL_COLOR);
           g2.fillOval(ovalX, ovalY, ovalSize, ovalSize);
         }
         else {
