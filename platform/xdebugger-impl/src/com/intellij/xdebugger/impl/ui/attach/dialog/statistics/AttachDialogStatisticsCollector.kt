@@ -2,7 +2,6 @@ package com.intellij.xdebugger.impl.ui.attach.dialog.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
@@ -41,10 +40,10 @@ internal class AttachDialogStatisticsCollector : CounterUsagesCollector() {
       selectedViewType: AttachViewType,
       debuggersFilterSet: Boolean,
       searchFieldIsUsed: Boolean) = ATTACH_BUTTON_PRESSED.log(
-      EventPair(DEBUGGER_NAME_EVENT_FIELD, debuggerClass),
-      EventPair(IS_MAIN_ACTION_EVENT_FIELD, isMainAction),
-      EventPair(VIEW_TYPE_EVENT_FIELD, selectedViewType),
-      EventPair(DEBUGGERS_FILTER_SET_EVENT_FIELD, debuggersFilterSet),
-      EventPair(SEARCH_FIELD_USED_EVENT_FIELD, searchFieldIsUsed))
+      DEBUGGER_NAME_EVENT_FIELD.with(debuggerClass),
+      IS_MAIN_ACTION_EVENT_FIELD.with(isMainAction),
+      VIEW_TYPE_EVENT_FIELD.with(selectedViewType),
+      DEBUGGERS_FILTER_SET_EVENT_FIELD.with(debuggersFilterSet),
+      SEARCH_FIELD_USED_EVENT_FIELD.with(searchFieldIsUsed))
   }
 }
