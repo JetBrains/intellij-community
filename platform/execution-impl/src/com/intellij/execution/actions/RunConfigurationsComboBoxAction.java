@@ -64,6 +64,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (PlatformUtils.isRubyMine()) return true;
     if (PlatformUtils.isPyCharmPro()) return true;
     if (PlatformUtils.isPyCharmCommunity()) return true;
+    if (PlatformUtils.isDataGrip()) return true;
 
     return Registry.is("run.current.file.item.in.run.configurations.combobox");
   }
