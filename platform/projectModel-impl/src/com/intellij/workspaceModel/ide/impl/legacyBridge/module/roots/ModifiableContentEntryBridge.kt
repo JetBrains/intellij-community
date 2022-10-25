@@ -134,12 +134,12 @@ internal class ModifiableContentEntryBridge(
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
     val virtualFileUrl = (excludeFolder as ExcludeFolderBridge).excludeFolderUrl
 
-    updateContentEntry {
-      if (!excludedUrls.map { it.url }.contains(virtualFileUrl)) {
-        error("Exclude folder ${excludeFolder.url} is not under content entry $contentEntryUrl")
-      }
-
-      excludedUrls = excludedUrls.filterNot { url -> url.url == virtualFileUrl }
+    val excludeUrlEntities = currentContentEntry.value.entity.excludedUrls.filter { it.url == virtualFileUrl }
+    if (excludeUrlEntities.isEmpty()) {
+      error("Exclude folder ${excludeFolder.url} is not under content entry $contentEntryUrl")
+    }
+    excludeUrlEntities.forEach {
+      diff.removeEntity(it)
     }
   }
 
