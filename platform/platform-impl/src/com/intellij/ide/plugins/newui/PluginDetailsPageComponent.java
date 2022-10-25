@@ -579,15 +579,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private void createDescriptionTab(@NotNull JBTabbedPane pane) {
     myDescriptionComponent = createDescriptionComponent(createHtmlImageViewHandler());
 
-    myImagesComponent = new PluginImagesComponent(myPanel);
-    myImagesComponent.setBorder(JBUI.Borders.emptyTop(16));
+    myImagesComponent = new PluginImagesComponent();
+    myImagesComponent.setBorder(JBUI.Borders.emptyRight(16));
 
     JPanel parent = new OpaquePanel(new BorderLayout(), PluginManagerConfigurable.MAIN_BG_COLOR);
-    parent.setBorder(JBUI.Borders.emptyLeft(12));
+    parent.setBorder(JBUI.Borders.empty(16, 16, 0, 0));
     parent.add(myImagesComponent, BorderLayout.NORTH);
     parent.add(myDescriptionComponent);
 
-    pane.addTab(IdeBundle.message("plugins.configurable.overview.tab.name"), myBottomScrollPane = createScrollPane(parent));
+    addTabWithoutBorders(pane, () -> {
+      pane.addTab(IdeBundle.message("plugins.configurable.overview.tab.name"), myBottomScrollPane = createScrollPane(parent));
+    });
+    myImagesComponent.setParent(myBottomScrollPane.getViewport());
   }
 
   private void createChangeNotesTab(@NotNull JBTabbedPane pane) {
@@ -664,10 +667,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       });
     });
 
-    Insets insets = pane.getTabComponentInsets();
-    pane.setTabComponentInsets(JBInsets.emptyInsets());
-    pane.add(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel));
-    pane.setTabComponentInsets(insets);
+    addTabWithoutBorders(pane, () -> {
+      pane.add(IdeBundle.message("plugins.configurable.reviews.tab.name"), createScrollPane(reviewsPanel));
+    });
   }
 
   private void createAdditionalInfoTab(@NotNull JBTabbedPane pane) {
@@ -693,6 +695,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     mySize.setForeground(ListPluginComponent.GRAY_COLOR);
 
     pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), new Wrapper(infoPanel));
+  }
+
+  private static void addTabWithoutBorders(@NotNull JBTabbedPane pane, @NotNull Runnable callback) {
+    Insets insets = pane.getTabComponentInsets();
+    pane.setTabComponentInsets(JBInsets.emptyInsets());
+    callback.run();
+    pane.setTabComponentInsets(insets);
   }
 
   private static void setFont(@NotNull JComponent component, boolean tiny) {
@@ -1075,7 +1084,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     if (!myIsPluginAvailable) {
       if (!myIsPluginCompatible) {
         myRootPanel.add(myPlatformIncompatibleNotification, BorderLayout.NORTH);
-      } else {
+      }
+      else {
         myRootPanel.add(myControlledByOrgNotification, BorderLayout.NORTH);
       }
     }
