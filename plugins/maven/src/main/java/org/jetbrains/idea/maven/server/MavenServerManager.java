@@ -196,7 +196,7 @@ public final class MavenServerManager implements Disposable {
                                                              String multimoduleDirectory) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
-    Integer debugPort = getDebugPort(project);
+    Integer debugPort = getFreeDebugPort();
     MavenServerConnector connector;
     if (TrustedProjects.isTrusted(project) || project.isDefault()) {
       connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
@@ -217,7 +217,7 @@ public final class MavenServerManager implements Disposable {
   }
 
 
-  private static Integer getDebugPort(@Nullable Project project) {
+  private static Integer getFreeDebugPort() {
     if (Registry.is("maven.server.debug")) {
       try {
         return NetUtils.findAvailableSocketPort();
@@ -449,7 +449,7 @@ public final class MavenServerManager implements Disposable {
               myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
                                                                    JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
                                                                    "",
-                                                                   getDebugPort(null),
+                                                                   getFreeDebugPort(),
                                                                    MavenDistributionsCache.resolveEmbeddedMavenHome(),
                                                                    workingDir);
               myIndexingConnector.connect();
