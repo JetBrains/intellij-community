@@ -1038,6 +1038,92 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertConcatenationToBuildString")
+    public static class ConvertConcatenationToBuildString extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/basic.kt");
+        }
+
+        @TestMetadata("inAnnotation.kt")
+        public void testInAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/inAnnotation.kt");
+        }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments.kt");
+        }
+
+        @TestMetadata("withComments2.kt")
+        public void testWithComments2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments2.kt");
+        }
+
+        @TestMetadata("withComments3.kt")
+        public void testWithComments3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments3.kt");
+        }
+
+        @TestMetadata("withComments4.kt")
+        public void testWithComments4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments4.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString")
+    public static class ConvertStringTemplateToBuildString extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/argument.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/basic2.kt");
+        }
+
+        @TestMetadata("basic3.kt")
+        public void testBasic3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/basic3.kt");
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/empty.kt");
+        }
+
+        @TestMetadata("inAnnotation.kt")
+        public void testInAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
+        }
+
+        @TestMetadata("raw.kt")
+        public void testRaw() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/raw.kt");
+        }
+
+        @TestMetadata("slashBuck.kt")
+        public void testSlashBuck() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/slashBuck.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertToBlockBody")
     public static class ConvertToBlockBody extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
