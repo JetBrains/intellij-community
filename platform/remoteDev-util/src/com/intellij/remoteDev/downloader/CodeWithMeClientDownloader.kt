@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -16,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -24,6 +26,7 @@ import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
 import com.intellij.remoteDev.util.*
+import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
@@ -49,10 +52,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -475,7 +475,7 @@ object CodeWithMeClientDownloader {
       if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
 
       LOG.info("Download of guest and jdk succeeded")
-      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath)
+      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath, version = sessionInfoResponse.hostBuildNumber)
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
@@ -615,6 +615,8 @@ object CodeWithMeClientDownloader {
     }
   }
 
+  private val remoteDevYouTrackFlag = "-Dapplication.info.youtrack.url=https://youtrack.jetbrains.com/newissue?project=GTW&amp;clearDraft=true&amp;description=\$DESCR"
+
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -634,10 +636,16 @@ object CodeWithMeClientDownloader {
       Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
     }
 
-    val parameters = listOf("thinClient", url)
+    val parameters = if (CodeWithMeGuestLauncher.isUnattendedModeUri(URI(url))) listOf("thinClient", url, remoteDevYouTrackFlag) else listOf("thinClient", url)
     val processLifetimeDef = lifetime.createNested()
 
-    val vmOptionsFile = executable.resolveSibling("jetbrains_client64.vmoptions")
+    val vmOptionsFile = if (SystemInfoRt.isMac) {
+      // macOS stores vmoptions file inside .app file – we can't edit it
+      Paths.get(
+        PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + extractedJetBrainsClientData.version),
+        "jetbrains_client.vmoptions"
+      )
+    } else executable.resolveSibling("jetbrains_client64.vmoptions")
     service<JetBrainsClientDownloaderConfigurationProvider>().patchVmOptions(vmOptionsFile)
 
     if (SystemInfo.isWindows) {

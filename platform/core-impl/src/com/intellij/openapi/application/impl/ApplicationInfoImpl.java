@@ -326,7 +326,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    overrideFromProperties();
+
     essentialPluginsIds.sort(null);
+  }
+
+  private void overrideFromProperties() {
+    String youTrackUrlOverride = System.getProperty("application.info.youtrack.url");
+    if (youTrackUrlOverride != null) {
+      myYoutrackUrl = youTrackUrlOverride;
+    }
   }
 
   private void readLogoInfo(XmlElement element) {
