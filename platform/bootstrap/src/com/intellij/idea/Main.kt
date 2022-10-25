@@ -71,6 +71,10 @@ private fun initProjectorIfNeeded(args: List<String>) {
     return
   }
 
+  if (!JBR.isProjectorUtilsSupported()) {
+    error("JBR version newer than 17.0.4 is required to run a remote-dev server")
+  }
+
   runActivity("cwm host init") {
     val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
     val projectorEnvInstance = projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
