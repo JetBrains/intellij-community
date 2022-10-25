@@ -2,10 +2,17 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
@@ -29,6 +36,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.*
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
@@ -116,6 +124,10 @@ internal class WorkspaceProjectImporter(
     createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
 
     stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
+
+    if (!ExternalSystemUtil.isNewProject(myProject) && hasLegacyImportedModules(storageBeforeImport)) {
+      postTasks.add(NotifyUserAboutWorkspaceImportTask())
+    }
 
     postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
 
@@ -390,6 +402,10 @@ internal class WorkspaceProjectImporter(
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
         .mapNotNull { WorkspaceModuleImporter.ExternalSystemData.tryRead(it) }
 
+    private fun hasLegacyImportedModules(storage: EntityStorage) =
+      importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
+        .any { WorkspaceModuleImporter.ExternalSystemData.isFromLegacyImport(it) }
+
     @JvmStatic
     fun updateTargetFolders(project: Project) {
       val stats = WorkspaceImportStats.startFoldersUpdate(project)
@@ -506,6 +522,33 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
       catch (e: Exception) {
         MavenLog.LOG.error("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
       }
+    }
+  }
+}
+
+private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
+  override fun perform(project: Project,
+                       embeddersManager: MavenEmbeddersManager,
+                       console: MavenConsole,
+                       indicator: MavenProgressIndicator) {
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
+
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed) return@invokeLater
+
+      val notification = notificationGroup
+        .createNotification(SyncBundle.message("maven.workspace.first.import.notification.title"),
+                            SyncBundle.message("maven.workspace.first.import.notification.text"),
+                            NotificationType.INFORMATION)
+
+      notification.addAction(object : AnAction(SyncBundle.message("maven.sync.quickfixes.open.settings")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          notification.expire()
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenProjectBundle.message("maven.tab.importing"))
+        }
+      })
+
+      notification.notify(project)
     }
   }
 }
