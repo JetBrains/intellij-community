@@ -283,8 +283,7 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                         }
 
                     }
-                ),
-                JKTypeArgumentList()
+                )
             )
             is JKKtAnnotationArrayInitializerExpression ->
                 JKKtAnnotationArrayInitializerExpression(initializers.map { it.detached(this).toExpression(symbolProvider) })

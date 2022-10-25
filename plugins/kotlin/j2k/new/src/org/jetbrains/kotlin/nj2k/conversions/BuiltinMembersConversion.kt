@@ -355,7 +355,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 JKCallExpressionImpl(
                     symbolProvider.provideMethodSymbol("kotlin.enumValueOf"),
                     JKArgumentList(enumEntryName),
-                    JKTypeArgumentList(listOf(typeElement)),
+                    JKTypeArgumentList(typeElement),
                     typeElement.type
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,

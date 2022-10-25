@@ -200,7 +200,7 @@ class JKCallExpressionImpl(
 class JKNewExpression(
     val classSymbol: JKClassSymbol,
     arguments: JKArgumentList,
-    typeArgumentList: JKTypeArgumentList,
+    typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     classBody: JKClassBody = JKClassBody(),
     val isAnonymousClass: Boolean = false,
     override val expressionType: JKType? = null,

@@ -78,7 +78,7 @@ class MethodReferenceToLambdaConversion(context: NewJ2kConverterContext) : Recur
                         symbol,
                         JKArgumentList(arguments)
                     )
-                is JKClassSymbol -> JKNewExpression(symbol, JKArgumentList(), JKTypeArgumentList())
+                is JKClassSymbol -> JKNewExpression(symbol, JKArgumentList())
                 else -> return recurse(element)
             }
         val qualifier = when {
