@@ -34,10 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -247,7 +244,8 @@ final class FindInProjectTask {
 
     if (searcher != null) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(sourceVirtualFile);
-      CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(sourceVirtualFile, -1);
+      CharSequence s = document != null ? document.getCharsSequence() :
+                       DiskQueryRelay.compute(() -> LoadTextUtil.loadText(sourceVirtualFile, -1));
       if (s.length() == 0 || searcher.scan(s) < 0) {
         return true;
       }
