@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list
 
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -19,13 +18,14 @@ fun createExtraButton(icon: Icon, active: Boolean): JComponent {
   label.putClientProperty(INLINE_BUTTON_MARKER, true)
   val leftRightInsets = JBUI.CurrentTheme.List.buttonLeftRightInsets()
   label.border = JBUI.Borders.empty(0, leftRightInsets)
-  val panel = Wrapper(label)
+  val panel = SelectablePanel.wrap(label)
   val size = panel.preferredSize
   size.width = buttonWidth(leftRightInsets)
   panel.preferredSize = size
   panel.minimumSize = size
-  panel.isOpaque = active
-  panel.background = JBUI.CurrentTheme.List.buttonHoverBackground()
+  panel.selectionColor = if (active) JBUI.CurrentTheme.List.buttonHoverBackground() else null
+  panel.selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
+  panel.isOpaque = false
   return panel
 }
 
