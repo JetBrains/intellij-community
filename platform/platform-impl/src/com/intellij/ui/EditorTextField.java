@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
@@ -35,8 +36,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -693,9 +692,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       return;
     }
     UISettings settings = UISettings.getInstance();
-    if (settings.getPresentationMode()) {
+    float currentEditorFontSize = IdeScaleTransformer.INSTANCE.getCurrentEditorFontSize();
+    if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
       editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
-      editor.setFontSize(settings.getPresentationModeFontSize());
+      editor.setFontSize(currentEditorFontSize);
     }
   }
 

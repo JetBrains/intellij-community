@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.actions.IdeScaleTransformer;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -1032,22 +1033,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void patchLafFonts(UIDefaults uiDefaults) {
-    //if (JBUI.isHiDPI()) {
-    //  HashMap<Object, Font> newFonts = new HashMap<Object, Font>();
-    //  for (Object key : uiDefaults.keySet().toArray()) {
-    //    Object val = uiDefaults.get(key);
-    //    if (val instanceof Font) {
-    //      newFonts.put(key, JBFont.create((Font)val));
-    //    }
-    //  }
-    //  for (Map.Entry<Object, Font> entry : newFonts.entrySet()) {
-    //    uiDefaults.put(entry.getKey(), entry.getValue());
-    //  }
-    //} else
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getOverrideLafFonts()) {
+    if (uiSettings.getOverrideLafFonts() || IdeScaleTransformer.INSTANCE.getCurrentScale() != 1) {
       storeOriginalFontDefaults(uiDefaults);
-      float fontSize = uiSettings.getFontSize2D();
+      float fontSize = uiSettings.getFontSize2D() * IdeScaleTransformer.INSTANCE.getCurrentScale();
       StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, fontSize));
       float userScaleFactor = useInterFont() ? fontSize / INTER_SIZE : JBUIScale.getFontScale(fontSize);
       JBUIScale.setUserScaleFactor(userScaleFactor);
@@ -1055,9 +1044,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
       StartupUiUtil.initFontDefaults(uiDefaults, getDefaultInterFont());
-      if (!uiSettings.getPresentationMode()) {
-        JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
-      }
+      JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
