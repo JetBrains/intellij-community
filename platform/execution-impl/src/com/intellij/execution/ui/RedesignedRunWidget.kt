@@ -25,6 +25,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -192,7 +193,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   override fun getButtonArc(): JBValue = JBValue.Float(8f)
 }
 
-
+private const val MINIMAL_POPUP_WIDTH = 270
 private abstract class TogglePopupAction : ToggleAction {
 
   constructor()
@@ -213,6 +214,7 @@ private abstract class TogglePopupAction : ToggleAction {
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
     PopupImplUtil.setPopupToggleButton(popup, e.inputEvent.component)
+    popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
     popup.showUnderneathOf(component)
   }
 
