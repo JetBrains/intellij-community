@@ -39,6 +39,15 @@ class AndroidPlugin(context: Context) : Plugin(context) {
             shouldExists()
         }
 
+        @Deprecated("Kotlin Android Extensions compiler plugin")
+        val addAndroidExtensionPlugin by booleanSetting(
+            "<ADD_ANDROID_EXTENSIONS_PLUGIN>>",
+            neededAtPhase = GenerationPhase.PROJECT_GENERATION,
+        ) {
+            isAvailable = isAndroidContainingProject
+            defaultValue = value(true)
+        }
+
         private val isAndroidContainingProject = checker {
             KotlinPlugin.modules.settingValue
                 .withAllSubModules(includeSourcesets = true)
