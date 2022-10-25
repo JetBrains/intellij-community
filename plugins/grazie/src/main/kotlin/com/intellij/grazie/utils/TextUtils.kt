@@ -44,7 +44,13 @@ object Text {
     return TextRange(start.coerceAtLeast(0), end.coerceAtMost(text.length))
   }
 
+  private const val assignment = "= ['\"]"
+  private const val idChain = "\\p{L}\\.\\p{L}+\\.\\p{L}"
+  private val codeLikePattern = Regex("$assignment|$idChain")
+
   fun CharSequence.looksLikeCode(): Boolean {
+    if (codeLikePattern.find(this) != null) return true
+
     var codeChars = 0
     var textTokens = 0
     var inToken = false
