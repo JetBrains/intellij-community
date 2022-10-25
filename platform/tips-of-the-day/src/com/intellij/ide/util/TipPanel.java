@@ -15,7 +15,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -253,6 +255,13 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setTip(@NotNull TipAndTrickBean tip) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
+      ApplicationManager.getApplication().invokeLater(() -> doSetTip(tip, tipContent), ModalityState.stateForComponent(this));
+    });
+  }
+
+  private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
     myCurrentTip = tip;
@@ -261,7 +270,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setText(ObjectUtils.notNull(groupName, ""));
     mySubSystemLabel.setVisible(groupName != null);
 
-    List<TextParagraph> tipContent = TipUtils.loadAndParseTip(tip);
     myTextPane.setParagraphs(tipContent);
     adjustTextPaneBorder(tipContent);
     setPromotionForCurrentTip();
