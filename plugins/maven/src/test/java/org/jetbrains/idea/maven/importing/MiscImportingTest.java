@@ -11,6 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -20,9 +27,8 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
+import java.util.function.Function;
 
 public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   private MavenEventsTestHelper myEventsTestHelper = new MavenEventsTestHelper();
@@ -182,6 +188,81 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
     myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
+  }
+
+  @Test
+  public void testSendWorkspaceEventsOnlyForChangedEntities() {
+    Assume.assumeTrue(isWorkspaceImport());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m2</module>" +
+                  "</modules>");
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>");
+
+    createModulePom("m2",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m2</artifactId>" +
+                    "<version>1</version>");
+
+    importProject();
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<dependencies>" +
+                    "  <dependency>" +
+                    "    <groupId>junit</groupId>" +
+                    "    <artifactId>junit</artifactId>" +
+                    "    <version>4.0</version>" +
+                    "  </dependency>" +
+                    "</dependencies>");
+
+    var changeLog = new HashSet<String>();
+    myProject.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
+
+        var getName = new Function<WorkspaceEntity, String>() {
+          @Override
+          public String apply(WorkspaceEntity entity) {
+            if (entity instanceof WorkspaceEntityWithSymbolicId) {
+              return ((WorkspaceEntityWithSymbolicId)entity).getSymbolicId().getPresentableName();
+            }
+            else {
+              return entity.getClass().getSimpleName();
+            }
+          }
+        };
+        while (iterator.hasNext()) {
+          var change = iterator.next();
+          if (change.getNewEntity() == null) {
+            changeLog.add("deleted " + getName.apply(change.getOldEntity()));
+          }
+          else if (change.getOldEntity() == null) {
+            changeLog.add("created " + getName.apply(change.getNewEntity()));
+          }
+          else {
+            changeLog.add("modified " + getName.apply(change.getNewEntity()));
+          }
+        }
+      }
+    });
+
+    importProject();
+    assertEquals(Set.of("modified m1", "created Maven: junit:junit:4.0"), changeLog);
   }
 
   @Test
