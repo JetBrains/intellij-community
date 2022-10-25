@@ -5,6 +5,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import javax.swing.border.Border
 
 internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Boolean) : ToolWindowToolbar() {
   override val topStripe = StripeV2(this, paneId, ToolWindowAnchor.LEFT)
@@ -14,7 +15,7 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
     init()
   }
 
-  val moreButton = MoreSquareStripeButton(this)
+  val moreButton: MoreSquareStripeButton = MoreSquareStripeButton(this)
 
   override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe {
     return when (anchor) {
@@ -24,10 +25,11 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
     }
   }
 
-  override fun createBorder() = JBUI.Borders.customLine(getBorderColor(), 1, 0, 0, 1)
+  override fun createBorder(): Border = JBUI.Borders.customLine(getBorderColor(), 1, 0, 0, 1)
 
   fun initMoreButton() {
-    if (isPrimary) topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    if (isPrimary) {
+      topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+    }
   }
-
 }
