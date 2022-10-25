@@ -2,16 +2,14 @@
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JViewport;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -41,10 +39,10 @@ public final class RenderingHelper {
       if (pane != null) {
         JScrollBar hsb = pane.getHorizontalScrollBar();
         if (hsb != null && hsb.isVisible()) {
-          myShrinkingDisabled = isClientPropertyFalse(component, SHRINK_LONG_RENDERER, false);
+          myShrinkingDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_RENDERER);
         }
         JScrollBar vsb = pane.getVerticalScrollBar();
-        if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && isClientPropertyFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS, isMac)) {
+        if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && (isMac ? ClientProperty.isFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS) : !ClientProperty.isTrue(vsb, IGNORE_SCROLLBAR_IN_INSETS))) {
           myRightMargin = vsb.getWidth();
         }
       }
@@ -87,10 +85,5 @@ public final class RenderingHelper {
       if (item instanceof Integer) return (Integer)item;
     }
     return -1;
-  }
-
-  private static boolean isClientPropertyFalse(@NotNull JComponent component, @NotNull Object key, boolean strict) {
-    Object property = component.getClientProperty(key);
-    return strict ? Boolean.FALSE.equals(property) : !Boolean.TRUE.equals(property);
   }
 }
