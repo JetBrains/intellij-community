@@ -37,6 +37,7 @@ import com.intellij.util.FontUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.CurrentTheme
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -576,6 +577,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
     private class BranchesTree(model: TreeModel): Tree(model) {
+
+      init {
+        background = CurrentTheme.Popup.BACKGROUND
+      }
+
       //Change visibility of processEvent to be able to delegate key events dispatched in WizardPopup directly to tree
       //This will allow to handle events like "copy-paste" in AbstractPopup.speedSearch
       public override fun processEvent(e: AWTEvent?) {
