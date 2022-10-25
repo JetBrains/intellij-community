@@ -34,7 +34,7 @@ class IdentifierSymbol(
     }
   }
 
-  override fun getTargetPresentation(): TargetPresentation {
+  override fun presentation(): TargetPresentation {
     return TargetPresentation.builder(text).presentation()
   }
 

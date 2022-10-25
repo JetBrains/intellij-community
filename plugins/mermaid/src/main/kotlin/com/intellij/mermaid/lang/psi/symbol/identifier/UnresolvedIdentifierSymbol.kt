@@ -24,10 +24,12 @@ open class UnresolvedIdentifierSymbol(
 ) : MermaidSymbol, SearchTarget, RenameTarget {
   override val maximalSearchScope: SearchScope
     get() = LocalSearchScope(file, file.name)
-  override val presentation: TargetPresentation
-    get() = TargetPresentation.builder(text).presentation()
   override val targetName: String
     get() = text
+
+  override fun presentation(): TargetPresentation {
+    return TargetPresentation.builder(text).presentation()
+  }
 
   override fun createPointer(): Pointer<out UnresolvedIdentifierSymbol> {
     val project = file.project
@@ -46,7 +48,7 @@ open class UnresolvedIdentifierSymbol(
     }
   }
 
-  override val usageHandler: UsageHandler<*>
+  override val usageHandler: UsageHandler
     get() = UsageHandler.createEmptyUsageHandler(text)
 
   override val searchText: String
