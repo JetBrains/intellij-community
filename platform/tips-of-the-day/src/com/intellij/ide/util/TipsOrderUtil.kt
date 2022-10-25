@@ -15,11 +15,11 @@ internal class TipsOrderUtil {
    *
    * @return object that contains sorted tips and describes approach of how the tips are sorted
    */
-  fun sort(tips: List<TipAndTrickBean>, project: Project): RecommendationDescription {
+  fun sort(tips: List<TipAndTrickBean>, project: Project): TipsSortingResult {
     val registry = ProductivityFeaturesRegistry.getInstance();
     if (registry == null) {
       thisLogger().warn("ProductivityFeaturesRegistry is not created")
-      return RecommendationDescription(SHUFFLE_ALGORITHM, tips.shuffled(), "1")
+      return TipsSortingResult(tips.shuffled(), SHUFFLE_ALGORITHM, "1")
     }
 
     FeatureUsageTracker.getInstance()  // instantiate just to load statistics of feature usage
@@ -44,7 +44,7 @@ internal class TipsOrderUtil {
 
     val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
     val adjustedSortedTips = tipsUsageManager.makeLastShownTipFirst(sortedTips)
-    return RecommendationDescription(SORTING_ALGORITHM, adjustedSortedTips, SORTING_ALGORITHM_VERSION)
+    return TipsSortingResult(adjustedSortedTips, SORTING_ALGORITHM, SORTING_ALGORITHM_VERSION)
   }
 
   private fun getComparator(): Comparator<TipInfo> {
@@ -73,5 +73,7 @@ internal class TipsOrderUtil {
   }
 }
 
-internal data class RecommendationDescription(val algorithm: String, val tips: List<TipAndTrickBean>, val version: String?)
+internal data class TipsSortingResult(val tips: List<TipAndTrickBean>,
+                                      val algorithm: String = "unknown",
+                                      val version: String? = null)
 
