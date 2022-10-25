@@ -129,7 +129,7 @@ class JBCefOsrHandler implements CefRenderHandler {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
         image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE), myScale.getJreBiased(), null);
-        volatileImage = myComponent.createVolatileImage(width, height);
+        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
         dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
       }
     }
@@ -148,7 +148,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         dirtyRects = new Rectangle[]{ new Rectangle(0, 0, width, height) };
       }
       if (result == VolatileImage.IMAGE_INCOMPATIBLE) {
-        volatileImage = myComponent.createVolatileImage(imageWidth, imageHeight);
+        volatileImage = myComponent.getGraphicsConfiguration().createCompatibleVolatileImage(imageWidth, imageHeight, Transparency.TRANSLUCENT);
       }
     }
 
@@ -201,6 +201,7 @@ class JBCefOsrHandler implements CefRenderHandler {
         double sx = viGr.getTransform().getScaleX();
         double sy = viGr.getTransform().getScaleY();
         viGr.scale(1 / sx, 1 / sy);
+        viGr.setComposite(AlphaComposite.Src);
         viGr.drawImage(bufferedImage,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
                        outerRect.x, outerRect.y, outerRect.x + outerRect.width, outerRect.y + outerRect.height,
