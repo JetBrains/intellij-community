@@ -3,12 +3,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
 abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIntentionActionOnPsiElement(module) {
@@ -21,14 +19,6 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIn
     invoke(project, startElement as PsiJavaModule)
 
   protected abstract fun invoke(project: Project, module: PsiJavaModule)
-
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val moduleFile = (startElement.containingFile.copy() as? PsiFile) ?: return IntentionPreviewInfo.EMPTY
-    val module = (PsiTreeUtil.findSameElementInCopy(startElement, moduleFile) as? PsiJavaModule) ?: return IntentionPreviewInfo.EMPTY
-    val beforeText = module.text
-    invoke(project, module)
-    return IntentionPreviewInfo.CustomDiff(moduleFile.fileType, moduleFile.name, beforeText, module.text)
-  }
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {

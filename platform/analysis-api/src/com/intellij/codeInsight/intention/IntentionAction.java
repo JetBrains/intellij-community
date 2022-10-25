@@ -107,8 +107,10 @@ public interface IntentionAction extends FileModifier {
    * overriding {@code getFileModifierForPreview} or {@code generatePreview} is desired.
    *
    * @param project current project
-   * @param editor editor. Could be a simplified headless Editor implementation that lacks some features.
-   * @param file non-physical file to apply
+   * @param editor editor where a file copy is opened. 
+   *               Could be a simplified headless Editor implementation that lacks some features.
+   * @param file a non-physical file to apply, which is a copy of the file that contains element returned from
+   *             {@link #getElementToMakeWritable(PsiFile)}, or copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

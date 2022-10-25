@@ -107,11 +107,14 @@ internal class IntentionPreviewComputable(private val project: Project,
         IntentionPreviewInfo.DIFF,
         IntentionPreviewInfo.DIFF_NO_TRIM -> {
           val document = psiFileCopy!!.viewProvider.document
+          val anotherFile = psiFileCopy.originalFile != origFile
           val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
           IntentionPreviewDiffResult(
             psiFile = psiFileCopy,
-            origFile = origFile,
+            origFile = psiFileCopy.originalFile,
             policy = policy,
+            fileName = if (anotherFile) psiFileCopy.name else null,
+            normalDiff = !anotherFile,
             lineFragments = comparisonManager.compareLines(origFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
         }
         IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
@@ -135,21 +138,22 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun invokePreview(origFile: PsiFile, selection: TextRange, caretOffset: Int): Pair<IntentionPreviewInfo, PsiFile?> {
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(origFile)
+    val fileToCopy = action.getElementToMakeWritable(origFile) ?. containingFile ?: origFile
+    val psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
     val editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
-    editorCopy.caretModel.moveToOffset(caretOffset)
-    editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    if (fileToCopy == origFile) {
+      editorCopy.caretModel.moveToOffset(caretOffset)
+      editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    }
     originalEditor.document.setReadOnly(true)
     ProgressManager.checkCanceled()
     IntentionPreviewUtils.previewSession(editorCopy) {
       PostprocessReformattingAspect.getInstance(project)
         .postponeFormattingInside { info = action.generatePreview(project, editorCopy, psiFileCopy) }
     }
-    if (info == IntentionPreviewInfo.FALLBACK_DIFF) {
+    if (info == IntentionPreviewInfo.FALLBACK_DIFF && fileToCopy == origFile) {
       if (!action.startInWriteAction()) return info to null
       if (action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) return info to null
-      // Use fallback algorithm only if invokeForPreview is not explicitly overridden
-      // in this case, the absence of diff could be intended, thus should not be logged as error
       val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return info to null
       val unwrapped = IntentionActionDelegate.unwrap(action)
       val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
