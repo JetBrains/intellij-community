@@ -3,7 +3,7 @@ package com.intellij.mermaid.lang.psi.symbol.identifier
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.mermaid.lang.psi.MermaidNamedPsiElement
-import com.intellij.mermaid.lang.psi.MermaidVisitor
+import com.intellij.mermaid.lang.psi.MermaidRecursiveVisitor
 import com.intellij.mermaid.lang.psi.symbol.MermaidPsiSymbolReferenceBase
 import com.intellij.mermaid.lang.psi.symbol.identifier.UnresolvedIdentifierSymbol.Companion.isDeclaration
 import com.intellij.model.Symbol
@@ -44,13 +44,12 @@ class IdentifierSymbolReference(
   companion object {
     private fun PsiFile.collectNamedElements(): List<MermaidNamedPsiElement> {
       val elements = arrayListOf<MermaidNamedPsiElement>()
-      val visitor = object : MermaidVisitor() {
-        override fun visitElement(element: PsiElement) {
+      val visitor = object : MermaidRecursiveVisitor() {
+        override fun visitPsiElement(element: PsiElement) {
           if (element is MermaidNamedPsiElement) {
             elements.add(element)
           }
-          super.visitElement(element)
-          element.acceptChildren(this)
+          super.visitPsiElement(element)
         }
       }
       accept(visitor)

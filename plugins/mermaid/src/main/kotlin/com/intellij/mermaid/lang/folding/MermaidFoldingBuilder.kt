@@ -22,12 +22,7 @@ class MermaidFoldingBuilder : CustomFoldingBuilder() {
     if (root !is MermaidFile) {
       return
     }
-    root.accept(object : MermaidVisitor() {
-      override fun visitElement(element: PsiElement) {
-        super.visitElement(element)
-        element.acceptChildren(this)
-      }
-
+    root.accept(object : MermaidRecursiveVisitor() {
       override fun visitFoldableElement(o: MermaidFoldableElement) {
         addDescriptors(o, o.textRange)
         super.visitFoldableElement(o)
