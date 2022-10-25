@@ -51,7 +51,7 @@ public class HwFacadeHelper {
   // [tav] todo: export visible browser bounds from jcef instead
   private static final class JCEFAccessor {
     private static FieldAccessor<CefApp, HashSet<CefClient>> clientsField;
-    private static FieldAccessor<CefClient, HashMap<Integer, CefBrowser>> browsersField;
+    private static FieldAccessor<CefClient, Map<Integer, CefBrowser>> browsersField;
     private static CefApp ourCefApp;
 
     @Nullable
@@ -71,7 +71,7 @@ public class HwFacadeHelper {
       Set<CefClient> clients = clientsField.get(ourCefApp);
       if (clients == null) return list;
       for (CefClient client : clients) {
-        HashMap<?, CefBrowser> browsers = browsersField.get(client);
+        Map<?, CefBrowser> browsers = browsersField.get(client);
         if (browsers == null) return list;
         for (CefBrowser browser : browsers.values()) {
           JBCefBrowserBase jbCefBrowser = JBCefBrowserBase.getJBCefBrowser(browser);
