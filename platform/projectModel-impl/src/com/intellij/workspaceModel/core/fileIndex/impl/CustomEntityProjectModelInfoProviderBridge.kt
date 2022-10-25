@@ -27,7 +27,7 @@ internal class CustomEntityProjectModelInfoProviderBridge<E : WorkspaceEntity>(p
         registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL, entity, null)
       }
       libraryRoots.sources.forEach { 
-        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, null)
+        registrar.registerFileSet(it, WorkspaceFileKind.EXTERNAL_SOURCE, entity, LibrarySourceRootFileSetData(null))
       }
       libraryRoots.excluded.forEach { 
         registrar.registerExcludedRoot(it, WorkspaceFileKind.EXTERNAL, entity)
