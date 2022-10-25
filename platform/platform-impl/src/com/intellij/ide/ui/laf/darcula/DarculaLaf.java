@@ -11,11 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.TableActions;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -402,23 +400,10 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
-  /*
-   * The method is expected to return an Icon in Swing format (with MultiResolutionImage)
-   */
   @Override
-  public final Icon getDisabledIcon(JComponent component, Icon icon) {
-    if (icon == null) {
-      return null;
-    }
-
-    ScaleContext ctx = ScaleContext.create(component);
-    Icon multiResIcon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
-    Icon multiResDisabledIcon = super.getDisabledIcon(component, multiResIcon);
-    if (multiResDisabledIcon != null) {
-      return multiResDisabledIcon;
-    }
-    Icon jbDisabledIcon = IconLoader.getDisabledIcon(icon, component);
-    return MultiResolutionImageProvider.convertFromJBIcon(jbDisabledIcon, ctx);
+  public Icon getDisabledIcon(JComponent component, Icon icon) {
+    if (icon == null) return null;
+    return IconLoader.getDisabledIcon(icon, component);
   }
 
   @Override
