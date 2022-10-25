@@ -233,7 +233,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
-      group.add(new ShowCoveringTestsAction(myClassName, lineData));
+      group.add(new ShowCoveringTestsAction(editor.getProject(), myClassName, lineData));
     }
     final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
     if (byteCodeViewAction != null) {
@@ -243,6 +243,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     group.add(new HideCoverageInfoAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageHintToolbar", group, true);
+    toolbar.setTargetComponent(editorComponent);
     final JComponent toolbarComponent = toolbar.getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
