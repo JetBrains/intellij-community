@@ -65,7 +65,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
+  public TipPanel(@NotNull final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 
@@ -114,7 +114,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myPreviousTipAction = new PreviousTipAction();
     myNextTipAction = new NextTipAction();
 
-    setTips(tips);
+    setTips(sortingResult);
   }
 
   private JPanel createFeedbackPanel() {
@@ -228,8 +228,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     };
   }
 
-  void setTips(@NotNull List<TipAndTrickBean> list) {
-    TipsSortingResult sortingResult = TipsOrderUtil.getInstance().sort(list, myProject);
+  void setTips(@NotNull TipsSortingResult sortingResult) {
     myTips = sortingResult.getTips();
     myAlgorithm = sortingResult.getAlgorithm();
     myAlgorithmVersion = sortingResult.getVersion();

@@ -73,7 +73,7 @@ internal class TipsOrderUtil {
   }
 }
 
-internal data class TipsSortingResult(val tips: List<TipAndTrickBean>,
-                                      val algorithm: String = "unknown",
-                                      val version: String? = null)
+internal data class TipsSortingResult @JvmOverloads constructor(val tips: List<TipAndTrickBean>,
+                                                                val algorithm: String = "unknown",
+                                                                val version: String? = null)
 
