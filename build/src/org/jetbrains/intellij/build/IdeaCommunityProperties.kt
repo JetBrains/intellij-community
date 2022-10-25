@@ -26,11 +26,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
-      "intellij.maven.testFramework",
-      "intellij.tools.ide.starter",
-      "intellij.tools.ide.metricsCollector",
-      "intellij.tools.ide.starter.junit4",
-      "intellij.tools.ide.starter.junit5"
+      "intellij.maven.testFramework"
     )
   }
 

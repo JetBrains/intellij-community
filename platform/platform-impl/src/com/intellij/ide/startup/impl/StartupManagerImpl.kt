@@ -192,6 +192,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       val pluginId = adapter.pluginDescriptor.pluginId
       if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
                                                   && pluginId.idString != "com.intellij.clion-makefile"
+                                                  && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
                                                   && pluginId.idString != "com.intellij.clion-swift"
                                                   && pluginId.idString != "com.intellij.appcode"
                                                   && pluginId.idString != "com.intellij.clion-compdb"
