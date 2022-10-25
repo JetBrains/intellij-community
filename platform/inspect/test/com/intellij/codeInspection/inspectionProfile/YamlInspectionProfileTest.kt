@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -11,7 +12,7 @@ import java.io.File
 
 class YamlInspectionProfileTest: LightPlatformTestCase() {
 
-  override fun getTestDirectoryName(): String = "testData/"
+  override fun getTestDirectoryName(): String = PathManager.getCommunityHomePath() + "/platform/inspect/testData/"
 
   fun testBasic(){ checkEffectiveProfile() }
 
