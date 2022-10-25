@@ -12,7 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 
 public final class RenderingHelper {
@@ -42,7 +41,7 @@ public final class RenderingHelper {
           myShrinkingDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_RENDERER);
         }
         JScrollBar vsb = pane.getVerticalScrollBar();
-        if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && (isMac ? ClientProperty.isFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS) : !ClientProperty.isTrue(vsb, IGNORE_SCROLLBAR_IN_INSETS))) {
+        if (vsb != null && vsb.isVisible() && !vsb.isOpaque() && ClientProperty.isFalse(vsb, IGNORE_SCROLLBAR_IN_INSETS)) {
           myRightMargin = vsb.getWidth();
         }
       }
