@@ -146,8 +146,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       fileAnnotation = doAnnotate(root, filePath, null, file);
     }
 
-    loadFileHistoryInBackground(fileAnnotation);
-    loadCommitMessagesFromLog(root, fileAnnotation);
+    if (fileAnnotation.getRevisions() == null) {
+      loadFileHistoryInBackground(fileAnnotation);
+      loadCommitMessagesFromLog(root, fileAnnotation);
+    }
 
     return fileAnnotation;
   }
