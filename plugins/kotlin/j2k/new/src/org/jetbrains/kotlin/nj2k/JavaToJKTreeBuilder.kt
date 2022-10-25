@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
+import org.jetbrains.kotlin.nj2k.tree.Mutability.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -842,7 +843,9 @@ class JavaToJKTreeBuilder constructor(
             otherModifiers(),
             visibility(),
             modality(),
-            JKMutabilityModifierElement(Mutability.UNKNOWN)
+            JKMutabilityModifierElement(
+                if (containingClass?.isInterface == true) IMMUTABLE else UNKNOWN
+            )
         ).also {
             symbolProvider.provideUniverseSymbol(this, it)
             it.psi = this
@@ -992,8 +995,7 @@ class JavaToJKTreeBuilder constructor(
                 nameIdentifier.toJK(),
                 with(expressionTreeMapper) { initializer.toJK() },
                 JKMutabilityModifierElement(
-                    if (hasModifierProperty(PsiModifier.FINAL)) Mutability.IMMUTABLE
-                    else Mutability.UNKNOWN
+                    if (hasModifierProperty(PsiModifier.FINAL)) IMMUTABLE else UNKNOWN
                 ),
                 annotationList(null)
             ).also { i ->

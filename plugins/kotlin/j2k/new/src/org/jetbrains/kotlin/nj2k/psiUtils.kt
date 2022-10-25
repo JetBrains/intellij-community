@@ -68,9 +68,8 @@ internal fun PsiMember.visibility(
         }
     }?.firstOrNull() ?: JKVisibilityModifierElement(Visibility.INTERNAL)
 
-
-fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?) =
-    modifierList?.children?.mapNotNull { child ->
+fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
+    val modalityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
         when (child.text) {
             PsiModifier.FINAL -> Modality.FINAL
@@ -82,8 +81,14 @@ fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -
         }?.also { modifier ->
             assignNonCodeElements?.let { it(modifier, child) }
         }
-    }?.firstOrNull() ?: JKModalityModifierElement(Modality.OPEN)
+    }?.firstOrNull()
 
+    return when {
+        modalityFromModifier != null -> modalityFromModifier
+        this is PsiField && containingClass?.isInterface == true -> JKModalityModifierElement(Modality.FINAL)
+        else -> JKModalityModifierElement(Modality.OPEN)
+    }
+}
 
 fun JvmClassKind.toJk() = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS

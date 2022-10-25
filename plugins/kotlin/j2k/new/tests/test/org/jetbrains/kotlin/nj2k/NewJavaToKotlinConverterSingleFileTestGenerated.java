@@ -66,6 +66,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/annotationUsages.java");
         }
 
+        @TestMetadata("annotationWithField.java")
+        public void testAnnotationWithField() throws Exception {
+            runTest("testData/newJ2k/annotations/annotationWithField.java");
+        }
+
         @TestMetadata("annotationsFromPropertyAccessors.java")
         public void testAnnotationsFromPropertyAccessors() throws Exception {
             runTest("testData/newJ2k/annotations/annotationsFromPropertyAccessors.java");
