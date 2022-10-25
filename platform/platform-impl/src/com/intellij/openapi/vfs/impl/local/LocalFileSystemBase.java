@@ -782,36 +782,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     PersistentFS.getInstance().clearIdCache();
   }
 
-  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
-    final FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+  private static @Nullable FileAttributes getAttributesWithCustomTimestamp(VirtualFile file) {
+    FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
     return copyWithCustomTimestamp(file, attributes);
   }
 
-  protected static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull VirtualFile file, @Nullable FileAttributes attributes) {
-    return copyWithCustomTimestamp(provider -> provider.getTimestamp(file), attributes);
-  }
-
-  protected static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull Path file, @Nullable FileAttributes attributes) {
-    return copyWithCustomTimestamp(provider -> provider.getTimestamp(file), attributes);
-  }
-
-  private static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull Function<LocalFileSystemTimestampEvaluator, Long> timestamp,
-                                                                  @Nullable FileAttributes attributes) {
-    if (attributes == null) return null;
-
-    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-      final Long custom = timestamp.fun(provider);
-      if (custom != null) {
-        return new FileAttributes(
-          attributes.isDirectory(),
-          attributes.isSpecial(),
-          attributes.isSymLink(),
-          attributes.isHidden(),
-          attributes.length,
-          custom,
-          attributes.isWritable(),
-          attributes.areChildrenCaseSensitive()
-        );
+  private static @Nullable FileAttributes copyWithCustomTimestamp(VirtualFile file, @Nullable FileAttributes attributes) {
+    if (attributes != null) {
+      for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+        Long custom = provider.getTimestamp(file);
+        if (custom != null) {
+          return attributes.withTimeStamp(custom);
+        }
       }
     }
 

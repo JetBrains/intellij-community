@@ -305,6 +305,19 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     }
   }
 
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, @Nullable FileAttributes attributes) {
+    if (attributes != null) {
+      for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+        Long custom = provider.getTimestamp(file);
+        if (custom != null) {
+          return attributes.withTimeStamp(custom);
+        }
+      }
+    }
+
+    return attributes;
+  }
+
   @Override
   public String toString() {
     return "LocalFileSystem";

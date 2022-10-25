@@ -164,6 +164,10 @@ public final class FileAttributes {
     return new FileAttributes(newFlags, length, lastModified);
   }
 
+  public @NotNull FileAttributes withTimeStamp(long timestamp) {
+    return new FileAttributes(flags, length, timestamp);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
