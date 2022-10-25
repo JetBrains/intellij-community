@@ -30,6 +30,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -344,6 +345,22 @@ class ModuleBridgesTest {
     }
 
     assertEmpty(projectModel.entityStorage.current.entities(LibraryEntity::class.java).toList())
+  }
+
+  @Test
+  fun `add remove excluded folder`() {
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, temporaryDirectoryRule.newVirtualDirectory("root"))
+    val excludedRoot = temporaryDirectoryRule.newVirtualDirectory("root/excluded")
+    PsiTestUtil.addExcludedRoot(module, excludedRoot)
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    assertEquals(excludedRoot, workspaceModel.entityStorage.current.entities(ExcludeUrlEntity::class.java).single().url.virtualFile)
+    ModuleRootModificationUtil.modifyModel(module) { model ->
+      val contentEntry = model.contentEntries.single()
+      contentEntry.removeExcludeFolder(contentEntry.excludeFolders.single())
+      true
+    }
+    assertEmpty(workspaceModel.entityStorage.current.entities(ExcludeUrlEntity::class.java).toList())
   }
 
   @Test
