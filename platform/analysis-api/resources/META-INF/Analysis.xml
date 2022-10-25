@@ -59,8 +59,6 @@
     <extensionPoint name="localFileSystemTimestampEvaluator" interface="com.intellij.openapi.vfs.impl.local.LocalFileSystemTimestampEvaluator" dynamic="true"/>
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
-
-    <extensionPoint name="directoryScopeEnlarger" interface="com.intellij.psi.search.DirectoryScopeEnlarger" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

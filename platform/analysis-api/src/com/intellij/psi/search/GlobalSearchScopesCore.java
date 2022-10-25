@@ -38,29 +38,22 @@ public final class GlobalSearchScopesCore {
 
   @NotNull
   public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
-    return directoriesScope(directory.getProject(), withSubdirectories, directory.getVirtualFile());
+    return new DirectoryScope(directory, withSubdirectories);
   }
 
   @NotNull
   public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
-    return directoriesScope(project, withSubdirectories, directory);
+    return new DirectoryScope(project, directory, withSubdirectories);
   }
 
   @NotNull
   public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, VirtualFile @NotNull ... directories) {
     Set<VirtualFile> dirSet = ContainerUtil.newHashSet(directories);
-
-    for (DirectoryScopeEnlarger scopeEnlarger : DirectoryScopeEnlarger.EP_NAME.getExtensionList()) {
-      for (VirtualFile dir : directories) {
-        dirSet.addAll(scopeEnlarger.getAdditionalScope(project, dir));
-      }
-    }
-
     if (dirSet.isEmpty()) {
       return GlobalSearchScope.EMPTY_SCOPE;
     }
     if (dirSet.size() == 1) {
-      return new DirectoryScope(project, dirSet.iterator().next(), withSubdirectories);
+      return directoryScope(project, dirSet.iterator().next(), withSubdirectories);
     }
     return new DirectoriesScope(project,
                                 withSubdirectories ? Collections.emptySet() : dirSet,
@@ -221,10 +214,12 @@ public final class GlobalSearchScopesCore {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
-    /**
-     * @deprecated Use {@link GlobalSearchScopesCore#directoryScope(Project, VirtualFile, boolean)} instead.
-     */
-    @Deprecated(forRemoval = true)
+    private DirectoryScope(@NotNull PsiDirectory psiDirectory, boolean withSubdirectories) {
+      super(psiDirectory.getProject());
+      myWithSubdirectories = withSubdirectories;
+      myDirectory = psiDirectory.getVirtualFile();
+    }
+
     public DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, boolean withSubdirectories) {
       super(project);
       myWithSubdirectories = withSubdirectories;
