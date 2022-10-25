@@ -133,6 +133,7 @@
     <module name="intellij.fullLine.python"/>
     <module name="intellij.fullLine.java"/>
     <module name="intellij.fullLine.kotlin"/>
+    <module name="intellij.fullLine.languages.js"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
