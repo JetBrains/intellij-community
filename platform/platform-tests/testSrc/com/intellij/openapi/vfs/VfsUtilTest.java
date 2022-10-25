@@ -550,15 +550,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void pathEqualsWorksForWslPaths() {
-    IoTestUtil.assumeWindows();
-    IoTestUtil.assumeWslPresence();
-    List<@NotNull String> distributions = IoTestUtil.enumerateWslDistributions();
-    assumeTrue("No WSL distributions found", !distributions.isEmpty());
-
-    String wslName = distributions.get(0);
+    String wslName = IoTestUtil.assumeWorkingWslDistribution();
     File usrBinFile = new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\");
-    assertTrue(usrBinFile + " doesn't exist, despite " +distributions.size()+
-               " WSL distributions found: " + distributions, usrBinFile.exists());
+    assertTrue(usrBinFile + " doesn't exist", usrBinFile.exists());
     VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(usrBinFile);
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin"));

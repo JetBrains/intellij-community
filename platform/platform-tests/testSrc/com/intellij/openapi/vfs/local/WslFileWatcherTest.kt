@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil.*
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -49,7 +48,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
   companion object {
     private val LOG = logger<WslFileWatcherTest>()
-    private val WSL: String? by lazy { enumerateWslDistributions().firstOrNull() }
+    private val WSL: String by lazy { assumeWorkingWslDistribution() }
   }
 
   private lateinit var tempDir: Path
@@ -64,12 +63,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
   private val resetHappened = AtomicBoolean()
 
   @Before fun setUp() {
-    assumeTrue(SystemInfo.isWin10OrNewer)
-    assumeWslPresence()
-
-    assumeTrue("No WSL distributions found", WSL != null)
-    wsl = WSL!!
-    assumeTrue("WSL distribution ${wsl} doesn't seem to be alive", reanimateWslDistribution(wsl))
+    wsl = WSL
 
     TestLoggerFactory.enableTraceLogging(testRootDisposable, WslFileWatcher::class.java, FileWatcherTest::class.java)
     LOG.debug("================== setting up " + getTestName(false) + " ==================")

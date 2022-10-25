@@ -426,6 +426,25 @@ public final class IoTestUtil {
     return false;
   }
 
+  public static @NotNull String assumeWorkingWslDistribution() {
+    assumeWindows();
+    assumeWslPresence();
+
+    var distributions = enumerateWslDistributions();
+    assumeTrue("No WSL distributions found", !distributions.isEmpty());
+
+    for (var distribution : distributions) {
+      if (reanimateWslDistribution(distribution)) {
+        return distribution;
+      }
+    }
+
+    //noinspection DataFlowIssue
+    assumeTrue("Cannot find a working distribution among " + distributions, false);
+    // making the compiler happy
+    return "";
+  }
+
   public static void setCaseSensitivity(@NotNull File dir, boolean caseSensitive) throws IOException {
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
