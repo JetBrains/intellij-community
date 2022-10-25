@@ -209,7 +209,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
-        registerEditor(event.getEditor());
+        if (event.getEditor().getProject() == myProject) {
+          registerEditor(event.getEditor());
+        }
       }
     }, myProject);
   }
