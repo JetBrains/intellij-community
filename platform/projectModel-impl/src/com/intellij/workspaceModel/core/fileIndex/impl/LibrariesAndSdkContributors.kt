@@ -24,8 +24,8 @@ import java.util.IdentityHashMap
 
 internal class LibrariesAndSdkContributors(private val project: Project,
                                            private val rootFileSupplier: RootFileSupplier,
-                                           private val fileSets: MultiMap<VirtualFile, WorkspaceFileSetImpl>,
-                                           private val excludedFileSets: MultiMap<VirtualFile, ExcludedFileSet>) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
+                                           private val fileSets: MultiMap<VirtualFile, StoredFileSet>
+) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
   private val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
@@ -87,7 +87,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, reference, LibrarySourceRootFileSetData(null))
     (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
       if (RootFileSupplier.ensureValid(it, library, null)) {
-        excludedFileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference))
+        fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, reference))
         libraryRoots.putValue(library, it)
       }
     }
@@ -120,7 +120,6 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     val roots = libraryRoots.remove(library)
     roots?.forEach { root ->
       fileSets.removeValueIf(root) { (it.entityReference as? GlobalLibraryReference)?.library === library }
-      excludedFileSets.removeValueIf(root) { (it.entityReference as? GlobalLibraryReference)?.library === library }
     }
   }
 

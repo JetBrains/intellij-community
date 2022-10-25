@@ -14,8 +14,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 internal class SyntheticLibraryContributors(private val project: Project, private val rootFileSupplier: RootFileSupplier) {
   private val allRoots = HashSet<VirtualFile>()
   
-  internal fun registerFileSets(fileSets: MultiMap<VirtualFile, WorkspaceFileSetImpl>,
-                                excludedFileSets: MultiMap<VirtualFile, ExcludedFileSet>) {
+  internal fun registerFileSets(fileSets: MultiMap<VirtualFile, StoredFileSet>) {
     AdditionalLibraryRootsProvider.EP_NAME.extensionList.forEach { provider ->
       provider.getAdditionalProjectLibraries(project).forEach { library ->
         fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind) {
@@ -30,24 +29,23 @@ internal class SyntheticLibraryContributors(private val project: Project, privat
         registerRoots(library.sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE)
         registerRoots(library.binaryRoots, WorkspaceFileKind.EXTERNAL)
         library.excludedRoots.forEach { 
-          excludedFileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, SyntheticLibraryReference))
+          fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, SyntheticLibraryReference))
           allRoots.add(it)
         }
         library.unitedExcludeCondition?.let { condition ->
           val predicate = { file: VirtualFile -> condition.value(file) }
           (library.sourceRoots + library.binaryRoots).forEach { root ->
-            excludedFileSets.putValue(root, ExcludedFileSet.ByCondition(root, predicate, SyntheticLibraryReference))
+            fileSets.putValue(root, ExcludedFileSet.ByCondition(root, predicate, SyntheticLibraryReference))
           }
         }
       }
     }
   }
   
-  internal fun unregisterFileSets(fileSets: MultiMap<VirtualFile, WorkspaceFileSetImpl>,
-                                  excludedRoots: MultiMap<VirtualFile, ExcludedFileSet>) {
+  internal fun unregisterFileSets(fileSets: MultiMap<VirtualFile, StoredFileSet>
+  ) {
     for (root in allRoots) {
       fileSets.removeValueIf(root) { it.entityReference is SyntheticLibraryReference }
-      excludedRoots.removeValueIf(root) { it.entityReference is SyntheticLibraryReference }
     }
     allRoots.clear()
   }
