@@ -8,12 +8,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * This sample provides an example of {@link HeavyBraceHighlighter HeavyBracesHighlighter}.
  * It introduces new braces ("<]" and "[>") and matches them naively.
- * It is used in testing purposes.
+ * It is used for testing purposes.
  */
+@TestOnly
 public class HeavyHighlighterSample extends HeavyBraceHighlighter {
   private final static String LEFT_BRACE = "<]";
   private final static String RIGHT_BRACE = "[>";
