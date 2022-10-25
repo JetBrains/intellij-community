@@ -66,10 +66,10 @@ mod tests {
 
         let dump = &result.dump.expect("Launcher exited successfully, but no dump received");
 
-        assert_eq!(&dump.cmdArguments[0], test.launcher_path.to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[0], &test.launcher_path.to_string_lossy());
         assert_eq!(&dump.cmdArguments[1], "dump-launch-parameters");
         assert_eq!(&dump.cmdArguments[2], "--output");
-        assert_eq!(&dump.cmdArguments[3], test.test_root_dir.join(TEST_OUTPUT_FILE_NAME).to_string_lossy().as_ref());
+        assert_eq!(&dump.cmdArguments[3], &test.test_root_dir.path().join(TEST_OUTPUT_FILE_NAME).to_string_lossy());
         assert_eq!(&dump.cmdArguments[4], args[0]);
     }
 
