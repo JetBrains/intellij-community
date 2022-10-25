@@ -22,7 +22,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.scale.JBUIScale
@@ -309,10 +308,6 @@ private class RunToolbarSeparator(private val isCurrentConfigurationRunning: () 
   }
 
   override fun getPreferredSize(): Dimension = Dimension(JBUI.scale(1), JBUI.scale(RUN_TOOLBAR_HEIGHT))
-}
-
-private fun Color.addAlpha(alpha: Double): Color {
-  return JBColor.lazy { Color(red, green, blue, (255 * alpha).toInt()) }
 }
 
 private fun getRunWidgetBackgroundColor(isRunning: Boolean): Color = if (isRunning)
