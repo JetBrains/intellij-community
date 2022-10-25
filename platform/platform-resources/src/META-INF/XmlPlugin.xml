@@ -103,6 +103,10 @@
       <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="xml.xmlAttributeRenameProvider"
+                    interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
