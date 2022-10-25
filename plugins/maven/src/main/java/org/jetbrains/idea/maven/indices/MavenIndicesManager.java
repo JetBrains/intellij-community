@@ -30,11 +30,12 @@ import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArchetypes;
 
 /**
  * Main api class for work with maven indices.
@@ -235,7 +236,17 @@ public final class MavenIndicesManager implements Disposable {
       AsyncPromise<Void> result = new AsyncPromise<>();
 
       queueToAdd.add(new Pair<>(file, result));
-      myMergingUpdateQueue.queue(Update.create(this, taskConsumer));
+      myMergingUpdateQueue.queue(new Update(IndexFixer.this) {
+        @Override
+        public void run() {
+          ((Runnable)taskConsumer).run();
+        }
+
+        @Override
+        public boolean isDisposed() {
+          return myMavenIndices.isDisposed();
+        }
+      });
       return result;
     }
 

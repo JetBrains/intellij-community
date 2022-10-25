@@ -425,6 +425,7 @@ public final class MavenIndex implements MavenSearchIndex {
       if (!locked) return false;
       try {
         IndexData indexData = myData;
+        if (indexData == null) return false;
         IndexedMavenId id = indexData.addArtifact(artifactFile);
         if (id == null) return true;
 

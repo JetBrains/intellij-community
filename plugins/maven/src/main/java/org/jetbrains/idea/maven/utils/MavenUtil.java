@@ -1188,7 +1188,7 @@ public class MavenUtil {
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-        if (it.getProject().equals(project) && condition.test(it)) {
+        if (project.equals(it.getProject()) && condition.test(it)) {
           MavenServerManager.getInstance().shutdownConnector(it, wait);
         }
       });

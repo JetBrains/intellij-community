@@ -176,10 +176,16 @@ public class MavenIndices implements Disposable {
   public void dispose() {
     isDisposed = true;
     closeIndices(myIndexHolder.getIndices());
+    myIndexHolder = null;
   }
 
-  private static void closeIndices(@NotNull List<MavenIndex> indices) {
-    for (MavenIndex each : indices) {
+  public boolean isDisposed() {
+    return isDisposed;
+  }
+
+  private void closeIndices(@NotNull List<MavenIndex> indices) {
+    List<MavenIndex> list = new ArrayList<>(indices);
+    for (MavenIndex each : list) {
       try {
         each.finalClose(false);
       }
@@ -246,17 +252,17 @@ public class MavenIndices implements Disposable {
     List<MavenIndex> newMavenIndices = remoteRepositoryIdsByUrl
       .entrySet()
       .stream()
-      .map(e -> createMavenIndex(currentRemoteIndicesByUrls.get(e.getKey()), propertyHolderMapByUrl.get(e.getKey()), e, context))
+      .map(e -> getOrCreateMavenIndex(currentRemoteIndicesByUrls.get(e.getKey()), propertyHolderMapByUrl.get(e.getKey()), e, context))
       .filter(i -> i != null)
       .collect(Collectors.toList());
 
     return new RepositoryDiff<>(newMavenIndices, oldIndices);
   }
 
-  private static MavenIndex createMavenIndex(@Nullable MavenIndex index,
-                                             @Nullable MavenIndexUtils.IndexPropertyHolder propertyHolder,
-                                             @NotNull Map.Entry<String, Set<String>> remoteEntry,
-                                             @NotNull RepositoryDiffContext context) {
+  private static MavenIndex getOrCreateMavenIndex(@Nullable MavenIndex index,
+                                                  @Nullable MavenIndexUtils.IndexPropertyHolder propertyHolder,
+                                                  @NotNull Map.Entry<String, Set<String>> remoteEntry,
+                                                  @NotNull RepositoryDiffContext context) {
     if (index != null) return index;
     if (propertyHolder != null) {
       index = createMavenIndex(propertyHolder, context);

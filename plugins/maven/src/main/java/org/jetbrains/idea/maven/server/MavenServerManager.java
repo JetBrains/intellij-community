@@ -56,14 +56,17 @@ public final class MavenServerManager implements Disposable {
 
   //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
   private MavenIndexingConnectorImpl myIndexingConnector = null;
+  private MavenIndexerWrapper myWrapper = null;
 
   private File eventListenerJar;
-
 
   public Collection<MavenServerConnector> getAllConnectors() {
     Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
     synchronized (myMultimoduleDirToConnectorMap) {
       set.addAll(myMultimoduleDirToConnectorMap.values());
+      if (myIndexingConnector != null) {
+        set.add(myIndexingConnector);
+      }
     }
     return set;
   }
@@ -417,38 +420,44 @@ public final class MavenServerManager implements Disposable {
 
   public MavenIndexerWrapper createIndexer(@NotNull Project project) {
     if (Registry.is("maven.dedicated.indexer")) {
-      return createDedicatedIndexer(project);
+      return createDedicatedIndexer();
     }
     else {
       return createLegacyIndexer(project);
     }
   }
 
-  private MavenIndexerWrapper createDedicatedIndexer(@NotNull Project project) {
-    return new MavenIndexerWrapper(null) {
+  private MavenIndexerWrapper createDedicatedIndexer() {
+    if (myWrapper != null) return myWrapper;
+    synchronized (myMultimoduleDirToConnectorMap) {
+      if (myWrapper != null) return myWrapper;
+      String workingDir = SystemUtils.getUserHome().getAbsolutePath();
+      myWrapper =
+        new MavenIndexerWrapper(null) {
 
-      @Override
-      protected @NotNull MavenServerIndexer create() throws RemoteException {
-        MavenServerConnector indexingConnector = getIndexingConnector();
-        return indexingConnector.createIndexer();
-      }
+          @Override
+          protected @NotNull MavenServerIndexer create() throws RemoteException {
+            MavenServerConnector indexingConnector = getIndexingConnector();
+            return indexingConnector.createIndexer();
+          }
 
-      private MavenServerConnector getIndexingConnector() {
-        if (myIndexingConnector != null) return myIndexingConnector;
-        synchronized (myMultimoduleDirToConnectorMap) {
-          if (myIndexingConnector != null) return myIndexingConnector;
-          myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
-                                                               JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
-                                                               "",
-                                                               getDebugPort(null),
-                                                               MavenDistributionsCache.resolveEmbeddedMavenHome(),
-                                                               ObjectUtils.chooseNotNull(project.getBasePath(),
-                                                                                         SystemUtils.getUserHome().getAbsolutePath()));
-          myIndexingConnector.connect();
-        }
-        return myIndexingConnector;
-      }
-    };
+          private MavenServerConnector getIndexingConnector() {
+            if (myIndexingConnector != null) return myIndexingConnector;
+            synchronized (myMultimoduleDirToConnectorMap) {
+              if (myIndexingConnector != null) return myIndexingConnector;
+              myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
+                                                                   JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
+                                                                   "",
+                                                                   getDebugPort(null),
+                                                                   MavenDistributionsCache.resolveEmbeddedMavenHome(),
+                                                                   workingDir);
+              myIndexingConnector.connect();
+            }
+            return myIndexingConnector;
+          }
+        };
+    }
+    return myWrapper;
   }
 
   private MavenIndexerWrapper createLegacyIndexer(@NotNull Project project) {
