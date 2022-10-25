@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
-import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -518,7 +517,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
                           .filter { ClientProperty.get(it, Renderer.MAIN_ICON) == true }
                           .firstOrNull() ?: return false
 
-    return iconComponent.bounds.contains(point)
+    // todo: implement more precise check
+    return iconComponent.bounds.width >= point.x
   }
 
   override fun handleNextStep(nextStep: PopupStep<*>?, parentValue: Any) {
@@ -605,11 +605,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
       private val mainTextComponent = SimpleColoredComponent().apply {
         isOpaque = false
-        border = JBUI.Borders.emptyBottom(1)
+        border = JBUI.Borders.emptyBottom(0)
       }
       private val secondaryLabel = JLabel().apply {
         font = FontUtil.minusOne(font)
-        border = JBUI.Borders.empty(0, 10, 1, 5)
+        border = JBUI.Borders.empty(0, 10, 0, 5)
         horizontalAlignment = SwingConstants.RIGHT
       }
       private val arrowLabel = JLabel().apply {
@@ -620,7 +620,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
-        .addToLeft(FlowLayoutWrapper(mainIconComponent).also { it.add(mainTextComponent) })
+        .addToLeft(JBUI.Panels.simplePanel(mainTextComponent).addToLeft(mainIconComponent).andTransparent())
         .addToCenter(JBUI.Panels.simplePanel(incomingOutgoingLabel).addToRight(secondaryLabel).andTransparent())
         .andTransparent()
 
