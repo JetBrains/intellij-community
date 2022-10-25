@@ -3,6 +3,7 @@ package com.intellij.mermaid.lang.psi
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.parentOfType
 
 class MermaidElementFactory {
   companion object {
@@ -15,6 +16,16 @@ class MermaidElementFactory {
 
       val element = file.findElementAt("classDiagram\n  ".length)?.parent?.parent
       return element as? MermaidClassDiagramStatement
+    }
+
+    fun createGenericElement(project: Project, name: String): MermaidGeneric? {
+      val text = """
+        classDiagram
+          class A~$name~
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      return file.findElementAt(text.length - 1)!!.parentOfType()
     }
 
     fun createBranchStatement(project: Project, name: String): MermaidGitGraphStatement? {

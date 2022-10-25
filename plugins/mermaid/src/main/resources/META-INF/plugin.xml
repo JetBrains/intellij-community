@@ -67,5 +67,14 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.UnusedAttributesInspection"/>
 
+    <localInspection language="Mermaid" shortName="UndeclaredGeneric"
+                     groupKey="generic.will.not.be.rendered"
+                     bundle="messages.MermaidBundle"
+                     key="generic.will.not.be.rendered"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection"/>
+
   </extensions>
 </idea-plugin>

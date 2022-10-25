@@ -138,6 +138,7 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.AS).spaces(1)
       // Class diagram
       .around(MermaidTokens.TILDA).spaceIf(false)
+      .around(MermaidElements.GENERIC).spaceIf(false)
       .around(MermaidTokens.STYLE_SEPARATOR).spaceIf(false)
       .around(MermaidTokens.ANNOTATION_VALUE).spaceIf(false)
       .between(MermaidElements.ATTR_NAME, MermaidTokens.OPEN_ROUND).spaceIf(false)

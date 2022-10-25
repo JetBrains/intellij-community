@@ -470,6 +470,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ".." { yybegin(class_in_relation); return ClassDiagram.DOTTED_LINE; }
 }
 <class_in_relation> {
+  [~] { yypushstate(generic); return TILDA; }
   ":" { yypushstate(description); return COLON; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
 

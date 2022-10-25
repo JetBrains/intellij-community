@@ -36,7 +36,7 @@ class ClassDiagramAnnotator : Annotator {
       .map { it.classDiagramIdentifier }
     val mermaidStatementIdentifiers = prevSiblings
       .filterIsInstance<MermaidRelationStatement>()
-      .flatMap { it.classDiagramIdentifierList }
+      .flatMap { listOf(it.leftId.classDiagramIdentifier, it.rightId.classDiagramIdentifier) }
     val matchingIds = (classStatementIdentifiers + mermaidStatementIdentifiers)
       .map { it.text }
       .filter { it == text }

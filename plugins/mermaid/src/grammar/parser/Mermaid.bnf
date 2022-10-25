@@ -220,7 +220,9 @@ classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [
 
 memberStatement ::= classDiagramIdentifier [generic] COLON attrOrMethod
 
-relationStatement ::= classDiagramIdentifier [generic] relation classDiagramIdentifier [generic] [COLON complexLabel]
+relationStatement ::= leftId relation rightId [COLON complexLabel]
+leftId ::= classDiagramIdentifier [generic]
+rightId ::= classDiagramIdentifier [generic]
 complexLabel ::= LABEL+
 
 annotationStatement ::= annotation classDiagramIdentifier [generic]
@@ -242,7 +244,7 @@ attrType ::= ATTRIBUTE_WORD
 attrTypeWithGeneric ::= attrType generic
 attrName ::= ATTRIBUTE_WORD
 
-private generic ::= TILDA genericTypeId TILDA
+generic ::= TILDA genericTypeId TILDA
 genericTypeId ::= GENERIC_TYPE {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
