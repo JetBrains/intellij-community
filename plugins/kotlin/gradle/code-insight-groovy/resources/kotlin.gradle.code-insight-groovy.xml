@@ -37,7 +37,7 @@
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
             groupPath="Kotlin,Migration"
             groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
-            enabledByDefault="true"
+            enabledByDefault="false"
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>

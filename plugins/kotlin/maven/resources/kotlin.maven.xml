@@ -84,7 +84,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
                      groupPath="Kotlin,Migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
-                     enabledByDefault="true"
+                     enabledByDefault="false"
                      language="XML"
                      hasStaticDescription="true"
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
