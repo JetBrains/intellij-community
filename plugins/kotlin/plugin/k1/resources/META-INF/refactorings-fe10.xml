@@ -156,10 +156,6 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineTypeAliasHandler"/>
 
-    <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
-
-    <renameInputValidator implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinDeclarationRenameInputValidator"/>
-
     <rename.inplace.resolveSnapshotProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.rename.KotlinResolveSnapshotProvider"/>

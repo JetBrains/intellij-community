@@ -4,6 +4,7 @@
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="resolution-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="highlighting.xml" xpointer="xpointer(/idea-plugin/*)"/>
