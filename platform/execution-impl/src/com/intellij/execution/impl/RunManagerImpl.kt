@@ -157,7 +157,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private var notYetAppliedInitialSelectedConfigurationId: String? = null
   private var selectedRCSetupScheduled: Boolean = false
 
-  private val iconCache = TimedIconCache()
+  private val iconCache = RunConfigurationIconAndInvalidCache()
 
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
@@ -1140,7 +1140,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
     val uniqueId = settings.uniqueID
     if (selectedConfiguration?.uniqueID == uniqueId) {
-      iconCache.checkValidity(uniqueId)
+      iconCache.checkValidity(uniqueId, project)
     }
     var icon = iconCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
