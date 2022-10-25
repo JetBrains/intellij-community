@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -16,8 +16,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,23 +47,23 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
     return templateBuilder;
   }
 
-  /**
-   * @param header      header to set up record components
-   * @param builder     builder to use
-   * @param list        <ul>
-   *                    <li>{@code PsiExpressionList} if the record is created from a new expression</li>
-   *                    <li>{@code PsiDeconstructionList} if the record is created from a record pattern</li>
-   *                    </ul>
-   * @param substitutor substitutor to use
-   * @throws IncorrectOperationException if setting up of record components fails
-   */
   static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,
-                                    @NotNull PsiElement list, @NotNull PsiSubstitutor substitutor)
-    throws IncorrectOperationException {
-    if (header == null || !(list instanceof PsiExpressionList || list instanceof PsiDeconstructionList)) return;
-    PsiCaseLabelElement[] elements = list instanceof PsiExpressionList argumentList
-                                     ? argumentList.getExpressions()
-                                     : ((PsiDeconstructionList)list).getDeconstructionComponents();
+                                    @NotNull PsiExpressionList list, @NotNull PsiSubstitutor substitutor) {
+    if (header == null) return;
+    setupRecordComponents(header, builder, substitutor, list.getExpressions());
+  }
+
+  static void setupRecordComponentsFromPattern(@Nullable PsiRecordHeader header,
+                                               @NotNull TemplateBuilder builder,
+                                               @NotNull PsiDeconstructionList list) {
+    if (header == null) return;
+    setupRecordComponents(header, builder, PsiSubstitutor.EMPTY, list.getDeconstructionComponents());
+  }
+
+  private static void setupRecordComponents(@NotNull PsiRecordHeader header,
+                                            @NotNull TemplateBuilder builder,
+                                            @NotNull PsiSubstitutor substitutor,
+                                            @NotNull PsiCaseLabelElement @NotNull [] elements) {
     final PsiManager psiManager = header.getManager();
     final Project project = psiManager.getProject();
 
@@ -111,9 +111,11 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
       PsiRecordComponent component = recordComponents[i];
       ComponentData data = components.get(i);
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, data.myType, TailType.NONE);
+      int kind =
+        TypeConversionUtil.isPrimitiveAndNotNull(data.myType) ? ExpectedTypeInfo.TYPE_STRICTLY : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, kind, data.myType, TailType.NONE);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(list, PsiClass.class, PsiMethod.class);
+      PsiElement context = PsiTreeUtil.getParentOfType(elements[i], PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new CreateFromUsageUtils.ParameterNameExpression(data.myNames);

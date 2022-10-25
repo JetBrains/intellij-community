@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -37,7 +37,8 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
       CreateFromUsageUtils.setupSuperClassReference(aClass, superClassName);
     }
     CreateFromUsageBaseFix.setupGenericParameters(aClass, element);
-    if (element.getParent() instanceof PsiTypeElement typeElement && typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+    PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+    if (pattern != null) {
       CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
     }
     CodeStyleManager.getInstance(project).reformat(aClass);
@@ -72,8 +73,8 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
         IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        if (element.getParent() instanceof PsiTypeElement typeElement &&
-            typeElement.getParent() instanceof PsiDeconstructionPattern pattern) {
+        PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+        if (pattern != null) {
           CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
         }
         else {
