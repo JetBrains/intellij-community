@@ -106,7 +106,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
                                                                      consoleParameters.settingsProvider, config,
                                                                      *consoleParameters.setupFragment)
       is TargetedConsoleParameters -> PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, config.name,
-                                                                     config.workingDirectory?.let { constant(it) }
+                                                                     config.workingDirectory?.let { targetPath(Path.of(it)) }
                                                                      ?: consoleParameters.workingDirFunction, consoleEnvs,
                                                                      consoleParameters.settingsProvider, config,
                                                                      consoleParameters.setupScript)
