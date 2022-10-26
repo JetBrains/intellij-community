@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -52,5 +53,5 @@ internal suspend fun focusDataContext(): DataContext = suspendCancellableCorouti
     val uiSnapshot = Utils.wrapToAsyncDataContext(dataContextFromFocusedComponent)
     val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
     it.resume(asyncDataContext)
-  }, ModalityState.any())
+  }, it.context.contextModality() ?: ModalityState.NON_MODAL)
 }
