@@ -58,6 +58,11 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
     return true
   }
 
+  override fun isFailureUpToDate(commitContexts: List<CommitContext>): Boolean {
+    val lastCommit = commitContexts.lastOrNull()?.postCommitHashes ?: return true // non-git commits, not our problem
+    return lastCommit.entries.any { (repo, hash) -> repo.currentRevision == hash.asString() }
+  }
+
   companion object {
     private val GIT_POST_COMMIT_HASHES_KEY = Key.create<MutableMap<GitRepository, Hash>>("Git.Post.Commit.Hash")
 

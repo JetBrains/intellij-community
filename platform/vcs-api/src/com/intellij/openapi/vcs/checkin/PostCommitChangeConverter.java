@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,4 +24,7 @@ public interface PostCommitChangeConverter {
    */
   @RequiresBackgroundThread
   boolean areConsequentCommits(@NotNull List<CommitContext> commitContexts);
+
+  @RequiresEdt
+  boolean isFailureUpToDate(@NotNull List<CommitContext> commitContexts);
 }

@@ -201,6 +201,14 @@ class PostCommitChecksHandler(val project: Project) {
         .text(VcsBundle.message("post.commit.checks.not.finished.push.dialog.notification.text"))
     }
     if (lastCommitWarning != null) {
+      val lastCommitInfos = pendingCommits.toList()
+      val allVcses = lastCommitInfos.flatMap { it.affectedVcses }.toSet()
+      val commitContexts = lastCommitInfos.map { it.commitContext }
+
+      val changeConverters = allVcses
+        .mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
+      if (changeConverters.none { it.isFailureUpToDate(commitContexts) }) return null
+
       return EditorNotificationPanel(EditorNotificationPanel.Status.Error)
         .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", lastCommitWarning))
     }
