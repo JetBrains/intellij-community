@@ -269,14 +269,12 @@ public final class FileSystemUtil {
   }
 
   private static class Nio2MediatorImpl implements Mediator {
-    private final LinkOption[] myNoFollowLinkOptions = {LinkOption.NOFOLLOW_LINKS};
-
     @Override
     public FileAttributes getAttributes(@NotNull String pathStr) {
       try {
         Path path = Paths.get(pathStr);
-        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, myNoFollowLinkOptions);
-        return FileAttributes.fromNio(path, attributes);
+        BasicFileAttributes attributes = NioFiles.readAttributes(path);
+        return attributes == NioFiles.BROKEN_SYMLINK ? FileAttributes.BROKEN_SYMLINK : FileAttributes.fromNio(path, attributes);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
