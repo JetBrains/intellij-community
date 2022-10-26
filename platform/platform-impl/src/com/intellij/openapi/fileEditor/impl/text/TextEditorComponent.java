@@ -60,7 +60,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
                       @NotNull final VirtualFile file,
                       @NotNull final TextEditorImpl textEditor,
                       @NotNull EditorImpl editor) {
-    super(new BorderLayout(), textEditor);
+    super(new BorderLayout(), textEditor, 300);
 
     myProject = project;
     myFile = file;
@@ -72,7 +72,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     myEditor.setFile(myFile);
     myEditor.setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
     myEditor.setDropHandler(new FileDropHandler(myEditor));
-    TextEditorProvider.putTextEditor(myEditor, myTextEditor);    myEditor.getComponent().setFocusable(false);
+    TextEditorProvider.putTextEditor(myEditor, myTextEditor);
+    myEditor.getComponent().setFocusable(false);
 
     add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
