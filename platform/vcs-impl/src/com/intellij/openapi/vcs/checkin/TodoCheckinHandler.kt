@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -127,28 +126,30 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   companion object {
     internal fun showDialog(project: Project,
                             worker: TodoCheckinHandlerWorker,
-                            @NlsContexts.Button commitActionText: String): ReturnResult {
+                            @Button commitActionText: String): ReturnResult {
       val noTodo = worker.addedOrEditedTodos.isEmpty() && worker.inChangedTodos.isEmpty()
       val noSkipped = worker.skipped.isEmpty()
 
-      return when {
-        noTodo && noSkipped -> ReturnResult.COMMIT
-        noTodo -> if (confirmCommitWithSkippedFiles(worker, commitActionText)) ReturnResult.COMMIT else ReturnResult.CANCEL
-        else -> processFoundTodoItems(project, worker, commitActionText)
+      if (noTodo && noSkipped) return ReturnResult.COMMIT
+      if (noTodo) {
+        val commit = confirmCommitWithSkippedFiles(worker, commitActionText)
+        if (commit) {
+          return ReturnResult.COMMIT
+        }
+        else {
+          return ReturnResult.CANCEL
+        }
       }
-    }
 
-    private fun processFoundTodoItems(project: Project,
-                                      worker: TodoCheckinHandlerWorker,
-                                      @NlsContexts.Button commitActionText: String): ReturnResult =
       when (askReviewCommitCancel(worker, commitActionText)) {
         Messages.YES -> {
           showTodoItems(project, worker.changes, worker.inOneList())
-          ReturnResult.CLOSE_WINDOW
+          return ReturnResult.CLOSE_WINDOW
         }
-        Messages.NO -> ReturnResult.COMMIT
-        else -> ReturnResult.CANCEL
+        Messages.NO -> return ReturnResult.COMMIT
+        else -> return ReturnResult.CANCEL
       }
+    }
 
     internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
       val todoView = project.service<TodoView>()
@@ -191,7 +192,7 @@ internal class TextToDetailsProgressSink(private val original: ProgressSink) : P
   }
 }
 
-private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String) =
+private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @Button commitActionText: String) =
   yesNo(message("checkin.dialog.title.todo"), getDescription(worker))
     .icon(getWarningIcon())
     .yesText(commitActionText)
@@ -199,7 +200,7 @@ private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @Nls
     .ask(worker.project)
 
 @YesNoCancelResult
-private fun askReviewCommitCancel(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): Int =
+private fun askReviewCommitCancel(worker: TodoCheckinHandlerWorker, @Button commitActionText: String): Int =
   yesNoCancel(message("checkin.dialog.title.todo"), getDescription(worker))
     .icon(getWarningIcon())
     .yesText(message("todo.in.new.review.button"))
