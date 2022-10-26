@@ -212,14 +212,16 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   override fun loadState(state: Element) {
-    val child = state.getChild(ACTIVE_KEYMAP)
-    val activeKeymapName = child?.getAttributeValue(NAME_ATTRIBUTE)
-    if (!activeKeymapName.isNullOrBlank()) {
-      schemeManager.currentSchemeName = activeKeymapName
-      if (schemeManager.currentSchemeName != activeKeymapName) {
-        notifyAboutMissingKeymap(activeKeymapName, IdeBundle.message("notification.content.cannot.find.keymap", activeKeymapName), false)
-      }
+    val activeKeymapName = getActiveKeymapName(state.getChild(ACTIVE_KEYMAP))
+    schemeManager.currentSchemeName = activeKeymapName
+    if (schemeManager.currentSchemeName != activeKeymapName) {
+      notifyAboutMissingKeymap(activeKeymapName, IdeBundle.message("notification.content.cannot.find.keymap", activeKeymapName), false)
     }
+  }
+
+  private fun getActiveKeymapName(child : Element?) : String {
+    val value = child?.getAttributeValue(NAME_ATTRIBUTE)
+    return if (!value.isNullOrBlank()) value else DefaultKeymap.getInstance().defaultKeymapName
   }
 
   @Suppress("OverridingDeprecatedMember")
