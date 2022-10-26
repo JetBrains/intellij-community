@@ -243,7 +243,7 @@ class GraphicsPanel(private val project: Project, private val disposableParent: 
   }
 
   private fun createInvertedImage(content: ByteArray, globalScheme: EditorColorsScheme): ByteArray {
-    val inverter = ImageInverter(globalScheme.defaultForeground, globalScheme.defaultBackground, component.graphicsConfiguration)
+    val inverter = ImageInverter(globalScheme.defaultForeground, globalScheme.defaultBackground)
     return inverter.invert(content)
   }
 
