@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -35,7 +36,7 @@ class PostCommitChecksHandler(val project: Project) {
   }
 
   private val pendingCommits = mutableListOf<StaticCommitInfo>()
-  private var lastCommitWarning: String? = null
+  private var lastCommitProblems: List<CommitProblem>? = null
 
   private var lastJob: Job? = null
 
@@ -46,7 +47,7 @@ class PostCommitChecksHandler(val project: Project) {
 
   fun resetPendingCommits() {
     pendingCommits.clear()
-    lastCommitWarning = null
+    lastCommitProblems = null
     lastJob?.cancel()
   }
 
@@ -69,11 +70,11 @@ class PostCommitChecksHandler(val project: Project) {
       if (problems.isEmpty()) {
         LOG.debug("Post-commit checks succeeded")
         pendingCommits.clear()
-        lastCommitWarning = null
+        lastCommitProblems = null
       }
       else {
         reportPostCommitChecksFailure(problems)
-        lastCommitWarning = problems.joinToString("<br/>") { it.text }
+        lastCommitProblems = problems
       }
     }
   }
@@ -182,7 +183,7 @@ class PostCommitChecksHandler(val project: Project) {
   private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
     val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
       .createNotification(VcsBundle.message("post.commit.checks.failed.notification.title"),
-                          problems.joinToString("<br>") { it.text },
+                          problems.joinToString("<br/>") { it.text },
                           NotificationType.ERROR)
       .setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
 
@@ -195,12 +196,14 @@ class PostCommitChecksHandler(val project: Project) {
     notification.notify(project)
   }
 
-  fun createPushStatusNotification(): JComponent? {
+  fun createPushStatusNotification(closeDialog: Runnable): JComponent? {
     if (lastJob?.isActive == true) {
       return EditorNotificationPanel(EditorNotificationPanel.Status.Warning)
         .text(VcsBundle.message("post.commit.checks.not.finished.push.dialog.notification.text"))
     }
-    if (lastCommitWarning != null) {
+
+    val problems = lastCommitProblems
+    if (problems != null) {
       val lastCommitInfos = pendingCommits.toList()
       val allVcses = lastCommitInfos.flatMap { it.affectedVcses }.toSet()
       val commitContexts = lastCommitInfos.map { it.commitContext }
@@ -209,9 +212,20 @@ class PostCommitChecksHandler(val project: Project) {
         .mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
       if (changeConverters.none { it.isFailureUpToDate(commitContexts) }) return null
 
-      return EditorNotificationPanel(EditorNotificationPanel.Status.Error)
-        .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", lastCommitWarning))
+      val text = StringUtil.shortenTextWithEllipsis(problems.joinToString(", ") { it.text }, 100, 0)
+      val panel = EditorNotificationPanel(EditorNotificationPanel.Status.Error)
+        .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", text))
+      for (problem in problems) {
+        if (problem is CommitProblemWithDetails) {
+          panel.createActionLabel(problem.showDetailsAction) {
+            closeDialog.run()
+            problem.showDetails(project)
+          }
+        }
+      }
+      return panel
     }
+
     return null
   }
 }

@@ -608,7 +608,9 @@ public final class PushController implements Disposable {
   public JComponent createTopPanel() {
     List<JComponent> notifications = new ArrayList<>();
     if (myPushSource == null) {
-      ContainerUtil.addIfNotNull(notifications, PostCommitChecksHandler.getInstance(myProject).createPushStatusNotification());
+      Runnable closeDialog = () -> myDialog.doCancelAction();
+      JComponent commitStatus = PostCommitChecksHandler.getInstance(myProject).createPushStatusNotification(closeDialog);
+      ContainerUtil.addIfNotNull(notifications, commitStatus);
     }
 
     notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
