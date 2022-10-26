@@ -387,8 +387,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (parent instanceof PsiAssignmentExpression) {
+      if (PsiUtil.isAccessedForWriting(expression)) {
         if (expression.isReferenceTo(myKey) ||
             EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myMapReference, expression)) {
           myTainted = true;
