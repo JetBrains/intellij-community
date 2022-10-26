@@ -608,7 +608,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         border = JBUI.Borders.empty()
       }
       private val secondaryLabel = JLabel().apply {
-        font = FontUtil.minusOne(font)
         border = JBUI.Borders.emptyLeft(10)
         horizontalAlignment = SwingConstants.RIGHT
       }
