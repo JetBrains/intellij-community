@@ -1122,6 +1122,7 @@
       <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>
       <action id="ChangeView" class="com.intellij.ide.actions.QuickChangeViewModeAction"/>
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
+      <action id="ChangeToolWindowLayout" class="com.intellij.ide.actions.QuickChangeToolWindowLayout"/>
     </group>
 
     <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>
