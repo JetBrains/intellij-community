@@ -54,17 +54,16 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       for (final GroovyFile file : files) {
         if (!file.isValid()) continue;
         final VirtualFile virtualFile = file.getVirtualFile();
-        if (!ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile)) {
-          continue;
-        }
         if (progressIndicator != null) {
           progressIndicator.setText2(virtualFile.getPresentableUrl());
           progressIndicator.setFraction((double)i++/total);
         }
         ApplicationManager.getApplication().runReadAction(() -> {
-          final Set<GrImportStatement> usedImports = usedImports(file);
-          final List<GrImportStatement> validImports = PsiUtil.getValidImportStatements(file);
-          redundants.put(file, Pair.create(validImports, usedImports));
+          if (ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile)) {
+            final Set<GrImportStatement> usedImports = usedImports(file);
+            final List<GrImportStatement> validImports = PsiUtil.getValidImportStatements(file);
+            redundants.put(file, Pair.create(validImports, usedImports));
+          }
         });
       }
     };
