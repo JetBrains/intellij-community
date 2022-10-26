@@ -96,11 +96,6 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
   protected AbstractTreeNode createRootElement() {
     if (myFile == null) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);

@@ -24,7 +24,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   protected final ToDoSummary mySummaryElement;
 
   private boolean myFlattenPackages;
-  protected boolean myArePackagesShown;
+  private boolean myArePackagesShown;
   private boolean myAreModulesShown;
 
 
@@ -142,6 +142,11 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   public boolean getIsFlattenPackages() {
     return myFlattenPackages;
+  }
+
+  @Override
+  public boolean getIsPackagesShown() {
+    return myArePackagesShown;
   }
 
   public PsiTodoSearchHelper getSearchHelper() {

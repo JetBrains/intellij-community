@@ -45,11 +45,6 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }

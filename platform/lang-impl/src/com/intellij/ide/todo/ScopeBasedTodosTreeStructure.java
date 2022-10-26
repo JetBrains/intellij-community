@@ -43,11 +43,6 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   }
 
   @Override
-  public boolean getIsPackagesShown() {
-    return myArePackagesShown;
-  }
-
-  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
