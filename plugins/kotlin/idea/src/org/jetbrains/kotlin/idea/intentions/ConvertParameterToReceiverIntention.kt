@@ -6,12 +6,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureConfiguration
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.modify
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.runChangeSignature
 import org.jetbrains.kotlin.idea.refactoring.resolveToExpectedDescriptorIfPossible
+import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -25,7 +28,13 @@ class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
         if (!identifier.textRange.containsOffset(caretOffset)) return false
         if (element.isVarArg) return false
         val function = element.getStrictParentOfType<KtNamedFunction>() ?: return false
-        return function.valueParameterList == element.parent && function.receiverTypeReference == null
+        if (function.receiverTypeReference != null) return false
+        if (function.valueParameterList != element.parent) return false
+        if (!function.hasModifier(OVERRIDE_KEYWORD)) return true
+        val functionDescriptor = function.resolveToDescriptorIfAny() ?: return true
+        val baseDescriptor = functionDescriptor.original.overriddenDescriptors.firstOrNull() ?: return true
+        if (baseDescriptor is JavaCallableMemberDescriptor) return false
+        return true
     }
 
     private fun configureChangeSignature(parameterIndex: Int): KotlinChangeSignatureConfiguration =

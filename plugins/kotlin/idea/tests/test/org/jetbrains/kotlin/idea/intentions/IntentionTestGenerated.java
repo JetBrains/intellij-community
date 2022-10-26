@@ -6823,6 +6823,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertParameterToReceiver/hasVararg.kt");
         }
 
+        @TestMetadata("javaBaseMethod.kt")
+        public void testJavaBaseMethod() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/javaBaseMethod.kt");
+        }
+
+        @TestMetadata("kotlinBaseMethod.kt")
+        public void testKotlinBaseMethod() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/kotlinBaseMethod.kt");
+        }
+
         @TestMetadata("lambdaParameter.kt")
         public void testLambdaParameter() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/lambdaParameter.kt");
