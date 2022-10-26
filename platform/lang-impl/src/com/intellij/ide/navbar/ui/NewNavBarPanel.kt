@@ -13,17 +13,12 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.HintHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
@@ -35,7 +30,7 @@ internal class NewNavBarPanel(
 
   private val myItemComponents = arrayListOf<NavBarItemComponent>()
 
-  var onSizeChange: Consumer<Dimension>? = null
+  var onSizeChange: Runnable? = null
 
   init {
     EDT.assertIsEdt()
@@ -96,7 +91,7 @@ internal class NewNavBarPanel(
       }
     }
 
-    onSizeChange?.accept(preferredSize)
+    onSizeChange?.run()
   }
 
   private fun showPopup(item: NavBarVmItem, vm: NavBarPopupVm) {

@@ -78,9 +78,7 @@ public class FloatingModeHelper {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
     }
 
-    panel.setOnSizeChange(size -> {
-      hint.setSize(size);
-    });
+    panel.setOnSizeChange(() -> hint.setSize(component.getPreferredSize()));
 
     return hint;
   }
