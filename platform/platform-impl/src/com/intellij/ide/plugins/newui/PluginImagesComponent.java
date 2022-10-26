@@ -22,6 +22,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,9 +215,7 @@ public class PluginImagesComponent extends JPanel {
       }
       if (isImages) {
         width = getFullWidth();
-        //height = (int)(width / 1.58) + JBUI.scale(28);
-        height = (int)(width / 1.33) + JBUI.scale(28);
-        //height = width / 2 + JBUI.scale(28);
+        height = (int)(width / 1.58) + JBUI.scale(28);
       }
     }
 
@@ -450,27 +449,29 @@ public class PluginImagesComponent extends JPanel {
       g.fillRect(x, y, width, height);
     }
 
+    int imageX = insets.left + offset;
+    int imageY = insets.top;
     int imageWidth = image.getWidth();
     int imageHeight = image.getHeight();
-    int paintWidth = width - x - 2 * offset;
-    int paintHeight = height - y - offset;
+    int paintWidth = width - 2 * offset;
+    int paintHeight = height - offset;
 
     if (imageWidth <= paintWidth && imageHeight <= paintHeight) {
-      g.drawImage(image, x + offset + (paintWidth - imageWidth) / 2, y + (paintHeight - imageHeight) / 2, null);
-    }
-    else if (myShowFullContent) {
-      int newHeight = paintWidth / 2;
-
-      if (newHeight < paintHeight) {
-        int newY = y + (paintHeight - newHeight) / 2;
-        g.drawImage(image, x + offset, newY, x + offset + paintWidth, newY + newHeight, 0, 0, imageWidth, imageHeight, null);
-      }
-      else {
-        g.drawImage(image, x + offset, y, x + offset + paintWidth, y + imageHeight, 0, 0, imageWidth, imageHeight, null);
-      }
+      StartupUiUtil.drawImage(g, image, imageX + (paintWidth - imageWidth) / 2, imageY + (paintHeight - imageHeight) / 2, null);
     }
     else {
-      g.drawImage(image, x + offset, y, width - offset, height - offset, 0, 0, imageWidth, imageHeight, null);
+      int zoomedHeight = imageHeight * paintWidth / imageWidth;
+      int zoomedWidth = imageWidth * paintHeight / imageHeight;
+
+      if (zoomedWidth <= paintWidth) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX + (paintWidth - zoomedWidth) / 2, imageY, zoomedWidth, paintHeight), null);
+      }
+      else if (zoomedHeight <= paintHeight) {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY + (paintHeight - zoomedHeight) / 2, paintWidth, zoomedHeight), null);
+      }
+      else {
+        StartupUiUtil.drawImage(g, image, new Rectangle(imageX, imageY, paintWidth, paintHeight), null);
+      }
     }
 
     Graphics2D g2 = (Graphics2D)g.create();
