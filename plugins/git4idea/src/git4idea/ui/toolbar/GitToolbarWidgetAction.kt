@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
@@ -140,7 +139,7 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
       val dataContext = DataManager.getInstance().getDataContext(component)
       if (repo != null) {
         popup =
-          if (Registry.`is`("git.branches.popup.tree", false)) GitBranchesTreePopup.create(proj)
+          if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(proj)
           else GitBranchPopup.getInstance(proj, repo, dataContext).asListPopup()
       }
       else {

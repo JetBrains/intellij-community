@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -36,7 +35,7 @@ public class GitBranchesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    if (Registry.is("git.branches.popup.tree", false)) {
+    if (GitBranchesTreePopup.isEnabled()) {
       GitBranchesTreePopup.show(project);
     }
     else {

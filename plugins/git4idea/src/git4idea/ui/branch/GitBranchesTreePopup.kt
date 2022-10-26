@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.FlowLayoutWrapper
 import com.intellij.ui.popup.NextStepHandler
@@ -509,6 +510,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   companion object {
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
+
+    @JvmStatic
+    fun isEnabled() = Registry.`is`("git.branches.popup.tree", false)
+                      && !ExperimentalUI.isNewUI()
 
     @JvmStatic
     fun show(project: Project) {
