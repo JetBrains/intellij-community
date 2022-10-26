@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
@@ -55,28 +56,43 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
                                           int offset,
                                           @NotNull String text) {
     if (hasOptionPrefix(text, offset, "--")) {
-      String[] options = {"add-reads", "add-exports", "add-opens", "limit-modules", "patch-module"};
-      for (String option : options) {
-        result.addElement(
-          TailTypeDecorator.withTail(LookupElementBuilder.create(option).withPresentableText("--" + option), TailType.SPACE));
-      }
+      addDoubleDashOptions(result, 0);
       return true;
     }
     if (hasOptionPrefix(text, offset, "-")) {
-      String[] options = {"ea", "enableassertions", "da", "disableassertions", "esa", "dsa", "agentpath:", "agentlib:",
-        "javaagent:", "XX:", "D"};
-      for (String option : options) {
-        result.addElement(LookupElementBuilder.create(option).withPresentableText("-" + option));
-      }
-      for (VMOption option : data.getOptions()) {
-        if (option.getVariant() == VMOptionVariant.X) {
-          String name = "X" + option.getOptionName();
-          result.addElement(LookupElementBuilder.create(name).withPresentableText("-" + name));
-        }
-      }
+      addDoubleDashOptions(result, 1);
+      addSingleDashOptions(result, data, 0);
       return true;
     }
-    return false;
+    if (hasOptionPrefix(text, offset, "")) {
+      addDoubleDashOptions(result, 2);
+      addSingleDashOptions(result, data, 1);
+      return true;
+    }
+      return false;
+    }
+
+  private static void addDoubleDashOptions(@NotNull CompletionResultSet result, int prefix) {
+    String[] options = {"add-reads", "add-exports", "add-opens", "limit-modules", "patch-module"};
+    for (String option : options) {
+      option = "-".repeat(prefix) + option;
+      result.addElement(
+        TailTypeDecorator.withTail(LookupElementBuilder.create(option).withPresentableText("-".repeat(2 - prefix) + option),
+                                   TailType.SPACE));
+    }
+  }
+
+  private static void addSingleDashOptions(@NotNull CompletionResultSet result, @NotNull JdkOptionsData data, int prefix) {
+    String[] options = {"ea", "enableassertions", "da", "disableassertions", "esa", "dsa", "agentpath:", "agentlib:",
+      "javaagent:", "XX:", "D"};
+    Stream<String> stream = Stream.concat(data.getOptions().stream()
+                                            .filter(option -> option.getVariant() == VMOptionVariant.X)
+                                            .map(option -> "X" + option.getOptionName()),
+                                          Stream.of(options));
+    stream.forEach(option -> {
+      option = "-".repeat(prefix) + option;
+      result.addElement(LookupElementBuilder.create(option).withPresentableText("-".repeat(1 - prefix) + option));
+    });
   }
 
   private static boolean addXxCompletion(@NotNull CompletionResultSet result,

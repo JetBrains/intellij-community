@@ -20,14 +20,27 @@ import java.util.concurrent.CompletableFuture;
 
 public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsightFixture4TestCase {
   @Test
+  public void testEmptyPrompt() {
+    configure("<caret>");
+    myFixture.completeBasic();
+    assertEquals(List.of("--add-exports", "--add-opens", "--add-reads", "--limit-modules", "--patch-module",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-dsa", "-ea", "-enableassertions", "-esa",
+                         "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
+    checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
+    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
+  }
+
+  @Test
   public void testSimpleOptions() {
     configure("-<caret>");
     myFixture.completeBasic();
-    assertEquals(List.of("agentlib:", "agentpath:", "D", "da", "disableassertions", "dsa", "ea", "enableassertions", "esa", 
+    assertEquals(List.of("-add-exports", "-add-opens", "-add-reads", "-limit-modules", "-patch-module",
+                         "agentlib:", "agentpath:", "D", "da", "disableassertions", "dsa", "ea", "enableassertions", "esa",
                          "javaagent:", "Xmx", "XX:"), myFixture.getLookupElementStrings());
-    checkPresentation(myFixture.getLookupElements()[0], "-agentlib:|null/null");
+    checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
+    checkPresentation(myFixture.getLookupElements()[5], "-agentlib:|null/null");
   }
-    
+
   @Test
   public void testDoubleDash() {
     configure("--<caret>");
@@ -35,7 +48,7 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     assertEquals(List.of("add-exports", "add-opens", "add-reads", "limit-modules", "patch-module"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
   }
-    
+
   @Test
   public void testXX() {
     configure("-XX:<caret>");
