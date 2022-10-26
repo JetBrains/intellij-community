@@ -45,11 +45,11 @@ class IdentifierSymbolReference(
     private fun PsiFile.collectNamedElements(): List<MermaidNamedPsiElement> {
       val elements = arrayListOf<MermaidNamedPsiElement>()
       val visitor = object : MermaidRecursiveVisitor() {
-        override fun visitPsiElement(element: PsiElement) {
+        override fun visitElement(element: PsiElement) {
           if (element is MermaidNamedPsiElement) {
             elements.add(element)
           }
-          super.visitPsiElement(element)
+          super.visitElement(element)
         }
       }
       accept(visitor)
