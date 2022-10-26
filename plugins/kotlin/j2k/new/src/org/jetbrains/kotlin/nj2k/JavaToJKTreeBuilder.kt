@@ -1091,7 +1091,7 @@ class JavaToJKTreeBuilder constructor(
                 is PsiEmptyStatement -> JKEmptyStatement()
 
                 is PsiThrowStatement ->
-                    JKJavaThrowStatement(with(expressionTreeMapper) { exception.toJK() })
+                    JKThrowExpression(with(expressionTreeMapper) { exception.toJK() }).asStatement()
 
                 is PsiTryStatement ->
                     JKJavaTryStatement(

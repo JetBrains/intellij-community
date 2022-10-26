@@ -660,13 +660,13 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
 
     open fun visitIsExpressionRaw(isExpression: JKIsExpression) = visitExpressionRaw(isExpression)
 
-    override fun visitKtThrowExpression(ktThrowExpression: JKKtThrowExpression) {
+    override fun visitKtThrowExpression(ktThrowExpression: JKThrowExpression) {
         printLeftNonCodeElements(ktThrowExpression)
         visitKtThrowExpressionRaw(ktThrowExpression)
         printRightNonCodeElements(ktThrowExpression)
     }
 
-    open fun visitKtThrowExpressionRaw(ktThrowExpression: JKKtThrowExpression) = visitExpressionRaw(ktThrowExpression)
+    open fun visitKtThrowExpressionRaw(ktThrowExpression: JKThrowExpression) = visitExpressionRaw(ktThrowExpression)
 
     override fun visitKtItExpression(ktItExpression: JKKtItExpression) {
         printLeftNonCodeElements(ktItExpression)
@@ -930,14 +930,6 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
     }
 
     open fun visitJavaSwitchStatementRaw(javaSwitchStatement: JKJavaSwitchStatement) = visitStatementRaw(javaSwitchStatement)
-
-    override fun visitJavaThrowStatement(javaThrowStatement: JKJavaThrowStatement) {
-        printLeftNonCodeElements(javaThrowStatement)
-        visitJavaThrowStatementRaw(javaThrowStatement)
-        printRightNonCodeElements(javaThrowStatement)
-    }
-
-    open fun visitJavaThrowStatementRaw(javaThrowStatement: JKJavaThrowStatement) = visitStatementRaw(javaThrowStatement)
 
     override fun visitJavaTryStatement(javaTryStatement: JKJavaTryStatement) {
         printLeftNonCodeElements(javaTryStatement)

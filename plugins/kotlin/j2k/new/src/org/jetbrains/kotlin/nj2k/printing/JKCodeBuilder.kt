@@ -123,7 +123,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitKtThrowExpressionRaw(ktThrowExpression: JKKtThrowExpression) {
+        override fun visitKtThrowExpressionRaw(ktThrowExpression: JKThrowExpression) {
             printer.print("throw ")
             ktThrowExpression.exception.accept(this)
         }

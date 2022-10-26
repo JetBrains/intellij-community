@@ -129,7 +129,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
         }
 
     private fun JKStatement.isThrowStatement(): Boolean =
-        (this as? JKExpressionStatement)?.expression is JKKtThrowExpression
+        (this as? JKExpressionStatement)?.expression is JKThrowExpression
 
     private fun PsiElement.canCompleteNormally(): Boolean {
         val controlFlow =

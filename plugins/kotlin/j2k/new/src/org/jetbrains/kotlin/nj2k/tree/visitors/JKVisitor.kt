@@ -106,7 +106,7 @@ abstract class JKVisitor {
         visitKtAssignmentChainLink(assignmentChainLetLink)
 
     open fun visitIsExpression(isExpression: JKIsExpression) = visitExpression(isExpression)
-    open fun visitKtThrowExpression(ktThrowExpression: JKKtThrowExpression) = visitExpression(ktThrowExpression)
+    open fun visitKtThrowExpression(ktThrowExpression: JKThrowExpression) = visitExpression(ktThrowExpression)
     open fun visitKtItExpression(ktItExpression: JKKtItExpression) = visitExpression(ktItExpression)
     open fun visitKtAnnotationArrayInitializerExpression(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression) =
         visitExpression(ktAnnotationArrayInitializerExpression)
@@ -156,7 +156,6 @@ abstract class JKVisitor {
     open fun visitKtAssignmentStatement(ktAssignmentStatement: JKKtAssignmentStatement) = visitStatement(ktAssignmentStatement)
     open fun visitReturnStatement(returnStatement: JKReturnStatement) = visitStatement(returnStatement)
     open fun visitJavaSwitchStatement(javaSwitchStatement: JKJavaSwitchStatement) = visitStatement(javaSwitchStatement)
-    open fun visitJavaThrowStatement(javaThrowStatement: JKJavaThrowStatement) = visitStatement(javaThrowStatement)
     open fun visitJavaTryStatement(javaTryStatement: JKJavaTryStatement) = visitStatement(javaTryStatement)
     open fun visitJavaSynchronizedStatement(javaSynchronizedStatement: JKJavaSynchronizedStatement) =
         visitStatement(javaSynchronizedStatement)
