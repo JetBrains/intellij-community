@@ -227,7 +227,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class CsvSource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.CsvSource(value = "src, 1")
-        void testWithCsvSource(String first, int second) {}  
+        void testWithCsvSource(String first, int second) { }  
       }
       
       class NullSource {
@@ -239,15 +239,19 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       class EmptySource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooSet(java.util.Set<String> input) {}
+        void testFooSet(java.util.Set<String> input) { }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooList(java.util.List<String> input) {}
+        void testFooList(java.util.List<String> input) { }
 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooMap(java.util.Map<String, String> input) {}  
+        void testFooMap(java.util.Map<String, String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testFooTestInfo(String input, org.junit.jupiter.api.TestInfo testInfo) { }
       }
     """.trimIndent()
     )
