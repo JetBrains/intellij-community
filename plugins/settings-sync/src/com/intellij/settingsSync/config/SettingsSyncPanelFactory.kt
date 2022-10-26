@@ -62,6 +62,7 @@ internal object SettingsSyncPanelFactory {
               .onIsModified { descriptor.isModified() }
             comment(descriptor.description)
             cell(subcategoryLink)
+              .visible(descriptor.secondaryGroup.getDescriptors().size > 1 || !descriptor.secondaryGroup.isComplete())
           }
 
         }
