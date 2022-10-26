@@ -489,7 +489,8 @@ public final class HttpRequests {
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     Application app = ApplicationManager.getApplication();
     LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
-                   "Network shouldn't be accessed in EDT or inside read action");
+                   "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
+                   "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
     if (contextLoader != null && shouldOverrideContextClassLoader()) {
