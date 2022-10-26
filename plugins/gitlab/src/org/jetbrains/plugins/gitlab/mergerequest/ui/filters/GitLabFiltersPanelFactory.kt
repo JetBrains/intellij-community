@@ -94,11 +94,13 @@ internal class GitLabFiltersPanelFactory(
     participantsLoader: suspend () -> List<GitLabUserDTO>
   ): GitLabUserDTO? {
     return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.loadAvatarIcon(user))
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, AVATAR_SIZE))
     }
   }
 
   companion object {
+    private const val AVATAR_SIZE = 20
+
     private fun getShortText(stateFilterValue: MergeRequestStateFilterValue): @Nls String = when (stateFilterValue) {
       MergeRequestStateFilterValue.OPENED -> GitLabBundle.message("merge.request.list.filter.state.open")
       MergeRequestStateFilterValue.MERGED -> GitLabBundle.message("merge.request.list.filter.state.merged")

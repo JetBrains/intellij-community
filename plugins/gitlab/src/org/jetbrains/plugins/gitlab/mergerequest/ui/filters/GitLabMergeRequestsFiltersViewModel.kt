@@ -12,23 +12,22 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
-import javax.swing.Icon
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+
   val stateFilterState: MutableStateFlow<MergeRequestStateFilterValue?>
   val authorFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val assigneeFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
 
   suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
-
-  fun loadAvatarIcon(user: GitLabUserDTO): Icon
 }
 
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
-  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val projectDetailsLoader: GitLabProjectDetailsLoader
 ) : GitLabMergeRequestsFiltersViewModel,
     ReviewListSearchPanelViewModelBase<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter>(
@@ -65,11 +64,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     isValidMergeRequestAccessLevel(member.accessLevel)
   }
 
-  override fun loadAvatarIcon(user: GitLabUserDTO): Icon = avatarIconsProvider.getIcon(user, AVATAR_SIZE)
-
   companion object {
-    private const val AVATAR_SIZE = 20
-
     private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
       return accessLevel == GitLabAccessLevel.REPORTER ||
              accessLevel == GitLabAccessLevel.DEVELOPER ||
