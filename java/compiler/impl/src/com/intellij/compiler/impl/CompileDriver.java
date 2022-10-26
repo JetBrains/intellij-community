@@ -559,12 +559,14 @@ public final class CompileDriver {
     compileContext.getBuildSession().setEndCompilationStamp(_status, endCompilationStamp);
     final long duration = endCompilationStamp - compileContext.getStartCompilationStamp();
     if (!myProject.isDisposed()) {
-      // refresh on output roots is required in order for the order enumerator to see all roots via VFS
-      final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
 
       if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
+        // refresh on output roots is required in order for the order enumerator to see all roots via VFS
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
-        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
+        Collection<String> affectedRoots = ReadAction.compute(() -> {
+          Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
+          return ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
+        });
         if (!affectedRoots.isEmpty()) {
           ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText(JavaCompilerBundle.message("synchronizing.output.directories"));
