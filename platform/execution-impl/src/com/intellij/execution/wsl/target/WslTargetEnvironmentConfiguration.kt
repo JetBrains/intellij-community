@@ -1,18 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
+import com.intellij.execution.Platform
+import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.synchronizedVolumes
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.thisLogger
 import java.nio.file.Paths
 
 class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTargetType.TYPE_ID),
-                                            PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState>, TargetConfigurationReadableFs {
+                                            PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState>,
+                                            TargetConfigurationReadableFs,
+                                            TargetConfigurationWithLocalFsAccess {
+
+  override val synchronizedVolumes: List<TargetEnvironment.SynchronizedVolume> get() = distribution!!.synchronizedVolumes
+
+  override val platform: TargetPlatform = TargetPlatform(Platform.UNIX)
+
+  override val asTargetConfig: TargetEnvironmentConfiguration = this
+
   private var distributionMsId: String? = null
   var distribution: WSLDistribution?
     get() {

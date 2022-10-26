@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -52,7 +53,7 @@ interface PythonInterpreterTargetEnvironmentFactory {
   /**
    * For some modules target is obvious (like ``\\wsl$\``)
    */
-  fun guessTargetConfigurationByModuleImpl(module: Module): TargetEnvironmentConfiguration? = null
+  fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   companion object {
     const val UNKNOWN_INTERPRETER_VERSION = "unknown interpreter"
@@ -123,7 +124,10 @@ interface PythonInterpreterTargetEnvironmentFactory {
         EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
       }
 
-    fun guessTargetConfigurationByModule(module: Module): TargetEnvironmentConfiguration? =
-      EP_NAME.extensionList.firstNotNullOfOrNull { it.guessTargetConfigurationByModuleImpl(module) }
+    /**
+     * Module may be not local but resided on target (like wsl)
+     */
+    fun getTargetModuleResidesOn(module: Module): TargetConfigurationWithLocalFsAccess? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getTargetModuleResidesOnImpl(module) }
   }
 }
