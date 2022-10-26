@@ -61,6 +61,8 @@ public final class PushController implements Disposable {
 
   private final Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> myView2Model = new TreeMap<>();
 
+  private boolean myHasCommitWarning;
+
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
                         @NotNull Collection<? extends Repository> allRepos,
@@ -257,6 +259,10 @@ public final class PushController implements Disposable {
   public boolean isPushAllowed() {
     JTree tree = myPushLog.getTree();
     return !tree.isEditing() && ContainerUtil.exists(myPushSupports, support -> isPushAllowed(support));
+  }
+
+  public boolean hasCommitWarnings() {
+    return myHasCommitWarning;
   }
 
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
@@ -610,7 +616,10 @@ public final class PushController implements Disposable {
     if (myPushSource == null) {
       Runnable closeDialog = () -> myDialog.doCancelAction();
       JComponent commitStatus = PostCommitChecksHandler.getInstance(myProject).createPushStatusNotification(closeDialog);
-      ContainerUtil.addIfNotNull(notifications, commitStatus);
+      if (commitStatus != null) {
+        myHasCommitWarning = true;
+        notifications.add(commitStatus);
+      }
     }
 
     notifications = DiffUtil.wrapEditorNotificationBorders(notifications);

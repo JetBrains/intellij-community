@@ -65,7 +65,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   private final PushLog myListPanel;
   private final JComponent myTopPanel;
 
-  private final Action myMainAction;
+  private final ComplexPushAction myMainAction;
   @NotNull private final List<ActionWrapper> myPushActions;
 
   public VcsPushDialog(@NotNull Project project,
@@ -227,6 +227,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
+  public boolean hasWarnings() {
+    return myController.hasCommitWarnings();
+  }
+
+  @Override
   public @NotNull Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     return myController.getSelectedPushSpecs();
   }
@@ -338,7 +343,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   public void updateOkActions() {
-    myMainAction.setEnabled(canPush());
+    myMainAction.update();
     for (ActionWrapper wrapper : myPushActions) {
       wrapper.update();
     }
@@ -387,6 +392,15 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       }
     }
 
+    public void update() {
+      VcsPushUi dialog = myDefaultAction.myDialog;
+      PushActionBase realAction = myDefaultAction.myRealAction;
+
+      setEnabled(dialog.canPush());
+      putValue(Action.NAME, realAction.getText(dialog, enabled));
+      putValue(Action.SHORT_DESCRIPTION, realAction.getDescription(dialog, enabled));
+    }
+
     @Override
     public Action @NotNull [] getOptions() {
       return myOptions.toArray(new ActionWrapper[0]);
@@ -400,7 +414,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     @NotNull private final PushActionBase myRealAction;
 
     ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
-      super(realAction.getTemplatePresentation().getTextWithMnemonic());
       myProject = project;
       myDialog = dialog;
       myRealAction = realAction;
@@ -415,6 +428,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     public void update() {
       boolean enabled = myRealAction.isEnabled(myDialog);
       setEnabled(enabled);
+      putValue(Action.NAME, myRealAction.getText(myDialog, enabled));
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
