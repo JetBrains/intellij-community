@@ -1420,6 +1420,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoSubClass.kt");
         }
 
+        @TestMetadata("smartStepIntoSuspendFunInterface.kt")
+        public void testSmartStepIntoSuspendFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSuspendFunInterface.kt");
+        }
+
         @TestMetadata("smartStepIntoSuspendLambda.kt")
         public void testSmartStepIntoSuspendLambda() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoSuspendLambda.kt");
