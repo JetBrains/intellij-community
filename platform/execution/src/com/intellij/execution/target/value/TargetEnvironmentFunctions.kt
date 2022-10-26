@@ -173,7 +173,11 @@ private fun TargetEnvironment.getTargetPath(localPath: Path): String? {
 private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: Path): String? {
   // TODO [targets] Does not look nice
   this as TargetEnvironment
-  val (volume, relativePath) = findRemotePathByMapping(synchronizedVolumes, localPath, targetPlatform) ?: return null
+  return synchronizedVolumes.tryMapToSynchronizedVolume(localPath, targetPlatform)
+}
+
+fun List<TargetEnvironment.SynchronizedVolume>.tryMapToSynchronizedVolume(localPath: Path, targetPlatform: TargetPlatform): FullPathOnTarget? {
+  val (volume, relativePath) = findRemotePathByMapping(this, localPath, targetPlatform) ?: return null
   return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 

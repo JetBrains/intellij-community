@@ -248,7 +248,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void refreshSdkList() {
-    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject, myModule);
     Sdk projectSdk = getSdk();
     final List<Sdk> notAssociatedWithOtherProjects = StreamEx
       .of(allPythonSdks)

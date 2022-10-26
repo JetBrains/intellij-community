@@ -10,7 +10,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.isMutableTarget

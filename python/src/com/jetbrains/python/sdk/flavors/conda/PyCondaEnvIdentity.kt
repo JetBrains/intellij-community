@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.google.gson.*
 import com.google.gson.annotations.JsonAdapter
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.sdk.SealedClassAdapter
 
 

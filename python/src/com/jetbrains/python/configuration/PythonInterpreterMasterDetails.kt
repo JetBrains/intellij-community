@@ -95,7 +95,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
   }
 
   private val allPythonSdksInEdit: List<Sdk>
-    get() = pythonConfigurableInterpreterList.getAllPythonSdks(project)
+    get() = pythonConfigurableInterpreterList.getAllPythonSdks(project, module)
 
   override fun reset() {
     pythonPathsModified = false

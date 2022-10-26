@@ -6,7 +6,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import java.nio.file.Path
 
