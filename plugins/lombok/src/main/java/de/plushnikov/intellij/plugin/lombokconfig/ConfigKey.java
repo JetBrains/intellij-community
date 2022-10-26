@@ -25,6 +25,7 @@ public enum ConfigKey {
   ACCESSORS_PREFIX("lombok.accessors.prefix", "", false),
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
   ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
+  ACCESSORS_MAKE_FINAL("lombok.accessors.makeFinal", "false"),
   GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
 
   SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),

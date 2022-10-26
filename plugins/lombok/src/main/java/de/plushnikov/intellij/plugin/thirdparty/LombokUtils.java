@@ -279,7 +279,10 @@ public final class LombokUtils {
 
   public static String getGetterName(final @NotNull PsiField psiField) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    return getGetterName(psiField, accessorsInfo);
+  }
 
+  public static String getGetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
     final String psiFieldName = psiField.getName();
     final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
@@ -287,12 +290,12 @@ public final class LombokUtils {
   }
 
   public static String getSetterName(@NotNull PsiField psiField) {
-    return getSetterName(psiField, PsiType.BOOLEAN.equals(psiField.getType()));
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    return getSetterName(psiField, accessorsInfo);
   }
 
-  public static String getSetterName(@NotNull PsiField psiField, boolean isBoolean) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-    return toSetterName(accessorsInfo, psiField.getName(), isBoolean);
+  public static String getSetterName(@NotNull PsiField psiField, AccessorsInfo accessorsInfo) {
+    return toSetterName(accessorsInfo, psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
   }
 
   /**

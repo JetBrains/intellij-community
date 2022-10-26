@@ -20,23 +20,25 @@ import java.util.Collections;
  * @author Plushnikov Michail
  */
 public class AccessorsInfo {
-  public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false);
+  public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false, false);
 
   private final boolean fluent;
   private final boolean chain;
+  private final boolean makeFinal;
   private final String[] prefixes;
   private final boolean doNotUseIsPrefix;
 
-  private AccessorsInfo(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
+  private AccessorsInfo(boolean fluentValue, boolean chainValue, boolean makeFinal, boolean doNotUseIsPrefix, String... prefixes) {
     this.fluent = fluentValue;
     this.chain = chainValue;
+    this.makeFinal = makeFinal;
     this.doNotUseIsPrefix = doNotUseIsPrefix;
     this.prefixes = null == prefixes ? ArrayUtil.EMPTY_STRING_ARRAY : prefixes;
   }
 
   @NotNull
-  public static AccessorsInfo build(boolean fluentValue, boolean chainValue, boolean doNotUseIsPrefix, String... prefixes) {
-    return new AccessorsInfo(fluentValue, chainValue, doNotUseIsPrefix, prefixes);
+  public static AccessorsInfo build(boolean fluentValue, boolean chainValue, boolean makeFinal, boolean doNotUseIsPrefix, String... prefixes) {
+    return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, prefixes);
   }
 
   @NotNull
@@ -49,7 +51,8 @@ public class AccessorsInfo {
     final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
-    } else {
+    }
+    else {
       return build(containingClass);
     }
   }
@@ -59,7 +62,8 @@ public class AccessorsInfo {
     final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, psiField.getContainingClass());
-    } else {
+    }
+    else {
       return classAccessorsInfo;
     }
   }
@@ -75,23 +79,27 @@ public class AccessorsInfo {
       containingClass = containingClass.getContainingClass();
     }
 
-    return buildAccessorsInfo(psiClass, null, null, Collections.emptySet());
+    return buildAccessorsInfo(psiClass, null, null, null, Collections.emptySet());
   }
 
   @NotNull
   private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @Nullable PsiClass psiClass) {
     Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "chain");
     Boolean fluentDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "fluent");
+    Boolean makeFinal = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "makeFinal");
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
 
-    return buildAccessorsInfo(psiClass, chainDeclaredValue, fluentDeclaredValue, prefixes);
+    return buildAccessorsInfo(psiClass, chainDeclaredValue, fluentDeclaredValue, makeFinal, prefixes);
   }
 
   @NotNull
   private static AccessorsInfo buildAccessorsInfo(@Nullable PsiClass psiClass, @Nullable Boolean chainDeclaredValue,
-                                                  @Nullable Boolean fluentDeclaredValue, @NotNull Collection<String> prefixDeclared) {
+                                                  @Nullable Boolean fluentDeclaredValue,
+                                                  @Nullable Boolean makeFinalDeclaredValue,
+                                                  @NotNull Collection<String> prefixDeclared) {
     final boolean isFluent;
     final boolean isChained;
+    final boolean makeFinal;
     final boolean doNotUseIsPrefix;
     final String[] prefixes;
 
@@ -99,33 +107,44 @@ public class AccessorsInfo {
       final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
       if (null == fluentDeclaredValue) {
         isFluent = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_FLUENT, psiClass);
-      } else {
+      }
+      else {
         isFluent = fluentDeclaredValue;
       }
 
       if (null == chainDeclaredValue) {
         isChained = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_CHAIN, psiClass);
-      } else {
+      }
+      else {
         isChained = chainDeclaredValue;
+      }
+
+      if (null == makeFinalDeclaredValue) {
+        makeFinal = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ACCESSORS_MAKE_FINAL, psiClass);
+      }
+      else {
+        makeFinal = makeFinalDeclaredValue;
       }
 
       if (prefixDeclared.isEmpty()) {
         prefixes = ArrayUtil.toStringArray(configDiscovery.getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass));
-      } else {
+      }
+      else {
         prefixes = ArrayUtil.toStringArray(prefixDeclared);
       }
 
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
-
-    } else {
+    }
+    else {
       isFluent = null != fluentDeclaredValue && fluentDeclaredValue;
       isChained = null != chainDeclaredValue && chainDeclaredValue;
+      makeFinal = null != makeFinalDeclaredValue && makeFinalDeclaredValue;
       prefixes = ArrayUtil.toStringArray(prefixDeclared);
       doNotUseIsPrefix = false;
     }
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
-    return new AccessorsInfo(isFluent, isChainDeclaredOrImplicit, doNotUseIsPrefix, prefixes);
+    return build(isFluent, isChainDeclaredOrImplicit, makeFinal, doNotUseIsPrefix, prefixes);
   }
 
   public boolean isFluent() {
@@ -136,11 +155,15 @@ public class AccessorsInfo {
     if (fluent == fluentValue) {
       return this;
     }
-    return new AccessorsInfo(fluentValue, chain, doNotUseIsPrefix, prefixes);
+    return build(fluentValue, chain, makeFinal, doNotUseIsPrefix, prefixes);
   }
 
   public boolean isChain() {
     return chain;
+  }
+
+  public boolean isMakeFinal() {
+    return makeFinal;
   }
 
   public boolean isDoNotUseIsPrefix() {
@@ -177,8 +200,8 @@ public class AccessorsInfo {
     final int prefixLength = prefix.length();
     // we can use digits and upper case letters after a prefix, but not lower case letters
     return prefixLength == 0 ||
-      fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-        (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || !Character.isLowerCase(fieldName.charAt(prefixLength)));
+           fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
+           (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || !Character.isLowerCase(fieldName.charAt(prefixLength)));
   }
 
   private static String decapitalizeLikeLombok(String name) {

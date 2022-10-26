@@ -25,6 +25,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     final Collection<String> booleanOptions = ContainerUtil.set(
       ConfigKey.CONFIG_STOP_BUBBLING.getConfigKey(),
       ConfigKey.ACCESSORS_CHAIN.getConfigKey(), ConfigKey.ACCESSORS_FLUENT.getConfigKey(),
+      ConfigKey.ACCESSORS_MAKE_FINAL.getConfigKey(),
       ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES.getConfigKey(),
       ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES.getConfigKey(),
       ConfigKey.STANDARD_EXCEPTION_ADD_CONSTRUCTOR_PROPERTIES.getConfigKey(),

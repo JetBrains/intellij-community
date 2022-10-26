@@ -181,6 +181,10 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
         .withModifier(methodModifier)
         .withContract("pure = true");
 
+      if(accessorsInfo.isMakeFinal()) {
+        methodBuilder.withModifier(PsiModifier.FINAL);
+      }
+
       PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
       copyOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 

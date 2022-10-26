@@ -97,7 +97,8 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     final PsiType psiFieldType = psiField.getType();
     final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SETTER);
 
-    final String methodName = LombokUtils.getSetterName(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final String methodName = LombokUtils.getSetterName(psiField, accessorsInfo);
 
     PsiType returnType = getReturnType(psiField);
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
@@ -112,6 +113,9 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
     if (isStatic) {
       methodBuilder.withModifier(PsiModifier.STATIC);
+    }
+    if(accessorsInfo.isMakeFinal()) {
+      methodBuilder.withModifier(PsiModifier.FINAL);
     }
 
     LombokLightParameter setterParameter = methodBuilder.getParameterList().getParameter(0);

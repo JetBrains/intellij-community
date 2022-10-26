@@ -9,11 +9,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsAllGetterTest {
 
-  private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false);
+  private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(false, false, false, false);
   private final List<String> lombokResult = new ArrayList<>();
   private final List<String> result = new ArrayList<>();
 
@@ -86,7 +86,7 @@ public class LombokUtilsAllGetterTest {
 
   @Test
   public void testToAllGetterNames_NonBoolean_Fluent() {
-    makeResults("myField", false, AccessorsInfo.build(true, false, false));
+    makeResults("myField", false, AccessorsInfo.build(true, false, false, false));
 
     assertThat(result, is(Collections.singletonList("myField")));
   }

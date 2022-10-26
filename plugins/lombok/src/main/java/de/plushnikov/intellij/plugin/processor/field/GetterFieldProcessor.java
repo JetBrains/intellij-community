@@ -93,7 +93,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
   @NotNull
   public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
-    final String methodName = LombokUtils.getGetterName(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final String methodName = LombokUtils.getGetterName(psiField, accessorsInfo);
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(psiField.getType())
@@ -106,6 +107,9 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     boolean isStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
     if (isStatic) {
       methodBuilder.withModifier(PsiModifier.STATIC);
+    }
+    if(accessorsInfo.isMakeFinal()) {
+      methodBuilder.withModifier(PsiModifier.FINAL);
     }
 
     final String blockText = String.format("return %s.%s;", isStatic ? psiClass.getName() : "this", psiField.getName());
