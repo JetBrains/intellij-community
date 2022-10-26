@@ -216,16 +216,18 @@ classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY]
+classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [OPEN_CURLY EOL classMembersDocument? CLOSE_CURLY] {
+  implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder"
+}
 
-memberStatement ::= classDiagramIdentifier [generic] COLON attrOrMethod
+memberStatement ::= classDiagramIdentifier [generic] COLON attrOrMethod { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 
 relationStatement ::= leftId relation rightId [COLON complexLabel]
-leftId ::= classDiagramIdentifier [generic]
-rightId ::= classDiagramIdentifier [generic]
+leftId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+rightId ::= classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
 complexLabel ::= LABEL+
 
-annotationStatement ::= annotation classDiagramIdentifier [generic]
+annotationStatement ::= annotation classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 classMembersDocument ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }

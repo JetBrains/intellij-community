@@ -12,6 +12,13 @@ interface MermaidDiagramInBracesDocument : PsiElement
 
 interface MermaidFoldableElement : PsiElement
 
+interface MermaidClassDiagramIdentifierHolder : PsiElement {
+  val classDiagramIdentifier: MermaidClassDiagramIdentifier
+  val generic: MermaidGeneric?
+}
+
+interface MermaidClassDiagramIdentifierDeclarationHolder : MermaidClassDiagramIdentifierHolder
+
 interface MermaidPsiElement : NavigatablePsiElement
 
 @Suppress("UnstableApiUsage")
