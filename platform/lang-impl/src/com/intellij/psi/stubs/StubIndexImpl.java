@@ -201,6 +201,7 @@ public final class StubIndexImpl extends StubIndexEx {
     if (!myInitialized) {
       return;
     }
+    myPerFileElementTypeStubModificationTracker.flush();
     for (UpdatableIndex<?, Void, FileContent, ?> index : getAsyncState().myIndices.values()) {
       index.flush();
     }
@@ -243,10 +244,10 @@ public final class StubIndexImpl extends StubIndexEx {
 
   public void dispose() {
     try {
+      myPerFileElementTypeStubModificationTracker.dispose();
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
       }
-      myPerFileElementTypeStubModificationTracker.dispose();
     } finally {
       clearState();
     }

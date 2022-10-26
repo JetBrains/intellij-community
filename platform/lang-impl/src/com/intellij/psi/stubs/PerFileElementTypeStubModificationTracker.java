@@ -79,6 +79,15 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   private void fastCheck() {
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
+      if (file.isDirectory()) continue;
+      if (!file.isValid()) {
+        // file is deleted or changed externally
+        var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
+        for (var type : beforeSuitableTypes) {
+          registerModificationFor(type);
+        }
+        continue;
+      }
       Project project = ProjectLocator.getInstance().guessProjectForFile(file);
       if (project != null && project.isDisposed()) continue;
       IndexedFile indexedFile = new IndexedFileImpl(file, project);
@@ -147,6 +156,10 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myPendingUpdates.clear();
     myProbablyExpensiveUpdates.clear();
     myModificationsInCurrentBatch.clear();
+  }
+
+  public void flush() {
+    endUpdatesBatch();
   }
 
   private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
