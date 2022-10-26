@@ -259,7 +259,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     }
 
     val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
-    componentStore.reinitComponents(changedComponentNames, changed.toSet(), notReloadableComponents)
+    componentStore.reinitComponents(changedComponentNames, (changed + deleted).toSet(), notReloadableComponents)
   }
 
   private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
