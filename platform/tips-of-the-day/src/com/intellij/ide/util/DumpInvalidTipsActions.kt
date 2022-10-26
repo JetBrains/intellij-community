@@ -2,6 +2,7 @@
 
 package com.intellij.ide.util
 
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,7 +21,13 @@ import java.awt.datatransfer.StringSelection
 open class DumpInvalidTipsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     runBackgroundableTask("Analyzing tips", e.getData(CommonDataKeys.PROJECT)) {
-      dumpInvalidTips(TipAndTrickBean.EP_NAME.extensionList)
+      val registry = ProductivityFeaturesRegistry.getInstance() ?: error("ProductivityFeaturesRegistry is not created")
+      val productivityGuideTips = registry.featureIds.map { id ->
+        val tipId = registry.getFeatureDescriptor(id).tipId
+        TipAndTrickBean().also { it.fileName = tipId + TipAndTrickBean.TIP_FILE_EXTENSION }
+      }
+      val allTips = TipAndTrickBean.EP_NAME.extensionList.plus(productivityGuideTips).distinctBy(TipAndTrickBean::fileName)
+      dumpInvalidTips(allTips)
     }
   }
 
