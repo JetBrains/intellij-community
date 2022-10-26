@@ -252,12 +252,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     return CompletableFuture.allOf(futures);
   }
 
-  public void addCustomTodoView(final TodoTreeBuilderFactory factory,
-                                @NlsContexts.TabTitle final String title,
-                                final TodoPanelSettings settings) {
+  @Nullable
+  public Content addCustomTodoView(@NotNull TodoTreeBuilderFactory factory,
+                                   @NlsContexts.TabTitle String title,
+                                   @NotNull TodoPanelSettings settings) {
     Content content = ContentFactory.getInstance().createContent(null, title, true);
     final TodoPanel panel = myChangesSupport.createPanel(myProject, settings, content, factory);
-    if (panel == null) return;
+    if (panel == null) return null;
 
     content.setComponent(panel);
     Disposer.register(this, panel);
@@ -276,5 +277,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         myPanels.remove(panel);
       }
     });
+    return content;
   }
 }

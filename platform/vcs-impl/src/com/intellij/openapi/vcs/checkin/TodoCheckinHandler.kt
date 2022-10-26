@@ -152,19 +152,19 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
 
     internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
       val todoView = project.service<TodoView>()
-      todoView.addCustomTodoView(
-        TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
+      val content = todoView.addCustomTodoView(
+        { tree, _ -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
         message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
         TodoPanelSettings(VcsConfiguration.getInstance(project).myTodoPanelSettings)
       )
+      if (content == null) return
 
       runInEdt(ModalityState.NON_MODAL) {
         if (project.isDisposed) return@runInEdt
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
 
         toolWindow.show {
-          val lastContent = toolWindow.contentManager.contents.lastOrNull()
-          if (lastContent != null) toolWindow.contentManager.setSelectedContent(lastContent, true)
+          toolWindow.contentManager.setSelectedContent(content, true)
         }
       }
     }
