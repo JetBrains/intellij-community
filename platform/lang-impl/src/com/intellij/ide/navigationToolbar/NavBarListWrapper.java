@@ -55,7 +55,7 @@ public final class NavBarListWrapper extends JBScrollPane implements DataProvide
     }
   }
 
-  void updateViewportPreferredSizeIfNeeded() {
+  public void updateViewportPreferredSizeIfNeeded() {
     if (isPopupHeightStatic()) {
       getViewport().setPreferredSize(myList.getPreferredSize());
     }
