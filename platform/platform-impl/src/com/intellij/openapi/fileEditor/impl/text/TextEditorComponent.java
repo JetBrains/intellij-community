@@ -23,27 +23,29 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
-class TextEditorComponent extends JBLoadingPanel implements DataProvider, Disposable, BackgroundableDataProvider {
+class TextEditorComponent extends JPanel implements DataProvider, Disposable, BackgroundableDataProvider {
   private static final Logger LOG = Logger.getInstance(TextEditorComponent.class);
 
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   private final TextEditorImpl myTextEditor;
   @NotNull private final EditorImpl myEditor;
+  private final LoadingDecorator loadingDecorator;
 
   /**
    * Whether the editor's document is modified or not
@@ -60,7 +62,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
                       @NotNull final VirtualFile file,
                       @NotNull final TextEditorImpl textEditor,
                       @NotNull EditorImpl editor) {
-    super(new BorderLayout(), textEditor, 300);
+    super(new BorderLayout());
 
     myProject = project;
     myFile = file;
@@ -75,7 +77,9 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     TextEditorProvider.putTextEditor(myEditor, myTextEditor);
     myEditor.getComponent().setFocusable(false);
 
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    loadingDecorator = new LoadingDecorator(myEditor.getComponent(), textEditor, 300);
+    super.add(loadingDecorator.getComponent(), BorderLayout.CENTER);
+
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
     LOG.assertTrue(myValid);
@@ -87,6 +91,20 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, myEditor, myFile);
 
     project.getMessageBus().connect(this).subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
+  }
+
+  @Override
+  public Component add(Component comp) {
+    throw new IllegalCallerException();
+  }
+
+  @Override
+  public void add(@NotNull Component comp, Object constraints) {
+    throw new IllegalCallerException();
+  }
+
+  void startLoading() {
+    loadingDecorator.startLoading(false);
   }
 
   private volatile boolean myDisposed;
@@ -106,11 +124,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   }
 
   public void loadingFinished() {
-    if (isLoading()) {
-      stopLoading();
-    }
-
-    getContentPanel().setVisible(true);
+    loadingDecorator.stopLoading();
+    myEditor.getComponent().setVisible(true);
   }
 
   private static void assertThread(){

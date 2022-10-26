@@ -35,7 +35,7 @@ class AsyncEditorLoader internal constructor(private val textEditor: TextEditorI
 
   init {
     editor.putUserData(ASYNC_LOADER, this)
-    editorComponent.contentPanel.isVisible = false
+    editorComponent.editor.component.isVisible = false
   }
 
   companion object {
