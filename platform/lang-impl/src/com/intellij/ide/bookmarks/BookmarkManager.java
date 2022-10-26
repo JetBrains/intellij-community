@@ -162,18 +162,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Document document = editor.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null) return;
-
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return;
-
-    addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
-  }
-
   @NotNull
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
     ApplicationManager.getApplication().assertIsDispatchThread();
