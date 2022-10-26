@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
@@ -104,7 +105,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList.firstOrNull { it.editorTypeId == editorTypeId }
+    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findByIdOrFromInstance(editorTypeId) { it.editorTypeId }
   }
 
   fun providerSelected(composite: EditorComposite) {
