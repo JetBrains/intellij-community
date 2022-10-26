@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ide
+package com.intellij.ide.navbar.actions
 
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.ide.navbar.NavBarItem
@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 
 
-class DefaultNavBarItemDataRule : GetDataRule {
+internal class DefaultNavBarItemDataRule : GetDataRule {
 
   override fun getData(dataProvider: DataProvider): NavBarItem? {
     val ctx = DataContext { dataId -> dataProvider.getData(dataId) }

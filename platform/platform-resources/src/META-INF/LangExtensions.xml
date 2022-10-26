@@ -640,7 +640,7 @@
     <navbar.item.provider implementation="com.intellij.ide.navbar.impl.DefaultNavBarItemProvider" order="last"/>
 
     <getDataRule key="navigationBarItem"
-                 implementationClass="com.intellij.ide.navbar.ide.DefaultNavBarItemDataRule"
+                 implementationClass="com.intellij.ide.navbar.actions.DefaultNavBarItemDataRule"
                  type="context"
                  order="last"/>
 
