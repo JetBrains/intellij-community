@@ -146,8 +146,8 @@ internal class RecentProjectIconHelper {
       return EmptyIcon.create(projectIconSize())
     }
 
-    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
-      return@deferAutoUpdatable getCustomIcon(path = it.first, isProjectValid = it.second)
+    return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
+      return@defer getCustomIcon(path = it.first, isProjectValid = it.second)
                                 ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
     }
   }
