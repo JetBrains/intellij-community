@@ -32,7 +32,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.kind.SyntheticLibraryOrigin
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-@VisibleForTesting
+@Internal
 object FilesScanExecutor {
   private val LOG = Logger.getInstance(FilesScanExecutor::class.java)
   private val THREAD_COUNT = (UnindexedFilesUpdater.getNumberOfScanningThreads() - 1).coerceAtLeast(1)
