@@ -9,9 +9,8 @@ import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.io.exists
-import com.jetbrains.python.FullPathOnTarget
+import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import kotlinx.coroutines.Dispatchers

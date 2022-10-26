@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.components.service
@@ -21,7 +22,14 @@ import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
+interface PythonInterpreterTargetEnvironmentFactory: PluginAware {
+  /**
+   * Docker target may also access WSL, hence returns WSL here.
+   * Note, that you shouldn't return [getTargetType] here, since WSL can't run another WSL (you need to check distro),
+   * but Docker can run any WSL (depending on its config)
+   */
+  val canProbablyRunCodeForeignTypes: List<Class<out TargetEnvironmentType<*>>> get() = emptyList()
+
   fun getPythonTargetInterpreter(sdk: Sdk, project: Project): HelpersAwareTargetEnvironmentRequest?
 
   fun getTargetType(): TargetEnvironmentType<*>
@@ -56,7 +64,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   /**
    * For some modules target is obvious (like ``\\wsl$\``)
    */
-  fun guessTargetConfigurationByModuleImpl(module: Module): TargetEnvironmentConfiguration? = null
+  fun getTargetModuleResidesOnImpl(module: Module): TargetConfigurationWithLocalFsAccess? = null
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     if (!service<Available>().isAvailable(this, pluginDescriptor)) {
@@ -146,7 +154,11 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
         EP_NAME.extensionList.firstNotNullOfOrNull { it.packageManagementSupported(targetEnvironmentConfiguration) }
       }
 
-    fun guessTargetConfigurationByModule(module: Module): TargetEnvironmentConfiguration? =
-      EP_NAME.extensionList.firstNotNullOfOrNull { it.guessTargetConfigurationByModuleImpl(module) }
+    /**
+     * Module may be not local but resided on target (like wsl)
+     */
+    @JvmStatic
+    fun getTargetModuleResidesOn(module: Module): TargetConfigurationWithLocalFsAccess? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getTargetModuleResidesOnImpl(module) }
   }
 }

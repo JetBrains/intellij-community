@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
@@ -69,13 +70,12 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return PyFlavorData.Empty.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
-    return candidates;
+    return ContainerUtil.map(candidates, Path::of);
   }
 
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {

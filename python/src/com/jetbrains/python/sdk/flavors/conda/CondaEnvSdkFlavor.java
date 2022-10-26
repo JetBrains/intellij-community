@@ -21,6 +21,7 @@ import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -57,9 +58,8 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PyCondaFlavorData.class;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     // There is no such thing as "conda homepath" since conda doesn't store python path
     return Collections.emptyList();
   }
