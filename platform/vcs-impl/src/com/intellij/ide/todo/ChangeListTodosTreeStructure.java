@@ -16,8 +16,6 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -42,15 +40,5 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
     List<LocalChangeList> changeLists = changeListManager.getChangeLists(file);
     return ContainerUtil.exists(changeLists, list -> list.isDefault()) &&
            acceptTodoFilter(psiFile);
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }
 }

@@ -3,6 +3,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.todo.nodes.ToDoRootNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -20,7 +21,7 @@ import java.util.List;
 
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
   protected TodoTreeBuilder myBuilder;
-  protected AbstractTreeNode myRootElement;
+  protected AbstractTreeNode<?> myRootElement;
   protected final ToDoSummary mySummaryElement;
 
   private boolean myFlattenPackages;
@@ -46,7 +47,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     myRootElement = createRootElement();
   }
 
-  protected abstract AbstractTreeNode createRootElement();
+  protected AbstractTreeNode<?> createRootElement() {
+    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
+  }
 
   public abstract boolean accept(PsiFile psiFile);
 
@@ -83,7 +86,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   /**
    * @return first element that can be selected in the tree. The method can returns {@code null}.
    */
-  abstract Object getFirstSelectableElement();
+  Object getFirstSelectableElement() {
+    return ((ToDoRootNode)myRootElement).getSummaryNode();
+  }
 
   /**
    * @return number of {@code TodoItem}s located in the file.

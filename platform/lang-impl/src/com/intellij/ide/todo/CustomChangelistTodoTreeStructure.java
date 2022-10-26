@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
@@ -36,16 +34,6 @@ public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
     return getSearchHelper().getTodoItemsCount(psiFile) > 0;
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }
 
   @Override

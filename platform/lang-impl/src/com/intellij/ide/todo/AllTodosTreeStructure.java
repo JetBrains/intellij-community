@@ -16,8 +16,6 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
@@ -29,16 +27,5 @@ public class AllTodosTreeStructure extends TodoTreeStructure {
   @Override
   public boolean accept(final PsiFile psiFile) {
     return psiFile.isValid() && acceptTodoFilter(psiFile);
-  }
-
-  @Override
-  Object getFirstSelectableElement() {
-    return ((ToDoRootNode)myRootElement).getSummaryNode();
-  }
-
-  @Override
-  protected AbstractTreeNode createRootElement() {
-    return new ToDoRootNode(myProject, new Object(),
-                            myBuilder, mySummaryElement);
   }
 }
