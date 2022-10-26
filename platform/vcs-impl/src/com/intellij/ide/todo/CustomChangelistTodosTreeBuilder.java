@@ -26,8 +26,7 @@ import java.util.*;
 public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
 
-  private final PsiTodoSearchHelper myPsiTodoSearchHelper = new MyPsiTodoSearchHelper();
-  private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
+  private final PsiTodoSearchHelper myCustomPsiTodoSearchHelper;
 
   private final Set<PsiFile> myIncludedFiles;
   private final @Nullable Set<String> myIncludedChangeListsIds;
@@ -41,12 +40,12 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     myIncludedFiles = collectIncludedFiles(todoItems);
     myIncludedChangeListsIds = collectIncludedChangeListsIds(project, changes);
 
-    buildMap(todoItems);
+    myCustomPsiTodoSearchHelper = new MyPsiTodoSearchHelper(todoItems);
   }
 
   @Override
   protected @NotNull PsiTodoSearchHelper getSearchHelper() {
-    return myPsiTodoSearchHelper;
+    return myCustomPsiTodoSearchHelper;
   }
 
   private static @NotNull Set<PsiFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
@@ -73,14 +72,13 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return ids;
   }
 
-  private void buildMap(@NotNull Collection<? extends TodoItem> todoItems) {
-    myMap.clear();
-    for (TodoItem todoItem : todoItems) {
-      myMap.putValue(todoItem.getFile(), todoItem);
-    }
-  }
-
   private class MyPsiTodoSearchHelper implements PsiTodoSearchHelper {
+    private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
+
+    private MyPsiTodoSearchHelper(@NotNull Collection<? extends TodoItem> todoItems) {
+      buildMap(todoItems);
+    }
+
     @NotNull
     private Set<TodoItem> doFindAllTodoItems(TodoFilter todoFilter) {
       MultiMap<VirtualFile, Change> allChanges = new MultiMap<>();
@@ -119,6 +117,13 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       worker.execute();
 
       return worker.inOneList();
+    }
+
+    private void buildMap(@NotNull Collection<? extends TodoItem> todoItems) {
+      myMap.clear();
+      for (TodoItem todoItem : todoItems) {
+        myMap.putValue(todoItem.getFile(), todoItem);
+      }
     }
 
     @Override
@@ -207,6 +212,6 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
   @Override
   protected @NotNull TodoTreeStructure createTreeStructure() {
-    return new CustomChangelistTodoTreeStructure(myProject, myPsiTodoSearchHelper);
+    return new CustomChangelistTodoTreeStructure(myProject, myCustomPsiTodoSearchHelper);
   }
 }
