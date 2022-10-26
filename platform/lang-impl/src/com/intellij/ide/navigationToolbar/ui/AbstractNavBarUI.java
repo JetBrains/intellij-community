@@ -12,6 +12,7 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,6 +157,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
     else return;
 
+    paintHighlight(g, rectangle, color);
+  }
+
+  @Internal
+  public static void paintHighlight(@NotNull Graphics2D g, @NotNull Rectangle rectangle, @NotNull Color color) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
