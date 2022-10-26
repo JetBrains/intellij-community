@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -146,13 +146,14 @@ public final class FileTypeChooser extends DialogWrapper {
 
   /**
    * If fileName is already associated any known file type returns it.
-   * Otherwise asks user to select file type and associates it with fileName extension if any selected.
+   * Otherwise, asks user to select file type and associates it with fileName extension if any selected.
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
     if (project != null && !(file instanceof FakeVirtualFile)) {
-      PsiManagerEx.getInstanceEx(project).getFileManager().findFile(file); // autodetect text file if needed
+      // autodetect text file if needed
+      PsiManagerEx.getInstanceEx(project).getFileManager().findFile(file);
     }
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
@@ -162,7 +163,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   /**
-   * Speculates if file with newName would have known file type
+   * Speculates if file with newName had known file type
    */
   @Nullable
   public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {

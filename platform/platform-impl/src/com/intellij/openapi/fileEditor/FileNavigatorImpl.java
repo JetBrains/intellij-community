@@ -46,11 +46,13 @@ public class FileNavigatorImpl implements FileNavigator {
       throw new IllegalStateException("target not valid");
     }
 
-    if (!descriptor.getFile().isDirectory()) {
-      if (navigateInEditorOrNativeApp(descriptor, requestFocus)) return;
+    if (!descriptor.getFile().isDirectory() && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
+      return;
     }
 
-    if (navigateInProjectView(descriptor.getProject(), descriptor.getFile(), requestFocus)) return;
+    if (navigateInProjectView(descriptor.getProject(), descriptor.getFile(), requestFocus)) {
+      return;
+    }
 
     String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
     Messages.showErrorDialog(descriptor.getProject(), message, IdeBundle.message("title.cannot.open.file"));
@@ -58,7 +60,9 @@ public class FileNavigatorImpl implements FileNavigator {
 
   private boolean navigateInEditorOrNativeApp(@NotNull OpenFileDescriptor descriptor, boolean requestFocus) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(descriptor.getFile(), descriptor.getProject());
-    if (type == null || !descriptor.getFile().isValid()) return false;
+    if (type == null || !descriptor.getFile().isValid()) {
+      return false;
+    }
 
     if (type instanceof INativeFileType) {
       return ((INativeFileType)type).openFileInAssociatedApplication(descriptor.getProject(), descriptor.getFile());
