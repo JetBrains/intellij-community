@@ -389,12 +389,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                            boolean canChangeDocument,
                            @Nullable Runnable callbackWhileWaiting) {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
-      HighlightingSession session = queuePassesCreation(textEditor, passesToIgnore);
+      VirtualFile virtualFile = textEditor.getFile();
+      PsiFile psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(virtualFile); // findCachedFile doesn't work with temp file system in tests
+      psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
+      LOG.assertTrue(psiFile != null, "PsiFile not found for " + virtualFile);
+      HighlightingSession session = queuePassesCreation(textEditor, virtualFile, psiFile, passesToIgnore);
       if (session == null) {
-        LOG.error("Can't create session for "+textEditor+" ("+textEditor.getClass()+")," +
-                  " fileEditor.getBackgroundHighlighter()="+textEditor.getBackgroundHighlighter()+
-                  "; virtualFile="+textEditor.getFile() +
-                  "; findFileToHighlight(myProject, virtualFile)="+findFileToHighlight(myProject, textEditor.getFile()));
+        LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
+                  " fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
+                  "; virtualFile=" + virtualFile +
+                  "; psiFile=" + psiFile);
         throw new ProcessCanceledException();
       }
       ProgressIndicator progress = session.getProgressIndicator();
@@ -934,7 +938,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       try {
         boolean submitted = false;
         for (FileEditor fileEditor : activeEditors) {
-          submitted |= dca.queuePassesCreation(fileEditor, ArrayUtil.EMPTY_INT_ARRAY) != null;
+          VirtualFile virtualFile = fileEditor.getFile();
+          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
+          if (psiFile == null) continue;
+          submitted |= dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
         }
         if (!submitted) {
           // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
@@ -955,7 +962,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * return null if session wasn't created because highlighter/document/psiFile wasn't found or
    * throw PCE if it really wasn't appropriate moment to ask
    */
-  private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor, int @NotNull [] passesToIgnore) {
+  private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
+                                                  @NotNull VirtualFile virtualFile,
+                                                  @NotNull PsiFile psiFile,
+                                                  int @NotNull [] passesToIgnore) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int modificationCountBefore = daemonCancelEventCount.get();
     BackgroundEditorHighlighter highlighter;
@@ -968,11 +978,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     DaemonProgressIndicator progress = createUpdateProgress(fileEditor);
     // pre-create HighlightingSession in EDT to make visible range available in a background thread
-    VirtualFile virtualFile = fileEditor.getFile();
-    PsiFile psiFile = findFileToHighlight(myProject, virtualFile);
-    if (psiFile == null) {
-      return null;
-    }
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (editor != null && editor.getDocument().isInBulkUpdate()) {
       // avoid restarts until bulk mode is finished and daemon restarted in DaemonListeners
@@ -991,13 +996,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
     }
     JobLauncher.getInstance().submitToJobThread(() ->
-      submitInBackground(fileEditor, document, virtualFile, highlighter, passesToIgnore, modificationCountBefore, progress),
+      submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, modificationCountBefore, progress),
       // manifest exceptions in EDT to avoid storing them in the Future and abandoning
       task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     return session;
   }
 
-  static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
+  private static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
     PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null : PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(virtualFile);
     psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
     return psiFile;
@@ -1006,6 +1011,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private void submitInBackground(@NotNull FileEditor fileEditor,
                                   @NotNull Document document,
                                   @NotNull VirtualFile virtualFile,
+                                  @NotNull PsiFile psiFile,
                                   @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   int modificationCountBefore,
@@ -1024,7 +1030,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         // wait for heavy processing to stop, re-schedule daemon but not too soon
         boolean heavyProcessIsRunning = ReadAction.compute(() -> heavyProcessIsRunning());
         HighlightingPass[] passes = ReadAction.compute(() -> {
-          if (myProject.isDisposed() || !fileEditor.isValid()) {
+          if (myProject.isDisposed() || !fileEditor.isValid() || !psiFile.isValid()) {
             return HighlightingPass.EMPTY_ARRAY;
           }
           if (daemonCancelEventCount.get() != modificationCountBefore) {
@@ -1049,7 +1055,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, virtualFile, fileEditor, passes, progress);
+          myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
         }
       }, progress);
     }
