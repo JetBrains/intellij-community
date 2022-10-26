@@ -16,7 +16,7 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
   override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/auto-completing-code.html#accept"
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private data class EditedStatementData(val dotOffset: Int) {
     var isCompletionStarted: Boolean = false

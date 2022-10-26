@@ -17,7 +17,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   override val suggestingTipId = suggestingActionId
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private class ExtractedExpressionData(var exprText: String, changedStatement: PsiElement) {
     var changedStatement: PsiElement? by WeakReferenceDelegator(changedStatement)

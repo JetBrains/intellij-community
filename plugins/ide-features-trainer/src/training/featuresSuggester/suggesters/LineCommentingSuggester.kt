@@ -26,7 +26,7 @@ class LineCommentingSuggester : AbstractFeatureSuggester() {
   private data class CommentData(val lineNumber: Int, val documentRef: WeakReference<Document>, val timeMillis: Long)
   private data class CommentSymbolPlace(val offset: Int, val filePath: String)
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private val maxTimeMillisBetweenComments = 5000L
   private val numberOfCommentsToGetSuggestion = 3

@@ -14,7 +14,7 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
   override val suggestingTipId = suggestingActionId
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private object State {
     var dotOffset: Int = -1

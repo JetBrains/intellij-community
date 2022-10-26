@@ -23,7 +23,7 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
   override val suggestingTipId = suggestingActionId
   override val minSuggestingIntervalDays = 14
 
-  override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
+  override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
   private var prevActionIsEditorFindAction = false
 
