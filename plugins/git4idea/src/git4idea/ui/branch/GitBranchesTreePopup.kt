@@ -601,22 +601,22 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
       private val mainIconComponent = JLabel().apply {
         ClientProperty.put(this, MAIN_ICON, true)
-        border = JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap())
+        border = JBUI.Borders.emptyRight(4)  // 6 px in spec, but label width is differed
       }
       private val mainTextComponent = SimpleColoredComponent().apply {
         isOpaque = false
-        border = JBUI.Borders.emptyBottom(0)
+        border = JBUI.Borders.empty()
       }
       private val secondaryLabel = JLabel().apply {
         font = FontUtil.minusOne(font)
-        border = JBUI.Borders.empty(0, 10, 0, 5)
+        border = JBUI.Borders.emptyLeft(10)
         horizontalAlignment = SwingConstants.RIGHT
       }
       private val arrowLabel = JLabel().apply {
-        border = JBUI.Borders.empty(0, 2)
+        border = JBUI.Borders.emptyLeft(4) // 6 px in spec, but label width is differed
       }
       private val incomingOutgoingLabel = JLabel().apply {
-        border = JBUI.Borders.empty(0, 2)
+        border = JBUI.Borders.emptyLeft(10)
       }
 
       private val textPanel = JBUI.Panels.simplePanel()
@@ -628,6 +628,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         .addToCenter(textPanel)
         .addToRight(arrowLabel)
         .andTransparent()
+        .withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
 
       override fun getTreeCellRendererComponent(tree: JTree?,
                                                 value: Any?,
@@ -659,6 +660,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
         incomingOutgoingLabel.apply {
           icon = step.getIncomingOutgoingIcon(userObject)
+          isVisible = icon != null
         }
 
         arrowLabel.apply {
