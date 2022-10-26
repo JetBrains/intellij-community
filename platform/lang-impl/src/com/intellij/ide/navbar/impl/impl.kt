@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.impl
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.psi.PsiDirectory
@@ -46,4 +47,16 @@ private fun NavBarItem.weight() = when (this) {
     else -> Int.MAX_VALUE
   }
   else -> Int.MAX_VALUE
+}
+
+internal fun NavBarItem.isModuleContentRoot(): Boolean {
+  ApplicationManager.getApplication().assertReadAccessAllowed()
+  if (this is PsiNavBarItem) {
+    val psi = data
+    if (psi is PsiDirectory) {
+      val dir = psi.virtualFile
+      return dir.parent == null || ProjectRootsUtil.isModuleContentRoot(dir, psi.project)
+    }
+  }
+  return false
 }

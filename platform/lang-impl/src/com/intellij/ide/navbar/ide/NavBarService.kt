@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
+import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.FloatingModeHelper
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
@@ -108,13 +109,13 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
 internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
   ApplicationManager.getApplication().assertReadAccessAllowed()
   return map {
-    NavBarVmItem(it.createPointer(), it.presentation(), it.javaClass)
+    NavBarVmItem(it.createPointer(), it.presentation(), it.isModuleContentRoot(), it.javaClass)
   }
 }
 
 internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
     val item = ProjectNavBarItem(project)
-    listOf(NavBarVmItem(item.createPointer(), item.presentation(), item.javaClass))
+    listOf(NavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
   }
 }
