@@ -7,7 +7,10 @@ import com.intellij.ide.navigationToolbar.NavBarModel;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.navigationToolbar.NavBarPopup;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -24,6 +27,8 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.ide.navbar.ui.UiKt.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -32,40 +37,37 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? JBInsets.create(1, 2) :
-           ExperimentalUI.isNewUI() ? JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1)) : JBInsets.emptyInsets();
+    return isPopupElement ? navBarPopupItemInsets()
+                          : navBarItemInsets();
   }
 
   @Override
   @Deprecated
   public JBInsets getElementPadding() {
-    return getElementPadding(null);
+    return ExperimentalUI.isNewUI()
+           ? JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0))
+           : JBUI.insets(3);
   }
 
   @Override
-  public JBInsets getElementPadding(NavBarItem item) {
-    return ExperimentalUI.isNewUI() ?
-            item != null && item.isInFloatingMode() ?
-              JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1)) :
-              JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0)) :
-            JBUI.insets(3);
+  public Insets getElementPadding(@NotNull NavBarItem item) {
+    return navBarItemPadding(item.isInFloatingMode());
   }
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    Font font = StartupUiUtil.getLabelFont();
-    return !ExperimentalUI.isNewUI() && UISettings.getInstance().getUseSmallLabelsOnTabs() ? RelativeFont.SMALL.derive(font) : font;
+    return navBarItemFont();
   }
 
   @Override
   public Color getBackground(boolean selected, boolean focused) {
-    return selected && focused ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
+    return navBarItemBackground(selected, focused);
   }
 
   @Nullable
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
-    return selected && focused ? NamedColorUtil.getListSelectionForeground(true) : inactive ? NamedColorUtil.getInactiveTextColor() : null;
+    return defaultNavBarItemForeground(selected, focused, inactive);
   }
 
   @Override
@@ -75,7 +77,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
-    JBInsets paddings = getElementPadding(item);
+    JBInsets paddings = JBInsets.create(getElementPadding(item));
 
     if (ExperimentalUI.isNewUI()) {
       Rectangle rect = new Rectangle(item.getSize());
@@ -266,13 +268,15 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     return result;
   }
 
-  private static int getDecorationOffset() {
+  @Internal
+  public static int getDecorationOffset() {
     return JBUIScale.scale(8);
   }
 
-   private static int getFirstElementLeftOffset() {
-     return JBUIScale.scale(6);
-   }
+  @Internal
+  public static int getFirstElementLeftOffset() {
+    return JBUIScale.scale(6);
+  }
 
   @Override
   public Dimension getOffsets(NavBarItem item) {
@@ -312,6 +316,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public int getPopupOffset(@NotNull NavBarItem item) {
-    return item.isFirstElement() ? 0 : JBUIScale.scale(5);
+    return navBarPopupOffset(item.isFirstElement());
   }
 }
