@@ -114,16 +114,13 @@ internal class NewNavBarPanel(
   }
 
   private fun getItemPopupLocation(itemComponent: Component, popupHint: NavigationBarPopup): Point {
-    val relativeX = 0
-
     val relativeY = if (ExperimentalUI.isNewUI() && UISettings.getInstance().showNavigationBarInBottom) {
       -popupHint.component.preferredSize.height
     }
     else {
       itemComponent.height
     }
-
-    val relativePoint = RelativePoint(itemComponent, Point(relativeX, relativeY))
+    val relativePoint = RelativePoint(itemComponent, Point(0, relativeY))
     return relativePoint.getPoint(this)
   }
 }
