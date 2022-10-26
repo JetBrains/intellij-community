@@ -185,6 +185,18 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         public fun getParameters(): java.util.stream.Stream<String> { return java.util.Arrays.asList( "Another execution", "Last execution").stream() }
       }
       
+      class JUnit3TestWithMethodSource : junit.framework.TestCase() {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("bar")
+        fun testX(foo: String, bar: String) { }
+              
+        companion object {
+        @JvmStatic
+        fun bar(): java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> = 
+          java.util.stream.Stream.of(org.junit.jupiter.params.provider.Arguments.of("a", "b"))
+        }
+      }
+      
       class EnumSource { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(names = ["FIRST"])

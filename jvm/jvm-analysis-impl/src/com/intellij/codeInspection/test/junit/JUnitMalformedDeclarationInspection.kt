@@ -284,11 +284,16 @@ private class JUnitMalformedSignatureVisitor(
     val containingClass = method.javaPsi.containingClass ?: return
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
     if (checkSuspendFunction(method)) return
-    if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic || !method.isNoArg()) {
+    if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic
+        || (!method.isNoArg() && !method.isParameterizedTest())) {
       val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.no.arg.descriptor", "public", "non-static", DOUBLE)
       return holder.registerUProblem(method, message, MethodSignatureQuickfix(method.name, false, newVisibility = JvmModifier.PUBLIC))
     }
   }
+
+  private fun UMethod.isParameterizedTest(): Boolean =
+    uAnnotations.firstOrNull { it.qualifiedName == ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST } != null
+
 
   private fun checkedMalformedSetupTeardown(method: UMethod) {
     if ("setUp" != method.name && "tearDown" != method.name) return
