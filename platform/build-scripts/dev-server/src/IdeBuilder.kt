@@ -119,7 +119,6 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   // initial building
   val pluginBuilder = PluginBuilder(outDir = request.productionClassOutput,
-                                    pluginRootDir = pluginRootDir,
                                     pluginCacheRootDir = pluginCacheRootDir,
                                     context = context)
   coroutineScope {

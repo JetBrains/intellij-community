@@ -62,7 +62,6 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
 }
 
 internal class PluginBuilder(private val outDir: Path,
-                             private val pluginRootDir: Path,
                              private val pluginCacheRootDir: Path,
                              @JvmField val context: BuildContext) {
   private val dirtyPlugins = HashSet<PluginBuildDescriptor>()
@@ -152,26 +151,19 @@ internal class PluginBuilder(private val outDir: Path,
 
   private fun checkCache(plugin: PluginBuildDescriptor, projectOutDir: Path): String? {
     val dirName = plugin.layout.directoryName
-    val jarFilename = "$dirName.jar"
-    val cacheJarFile = pluginCacheRootDir.resolve(jarFilename)
-    val asJarExists = Files.exists(cacheJarFile)
-    val cacheDir = if (asJarExists) null else pluginCacheRootDir.resolve(dirName).takeIf { Files.exists(it) }
-    if (asJarExists || cacheDir != null) {
-      val reason = isCacheUpToDate(plugin, projectOutDir)
-      if (reason == null) {
-        if (asJarExists) {
-          Files.move(cacheJarFile, pluginRootDir.resolve(jarFilename))
-        }
-        else {
-          Files.move(cacheDir!!, plugin.dir)
-        }
-        return null
-      }
-      else {
-        return reason
-      }
+    val cacheDir = pluginCacheRootDir.resolve(dirName).takeIf { Files.exists(it) }
+    if (cacheDir == null) {
+      return "initial build"
     }
-    return "initial build"
+
+    val reason = isCacheUpToDate(plugin, projectOutDir)
+    if (reason == null) {
+      Files.move(cacheDir, plugin.dir)
+      return null
+    }
+    else {
+      return reason
+    }
   }
 }
 
