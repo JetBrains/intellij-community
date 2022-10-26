@@ -69,6 +69,14 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
         doTest()
     }
 
+    fun testFunctionSignature() {
+        doTest()
+    }
+
+    fun testFunctionFeatures() {
+        doFeatureTest()
+    }
+
     private fun doTest() {
         myFixture.configureByFile(getTestName(true) + ".kt")
         val findUsages = findUsages(myFixture.elementAtCaret, null, false, myFixture.project)
@@ -76,6 +84,14 @@ class KotlinGroupUsagesBySimilarityTest : AbstractFindUsagesTest() {
         findUsages.forEach { usage -> UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session) }
         val file = File(testDataDirectory, getTestName(true) + ".results.txt")
         assertEqualsToFile("", file, session.clusters.toString())
+    }
+
+    private fun doFeatureTest() {
+        myFixture.configureByFile(getTestName(true) + ".kt")
+        val elementAtCaret = myFixture.getReferenceAtCaretPosition()!!.element
+        val features = KotlinUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret)
+        val file = File(testDataDirectory, getTestName(true) + ".features.txt")
+        assertEqualsToFile("", file, features.bag.map { """${it.key} => ${it.value}""" }.joinToString(separator = ",\n"))
     }
 
 }
