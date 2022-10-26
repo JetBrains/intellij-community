@@ -25,17 +25,17 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
  * @author irengrig
  */
 public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
-  private final PsiTodoSearchHelper mySearchHelper;
+  private final PsiTodoSearchHelper myCustomSearchHelper;
 
-  public CustomChangelistTodoTreeStructure(Project project, PsiTodoSearchHelper searchHelper) {
+  public CustomChangelistTodoTreeStructure(Project project, PsiTodoSearchHelper customSearchHelper) {
     super(project);
-    mySearchHelper = searchHelper;
+    myCustomSearchHelper = customSearchHelper;
   }
 
   @Override
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
-    return mySearchHelper.getTodoItemsCount(psiFile) > 0;
+    return getSearchHelper().getTodoItemsCount(psiFile) > 0;
   }
 
   @Override
@@ -55,6 +55,6 @@ public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
 
   @Override
   public PsiTodoSearchHelper getSearchHelper() {
-    return mySearchHelper;
+    return myCustomSearchHelper;
   }
 }

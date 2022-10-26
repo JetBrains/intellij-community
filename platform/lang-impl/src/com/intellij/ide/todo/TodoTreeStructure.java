@@ -28,11 +28,11 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   private boolean myAreModulesShown;
 
 
-  protected final PsiTodoSearchHelper mySearchHelper;
+  private final PsiTodoSearchHelper mySearchHelper;
   /**
    * Current {@code TodoFilter}. If no filter is set then this field is {@code null}.
    */
-  protected TodoFilter myTodoFilter;
+  private TodoFilter myTodoFilter;
 
   public TodoTreeStructure(Project project) {
     super(project);
@@ -113,8 +113,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   }
 
   protected boolean acceptTodoFilter(PsiFile psiFile) {
-    return myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0);
+    PsiTodoSearchHelper searchHelper = getSearchHelper();
+    return myTodoFilter != null && myTodoFilter.accept(searchHelper, psiFile) ||
+           (myTodoFilter == null && searchHelper.getTodoItemsCount(psiFile) > 0);
   }
 
   @Override
