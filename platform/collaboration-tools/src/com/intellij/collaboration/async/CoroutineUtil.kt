@@ -43,7 +43,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
     "Found no Job in context: $coroutineContext"
   }
   return Disposer.newDisposable().also {
-    job.invokeOnCompletion(onCancelling = true, handler =  { _ ->
+    job.invokeOnCompletion(onCancelling = true, handler = { _ ->
       Disposer.dispose(it)
     })
   }
@@ -72,16 +72,19 @@ fun <T, M> StateFlow<T>.mapState(
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R> {
-  var nestedScope: CoroutineScope? = null
-  return mapState(scope) {value ->
-    nestedScope?.cancel()
-    scope.childScope(Dispatchers.Main).let {
-      nestedScope = it
-      mapper(scope, value)
-    }
-  }
+fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope,
+                                       sharingStart: SharingStarted = SharingStarted.Eagerly,
+                                       mapper: (CoroutineScope, T) -> R): StateFlow<R> {
+  var nestedScope: CoroutineScope = scope.childScope()
+  val originalState = this
+  return drop(1).transformLatest { newValue ->
+    nestedScope.cancel()
+    nestedScope = scope.childScope()
+    val mapped = mapper(nestedScope, newValue)
+    emit(mapped)
+  }.stateIn(scope, sharingStart, mapper(nestedScope, originalState.value))
 }
 
 @ApiStatus.Experimental
