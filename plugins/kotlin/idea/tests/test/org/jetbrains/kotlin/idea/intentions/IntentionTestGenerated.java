@@ -15283,6 +15283,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/lambdaInitializerWithAlias2.kt");
         }
 
+        @TestMetadata("lambdaInitializerWithTypeArgument.kt")
+        public void testLambdaInitializerWithTypeArgument() throws Exception {
+            runTest("testData/intentions/removeExplicitType/lambdaInitializerWithTypeArgument.kt");
+        }
+
         @TestMetadata("needTypeArgument.kt")
         public void testNeedTypeArgument() throws Exception {
             runTest("testData/intentions/removeExplicitType/needTypeArgument.kt");
