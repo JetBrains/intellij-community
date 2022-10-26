@@ -287,16 +287,16 @@ public class ExtensionPointImplTest {
     assertThat(extensionPoint.getExtensionList()).containsExactly(4, 2);
 
     Function<Integer, String> f = it -> "foo";
-    assertThat(ExtensionProcessingHelper.getByGroupingKey(extensionPoint, f.getClass(), "foo", f)).isEqualTo(extensionPoint.getExtensionList());
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, ExtensionPointImplTest.class, Function.identity(), Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByGroupingKey(extensionPoint, f.getClass(), "foo", f)).isEqualTo(extensionPoint.getExtensionList());
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, ExtensionPointImplTest.class, Function.identity(), Function.identity())).isEqualTo(2);
     Function<Integer, Integer> f2 = (Integer it) -> it * 2;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, f2.getClass(), Function.identity(), f2)).isEqualTo(4);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, f2.getClass(), Function.identity(), f2)).isEqualTo(4);
 
     Function<Integer, Integer> filteringKeyMapper = it -> it < 3 ? it : null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isEqualTo(2);
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isNull();
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 2, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 4, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isNull();
     Function<@NotNull Integer, @Nullable Integer> f3 = (Integer it) -> (Integer)null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, f3.getClass(), Function.identity(), f3)).isNull();
+    assertThat(ExtensionProcessingHelper.INSTANCE.getByKey(extensionPoint, 4, f3.getClass(), Function.identity(), f3)).isNull();
   }
 
   @Test

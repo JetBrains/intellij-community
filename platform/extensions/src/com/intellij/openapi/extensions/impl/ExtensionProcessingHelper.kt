@@ -1,188 +1,183 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions.impl;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.extensions.impl
 
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.annotations.ApiStatus
+import java.util.AbstractMap.SimpleImmutableEntry
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentMap
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.Predicate
+import java.util.function.Supplier
 
 // Separate class to keep ExtensionPointImpl class implementation clear and readable,
 // such simple util code better to keep separately.
-
 // getThreadSafeAdapterList can be opened to used here directly to avoid using of iterator, but it doesn't make sense
 // - if there is already cached extension list, it will be used instead of custom iterator.
 // It is not only about performance and common sense, but also supporting ability to mock extension list in tests (custom list is set).
 @ApiStatus.Internal
-public final class ExtensionProcessingHelper {
-  public static <T> void forEachExtensionSafe(@NotNull Iterable<? extends T> iterable, @NotNull Consumer<? super T> extensionConsumer) {
-    for (T t : iterable) {
+object ExtensionProcessingHelper {
+  fun <T> forEachExtensionSafe(iterable: Iterable<T>, extensionConsumer: Consumer<T>) {
+    for (t in iterable) {
       if (t == null) {
-        break;
+        break
       }
 
       try {
-        extensionConsumer.accept(t);
+        extensionConsumer.accept(t)
       }
-      catch (ProcessCanceledException | CancellationException e) {
-        throw e;
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-      catch (Throwable e) {
-        ExtensionPointImpl.LOG.error(e);
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        ExtensionPointImpl.LOG.error(e)
       }
     }
   }
 
-  public static @Nullable <T> T findFirstSafe(@NotNull Predicate<? super T> predicate, @NotNull Iterable<? extends T> iterable) {
-    return computeSafeIfAny(o -> predicate.test(o) ? o : null, iterable);
+  fun <T> findFirstSafe(predicate: Predicate<in T>, iterable: Iterable<T?>): T? {
+    return computeSafeIfAny({ o: T -> if (predicate.test(o)) o else null }, iterable)
   }
 
-  public static @Nullable <T, R> R computeSafeIfAny(@NotNull Function<? super T, ? extends R> processor, @NotNull Iterable<? extends T> iterable) {
-    for (T t : iterable) {
+  fun <T, R> computeSafeIfAny(processor: Function<T, out R?>, iterable: Iterable<T?>): R? {
+    for (t in iterable) {
       if (t == null) {
-        return null;
+        return null
       }
 
       try {
-        R result = processor.apply(t);
+        val result = processor.apply(t)
         if (result != null) {
-          return result;
+          return result
         }
       }
-      catch (ProcessCanceledException e) {
-        throw e;
+      catch (e: ProcessCanceledException) {
+        throw e
       }
-      catch (Exception e) {
-        ExtensionPointImpl.LOG.error(e);
+      catch (e: Exception) {
+        ExtensionPointImpl.LOG.error(e)
       }
     }
-
-    return null;
+    return null
   }
 
   /**
-   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByGroupingKey}.
+   * See [com.intellij.openapi.extensions.ExtensionPointName.getByGroupingKey].
    */
-  public static <K extends @NotNull Object, T extends @NotNull Object> @NotNull List<T> getByGroupingKey(@NotNull ExtensionPointImpl<T> point,
-                                                         @NotNull Class<?> cacheId,
-                                                         @NotNull K key,
-                                                         @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
-    ConcurrentMap<Class<?>, Map<K, List<T>>> keyMapperToCache = point.getCacheMap();
-    Map<K, List<T>> cache = keyMapperToCache.get(cacheId);
+  fun <K : Any, T : Any> getByGroupingKey(point: ExtensionPointImpl<T>,
+                                          cacheId: Class<*>,
+                                          key: K,
+                                          keyMapper: Function<T, K?>): List<T> {
+    val keyMapperToCache = point.getCacheMap<Class<*>, Map<K, MutableList<T>>>()
+    var cache = keyMapperToCache.get(cacheId)
     if (cache == null) {
-      cache = buildCacheForGroupingKeyMapper(keyMapper, point);
-      Map<K, List<T>> prev = keyMapperToCache.putIfAbsent(cacheId, cache);
+      cache = buildCacheForGroupingKeyMapper(keyMapper, point)
+      val prev = keyMapperToCache.putIfAbsent(cacheId, cache)
       if (prev != null) {
-        cache = prev;
+        cache = prev
       }
     }
-
-    List<T> result = cache.get(key);
-    return result == null ? Collections.emptyList() : result;
+    return cache.get(key) ?: emptyList()
   }
 
   /**
-   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
+   * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
   @ApiStatus.Internal
-  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @Nullable V getByKey(@NotNull ExtensionPointImpl<T> point,
-                                               @NotNull K key,
-                                               @NotNull Class<?> cacheId,
-                                               @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper,
-                                               @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper) {
-    return doGetByKey(point, cacheId, key, keyMapper, valueMapper, point.getCacheMap());
+  fun <K : Any, T : Any, V : Any?> getByKey(point: ExtensionPointImpl<T>,
+                                            key: K,
+                                            cacheId: Class<*>,
+                                            keyMapper: Function<T, K?>,
+                                            valueMapper: Function<T, V>): V? {
+    return doGetByKey(point = point,
+                      cacheId = cacheId,
+                      key = key,
+                      keyMapper = keyMapper,
+                      valueMapper,
+                      point.getCacheMap())
   }
 
   /**
-   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
+   * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
   @ApiStatus.Internal
-  public static <K extends @NotNull Object, T extends @NotNull Object> @Nullable T getByKey(@NotNull ExtensionPointImpl<T> point,
-                                            @NotNull K key,
-                                            @NotNull Class<?> cacheId,
-                                            @NotNull Function<? super @NotNull T, ? extends @Nullable K> keyMapper) {
-    return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap());
+  fun <K : Any, T : Any> getByKey(point: ExtensionPointImpl<T>,
+                                  key: K,
+                                  cacheId: Class<*>,
+                                  keyMapper: Function<T, K?>): T? {
+    return doGetByKey(point, cacheId, key, keyMapper, Function.identity(), point.getCacheMap())
   }
 
   /**
-   * See {@link com.intellij.openapi.extensions.ExtensionPointName#getByKey}.
+   * See [com.intellij.openapi.extensions.ExtensionPointName.getByKey].
    */
   @ApiStatus.Internal
-  public static <K extends @NotNull Object, T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
-                                                     @NotNull K key,
-                                                     @NotNull Class<?> cacheId,
-                                                     @NotNull Function<? super @NotNull K, ? extends @NotNull V> valueProducer) {
+  fun <K: Any, T: Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
+                                       key: K,
+                                       cacheId: Class<*>,
+                                       valueProducer: Function<K, V>): V {
     // Or to have double look-up (map for valueProducer, map for key), or using of composite key. Java GC is quite good, so, composite key.
-    ConcurrentMap<SimpleImmutableEntry<K, Class<?>>, V> cache = point.getCacheMap();
-    return cache.computeIfAbsent(new SimpleImmutableEntry<>(key, cacheId), entry -> valueProducer.apply(entry.getKey()));
+    val cache = point.getCacheMap<SimpleImmutableEntry<K, Class<*>>, V>()
+    return cache.computeIfAbsent(SimpleImmutableEntry(key, cacheId)) { (key1): SimpleImmutableEntry<K, Class<*>> ->
+      valueProducer.apply(key1)
+    }
   }
 
   @ApiStatus.Internal
-  public static <T extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
-                                                  @NotNull Class<?> cacheId,
-                                                  @NotNull Supplier<? extends @NotNull V> valueProducer) {
-    ConcurrentMap<Class<?>, V> cache = point.getCacheMap();
-    return cache.computeIfAbsent(cacheId, __ -> valueProducer.get());
+  fun <T : Any, V : Any> computeIfAbsent(point: ExtensionPointImpl<T>,
+                                         cacheId: Class<*>,
+                                         valueProducer: Supplier<V>): V {
+    val cache = point.getCacheMap<Class<*>, V>()
+    return cache.computeIfAbsent(cacheId) { valueProducer.get() }
   }
 
-  private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPoint<T> point,
-                                                             @NotNull CACHE_KEY cacheId,
-                                                             @NotNull K key,
-                                                             @NotNull Function<? super T, ? extends K> keyMapper,
-                                                             @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper,
-                                                             @NotNull ConcurrentMap<CACHE_KEY, Map<K, V>> keyMapperToCache) {
-    Map<K, V> cache = keyMapperToCache.get(cacheId);
+  private fun <CACHE_KEY : Any, K : Any, T : Any, V : Any?> doGetByKey(point: ExtensionPoint<T>,
+                                                                      cacheId: CACHE_KEY,
+                                                                      key: K,
+                                                                      keyMapper: Function<T, K?>,
+                                                                      valueMapper: Function<T, V>,
+                                                                      keyMapperToCache: ConcurrentMap<CACHE_KEY, Map<K, V?>>): V? {
+    var cache = keyMapperToCache.get(cacheId)
     if (cache == null) {
-      cache = buildCacheForKeyMapper(keyMapper, valueMapper, point);
-      Map<K, V> prev = keyMapperToCache.putIfAbsent(cacheId, cache);
+      cache = buildCacheForKeyMapper(keyMapper, valueMapper, point)
+      val prev = keyMapperToCache.putIfAbsent(cacheId, cache)
       if (prev != null) {
-        cache = prev;
+        cache = prev
       }
     }
-    return cache.get(key);
+    return cache.get(key)
   }
 
-  private static <K, T> @NotNull Map<K, List<T>> buildCacheForGroupingKeyMapper(@NotNull Function<? super T, ? extends K> keyMapper,
-                                                                                @NotNull ExtensionPoint<T> point) {
-    // use HashMap instead of THashMap - a lot of keys not expected, nowadays HashMap is a more optimized (e.g. computeIfAbsent implemented in an efficient manner)
-    Map<K, List<T>> cache = new HashMap<>();
-    for (T extension : point.getExtensionList()) {
-      K key = keyMapper.apply(extension);
-      if (key != null) {
-        // SmartList is not used - expected that list size will be > 1
-        cache.computeIfAbsent(key, k -> new ArrayList<>()).add(extension);
-      }
+  private fun <K : Any, T : Any> buildCacheForGroupingKeyMapper(keyMapper: Function<T, K?>,
+                                                                point: ExtensionPoint<T>): Map<K, MutableList<T>> {
+    // use HashMap instead of THashMap - a lot of keys not expected,
+    // nowadays HashMap is a more optimized (e.g. computeIfAbsent implemented in an efficient manner)
+    val cache = HashMap<K, MutableList<T>>()
+    for (extension in point.extensionList) {
+      val key = keyMapper.apply(extension) ?: continue
+      // SmartList is not used - expected that list size will be > 1
+      cache.computeIfAbsent(key) { ArrayList() }.add(extension)
     }
-    return cache;
+    return cache
   }
 
-  private static @NotNull <K, T, V> Map<K, V> buildCacheForKeyMapper(@NotNull Function<? super T, ? extends K> keyMapper,
-                                                                     @NotNull Function<? super @NotNull T, ? extends @Nullable V> valueMapper,
-                                                                     @NotNull ExtensionPoint<T> point) {
-    List<T> extensions = point.getExtensionList();
-    Map<K, V> cache = CollectionFactory.createSmallMemoryFootprintMap(extensions.size());
-    for (T extension : extensions) {
-      K key = keyMapper.apply(extension);
-      if (key == null) {
-        continue;
-      }
-
-      V value = valueMapper.apply(extension);
-      if (value == null) {
-        continue;
-      }
-      cache.put(key, value);
+  private fun <K : Any, T : Any, V> buildCacheForKeyMapper(keyMapper: Function<T, K?>,
+                                                           valueMapper: Function<T, V>,
+                                                           point: ExtensionPoint<T>): Map<K, V> {
+    val extensions = point.extensionList
+    val cache = HashMap<K, V>(extensions.size)
+    for (extension in extensions) {
+      val key: K = keyMapper.apply(extension) ?: continue
+      val value: V = valueMapper.apply(extension) ?: continue
+      cache.put(key, value)
     }
-    return cache;
+    return cache
   }
 }
