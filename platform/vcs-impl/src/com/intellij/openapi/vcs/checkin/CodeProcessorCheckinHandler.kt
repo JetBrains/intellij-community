@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -23,7 +25,7 @@ abstract class CodeProcessorCheckinHandler(
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
-  protected abstract fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor
+  protected abstract fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
@@ -33,10 +35,11 @@ abstract class CodeProcessorCheckinHandler(
       sink?.text(it)
     }
 
-    val processor = createCodeProcessor(commitInfo)
+    val affectedFiles = commitInfo.committedVirtualFiles
 
     withContext(Dispatchers.Default + noTextSinkContext(sink)) {
       // TODO suspending code processor
+      val processor = readAction { createCodeProcessor(affectedFiles) }
       runUnderIndicator {
         processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
       }

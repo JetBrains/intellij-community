@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandName
 
 class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
@@ -25,6 +26,6 @@ class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandl
 
   override fun getProgressMessage(): String = message("progress.text.reformatting.code")
 
-  override fun createCodeProcessor(commitInfo: CommitInfo): AbstractLayoutCodeProcessor =
-    ReformatCodeProcessor(project, getPsiFiles(project, commitInfo.committedVirtualFiles), getReformatBeforeCommitCommandName(), null, true)
+  override fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor =
+    ReformatCodeProcessor(project, getPsiFiles(project, files), getReformatBeforeCommitCommandName(), null, true)
 }
