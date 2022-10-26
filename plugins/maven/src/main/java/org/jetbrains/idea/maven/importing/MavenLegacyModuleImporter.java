@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -197,7 +196,7 @@ public final class MavenLegacyModuleImporter {
     }
 
     void config(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      MavenUtil.smartInvokeAndWait(myModule.getProject(), ModalityState.defaultModalityState(), () -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
         if (myModule.isDisposed()) return;
 
         final ModuleType moduleType = ModuleType.get(myModule);
