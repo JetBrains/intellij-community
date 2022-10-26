@@ -55,7 +55,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
               @Suppress("TestOnlyProblems")
               ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
             }
-            catch (e: RuntimeException) {
+            catch (e: Exception) {
               LOG.warn("Queue '$ignoreRefreshQueue' wait for all executed failed with error:", e)
             }
           }
