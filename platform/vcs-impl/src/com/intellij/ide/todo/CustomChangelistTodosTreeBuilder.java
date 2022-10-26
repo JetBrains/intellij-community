@@ -81,8 +81,8 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   private class MyPsiTodoSearchHelper implements PsiTodoSearchHelper {
-    @Override
-    public PsiFile @NotNull [] findFilesWithTodoItems() {
+    @NotNull
+    private Set<TodoItem> doFindAllTodoItems(TodoFilter todoFilter) {
       MultiMap<VirtualFile, Change> allChanges = new MultiMap<>();
       if (myIncludedChangeListsIds == null) {
         putChangesForLocalFiles(allChanges, ChangeListManager.getInstance(myProject).getAllChanges());
@@ -101,10 +101,33 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         changes.addAll(allChanges.get(next.getVirtualFile()));
       }
 
-      // a hack here with _todo filter
-      final TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, getTodoTreeStructure().getTodoFilter());
+      TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
       worker.execute();
-      buildMap(worker.inOneList());
+
+      return worker.inOneList();
+    }
+
+    @NotNull
+    private Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter) {
+      if (!myIncludedFiles.contains(file)) return Collections.emptySet();
+
+      Change change = ChangeListManager.getInstance(myProject).getChange(file.getVirtualFile());
+      if (change == null) return Collections.emptySet();
+
+      List<Change> changes = Collections.singletonList(change);
+      TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
+      worker.execute();
+
+      return worker.inOneList();
+    }
+
+    @Override
+    public PsiFile @NotNull [] findFilesWithTodoItems() {
+      // a hack here with _todo filter
+      TodoFilter todoFilter = getTodoTreeStructure().getTodoFilter();
+
+      Set<TodoItem> todoItems = doFindAllTodoItems(todoFilter);
+      buildMap(todoItems);
 
       final Set<PsiFile> files = myMap.keySet();
       return files.toArray(PsiFile.EMPTY_ARRAY);
@@ -115,7 +138,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       return ContainerUtil.process(findFilesWithTodoItems(), processor);
     }
 
-    private void putChangesForLocalFiles(@NotNull MultiMap<VirtualFile, Change> changesMap, @NotNull Collection<Change> changes) {
+    private static void putChangesForLocalFiles(@NotNull MultiMap<VirtualFile, Change> changesMap, @NotNull Collection<Change> changes) {
       for (Change change : changes) {
         FilePath afterPath = ChangesUtil.getAfterPath(change);
         VirtualFile file = afterPath != null ? afterPath.getVirtualFile() : null;
@@ -167,25 +190,19 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       filter.addTodoPattern(pattern);
       return findPatternedTodoItems(file, filter).length;
     }
-  }
 
-  private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
-    if (!myIncludedFiles.contains(file)) return EMPTY_ITEMS;
-    if (myDirtyFileSet.contains(file.getVirtualFile())) {
-      myMap.remove(file);
-      final Change change = ChangeListManager.getInstance(myProject).getChange(file.getVirtualFile());
-      if (change != null) {
-        final TodoCheckinHandlerWorker
-          worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter);
-        worker.execute();
-
-        for (TodoItem todoItem : worker.inOneList()) {
+    private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
+      if (myDirtyFileSet.contains(file.getVirtualFile())) {
+        Set<TodoItem> todoItems = doFindTodoForFile(file, todoFilter);
+        myMap.remove(file);
+        for (TodoItem todoItem : todoItems) {
           myMap.putValue(file, todoItem);
         }
       }
+
+      final Collection<TodoItem> todoItems = myMap.get(file);
+      return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
     }
-    final Collection<TodoItem> todoItems = myMap.get(file);
-    return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
   @Override
