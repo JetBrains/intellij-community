@@ -3,6 +3,7 @@ package com.intellij.ide.ui.text
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -109,9 +110,17 @@ object ShortcutsRenderingUtil {
   }
 
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+    val action = ActionManager.getInstance().getAction(actionId)
+    val actionName = if (action != null) {
+      action.templatePresentation.text.replaceSpacesWithNonBreakSpaces()
+    }
+    else {
+      thisLogger().error("Failed to find action with id: $actionId")
+      actionId
+    }
+
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
-    val actionName = ActionManager.getInstance().getAction(actionId).templatePresentation.text.replaceSpacesWithNonBreakSpaces()
     val updated = ArrayList<IntRange>(gotoAction.second)
     val start = gotoAction.first.length + 5
     updated.add(IntRange(start, start + actionName.length - 1))
