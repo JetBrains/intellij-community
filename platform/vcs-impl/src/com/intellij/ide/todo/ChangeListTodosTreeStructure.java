@@ -52,8 +52,7 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null && afterRevision.getFile().equals(filePath)) {
-        return (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-                (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
+        return acceptTodoFilter(psiFile);
       }
     }
     return false;

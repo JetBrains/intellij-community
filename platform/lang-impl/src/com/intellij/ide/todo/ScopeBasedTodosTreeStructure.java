@@ -39,8 +39,7 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
     SearchScope scope = myScopes.getSelectedScope();
     VirtualFile file = psiFile.getVirtualFile();
     boolean isAffected = scope != null && file != null && scope.contains(file);
-    return isAffected && (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile) ||
-                          (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
+    return isAffected && acceptTodoFilter(psiFile);
   }
 
   @Override

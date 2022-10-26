@@ -68,8 +68,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
     if (myFile == null || !myFile.equals(psiFile) || !myFile.isValid()) {
       return false;
     }
-    return (myTodoFilter != null && myTodoFilter.accept(mySearchHelper, psiFile)) ||
-           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0);
+    return acceptTodoFilter(psiFile);
   }
 
   @Override
