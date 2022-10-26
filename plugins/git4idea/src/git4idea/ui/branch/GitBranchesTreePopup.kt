@@ -32,7 +32,6 @@ import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.FontUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -651,12 +650,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           append(step.getText(userObject).orEmpty())
         }
 
-        secondaryLabel.apply {
-          text = step.getSecondaryText(userObject)
-          //todo: LAF color
-          foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
-        }
-
         incomingOutgoingLabel.apply {
           icon = step.getIncomingOutgoingIcon(userObject)
           isVisible = icon != null
@@ -665,6 +658,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
         arrowLabel.apply {
           isVisible = step.hasSubstep(userObject)
           icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
+        }
+
+        secondaryLabel.apply {
+          text = step.getSecondaryText(userObject)
+          //todo: LAF color
+          foreground = if (selected) JBUI.CurrentTheme.Tree.foreground(true, true) else JBColor.GRAY
+
+          border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
+            JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
+          } else {
+            JBUI.Borders.emptyLeft(10)
+          }
         }
 
         if (tree != null && value != null) {
