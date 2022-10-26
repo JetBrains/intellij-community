@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
@@ -85,7 +86,9 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
       }
     }
 
-    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
+    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject,
+                                                                   PartialChangesUtil.wrapPartialChanges(myProject, changes),
+                                                                   todoFilter);
     worker.execute();
 
     return worker.inOneList();
@@ -101,7 +104,9 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
     if (change == null) return Collections.emptySet();
 
     List<Change> changes = Collections.singletonList(change);
-    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
+    TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject,
+                                                                   PartialChangesUtil.wrapPartialChanges(myProject, changes),
+                                                                   todoFilter);
     worker.execute();
 
     return worker.inOneList();
