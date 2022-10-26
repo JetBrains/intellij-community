@@ -63,7 +63,6 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     super.init(window)
 
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
-    hideIdLabelIfNotEmptyState(window)
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {
@@ -79,6 +78,8 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     super.createToolWindowContent(project, toolWindow)
 
+    hideIdLabelIfNotEmptyState(toolWindow)
+
     // to show id label
     if (toolWindow.contentManager.isEmpty) {
       rebuildContentUi(toolWindow)
@@ -90,6 +91,7 @@ internal class SwitchToCommitDialogHint(toolWindow: ToolWindowEx, toolbar: Actio
   private val actionToolbarTooltip =
     ActionToolbarGotItTooltip("changes.view.toolwindow", message("switch.to.commit.dialog.hint.text"),
                               toolWindow.disposable, toolbar, gearButtonOrToolbar)
+
   init {
     toolWindow.project.messageBus.connect(actionToolbarTooltip.tooltipDisposable).subscribe(ChangesViewContentManagerListener.TOPIC, this)
   }
