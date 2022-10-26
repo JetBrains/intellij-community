@@ -62,8 +62,6 @@ class PythonSupporterTest : BasePlatformTestCase() {
     assertEquals(expectedToken, supporter.getFirstToken(line))
   }
 
-
-  @Suppress("unused")
   companion object {
     @JvmStatic
     fun firstTokenData(): Stream<Arguments> =
