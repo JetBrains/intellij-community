@@ -2698,12 +2698,19 @@ public class JBTabsImpl extends JComponent
                           ? new DefaultActionGroup(tabActionGroup, entryPointActionGroup)
                           : tabActionGroup != null ? tabActionGroup : entryPointActionGroup;
 
-      myEntryPointToolbar = createToolbar(group);
-      JComponent toolbarComp = myEntryPointToolbar.getComponent();
-      if (ExperimentalUI.isNewUI()) {
-        toolbarComp.setBorder(createEntryPointToolbarBorder());
+      if (myEntryPointToolbar != null && myEntryPointToolbar.getActionGroup().equals(group)) {
+        // keep old toolbar to avoid blinking (actions need to be updated to be visible)
+        add(myEntryPointToolbar.getComponent());
       }
-      add(toolbarComp);
+      else {
+        myEntryPointToolbar = createToolbar(group);
+
+        JComponent toolbarComp = myEntryPointToolbar.getComponent();
+        if (ExperimentalUI.isNewUI()) {
+          toolbarComp.setBorder(createEntryPointToolbarBorder());
+        }
+        add(toolbarComp);
+      }
     }
     else {
       myEntryPointToolbar = null;
