@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
 
 internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, ActionGroup() {
 
@@ -29,17 +31,20 @@ internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, Acti
     else {
       // Bookmark item
       addGroup("Bookmarks.ToolWindow.PopupMenu")
-      actions.add(Separator())
-      addGroup("AnalyzeMenu")
-      actions.add(Separator())
-      addGroup("ProjectViewPopupMenuRefactoringGroup")
-      actions.add(Separator())
-      addGroup("ProjectViewPopupMenuRunGroup")
-      actions.add(Separator())
-      addGroup("VersionControlsGroup")
-      actions.add(Separator())
-      val selectAction = CustomActionsSchema.getInstance().getCorrectedAction("SelectInProjectView")
-      if (selectAction != null) actions.add(selectAction)
+      if ((TreeUtil.getSelectedPathIfOne(tree)?.lastPathComponent as? DefaultMutableTreeNode)?.userObject !is GroupNode) {
+        // Not a bookmark group: add some project view context menu actions
+        actions.add(Separator())
+        addGroup("AnalyzeMenu")
+        actions.add(Separator())
+        addGroup("ProjectViewPopupMenuRefactoringGroup")
+        actions.add(Separator())
+        addGroup("ProjectViewPopupMenuRunGroup")
+        actions.add(Separator())
+        addGroup("VersionControlsGroup")
+        actions.add(Separator())
+        val selectAction = CustomActionsSchema.getInstance().getCorrectedAction("SelectInProjectView")
+        if (selectAction != null) actions.add(selectAction)
+      }
     }
 
     return actions.toTypedArray()
