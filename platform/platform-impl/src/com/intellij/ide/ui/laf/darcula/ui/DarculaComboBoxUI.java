@@ -468,9 +468,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
           }
 
-          if (comboBox.getClientProperty("JComboBox.noPaintBorder") != Boolean.TRUE) {
-            paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
-          }
+          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
         }
       }
       else {
@@ -489,7 +487,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     arc = arc > lw ? arc - lw : 0.0f;
     border.append(getInnerShape(r, bw, lw, arc), false);
 
-    g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
+    if (hasFocus && isBorderless(c)) {
+      Outline.focus.setGraphicsColor(g2, true);
+    } else {
+      g2.setColor(getOutlineColor(c.isEnabled(), hasFocus));
+    }
     g2.fill(border);
   }
 
