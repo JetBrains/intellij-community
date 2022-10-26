@@ -1,6 +1,6 @@
-query($fullPath: ID!) {
+query($fullPath: ID!, $pageSize: Int = 100, $cursor: String) {
   project(fullPath: $fullPath) {
-    projectMembers {
+    projectMembers(first: $pageSize, after: $cursor) {
       nodes {
         ...member
       }

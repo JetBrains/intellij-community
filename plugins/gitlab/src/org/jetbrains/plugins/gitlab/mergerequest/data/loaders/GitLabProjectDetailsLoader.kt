@@ -4,11 +4,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
-import org.jetbrains.plugins.gitlab.api.request.getProjectMembers
+import org.jetbrains.plugins.gitlab.api.request.getAllProjectMembers
 
 internal class GitLabProjectDetailsLoader(
   private val api: GitLabApi,
   private val project: GitLabProjectCoordinates,
 ) {
-  suspend fun projectMembers(): List<GitLabMemberDTO> = api.getProjectMembers(project)
+  suspend fun projectMembers(): List<GitLabMemberDTO> = api.getAllProjectMembers(project)
 }
