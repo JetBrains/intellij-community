@@ -173,7 +173,7 @@ public class AnalysisScope {
     if (filter != null && !filter.contains(virtualFile)) {
       return true;
     }
-    return !myIncludeTestSource && TestSourcesFilter.isTestSources(virtualFile, myProject);
+    return !myIncludeTestSource && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
   }
 
   @NotNull
