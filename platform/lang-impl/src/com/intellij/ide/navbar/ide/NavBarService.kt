@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -23,6 +24,12 @@ import javax.swing.JComponent
 
 @Service(PROJECT)
 internal class NavBarService(private val project: Project) : Disposable {
+
+  companion object {
+
+    @JvmStatic
+    fun getInstance(project: Project): NavBarService = project.service()
+  }
 
   private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
 

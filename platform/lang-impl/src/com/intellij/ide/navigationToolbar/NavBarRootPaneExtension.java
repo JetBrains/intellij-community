@@ -97,7 +97,7 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     }
 
     if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavBarPanel();
+      myNavigationBar = NavBarService.getInstance(myProject).getStaticNavBarPanel();
     }
     else {
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
@@ -139,7 +139,7 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     toggleNavPanel(uiSettings);
 
     if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myProject.getService(NavBarService.class).uiSettingsChanged(uiSettings);
+      NavBarService.getInstance(myProject).uiSettingsChanged(uiSettings);
     }
 
     if (myNavigationBar == null) {
