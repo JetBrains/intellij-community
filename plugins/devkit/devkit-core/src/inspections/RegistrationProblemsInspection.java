@@ -2,13 +2,11 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
@@ -175,7 +173,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   private static final class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
     private List<ProblemDescriptor> myList;
     private final InspectionManager myManager;
-    private final XmlFile myXmlFile;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
     private final MultiMap<ComponentType, String> myInterfaceClasses = MultiMap.createSet();
@@ -183,7 +180,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
     private RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
       myManager = manager;
-      myXmlFile = xmlFile;
       myOnTheFly = onTheFly;
       myPsiManager = xmlFile.getManager();
       myScope = xmlFile.getResolveScope();
@@ -199,7 +195,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (impl == null) {
         addProblem(component,
                    DevKitBundle.message("inspections.registration.problems.missing.implementation.class"),
-                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+                   myOnTheFly);
       }
       else {
         String intfName = null;
@@ -210,52 +206,38 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
         final String implClassName = impl.getTrimmedText();
         final PsiClass implClass = findClass(implClassName);
-        if (implClass == null) {
-          addProblem(impl,
-                     DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
-                                          DevKitBundle.message("class.implementation")),
-                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
-              .createCreateClassOrInterfaceFix(myXmlFile, implClassName, true, intfClass != null ? intfName : type.myClassName)));
-        }
-        else {
+        if (implClass != null) {
           if (isAbstract(implClass)) {
             addProblem(impl,
                        DevKitBundle.message("inspections.registration.problems.abstract"),
-                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+                       myOnTheFly);
           }
         }
         if (intfName != null) {
-          if (intfClass == null) {
-            addProblem(intf,
-                       DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
-                                            DevKitBundle.message("class.interface")),
-                       ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
-                .createCreateClassOrInterfaceFix(myXmlFile, intfName, false, type.myClassName)),
-                       ((LocalQuickFix)QuickFixFactory.getInstance()
-                         .createCreateClassOrInterfaceFix(myXmlFile, intfName, true, type.myClassName)));
-          }
-          else if (implClass != null) {
-            final String fqn = intfClass.getQualifiedName();
+          if (intfClass != null) {
+            if (implClass != null) {
+              final String fqn = intfClass.getQualifiedName();
 
-            if (type == ComponentType.MODULE) {
-              if (!checkInterface(type, fqn, intf)) {
-                // module components can be restricted to modules of certain types
-                final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
-                for (String key : keys) {
-                  checkInterface(type, key, intf);
-                  myInterfaceClasses.putValue(type, key);
+              if (type == ComponentType.MODULE) {
+                if (!checkInterface(type, fqn, intf)) {
+                  // module components can be restricted to modules of certain types
+                  final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
+                  for (String key : keys) {
+                    checkInterface(type, key, intf);
+                    myInterfaceClasses.putValue(type, key);
+                  }
                 }
               }
-            }
-            else {
-              checkInterface(type, fqn, intf);
-              myInterfaceClasses.putValue(type, fqn);
-            }
+              else {
+                checkInterface(type, fqn, intf);
+                myInterfaceClasses.putValue(type, fqn);
+              }
 
-            if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
-              addProblem(impl,
-                         DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn),
-                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+              if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
+                addProblem(impl,
+                           DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn),
+                           myOnTheFly);
+              }
             }
           }
         }
@@ -267,7 +249,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (myInterfaceClasses.get(type).contains(fqn)) {
         addProblem(value,
                    DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn),
-                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+                   myOnTheFly);
         return true;
       }
       return false;
@@ -301,20 +283,13 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
           if (attributeValue != null) {
             final String actionClassName = attributeValue.trim();
             final PsiClass actionClass = findClass(actionClassName);
-            if (actionClass == null) {
-              addProblem(token,
-                         DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
-                                              DevKitBundle.message("class.action")),
-                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
-                  .createCreateClassOrInterfaceFix(token, actionClassName, true, AnAction.class.getName())));
-            }
-            else {
+            if (actionClass != null) {
               if (!type.isOfType(actionClass)) {
                 final PsiClass psiClass = findClass(type.myClassName);
                 if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
                   addProblem(token,
                              DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly,
+                             myOnTheFly,
                              ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
                 }
               }
@@ -322,12 +297,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
               if (noArgCtor == null) {
                 addProblem(token,
                            DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
+                           myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
               }
               if (isAbstract(actionClass)) {
                 addProblem(token,
                            DevKitBundle.message("inspections.registration.problems.abstract"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
+                           myOnTheFly);
               }
             }
           }
@@ -351,24 +326,22 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
     private void addProblem(XmlTagValue impl,
                             @InspectionMessage String problem,
-                            ProblemHighlightType type,
                             boolean isOnTheFly,
                             LocalQuickFix... fixes) {
       final XmlText[] textElements = impl.getTextElements();
       for (XmlText text : textElements) {
         if (text.getValue().trim().length() > 0) {
-          addProblem(text, problem, type, isOnTheFly, fixes);
+          addProblem(text, problem, isOnTheFly, fixes);
         }
       }
     }
 
     private void addProblem(PsiElement element,
                             @InspectionMessage String problem,
-                            ProblemHighlightType type,
                             boolean onTheFly,
                             LocalQuickFix... fixes) {
       if (myList == null) myList = new SmartList<>();
-      myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, type));
+      myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     public ProblemDescriptor @Nullable [] getProblems() {

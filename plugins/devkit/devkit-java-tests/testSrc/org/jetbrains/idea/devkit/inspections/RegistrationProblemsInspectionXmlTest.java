@@ -35,17 +35,9 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
                                "MyModuleComponentInterface.java");
   }
 
-  public void testComponentUnresolvedClass() {
-    myFixture.testHighlighting("ComponentUnresolvedClass.xml");
-  }
-
   public void testActionAbstractClass() {
     myFixture.testHighlighting("ActionAbstractClass.xml",
                                "MyAbstractAction.java");
-  }
-
-  public void testActionUnresolvedClass() {
-    myFixture.testHighlighting("ActionUnresolvedClass.xml");
   }
 
   public void testActionWithoutDefaultCtor() {
