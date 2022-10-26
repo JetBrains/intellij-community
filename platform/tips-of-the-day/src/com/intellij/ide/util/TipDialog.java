@@ -58,6 +58,7 @@ public final class TipDialog extends DialogWrapper {
   }
 
   private void adjustSizeToContent() {
+    if (isDisposed()) return;
     Dimension prefSize = getPreferredSize();
     Dimension minSize = getRootPane().getMinimumSize();
     int height = Math.max(prefSize.height, minSize.height);
