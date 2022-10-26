@@ -1,106 +1,91 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.components;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.components
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
-import java.util.function.Function;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.LayoutManager
+import java.util.function.Function
+import javax.swing.JPanel
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JBLoadingPanel extends JPanel {
-  private final JPanel myPanel;
-  private final LoadingDecorator myDecorator;
-  private final Collection<JBLoadingPanelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+open class JBLoadingPanel(manager: LayoutManager?,
+                          createLoadingDecorator: Function<JPanel, LoadingDecorator>) : JPanel(BorderLayout()) {
+  val contentPanel: JPanel
+  private val decorator: LoadingDecorator?
+  private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<JBLoadingPanelListener>()
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
-    this(manager, parent, -1);
+  @JvmOverloads
+  constructor(manager: LayoutManager?, parent: Disposable, startDelayMs: Int = -1) : this(manager = manager,
+                                                                                          createLoadingDecorator = { panel ->
+                                                                                            LoadingDecorator(panel, parent, startDelayMs)
+                                                                                          })
+
+  init {
+    contentPanel = manager?.let { JPanel(it) } ?: JPanel()
+    contentPanel.isOpaque = false
+    contentPanel.isFocusable = false
+    decorator = createLoadingDecorator.apply(contentPanel)
+
+    super.add(decorator.component, BorderLayout.CENTER)
   }
 
-  public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
-    this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs));
-  }
-
-  public JBLoadingPanel(@Nullable LayoutManager manager,
-                        @NotNull Function<? super @NotNull JPanel, ? extends @NotNull LoadingDecorator> createLoadingDecorator) {
-    super(new BorderLayout());
-    myPanel = manager == null ? new JPanel() : new JPanel(manager);
-    myPanel.setOpaque(false);
-    myPanel.setFocusable(false);
-    myDecorator = createLoadingDecorator.apply(myPanel);
-    super.add(myDecorator.getComponent(), BorderLayout.CENTER);
-  }
-
-  @Override
-  public void setLayout(LayoutManager mgr) {
-    if (!(mgr instanceof BorderLayout)) {
-      throw new IllegalArgumentException(String.valueOf(mgr));
-    }
-    super.setLayout(mgr);
-    if (myDecorator != null) {
-      super.add(myDecorator.getComponent(), BorderLayout.CENTER);
+  override fun setLayout(layoutManager: LayoutManager) {
+    require(layoutManager is BorderLayout) { layoutManager.toString() }
+    super.setLayout(layoutManager)
+    decorator?.component?.let {
+      super.add(it, BorderLayout.CENTER)
     }
   }
 
-  public void setLoadingText(@Nls String text) {
-    myDecorator.setLoadingText(text);
+  fun setLoadingText(text: @Nls String?) {
+    decorator!!.loadingText = text
   }
 
-  public void stopLoading() {
-    myDecorator.stopLoading();
-    for (JBLoadingPanelListener listener : myListeners) {
-      listener.onLoadingFinish();
+  fun stopLoading() {
+    decorator!!.stopLoading()
+    for (listener in listeners) {
+      listener.onLoadingFinish()
     }
   }
 
-  public boolean isLoading() {
-    return myDecorator.isLoading();
-  }
+  val isLoading: Boolean
+    get() = decorator!!.isLoading
 
-  public void startLoading() {
-    myDecorator.startLoading(false);
-    for (JBLoadingPanelListener listener : myListeners) {
-      listener.onLoadingStart();
+  open fun startLoading() {
+    decorator!!.startLoading(false)
+    for (listener in listeners) {
+      listener.onLoadingStart()
     }
   }
 
-  public void addListener(@NotNull JBLoadingPanelListener listener) {
-    myListeners.add(listener);
+  fun addListener(listener: JBLoadingPanelListener) {
+    listeners.add(listener)
   }
 
-  public boolean removeListener(@NotNull JBLoadingPanelListener listener) {
-    return myListeners.remove(listener);
+  fun removeListener(listener: JBLoadingPanelListener): Boolean {
+    return listeners.remove(listener)
   }
 
-  public JPanel getContentPanel() {
-    return myPanel;
+  override fun add(comp: Component): Component {
+    return contentPanel.add(comp)
   }
 
-  @Override
-  public Component add(Component comp) {
-    return myPanel.add(comp);
+  override fun add(comp: Component, index: Int): Component {
+    return contentPanel.add(comp, index)
   }
 
-  @Override
-  public Component add(Component comp, int index) {
-    return myPanel.add(comp, index);
+  override fun add(comp: Component, constraints: Any) {
+    contentPanel.add(comp, constraints)
   }
 
-  @Override
-  public void add(Component comp, Object constraints) {
-    myPanel.add(comp, constraints);
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    return getContentPanel().getPreferredSize();
+  override fun getPreferredSize(): Dimension {
+    return contentPanel.preferredSize
   }
 }
