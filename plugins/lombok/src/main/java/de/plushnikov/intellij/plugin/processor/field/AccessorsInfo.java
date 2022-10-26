@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -21,6 +20,10 @@ import java.util.Collections;
  */
 public class AccessorsInfo {
   public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false, false);
+  private static final String CHAIN_VALUE = "chain";
+  private static final String FLUENT_VALUE = "fluent";
+  private static final String MAKE_FINAL_VALUE = "makeFinal";
+  private static final String PREFIX_VALUE = "prefix";
 
   private final boolean fluent;
   private final boolean chain;
@@ -37,59 +40,12 @@ public class AccessorsInfo {
   }
 
   @NotNull
-  public static AccessorsInfo build(boolean fluentValue, boolean chainValue, boolean makeFinal, boolean doNotUseIsPrefix, String... prefixes) {
+  public static AccessorsInfo build(boolean fluentValue,
+                                    boolean chainValue,
+                                    boolean makeFinal,
+                                    boolean doNotUseIsPrefix,
+                                    String... prefixes) {
     return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, prefixes);
-  }
-
-  @NotNull
-  public static AccessorsInfo build(@NotNull PsiField psiField) {
-    return build(psiField, psiField.getContainingClass());
-  }
-
-  @NotNull
-  public static AccessorsInfo build(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokClassNames.ACCESSORS);
-    if (null != accessorsFieldAnnotation) {
-      return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
-    }
-    else {
-      return build(containingClass);
-    }
-  }
-
-  @NotNull
-  public static AccessorsInfo build(@NotNull PsiField psiField, @NotNull AccessorsInfo classAccessorsInfo) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
-    if (null != accessorsFieldAnnotation) {
-      return buildFromAnnotation(accessorsFieldAnnotation, psiField.getContainingClass());
-    }
-    else {
-      return classAccessorsInfo;
-    }
-  }
-
-  @NotNull
-  public static AccessorsInfo build(@Nullable PsiClass psiClass) {
-    PsiClass containingClass = psiClass;
-    while (null != containingClass) {
-      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokClassNames.ACCESSORS);
-      if (null != accessorsClassAnnotation) {
-        return buildFromAnnotation(accessorsClassAnnotation, containingClass);
-      }
-      containingClass = containingClass.getContainingClass();
-    }
-
-    return buildAccessorsInfo(psiClass, null, null, null, Collections.emptySet());
-  }
-
-  @NotNull
-  private static AccessorsInfo buildFromAnnotation(@NotNull PsiAnnotation accessorsAnnotation, @Nullable PsiClass psiClass) {
-    Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "chain");
-    Boolean fluentDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "fluent");
-    Boolean makeFinal = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "makeFinal");
-    Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
-
-    return buildAccessorsInfo(psiClass, chainDeclaredValue, fluentDeclaredValue, makeFinal, prefixes);
   }
 
   @NotNull
@@ -145,6 +101,98 @@ public class AccessorsInfo {
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
     return build(isFluent, isChainDeclaredOrImplicit, makeFinal, doNotUseIsPrefix, prefixes);
+  }
+
+  public record AccessorsValues(Boolean chainDeclaredValue, Boolean fluentDeclaredValue, Boolean makeFinalDeclaredValue,
+                                 Collection<String> prefixes) {
+
+    private AccessorsValues() {
+      this(null, null, null, Collections.emptyList());
+    }
+    private AccessorsValues combine(AccessorsValues defaults) {
+      Boolean combinedChain = chainDeclaredValue;
+      Boolean combinedFluent = fluentDeclaredValue;
+      Boolean combinedMakeFinal = makeFinalDeclaredValue;
+      Collection<String> combinedPrefixes = prefixes;
+
+      if (combinedChain == null && null != defaults.chainDeclaredValue) {
+        combinedChain = defaults.chainDeclaredValue;
+      }
+      if (combinedFluent == null && null != defaults.fluentDeclaredValue) {
+        combinedFluent = defaults.fluentDeclaredValue;
+      }
+      if (combinedMakeFinal == null && null != defaults.makeFinalDeclaredValue) {
+        combinedMakeFinal = defaults.makeFinalDeclaredValue;
+      }
+      if (combinedPrefixes.isEmpty() && !defaults.prefixes.isEmpty()) {
+        combinedPrefixes = defaults.prefixes;
+      }
+      return new AccessorsValues(combinedChain, combinedFluent, combinedMakeFinal, combinedPrefixes);
+    }
+  }
+
+  private static AccessorsValues collectValues(@NotNull PsiAnnotation accessorsAnnotation) {
+    Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, CHAIN_VALUE);
+    Boolean fluentDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, FLUENT_VALUE);
+    Boolean makeFinalDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, MAKE_FINAL_VALUE);
+    Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, PREFIX_VALUE, String.class);
+    return new AccessorsValues(chainDeclaredValue, fluentDeclaredValue, makeFinalDeclaredValue, prefixes);
+  }
+
+  private static AccessorsInfo buildFrom(@Nullable PsiClass psiClass, AccessorsValues values) {
+    return buildAccessorsInfo(psiClass, values.chainDeclaredValue, values.fluentDeclaredValue, values.makeFinalDeclaredValue,
+                              values.prefixes);
+  }
+
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiField psiField) {
+    final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
+    final AccessorsValues classAccessorsValues = getAccessorsValues(psiField.getContainingClass());
+    final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
+
+    final PsiClass containingClass = psiField.getContainingClass();
+    return buildFrom(containingClass, combinedAccessorValues);
+  }
+
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiClass psiClass) {
+    AccessorsValues resultAccessorsValues = getAccessorsValues(psiClass);
+    return buildFrom(psiClass, resultAccessorsValues);
+  }
+
+  @NotNull
+  private static AccessorsValues getAccessorsValues(@NotNull PsiField psiField) {
+    AccessorsValues accessorsValues = new AccessorsValues();
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.ACCESSORS);
+    if (null != accessorsFieldAnnotation) {
+      accessorsValues = collectValues(accessorsFieldAnnotation);
+    }
+    return accessorsValues;
+  }
+
+  @NotNull
+  public static AccessorsValues getAccessorsValues(@Nullable PsiClass psiClass) {
+    AccessorsValues resultAccessorsValues = new AccessorsValues();
+
+    PsiClass containingClass = psiClass;
+    while (null != containingClass) {
+      final PsiAnnotation accessorsClassAnnotation = PsiAnnotationSearchUtil.findAnnotation(containingClass, LombokClassNames.ACCESSORS);
+      if (null != accessorsClassAnnotation) {
+        final AccessorsValues classAccessorsValues = collectValues(accessorsClassAnnotation);
+        resultAccessorsValues = resultAccessorsValues.combine(classAccessorsValues);
+      }
+      containingClass = containingClass.getContainingClass();
+    }
+    return resultAccessorsValues;
+  }
+
+  @NotNull
+  public static AccessorsInfo buildFor(@NotNull PsiField psiField, AccessorsValues classAccessorsValues) {
+    final AccessorsValues fieldAccessorsValues = getAccessorsValues(psiField);
+    final AccessorsValues combinedAccessorValues = fieldAccessorsValues.combine(classAccessorsValues);
+
+    final PsiClass containingClass = psiField.getContainingClass();
+    return buildFrom(containingClass, combinedAccessorValues);
   }
 
   public boolean isFluent() {

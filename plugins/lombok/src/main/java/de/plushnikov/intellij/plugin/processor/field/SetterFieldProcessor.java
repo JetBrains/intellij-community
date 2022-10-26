@@ -79,7 +79,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
 
   private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
+    if (AccessorsInfo.buildFor(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.setter.for.this.field.it"));
       result = false;
     }
@@ -87,7 +87,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   public Collection<String> getAllSetterNames(@NotNull PsiField psiField, boolean isBoolean) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     return LombokUtils.toAllSetterNames(accessorsInfo, psiField.getName(), isBoolean);
   }
 
@@ -97,10 +97,10 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     final PsiType psiFieldType = psiField.getType();
     final PsiAnnotation setterAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SETTER);
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getSetterName(psiField, accessorsInfo);
 
-    PsiType returnType = getReturnType(psiField);
+    PsiType returnType = getReturnType(psiField, accessorsInfo.isChain());
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
@@ -156,9 +156,9 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return codeBlockText;
   }
 
-  private static PsiType getReturnType(@NotNull PsiField psiField) {
+  private static PsiType getReturnType(@NotNull PsiField psiField, boolean isChained) {
     PsiType result = PsiType.VOID;
-    if (!psiField.hasModifierProperty(PsiModifier.STATIC) && AccessorsInfo.build(psiField).isChain()) {
+    if (!psiField.hasModifierProperty(PsiModifier.STATIC) && isChained) {
       final PsiClass fieldClass = psiField.getContainingClass();
       if (null != fieldClass) {
         result = PsiClassUtil.getTypeWithGenerics(fieldClass);

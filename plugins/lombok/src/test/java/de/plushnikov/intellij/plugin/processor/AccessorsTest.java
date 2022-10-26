@@ -11,6 +11,10 @@ public class AccessorsTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testAccessors$AccessorsCascade() {
+    doTest(true);
+  }
+
   public void testAccessors$AccessorsMakeFinal() {
     doTest(true);
   }

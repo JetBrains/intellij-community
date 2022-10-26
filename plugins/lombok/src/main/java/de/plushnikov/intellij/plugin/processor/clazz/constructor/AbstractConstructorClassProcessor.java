@@ -290,7 +290,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   private static boolean isAnyConstructorDefined(@NotNull PsiClass psiClass) {
     Collection<PsiMethod> constructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    return constructors.stream().anyMatch(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE));
+    return ContainerUtil.exists(constructors,
+                                psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE));
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier,
@@ -302,9 +303,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withModifier(modifier);
 
     final List<String> fieldNames = new ArrayList<>();
-    final AccessorsInfo classAccessorsInfo = AccessorsInfo.build(psiClass);
+    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
     for (PsiField psiField : params) {
-      final AccessorsInfo paramAccessorsInfo = AccessorsInfo.build(psiField, classAccessorsInfo);
+      final AccessorsInfo paramAccessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
       fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
     }
 

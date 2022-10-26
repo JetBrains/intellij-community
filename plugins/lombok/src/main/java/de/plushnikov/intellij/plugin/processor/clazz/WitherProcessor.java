@@ -53,7 +53,7 @@ public class WitherProcessor extends AbstractClassProcessor {
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass).withFluent(false);
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiClass).withFluent(false);
       target.addAll(createFieldWithers(psiClass, methodVisibility, accessorsInfo));
     }
   }

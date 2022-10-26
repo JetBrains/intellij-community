@@ -84,7 +84,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
   private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
-    if (AccessorsInfo.build(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
+    if (AccessorsInfo.buildFor(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
       builder.addWarning(LombokBundle.message("inspection.message.not.generating.getter.for.this.field"));
       result = false;
     }
@@ -93,7 +93,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
   @NotNull
   public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getGetterName(psiField, accessorsInfo);
 
     LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), methodName)

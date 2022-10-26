@@ -278,7 +278,7 @@ public final class LombokUtils {
     "com.fasterxml.jackson.databind.annotation.JsonNaming"};
 
   public static String getGetterName(final @NotNull PsiField psiField) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     return getGetterName(psiField, accessorsInfo);
   }
 
@@ -290,7 +290,7 @@ public final class LombokUtils {
   }
 
   public static String getSetterName(@NotNull PsiField psiField) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     return getSetterName(psiField, accessorsInfo);
   }
 

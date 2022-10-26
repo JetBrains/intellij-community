@@ -68,6 +68,10 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
   }
 
   ////////////
+  public void testMakefinal$AccessorsMakeFinalLombokConfig() {
+    doTest();
+  }
+  ////////////
 
   public void testSuperbuilder$SuperBuilderWithPrefixes() {
     doTest();

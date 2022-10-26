@@ -144,7 +144,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       final List<MethodSignatureBackedByPsiMethod> classMethods = new ArrayList<>(ownSignatures);
 
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
       final String fieldName = psiField.getName();
       String accessorName = isGetter ? LombokUtils.toGetterName(accessorsInfo, fieldName, isBoolean)
                                      : LombokUtils.toSetterName(accessorsInfo, fieldName, isBoolean);

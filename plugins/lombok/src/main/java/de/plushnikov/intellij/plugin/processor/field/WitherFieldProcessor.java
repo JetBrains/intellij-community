@@ -207,7 +207,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   private static AccessorsInfo buildAccessorsInfo(@NotNull PsiField psiField) {
-    return AccessorsInfo.build(psiField).withFluent(false);
+    return AccessorsInfo.buildFor(psiField).withFluent(false);
   }
 
   private static String getWitherName(@NotNull AccessorsInfo accessorsInfo, String psiFieldName, PsiType psiFieldType) {

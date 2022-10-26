@@ -80,7 +80,7 @@ public class BuilderInfo {
     result.fieldInitializer = psiField.getInitializer();
     result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, BUILDER_DEFAULT_ANNOTATION);
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
 
     result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
