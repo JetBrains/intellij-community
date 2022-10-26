@@ -20,12 +20,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PlatformNioHelper;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.*;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -274,44 +274,26 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     return super.getAttributes(file);
   }
 
-  @SuppressWarnings("UnnecessaryFullyQualifiedName")
   private static Map<String, FileAttributes> listWithAttributes(VirtualFile dir) {
     try {
-      Map<String, FileAttributes> result = CollectionFactory.createFilePathMap(10, dir.isCaseSensitive());
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
-        for (Path file : stream) {
-          BasicFileAttributes attrs = null;
-          if (file instanceof sun.nio.fs.BasicFileAttributesHolder) {
-            attrs = ((sun.nio.fs.BasicFileAttributesHolder)file).get();
-          }
-          if (attrs == null) {
-            try {
-              attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-            }
-            catch (IOException e) {
-              LOG.trace(e);
-            }
-          }
-          if (attrs != null) {
-            result.put(file.getFileName().toString(), copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)));
-          }
-        }
-      }
+      var result = CollectionFactory.<FileAttributes>createFilePathMap(10, dir.isCaseSensitive());
+      PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, attrs) -> {
+        var fsuAttrs = attrs != null ? copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)) : null;
+        result.put(file.getFileName().toString(), fsuAttrs);
+      });
       return result;
     }
-    catch (InvalidPathException | IOException | SecurityException e) {
+    catch (InvalidPathException | SecurityException e) {
       LOG.warn(e);
       return Map.of();
     }
   }
 
-  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, @Nullable FileAttributes attributes) {
-    if (attributes != null) {
-      for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
-        Long custom = provider.getTimestamp(file);
-        if (custom != null) {
-          return attributes.withTimeStamp(custom);
-        }
+  private static @Nullable FileAttributes copyWithCustomTimestamp(Path file, FileAttributes attributes) {
+    for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
+      Long custom = provider.getTimestamp(file);
+      if (custom != null) {
+        return attributes.withTimeStamp(custom);
       }
     }
 

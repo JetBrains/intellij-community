@@ -14,11 +14,13 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -110,7 +112,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void findChildWithSpecialName() {
     VirtualFile dir = requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
-    assertFalse(((VirtualDirectoryImpl)dir).allChildrenLoaded());    
+    assertFalse(((VirtualDirectoryImpl)dir).allChildrenLoaded());
     assertNull(dir.findChild("."));
     assertNull(dir.findChild(".."));
   }
@@ -954,5 +956,42 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertThatExceptionOfType(FileNotFoundException.class)
       .isThrownBy(() -> file.contentsToByteArray())
       .withMessageStartingWith("Not a file: ");
+  }
+
+  @Test
+  public void directoryListing() {
+    var dir = tempDir.newVirtualFile("dir/1").getParent();
+    assertDirectoryListing(dir, "1");
+
+    var file = tempDir.newVirtualFile("file");
+    assertDirectoryListing(file);
+
+    var missing = new FakeVirtualFile(tempDir.getVirtualFileRoot(), "missing");
+    assertDirectoryListing(missing);
+  }
+
+  @Test
+  public void directoryListingViaSymlink() throws IOException {
+    assumeNioSymLinkCreationIsSupported();
+
+    var dir = tempDir.newFile("dir/1").toPath().getParent();
+    var dirLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("dirLink"), dir);
+    assertDirectoryListing(myFS.refreshAndFindFileByNioFile(dirLink), "1");
+
+    var file = tempDir.newFile("file").toPath();
+    var fileLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("fileLink"), file);
+    assertDirectoryListing(myFS.refreshAndFindFileByNioFile(fileLink));
+
+    var missingLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("missingLink"), Path.of("missing"));
+    assertDirectoryListing(myFS.refreshAndFindFileByNioFile(missingLink));
+  }
+
+  private void assertDirectoryListing(VirtualFile vFile, String... expected) {
+    var list1 = myFS.list(vFile);
+    var list2 = ((LocalFileSystemImpl)myFS).listWithCaching(vFile);
+    ((LocalFileSystemImpl)myFS).clearListCache();
+    assertThat(list1).
+      containsExactlyInAnyOrder(expected).
+      containsExactlyInAnyOrder(list2);
   }
 }
