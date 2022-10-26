@@ -53,7 +53,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
@@ -232,26 +231,6 @@ public class MavenUtil {
     }
   }
 
-
-  public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
-    startTestRunnable(r);
-    if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
-      runAndFinishTestRunnable(r);
-    }
-    else {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      DumbService.getInstance(p).smartInvokeLater(() -> {
-        try {
-          runAndFinishTestRunnable(r);
-        }
-        finally {
-          semaphore.up();
-        }
-      }, state);
-      semaphore.waitFor();
-    }
-  }
 
   public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
     startTestRunnable(r);
