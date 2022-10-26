@@ -51,7 +51,9 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData
+import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -64,6 +66,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.div
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+
+private data class TargetAndPath(val target: TargetEnvironmentConfiguration?,
+                                 val path: FullPathOnTarget?)
 
 /**
  * @author vlan
@@ -96,14 +103,17 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
 }
 
 @JvmOverloads
-fun detectSystemWideSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
+fun detectSystemWideSdks(module: Module?,
+                         existingSdks: List<Sdk>,
+                         context: UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
   if (module != null && module.isDisposed) return emptyList()
-  val existingPaths = existingSdks.map { it.homePath }.toSet()
+  val target = module?.let { PythonInterpreterTargetEnvironmentFactory.guessTargetConfigurationByModule(it) }
+  val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   return PythonSdkFlavor.getApplicableFlavors(false)
     .asSequence()
-    .flatMap { it.suggestHomePaths(module, context).asSequence() }
-    .filter { it !in existingPaths }
-    .map { PyDetectedSdk(it) }
+    .flatMap { it.suggestLocalHomePaths(module, context).asSequence() }
+    .filter { TargetAndPath(target, it.pathString) !in existingPaths }
+    .map { createDetectedSdk(it.name, target) }
     .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
                                          { it.homePath }).reversed())
     .toList()
@@ -114,7 +124,7 @@ fun resetSystemWideSdksDetectors() {
 }
 
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, context)
+  filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(module, context), existingSdks, module, context)
 
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
@@ -122,7 +132,7 @@ fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(
-    CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, context, true)
+    CondaEnvSdkFlavor.getInstance().suggestLocalHomePaths(module, context), existingSdks, module, context, true)
 
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
@@ -382,18 +392,20 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   return newData
 }
 
-private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
+
+private fun filterSuggestedPaths(suggestedPaths: Collection<Path>,
                                  existingSdks: List<Sdk>,
                                  module: Module?,
                                  context: UserDataHolder,
                                  mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
-  val existingPaths = existingSdks.mapTo(HashSet()) { it.homePath }
+  val target = module?.let { PythonInterpreterTargetEnvironmentFactory.guessTargetConfigurationByModule(it) }
+  val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   val baseDirFromContext = context.getUserData(BASE_DIR)
   return suggestedPaths
     .asSequence()
-    .filterNot { it in existingPaths }
+    .filterNot { TargetAndPath(target, it.toString()) in existingPaths }
     .distinct()
-    .map { PyDetectedSdk(it) }
+    .map { createDetectedSdk(it.toString(), target) }
     .sortedWith(
       compareBy(
         { !it.isAssociatedWithModule(module) && !it.isLocatedInsideBaseDir(baseDirFromContext) },
