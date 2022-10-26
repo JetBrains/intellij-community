@@ -42,6 +42,7 @@ internal fun activityFlow(): Flow<Unit> {
         trySend(Unit)
       }
     }, disposable)
+    trySend(Unit)
     awaitClose {
       Disposer.dispose(disposable)
     }

@@ -112,7 +112,7 @@ internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
   }
 }
 
-private suspend fun defaultModel(project: Project): List<NavBarVmItem> {
+internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
     val item = ProjectNavBarItem(project)
     listOf(NavBarVmItem(item.createPointer(), item.presentation(), item.javaClass))
