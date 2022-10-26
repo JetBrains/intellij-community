@@ -32,10 +32,10 @@ public final class TodoFileNode extends PsiFileNode {
   public TodoFileNode(Project project,
                       @NotNull PsiFile file,
                       TodoTreeBuilder treeBuilder,
-                      boolean singleFileMode){
-    super(project,file,ViewSettings.DEFAULT);
-    myBuilder=treeBuilder;
-    mySingleFileMode=singleFileMode;
+                      boolean singleFileMode) {
+    super(project, file, ViewSettings.DEFAULT);
+    myBuilder = treeBuilder;
+    mySingleFileMode = singleFileMode;
   }
 
   @Override
@@ -114,10 +114,11 @@ public final class TodoFileNode extends PsiFileNode {
   protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     String newName;
-    if(myBuilder.getTodoTreeStructure().isPackagesShown()){
-      newName=getValue().getName();
-    }else{
-      newName=mySingleFileMode ? getValue().getName() : getValue().getVirtualFile().getPresentableUrl();
+    if (myBuilder.getTodoTreeStructure().isPackagesShown()) {
+      newName = getValue().getName();
+    }
+    else {
+      newName = mySingleFileMode ? getValue().getName() : getValue().getVirtualFile().getPresentableUrl();
     }
 
     data.setPresentableText(newName);

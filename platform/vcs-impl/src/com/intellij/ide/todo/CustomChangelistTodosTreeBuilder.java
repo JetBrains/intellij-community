@@ -170,7 +170,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
-    if (! myIncludedFiles.contains(file)) return EMPTY_ITEMS;
+    if (!myIncludedFiles.contains(file)) return EMPTY_ITEMS;
     if (myDirtyFileSet.contains(file.getVirtualFile())) {
       myMap.remove(file);
       final Change change = ChangeListManager.getInstance(myProject).getChange(file.getVirtualFile());
@@ -179,7 +179,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
           worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter);
         worker.execute();
         final Collection<TodoItem> todoItems = worker.inOneList();
-        if (todoItems != null && ! todoItems.isEmpty()) {
+        if (todoItems != null && !todoItems.isEmpty()) {
           for (TodoItem todoItem : todoItems) {
             myMap.putValue(file, todoItem);
           }
@@ -194,5 +194,4 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   protected @NotNull TodoTreeStructure createTreeStructure() {
     return new CustomChangelistTodoTreeStructure(myProject, myPsiTodoSearchHelper);
   }
-
 }

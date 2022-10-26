@@ -34,7 +34,7 @@ public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
 
   @Override
   public boolean accept(final PsiFile psiFile) {
-    if (! psiFile.isValid()) return false;
+    if (!psiFile.isValid()) return false;
     return mySearchHelper.getTodoItemsCount(psiFile) > 0;
   }
 

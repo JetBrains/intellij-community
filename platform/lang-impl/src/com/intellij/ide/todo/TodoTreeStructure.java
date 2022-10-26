@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings{
+public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
   protected TodoTreeBuilder myBuilder;
   protected AbstractTreeNode myRootElement;
   protected final ToDoSummary mySummaryElement;
@@ -34,16 +34,16 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
    */
   protected TodoFilter myTodoFilter;
 
-  public TodoTreeStructure(Project project){
+  public TodoTreeStructure(Project project) {
     super(project);
-    myArePackagesShown=true;
-    mySummaryElement=new ToDoSummary();
-    mySearchHelper= PsiTodoSearchHelper.getInstance(project);
+    myArePackagesShown = true;
+    mySummaryElement = new ToDoSummary();
+    mySearchHelper = PsiTodoSearchHelper.getInstance(project);
   }
 
-  final void setTreeBuilder(TodoTreeBuilder builder){
-    myBuilder=builder;
-    myRootElement=createRootElement();
+  final void setTreeBuilder(TodoTreeBuilder builder) {
+    myBuilder = builder;
+    myRootElement = createRootElement();
   }
 
   protected abstract AbstractTreeNode createRootElement();
@@ -53,31 +53,31 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   /**
    * Validate whole the cache
    */
-  protected void validateCache(){
+  protected void validateCache() {
   }
 
-  public final boolean isPackagesShown(){
+  public final boolean isPackagesShown() {
     return myArePackagesShown;
   }
 
-  final void setShownPackages(boolean state){
-    myArePackagesShown=state;
+  final void setShownPackages(boolean state) {
+    myArePackagesShown = state;
   }
 
-  public final boolean areFlattenPackages(){
+  public final boolean areFlattenPackages() {
     return myFlattenPackages;
   }
 
-  public final void setFlattenPackages(boolean state){
-    myFlattenPackages=state;
+  public final void setFlattenPackages(boolean state) {
+    myFlattenPackages = state;
   }
 
   /**
    * Sets new {@code TodoFilter}. {@code null} is acceptable value. It means
    * that there is no any filtration of <code>TodoItem>/code>s.
    */
-  final void setTodoFilter(TodoFilter todoFilter){
-    myTodoFilter=todoFilter;
+  final void setTodoFilter(TodoFilter todoFilter) {
+    myTodoFilter = todoFilter;
   }
 
   /**
@@ -88,23 +88,24 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   /**
    * @return number of {@code TodoItem}s located in the file.
    */
-  public final int getTodoItemCount(PsiFile psiFile){
-    int count=0;
-    if(psiFile != null){
-      if(myTodoFilter!=null){
-        for(Iterator i=myTodoFilter.iterator();i.hasNext();){
-          TodoPattern pattern=(TodoPattern)i.next();
-          count+=getSearchHelper().getTodoItemsCount(psiFile,pattern);
+  public final int getTodoItemCount(PsiFile psiFile) {
+    int count = 0;
+    if (psiFile != null) {
+      if (myTodoFilter != null) {
+        for (Iterator i = myTodoFilter.iterator(); i.hasNext(); ) {
+          TodoPattern pattern = (TodoPattern)i.next();
+          count += getSearchHelper().getTodoItemsCount(psiFile, pattern);
         }
-      }else{
-        count=getSearchHelper().getTodoItemsCount(psiFile);
+      }
+      else {
+        count = getSearchHelper().getTodoItemsCount(psiFile);
       }
     }
     return count;
   }
 
-  boolean isAutoExpandNode(NodeDescriptor descriptor){
-    Object element=descriptor.getElement();
+  boolean isAutoExpandNode(NodeDescriptor descriptor) {
+    Object element = descriptor.getElement();
     if (element instanceof AbstractTreeNode) {
       element = ((AbstractTreeNode<?>)element).getValue();
     }
@@ -129,7 +130,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   @NotNull
   @Override
-  public final Object getRootElement(){
+  public final Object getRootElement() {
     return myRootElement;
   }
 

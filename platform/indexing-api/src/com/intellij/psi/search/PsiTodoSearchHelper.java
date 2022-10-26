@@ -61,6 +61,7 @@ public interface PsiTodoSearchHelper {
   TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
   TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file);
+
   TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
 
   /**

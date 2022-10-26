@@ -70,7 +70,9 @@ public class TodoCheckinHandlerWorker {
   private final Set<TodoItem> myInChangedTodos = new HashSet<>();
   private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
-  public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<? extends Change> changes, @Nullable TodoFilter todoFilter) {
+  public TodoCheckinHandlerWorker(@NotNull Project project,
+                                  @NotNull Collection<? extends Change> changes,
+                                  @Nullable TodoFilter todoFilter) {
     myProject = project;
     myChanges = changes;
     myTodoFilter = todoFilter;
@@ -387,7 +389,7 @@ public class TodoCheckinHandlerWorker {
   private static final class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
-    private LeftLineFragmentConvertor(String content) {myContent = content;}
+    private LeftLineFragmentConvertor(String content) { myContent = content; }
 
     @Override
     public TextRange convert(LineFragment o) {
@@ -401,7 +403,7 @@ public class TodoCheckinHandlerWorker {
   private static final class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
-    private RightLineFragmentConvertor(String content) {myContent = content;}
+    private RightLineFragmentConvertor(String content) { myContent = content; }
 
     @Override
     public TextRange convert(LineFragment o) {

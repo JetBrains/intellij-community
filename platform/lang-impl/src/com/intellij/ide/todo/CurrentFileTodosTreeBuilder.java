@@ -47,8 +47,8 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   /**
    * @see CurrentFileTodosTreeStructure#setFile
    */
-  public void setFile(PsiFile file){
-    CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
+  public void setFile(PsiFile file) {
+    CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
     treeStructure.setFile(file);
     rebuildCache();
   }

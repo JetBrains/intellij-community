@@ -72,8 +72,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     myChangesSupport = project.getService(TodoViewChangesSupport.class);
     myChangesListener = myChangesSupport.installListener(project, connection,
-                                                         () -> { return myContentManager; },
-                                                         () -> { return myChangeListTodosContent; });
+                                                         () -> myContentManager,
+                                                         () -> myChangeListTodosContent);
   }
 
   static class State {
@@ -120,7 +120,8 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   public void initToolWindow(@NotNull ToolWindow toolWindow) {
     // Create panels
     ContentFactory contentFactory = ContentFactory.getInstance();
-    Content allTodosContent = contentFactory.createContent(null, IdeUICustomization.getInstance().projectMessage("tab.title.project"), false);
+    Content allTodosContent =
+      contentFactory.createContent(null, IdeUICustomization.getInstance().projectMessage("tab.title.project"), false);
     toolWindow.setHelpId("find.todoList");
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
@@ -223,7 +224,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         for (TodoPanel panel : myPanels) {
           panel.updateTodoFilter();
         }
-      } catch (ProcessCanceledException ignore) { }
+      }
+      catch (ProcessCanceledException ignore) {
+      }
     }
   }
 
@@ -249,7 +252,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     return CompletableFuture.allOf(futures);
   }
 
-  public void addCustomTodoView(final TodoTreeBuilderFactory factory, @NlsContexts.TabTitle final String title, final TodoPanelSettings settings) {
+  public void addCustomTodoView(final TodoTreeBuilderFactory factory,
+                                @NlsContexts.TabTitle final String title,
+                                final TodoPanelSettings settings) {
     Content content = ContentFactory.getInstance().createContent(null, title, true);
     final TodoPanel panel = myChangesSupport.createPanel(myProject, settings, content, factory);
     if (panel == null) return;
