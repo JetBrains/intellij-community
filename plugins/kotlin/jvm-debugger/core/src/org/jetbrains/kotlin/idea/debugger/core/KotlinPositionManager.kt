@@ -368,11 +368,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
-            if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return emptyList()
 
             val referenceTypesInKtFile = syncNonBlockingReadAction(psiFile.project) {
+                if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
                 getReferenceTypesForPositionInKotlinFile(sourcePosition)
-            }
+            } ?: return emptyList()
 
             if (sourcePosition.isInsideProjectWithCompose()) {
                 return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)

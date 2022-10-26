@@ -144,15 +144,15 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            val kotlinFiles = nonBlockingReadActionSync {
-                FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+            nonBlockingReadActionSync {
+                val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
+                kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
+                    if (projectFileIndex.isInSourceContent(ktFile)) {
+                        projectFileIndex.getModuleForFile(ktFile)
+                    } else null
+                }
             }
 
-            kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
-                if (projectFileIndex.isInSourceContent(ktFile)) {
-                    projectFileIndex.getModuleForFile(ktFile)
-                } else null
-            }
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
             nonBlockingReadActionSync {
