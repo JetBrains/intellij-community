@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -68,11 +69,19 @@ internal class WorkspaceProjectImporter(
 
     val externalStorageManager = myProject.getService(ExternalStorageConfigurationManager::class.java)
     if (!externalStorageManager.isEnabled) {
-      MavenLog.LOG.info("Project#isExternalStorageEnabled is false. Converting storage to external for workspace import")
       ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true)
       hasChanges = true
 
-      if (!externalStorageManager.isEnabled) MavenLog.LOG.error("Failed to update Project#isExternalStorageEnabled flag")
+      if (!externalStorageManager.isEnabled) {
+        MavenLog.LOG.error(
+          "Can't migrate the project to external project files storage: ExternalStorageConfigurationManager.isEnabled=false")
+      }
+      else if (!myProject.isExternalStorageEnabled) {
+        MavenLog.LOG.warn("Can't migrate the project to external project files storage: Project.isExternalStorageEnabled=false")
+      }
+      else {
+        MavenLog.LOG.info("Project has been migrated to external project files storage")
+      }
     }
 
     if (!hasChanges) return emptyList()
