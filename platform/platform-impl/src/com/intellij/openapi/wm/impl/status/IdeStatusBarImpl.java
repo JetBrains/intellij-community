@@ -7,7 +7,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -17,10 +24,20 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarListener;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
@@ -34,27 +51,50 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
-
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
   private static final Logger LOG = Logger.getInstance(IdeStatusBarImpl.class);
@@ -252,9 +292,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   @ApiStatus.Experimental
-  @Override
-  public void setCentralWidget(@NotNull StatusBarCentralWidget widget) {
-    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.CENTER, ""));
+  @RequiresEdt
+  public void setCentralWidget(@NotNull StatusBarWidget widget, @NotNull JComponent component) {
+    JPanel panel;
+    myInfoAndProgressPanel.setCentralComponent(component);
+    panel = myInfoAndProgressPanel;
+    doAddWidget(widget, Position.CENTER, "", component, panel);
   }
 
   /**
@@ -267,53 +310,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.LEFT, "__IGNORED__"));
     String id = widget.ID();
     Disposer.register(parentDisposable, () -> removeWidget(id));
-  }
-
-  @Override
-  @SuppressWarnings("removal")
-  public void addCustomIndicationComponent(final @NotNull JComponent c) {
-    final String customId = c.getClass().getName() + new Random().nextLong();
-    addWidget(new CustomStatusBarWidget() {
-      @Override
-      public @NotNull String ID() {
-        return customId;
-      }
-
-      @Override
-      public @Nullable WidgetPresentation getPresentation() {
-        return null;
-      }
-
-      @Override
-      public void install(@NotNull StatusBar statusBar) {
-      }
-
-      @Override
-      public void dispose() {
-      }
-
-      @Override
-      public JComponent getComponent() {
-        return c;
-      }
-    });
-
-    myCustomComponentIds.add(customId);
-  }
-
-  @Override
-  @SuppressWarnings("removal")
-  public void removeCustomIndicationComponent(final @NotNull JComponent c) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Set<String> keySet = myWidgetMap.keySet();
-    final String[] keys = ArrayUtilRt.toStringArray(keySet);
-    for (final String key : keys) {
-      final WidgetBean value = myWidgetMap.get(key);
-      if (value.widget instanceof CustomStatusBarWidget && value.component == c) {
-        removeWidget(key);
-        myCustomComponentIds.remove(key);
-      }
-    }
   }
 
   @Override
@@ -335,29 +331,23 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     myCustomComponentIds.clear();
   }
 
+  @RequiresEdt
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    JComponent c;
-    JPanel panel;
-    if (widget instanceof StatusBarCentralWidget && position == Position.CENTER) {
-      c = ((StatusBarCentralWidget)widget).getCentralStatusBarComponent();
-      myInfoAndProgressPanel.setCentralComponent(c);
-      panel = myInfoAndProgressPanel;
+    JComponent c = wrap(widget);
+    JPanel panel = getTargetPanel(position);
+    if (position == Position.LEFT && panel.getComponentCount() == 0) {
+      c.setBorder(SystemInfoRt.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
     }
-    else {
-      c = wrap(widget);
-      panel = getTargetPanel(position);
-      if (position == Position.LEFT && panel.getComponentCount() == 0) {
-        c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
-      }
-      panel.add(c, getPositionIndex(position, anchor));
+    panel.add(c, getPositionIndex(position, anchor));
 
-      if (c instanceof StatusBarWidgetWrapper) {
-        ((StatusBarWidgetWrapper)c).beforeUpdate();
-      }
+    if (c instanceof StatusBarWidgetWrapper) {
+      ((StatusBarWidgetWrapper)c).beforeUpdate();
     }
 
+    doAddWidget(widget, position, anchor, c, panel);
+  }
+
+  private void doAddWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor, JComponent c, JPanel panel) {
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, position, c, anchor));
     widget.install(this);
     panel.revalidate();

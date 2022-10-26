@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension
-import com.intellij.openapi.wm.StatusBarCentralWidget
-import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -68,7 +65,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
   private var statusBarDisposed = false
   private val northPanel = JBBox.createVerticalBox()
   private var northExtensions: List<IdeRootPaneNorthExtension> = emptyList()
-  internal var statusBarCentralWidget: IdeRootPaneNorthExtension? = null
+  internal var navBarStatusWidgetComponent: JComponent? = null
     private set
 
   private var toolWindowPane: ToolWindowPane? = null
@@ -428,7 +425,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
   @RequiresEdt
   internal open fun installNorthComponents(project: Project) {
     northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
-    statusBarCentralWidget = northExtensions.firstOrNull { it is StatusBarCentralWidget }
     if (northExtensions.isEmpty()) {
       return
     }
@@ -437,6 +433,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
       val component = extension.createComponent(project, false) ?: continue
       component.putClientProperty(EXTENSION_KEY, extension.key)
       northPanel.add(component)
+
+      if (component is StatusBarCentralWidgetProvider) {
+        navBarStatusWidgetComponent = component.createCentralStatusBarComponent()
+      }
     }
   }
 
@@ -446,15 +446,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
       if (northPanel.getComponent(i) !== toolbar) {
         northPanel.remove(i)
       }
-    }
-  }
-
-  internal fun findNorthComponentByKey(key: String): IdeRootPaneNorthExtension? {
-    if (ExperimentalUI.isNewUI() && IdeStatusBarImpl.NAVBAR_WIDGET_KEY == key) {
-      return statusBarCentralWidget
-    }
-    else {
-      return northExtensions.firstOrNull { it.key == key }
     }
   }
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -340,18 +341,18 @@ open class ProjectFrameHelper(
 
   override fun getProject() = project
 
+  @RequiresEdt
   fun setProject(project: Project) {
     if (this.project === project) {
       return
     }
 
     this.project = project
-    rootPane?.let { rootPane ->
-      rootPane.setProject(project)
-      rootPane.installNorthComponents(project)
-      rootPane.statusBar?.let {
-        project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
-      }
+    val rootPane = rootPane!!
+    rootPane.setProject(project)
+    rootPane.installNorthComponents(project)
+    rootPane.statusBar?.let {
+      project.messageBus.connect().subscribe(StatusBar.Info.TOPIC, it)
     }
     installDefaultProjectStatusBarWidgets(project)
 
@@ -368,9 +369,18 @@ open class ProjectFrameHelper(
     project.service<StatusBarWidgetsManager>().installPendingWidgets()
     val statusBar = statusBar!!
     PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
-    val navBar = rootPane!!.statusBarCentralWidget
-    if (navBar != null && navBar.key == IdeStatusBarImpl.NAVBAR_WIDGET_KEY) {
-      statusBar.setCentralWidget(navBar as StatusBarCentralWidget)
+    val rootPane = rootPane!!
+    val navBar = rootPane.navBarStatusWidgetComponent
+    if (navBar != null) {
+      statusBar.setCentralWidget(object : StatusBarWidget {
+        override fun dispose() {
+        }
+
+        override fun ID(): String = IdeStatusBarImpl.NAVBAR_WIDGET_KEY
+
+        override fun install(statusBar: StatusBar) {
+        }
+      }, navBar)
     }
   }
 

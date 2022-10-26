@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBarCentralWidgetProvider;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel;
 import com.intellij.ui.ExperimentalUI;
@@ -51,19 +52,21 @@ public final class NavBarRootPaneExtension implements IdeRootPaneNorthExtension 
     return IdeStatusBarImpl.NAVBAR_WIDGET_KEY;
   }
 
+  // used externally
   public abstract static class NavBarWrapperPanel extends JPanel implements UISettingsListener {
-    public NavBarWrapperPanel(LayoutManager layout) {
-      super(layout);
-    }
+      public NavBarWrapperPanel(LayoutManager layout) {
+        super(layout);
+      }
 
-    @Override
-    protected Graphics getComponentGraphics(Graphics graphics) {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+      @Override
+      protected Graphics getComponentGraphics(Graphics graphics) {
+        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+      }
     }
-  }
 }
 
-final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPanel {
+final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPanel implements
+                                                                                    StatusBarCentralWidgetProvider {
   private final Project myProject;
   JComponent myNavigationBar;
   private JComponent myNavBarPanel;
@@ -77,18 +80,23 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
     myProject = project;
 
     UISettings settings = UISettings.getInstance();
-    if (!ExperimentalUI.isNewUI() || settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP) {
+    if (!ExperimentalUI.isNewUI() || (settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP)) {
       add(getNavBarPanel(), BorderLayout.CENTER);
     }
     else {
       setVisible(false);
     }
 
-    getNavBarPanel(); // init myNavigationBar
     putClientProperty(PANEL_KEY, myNavigationBar);
     revalidate();
 
     uiSettingsChanged(settings);
+  }
+
+  @NotNull
+  @Override
+  public JComponent createCentralStatusBarComponent() {
+    return getNavBarPanel();
   }
 
   private JComponent getNavBarPanel() {
@@ -181,7 +189,6 @@ final class MyNavBarWrapperPanel extends NavBarRootPaneExtension.NavBarWrapperPa
       myScrollPane.putClientProperty(JBScrollPane.Flip.class, flipState);
     }
   }
-
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
     // Evanescent me: fix run panel show condition in ExpUI if necessary.
