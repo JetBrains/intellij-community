@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -85,7 +86,7 @@ public class JBCefTestHelper {
   public static void await(@NotNull CountDownLatch latch) {
     try {
       if (!latch.await(5, TimeUnit.SECONDS)) {
-        Assert.fail("timeout");
+        Assert.fail("timeout:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
     catch (InterruptedException e) {
