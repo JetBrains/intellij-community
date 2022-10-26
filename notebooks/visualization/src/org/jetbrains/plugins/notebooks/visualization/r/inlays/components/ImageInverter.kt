@@ -109,13 +109,10 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
     return Color(argb, true)
   }
 
-  fun invert(image: BufferedImage): BufferedImage {
-    val width = ImageUtil.getUserWidth(image)
-    val height = ImageUtil.getUserHeight(image)
-    return ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB).also { outputImage ->
+  fun invert(image: BufferedImage): BufferedImage =
+    blankImageWithSameSize(image).also { outputImage ->
       invertInPlace(image, outputImage)
     }
-  }
 
   fun invert(content: ByteArray): ByteArray {
     val image = ImageIO.read(ByteArrayInputStream(content)) ?: return content
@@ -157,10 +154,15 @@ class ImageInverter(foreground: Color, background: Color, private val graphicsCo
       palette[index] = convertHSLtoRGB(hsl, alpha)
     }
 
-    // UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
-    @Suppress("UndesirableClassUsage")
-    return BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
+    return blankImageWithSameSize(image)
   }
+
+  /**
+   * UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
+   */
+  @Suppress("UndesirableClassUsage")
+  private fun blankImageWithSameSize(image: BufferedImage): BufferedImage =
+    BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
 
   // Note: returns alpha, resulting color resides in `hsl`
   private fun invert(argb: Int): Float {
