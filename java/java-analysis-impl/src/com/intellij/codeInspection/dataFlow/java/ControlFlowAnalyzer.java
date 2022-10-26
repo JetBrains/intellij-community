@@ -1337,10 +1337,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       resourceList.accept(this);
 
       closerExceptions = StreamEx.of(resourceList.iterator()).flatCollection(ExceptionUtil::getCloserExceptions).toSet();
-      if (!closerExceptions.isEmpty()) {
-        twrFinallyDescriptor = new TwrFinally(resourceList, getStartOffset(resourceList));
-        pushTrap(twrFinallyDescriptor);
-      }
+      twrFinallyDescriptor = new TwrFinally(resourceList, getStartOffset(resourceList));
+      pushTrap(twrFinallyDescriptor);
     }
 
     if (tryBlock != null) {
