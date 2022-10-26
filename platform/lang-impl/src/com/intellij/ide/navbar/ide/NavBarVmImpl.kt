@@ -3,158 +3,209 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
+import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.impl.children
-import com.intellij.ide.navbar.ui.FloatingModeHelper
-import com.intellij.ide.navbar.vm.NavBarPopupVm
+import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarVm
-import com.intellij.ide.navbar.vm.NavBarVmItem
-import com.intellij.ide.navbar.vm.PopupResult.*
+import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
+import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.util.flow.zipWithPrevious
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class NavBarVmImpl(
-  cs: CoroutineScope,
+  private val cs: CoroutineScope,
   private val project: Project,
   initialItems: List<NavBarVmItem>,
   activityFlow: Flow<Unit>,
 ) : NavBarVm {
 
-  private val _items: MutableStateFlow<List<NavBarVmItem>> = MutableStateFlow(initialItems)
-  override val items: StateFlow<List<NavBarVmItem>> = _items.asStateFlow()
+  init {
+    require(initialItems.isNotEmpty())
+  }
 
-  private val _itemEvents = MutableSharedFlow<ItemEvent>(replay = 1, onBufferOverflow = DROP_OLDEST)
+  private val _items: MutableStateFlow<List<NavBarItemVmImpl>> = MutableStateFlow(initialItems.mapIndexed(::NavBarItemVmImpl))
 
-  // Flag to block external model changes while user click is being processed
-  private val skipFocusUpdates = AtomicBoolean(false)
+  private val _selectedIndex: MutableStateFlow<Int> = MutableStateFlow(-1)
+
+  private val _popupRequests: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
+
+  private val _popup: MutableStateFlow<NavBarPopupVmImpl?> = MutableStateFlow(null)
 
   init {
-    cs.launch(Dispatchers.Default) {
+    cs.launch {
       activityFlow.collectLatest {
-        if (skipFocusUpdates.get()) {
-          return@collectLatest
-        }
         val items = focusModel(project)
         if (items.isNotEmpty()) {
-          _items.value = items
+          _items.value = items.mapIndexed(::NavBarItemVmImpl)
+          _selectedIndex.value = -1
+          check(_popupRequests.tryEmit(-1))
+          _popup.value = null
         }
       }
     }
-    cs.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-      _itemEvents.collectLatest { e ->
-        when (e) {
-          is ItemEvent.Select -> freezeModelAndInvoke {
-            handleItemSelected(e.item)
-            FloatingModeHelper.hideHint(false)
-          }
-          is ItemEvent.Activate -> navigateTo(project, e.item)
-        }
-      }
+    cs.launch {
+      handleSelectionChange()
+    }
+    cs.launch {
+      handlePopupRequests()
     }
   }
 
-  override val popup = MutableSharedFlow<Pair<NavBarVmItem, NavBarPopupVm>>(replay = 1, onBufferOverflow = DROP_OLDEST)
+  override val items: StateFlow<List<NavBarItemVm>> = _items.asStateFlow()
 
-  override fun selectItem(item: NavBarVmItem) {
-    _itemEvents.tryEmit(ItemEvent.Select(item))
+  override val selectedIndex: StateFlow<Int> = _selectedIndex.asStateFlow()
+
+  override val popup: StateFlow<NavBarPopupVmImpl?> = _popup.asStateFlow()
+
+  override fun selection(): List<Pointer<out NavBarItem>> {
+    EDT.assertIsEdt()
+    val popup = _popup.value
+    if (popup != null) {
+      return popup.selectedItems.map { it.pointer }
+    }
+    else {
+      val selectedIndex = _selectedIndex.value
+      val items = _items.value
+      if (selectedIndex in items.indices) {
+        return listOf(items[selectedIndex].item.pointer)
+      }
+    }
+    return emptyList()
   }
 
-  override fun activateItem(item: NavBarVmItem) {
-    _itemEvents.tryEmit(ItemEvent.Activate(item))
+  override fun shiftSelectionTo(shift: SelectionShift) {
+    when (shift) {
+      SelectionShift.FIRST -> _selectedIndex.value = 0
+      SelectionShift.PREV -> _selectedIndex.update { (it - 1 + items.value.size).mod(items.value.size) }
+      SelectionShift.NEXT -> _selectedIndex.update { (it + 1 + items.value.size).mod(items.value.size) }
+      SelectionShift.LAST -> _selectedIndex.value = items.value.lastIndex
+    }
   }
 
   override fun selectTail() {
-    val items = _items.value
+    val items = items.value
     val i = (items.size - 2).coerceAtLeast(0)
-    val item = items[i]
-    _itemEvents.tryEmit(ItemEvent.Select(item))
+    items[i].select()
   }
 
-  // Run body with no external model changes allowed
-  private suspend fun freezeModelAndInvoke(body: suspend () -> Unit) {
-    check(!skipFocusUpdates.getAndSet(true))
-    try {
-      body()
-    }
-    finally {
-      check(skipFocusUpdates.getAndSet(false))
+  override fun showPopup() {
+    check(_popupRequests.tryEmit(_selectedIndex.value))
+  }
+
+  private suspend fun handleSelectionChange() {
+    _items.collectLatest { items: List<NavBarItemVmImpl> ->
+      _selectedIndex.zipWithPrevious().collect { (unselected, selected) ->
+        if (unselected >= 0) {
+          items[unselected].selected.value = false
+        }
+        if (selected >= 0) {
+          items[selected].selected.value = true
+        }
+        if (_popup.value != null) {
+          check(_popupRequests.tryEmit(selected))
+        }
+      }
     }
   }
 
-  private suspend fun handleItemSelected(item: NavBarVmItem) {
-    var items = _items.value
-    var selectedIndex = items.indexOf(item).takeUnless { it < 0 } ?: return
-    var children = item.children() ?: return
+  private suspend fun handlePopupRequests() {
+    _popupRequests.collectLatest {
+      handlePopupRequest(it)
+    }
+  }
 
-    while (true) {
-      // Popup with [children] should be displayed for user at [selectedItem] item
-      // Empty [children] is an illegal case, popup navigation ends
-      if (children.isEmpty()) {
+  private suspend fun handlePopupRequest(index: Int) {
+    _popup.value = null // hide previous popup
+    if (index < 0) {
+      return
+    }
+    val items = _items.value
+    val children = items[index].item.children() ?: return
+    if (children.isEmpty()) {
+      return
+    }
+    val nextItem = items.getOrNull(index + 1)?.item
+    popupLoop(items.slice(0..index).map { it.item }, NavBarPopupVmImpl(
+      items = children,
+      initialSelectedItemIndex = children.indexOf(nextItem),
+    ))
+  }
+
+  private suspend fun popupLoop(items: List<NavBarVmItem>, popup: NavBarPopupVmImpl) {
+    _popup.value = popup
+    val selectedChild = try {
+      popup.result.await()
+    }
+    catch (ce: CancellationException) {
+      _popup.value = null
+      throw ce
+    }
+    val expandResult = autoExpand(selectedChild)
+                       ?: return
+    when (expandResult) {
+      is ExpandResult.NavigateTo -> {
+        navigateTo(project, expandResult.target)
         return
       }
-
-      // Force suspend to render new navbar for proper popup positioning
-      yield()
-
-      val popupResult = suspendCancellableCoroutine { continuation ->
-        val nextItem = items.getOrNull(selectedIndex + 1)
-        popup.tryEmit(Pair(items[selectedIndex], NavBarPopupVmImpl(children, nextItem, continuation)))
-      }
-
-      when (popupResult) {
-        PopupResultCancel -> {
-          FloatingModeHelper.hideHint(true)
-          return
+      is ExpandResult.NextPopup -> {
+        val newItems = items + expandResult.expanded
+        val lastIndex = newItems.indices.last
+        val newItemVms = newItems.mapIndexed(::NavBarItemVmImpl).also {
+          it[lastIndex].selected.value = true
         }
-        PopupResultLeft -> {
-          if (selectedIndex > 0) {
-            selectedIndex--
-            children = items[selectedIndex].children() ?: return
-          }
-        }
-        PopupResultRight -> {
-          if (selectedIndex < items.size - 1) {
-            selectedIndex++
-          }
-          val localChildren = items[selectedIndex].children() ?: return
-          if (localChildren.isEmpty()) {
-            selectedIndex--
-          }
-          else {
-            children = localChildren
-          }
-        }
-        is PopupResultSelect -> {
-          val selectedChild = popupResult.item
-          val expandResult = autoExpand(selectedChild) ?: return
-          when (expandResult) {
-            is ExpandResult.NavigateTo -> {
-              navigateTo(project, expandResult.target)
-              return
-            }
-            is ExpandResult.NextPopup -> {
-              val newModel = items.slice(0..selectedIndex) + expandResult.expanded
-              _items.value = newModel
-              items = newModel
-              selectedIndex = newModel.indices.last
-              children = expandResult.children
-            }
-          }
-        }
+        _items.value = newItemVms
+        _selectedIndex.value = lastIndex
+        popupLoop(newItems, NavBarPopupVmImpl(
+          items = expandResult.children,
+          initialSelectedItemIndex = -1,
+        ))
       }
     }
   }
-}
 
-private sealed interface ItemEvent {
-  class Select(val item: NavBarVmItem) : ItemEvent
-  class Activate(val item: NavBarVmItem) : ItemEvent
+  private inner class NavBarItemVmImpl(
+    val index: Int,
+    val item: NavBarVmItem,
+  ) : NavBarItemVm {
+
+    override val presentation: NavBarItemPresentation get() = item.presentation
+
+    override val isModuleContentRoot: Boolean get() = item.isModuleContentRoot
+
+    override val isFirst: Boolean get() = index == 0
+
+    override val isLast: Boolean get() = index == items.value.lastIndex
+
+    override val selected: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    override fun isNextSelected(): Boolean {
+      return index == _selectedIndex.value - 1
+    }
+
+    override fun isInactive(): Boolean {
+      return _selectedIndex.value != -1 && _selectedIndex.value < index
+    }
+
+    override fun select() {
+      _selectedIndex.value = index
+    }
+
+    override fun showPopup() {
+      this@NavBarVmImpl.showPopup()
+    }
+
+    override fun activate() {
+      cs.launch {
+        navigateTo(project, item)
+      }
+    }
+  }
 }
 
 private sealed interface ExpandResult {

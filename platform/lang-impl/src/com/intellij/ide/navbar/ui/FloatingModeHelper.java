@@ -4,7 +4,6 @@ package com.intellij.ide.navbar.ui;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.navbar.ide.NavBarVmImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -32,9 +31,8 @@ import java.awt.*;
 
 public class FloatingModeHelper {
 
-  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavBarVmImpl navigationBar, Project project) {
+  public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, Project project, NewNavBarPanel panel) {
     final JPanel component = new JPanel(new BorderLayout());
-    NewNavBarPanel panel = new NewNavBarPanel(cs, navigationBar, project);
     component.add(panel);
     component.setOpaque(true);
 

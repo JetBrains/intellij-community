@@ -28,7 +28,7 @@ internal class StaticNavBarPanel(
         }
         else {
           coroutineScope {
-            add(NewNavBarPanel(this@coroutineScope, vm, project))
+            add(NewNavBarPanel(this@coroutineScope, vm, project, isFloating = false))
           }
         }
       }

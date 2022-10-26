@@ -3,9 +3,13 @@ package com.intellij.ide.navbar.vm
 
 internal interface NavBarPopupVm {
 
-  val items: List<NavBarVmItem>
+  val items: List<NavBarPopupItem>
 
-  val selectedChild: NavBarVmItem?
+  val initialSelectedItemIndex: Int
 
-  fun popupResult(result: PopupResult)
+  fun itemsSelected(selectedItems: List<NavBarPopupItem>)
+
+  fun cancel()
+
+  fun complete()
 }

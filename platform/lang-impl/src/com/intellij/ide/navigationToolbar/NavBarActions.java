@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navbar.actions.NavBarActionHandler;
+import com.intellij.ide.navbar.ide.NavBarIdeUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public sealed abstract class NavBarActions extends AnAction implements DumbAware {
@@ -32,7 +34,9 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
   }
 
   private @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
-    return ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
+    return NavBarIdeUtil.isNavbarV2Enabled()
+           ? isEnabledInV2() ? event.getData(NAV_BAR_ACTION_HANDLER) : null
+           : ComponentUtil.getParentOfType(NavBarPanel.class, event.getData(CONTEXT_COMPONENT));
   }
 
   @Override
@@ -41,6 +45,10 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
   }
 
   protected boolean isEnabledWithActivePopupSpeedSearch() {
+    return true;
+  }
+
+  protected boolean isEnabledInV2() {
     return true;
   }
 
@@ -109,6 +117,12 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
   }
 
   public static final class Escape extends NavBarActions {
+
+    @Override
+    protected boolean isEnabledInV2() {
+      return false;
+    }
+
     @Override
     protected boolean isEnabledWithActivePopupSpeedSearch() {
       return false;
@@ -128,6 +142,12 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
   }
 
   public static final class Navigate extends NavBarActions {
+
+    @Override
+    protected boolean isEnabledInV2() {
+      return false;
+    }
+
     @Override
     void actionPerformed(@NotNull NavBarActionHandler handler) {
       handler.navigate();
