@@ -10,24 +10,54 @@ import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.KtStatementExpression
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 
 class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
     @RequiresReadLock
     @RequiresBackgroundThread
     override fun getFeatures(usage: PsiElement): Bag {
-        val properties = Bag()
+        val features = Bag()
         if (!Registry.`is`("similarity.find.usages.kotlin.clustering.enable")) {
-            return properties
+            return features
         }
-        val statement = getContext(usage)
-        if (statement != null) {
-            properties.addAll(KotlinSimilarityFeaturesExtractor(usage, statement).getFeatures())
+        val context = getContext(usage)
+        if (context is KtParameter || context is KtFunction) {
+            val function = PsiTreeUtil.findFirstParent(
+                context,
+                false,
+                Condition { e: PsiElement? ->
+                    e is KtFunction
+                })
+            if (function is KtFunction) {
+                features.addAll(collectFeaturesForFunctionSignature(function, context))
+            }
+        } else if (context != null) {
+            features.addAll(KotlinSimilarityFeaturesExtractor(usage, context).getFeatures())
         }
+        return features
+    }
 
-        return properties
+    private fun collectFeaturesForFunctionSignature(function: KtFunction, context: PsiElement): Bag {
+        val features = Bag()
+        features.add("""OVERRIDE: ${function.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD) != null}""")
+        features.add("""NAME: ${function.name}""")
+        features.add("""FUNCTION_CLASS: ${function::class}""")
+        features.add("""RETURN_TYPE: ${toFeature(function.getReturnTypeReference())}""")
+        features.add("""RECEIVER_TYPE_REFERENCE: ${function.receiverTypeReference != null}""")
+        function.valueParameters.forEach {
+            features.add(
+                """PARAMETER_TYPE: ${
+                    if (it == context) "USAGE: " + toFeature(it.typeReference) else toFeature(it?.typeReference)
+                }"""
+            )
+        }
+        return features
+    }
+
+    private fun toFeature(typeReference: KtTypeReference?): String? {
+        return typeReference?.text?.filterNot { it.isWhitespace() }
     }
 
     fun getContext(element: PsiElement): PsiElement? {

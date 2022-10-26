@@ -1,0 +1,12 @@
+[{
+8|fun| f(a: |A|, count:Int) {,
+13|fun| f(a:|A|, count:Int) {,
+22|fun| f(a:|A|, count: Int) {}
+, {
+18|fun| Bar.f(a:|A|) {}
+, {
+26|fun| f(a:|A|) {}
+, {
+30|fun| f (b:Bar):List<|A|> {,
+33|fun| f (b:Bar):List<|A| > { |//spaces in type reference}
+]
