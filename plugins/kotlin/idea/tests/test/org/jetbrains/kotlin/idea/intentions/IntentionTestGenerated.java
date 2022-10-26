@@ -11303,6 +11303,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/introduceVariable/beforeExpression.kt");
         }
 
+        @TestMetadata("insideLambda.kt")
+        public void testInsideLambda() throws Exception {
+            runTest("testData/intentions/introduceVariable/insideLambda.kt");
+        }
+
         @TestMetadata("noType.kt")
         public void testNoType() throws Exception {
             runTest("testData/intentions/introduceVariable/noType.kt");
