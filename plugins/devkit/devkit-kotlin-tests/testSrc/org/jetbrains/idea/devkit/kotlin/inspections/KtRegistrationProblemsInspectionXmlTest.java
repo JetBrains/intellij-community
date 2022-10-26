@@ -36,17 +36,9 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
                                "MyModuleComponentInterface.kt");
   }
 
-  public void testComponentUnresolvedClass() {
-    myFixture.testHighlighting("ComponentUnresolvedClass.xml");
-  }
-
   public void testActionAbstractClass() {
     myFixture.testHighlighting("ActionAbstractClass.xml",
                                "MyAbstractAction.kt");
-  }
-
-  public void testActionUnresolvedClass() {
-    myFixture.testHighlighting("ActionUnresolvedClass.xml");
   }
 
   public void testActionWithoutDefaultCtor() {
