@@ -1297,9 +1297,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       IdeaPlugin root = DescriptorUtil.getIdeaPlugin((XmlFile)file);
-      if (root != null) {
-        XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
+      if (root == null) return;
       XmlTag rootTag = root.getXmlTag();
+      if (rootTag == null) return;
+      XmlTag after = getLastSubTag(rootTag, root.getId(), root.getDescription(), root.getVersion(), root.getName());
       XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
 
       XmlTag addedTag;
@@ -1313,18 +1314,17 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       if (StringUtil.isEmpty(myTagValue) && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
         int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
         NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
-        }
       }
     }
 
-    private static XmlTag getLastSubTag(IdeaPlugin root, DomElement... children) {
+    private static XmlTag getLastSubTag(@NotNull XmlTag rootTag, DomElement... children) {
       Set<XmlTag> childrenTags = new HashSet<>();
       for (DomElement child : children) {
         if (child != null) {
           childrenTags.add(child.getXmlTag());
         }
       }
-      XmlTag[] subTags = root.getXmlTag().getSubTags();
+      XmlTag[] subTags = rootTag.getSubTags();
       for (int i = subTags.length - 1; i >= 0; i--) {
         if (childrenTags.contains(subTags[i])) {
           return subTags[i];
