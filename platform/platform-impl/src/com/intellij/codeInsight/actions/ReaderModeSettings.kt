@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
@@ -60,9 +60,11 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     }
 
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {
-      for (m in EP_READER_MODE_MATCHER.iterable) {
+      for (m in EP_READER_MODE_MATCHER.lazySequence()) {
         val matched = m.matches(project, file, editor, mode)
-        if (matched != null) return matched
+        if (matched != null) {
+          return matched
+        }
       }
 
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false

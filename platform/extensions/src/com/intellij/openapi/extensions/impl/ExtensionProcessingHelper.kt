@@ -4,6 +4,7 @@
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.ApiStatus
 import java.util.AbstractMap.SimpleImmutableEntry
@@ -21,7 +22,7 @@ import java.util.function.Supplier
 // It is not only about performance and common sense, but also supporting ability to mock extension list in tests (custom list is set).
 @ApiStatus.Internal
 object ExtensionProcessingHelper {
-  fun <T> forEachExtensionSafe(iterable: Iterable<T>, extensionConsumer: Consumer<T>) {
+  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<T>) {
     for (t in iterable) {
       if (t == null) {
         break
@@ -180,4 +181,11 @@ object ExtensionProcessingHelper {
     }
     return cache
   }
+}
+
+@ApiStatus.Internal
+inline fun <T : Any> ExtensionPointName<T>.findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
+  val point = point as ExtensionPointImpl<T>
+  return point.sortedAdapters.firstOrNull { it.orderId == id }?.createInstance(point.componentManager)
+         ?: lazySequence().firstOrNull { idGetter(it) == id }
 }

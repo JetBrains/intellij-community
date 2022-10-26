@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.template.Template
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointName.create
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -50,7 +50,7 @@ interface FullLineLanguageSupporter {
   }
 
   companion object {
-    private val INSTANCE = create<FullLineLanguageSupporter>("org.jetbrains.completion.full.line.fullLineLanguageSupport")
+    private val INSTANCE = ExtensionPointName<FullLineLanguageSupporter>("org.jetbrains.completion.full.line.fullLineLanguageSupport")
 
     fun supportedLanguages() = INSTANCE.extensionList.map { it.language }
 

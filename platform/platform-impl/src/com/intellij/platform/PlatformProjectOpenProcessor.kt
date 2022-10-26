@@ -276,7 +276,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         virtualFile.refresh(false, false)
       }
 
-      for (configurator in EP_NAME.iterable) {
+      for (configurator in EP_NAME.lazySequence()) {
         try {
           if (configurator is DirectoryProjectConfigurator.AsyncDirectoryProjectConfigurator) {
             configurator.configure(project, virtualFile, moduleRef, newProject)

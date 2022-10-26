@@ -12,12 +12,12 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
-import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
@@ -377,7 +377,7 @@ class KotlinFacetEditorGeneralTab(
 
         editor.initialize()
 
-        for (creator in KotlinFacetValidatorCreator.EP_NAME.getExtensions()) {
+        for (creator in KotlinFacetValidatorCreator.EP_NAME.extensions) {
             validatorsManager.registerValidator(creator.create(editor, validatorsManager, editorContext))
         }
 

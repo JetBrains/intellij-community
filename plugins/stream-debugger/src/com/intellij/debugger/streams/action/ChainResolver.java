@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Helps {@link TraceStreamAction} understand if there is a suitable chain under the debugger position or not.
  */
-class ChainResolver {
+final class ChainResolver {
   private static final Logger LOG = Logger.getInstance(ChainResolver.class);
 
   private final AtomicReference<ChainsSearchResult> mySearchResult = new AtomicReference<>(new ChainsSearchResult(0, -1, null));
@@ -51,7 +51,7 @@ class ChainResolver {
     }
     else {
       ReadAction.nonBlocking(() -> {
-        LibrarySupportProvider provider = ExtensionProcessingHelper
+        LibrarySupportProvider provider = ExtensionProcessingHelper.INSTANCE
           .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
         boolean found = provider != null;
         if (LOG.isDebugEnabled()) {

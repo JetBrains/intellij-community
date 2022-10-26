@@ -33,9 +33,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactPropertiesEntity
@@ -728,7 +725,7 @@ class ArtifactTest : ArtifactsTestCase() {
     assertEmpty(newArtifact.rootElement.children)
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
     try {
@@ -739,7 +736,7 @@ class ArtifactTest : ArtifactsTestCase() {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {

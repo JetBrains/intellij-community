@@ -48,7 +48,7 @@ class SdkTypeRegistrationTest : HeavyPlatformTestCase() {
         Disposer.dispose(sdkTypeDisposable)
       }
     })
-    SdkType.EP_NAME.getPoint().registerExtension(MockSdkType(), sdkTypeDisposable)
+    SdkType.EP_NAME.point.registerExtension(MockSdkType(), sdkTypeDisposable)
   }
 }
 

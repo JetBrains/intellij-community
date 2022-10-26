@@ -1,231 +1,206 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions;
+@file:Suppress("DeprecatedCallableAddReplaceWith")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.extensions
 
-import java.util.Collections;
-import java.util.List;
-import java.util.function.*;
-import java.util.stream.Stream;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeIfAbsent
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSafeIfAny
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.forEachExtensionSafe
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroupingKey
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
+import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.util.function.*
+import java.util.function.Function
+import java.util.stream.Stream
 
 /**
- * Provides access to an <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html">extension point</a>. Instances of this class can be safely stored in static final fields.
- * <p>For project-level and module-level extension points use {@link ProjectExtensionPointName} instead to make it evident that corresponding
- * {@link AreaInstance} must be passed.</p>
+ * Provides access to an [extension point](https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html). Instances of this class can be safely stored in static final fields.
+ *
+ * For project-level and module-level extension points use [ProjectExtensionPointName] instead to make it evident that corresponding
+ * [AreaInstance] must be passed.
  */
-public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ExtensionPointName(@NotNull @NonNls String name) {
-    super(name);
-  }
-
-  public static @NotNull <T> ExtensionPointName<T> create(@NonNls @NotNull String name) {
-    return new ExtensionPointName<>(name);
+class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName<T>(name) {
+  companion object {
+    @JvmStatic
+    fun <T : Any> create(name: @NonNls String): ExtensionPointName<T> = ExtensionPointName(name)
   }
 
   /**
-   * Consider using {@link #getExtensionList()}.
+   * Consider using [.getExtensionList].
    */
-  public T @NotNull [] getExtensions() {
-    return getPointImpl(null).getExtensions();
-  }
+  val extensions: Array<T>
+    get() = getPointImpl(null).extensions
 
-  public @NotNull List<T> getExtensionList() {
-    return getPointImpl(null).getExtensionList();
-  }
+  val extensionList: List<T>
+    get() = getPointImpl(null).extensionList
 
   /**
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
-  public void forEachExtensionSafe(@NotNull Consumer<? super T> consumer) {
-    ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(getPointImpl(null), consumer);
+  fun forEachExtensionSafe(consumer: Consumer<in T>) {
+    forEachExtensionSafe(getPointImpl(null), consumer)
   }
 
-  public @Nullable T findFirstSafe(@NotNull Predicate<? super T> predicate) {
-    return ExtensionProcessingHelper.INSTANCE.findFirstSafe(predicate, getPointImpl(null));
+  fun findFirstSafe(predicate: Predicate<in T>): T? {
+    return findFirstSafe(predicate, getPointImpl(null))
   }
 
-  public @Nullable <R> R computeSafeIfAny(@NotNull Function<? super T, ? extends R> processor) {
-    return ExtensionProcessingHelper.INSTANCE.computeSafeIfAny(processor, getPointImpl(null));
+  fun <R> computeSafeIfAny(processor: Function<in T, out R?>): R? {
+    return computeSafeIfAny(processor, getPointImpl(null))
   }
 
-  public @NotNull List<T> getExtensionsIfPointIsRegistered() {
-    return getExtensionsIfPointIsRegistered(null);
+  val extensionsIfPointIsRegistered: List<T>
+    get() = getExtensionsIfPointIsRegistered(null)
+
+  fun getExtensionsIfPointIsRegistered(areaInstance: AreaInstance?): List<T> {
+    @Suppress("DEPRECATION")
+    val area = areaInstance?.extensionArea ?: Extensions.getRootArea()
+    return area?.getExtensionPointIfRegistered<T>(name)?.extensionList ?: emptyList()
   }
 
-  public @NotNull List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    //noinspection deprecation
-    ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
-    ExtensionPoint<@NotNull T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
-    return point == null ? Collections.emptyList() : point.getExtensionList();
+  @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"))
+  fun extensions(): Stream<T> {
+    return getPointImpl(null).extensions()
   }
 
-  /**
-   * @deprecated Use {@code getExtensionList().stream()}
-   */
-  @Deprecated
-  public @NotNull Stream<T> extensions() {
-    return getPointImpl(null).extensions();
-  }
-
-  public boolean hasAnyExtensions() {
-    return getPointImpl(null).size() != 0;
-  }
+  fun hasAnyExtensions(): Boolean = getPointImpl(null).size() != 0
 
   /**
-   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   * Consider using [ProjectExtensionPointName.getExtensions]
    */
-  public @NotNull List<T> getExtensionList(@Nullable AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).getExtensionList();
-  }
+  fun getExtensionList(areaInstance: AreaInstance?): List<T> = getPointImpl(areaInstance).extensionList
 
   /**
-   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   * Consider using [ProjectExtensionPointName.getExtensions]
    */
-  public T @NotNull [] getExtensions(@Nullable AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).getExtensions();
+  fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
+
+  @Deprecated("Use app-level app extension point.")
+  fun extensions(areaInstance: AreaInstance?): Stream<T> {
+    return getPointImpl(areaInstance).extensionList.stream()
   }
 
-  /**
-   * @deprecated Use app-level app extension point.
-   */
-  @Deprecated
-  public @NotNull Stream<T> extensions(@Nullable AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).getExtensionList().stream();
-  }
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("""use {@link #getPoint()} to access application-level extensions and {@link ProjectExtensionPointName#getPoint(AreaInstance)}
+    to access project-level and module-level extensions""")
+  fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
-  /**
-   * @deprecated use {@link #getPoint()} to access application-level extensions and {@link ProjectExtensionPointName#getPoint(AreaInstance)}
-   * to access project-level and module-level extensions
-   */
-  @Deprecated
-  public @NotNull ExtensionPoint<@NotNull T> getPoint(@Nullable AreaInstance areaInstance) {
-    return getPointImpl(areaInstance);
-  }
+  val point: ExtensionPoint<T>
+    get() = getPointImpl(null)
 
-  public @NotNull ExtensionPoint<@NotNull T> getPoint() {
-    return getPointImpl(null);
-  }
-
-  public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
-    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE);
+  fun <V : T> findExtension(instanceOf: Class<V>): V? {
+    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE)
   }
 
   @ApiStatus.Internal
-  public <V> @NotNull List<@NotNull T> findExtensions(@NotNull Class<V> instanceOf) {
-    return getPointImpl(null).findExtensions(instanceOf);
+  fun <V> findExtensions(instanceOf: Class<V>): List<T> {
+    return getPointImpl(null).findExtensions(instanceOf)
   }
 
-  public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> exactClass) {
-    //noinspection ConstantConditions
-    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE);
+  fun <V : T> findExtensionOrFail(exactClass: Class<V>): V {
+    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE)!!
   }
 
-  public @Nullable <V extends T> V findFirstAssignableExtension(@NotNull Class<V> instanceOf) {
-    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO);
+  fun <V : T> findFirstAssignableExtension(instanceOf: Class<V>): V? {
+    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO)
   }
 
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
-   * events will be fired during iteration and probably it will be not expected.
-   * <p>
+   * events will be fired during iteration, and probably it will be not expected.
+   *
    * Use only for interface extension points, not for bean.
-   * <p>
+   *
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case stop iteration).
-   * <p>
+   *
    * Possible use cases:
    * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
    * 2. Iterated only once per application (no need to cache extension list internally).
    */
   @ApiStatus.Internal
-  public @NotNull Iterable<T> getIterable() {
-    return getPointImpl(null);
+  fun getIterable(): Iterable<T?> = getPointImpl(null)
+
+  @ApiStatus.Internal
+  fun lazySequence(): Sequence<T> {
+    return getPointImpl(null).iterator().asSequence().filterNotNull()
   }
 
   @ApiStatus.Internal
-  public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);
+  fun processWithPluginDescriptor(consumer: BiConsumer<in T, in PluginDescriptor>) {
+    getPointImpl(null).processWithPluginDescriptor( /* shouldBeSorted = */true, consumer)
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
-    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
+  fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
+    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable)
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    getPointImpl(null).addExtensionPointListener(listener, false, null);
+  fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
+    getPointImpl(null).addExtensionPointListener(listener, false, null)
   }
 
-  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
-                                        @NotNull ExtensionPointListener<T> listener) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null);
+  fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null)
   }
 
-  public void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    getPointImpl(null).removeExtensionPointListener(listener);
+  fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
+    getPointImpl(null).removeExtensionPointListener(listener)
   }
 
-  public void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
-    getPointImpl(null).addChangeListener(listener, parentDisposable);
+  fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
+    getPointImpl(null).addChangeListener(listener, parentDisposable)
   }
 
   /**
    * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
-   * <p>
+   *
    * To exclude extension from cache, return null key.
-   * <p>
-   * {@code cacheId} is required because it's dangerous to rely on identity of functional expressions.
+   *
+   * `cacheId` is required because it's dangerous to rely on identity of functional expressions.
    * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
    */
   @ApiStatus.Experimental
-  public <K extends @NotNull Object> @NotNull List<T> getByGroupingKey(@NotNull K key,
-                                                                       @NotNull Class<?> cacheId,
-                                                                       @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return ExtensionProcessingHelper.INSTANCE.getByGroupingKey(getPointImpl(null), cacheId, key, keyMapper);
+  fun <K : Any> getByGroupingKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): List<T> {
+    return getByGroupingKey(point = getPointImpl(null), cacheId = cacheId, key = key, keyMapper = keyMapper)
   }
 
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
-   * <p>
+   *
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public <K extends @NotNull Object> @Nullable T getByKey(@NotNull K key,
-                                                          @NotNull Class<?> cacheId,
-                                                          @NotNull Function<@NotNull T, @Nullable K> keyMapper) {
-    return ExtensionProcessingHelper.INSTANCE.getByKey(getPointImpl(null), key, cacheId, keyMapper);
+  fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
+    return getByKey(getPointImpl(null), key, cacheId, keyMapper)
   }
 
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
-   * <p>
+   *
    * To exclude extension from cache, return null key.
    */
   @ApiStatus.Experimental
-  public <K extends @NotNull Object, V extends @NotNull Object> @Nullable V getByKey(@NotNull K key,
-                                     @NotNull Class<?> cacheId,
-                                     @NotNull Function<@NotNull T, @Nullable K> keyMapper,
-                                     @NotNull Function<@NotNull T, @Nullable V> valueMapper) {
-    return ExtensionProcessingHelper.INSTANCE.getByKey(getPointImpl(null), key, cacheId, keyMapper, valueMapper);
+  fun <K : Any, V : Any> getByKey(key: K,
+                                  cacheId: Class<*>,
+                                  keyMapper: Function<T, K?>,
+                                  valueMapper: Function<T, V?>): V? {
+    return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper, valueMapper = valueMapper)
   }
 
   @ApiStatus.Experimental
-  public <K extends @NotNull Object, V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull K key,
-                                                                                           @NotNull Class<?> cacheId,
-                                                                                           @NotNull Function<@NotNull K, @NotNull V> valueMapper) {
-    return ExtensionProcessingHelper.INSTANCE.computeIfAbsent(getPointImpl(null), key, cacheId, valueMapper);
+  fun <K : Any, V : Any> computeIfAbsent(key: K, cacheId: Class<*>, valueMapper: Function<K, V>): V {
+    return computeIfAbsent(point = getPointImpl(null), key = key, cacheId = cacheId, valueProducer = valueMapper)
   }
 
   /**
    * Cache some value per extension point.
    */
   @ApiStatus.Experimental
-  public <V extends @NotNull Object> @NotNull V computeIfAbsent(@NotNull Class<?> cacheId, @NotNull Supplier<@NotNull V> valueMapper) {
-    return ExtensionProcessingHelper.INSTANCE.computeIfAbsent(getPointImpl(null), cacheId, valueMapper);
+  fun <V : Any> computeIfAbsent(cacheId: Class<*>, valueMapper: Supplier<V>): V {
+    return computeIfAbsent(getPointImpl(null), cacheId, valueMapper)
   }
 }

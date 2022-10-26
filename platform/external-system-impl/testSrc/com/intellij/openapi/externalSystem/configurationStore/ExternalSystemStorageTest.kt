@@ -14,7 +14,6 @@ import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -765,8 +764,8 @@ class ExternalSystemStorageTest {
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
-      FacetType.EP_NAME.getPoint().registerExtension(MockFacetType(), disposableRule.disposable)
-      FacetType.EP_NAME.getPoint().registerExtension(MockSubFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockFacetType(), disposableRule.disposable)
+      FacetType.EP_NAME.point.registerExtension(MockSubFacetType(), disposableRule.disposable)
     }
   }
 

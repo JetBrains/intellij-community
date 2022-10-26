@@ -495,11 +495,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       LOG.debug("enter: canClose()")
     }
 
-    for (handler in CLOSE_HANDLER_EP.iterable) {
-      if (handler == null) {
-        break
-      }
-
+    for (handler in CLOSE_HANDLER_EP.lazySequence()) {
       try {
         if (!handler.canClose(project)) {
           LOG.debug("close canceled by $handler")

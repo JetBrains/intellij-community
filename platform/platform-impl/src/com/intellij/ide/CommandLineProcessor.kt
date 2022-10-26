@@ -183,7 +183,7 @@ object CommandLineProcessor {
   private val PROTOCOL_EP_NAME = ExtensionPointName<ProtocolHandler>("com.intellij.protocolHandler")
 
   private suspend fun processProtocol(scheme: String, query: String): CliResult {
-    for (handler in PROTOCOL_EP_NAME.iterable) {
+    for (handler in PROTOCOL_EP_NAME.lazySequence()) {
       if (scheme == handler.scheme) {
         return handler.process(query)
       }

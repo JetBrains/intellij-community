@@ -152,7 +152,7 @@ object ProjectUtil {
     }
 
     var virtualFileResult: Result<VirtualFile>? = null
-    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.iterable) {
+    for (provider in ProjectOpenProcessor.EXTENSION_POINT_NAME.lazySequence()) {
       if (!provider.isStrongProjectInfoHolder) {
         continue
       }

@@ -1,88 +1,64 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions;
+package com.intellij.openapi.extensions
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSafeIfAny
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
+import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.util.function.BiConsumer
+import java.util.function.Function
+import java.util.function.Predicate
+import java.util.stream.Stream
 
 /**
  * Do not use.
- * <p>
+ *
  * Provides access to a project-level or module-level extension point. Since extensions are supposed to be stateless, storing different
- * instances of an extension for each project or module just waste the memory and complicates code, so <strong>it's strongly recommended not
- * to introduce new project-level and module-level extension points</strong>. If you need to have {@link com.intellij.openapi.project.Project Project}
- * or {@link com.intellij.openapi.module.Module Module} instance in some extension's method, just pass it as a parameter and use the default
+ * instances of an extension for each project or module just waste the memory and complicates code, so **it's strongly recommended not
+ * to introduce new project-level and module-level extension points**. If you need to have [Project][com.intellij.openapi.project.Project]
+ * or [Module][com.intellij.openapi.module.Module] instance in some extension's method, just pass it as a parameter and use the default
  * application-level extension point.
  */
-public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ProjectExtensionPointName(@NotNull @NonNls String name) {
-    super(name);
+class ProjectExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName<T>(name) {
+  fun getPoint(areaInstance: AreaInstance): ExtensionPoint<T> = getPointImpl(areaInstance)
+
+  fun getExtensions(areaInstance: AreaInstance): List<T> = getPointImpl(areaInstance).extensionList
+
+  @Deprecated("Use {@link #getExtensions(AreaInstance)}", ReplaceWith("getExtensions(areaInstance).stream()"))
+  fun extensions(areaInstance: AreaInstance): Stream<T> = getPointImpl(areaInstance).extensionList.stream()
+
+  fun <V : T> findExtension(instanceOf: Class<V>, areaInstance: AreaInstance): V? {
+    return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE)
   }
 
-  public @NotNull ExtensionPoint<@NotNull T> getPoint(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance);
+  fun <V : T> findExtensionOrFail(instanceOf: Class<V>, areaInstance: AreaInstance): V {
+    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE)!!
   }
 
-  public @NotNull List<T> getExtensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).getExtensionList();
+  fun hasAnyExtensions(areaInstance: AreaInstance): Boolean = getPointImpl(areaInstance).size() != 0
+
+  fun findFirstSafe(areaInstance: AreaInstance, predicate: Predicate<in T>): T? {
+    return findFirstSafe(predicate, getPointImpl(areaInstance))
   }
 
-  /**
-   * @deprecated Use {@link #getExtensions(AreaInstance)}
-   */
-  @Deprecated
-  public @NotNull Stream<T> extensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).getExtensionList().stream();
+  fun <R> computeSafeIfAny(areaInstance: AreaInstance, processor: Function<T, R?>): R? {
+    return computeSafeIfAny<T, R>(processor, getPointImpl(areaInstance))
   }
 
-  public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE);
+  fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
+    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable)
   }
 
-  public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
-    //noinspection ConstantConditions
-    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
+  fun addChangeListener(areaInstance: AreaInstance, listener: Runnable, parentDisposable: Disposable?) {
+    getPointImpl(areaInstance).addChangeListener(listener, parentDisposable)
   }
 
-  public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).size() != 0;
-  }
-
-  public @Nullable T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
-    return ExtensionProcessingHelper.INSTANCE.findFirstSafe(predicate, getPointImpl(areaInstance));
-  }
-
-  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
-    return ExtensionProcessingHelper.INSTANCE.computeSafeIfAny(processor, getPointImpl(areaInstance));
-  }
-
-
-  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
-                                        @NotNull ExtensionPointListener<T> listener,
-                                        @Nullable Disposable parentDisposable) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
-  }
-
-  public void addChangeListener(@NotNull AreaInstance areaInstance, @NotNull Runnable listener, @Nullable Disposable parentDisposable) {
-    getPointImpl(areaInstance).addChangeListener(listener, parentDisposable);
-  }
-
-  public void processWithPluginDescriptor(@NotNull AreaInstance areaInstance, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer);
+  fun processWithPluginDescriptor(areaInstance: AreaInstance, consumer: BiConsumer<in T, in PluginDescriptor?>) {
+    getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer)
   }
 
   @ApiStatus.Experimental
-  public @NotNull Iterable<T> getIterable(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance);
-  }
+  fun getIterable(areaInstance: AreaInstance): Iterable<T?> = getPointImpl(areaInstance)
 }

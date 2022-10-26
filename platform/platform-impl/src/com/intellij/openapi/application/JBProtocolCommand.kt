@@ -35,7 +35,7 @@ abstract class JBProtocolCommand(private val command: String) {
       }
 
       val commandName = parts[1]
-      for (command in EP_NAME.iterable) {
+      for (command in EP_NAME.lazySequence()) {
         if (command.command != commandName) {
           continue
         }

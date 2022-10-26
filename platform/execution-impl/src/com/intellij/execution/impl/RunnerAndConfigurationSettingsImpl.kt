@@ -495,7 +495,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.iterable.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.lazySequence().filter { runnerId == it.runnerId }.toList()
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()

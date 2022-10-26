@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -118,7 +118,7 @@ class ArtifactLoadingTest {
       StringUtil.convertLineSeparators(File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText()))
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     runInEdt {
       runWriteAction {
@@ -133,7 +133,7 @@ class ArtifactLoadingTest {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runInEdt {

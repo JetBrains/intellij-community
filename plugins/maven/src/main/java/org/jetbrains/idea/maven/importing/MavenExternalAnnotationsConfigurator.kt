@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 @ApiStatus.Internal
-class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+private class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
                                              MavenWorkspaceConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
@@ -65,8 +65,7 @@ class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plu
     return true
   }
 
-  private fun getResolvers(): MutableList<ExternalAnnotationsArtifactsResolver> =
-    ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
+  private fun getResolvers(): List<ExternalAnnotationsArtifactsResolver> = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
 
   private fun doConfigure(project: Project, mavenProjects: Sequence<MavenProject>, libraryFinder: (libraryName: String) -> Library?) {
     val toProcess = mutableMapOf<MavenArtifact, Library>()

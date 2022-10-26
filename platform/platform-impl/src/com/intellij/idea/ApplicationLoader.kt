@@ -22,8 +22,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -376,21 +376,14 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
 }
 
 fun findStarter(key: String): ApplicationStarter? {
-  val point = ApplicationStarter.EP_NAME.point as ExtensionPointImpl<ApplicationStarter>
-  var result: ApplicationStarter? = point.sortedAdapters.firstOrNull { it.orderId == key }  ?.createInstance(point.componentManager)
-  if (result == null) {
-    result = point.firstOrNull {
-      @Suppress("DEPRECATION")
-      it?.commandName == key
-    }
-  }
-  return result
+  @Suppress("DEPRECATION")
+  return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
 fun initConfigurationStore(app: ApplicationImpl) {
   var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
-  for (listener in ApplicationLoadListener.EP_NAME.iterable) {
+  for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
     try {
       (listener ?: break).beforeApplicationLoaded(app, configPath)
     }

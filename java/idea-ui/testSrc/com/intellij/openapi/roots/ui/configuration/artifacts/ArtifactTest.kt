@@ -47,10 +47,6 @@ class ArtifactTest : HeavyPlatformTestCase() {
 }
 
 private class MockArtifactTypeForRename : ArtifactType("mock", Supplier { "Mock" }) {
-  companion object {
-    fun getInstance() = EP_NAME.findExtension(MockArtifactTypeForRename::class.java)!!
-  }
-
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
   override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
@@ -60,7 +56,7 @@ private class MockArtifactTypeForRename : ArtifactType("mock", Supplier { "Mock"
   }
 }
 
-private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
   val disposable = Disposer.newDisposable()
   registerExtension(extension, extensionPoint, disposable)
   try {
@@ -71,7 +67,7 @@ private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: 
   }
 }
 
-private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
   val artifactTypeDisposable = Disposer.newDisposable()
   Disposer.register(disposable, Disposable {
     runWriteAction {
