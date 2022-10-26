@@ -254,7 +254,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (myNavBarPanel != null) return myNavBarPanel;
 
     if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myNavigationBar = myProject.getService(NavBarService.class).getStaticNavBarPanel();
+      myNavigationBar = NavBarService.getInstance(myProject).getStaticNavBarPanel();
     }
     else {
       myNavigationBar = new ReusableNavBarPanel(myProject, true);
@@ -299,7 +299,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   public void uiSettingsChanged(@NotNull UISettings settings) {
 
     if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      myProject.getService(NavBarService.class).uiSettingsChanged(settings);
+      NavBarService.getInstance(myProject).uiSettingsChanged(settings);
     }
 
     if (myNavigationBar == null) {
