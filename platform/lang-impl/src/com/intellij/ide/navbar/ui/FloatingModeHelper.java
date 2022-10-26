@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
@@ -24,96 +24,94 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class FloatingModeHelper {
 
-  private static Component myContextComponent;
-  private static LightweightHint myHint = null;
-  private static JComponent myHintContainer;
-  private static RelativePoint myLocationCache;
-
   public static LightweightHint showHint(DataContext dataContext, CoroutineScope cs, NavBarVmImpl navigationBar, Project project) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    NewNavBarPanel component = new NewNavBarPanel(cs, navigationBar, project);
-    panel.add(component);
-    panel.setOpaque(true);
+    final JPanel component = new JPanel(new BorderLayout());
+    NewNavBarPanel panel = new NewNavBarPanel(cs, navigationBar, project);
+    component.add(panel);
+    component.setOpaque(true);
 
     if (ExperimentalUI.isNewUI()) {
-      panel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets()));
-      panel.setBackground(JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND);
+      component.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.StatusBar.Breadcrumbs.floatingBorderInsets()));
+      component.setBackground(JBUI.CurrentTheme.StatusBar.Breadcrumbs.FLOATING_BACKGROUND);
     }
     else {
-      panel.setBackground(UIUtil.getListBackground());
+      component.setBackground(UIUtil.getListBackground());
     }
 
-    myHint = new LightweightHint(panel) {
+    var hint = new LightweightHint(component) {
       @Override
       public void hide() {
         super.hide();
         CoroutineScopeKt.cancel(cs, null);
       }
     };
-    myHint.setForceShowAsPopup(true);
-    myHint.setFocusRequestor(component);
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    hint.setForceShowAsPopup(true);
+    hint.setFocusRequestor(panel);
 
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-
     if (editor == null) {
-      myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      getHintContainerShowPoint(component, project).doWhenDone((Consumer<RelativePoint>)relativePoint -> {
-        final Component owner = focusManager.getFocusOwner();
-        final Component cmp = relativePoint.getComponent();
-        if (cmp instanceof JComponent && cmp.isShowing()) {
-          myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                      owner instanceof JComponent ? (JComponent)owner : null,
-                      new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
-        }
-      });
+      Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      RelativePoint relativePoint = getHintContainerShowPoint(project, panel, null, contextComponent);
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      final Component cmp = relativePoint.getComponent();
+      if (cmp instanceof JComponent && cmp.isShowing()) {
+        hint.show(
+          (JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
+          owner instanceof JComponent ? (JComponent)owner : null,
+          new HintHint(relativePoint.getComponent(), relativePoint.getPoint())
+        );
+      }
     }
     else {
-      myHintContainer = editor.getContentComponent();
-      getHintContainerShowPoint(component, project).doWhenDone((Consumer<RelativePoint>)rp -> {
-        Point p = rp.getPointOn(myHintContainer).getPoint();
-        final HintHint hintInfo = new HintHint(editor, p);
-        HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
-      });
+      var hintContainer = editor.getContentComponent();
+      RelativePoint rp = getHintContainerShowPoint(project, panel, hintContainer, null);
+      Point p = rp.getPointOn(hintContainer).getPoint();
+      final HintHint hintInfo = new HintHint(editor, p);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
     }
 
-    component.setOnSizeChange(size -> {
-      myHint.setSize(size);
+    panel.setOnSizeChange(size -> {
+      hint.setSize(size);
     });
 
-    return myHint;
+    return hint;
   }
 
-  static AsyncResult<RelativePoint> getHintContainerShowPoint(JComponent component, Project project) {
-    AsyncResult<RelativePoint> result = new AsyncResult<>();
-    if (myLocationCache == null) {
-      if (myHintContainer != null) {
-        final Point p = AbstractPopup.getCenterOf(myHintContainer, component);
-        p.y -= myHintContainer.getVisibleRect().height / 4;
-        myLocationCache = RelativePoint.fromScreen(p);
+  private static RelativePoint getHintContainerShowPoint(
+    @NotNull Project project,
+    @NotNull JComponent panel,
+    @Nullable JComponent hintContainer,
+    @Nullable Component contextComponent
+  ) {
+    final Ref<RelativePoint> myLocationCache = new Ref<>();
+    if (hintContainer != null) {
+      final Point p = AbstractPopup.getCenterOf(hintContainer, panel);
+      p.y -= hintContainer.getVisibleRect().height / 4;
+      myLocationCache.set(RelativePoint.fromScreen(p));
+    }
+    else {
+      DataManager dataManager = DataManager.getInstance();
+      if (contextComponent != null) {
+        DataContext ctx = dataManager.getDataContext(contextComponent);
+        myLocationCache.set(JBPopupFactory.getInstance().guessBestPopupLocation(ctx));
       }
       else {
-        DataManager dataManager = DataManager.getInstance();
-        if (myContextComponent != null) {
+        dataManager.getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
+          var myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
           DataContext ctx = dataManager.getDataContext(myContextComponent);
-          myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(ctx);
-        }
-        else {
-          dataManager.getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
-            myContextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-            DataContext ctx = dataManager.getDataContext(myContextComponent);
-            myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(ctx);
-          });
-        }
+          myLocationCache.set(JBPopupFactory.getInstance().guessBestPopupLocation(ctx));
+        });
       }
     }
-    final Component c = myLocationCache.getComponent();
+    final Component c = myLocationCache.get().getComponent();
     if (!(c instanceof JComponent && c.isShowing())) {
       //Yes. It happens sometimes.
       // 1. Empty frame. call nav bar, select some package and open it in Project View
@@ -122,17 +120,8 @@ public class FloatingModeHelper {
       // 4. Call nav bar. NPE. ta da
       final JComponent ideFrame = WindowManager.getInstance().getIdeFrame(project).getComponent();
       final JRootPane rootPane = UIUtil.getRootPane(ideFrame);
-      myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(rootPane);
+      myLocationCache.set(JBPopupFactory.getInstance().guessBestPopupLocation(rootPane));
     }
-    result.setDone(myLocationCache);
-    return result;
+    return myLocationCache.get();
   }
-
-  public static void hideHint(boolean ok) {
-    if (myHint != null) {
-      myHint.hide(ok);
-      myHint = null;
-    }
-  }
-
 }
