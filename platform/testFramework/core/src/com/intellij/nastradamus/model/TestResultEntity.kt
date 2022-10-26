@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.nastradamus.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 enum class TestStatus(status: String) {
   SUCCESS("success"),
   FAILED("failed"),
@@ -16,4 +18,11 @@ enum class TestStatus(status: String) {
   }
 }
 
-data class TestResultEntity(val name: String, val status: TestStatus)
+data class TestResultEntity(
+  val name: String,
+  val status: TestStatus,
+
+  @JsonProperty("run_order")
+  val runOrder: Int,
+  val duration: Long // in milliseconds
+)

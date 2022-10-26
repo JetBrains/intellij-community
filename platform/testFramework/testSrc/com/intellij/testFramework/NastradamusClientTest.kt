@@ -50,12 +50,14 @@ class NastradamusClientTest {
   @Test
   @Ignore("Do not use TC. Use mocks / test data")
   fun collectingTestResultsFromTC() {
-    val tests = TeamCityClient.getTestRunInfo("225920558")
+    val tests = TeamCityClient.getTestRunInfo("226830449")
 
-    val testResultEntities = tests.map {
+    val testResultEntities = tests.map { json ->
       TestResultEntity(
-        name = it.findValue("name").asText(),
-        status = TestStatus.fromString(it.findValue("status").asText())
+        name = json.findValue("name").asText(),
+        status = TestStatus.fromString(json.findValue("status").asText()),
+        runOrder = json.findValue("runOrder").asInt(),
+        duration = json.findValue("duration")?.asLong() ?: 0
       )
     }
 
@@ -83,8 +85,8 @@ class NastradamusClientTest {
 
     val testRunResult = TestResultRequestEntity(
       testRunResults = listOf(
-        TestResultEntity(name = "org.jetbrains.xx", status = TestStatus.FAILED),
-        TestResultEntity(name = "com.intellij.bxjs", status = TestStatus.SUCCESS),
+        TestResultEntity(name = "org.jetbrains.xx", status = TestStatus.FAILED, runOrder = -1, duration = 10),
+        TestResultEntity(name = "com.intellij.bxjs", status = TestStatus.SUCCESS, runOrder = 10, duration = 0),
       )
     )
 

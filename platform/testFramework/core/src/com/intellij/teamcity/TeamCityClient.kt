@@ -195,7 +195,9 @@ object TeamCityClient {
     println("Getting test run info from TC ...")
 
     do {
-      val fullUrl = restUri.resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition")
+      val fullUrl = restUri
+        .resolve("testOccurrences?locator=build:(id:$buildId),count:$countOfTestsOnPage,start:$startPosition" +
+                 "&includePersonal=true&fields=testOccurrence(id,name,status,duration,runOrder)")
 
       currentTests = get(fullUrl).fields().asSequence()
         .filter { it.key == "testOccurrence" }

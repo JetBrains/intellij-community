@@ -20,6 +20,7 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
   fun sendSortingRequest(sortRequestEntity: SortRequestEntity): List<TestCaseEntity> {
     val uri = URIBuilder(baseUrl.resolve("/sort/").normalize())
       .addParameter("build_id", TeamCityClient.buildId)
+      .addParameter("buckets", TestCaseLoader.TEST_RUNNERS_COUNT.toString())
       .build()
 
     val stringJson = jacksonObjectMapper().writeValueAsString(sortRequestEntity)
@@ -48,18 +49,23 @@ class NastradamusClient(val baseUrl: URI = URI(System.getProperty("idea.nastrada
       println("Received data from $uri: $jsonTree")
     }
 
-    return jsonTree.fields().asSequence().single { it.key == "sorted_tests" }.value.map {
-      TestCaseEntity(it.findValue("name").asText())
-    }
+    return jsonTree.fields().asSequence()
+      .single { it.key == "sorted_tests" }.value
+      .get(TestCaseLoader.TEST_RUNNER_INDEX.toString())
+      .map {
+        TestCaseEntity(it.findValue("name").asText())
+      }
   }
 
   fun collectTestRunResults(): TestResultRequestEntity {
     val tests = TeamCityClient.getTestRunInfo()
 
-    val testResultEntities = tests.map {
+    val testResultEntities = tests.map { json ->
       TestResultEntity(
-        name = it.findValue("name").asText(),
-        status = TestStatus.fromString(it.findValue("status").asText())
+        name = json.findValue("name").asText(),
+        status = TestStatus.fromString(json.findValue("status").asText()),
+        runOrder = json.findValue("runOrder").asInt(),
+        duration = json.findValue("duration")?.asLong() ?: 0
       )
     }
 
