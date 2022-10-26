@@ -312,25 +312,26 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
       val component = UIBuilder(this).process(state, topPanel)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        validate()
-        val windows = windows.toList()
-        for (window in windows) {
-          (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
-        }
+        runActivity("editor reopening post-processing") {
+          component.isFocusable = false
+          removeAll()
+          add(component, BorderLayout.CENTER)
 
-        component.isFocusable = false
-
-        removeAll()
-        add(component, BorderLayout.CENTER)
-        // clear empty splitters
-        for (window in windows) {
-          if (window.tabCount == 0) {
-            window.removeFromSplitter()
+          validate()
+          val windows = windows.toList()
+          for (window in windows) {
+            // clear empty splitters
+            if (window.tabCount == 0) {
+              window.removeFromSplitter()
+            }
+            else {
+              (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
+            }
           }
-        }
 
-        if (requestFocus) {
-          currentWindow?.selectedComposite?.preferredFocusedComponent?.requestFocusInWindow()
+          if (requestFocus) {
+            currentWindow?.selectedComposite?.preferredFocusedComponent?.requestFocusInWindow()
+          }
         }
       }
     }
@@ -603,26 +604,28 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   fun getOrCreateCurrentWindow(file: VirtualFile): EditorWindow {
     val windows = findWindows(file)
     if (currentWindow == null) {
-      val iterator = this.windows.iterator()
       if (!windows.isEmpty()) {
         setCurrentWindow(windows[0], false)
       }
-      else if (iterator.hasNext()) {
-        setCurrentWindow(iterator.next(), false)
-      }
       else {
-        createCurrentWindow()
+        val anyWindow = this.windows.firstOrNull()
+        if (anyWindow == null) {
+          createCurrentWindow()
+        }
+        else {
+          setCurrentWindow(window = anyWindow, requestFocus = false)
+        }
       }
     }
     else if (!windows.isEmpty()) {
       if (!windows.contains(currentWindow)) {
-        setCurrentWindow(windows[0], false)
+        setCurrentWindow(window = windows[0], requestFocus = false)
       }
     }
     return currentWindow!!
   }
 
-  fun createCurrentWindow() {
+  internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
     currentWindow = createEditorWindow()
     add(currentWindow!!.panel, BorderLayout.CENTER)
@@ -848,7 +851,7 @@ internal class EditorSplittersState(element: Element) {
     proportion = splitterElement?.getAttributeValue("split-proportion")?.toFloat() ?: 0.5f
 
     val leaf = element.getChild("leaf")
-    files = (leaf.getChildren("file")?.map {
+    files = (leaf?.getChildren("file")?.map {
       FileEntry(
         pinned = it.getAttributeBooleanValue(PINNED),
         currentInTab = it.getAttributeValue(CURRENT_IN_TAB, "true").toBoolean(),
