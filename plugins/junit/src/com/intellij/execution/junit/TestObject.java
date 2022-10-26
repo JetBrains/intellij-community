@@ -314,9 +314,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     DumbService dumbService = DumbService.getInstance(project);
-    PsiClass classFromCommon = ReadAction.nonBlocking(() -> dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope))).executeSynchronously();
 
-    String launcherVersion = getVersion(classFromCommon);
+    String launcherVersion = getLibraryVersion("org.junit.platform.commons.JUnitException", globalSearchScope, project);
     if (launcherVersion == null) {
       LOG.info("Failed to detect junit 5 launcher version, please configure explicit dependency");
       return;
@@ -346,8 +345,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //add standard engines only if no engine api is present
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
-      PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> ReadAction.nonBlocking(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope)).executeSynchronously());
-      String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
+      String jupiterVersion = ObjectUtils.notNull(getLibraryVersion(JUnitUtil.TEST5_ANNOTATION, globalSearchScope, project), "5.0.0");
       if (JUnitUtil.hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
         if (!JUnitUtil.hasPackageWithDirectories(psiFacade, JUPITER_ENGINE_NAME, globalSearchScope)) {
           downloadDependenciesWhenRequired(project, additionalDependencies,
@@ -421,22 +419,27 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
   }
 
-  private static String getVersion(PsiClass classFromCommon) {
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
-    if (virtualFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.getInstance(classFromCommon.getProject());
-      VirtualFile root = index.getClassRootForFile(virtualFile);
-      if (root != null && root.getFileSystem() instanceof JarFileSystem) {
-        VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-        if (manifestFile != null) {
-          try (final InputStream inputStream = manifestFile.getInputStream()) {
-            Attributes mainAttributes = new Manifest(inputStream).getMainAttributes();
-            if ("junit.org".equals(mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR))) {
-              return mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-            }
+  private static String getLibraryVersion(String className, GlobalSearchScope globalSearchScope, Project project) {
+    VirtualFile root = ReadAction.nonBlocking(() -> {
+      PsiClass psiClass = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() ->
+        JavaPsiFacade.getInstance(project).findClass(className, globalSearchScope)
+      );
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
+      if (virtualFile == null) return null;
+
+      return ProjectFileIndex.getInstance(project).getClassRootForFile(virtualFile);
+    }).executeSynchronously();
+
+    if (root != null && root.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifestFile != null) {
+        try (final InputStream inputStream = manifestFile.getInputStream()) {
+          Attributes mainAttributes = new Manifest(inputStream).getMainAttributes();
+          if ("junit.org".equals(mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR))) {
+            return mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
           }
-          catch (IOException ignored) { }
         }
+        catch (IOException ignored) { }
       }
     }
 
