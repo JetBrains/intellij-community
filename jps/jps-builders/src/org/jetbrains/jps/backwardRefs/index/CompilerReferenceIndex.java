@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -186,8 +187,13 @@ public class CompilerReferenceIndex<Input> {
   public static void removeIndexFiles(File buildDir, Throwable cause) {
     final File indexDir = getIndexDir(buildDir);
     if (indexDir.exists()) {
-      FileUtil.delete(indexDir);
-      LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
+      try {
+        FileUtilRt.deleteRecursively(indexDir.toPath());
+        LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
+      }
+      catch (Throwable e) {
+        LOG.info("failed to delete backward reference index", e);
+      }
     }
   }
 
