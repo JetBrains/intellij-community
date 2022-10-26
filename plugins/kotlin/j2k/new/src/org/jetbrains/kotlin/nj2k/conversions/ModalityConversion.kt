@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
-import org.jetbrains.kotlin.nj2k.tree.Visibility.*
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
 
 class ModalityConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

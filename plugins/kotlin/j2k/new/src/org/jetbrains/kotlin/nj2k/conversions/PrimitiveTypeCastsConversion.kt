@@ -53,7 +53,8 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
 
                 if (expressionTypeAsPrimitive.isNumberType()
                     && toTypeAsPrimitive.isNumberType()
-                    && toTypeAsPrimitive.isStrongerThan(expressionTypeAsPrimitive)) {
+                    && toTypeAsPrimitive.isStrongerThan(expressionTypeAsPrimitive)
+                ) {
                     return JKLiteralExpression(
                         expression.literal,
                         expectedType

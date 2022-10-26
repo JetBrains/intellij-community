@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters2
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
+import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -48,12 +48,14 @@ internal val fixTypeMismatchDiagnosticBasedProcessing =
                 val factory = KtPsiFactory(element)
                 element.replace(factory.createExpressionByPattern("($0)!!", element.text))
             }
+
             element is KtExpression
                     && realType.isSignedOrUnsignedNumberType()
                     && expectedType.isSignedOrUnsignedNumberType() -> {
                 val fix = NumberConversionFix(element, realType, expectedType, disableIfAvailable = null)
                 fix.invoke(element.project, null, element.containingFile)
             }
+
             element is KtLambdaExpression
                     && expectedType.isNothing() -> {
                 for (valueParameter in element.valueParameters) {

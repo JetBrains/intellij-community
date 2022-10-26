@@ -9,14 +9,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer
+import org.jetbrains.kotlin.idea.j2k.post.processing.FileBasedPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.GeneralPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.j2k.JKPostProcessingTarget
 import org.jetbrains.kotlin.j2k.elements
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asLabel
-import org.jetbrains.kotlin.idea.j2k.post.processing.FileBasedPostProcessing
-import org.jetbrains.kotlin.idea.j2k.post.processing.GeneralPostProcessing
-import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 

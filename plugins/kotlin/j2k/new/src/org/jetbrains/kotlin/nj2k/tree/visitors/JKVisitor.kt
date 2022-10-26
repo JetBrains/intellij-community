@@ -60,8 +60,11 @@ abstract class JKVisitor {
     open fun visitJavaSwitchCase(javaSwitchCase: JKJavaSwitchCase) = visitTreeElement(javaSwitchCase)
     open fun visitJavaDefaultSwitchCase(javaDefaultSwitchCase: JKJavaDefaultSwitchCase) = visitJavaSwitchCase(javaDefaultSwitchCase)
     open fun visitJavaLabelSwitchCase(javaLabelSwitchCase: JKJavaLabelSwitchCase) = visitJavaSwitchCase(javaLabelSwitchCase)
-    open fun visitJavaClassicLabelSwitchCase(javaClassicLabelSwitchCase: JKJavaClassicLabelSwitchCase) = visitJavaLabelSwitchCase(javaClassicLabelSwitchCase)
-    open fun visitJavaArrowLabelSwitchCase(javaArrowSwitchLabelCase: JKJavaArrowSwitchLabelCase) = visitJavaLabelSwitchCase(javaArrowSwitchLabelCase)
+    open fun visitJavaClassicLabelSwitchCase(javaClassicLabelSwitchCase: JKJavaClassicLabelSwitchCase) =
+        visitJavaLabelSwitchCase(javaClassicLabelSwitchCase)
+
+    open fun visitJavaArrowLabelSwitchCase(javaArrowSwitchLabelCase: JKJavaArrowSwitchLabelCase) =
+        visitJavaLabelSwitchCase(javaArrowSwitchLabelCase)
 
 
     open fun visitExpression(expression: JKExpression) = visitTreeElement(expression)
@@ -107,6 +110,7 @@ abstract class JKVisitor {
     open fun visitKtItExpression(ktItExpression: JKKtItExpression) = visitExpression(ktItExpression)
     open fun visitKtAnnotationArrayInitializerExpression(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression) =
         visitExpression(ktAnnotationArrayInitializerExpression)
+
     open fun visitJavaSwitchExpression(javaSwitchExpression: JKJavaSwitchExpression) = visitExpression(javaSwitchExpression)
 
 
@@ -154,7 +158,9 @@ abstract class JKVisitor {
     open fun visitJavaSwitchStatement(javaSwitchStatement: JKJavaSwitchStatement) = visitStatement(javaSwitchStatement)
     open fun visitJavaThrowStatement(javaThrowStatement: JKJavaThrowStatement) = visitStatement(javaThrowStatement)
     open fun visitJavaTryStatement(javaTryStatement: JKJavaTryStatement) = visitStatement(javaTryStatement)
-    open fun visitJavaSynchronizedStatement(javaSynchronizedStatement: JKJavaSynchronizedStatement) = visitStatement(javaSynchronizedStatement)
+    open fun visitJavaSynchronizedStatement(javaSynchronizedStatement: JKJavaSynchronizedStatement) =
+        visitStatement(javaSynchronizedStatement)
+
     open fun visitJavaAssertStatement(javaAssertStatement: JKJavaAssertStatement) = visitStatement(javaAssertStatement)
     open fun visitJavaForLoopStatement(javaForLoopStatement: JKJavaForLoopStatement) = visitLoopStatement(javaForLoopStatement)
     open fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) = visitMethod(javaAnnotationMethod)

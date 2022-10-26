@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.ConstraintsCollector
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.ConstraintsCollector
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -16,16 +18,19 @@ class MutabilityConstraintsCollector : ConstraintsCollector() {
     private val callResolver = CallResolver(MUTATOR_CALL_FQ_NAMES)
 
     override fun ConstraintBuilder.collectConstraints(
-      element: KtElement,
-      boundTypeCalculator: BoundTypeCalculator,
-      inferenceContext: InferenceContext,
-      resolutionFacade: ResolutionFacade
+        element: KtElement,
+        boundTypeCalculator: BoundTypeCalculator,
+        inferenceContext: InferenceContext,
+        resolutionFacade: ResolutionFacade
     ) {
         when (element) {
             is KtQualifiedExpression -> {
                 val callExpression = element.selectorExpression?.safeAs<KtCallExpression>() ?: return
                 if (callResolver.isNeededCall(callExpression, resolutionFacade)) {
-                    element.receiverExpression.isTheSameTypeAs(org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State.LOWER, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.USE_AS_RECEIVER)
+                    element.receiverExpression.isTheSameTypeAs(
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.State.LOWER,
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.USE_AS_RECEIVER
+                    )
                 }
             }
         }

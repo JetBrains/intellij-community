@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability
 
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundType
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeEnhancer
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
@@ -27,6 +27,7 @@ class MutabilityBoundTypeCalculator(
                     expression.receiverExpression.boundType(inferenceContext)
                 else null
             }
+
             else -> null
         }
     }

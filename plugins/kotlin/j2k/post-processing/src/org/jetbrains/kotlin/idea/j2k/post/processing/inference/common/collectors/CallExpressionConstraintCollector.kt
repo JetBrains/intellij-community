@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CallExpressionConstraintCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
-      element: KtElement,
-      boundTypeCalculator: BoundTypeCalculator,
-      inferenceContext: InferenceContext,
-      resolutionFacade: ResolutionFacade
+        element: KtElement,
+        boundTypeCalculator: BoundTypeCalculator,
+        inferenceContext: InferenceContext,
+        resolutionFacade: ResolutionFacade
     ) {
         if (element !is KtCallElement) return
         val call = element.resolveToCall(resolutionFacade) ?: return
@@ -58,6 +58,7 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
                         }?.let { typeVariable ->
                             TypeVariableLabel(typeVariable)
                         } ?: label
+
                     else -> label
                 },
                 typeParameters.map { typeParameter ->
@@ -79,7 +80,10 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
             val receiverBoundType =
                 (originalDescriptor.extensionReceiverParameter ?: originalDescriptor.dispatchReceiverParameter)?.boundType()
                     ?: return@run
-            receiverExpressionBoundType.isSubtypeOf(receiverBoundType, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RECEIVER_PARAMETER)
+            receiverExpressionBoundType.isSubtypeOf(
+                receiverBoundType,
+                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RECEIVER_PARAMETER
+            )
         }
 
         val parameterToArgument = call.candidateDescriptor.valueParameters.let { parameters ->
@@ -91,8 +95,8 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
                     if (parameter.isVararg && KotlinBuiltIns.isArrayOrPrimitiveArray(parameter.type)) {
                         if (KotlinBuiltIns.isPrimitiveArray(parameter.type))
                             BoundTypeImpl(
-                              GenericLabel(NoClassReference),//not important as it just a primitive type
-                              emptyList()
+                                GenericLabel(NoClassReference), //not important as it just a primitive type
+                                emptyList()
                             ) else parameterBoundType.typeParameters.getOrNull(0)?.boundType
                     } else parameterBoundType
                 arguments.arguments.mapNotNull { argument ->
@@ -103,7 +107,10 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
 
         for ((parameter, argument) in parameterToArgument) {
             val argumentExpression = argument.getArgumentExpression() ?: continue
-            argumentExpression.isSubtypeOf(parameter, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.PARAMETER)
+            argumentExpression.isSubtypeOf(
+                parameter,
+                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.PARAMETER
+            )
         }
     }
 }

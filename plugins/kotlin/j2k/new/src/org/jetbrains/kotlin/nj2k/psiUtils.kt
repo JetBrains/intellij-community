@@ -92,9 +92,9 @@ fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -
 
 fun JvmClassKind.toJk() = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS
-    JvmClassKind.INTERFACE ->  JKClass.ClassKind.INTERFACE
-    JvmClassKind.ANNOTATION ->  JKClass.ClassKind.ANNOTATION
-    JvmClassKind.ENUM ->  JKClass.ClassKind.ENUM
+    JvmClassKind.INTERFACE -> JKClass.ClassKind.INTERFACE
+    JvmClassKind.ANNOTATION -> JKClass.ClassKind.ANNOTATION
+    JvmClassKind.ENUM -> JKClass.ClassKind.ENUM
 }
 
 private fun PsiMember.handleProtectedVisibility(referenceSearcher: ReferenceSearcher): Visibility {

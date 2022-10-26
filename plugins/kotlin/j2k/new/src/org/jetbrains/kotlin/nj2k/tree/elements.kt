@@ -303,7 +303,7 @@ class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceEl
     var declaration by child(declaration)
 }
 
-interface JKErrorElement: JKElement {
+interface JKErrorElement : JKElement {
     val psi: PsiElement?
     val reason: String?
 }

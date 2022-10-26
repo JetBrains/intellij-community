@@ -90,7 +90,7 @@ val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
 abstract class RecursiveApplicableConversionWithState<S>(
     context: NewJ2kConverterContext,
     private val initialState: S
-)  : MatchBasedConversion(context) {
+) : MatchBasedConversion(context) {
     override fun onElementChanged(new: JKTreeElement, old: JKTreeElement) {
         somethingChanged = true
     }

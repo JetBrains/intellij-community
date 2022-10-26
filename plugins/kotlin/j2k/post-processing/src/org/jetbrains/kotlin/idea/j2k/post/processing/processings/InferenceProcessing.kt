@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ByInfoSuperFunctionsProvider
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintsCollectorAggregator
@@ -16,7 +14,9 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
-import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtElement
 
 internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
@@ -40,20 +40,20 @@ internal class NullabilityInferenceProcessing : InferenceProcessing() {
         resolutionFacade: ResolutionFacade,
         converterContext: NewJ2kConverterContext
     ): InferenceFacade = InferenceFacade(
-      NullabilityContextCollector(resolutionFacade, converterContext),
-      ConstraintsCollectorAggregator(
-        resolutionFacade,
-        NullabilityConstraintBoundProvider(),
-        listOf(
+        NullabilityContextCollector(resolutionFacade, converterContext),
+        ConstraintsCollectorAggregator(
+            resolutionFacade,
+            NullabilityConstraintBoundProvider(),
+            listOf(
                 CommonConstraintsCollector(),
                 CallExpressionConstraintCollector(),
                 FunctionConstraintsCollector(ByInfoSuperFunctionsProvider(resolutionFacade, converterContext)),
                 NullabilityConstraintsCollector()
             )
         ),
-      BoundTypeCalculatorImpl(resolutionFacade, NullabilityBoundTypeEnhancer(resolutionFacade)),
-      NullabilityStateUpdater(),
-      NullabilityDefaultStateProvider()
+        BoundTypeCalculatorImpl(resolutionFacade, NullabilityBoundTypeEnhancer(resolutionFacade)),
+        NullabilityStateUpdater(),
+        NullabilityDefaultStateProvider()
     )
 }
 
@@ -62,19 +62,19 @@ internal class MutabilityInferenceProcessing : InferenceProcessing() {
         resolutionFacade: ResolutionFacade,
         converterContext: NewJ2kConverterContext
     ): InferenceFacade = InferenceFacade(
-      MutabilityContextCollector(resolutionFacade, converterContext),
-      ConstraintsCollectorAggregator(
-        resolutionFacade,
-        MutabilityConstraintBoundProvider(),
-        listOf(
+        MutabilityContextCollector(resolutionFacade, converterContext),
+        ConstraintsCollectorAggregator(
+            resolutionFacade,
+            MutabilityConstraintBoundProvider(),
+            listOf(
                 CommonConstraintsCollector(),
                 CallExpressionConstraintCollector(),
                 FunctionConstraintsCollector(ByInfoSuperFunctionsProvider(resolutionFacade, converterContext)),
                 MutabilityConstraintsCollector()
             )
         ),
-      MutabilityBoundTypeCalculator(resolutionFacade, MutabilityBoundTypeEnhancer()),
-      MutabilityStateUpdater(),
-      MutabilityDefaultStateProvider()
+        MutabilityBoundTypeCalculator(resolutionFacade, MutabilityBoundTypeEnhancer()),
+        MutabilityStateUpdater(),
+        MutabilityDefaultStateProvider()
     )
 }

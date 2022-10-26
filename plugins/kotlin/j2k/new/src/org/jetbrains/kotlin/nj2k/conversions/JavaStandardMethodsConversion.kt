@@ -12,9 +12,13 @@ import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.Modality.OPEN
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKClassType
+import org.jetbrains.kotlin.nj2k.types.JKJavaVoidType
+import org.jetbrains.kotlin.nj2k.types.fqName
+import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 class JavaStandardMethodsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

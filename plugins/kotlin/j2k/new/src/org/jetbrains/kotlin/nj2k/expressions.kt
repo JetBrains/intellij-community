@@ -119,7 +119,7 @@ fun useExpression(
 
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, typeFactory: JKTypeFactory) =
     JKCallExpressionImpl(
-        JKUnresolvedMethod(//TODO resolve assert
+        JKUnresolvedMethod( //TODO resolve assert
             "assert",
             typeFactory,
             typeFactory.types.unit
@@ -179,7 +179,7 @@ internal fun JKTreeElement.forEachDescendant(action: (JKElement) -> Unit) {
     this.forEachChild { it.forEachDescendant(action) }
 }
 
-internal inline fun <reified E: JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
+internal inline fun <reified E : JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
     forEachDescendant { if (it is E) action(it) }
 }
 
@@ -260,11 +260,13 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                 element.also {
                     element.literalType = JKClassLiteralExpression.ClassLiteralType.KOTLIN_CLASS
                 }
+
             is JKTypeElement ->
                 JKTypeElement(
                     element.type.replaceJavaClassWithKotlinClassType(symbolProvider),
                     element::annotationList.detached()
                 )
+
             else -> applyRecursive(element, ::handleAnnotationParameter)
         }
 
@@ -279,14 +281,17 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
                         when (argument) {
                             is JKAnnotationNameParameter ->
                                 JKNamedArgument(value, JKNameIdentifier(argument.name.value))
+
                             else -> JKArgumentImpl(value)
                         }
 
                     }
                 )
             )
+
             is JKKtAnnotationArrayInitializerExpression ->
                 JKKtAnnotationArrayInitializerExpression(initializers.map { it.detached(this).toExpression(symbolProvider) })
+
             is JKExpression -> this
             else -> error("Bad initializer")
         }
@@ -299,6 +304,7 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
             && (operator.token == JKOperatorToken.MINUS || operator.token == JKOperatorToken.PLUS)
             && expression is JKLiteralExpression
     -> operator.token.text + expression.cast<JKLiteralExpression>().literal
+
     this is JKLiteralExpression -> literal
     else -> null
 }

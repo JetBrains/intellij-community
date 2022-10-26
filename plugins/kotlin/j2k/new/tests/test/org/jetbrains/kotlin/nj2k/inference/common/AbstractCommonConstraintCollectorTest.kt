@@ -3,37 +3,37 @@
 package org.jetbrains.kotlin.nj2k.inference.common
 
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CallExpressionConstraintCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CommonConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.NullabilityConstraintBoundProvider
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.psi.KtTypeElement
 
 abstract class AbstractCommonConstraintCollectorTest : AbstractConstraintCollectorTest() {
     override fun createInferenceFacade(resolutionFacade: ResolutionFacade): InferenceFacade =
         InferenceFacade(
-          object : ContextCollector(resolutionFacade) {
+            object : ContextCollector(resolutionFacade) {
                 override fun ClassReference.getState(typeElement: KtTypeElement?): State =
                     State.UNKNOWN
             },
-          ConstraintsCollectorAggregator(
-            resolutionFacade,
-            NullabilityConstraintBoundProvider(),
-            listOf(
+            ConstraintsCollectorAggregator(
+                resolutionFacade,
+                NullabilityConstraintBoundProvider(),
+                listOf(
                     CommonConstraintsCollector(),
                     CallExpressionConstraintCollector(),
                     FunctionConstraintsCollector(ResolveSuperFunctionsProvider(resolutionFacade))
                 )
             ),
-          BoundTypeCalculatorImpl(resolutionFacade, BoundTypeEnhancer.ID),
-          object : StateUpdater() {
+            BoundTypeCalculatorImpl(resolutionFacade, BoundTypeEnhancer.ID),
+            object : StateUpdater() {
                 override fun TypeElementBasedTypeVariable.updateState() = Unit
             },
-          object : DefaultStateProvider() {
+            object : DefaultStateProvider() {
                 override fun defaultStateFor(typeVariable: TypeVariable): State = State.LOWER
             },
-          renderDebugTypes = true
+            renderDebugTypes = true
         )
 }

@@ -44,6 +44,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     this
                 } else newSelector
             }
+
             ReplaceType.REPLACE_WITH_QUALIFIER -> newSelector
         }.let { expression ->
             conversion.actionAfter?.invoke(expression.copyTreeAndDetach()) ?: expression
@@ -58,6 +59,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 if (conversion.byArgumentsFilter?.invoke(arguments.arguments.map { it.value }) == false) return@firstOrNull false
                 true
             }
+
         is JKFieldAccessExpression ->
             conversions[identifier.deepestFqName()]?.firstOrNull { conversion ->
                 if (conversion.from !is Field) return@firstOrNull false
@@ -79,6 +81,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 if (conversion.filter?.invoke(this) == false) return@firstOrNull false
                 true
             }
+
         else -> null
     }?.takeIf { conversion ->
         conversion.sinceKotlin?.let { it <= moduleApiVersion } ?: true
@@ -108,12 +111,14 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         from::typeArgumentList.detached()
                     )
                 }
+
                 is JKFieldAccessExpression ->
                     JKCallExpressionImpl(
                         methodSymbol,
                         JKArgumentList(),
                         JKTypeArgumentList()
                     )
+
                 is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol)
                 is JKNewExpression ->
                     JKCallExpressionImpl(
@@ -121,6 +126,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         argumentsProvider(from::arguments.detached()),
                         JKTypeArgumentList()
                     )
+
                 else -> error("Bad conversion")
             }.withFormattingFrom(from)
         }
@@ -135,10 +141,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     JKFieldAccessExpression(
                         symbolProvider.provideFieldSymbol(fqName)
                     ).withFormattingFrom(from)
+
                 is JKFieldAccessExpression ->
                     JKFieldAccessExpression(
                         symbolProvider.provideFieldSymbol(fqName)
                     ).withFormattingFrom(from)
+
                 else -> error("Bad conversion")
             }
     }
@@ -159,6 +167,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         )
                     ).withFormattingFrom(from)
                 }
+
                 else -> error("Bad conversion")
             }
     }
@@ -425,10 +434,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
             Method("java.lang.String.toUpperCase") convertTo Method("kotlin.text.uppercase")
                     sinceKotlin ApiVersion.KOTLIN_1_5
-                    withArgumentsProvider(::stringConversionArgumentsProvider),
+                    withArgumentsProvider (::stringConversionArgumentsProvider),
             Method("java.lang.String.toLowerCase") convertTo Method("kotlin.text.lowercase")
                     sinceKotlin ApiVersion.KOTLIN_1_5
-                    withArgumentsProvider(::stringConversionArgumentsProvider),
+                    withArgumentsProvider (::stringConversionArgumentsProvider),
 
             Method("java.lang.String.compareToIgnoreCase")
                     convertTo Method("kotlin.text.compareTo")
@@ -504,11 +513,13 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         )
                         listOf(JKArgumentImpl(patternArgument), JKArgumentImpl(limitArgument))
                     }
+
                     limit <= 0 -> {
                         // negative: same behavior as split(regex) in Kotlin
                         // zero or absent limit: cases are equivalent in Kotlin
                         listOf(JKArgumentImpl(patternArgument))
                     }
+
                     else -> {
                         // positive: same behavior as split(regex, limit) in Kotlin
                         val limitArgument = arguments.arguments.last()::value.detached()
@@ -546,7 +557,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         JKExpressionStatement(
                             JKBinaryExpression(
                                 JKFieldAccessExpression(
-                                    JKUnresolvedField(//TODO replace with `it` parameter
+                                    JKUnresolvedField( //TODO replace with `it` parameter
                                         "it",
                                         typeFactory
                                     )
@@ -570,7 +581,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     (expression as JKCallExpression).arguments::arguments.detached()
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
-            
+
             NewExpression("java.lang.String")
                     convertTo Method("kotlin.text.String")
                     withByArgumentsFilter { it.isNotEmpty() },

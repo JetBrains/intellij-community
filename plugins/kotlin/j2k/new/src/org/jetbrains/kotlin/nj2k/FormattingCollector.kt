@@ -44,6 +44,7 @@ class FormattingCollector {
                     this
                 )
             )
+
             is PsiComment -> JKComment(text, indent())
             else -> null
         } ?: return null

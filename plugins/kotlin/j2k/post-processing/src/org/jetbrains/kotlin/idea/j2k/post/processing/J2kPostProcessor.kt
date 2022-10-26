@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
+import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.ConverterContext
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents

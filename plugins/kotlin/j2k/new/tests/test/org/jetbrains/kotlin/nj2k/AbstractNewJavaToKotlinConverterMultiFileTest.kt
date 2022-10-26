@@ -9,14 +9,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
+import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterTest
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlinConverterTest() {

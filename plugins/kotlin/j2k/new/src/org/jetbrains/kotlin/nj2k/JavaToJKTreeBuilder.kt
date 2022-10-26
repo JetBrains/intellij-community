@@ -37,7 +37,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
-import org.jetbrains.kotlin.nj2k.tree.Mutability.*
+import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
+import org.jetbrains.kotlin.nj2k.tree.Mutability.UNKNOWN
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -209,6 +210,7 @@ class JavaToJKTreeBuilder constructor(
                 elseExpression.toJK(),
                 type.toJK()
             )
+
             is PsiPolyadicExpression -> {
                 val token = JKOperatorToken.fromElementType(operationTokenType)
                 val jkOperandsWithPsiTypes = operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfCompoundExpression() to it.type }
@@ -221,6 +223,7 @@ class JavaToJKTreeBuilder constructor(
                     else folded
                 }
             }
+
             is PsiArrayInitializerExpression -> toJK()
             is PsiLambdaExpression -> toJK()
             is PsiClassObjectAccessExpressionImpl -> toJK()
@@ -285,6 +288,7 @@ class JavaToJKTreeBuilder constructor(
                         operationSign.tokenType == JavaTokenType.EQEQ -> JKOperatorToken.fromElementType(KtTokens.EQEQEQ)
                         else -> JKOperatorToken.fromElementType(KtTokens.EXCLEQEQEQ)
                     }
+
                 else -> JKOperatorToken.fromElementType(operationSign.tokenType)
             }
             return JKBinaryExpression(
@@ -419,6 +423,7 @@ class JavaToJKTreeBuilder constructor(
                                 ).qualified(qualifier)
                             }
                         }
+
                         is KtProperty, is KtPropertyAccessor, is KtParameter -> {
                             origin.kotlinFqName?.also { importStorage.addImport(it) }
                             val property =
@@ -449,6 +454,7 @@ class JavaToJKTreeBuilder constructor(
                                         createOperator(JavaTokenType.EQ, type) //TODO correct type
                                     )
                                 }
+
                                 else -> createErrorExpression("expected getter or setter call")
                             }
                         }
@@ -677,6 +683,7 @@ class JavaToJKTreeBuilder constructor(
                 withBody = true
                 trueBranch().also { withBody = false }
             }
+
             else -> elseBranch()
         }
 
@@ -910,6 +917,7 @@ class JavaToJKTreeBuilder constructor(
                 is PsiAnnotation -> toJK()
                 is PsiArrayInitializerMemberValue ->
                     JKKtAnnotationArrayInitializerExpression(initializers.map { it.toJK() })
+
                 else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
@@ -1011,14 +1019,18 @@ class JavaToJKTreeBuilder constructor(
             is PsiExpressionListStatement -> expressionList.expressions.map { expression ->
                 JKExpressionStatement(with(expressionTreeMapper) { expression.toJK() })
             }
+
             else -> listOf(toJK())
         }
 
         fun PsiStatement?.toJK(): JKStatement {
             return when (this) {
                 null -> JKExpressionStatement(JKStubExpression())
+
                 is PsiExpressionStatement -> JKExpressionStatement(with(expressionTreeMapper) { expression.toJK() })
+
                 is PsiReturnStatement -> JKReturnStatement(with(expressionTreeMapper) { returnValue.toJK() })
+
                 is PsiDeclarationStatement ->
                     JKDeclarationStatement(declaredElements.mapNotNull {
                         when (it) {
@@ -1027,10 +1039,12 @@ class JavaToJKTreeBuilder constructor(
                             else -> null
                         }
                     })
+
                 is PsiAssertStatement ->
                     JKJavaAssertStatement(
                         with(expressionTreeMapper) { assertCondition.toJK() },
                         with(expressionTreeMapper) { assertDescription?.toJK() } ?: JKStubExpression())
+
                 is PsiIfStatement ->
                     with(expressionTreeMapper) {
                         JKIfElseStatement(condition.toJK(), thenBranch.toJK(), elseBranch.toJK())
@@ -1043,32 +1057,42 @@ class JavaToJKTreeBuilder constructor(
                     update.asJKStatementsList(),
                     body.toJK()
                 )
+
                 is PsiForeachStatement ->
                     JKForInStatement(
                         iterationParameter.toJK(),
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
                         body?.toJK() ?: blockStatement()
                     )
+
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
+
                 is PsiWhileStatement -> JKWhileStatement(with(expressionTreeMapper) { condition.toJK() }, body.toJK())
+
                 is PsiDoWhileStatement -> JKDoWhileStatement(body.toJK(), with(expressionTreeMapper) { condition.toJK() })
 
                 is PsiSwitchStatement -> JKJavaSwitchStatement(with(expressionTreeMapper) { expression.toJK() }, collectSwitchCases())
+
                 is PsiBreakStatement ->
                     JKBreakStatement(labelIdentifier?.let { JKLabelText(JKNameIdentifier(it.text)) } ?: JKLabelEmpty())
+
                 is PsiContinueStatement -> {
                     val label = labelIdentifier?.let {
                         JKLabelText(JKNameIdentifier(it.text))
                     } ?: JKLabelEmpty()
                     JKContinueStatement(label)
                 }
+
                 is PsiLabeledStatement -> {
                     val (labels, statement) = collectLabels()
                     JKLabeledExpression(statement.toJK(), labels.map { JKNameIdentifier(it.text) }).asStatement()
                 }
+
                 is PsiEmptyStatement -> JKEmptyStatement()
+
                 is PsiThrowStatement ->
                     JKJavaThrowStatement(with(expressionTreeMapper) { exception.toJK() })
+
                 is PsiTryStatement ->
                     JKJavaTryStatement(
                         resourceList?.toList()?.map { (it as PsiResourceListElement).toJK() }.orEmpty(),
@@ -1076,12 +1100,15 @@ class JavaToJKTreeBuilder constructor(
                         finallyBlock?.toJK() ?: JKBodyStub,
                         catchSections.map { it.toJK() }
                     )
+
                 is PsiSynchronizedStatement ->
                     JKJavaSynchronizedStatement(
                         with(expressionTreeMapper) { lockExpression?.toJK() } ?: JKStubExpression(),
                         body?.toJK() ?: JKBodyStub
                     )
+
                 is PsiYieldStatement -> JKJavaYieldStatement(with(expressionTreeMapper) { expression.toJK() })
+
                 else -> createErrorStatement()
             }.also {
                 if (this != null) {
@@ -1140,6 +1167,7 @@ class JavaToJKTreeBuilder constructor(
                     val type = factory.createType(psi)
                     JKTypeElement(type.toJK().updateNullabilityRecursively(NotNull))
                 } else null
+
             else -> null
         }?.let { JKTreeRoot(it) }
 
@@ -1168,6 +1196,7 @@ class JavaToJKTreeBuilder constructor(
                             emptyList()
                         )
                     }.withFormattingFrom(statement)
+
                 is PsiSwitchLabeledRuleStatement -> {
                     val body = statement.body.toJK()
                     cases += when {
@@ -1182,6 +1211,7 @@ class JavaToJKTreeBuilder constructor(
                         }
                     }.withFormattingFrom(statement)
                 }
+
                 else ->
                     cases.lastOrNull()?.also { it.statements = it.statements + statement.toJK() } ?: run {
                         cases += JKJavaClassicLabelSwitchCase(

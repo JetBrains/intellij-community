@@ -46,11 +46,12 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                 .takeWhileInclusive { statement -> statement.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
                 .mapNotNull { statement ->
                     when (statement) {
-                      is JKBlockStatement -> blockStatement(
-                          statement.block.statements
-                              .takeWhileInclusive { !isSwitchBreakOrYield(it) }
-                              .mapNotNull {  handleBreakOrYield(it) }
-                      ).withFormattingFrom(statement)
+                        is JKBlockStatement -> blockStatement(
+                            statement.block.statements
+                                .takeWhileInclusive { !isSwitchBreakOrYield(it) }
+                                .mapNotNull { handleBreakOrYield(it) }
+                        ).withFormattingFrom(statement)
+
                         else -> handleBreakOrYield(statement)
                     }
                 }
@@ -79,6 +80,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                 switchCasesToWhenCases(cases.drop(javaLabels.size))
 
     }
+
     private fun handleBreakOrYield(statement: JKStatement) = when {
         isSwitchBreak(statement) -> null
         else -> statement.copyTreeAndDetach()
@@ -116,11 +118,13 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplica
                     this is JKBreakStatement ||
                     this is JKReturnStatement ||
                     this is JKContinueStatement -> false
+
             this is JKBlockStatement -> block.statements.fallsThrough()
             this is JKIfElseStatement ||
                     this is JKJavaSwitchBlock ||
                     this is JKKtWhenBlock ->
                 psi?.canCompleteNormally() == true
+
             else -> true
         }
 

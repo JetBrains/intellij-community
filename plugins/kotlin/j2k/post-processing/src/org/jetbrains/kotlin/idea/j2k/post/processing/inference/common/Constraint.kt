@@ -19,18 +19,18 @@ sealed class Constraint {
 }
 
 class SubtypeConstraint(
-  var subtype: ConstraintBound,
-  var supertype: ConstraintBound,
-  override val priority: ConstraintPriority
+    var subtype: ConstraintBound,
+    var supertype: ConstraintBound,
+    override val priority: ConstraintPriority
 ) : Constraint() {
     operator fun component1() = subtype
     operator fun component2() = supertype
 }
 
 class EqualsConstraint(
-  var left: ConstraintBound,
-  var right: ConstraintBound,
-  override val priority: ConstraintPriority
+    var left: ConstraintBound,
+    var right: ConstraintBound,
+    override val priority: ConstraintPriority
 ) : Constraint() {
     operator fun component1() = left
     operator fun component2() = right

@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.j2k.post.processing.FileBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.idea.j2k.post.processing.FileBasedPostProcessing
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
@@ -18,6 +18,7 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
                 JKImportStorage.isImportNeededForCall(element) -> ShortenReferences.FilterResult.PROCESS
                 else -> ShortenReferences.FilterResult.SKIP
             }
+
             else -> ShortenReferences.FilterResult.PROCESS
         }
     }

@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
 import org.jetbrains.kotlin.resolve.calls.smartcasts.Nullability
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.jvm.checkers.mustNotBeNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
@@ -25,26 +25,30 @@ private fun <T> Option<T>.getOrNull(): T? = getOrElse(null as T?)
 
 class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacade) : BoundTypeEnhancer() {
     override fun enhance(
-      expression: KtExpression,
-      boundType: BoundType,
-      inferenceContext: InferenceContext
+        expression: KtExpression,
+        boundType: BoundType,
+        inferenceContext: InferenceContext
     ): BoundType = when {
         expression.isNullExpression() ->
             WithForcedStateBoundType(boundType, State.UPPER)
+
         expression is KtCallExpression -> enhanceCallExpression(expression, boundType, inferenceContext)
         expression is KtQualifiedExpression && expression.selectorExpression is KtCallExpression ->
             enhanceCallExpression(expression.selectorExpression as KtCallExpression, boundType, inferenceContext)
+
         expression is KtNameReferenceExpression ->
             boundType.enhanceWith(expression.smartCastEnhancement())
+
         expression is KtLambdaExpression ->
             WithForcedStateBoundType(boundType, State.LOWER)
+
         else -> boundType
     }
 
     private fun enhanceCallExpression(
-      expression: KtCallExpression,
-      boundType: BoundType,
-      inferenceContext: InferenceContext
+        expression: KtCallExpression,
+        boundType: BoundType,
+        inferenceContext: InferenceContext
     ): BoundType {
         if (expression.resolveToCall(resolutionFacade)?.candidateDescriptor is ConstructorDescriptor) {
             return WithForcedStateBoundType(boundType, State.LOWER)
@@ -56,10 +60,10 @@ class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacad
     }
 
     override fun enhanceKotlinType(
-      type: KotlinType,
-      boundType: BoundType,
-      allowLowerEnhancement: Boolean,
-      inferenceContext: InferenceContext
+        type: KotlinType,
+        boundType: BoundType,
+        allowLowerEnhancement: Boolean,
+        inferenceContext: InferenceContext
     ): BoundType {
         if (type.arguments.size != boundType.typeParameters.size) return boundType
         val inner = BoundTypeImpl(

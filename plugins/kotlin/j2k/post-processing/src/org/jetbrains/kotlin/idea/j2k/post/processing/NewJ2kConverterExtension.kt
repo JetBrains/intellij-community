@@ -60,9 +60,10 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
                     val message = KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.no.configurators.available")
                     Messages.showErrorDialog(message, title)
                 }
+
                 configurators.size == 1 -> configurators.single().configure(project, emptyList())
                 else -> {
-                    val resultIndex = Messages.showChooseDialog(//TODO a better dialog?
+                    val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
                         project,
                         KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.choose.configurator"),
                         title,

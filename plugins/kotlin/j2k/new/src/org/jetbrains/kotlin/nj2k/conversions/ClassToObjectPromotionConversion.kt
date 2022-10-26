@@ -22,6 +22,7 @@ class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : Recurs
                                 else -> false
                             }
                         }
+
                     is JKClass -> true
                     else -> false
                 }

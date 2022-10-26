@@ -32,6 +32,7 @@ internal abstract class FileBasedPostProcessing : GeneralPostProcessing {
     final override fun runProcessing(target: JKPostProcessingTarget, converterContext: NewJ2kConverterContext) = when (target) {
         is JKPieceOfCodePostProcessingTarget ->
             runProcessing(target.file, listOf(target.file), target.rangeMarker, converterContext)
+
         is JKMultipleFilesPostProcessingTarget ->
             target.files.forEach { file ->
                 runProcessing(file, target.files, rangeMarker = null, converterContext = converterContext)

@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.j2k.AccessorKind.SETTER
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions = mutableListOf<JKExternalConversion>()

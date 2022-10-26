@@ -35,9 +35,9 @@ class NullabilityAnnotationsConversion(context: NewJ2kConverterContext) : Recurs
 
     private fun JKAnnotation.annotationNullability(): Nullability? =
         when (classSymbol.fqName) {
-          in nullableAnnotationsFqNames -> Nullability.Nullable
-          in notNullAnnotationsFqNames -> Nullability.NotNull
-          else -> null
+            in nullableAnnotationsFqNames -> Nullability.Nullable
+            in notNullAnnotationsFqNames -> Nullability.NotNull
+            else -> null
         }
 
     companion object {

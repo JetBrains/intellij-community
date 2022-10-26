@@ -26,6 +26,7 @@ class InternalDeclarationConversion(context: NewJ2kConverterContext) : Recursive
         element.visibility = when {
             containingClassKind == INTERFACE || containingClassKind == ANNOTATION ->
                 PUBLIC
+
             containingClassKind == ENUM && element is JKConstructor ->
                 PRIVATE
 
@@ -34,8 +35,10 @@ class InternalDeclarationConversion(context: NewJ2kConverterContext) : Recursive
 
             element is JKConstructor && containingClassVisibility != INTERNAL ->
                 defaultVisibility
+
             element is JKField || element is JKMethod ->
                 PUBLIC
+
             else -> defaultVisibility
         }
 

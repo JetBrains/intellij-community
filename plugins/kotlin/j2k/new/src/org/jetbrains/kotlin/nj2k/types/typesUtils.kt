@@ -2,11 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.types
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
 import org.jetbrains.kotlin.builtins.PrimitiveType

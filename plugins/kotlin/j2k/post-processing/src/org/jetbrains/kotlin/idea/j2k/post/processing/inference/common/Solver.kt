@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 internal class Solver(
-  private val inferenceContext: InferenceContext,
-  private val printConstraints: Boolean,
-  private val defaultStateProvider: DefaultStateProvider
+    private val inferenceContext: InferenceContext,
+    private val printConstraints: Boolean,
+    private val defaultStateProvider: DefaultStateProvider
 ) {
     private val printer = DebugPrinter(inferenceContext)
 
@@ -108,7 +108,7 @@ internal class Solver(
 
     private fun ConstraintBound.fixedState(): State? = when {
         this is LiteralBound -> state
-      this is TypeVariableBound && typeVariable.isFixed -> typeVariable.state
+        this is TypeVariableBound && typeVariable.isFixed -> typeVariable.state
         else -> null
     }
 
@@ -119,13 +119,13 @@ internal class Solver(
             for (constraint in equalsConstraints) {
                 val (leftBound, rightBound) = constraint
                 when {
-                  leftBound is TypeVariableBound && rightBound.fixedState() != null -> {
+                    leftBound is TypeVariableBound && rightBound.fixedState() != null -> {
                         this -= constraint
                         somethingChanged = true
                         leftBound.typeVariable.setStateIfNotFixed(rightBound.fixedState()!!)
                     }
 
-                  rightBound is TypeVariableBound && leftBound.fixedState() != null -> {
+                    rightBound is TypeVariableBound && leftBound.fixedState() != null -> {
                         this -= constraint
                         somethingChanged = true
                         rightBound.typeVariable.setStateIfNotFixed(leftBound.fixedState()!!)
@@ -157,14 +157,14 @@ internal class Solver(
 
     private fun List<Constraint>.getConstraintsWithNullableLowerBound(priority: ConstraintPriority) =
         filterIsInstance<SubtypeConstraint>().filter { constraint ->
-          constraint.priority <= priority
-          && constraint.subtype.safeAs<LiteralBound>()?.state == State.UPPER
+            constraint.priority <= priority
+                    && constraint.subtype.safeAs<LiteralBound>()?.state == State.UPPER
         }
 
     private fun List<Constraint>.getConstraintsWithNotNullUpperBound(priority: ConstraintPriority) =
         filterIsInstance<SubtypeConstraint>().filter { constraint ->
-          constraint.priority <= priority
-          && constraint.supertype.safeAs<LiteralBound>()?.state == State.LOWER
+            constraint.priority <= priority
+                    && constraint.supertype.safeAs<LiteralBound>()?.state == State.LOWER
         }
 
 
@@ -181,8 +181,9 @@ internal class Solver(
                         ?.takeIf { defaultStateProvider.defaultStateFor(it) == State.UPPER }
                         ?.let { return it }
                 }
+
                 is EqualsConstraint -> {
-                  (constraint.left.safeAs<TypeVariableBound>()
+                    (constraint.left.safeAs<TypeVariableBound>()
                         ?: constraint.right.safeAs<TypeVariableBound>())
                         ?.let { return it.typeVariable }
                 }

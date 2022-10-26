@@ -476,7 +476,8 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         printRightNonCodeElements(parenthesizedExpression)
     }
 
-    open fun visitParenthesizedExpressionRaw(parenthesizedExpression: JKParenthesizedExpression) = visitExpressionRaw(parenthesizedExpression)
+    open fun visitParenthesizedExpressionRaw(parenthesizedExpression: JKParenthesizedExpression) =
+        visitExpressionRaw(parenthesizedExpression)
 
     override fun visitTypeCastExpression(typeCastExpression: JKTypeCastExpression) {
         printLeftNonCodeElements(typeCastExpression)
@@ -722,7 +723,8 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         printRightNonCodeElements(javaAssignmentExpression)
     }
 
-    open fun visitJavaAssignmentExpressionRaw(javaAssignmentExpression: JKJavaAssignmentExpression) = visitExpressionRaw(javaAssignmentExpression)
+    open fun visitJavaAssignmentExpressionRaw(javaAssignmentExpression: JKJavaAssignmentExpression) =
+        visitExpressionRaw(javaAssignmentExpression)
 
     override fun visitModifierElement(modifierElement: JKModifierElement) {
         printLeftNonCodeElements(modifierElement)
@@ -951,7 +953,8 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         printRightNonCodeElements(javaSynchronizedStatement)
     }
 
-    open fun visitJavaSynchronizedStatementRaw(javaSynchronizedStatement: JKJavaSynchronizedStatement) = visitStatementRaw(javaSynchronizedStatement)
+    open fun visitJavaSynchronizedStatementRaw(javaSynchronizedStatement: JKJavaSynchronizedStatement) =
+        visitStatementRaw(javaSynchronizedStatement)
 
     override fun visitJavaAssertStatement(javaAssertStatement: JKJavaAssertStatement) {
         printLeftNonCodeElements(javaAssertStatement)

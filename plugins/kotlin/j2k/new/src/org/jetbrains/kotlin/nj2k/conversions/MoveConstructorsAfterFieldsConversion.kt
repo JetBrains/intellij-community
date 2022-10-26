@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.nj2k.*
-import org.jetbrains.kotlin.nj2k.forEachDescendantOfType
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 
@@ -50,6 +49,7 @@ class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : R
                         }
                     }
                 }
+
                 declaration is JKField && declaration.hasOtherModifier(OtherModifier.STATIC) == isStatic -> {
                     if (declaration.initializer !is JKStubExpression && declaration in forwardlyReferencedFields) {
                         val assignment = createFieldAssignmentInitDeclaration(declaration, isStatic)
