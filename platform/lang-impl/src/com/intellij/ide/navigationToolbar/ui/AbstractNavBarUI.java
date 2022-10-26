@@ -117,7 +117,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       Map<ImageType, ScaleContext.Cache<BufferedImage>> cache = AbstractNavBarUI.cache.computeIfAbsent(item, k -> new HashMap<>());
       ScaleContext.Cache<BufferedImage> imageCache = cache.computeIfAbsent(type, k -> {
         return new ScaleContext.Cache<>(ctx -> {
-          return drawToBuffer(item, ctx, floating, toolbarVisible, selected, navbar);
+          return drawToBuffer(item, ctx, floating, toolbarVisible, selected, nextSelected, item.isLastElement());
         });
       });
       BufferedImage image = imageCache.getOrProvide(ScaleContext.create(g));
@@ -178,12 +178,16 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
   }
 
-  private static BufferedImage drawToBuffer(NavBarItem item,
-                                            ScaleContext ctx,
-                                            boolean floating,
-                                            boolean toolbarVisible,
-                                            boolean selected,
-                                            NavBarPanel navbar) {
+  @Internal
+  public static BufferedImage drawToBuffer(
+    @NotNull Component item,
+    ScaleContext ctx,
+    boolean floating,
+    boolean toolbarVisible,
+    boolean selected,
+    boolean nextSelected,
+    boolean isLastElement
+  ) {
     int w = item.getWidth();
     int h = item.getHeight();
     int offset = (w - getDecorationOffset());
@@ -239,20 +243,20 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
 
       g2.setColor(selection);
-      if (floating && item.isLastElement()) {
+      if (floating && isLastElement) {
         g2.fillRect(0, 0, w, h);
       } else {
         g2.fill(shape);
       }
     }
 
-    if (item.isNextSelected() && navbar.isFocused()) {
+    if (nextSelected) {
       g2.setColor(selection);
       g2.fill(endShape);
     }
 
-    if (!item.isLastElement()) {
-      if (!selected && (!navbar.isFocused() || !item.isNextSelected())) {
+    if (!isLastElement) {
+      if (!selected && !nextSelected) {
         Icon icon = AllIcons.Ide.NavBarSeparator;
         icon.paintIcon(item, g2, w - icon.getIconWidth() - JBUIScale.scale(1), h2 - icon.getIconHeight() / 2);
       }
