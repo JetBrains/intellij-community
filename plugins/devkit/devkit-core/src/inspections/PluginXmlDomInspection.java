@@ -88,6 +88,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
+  private static final int MINIMAL_DESCRIPTION_LENGTH = 40;
+
   @NonNls
   public static final String DEPENDENCIES_DOC_URL =
     "https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html?from=DevkitPluginXmlInspection";
@@ -228,8 +230,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else
-      if (element instanceof Helpset) {
+    else if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
     else if (element instanceof Listeners) {
@@ -315,7 +316,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       final String psiClassFqn = psiClass.getQualifiedName();
       assert psiClassFqn != null;
 
-      // only highlight if located in same module
+      // only highlight if located in the same module
       if (!StringUtil.startsWith(psiClassFqn, pluginPackage + ".") &&
           module == ModuleUtilCore.findModuleForPsiElement(psiClass)) {
         holder.createProblem(domValue, HighlightSeverity.ERROR,
@@ -439,7 +440,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
 
     checkMaxLength(ideaPlugin.getDescription(), 65535, holder);
-    checkHasRealText(ideaPlugin.getDescription(), 40, holder);
+    checkHasRealText(ideaPlugin.getDescription(), holder);
     checkTemplateTextContains(ideaPlugin.getDescription(), "Enter short description for your plugin here.", holder);
     checkTemplateTextContains(ideaPlugin.getDescription(), "most HTML tags may be used", holder);
 
@@ -670,8 +671,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     if (StringUtil.isEmpty(name) ||
-        !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
-        StringUtil.toUpperCase(name).equals(name) || // not all uppercase
+        !Character.isLowerCase(name.charAt(0)) || // also checks that the name doesn't start with a dot
+        StringUtil.toUpperCase(name).equals(name) || // not all uppercase chars
         !StringUtil.isLatinAlphanumeric(name.replace(".", "")) ||
         name.charAt(name.length() - 1) == '.') {
       return false;
@@ -830,10 +831,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                             effectiveQualifiedName) :
                        DevKitBundle.message("inspections.plugin.xml.deprecated.ep.marked.for.removal.in.version",
                                             effectiveQualifiedName, inVersion);
-      highlightDeprecatedMarkedForRemoval(
-        extension, message,
-        holder, false, false
-      );
+      highlightDeprecatedMarkedForRemoval(extension, message, holder);
     }
     else if (kind == ExtensionPoint.Status.Kind.DEPRECATED) {
       highlightDeprecated(
@@ -1134,9 +1132,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void highlightDeprecatedMarkedForRemoval(DomElement element, @InspectionMessage String message,
-                                                          DomElementAnnotationHolder holder,
-                                                          boolean useRemoveQuickfix, boolean highlightWholeElement) {
-    doHighlightDeprecatedElement(element, message, holder, useRemoveQuickfix, highlightWholeElement, true);
+                                                          DomElementAnnotationHolder holder) {
+    doHighlightDeprecatedElement(element, message, holder, false, false, true);
   }
 
   private static void doHighlightDeprecatedElement(DomElement element,
@@ -1224,7 +1221,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkHasRealText(GenericDomValue<String> domValue,
-                                       int minimumLength,
                                        DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(domValue)) return;
 
@@ -1232,8 +1228,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_START, "");
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_END, "");
 
-    if (StringUtil.isEmptyOrSpaces(value) || value.length() < minimumLength) {
-      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.must.have.minimum.length", minimumLength));
+    if (StringUtil.isEmptyOrSpaces(value) || value.length() < MINIMAL_DESCRIPTION_LENGTH) {
+      holder.createProblem(domValue,
+                           DevKitBundle.message("inspections.plugin.xml.value.must.have.minimum.length", MINIMAL_DESCRIPTION_LENGTH));
     }
   }
 
@@ -1302,20 +1299,20 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       IdeaPlugin root = DescriptorUtil.getIdeaPlugin((XmlFile)file);
       if (root != null) {
         XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
-        XmlTag rootTag = root.getXmlTag();
-        XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
+      XmlTag rootTag = root.getXmlTag();
+      XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
 
-        XmlTag addedTag;
-        if (after == null) {
-          addedTag = rootTag.addSubTag(missingTag, true);
-        }
-        else {
-          addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
-        }
+      XmlTag addedTag;
+      if (after == null) {
+        addedTag = rootTag.addSubTag(missingTag, true);
+      }
+      else {
+        addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
+      }
 
-        if (StringUtil.isEmpty(myTagValue) && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
-          int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
-          NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
+      if (StringUtil.isEmpty(myTagValue) && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
+        int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
+        NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
         }
       }
     }
