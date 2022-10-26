@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
@@ -520,6 +521,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (!(comp instanceof JComponent jcomp)) return JBUIScale.scale(2);
     if (comp instanceof ActionButton) return JBUIScale.scale(2);
     if (comp instanceof ComboBoxWithWidePopup<?>) return JBUIScale.scale(2);
+    if (comp instanceof JBPanel<?>) return JBUIScale.scale(2);
 
     int componentLeftInset = jcomp.getInsets().left;
     int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
