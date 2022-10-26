@@ -35,6 +35,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getWarningIcon
+import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
@@ -48,11 +49,12 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   }
 }
 
-class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWithDetails {
+class TodoCommitProblem(val worker: TodoCheckinHandlerWorker,
+                        val isPostCommit: Boolean) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
 
   override fun showDetails(project: Project) {
-    TodoCheckinHandler.showTodoItems(project, worker.changes, worker.inOneList())
+    TodoCheckinHandler.showTodoItems(project, worker.changes, worker.inOneList(), isPostCommit)
   }
 
   override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
@@ -67,7 +69,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
 
-  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.LATE
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
@@ -75,6 +77,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.checking.for.todo"))
 
+    val isPostCommit = commitInfo.commitContext.isPostCommitCheck
     val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
     val changes = commitInfo.committedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
@@ -89,7 +92,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     val noSkipped = worker.skipped.isEmpty()
     if (noTodo && noSkipped) return null
 
-    return TodoCommitProblem(worker)
+    return TodoCommitProblem(worker, isPostCommit)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
@@ -143,7 +146,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
 
       when (askReviewCommitCancel(worker, commitActionText)) {
         Messages.YES -> {
-          showTodoItems(project, worker.changes, worker.inOneList())
+          showTodoItems(project, worker.changes, worker.inOneList(), isPostCommit = false)
           return ReturnResult.CLOSE_WINDOW
         }
         Messages.NO -> return ReturnResult.COMMIT
@@ -151,10 +154,17 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
       }
     }
 
-    internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
+    internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>, isPostCommit: Boolean) {
       val todoView = project.service<TodoView>()
       val content = todoView.addCustomTodoView(
-        { tree, _ -> CommitChecksTodosTreeBuilder(tree, project, changes, todoItems) },
+        { tree, _ ->
+          if (isPostCommit) {
+            PostCommitChecksTodosTreeBuilder(tree, project, changes, todoItems)
+          }
+          else {
+            CommitChecksTodosTreeBuilder(tree, project, changes, todoItems)
+          }
+        },
         message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
         TodoPanelSettings(VcsConfiguration.getInstance(project).myTodoPanelSettings)
       )
