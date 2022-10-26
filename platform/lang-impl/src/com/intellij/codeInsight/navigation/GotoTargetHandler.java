@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -168,7 +169,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
     if (pane != null) {
-      pane.setBorder(null);
+      if (!ExperimentalUI.isNewUI()) {
+        pane.setBorder(null);
+      }
       pane.setViewportBorder(null);
     }
 

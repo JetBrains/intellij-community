@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.navigation.TargetPresentation;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.list.TargetPopup;
+import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,14 +25,29 @@ final class GotoTargetRenderer implements ListCellRenderer<Object> {
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    Component renderer;
     if (value == null) {
-      return myNullRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
+      renderer = myNullRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
     }
     else if (value instanceof GotoTargetHandler.AdditionalAction) {
-      return myActionRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      renderer = myActionRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
     else {
-      return myPresentationRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      renderer = myPresentationRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
+
+    if (!ExperimentalUI.isNewUI()) {
+      return renderer;
+    }
+
+    SelectablePanel result = SelectablePanel.wrap(renderer, list.getBackground());
+    PopupUtil.configListRendererFixedHeight(result);
+    Color background = renderer.getBackground();
+    if (background == UIUtil.getListBackground()) {
+      background = list.getBackground();
+    }
+    result.setSelectionColor(background);
+    ((JComponent)renderer).setOpaque(false);
+    return result;
   }
 }
