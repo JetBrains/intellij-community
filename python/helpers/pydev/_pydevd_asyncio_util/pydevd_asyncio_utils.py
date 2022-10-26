@@ -1,13 +1,13 @@
 #  Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-from _pydevd_bundle.pydevd_constants import IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV
 
 eval_async_expression_in_context = None
 eval_async_expression = None
 exec_async_code = None
 asyncio_command_compiler = None
 
-if IS_PY3K:
+if IS_ASYNCIO_DEBUGGER_ENV:
     from _pydevd_bundle import pydevd_save_locals
     from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
     from codeop import CommandCompiler
