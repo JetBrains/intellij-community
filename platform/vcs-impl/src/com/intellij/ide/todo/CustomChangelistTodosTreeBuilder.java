@@ -51,9 +51,11 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     }
 
     private void buildMap(@NotNull Collection<? extends TodoItem> todoItems) {
-      myMap.clear();
-      for (TodoItem todoItem : todoItems) {
-        myMap.putValue(todoItem.getFile(), todoItem);
+      synchronized (myMap) {
+        myMap.clear();
+        for (TodoItem todoItem : todoItems) {
+          myMap.putValue(todoItem.getFile(), todoItem);
+        }
       }
     }
 
@@ -65,8 +67,10 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       Set<TodoItem> todoItems = doFindAllTodoItems(todoFilter);
       buildMap(todoItems);
 
-      final Set<PsiFile> files = myMap.keySet();
-      return files.toArray(PsiFile.EMPTY_ARRAY);
+      synchronized (myMap) {
+        final Set<PsiFile> files = myMap.keySet();
+        return files.toArray(PsiFile.EMPTY_ARRAY);
+      }
     }
 
     @Override
@@ -120,14 +124,18 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
       if (myDirtyFileSet.contains(file.getVirtualFile())) {
         Set<TodoItem> todoItems = doFindTodoForFile(file, todoFilter);
-        myMap.remove(file);
-        for (TodoItem todoItem : todoItems) {
-          myMap.putValue(file, todoItem);
+        synchronized (myMap) {
+          myMap.remove(file);
+          for (TodoItem todoItem : todoItems) {
+            myMap.putValue(file, todoItem);
+          }
         }
       }
 
-      final Collection<TodoItem> todoItems = myMap.get(file);
-      return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
+      synchronized (myMap) {
+        final Collection<TodoItem> todoItems = myMap.get(file);
+        return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
+      }
     }
   }
 
