@@ -24,17 +24,10 @@ import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.util.List;
 import java.util.Set;
 
 public class RegistrationProblemsInspection extends DevKitInspectionBase {
-
-  public boolean CHECK_PLUGIN_XML = true;
-  public boolean CHECK_JAVA_CODE = true;
-  public boolean CHECK_ACTIONS = true;
 
   @Override
   @NotNull
@@ -44,68 +37,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final JPanel jPanel = new JPanel();
-    jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
-
-    final JCheckBox checkPluginXml = new JCheckBox(
-      DevKitBundle.message("inspections.registration.problems.option.check.plugin.xml"),
-      CHECK_PLUGIN_XML);
-    checkPluginXml.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        CHECK_PLUGIN_XML = checkPluginXml.isSelected();
-      }
-    });
-
-    final JCheckBox checkJavaActions = new JCheckBox(
-      DevKitBundle.message("inspections.registration.problems.option.check.java.actions"),
-      CHECK_ACTIONS);
-    checkJavaActions.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        CHECK_ACTIONS = checkJavaActions.isSelected();
-      }
-    });
-
-    final JCheckBox checkJavaCode = new JCheckBox(
-      DevKitBundle.message("inspections.registration.problems.option.check.java.code"),
-      CHECK_JAVA_CODE);
-    checkJavaCode.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        final boolean selected = checkJavaCode.isSelected();
-        CHECK_JAVA_CODE = selected;
-        checkJavaActions.setEnabled(selected);
-      }
-    });
-
-    jPanel.add(checkPluginXml);
-    jPanel.add(checkJavaCode);
-    jPanel.add(checkJavaActions);
-    return jPanel;
-  }
-
-  @Override
-  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
-      return inspectPluginXml((XmlFile)file, manager, isOnTheFly);
-    }
-    return null;
-  }
-
-  @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (CHECK_JAVA_CODE) {
-      return inspectClass(checkedClass, manager, isOnTheFly);
-    }
-    return null;
-  }
-
-  private ProblemDescriptor @Nullable [] inspectClass(@NotNull PsiClass checkedClass,
-                                                      @NotNull InspectionManager manager,
-                                                      boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
     if (nameIdentifier != null &&
         checkedClass.getQualifiedName() != null &&
@@ -115,8 +47,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         !checkedClass.hasModifierProperty(PsiModifier.PRIVATE) &&
         !checkedClass.hasModifierProperty(PsiModifier.PROTECTED) &&
         !PsiUtil.isInnerClass(checkedClass)) {
-      final RegistrationCheckerUtil.RegistrationType registrationType =
-        CHECK_ACTIONS ? RegistrationCheckerUtil.RegistrationType.ALL : RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS;
+      final RegistrationCheckerUtil.RegistrationType registrationType = RegistrationCheckerUtil.RegistrationType.ALL;
       final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, registrationType);
       if (componentClasses != null && !componentClasses.isEmpty()) {
         List<ProblemDescriptor> problems = new SmartList<>();
@@ -140,7 +71,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
         }
-        if (isAbstract(checkedClass)) {
+        if (checkedClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           problems.add(manager.createProblemDescriptor(nameIdentifier,
                                                        DevKitBundle.message("inspections.registration.problems.abstract"), isOnTheFly,
                                                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
@@ -151,23 +82,23 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  private static ProblemDescriptor @Nullable [] inspectPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
-    final XmlDocument document = xmlFile.getDocument();
-    if (document == null) {
-      return null;
+  @Override
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (DescriptorUtil.isPluginXml(file)) {
+      final XmlDocument document = ((XmlFile)file).getDocument();
+      if (document == null) {
+        return null;
+      }
+
+      final XmlTag rootTag = document.getRootTag();
+      assert rootTag != null;
+
+      final RegistrationChecker checker = new RegistrationChecker(manager, (XmlFile)file, isOnTheFly);
+      DescriptorUtil.processComponents(rootTag, checker);
+      DescriptorUtil.processActions(rootTag, checker);
+      return checker.getProblems();
     }
-
-    final XmlTag rootTag = document.getRootTag();
-    assert rootTag != null;
-
-    final RegistrationChecker checker = new RegistrationChecker(manager, xmlFile, isOnTheFly);
-    DescriptorUtil.processComponents(rootTag, checker);
-    DescriptorUtil.processActions(rootTag, checker);
-    return checker.getProblems();
-  }
-
-  private static boolean isAbstract(PsiModifierListOwner checkedClass) {
-    return checkedClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    return null;
   }
 
   private static final class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
@@ -185,11 +116,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       myScope = xmlFile.getResolveScope();
     }
 
-    @Nullable
-    private PsiClass findClass(@NotNull String fqn) {
-      return ClassUtil.findPsiClass(myPsiManager, fqn, null, true, myScope);
-    }
-
+    //<editor-fold desc="Components">
     @Override
     public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
       if (impl == null) {
@@ -207,49 +134,46 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         final String implClassName = impl.getTrimmedText();
         final PsiClass implClass = findClass(implClassName);
         if (implClass != null) {
-          if (isAbstract(implClass)) {
-            addProblem(impl,
-                       DevKitBundle.message("inspections.registration.problems.abstract"),
-                       myOnTheFly);
+          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            addProblem(impl, DevKitBundle.message("inspections.registration.problems.abstract"), myOnTheFly);
           }
         }
-        if (intfName != null) {
-          if (intfClass != null) {
-            if (implClass != null) {
-              final String fqn = intfClass.getQualifiedName();
-
-              if (type == ComponentType.MODULE) {
-                if (!checkInterface(type, fqn, intf)) {
-                  // module components can be restricted to modules of certain types
-                  final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
-                  for (String key : keys) {
-                    checkInterface(type, key, intf);
-                    myInterfaceClasses.putValue(type, key);
-                  }
-                }
-              }
-              else {
-                checkInterface(type, fqn, intf);
-                myInterfaceClasses.putValue(type, fqn);
-              }
-
-              if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
-                addProblem(impl,
-                           DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn),
-                           myOnTheFly);
+        if (intfName != null && intfClass != null && implClass != null) {
+          final String fqn = intfClass.getQualifiedName();
+          if (type == ComponentType.MODULE) {
+            if (!checkInterface(type, fqn, intf)) {
+              // module components can be restricted to modules of certain types
+              final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
+              for (String key : keys) {
+                checkInterface(type, key, intf);
+                myInterfaceClasses.putValue(type, key);
               }
             }
+          }
+          else {
+            checkInterface(type, fqn, intf);
+            myInterfaceClasses.putValue(type, fqn);
+          }
+          if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
+            addProblem(impl, DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn), myOnTheFly);
           }
         }
       }
       return true;
     }
 
+    private void addProblem(XmlTagValue impl, @InspectionMessage String problem, boolean isOnTheFly, LocalQuickFix... fixes) {
+      final XmlText[] textElements = impl.getTextElements();
+      for (XmlText text : textElements) {
+        if (text.getValue().trim().length() > 0) {
+          addProblem(text, problem, isOnTheFly, fixes);
+        }
+      }
+    }
+
     private boolean checkInterface(ComponentType type, String fqn, XmlTagValue value) {
       if (myInterfaceClasses.get(type).contains(fqn)) {
-        addProblem(value,
-                   DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn),
-                   myOnTheFly);
+        addProblem(value, DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn), myOnTheFly);
         return true;
       }
       return false;
@@ -272,7 +196,9 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       }
       return new String[]{fqn};
     }
+    //</editor-fold>
 
+    //<editor-fold desc="Actions">
     @Override
     public boolean process(ActionType type, XmlTag action) {
       final XmlAttribute attribute = action.getAttribute("class");
@@ -289,8 +215,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                 if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
                   addProblem(token,
                              DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
-                             myOnTheFly,
-                             ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
+                             myOnTheFly, ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
                 }
               }
               final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
@@ -299,10 +224,8 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                            DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
                            myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
               }
-              if (isAbstract(actionClass)) {
-                addProblem(token,
-                           DevKitBundle.message("inspections.registration.problems.abstract"),
-                           myOnTheFly);
+              if (actionClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                addProblem(token, DevKitBundle.message("inspections.registration.problems.abstract"), myOnTheFly);
               }
             }
           }
@@ -323,25 +246,16 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
       return valueElement;
     }
+    //</editor-fold>
 
-    private void addProblem(XmlTagValue impl,
-                            @InspectionMessage String problem,
-                            boolean isOnTheFly,
-                            LocalQuickFix... fixes) {
-      final XmlText[] textElements = impl.getTextElements();
-      for (XmlText text : textElements) {
-        if (text.getValue().trim().length() > 0) {
-          addProblem(text, problem, isOnTheFly, fixes);
-        }
-      }
-    }
-
-    private void addProblem(PsiElement element,
-                            @InspectionMessage String problem,
-                            boolean onTheFly,
-                            LocalQuickFix... fixes) {
+    private void addProblem(PsiElement element, @InspectionMessage String problem, boolean onTheFly, LocalQuickFix... fixes) {
       if (myList == null) myList = new SmartList<>();
       myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+    }
+
+    @Nullable
+    private PsiClass findClass(@NotNull String fqn) {
+      return ClassUtil.findPsiClass(myPsiManager, fqn, null, true, myScope);
     }
 
     public ProblemDescriptor @Nullable [] getProblems() {
