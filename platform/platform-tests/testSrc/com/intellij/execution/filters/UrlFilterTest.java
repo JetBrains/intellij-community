@@ -24,6 +24,9 @@ public class UrlFilterTest extends BasePlatformTestCase {
     assertFileHyperlink("file:///home/file.txt", 0, 21, "/home/file.txt", 1, 1);
     assertFileHyperlink("text before file:///home/file.txt:3 some test after", 12, 35, "/home/file.txt", 3, 1);
     assertFileHyperlink("text before file:///home/file.txt:3:30 some test after", 12, 38, "/home/file.txt", 3, 30);
+    assertFileHyperlink("Click file:///C:/Users/user/file.js:12:40", 6, 41, "C:/Users/user/file.js", 12, 40);
+    assertFileHyperlink("See file:////wsl$/Ubuntu-20.04/projects/report.txt:4",
+                        4, 52, "//wsl$/Ubuntu-20.04/projects/report.txt", 4, 1);
   }
 
   public void testSingleBrowserHyperlink() {
@@ -54,6 +57,8 @@ public class UrlFilterTest extends BasePlatformTestCase {
                         "/home/path with space/file.kt", 3, 1);
     assertFileHyperlink("w file:///home/wrongly%EncodedPath/file.kt:3:10 Variable 'q' is never used", 2, 47,
                         "/home/wrongly%EncodedPath/file.kt", 3, 10);
+    assertFileHyperlink("Click file:////wsl$/Ubuntu-20.04/path-test-gradle%206/src/main/kotlin/base/Starter.kt:4:10",
+                        6, 90, "//wsl$/Ubuntu-20.04/path-test-gradle 6/src/main/kotlin/base/Starter.kt", 4, 10);
   }
 
   private Filter.Result applyFilter(@NotNull String line) {
