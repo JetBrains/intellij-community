@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
@@ -404,17 +404,18 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   /**
-   * @param fileElementTypeClass {@link IFileElementType} class to track changes for
-   * @return {@link ModificationTracker} that changes stamp on every file update with corresponding {@link IFileElementType}
+   * @param fileElementType {@link StubFileElementType} to track changes for
+   * @return {@link ModificationTracker} that changes stamp on every file update with corresponding {@link StubFileElementType}.
+   * Modification detector might react false-positively.
    * @implNote doesn't track changes of files with binary content
    */
   @Override
-  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass) {
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
     return () -> {
       if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
       }
-      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementTypeClass);
+      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
     };
   }
 

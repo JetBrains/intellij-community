@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
-import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
@@ -43,7 +43,7 @@ class StubIndexTest : JavaCodeInsightFixtureTestCase() {
     var lastModCount = 0L
     fun checkModCountIncreasedAtLeast(minInc: Int) {
       val modCount = (StubIndex.getInstance() as StubIndexEx)
-        .getPerFileElementTypeModificationTracker(JavaFileElementType::class.java).modificationCount
+        .getPerFileElementTypeModificationTracker(JavaParserDefinition.JAVA_FILE).modificationCount
       assert(lastModCount + minInc <= modCount)
       lastModCount = modCount
     }

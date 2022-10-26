@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.StubFileElementType
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.writeChild
 import com.intellij.util.io.write
@@ -17,7 +17,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Paths
-import kotlin.reflect.KClass
 
 /**
  * set "stub.index.per.file.element.type.modification.tracker.precise.check.threshold" system
@@ -28,9 +27,9 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
   @Test
   @Ignore
   fun benchmark() {
-    var lastModCount = getModCount(JavaFileElementType::class)
+    var lastModCount = getModCount(JavaParserDefinition.JAVA_FILE)
     fun assertModCountIncreasedAtLeast(minInc: Int) {
-      val modCount = getModCount(JavaFileElementType::class)
+      val modCount = getModCount(JavaParserDefinition.JAVA_FILE)
       assert(lastModCount + minInc <= modCount ||
              StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
              StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.Disabled
@@ -40,7 +39,7 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
       lastModCount = modCount
     }
     fun assertModCountIsSame() {
-      val modCount = getModCount(JavaFileElementType::class)
+      val modCount = getModCount(JavaParserDefinition.JAVA_FILE)
       assert(lastModCount == modCount ||
              StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
              StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.Disabled
@@ -113,7 +112,7 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
   }
 
-  private fun getModCount(elementType: KClass<out IFileElementType>) =
+  private fun getModCount(elementType: StubFileElementType<*>) =
     (StubIndex.getInstance() as StubIndexEx)
-      .getPerFileElementTypeModificationTracker(elementType.java).modificationCount
+      .getPerFileElementTypeModificationTracker(elementType).modificationCount
 }

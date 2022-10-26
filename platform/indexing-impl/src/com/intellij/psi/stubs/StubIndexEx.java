@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
@@ -549,7 +549,7 @@ public abstract class StubIndexEx extends StubIndex {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull Class<? extends IFileElementType> fileElementTypeClass);
+  abstract public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
