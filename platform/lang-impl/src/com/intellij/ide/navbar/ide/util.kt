@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.awt.AWTEvent
+import java.awt.event.MouseEvent
 import kotlin.coroutines.resume
 
 internal val isNavbarV2Enabled: Boolean = Registry.`is`("ide.navBar.v2", false)
@@ -32,17 +34,25 @@ internal fun UISettings.isNavbarShown(): Boolean {
   return showNavigationBar && !presentationMode
 }
 
-// TODO move to activity tracker?
 internal fun activityFlow(): Flow<Unit> {
   return channelFlow {
     val disposable: Disposable = Disposer.newDisposable()
     IdeEventQueue.getInstance().addActivityListener(Runnable {
-      this.trySend(Unit)
+      if (!skipActivityEvent(IdeEventQueue.getCurrentEvent())) {
+        trySend(Unit)
+      }
     }, disposable)
     awaitClose {
       Disposer.dispose(disposable)
     }
   }.buffer(Channel.CONFLATED)
+}
+
+private fun skipActivityEvent(e: AWTEvent): Boolean {
+  if (e is MouseEvent && (e.id == MouseEvent.MOUSE_PRESSED || e.id == MouseEvent.MOUSE_RELEASED)) {
+    return true
+  }
+  return false
 }
 
 // TODO move to DataManager
