@@ -190,7 +190,7 @@ public final class MavenLegacyModuleImporter {
             }
           }
           catch (Exception e) {
-            MavenLog.LOG.error(e);
+            MavenLog.LOG.error("Exception in MavenImporter.preConfig, skipping it.", e);
           }
         }
       });
@@ -218,7 +218,7 @@ public final class MavenLegacyModuleImporter {
                 });
               }
               catch (Exception e) {
-                MavenLog.LOG.error(e);
+                MavenLog.LOG.error("Exception in MavenImporter.config, skipping it.", e);
               }
             }
           }
@@ -241,7 +241,7 @@ public final class MavenLegacyModuleImporter {
             }
           }
           catch (Exception e) {
-            MavenLog.LOG.error(e);
+            MavenLog.LOG.error("Exception in MavenImporter.postConfig, skipping it.", e);
           }
         }
       });

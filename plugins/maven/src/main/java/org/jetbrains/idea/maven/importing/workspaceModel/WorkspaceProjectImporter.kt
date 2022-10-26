@@ -307,7 +307,7 @@ internal class WorkspaceProjectImporter(
             configurator.configureMavenProject(context.apply { mavenProjectWithModules = projectWithModules })
           }
           catch (e: Exception) {
-            MavenLog.LOG.error(e)
+            MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.configureMavenProject, skipping it.", e)
           }
         }
       }
@@ -331,7 +331,7 @@ internal class WorkspaceProjectImporter(
           configurator.beforeModelApplied(context)
         }
         catch (e: Exception) {
-          MavenLog.LOG.error(e)
+          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.beforeModelApplied, skipping it.", e)
         }
       }
     }
@@ -354,7 +354,7 @@ internal class WorkspaceProjectImporter(
           configurator.afterModelApplied(context)
         }
         catch (e: Exception) {
-          MavenLog.LOG.error(e)
+          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.afterModelApplied, skipping it.", e)
         }
       }
     }
@@ -507,7 +507,12 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
     }
     for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
       indicator.checkCanceled()
-      configurator.afterImport(context)
+      try {
+        configurator.afterImport(context)
+      }
+      catch (e: Exception) {
+        MavenLog.LOG.error("Exception in MavenAfterImportConfigurator.afterImport, skipping it.", e)
+      }
     }
   }
 }
