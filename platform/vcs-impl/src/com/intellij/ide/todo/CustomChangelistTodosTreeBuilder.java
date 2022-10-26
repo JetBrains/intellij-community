@@ -73,7 +73,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     return ids;
   }
 
-  private void buildMap(Collection<? extends TodoItem> todoItems) {
+  private void buildMap(@NotNull Collection<? extends TodoItem> todoItems) {
     myMap.clear();
     for (TodoItem todoItem : todoItems) {
       myMap.putValue(todoItem.getFile(), todoItem);
@@ -178,11 +178,9 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         final TodoCheckinHandlerWorker
           worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter);
         worker.execute();
-        final Collection<TodoItem> todoItems = worker.inOneList();
-        if (todoItems != null && !todoItems.isEmpty()) {
-          for (TodoItem todoItem : todoItems) {
-            myMap.putValue(file, todoItem);
-          }
+
+        for (TodoItem todoItem : worker.inOneList()) {
+          myMap.putValue(file, todoItem);
         }
       }
     }

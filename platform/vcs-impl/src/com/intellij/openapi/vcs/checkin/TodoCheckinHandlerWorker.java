@@ -343,14 +343,17 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
+  @NotNull
   public Set<TodoItem> getAddedOrEditedTodos() {
     return myAddedOrEditedTodos;
   }
 
+  @NotNull
   public Set<TodoItem> getInChangedTodos() {
     return myInChangedTodos;
   }
 
+  @NotNull
   public List<Pair<FilePath, String>> getSkipped() {
     return mySkipped;
   }
@@ -414,6 +417,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
+  @NotNull
   public Set<TodoItem> inOneList() {
     final Set<TodoItem> set = new HashSet<>();
     set.addAll(getAddedOrEditedTodos());
@@ -421,6 +425,7 @@ public class TodoCheckinHandlerWorker {
     return set;
   }
 
+  @NotNull
   public List<Change> getChanges() {
     return new ArrayList<>(myChanges);
   }
