@@ -119,12 +119,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     //<editor-fold desc="Components">
     @Override
     public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
-      if (impl == null) {
-        addProblem(component,
-                   DevKitBundle.message("inspections.registration.problems.missing.implementation.class"),
-                   myOnTheFly);
-      }
-      else {
+      if (impl != null) {
         String intfName = null;
         PsiClass intfClass = null;
         if (intf != null) {
