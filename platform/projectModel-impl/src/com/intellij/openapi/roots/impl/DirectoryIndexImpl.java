@@ -86,7 +86,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     });
   }
 
-  private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
+  public static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       // VFileCreateEvent.getFile() is expensive
       if (event instanceof VFileCreateEvent) {
@@ -102,7 +102,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return false;
   }
 
-  private static boolean isIgnoredFileCreated(@NotNull VFileEvent event) {
+  public static boolean isIgnoredFileCreated(@NotNull VFileEvent event) {
     return event instanceof VFileMoveEvent && FileTypeRegistry.getInstance().isFileIgnored(((VFileMoveEvent)event).getNewParent()) ||
            event instanceof VFilePropertyChangeEvent &&
            ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME) &&

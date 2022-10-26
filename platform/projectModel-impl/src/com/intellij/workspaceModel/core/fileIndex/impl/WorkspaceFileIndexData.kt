@@ -199,7 +199,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     customExcludedRootContributors.resetCache()
     syntheticLibraryContributors.unregisterFileSets(fileSets)
     syntheticLibraryContributors.registerFileSets(fileSets)
-    fileIdWithoutFileSets.clear()
+    resetFileCache()
   }
 
   fun markDirty(entities: Collection<WorkspaceEntity>, files: Collection<VirtualFile>) {
@@ -214,7 +214,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     contributors.keys.forEach { entityClass ->
       processChanges(event, entityClass)
     }
-    fileIdWithoutFileSets.clear()
+    resetFileCache()
   }
 
   fun updateDirtyEntities() {
@@ -229,8 +229,12 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     }
     dirtyFiles.clear()
     dirtyEntities.clear()
-    fileIdWithoutFileSets.clear()
+    resetFileCache()
     hasDirtyEntities = false
+  }
+
+  fun resetFileCache() {
+    fileIdWithoutFileSets.clear()
   }
 
   private inner class StoreFileSetsRegistrarImpl : WorkspaceFileSetRegistrar {
