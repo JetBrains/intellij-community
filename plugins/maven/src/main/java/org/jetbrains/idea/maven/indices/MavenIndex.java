@@ -370,7 +370,7 @@ public final class MavenIndex implements MavenSearchIndex {
           }
         }
       };
-      myNexusIndexer.processArtifacts(data.mavenIndexId, mavenIndicesProcessor);
+      myNexusIndexer.processArtifacts(data.mavenIndexId, mavenIndicesProcessor, progress);
 
       persist(groupToArtifactMap, data.groupToArtifactMap);
       persist(groupWithArtifactToVersionMap, data.groupWithArtifactToVersionMap);

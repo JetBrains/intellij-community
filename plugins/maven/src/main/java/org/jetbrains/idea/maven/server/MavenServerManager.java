@@ -442,6 +442,28 @@ public final class MavenServerManager implements Disposable {
             return indexingConnector.createIndexer();
           }
 
+          @Override
+          protected synchronized void handleRemoteError(RemoteException e) {
+            super.handleRemoteError(e);
+            if (waitIfNotIdeaShutdown()) {
+              MavenIndexingConnectorImpl indexingConnector = myIndexingConnector;
+              if (indexingConnector != null && !indexingConnector.checkConnected()) {
+                shutdownConnector(indexingConnector, true);
+              }
+            }
+          }
+
+          private static boolean waitIfNotIdeaShutdown() {
+            try {
+              Thread.sleep(100);
+              return true;
+            }
+            catch (InterruptedException ex) {
+              Thread.currentThread().interrupt();
+            }
+            return false;
+          }
+
           private MavenServerConnector getIndexingConnector() {
             if (myIndexingConnector != null) return myIndexingConnector;
             synchronized (myMultimoduleDirToConnectorMap) {

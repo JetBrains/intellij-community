@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -70,12 +69,15 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     });
   }
 
-  public void processArtifacts(final MavenIndexId mavenIndexId, final MavenIndicesProcessor processor) throws MavenServerIndexerException {
+  public void processArtifacts(final MavenIndexId mavenIndexId, final MavenIndicesProcessor processor, MavenProgressIndicator progress)
+    throws MavenServerIndexerException {
     perform(() -> {
       try {
         int start = 0;
         List<IndexedMavenId> list;
         do {
+          if (progress.isCanceled()) return null;
+          MavenLog.LOG.warn("process artifacts: " + start);
           list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken);
           if (list != null) {
             processor.processArtifacts(list);
@@ -84,8 +86,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         }
         while (list != null);
         return null;
-      } catch (Exception e){
-        MavenLog.LOG.error("maven index id " + mavenIndexId, e);
+      } catch (Exception e) {
         return null;
       }
     });
