@@ -64,6 +64,10 @@ internal class NavBarService(private val project: Project) : Disposable {
     }
   }
 
+  fun selectTail() {
+    staticNavBarVm.vm.value?.selectTail()
+  }
+
   private fun showFloatingNavbar(dataContext: DataContext) {
     cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
