@@ -1,1 +1,1 @@
-val foo: <caret>() -> String = fun(): String { return "" }
+val foo: <caret>() -> String = { "" }

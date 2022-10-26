@@ -1,1 +1,1 @@
-val foo = fun(): String { return "" }
+val foo = { "" }
