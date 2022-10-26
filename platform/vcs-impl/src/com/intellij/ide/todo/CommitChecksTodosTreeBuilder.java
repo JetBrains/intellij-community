@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
@@ -8,7 +9,6 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,9 @@ import javax.swing.*;
 import java.util.*;
 
 public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuilder {
-  private final Set<PsiFile> myIncludedFiles;
+  private static final Logger LOG = Logger.getInstance(CommitChecksTodosTreeBuilder.class);
+
+  private final Set<VirtualFile> myIncludedFiles;
   private final @Nullable Set<String> myIncludedChangeListsIds;
 
   public CommitChecksTodosTreeBuilder(@NotNull JTree tree,
@@ -27,12 +29,17 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
 
     myIncludedFiles = collectIncludedFiles(todoItems);
     myIncludedChangeListsIds = collectIncludedChangeListsIds(project, changes);
+
+    if (myIncludedChangeListsIds != null && myIncludedChangeListsIds.size() > 1) {
+      LOG.warn("Processing TODO for multiple changelists might be incorrect" + myIncludedChangeListsIds);
+    }
   }
 
-  private static @NotNull Set<PsiFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
-    HashSet<PsiFile> files = new HashSet<>();
+  private static @NotNull Set<VirtualFile> collectIncludedFiles(@NotNull Collection<? extends TodoItem> todoItems) {
+    HashSet<VirtualFile> files = new HashSet<>();
     for (TodoItem item : todoItems) {
-      files.add(item.getFile());
+      PsiFile psiFile = item.getFile();
+      files.add(psiFile.getVirtualFile());
     }
     return files;
   }
@@ -56,22 +63,26 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
   @NotNull
   @Override
   protected Set<TodoItem> doFindAllTodoItems(@Nullable TodoFilter todoFilter) {
-    MultiMap<VirtualFile, Change> allChanges = new MultiMap<>();
+    List<Change> allChanges = new ArrayList<>();
     if (myIncludedChangeListsIds == null) {
-      putChangesForLocalFiles(allChanges, ChangeListManager.getInstance(myProject).getAllChanges());
+      allChanges.addAll(ChangeListManager.getInstance(myProject).getAllChanges());
     }
     else {
       for (String changeListId : myIncludedChangeListsIds) {
         LocalChangeList changeList = ChangeListManager.getInstance(myProject).getChangeList(changeListId);
         if (changeList != null) {
-          putChangesForLocalFiles(allChanges, changeList.getChanges());
+          allChanges.addAll(changeList.getChanges());
         }
       }
     }
 
     List<Change> changes = new ArrayList<>();
-    for (PsiFile next : myIncludedFiles) {
-      changes.addAll(allChanges.get(next.getVirtualFile()));
+    for (Change change : allChanges) {
+      FilePath afterPath = ChangesUtil.getAfterPath(change);
+      VirtualFile changeFile = afterPath != null ? afterPath.getVirtualFile() : null;
+      if (changeFile != null && myIncludedFiles.contains(changeFile)) {
+        changes.add(change);
+      }
     }
 
     TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, todoFilter);
@@ -82,10 +93,11 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
 
   @NotNull
   @Override
-  protected Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter) {
+  protected Set<TodoItem> doFindTodoForFile(@NotNull PsiFile psiFile, @Nullable TodoFilter todoFilter) {
+    VirtualFile file = psiFile.getVirtualFile();
     if (!myIncludedFiles.contains(file)) return Collections.emptySet();
 
-    Change change = ChangeListManager.getInstance(myProject).getChange(file.getVirtualFile());
+    Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change == null) return Collections.emptySet();
 
     List<Change> changes = Collections.singletonList(change);
@@ -93,15 +105,5 @@ public class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuild
     worker.execute();
 
     return worker.inOneList();
-  }
-
-  private static void putChangesForLocalFiles(@NotNull MultiMap<VirtualFile, Change> changesMap, @NotNull Collection<Change> changes) {
-    for (Change change : changes) {
-      FilePath afterPath = ChangesUtil.getAfterPath(change);
-      VirtualFile file = afterPath != null ? afterPath.getVirtualFile() : null;
-      if (file != null) {
-        changesMap.putValue(file, change);
-      }
-    }
   }
 }
