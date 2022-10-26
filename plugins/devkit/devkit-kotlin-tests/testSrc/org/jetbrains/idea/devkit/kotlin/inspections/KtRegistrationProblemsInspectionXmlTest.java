@@ -22,10 +22,6 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
                                "ApplicationComponent.kt");
   }
 
-  public void testComponentMissingImplementation() {
-    myFixture.testHighlighting("ComponentMissingImplementation.xml");
-  }
-
   public void testComponentMultipleWithSameInterface() {
     myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 
