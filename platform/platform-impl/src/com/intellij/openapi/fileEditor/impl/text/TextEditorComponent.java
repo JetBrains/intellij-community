@@ -9,10 +9,10 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -120,7 +120,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
    * @return most recently used editor. This method never returns {@code null}.
    */
   @NotNull
-  Editor getEditor(){
+  EditorEx getEditor() {
     return myEditor;
   }
 
