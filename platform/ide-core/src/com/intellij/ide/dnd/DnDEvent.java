@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +96,7 @@ public interface DnDEvent extends Transferable, UserDataHolder {
 
     int TEXT = 16;
     int ERROR_TEXT = 32;
-    int BOTTOM_GRADIENT = 64;
+    @ApiStatus.Experimental
+    int BOTTOM = 64;
   }
 }
