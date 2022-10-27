@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.supporters
+package org.jetbrains.completion.full.line.js.supporters
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.lang.javascript.JSTokenTypes
@@ -12,6 +12,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.completion.full.line.language.supporters.FullLineLanguageSupporterBase
 
 abstract class JSDialectSupporter : FullLineLanguageSupporterBase() {
   override fun createCodeFragment(file: PsiFile, text: String, isPhysical: Boolean): PsiFile? {

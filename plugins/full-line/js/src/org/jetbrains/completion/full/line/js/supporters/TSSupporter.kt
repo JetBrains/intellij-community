@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.supporters
+package org.jetbrains.completion.full.line.js.supporters
 
 
 import com.intellij.lang.Language
@@ -7,7 +7,8 @@ import com.intellij.lang.javascript.dialects.TypeScriptLanguageDialect
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.completion.full.line.language.*
 import org.jetbrains.completion.full.line.language.formatters.DummyPsiCodeFormatter
-import org.jetbrains.completion.full.line.language.formatters.TSCodeFormatter
+import org.jetbrains.completion.full.line.js.TSIconSet
+import org.jetbrains.completion.full.line.js.formatters.TSCodeFormatter
 
 class TSSupporter : JSDialectSupporter() {
   override val fileType: FileType = TypeScriptFileType.INSTANCE

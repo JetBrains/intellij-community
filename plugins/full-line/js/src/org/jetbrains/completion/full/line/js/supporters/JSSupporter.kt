@@ -1,4 +1,4 @@
-package org.jetbrains.completion.full.line.language.supporters
+package org.jetbrains.completion.full.line.js.supporters
 
 import com.intellij.lang.Language
 import com.intellij.lang.javascript.JavaScriptFileType
@@ -6,7 +6,8 @@ import com.intellij.lang.javascript.JavascriptLanguage
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.completion.full.line.language.*
 import org.jetbrains.completion.full.line.language.formatters.DummyPsiCodeFormatter
-import org.jetbrains.completion.full.line.language.formatters.JSCodeFormatter
+import org.jetbrains.completion.full.line.js.JSIconSet
+import org.jetbrains.completion.full.line.js.formatters.JSCodeFormatter
 
 class JSSupporter : JSDialectSupporter() {
   override val fileType: FileType = JavaScriptFileType.INSTANCE
