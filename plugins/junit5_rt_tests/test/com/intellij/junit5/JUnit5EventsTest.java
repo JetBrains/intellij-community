@@ -160,15 +160,17 @@ public class JUnit5EventsTest {
     myExecutionListener.executionStarted(identifier);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(new IllegalStateException()));
 
-    Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
-                            "##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']\n" +
-                            "##teamcity[treeEnded]\n" +
-                            "##teamcity[rootName name = 'testMethod' location = 'java:suite://testMethod']\n" +
-                            "##teamcity[testStarted  name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'  ]\n" +
-                            "##teamcity[testFailed name='Class Configuration' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' error='true' message='' details='TRACE']\n" +
-                            "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' ]\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+    Assertions.assertEquals("""
+          ##teamcity[enteredTheMatrix]
+          ##teamcity[suiteTreeStarted id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']
+          ##teamcity[suiteTreeEnded id='|[engine:engine|]/|[class:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:engine|]/|[class:testClass|]' parentNodeId='0']
+          ##teamcity[treeEnded]
+          ##teamcity[rootName name = 'testMethod' location = 'java:suite://testMethod']
+          ##teamcity[testStarted  name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]'  ]
+          ##teamcity[testFailed name='Class Configuration' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' error='true' message='' details='TRACE']
+          ##teamcity[testFinished name='Class Configuration' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' ]
+          ##teamcity[testSuiteFinished  id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='brokenStream()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']
+          """, StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
   @Test

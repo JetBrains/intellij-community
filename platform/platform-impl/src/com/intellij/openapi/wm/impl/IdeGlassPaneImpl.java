@@ -41,14 +41,8 @@ public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, Id
   private final List<EventListener> myMouseListeners = new ArrayList<>();
 
   private final Set<EventListener> mySortedMouseListeners = new TreeSet<>((o1, o2) -> {
-    double weight1 = 0;
-    if (o1 instanceof Weighted) {
-      weight1 = ((Weighted)o1).getWeight();
-    }
-    double weight2 = 0;
-    if (o2 instanceof Weighted) {
-      weight2 = ((Weighted)o2).getWeight();
-    }
+    double weight1 = o1 instanceof Weighted w1 ? w1.getWeight() : 0;
+    double weight2 = o2 instanceof Weighted w2 ? w2.getWeight() : 0;
     return weight1 > weight2 ? 1 : weight1 < weight2 ? -1 : myMouseListeners.indexOf(o1) - myMouseListeners.indexOf(o2);
   });
 
@@ -521,7 +515,7 @@ public final class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, Id
     }
   }
 
-  final @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
+  @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
     return myNamedPainters.computeIfAbsent(name, key -> new PaintersHelper(this));
   }
 
