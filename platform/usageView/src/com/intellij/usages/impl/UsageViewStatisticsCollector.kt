@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 8)
+    val GROUP = EventLogGroup("usage.view", 9)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
       override val name: String = "usage_view"
 
@@ -61,7 +61,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
 
-    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW)
+    private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION)
 
     private val searchFinished = GROUP.registerVarargEvent("finished",
       SYMBOL_CLASS,
@@ -91,8 +91,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     )
 
     @JvmStatic
-    fun logSearchStarted(project: Project?, usageView: UsageView) {
-      searchStarted.log(project, USAGE_VIEW.with(usageView))
+    fun logSearchStarted(project: Project?, usageView: UsageView, source: CodeNavigateSource) {
+      searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source))
     }
 
     @JvmStatic
