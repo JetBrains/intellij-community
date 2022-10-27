@@ -94,7 +94,7 @@ internal class LibraryModifiableModelBridgeImpl(
         targetBuilder.addDiff(diff)
       }
       else {
-        WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel {
+        WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
           it.addDiff(diff)
         }
       }

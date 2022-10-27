@@ -10,11 +10,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import junit.framework.Assert.*
 import org.junit.*
 
@@ -130,8 +131,8 @@ class WorkspaceModelTest {
   @Test(expected = RuntimeException::class)
   @Ignore
   fun `recursive update silent`() {
-    (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
+    (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
         println("So much updates")
       }
     }
@@ -141,7 +142,7 @@ class WorkspaceModelTest {
   @Ignore
   fun `recursive update mixed 1`() {
     ApplicationManager.getApplication().runWriteAction {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
         (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
           println("So much updates")
         }
@@ -154,7 +155,7 @@ class WorkspaceModelTest {
   fun `recursive update mixed 2`() {
     ApplicationManager.getApplication().runWriteAction {
       (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModel {
-        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent {
+        (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl).updateProjectModelSilent("Test") {
           println("So much updates")
         }
       }

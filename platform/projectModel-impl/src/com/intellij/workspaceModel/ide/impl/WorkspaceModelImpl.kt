@@ -88,25 +88,48 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     loadedFromCache = false
   }
 
-  final override fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (!projectModelUpdating.compareAndSet(false, true)) {
       throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
-    val before = entityStorage.current
-    val builder = MutableEntityStorage.from(before)
-    val result = updater(builder)
-    startPreUpdateHandlers(before, builder)
+    log.info("-------------------------------------------")
+    log.info("Updating project model. Current version ${entityStorage.pointer.version}.")
+    log.info("Update description: $description")
 
-    val changes = builder.collectChanges(before)
-    this.initializeBridges(changes, builder)
+    val result: R
+    val generalTime = measureTimeMillis {
+      val before = entityStorage.current
+      val builder = MutableEntityStorage.from(before)
+      val updateTimeMillis = measureTimeMillis {
+        result = updater(builder)
+      }
+      val preHandlersTimeMillis = measureTimeMillis {
+        startPreUpdateHandlers(before, builder)
+      }
 
-    val newStorage = builder.toSnapshot()
-    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
-      before.assertConsistency()
-      newStorage.assertConsistency()
+      val changes: Map<Class<*>, List<EntityChange<*>>>
+      val collectChangesTimeMillis = measureTimeMillis {
+        changes = builder.collectChanges(before)
+      }
+      val initializingTimeMillis = measureTimeMillis {
+        this.initializeBridges(changes, builder)
+      }
+
+      val newStorage: EntityStorageSnapshot
+      val toSnapshotTimeMillis = measureTimeMillis {
+        newStorage = builder.toSnapshot()
+      }
+      if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+        before.assertConsistency()
+        newStorage.assertConsistency()
+      }
+      entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
+      log.info("Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
+      log.info("Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
     }
-    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
+    log.info("Whole update took $generalTime ms")
+    log.info("-------------------------------------------")
     return result
   }
 
@@ -116,20 +139,32 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
    * This method doesn't require write action.
    */
   @Synchronized
-  final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R {
     if (!projectModelUpdating.compareAndSet(false, true)) {
       throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
+    log.info("-------------------------------------------------------")
+    log.info("Updating project model silently. Version before update ${entityStorage.pointer.version}.")
+    log.info("Update description: $description")
+
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
-    val result = updater(builder)
-    val newStorage = builder.toSnapshot()
+    val result: R
+    val updateTimeMillis = measureTimeMillis {
+      result = updater(builder)
+    }
+    val newStorage: EntityStorageSnapshot
+    val toSnapshotTimeMillis = measureTimeMillis {
+      newStorage = builder.toSnapshot()
+    }
     if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
       before.assertConsistency()
       newStorage.assertConsistency()
     }
     entityStorage.replaceSilently(newStorage)
     projectModelUpdating.set(false)
+    log.info("Update: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
+    log.info("-------------------------------------------------------")
     return result
   }
 

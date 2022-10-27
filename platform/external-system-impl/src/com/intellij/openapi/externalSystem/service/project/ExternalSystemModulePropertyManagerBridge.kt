@@ -42,7 +42,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(module.project).updateProjectModel { builder ->
+        WorkspaceModel.getInstance(module.project).updateProjectModel("Modify external system module options") { builder ->
           val moduleEntity = module.findModuleEntity(builder) ?: return@updateProjectModel
           val options = builder.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
           builder.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)

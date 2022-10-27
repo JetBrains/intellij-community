@@ -473,7 +473,7 @@ internal class WorkspaceProjectImporter(
         attempts++
         MavenUtil.invokeAndWaitWriteAction(project) {
           val beforeWA = System.nanoTime()
-          workspaceModel.updateProjectModel { builder -> prepareInBackground(builder) }
+          workspaceModel.updateProjectModel("Maven update project model") { builder -> prepareInBackground(builder) }
           durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
           afterApplyInWriteAction(workspaceModel.entityStorage.current)
           durationInWriteAction += System.nanoTime() - beforeWA

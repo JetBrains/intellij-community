@@ -106,9 +106,8 @@ class ModifiableModelsProviderProxyImpl(private val project: Project,
       (model as ModifiableRootModelBridge).prepareForCommit()
     }
 
-    WorkspaceModel.getInstance(project).updateProjectModel<Any?> { builder: MutableEntityStorage ->
+    WorkspaceModel.getInstance(project).updateProjectModel("Modifiable model provider proxy commit") { builder: MutableEntityStorage ->
       builder.addDiff(diff)
-      null
     }
 
     for (model in rootModels) {

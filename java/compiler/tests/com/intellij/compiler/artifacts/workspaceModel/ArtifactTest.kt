@@ -28,6 +28,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.*
 import com.intellij.testFramework.JUnit38AssumeSupportRunner
+import com.intellij.testFramework.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel

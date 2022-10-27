@@ -57,7 +57,7 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
         modulePropertyManager.setMavenized(mavenized);
       }
     }
-    WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
+    WorkspaceModel.getInstance(myProject).updateProjectModel("Set mavenized modules", builder -> {
       builder.addDiff(storageBuilder);
       return null;
     });
