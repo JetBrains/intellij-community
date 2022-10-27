@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.refactoring.rename.AbstractFirRenameTest
-import org.jetbrains.kotlin.idea.fir.refactoring.rename.AbstractFirSimpleRenameTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
@@ -252,5 +251,4 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("")
         }
     }
-
 }

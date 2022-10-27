@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractDirectKotlinInheritorsSearcherTest
 import org.jetbrains.kotlin.idea.k2.inheritorsSearch.AbstractKotlinDefinitionsSearchTest
+import org.jetbrains.kotlin.idea.k2.search.AbstractFirAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2SearchTests() {
@@ -16,6 +17,9 @@ internal fun MutableTWorkspace.generateK2SearchTests() {
             model("definitionsSearch/kotlinClass", testMethodName = "doTestKotlinClass", pattern = Patterns.KT_WITHOUT_DOTS)
             model("definitionsSearch/javaClass", testMethodName = "doTestJavaClass", pattern = Patterns.JAVA)
             model("definitionsSearch/kotlinFunction", testMethodName = "doTestKotlinFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+        }
+        testClass<AbstractFirAnnotatedMembersSearchTest> {
+            model("../../idea/tests/testData/search/annotations")
         }
     }
 }
