@@ -41,6 +41,7 @@ import com.intellij.ui.docking.*
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
+import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
@@ -126,13 +127,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     }
   }
 
-  override fun getContainers(): Set<DockContainer> {
-    val result = LinkedHashSet<DockContainer>(containers.size + containerToWindow.size + 1)
-    FileEditorManagerEx.getInstanceEx(project)?.dockContainer?.let(result::add)
-    result.addAll(containers)
-    result.addAll(containerToWindow.keys)
-    return Collections.unmodifiableSet(result)
-  }
+  override fun getContainers(): Set<DockContainer> = allContainers.toSet()
 
   override fun getIdeFrame(container: DockContainer): IdeFrame? {
     return ComponentUtil.findUltimateParent(container.containerComponent) as? IdeFrame
@@ -217,7 +212,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
       val requiredSize = 220.0
       val width = buffer.getWidth(null).toDouble()
       val height = buffer.getHeight(null).toDouble()
-      val ratio: Double = if (width > height) requiredSize / width else requiredSize / height
+      val ratio = if (width > height) requiredSize / width else requiredSize / height
       defaultDragImage = buffer.getScaledInstance((width * ratio).toInt(), (height * ratio).toInt(), Image.SCALE_SMOOTH)
       dragImage = defaultDragImage
       imageContainer = JLabel(object : Icon {
@@ -658,7 +653,11 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   }
 
   private val allContainers: Sequence<DockContainer>
-    get() = containers.asSequence() + containerToWindow.keys
+    get() {
+      return sequenceOfNotNull(FileEditorManagerEx.getInstanceEx (project)?.dockContainer) +
+             containers.asSequence () +
+             containerToWindow.keys
+    }
 
   override fun loadState(state: Element) {
     loadedState = state

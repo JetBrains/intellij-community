@@ -235,13 +235,9 @@ open class ProjectFrameHelper(
     })
   }
 
-  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
-    return CloseProjectWindowHelper()
-  }
+  protected open fun createCloseProjectWindowHelper(): CloseProjectWindowHelper = CloseProjectWindowHelper()
 
-  override fun getStatusBar(): IdeStatusBarImpl? {
-    return if (rootPane == null) null else rootPane!!.statusBar
-  }
+  override fun getStatusBar(): IdeStatusBarImpl? = rootPane?.statusBar
 
   override fun setFrameTitle(text: String) {
     frame!!.title = text

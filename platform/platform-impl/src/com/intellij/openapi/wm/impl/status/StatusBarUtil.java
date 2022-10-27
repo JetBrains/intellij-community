@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -32,10 +33,6 @@ public final class StatusBarUtil {
   private StatusBarUtil() { }
 
   public static @Nullable Editor getCurrentTextEditor(@Nullable StatusBar statusBar) {
-    if (statusBar == null) {
-      return null;
-    }
-
     FileEditor fileEditor = getCurrentFileEditor(statusBar);
     if (fileEditor instanceof TextEditor) {
       Editor editor = ((TextEditor)fileEditor).getEditor();
@@ -66,14 +63,23 @@ public final class StatusBarUtil {
       return LightEditService.getInstance().getSelectedFileEditor();
     }
 
-    DockContainer dockContainer = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),
-                                                                                   DockableEditorTabbedContainer.class::isInstance);
-    EditorsSplitters splitters = null;
-    if (dockContainer instanceof DockableEditorTabbedContainer) {
-      splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
+    EditorsSplitters splitters;
+    if (statusBar == WindowManager.getInstance().getStatusBar(project)) {
+      // main - avoid getting DockManager
+      splitters = FileEditorManagerEx.getInstanceEx(project).getSplitters();
+    }
+    else {
+      DockContainer dockContainer = DockManager.getInstance(project).getContainerFor(statusBar.getComponent(),
+                                                                                     DockableEditorTabbedContainer.class::isInstance);
+      if (dockContainer instanceof DockableEditorTabbedContainer) {
+        splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
+      }
+      else {
+        return null;
+      }
     }
 
-    if (splitters != null && splitters.getCurrentWindow() != null) {
+    if (splitters.getCurrentWindow() != null) {
       EditorComposite composite = splitters.getCurrentWindow().getSelectedComposite();
       if (composite != null) {
         return composite.getSelectedWithProvider().getFileEditor();
