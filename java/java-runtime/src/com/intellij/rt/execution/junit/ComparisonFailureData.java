@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ComparisonFailureData {
@@ -14,6 +16,8 @@ public class ComparisonFailureData {
   private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
 
   public static final String OPENTEST4J_ASSERTION = "org.opentest4j.AssertionFailedError";
+
+  private static final List<String> COMPARISON_FAILURES = Arrays.asList("org.junit.ComparisonFailure", "org.junit.ComparisonFailure");
 
   private final String myExpected;
   private final String myActual;
@@ -25,8 +29,7 @@ public class ComparisonFailureData {
 
   static {
     try {
-      init("junit.framework.ComparisonFailure");
-      init("org.junit.ComparisonFailure");
+      for (String failure : COMPARISON_FAILURES) init(failure);
     }
     catch (Throwable ignored) { }
   }
@@ -212,12 +215,12 @@ public class ComparisonFailureData {
     if (commonAssertion != null) return commonAssertion;
 
     try {
-      return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
-    }
+     return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
+   }
     catch (Throwable e) {
-      return null;
-    }
+    return null;
   }
+}
 
   /** @noinspection SSBasedInspection*/
   private static ComparisonFailureData createCommonAssertion(Throwable assertion) {
@@ -245,25 +248,32 @@ public class ComparisonFailureData {
   }
 
   public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-     return get(assertion, ACTUAL, "fActual");
-   }
+    return get(assertion, ACTUAL, "fActual");
+  }
 
-   public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
-     return get(assertion, EXPECTED, "fExpected");
-   }
+  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, EXPECTED, "fExpected");
+  }
 
-   private static String get(final Throwable assertion, final Map<String, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
-     String actual;
-     Class<? extends Throwable> assertionClass = assertion.getClass();
-     Field actualField = staticMap.get(assertionClass.getName());
-     if (actualField != null) {
-       actual = (String)actualField.get(assertion);
-     }
-     else {
-       Field field = assertionClass.getDeclaredField(fieldName);
-       field.setAccessible(true);
-       actual = (String)field.get(assertion);
-     }
-     return actual;
-   }
+  private static String get(
+    final Throwable assertion, final Map<String, Field> staticMap, final String fieldName
+  ) throws IllegalAccessException, NoSuchFieldException {
+    Class<?> assertionClass = assertion.getClass();
+    while (!COMPARISON_FAILURES.contains(assertionClass.getName())) {
+      Class<?> superClass = assertionClass.getSuperclass();
+      if (superClass.getName().equals("java.lang.Object")) break;
+      assertionClass = assertionClass.getSuperclass();
+    }
+    Field actualField = staticMap.get(assertionClass.getName());
+    String actual;
+    if (actualField != null) {
+      actual = (String)actualField.get(assertion);
+    }
+    else {
+      Field field = assertionClass.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      actual = (String)field.get(assertion);
+    }
+    return actual;
+  }
 }
