@@ -37,7 +37,7 @@ internal class AddNameToArgumentIntention :
         !element.isNamed() && element !is KtLambdaArgument
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtValueArgument): Context? {
+    override fun prepareContext(element: KtValueArgument): Context? {
         val argumentList = element.parent as? KtValueArgumentList ?: return null
         val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return null

@@ -15,9 +15,9 @@ import kotlin.reflect.KClass
  * Note: A [familyNameGetter] for [SelfTargetingIntention] does not have to be set because inheritors of [KotlinApplicableIntentionBase]
  * must override [getFamilyName].
  */
-sealed class KotlinApplicableIntentionBase<Element : KtElement>(
-    elementType: KClass<Element>,
-) : SelfTargetingIntention<Element>(elementType.java, { "" }) {
+sealed class KotlinApplicableIntentionBase<ELEMENT : KtElement>(
+    elementType: KClass<ELEMENT>,
+) : SelfTargetingIntention<ELEMENT>(elementType.java, { "" }) {
     /**
      * @see com.intellij.codeInsight.intention.IntentionAction.getFamilyName
      */
@@ -29,18 +29,18 @@ sealed class KotlinApplicableIntentionBase<Element : KtElement>(
      * The default applicability range is equivalent to `ApplicabilityRanges.SELF`. Configuration of the applicability range might be as
      * simple as choosing an existing one from `ApplicabilityRanges`.
      */
-    open fun getApplicabilityRange(): KotlinApplicabilityRange<Element> = applicabilityTarget { it }
+    open fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT> = applicabilityTarget { it }
 
     /**
      * Whether this intention is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
      */
-    abstract fun isApplicableByPsi(element: Element): Boolean
+    abstract fun isApplicableByPsi(element: ELEMENT): Boolean
 
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange]. An override must invoke
      * [setTextGetter] to configure the action name.
      */
-    override fun isApplicableTo(element: Element, caretOffset: Int): Boolean {
+    override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
         if (!isApplicableByPsi(element)) return false
         val ranges = getApplicabilityRange().getApplicabilityRanges(element)
         if (ranges.isEmpty()) return false
@@ -50,5 +50,5 @@ sealed class KotlinApplicableIntentionBase<Element : KtElement>(
         return ranges.any { it.containsOffset(relativeCaretOffset) }
     }
 
-    final override fun applyTo(element: Element, editor: Editor?) = applyTo(element, element.project, editor)
+    final override fun applyTo(element: ELEMENT, editor: Editor?) = applyTo(element, element.project, editor)
 }

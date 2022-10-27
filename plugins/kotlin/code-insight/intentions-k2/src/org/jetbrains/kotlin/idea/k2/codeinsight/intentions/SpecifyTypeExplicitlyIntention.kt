@@ -32,7 +32,7 @@ internal class SpecifyTypeExplicitlyIntention :
     }
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtCallableDeclaration): TypeInfo? {
+    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? {
         // Avoid redundant intentions
         val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
         if (diagnostics.any { diagnostic ->

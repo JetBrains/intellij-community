@@ -42,7 +42,7 @@ internal class AddNamesToCallArgumentsIntention :
         element.valueArgumentList?.arguments?.any { !it.isNamed() } ?: false
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtCallElement): Context? =
+    override fun prepareContext(element: KtCallElement): Context? =
         associateArgumentNamesStartingAt(element, null)?.let { Context(it) }
 
     override fun apply(element: KtCallElement, context: Context, project: Project, editor: Editor?) =

@@ -16,20 +16,20 @@ import kotlin.reflect.KClass
  *
  * If [apply] needs to use the Analysis API, inherit from [KotlinApplicableIntentionWithContext] instead.
  */
-abstract class KotlinApplicableIntention<Element : KtElement>(
-    elementType: KClass<Element>,
-) : KotlinApplicableIntentionBase<Element>(elementType) {
+abstract class KotlinApplicableIntention<ELEMENT : KtElement>(
+    elementType: KClass<ELEMENT>,
+) : KotlinApplicableIntentionBase<ELEMENT>(elementType) {
     /**
      * @see com.intellij.codeInsight.intention.IntentionAction.getText
      */
-    abstract fun getActionName(element: Element): @IntentionName String
+    abstract fun getActionName(element: ELEMENT): @IntentionName String
 
     /**
      * Whether this intention is applicable to [element] by performing some resolution with the Analysis API. Any checks which don't
      * require the Analysis API should instead be implemented in [isApplicableByPsi].
      */
     context(KtAnalysisSession)
-    open fun isApplicableByAnalyze(element: Element): Boolean = true
+    open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
 
     /**
      * Applies a fix to [element]. [apply] should not use the Analysis API due to performance concerns, as [apply] is usually executed on
@@ -37,9 +37,9 @@ abstract class KotlinApplicableIntention<Element : KtElement>(
      *
      * [apply] is always executed in a write action, except when [startInWriteAction] is overridden.
      */
-    abstract fun apply(element: Element, project: Project, editor: Editor?)
+    abstract fun apply(element: ELEMENT, project: Project, editor: Editor?)
 
-    final override fun isApplicableTo(element: Element, caretOffset: Int): Boolean {
+    final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
         if (!super.isApplicableTo(element, caretOffset)) return false
         if (!isApplicableWithAnalyze(element)) return false
 
@@ -48,10 +48,10 @@ abstract class KotlinApplicableIntention<Element : KtElement>(
         return true
     }
 
-    final override fun applyTo(element: Element, project: Project, editor: Editor?) = apply(element, project, editor)
+    final override fun applyTo(element: ELEMENT, project: Project, editor: Editor?) = apply(element, project, editor)
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun isApplicableWithAnalyze(element: Element): Boolean = allowAnalysisOnEdt {
+    private fun isApplicableWithAnalyze(element: ELEMENT): Boolean = allowAnalysisOnEdt {
         analyze(element) {
             isApplicableByAnalyze(element)
         }

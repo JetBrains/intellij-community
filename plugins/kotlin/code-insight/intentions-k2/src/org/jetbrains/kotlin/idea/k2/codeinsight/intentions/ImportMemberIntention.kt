@@ -38,7 +38,7 @@ internal class ImportMemberIntention :
         element.getQualifiedElement() != element && !element.isInImportDirective()
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtNameReferenceExpression): Context? {
+    override fun prepareContext(element: KtNameReferenceExpression): Context? {
         val symbol = element.mainReference.resolveToSymbol() ?: return null
         return computeContext(element, symbol)
     }

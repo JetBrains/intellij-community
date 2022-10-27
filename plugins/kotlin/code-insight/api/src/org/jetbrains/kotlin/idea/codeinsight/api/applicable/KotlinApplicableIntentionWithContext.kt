@@ -15,20 +15,20 @@ import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
- * Applies a fix to the PSI with [apply] given some [Context] from [getContext] if the intention is applicable via [isApplicableByPsi] and
- * [getContext].
+ * Applies a fix to the PSI with [apply] given some [CONTEXT] from [prepareContext] if the intention is applicable via [isApplicableByPsi] and
+ * [prepareContext].
  */
-abstract class KotlinApplicableIntentionWithContext<Element : KtElement, Context>(
-    elementType: KClass<Element>,
-) : KotlinApplicableIntentionBase<Element>(elementType) {
+abstract class KotlinApplicableIntentionWithContext<ELEMENT : KtElement, CONTEXT>(
+    elementType: KClass<ELEMENT>,
+) : KotlinApplicableIntentionBase<ELEMENT>(elementType) {
     /**
      * @see com.intellij.codeInsight.intention.IntentionAction.getText
      */
-    abstract fun getActionName(element: Element, context: Context): @IntentionName String
+    abstract fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String
 
     /**
-     * Provides some context for [apply]. If the intention is not applicable (by analyze), [getContext] should return `null`. Guaranteed to
-     * be executed from a read action.
+     * Provides some context for [apply]. If the intention is not applicable (by analyze), [prepareContext] should return `null`.
+     * Guaranteed to be executed from a read action.
      *
      * The context should not store:
      * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like:
@@ -39,26 +39,26 @@ abstract class KotlinApplicableIntentionWithContext<Element : KtElement, Context
      * - [PsiElement], consider using [com.intellij.psi.SmartPsiElementPointer] instead.
      */
     context(KtAnalysisSession)
-    abstract fun getContext(element: Element): Context?
+    abstract fun prepareContext(element: ELEMENT): CONTEXT?
 
     /**
      * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
-     * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via [getContext].
+     * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via [prepareContext].
      *
      * [apply] is executed in a write action when [element] is physical.
      */
-    abstract fun apply(element: Element, context: Context, project: Project, editor: Editor?)
+    abstract fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?)
 
-    final override fun isApplicableTo(element: Element, caretOffset: Int): Boolean {
+    final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean {
         if (!super.isApplicableTo(element, caretOffset)) return false
-        val context = getContextWithAnalyze(element, needsReadAction = false) ?: return false
+        val context = prepareContextWithAnalyze(element, needsReadAction = false) ?: return false
         val actionText = getActionName(element, context)
         setTextGetter { actionText }
         return true
     }
 
-    final override fun applyTo(element: Element, project: Project, editor: Editor?) {
-        val context = getContextWithAnalyze(element, needsReadAction = true) ?: return
+    final override fun applyTo(element: ELEMENT, project: Project, editor: Editor?) {
+        val context = prepareContextWithAnalyze(element, needsReadAction = true) ?: return
         runWriteActionIfPhysical(element) {
             apply(element, context, project, editor)
         }
@@ -70,8 +70,8 @@ abstract class KotlinApplicableIntentionWithContext<Element : KtElement, Context
         false
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun getContextWithAnalyze(element: Element, needsReadAction: Boolean): Context? = allowAnalysisOnEdt {
-        fun action() = analyze(element) { getContext(element) }
+    private fun prepareContextWithAnalyze(element: ELEMENT, needsReadAction: Boolean): CONTEXT? = allowAnalysisOnEdt {
+        fun action() = analyze(element) { prepareContext(element) }
         if (needsReadAction) runReadAction { action() } else action()
     }
 }

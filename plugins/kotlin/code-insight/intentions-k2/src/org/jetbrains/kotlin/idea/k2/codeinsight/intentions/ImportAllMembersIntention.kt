@@ -41,7 +41,7 @@ internal class ImportAllMembersIntention :
         element.isOnTheLeftOfQualificationDot && !element.isInImportDirective()
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtExpression): Context? {
+    override fun prepareContext(element: KtExpression): Context? {
         val target = element.actualReference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol ?: return null
         val classId = target.classIdIfNonLocal ?: return null
         if (target.origin != KtSymbolOrigin.JAVA &&

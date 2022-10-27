@@ -35,14 +35,14 @@ object ChangeTypeQuickFixFactories {
         VARIABLE,
     }
 
-    private class UpdateTypeQuickFix<Element : KtCallableDeclaration>(
-        target: Element,
+    private class UpdateTypeQuickFix<E : KtCallableDeclaration>(
+        target: E,
         private val targetType: TargetType,
         private val typeInfo: CallableReturnTypeUpdaterUtils.TypeInfo,
-    ) : KotlinApplicableQuickFix<Element>(target) {
+    ) : KotlinApplicableQuickFix<E>(target) {
         override fun getFamilyName(): String = KotlinBundle.message("fix.change.return.type.family")
-        override fun getActionName(element: Element): String = getActionName(element, targetType, typeInfo)
-        override fun apply(element: Element, project: Project, editor: Editor?, file: KtFile) =
+        override fun getActionName(element: E): String = getActionName(element, targetType, typeInfo)
+        override fun apply(element: E, project: Project, editor: Editor?, file: KtFile) =
             updateType(element, typeInfo, project, editor)
     }
 

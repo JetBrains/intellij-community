@@ -44,7 +44,7 @@ internal class AddNamesToFollowingArgumentsIntention :
     }
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtValueArgument): Context? {
+    override fun prepareContext(element: KtValueArgument): Context? {
         val argumentList = element.parent as? KtValueArgumentList ?: return null
         val call = argumentList.parent as? KtCallElement ?: return null
         return associateArgumentNamesStartingAt(call, element)?.let { Context(it) }

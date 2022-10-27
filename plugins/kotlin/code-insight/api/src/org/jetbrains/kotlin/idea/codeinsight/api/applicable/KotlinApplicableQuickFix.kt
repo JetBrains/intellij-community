@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.psi.*
 /**
  * A [KotlinQuickFixAction] providing a similar API for quick fixes as [KotlinApplicableIntention] provides for intentions.
  */
-abstract class KotlinApplicableQuickFix<Element : PsiElement>(target: Element) : KotlinQuickFixAction<Element>(target) {
-    open fun getActionName(element: Element): @IntentionName String = familyName
+abstract class KotlinApplicableQuickFix<ELEMENT : PsiElement>(target: ELEMENT) : KotlinQuickFixAction<ELEMENT>(target) {
+    open fun getActionName(element: ELEMENT): @IntentionName String = familyName
 
-    abstract fun apply(element: Element, project: Project, editor: Editor?, file: KtFile)
+    abstract fun apply(element: ELEMENT, project: Project, editor: Editor?, file: KtFile)
 
     final override fun getText(): String {
         val element = element ?: return familyName

@@ -20,7 +20,7 @@ internal class AddWhenRemainingBranchesIntention
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
+    override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
         val whenMissingCases = element.getMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
         } ?: return null

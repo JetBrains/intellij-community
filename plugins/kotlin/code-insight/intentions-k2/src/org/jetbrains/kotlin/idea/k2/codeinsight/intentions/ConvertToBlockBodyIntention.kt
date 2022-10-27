@@ -36,7 +36,7 @@ internal class ConvertToBlockBodyIntention :
         (element is KtNamedFunction || element is KtPropertyAccessor) && !element.hasBlockBody() && element.hasBody()
 
     context(KtAnalysisSession)
-    override fun getContext(element: KtDeclarationWithBody): Context? {
+    override fun prepareContext(element: KtDeclarationWithBody): Context? {
         if (element is KtNamedFunction) {
             val returnType = element.getReturnKtType()
             if (!element.hasDeclaredReturnType() && returnType is KtClassErrorType) return null
