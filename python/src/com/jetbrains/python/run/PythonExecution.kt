@@ -5,6 +5,7 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.nio.charset.Charset
 
 /**
@@ -19,6 +20,8 @@ sealed class PythonExecution {
   val envs: MutableMap<String, TargetEnvironmentFunction<String>> = mutableMapOf()
 
   var charset: Charset = EncodingManager.getInstance().defaultCharset
+
+  var inputFile: File? = null
 
   fun addParameter(value: String) {
     addParameter(constant(value))
@@ -42,6 +45,10 @@ sealed class PythonExecution {
 
   fun addEnvironmentVariable(key: String, value: TargetEnvironmentFunction<String>) {
     envs[key] = value
+  }
+
+  fun withInputFile(file: File) {
+    inputFile = file
   }
 
   /**
