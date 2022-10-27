@@ -4,20 +4,18 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.DropDownSettingType
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.wizard.OnUserSettingChangeStatisticsLogger
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.*
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.SettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndicator
 import java.awt.Dimension
-import javax.swing.Icon
 import javax.swing.JComponent
 
 class ProjectTemplateSettingComponent(
@@ -96,18 +94,6 @@ class ProjectTemplateSettingComponent(
         }
     }
 }
-
-private val ProjectTemplate.icon: Icon?
-    get() = when (this) {
-        ConsoleApplicationProjectTemplateWithSample -> KotlinIcons.Wizard.CONSOLE
-        MultiplatformLibraryProjectTemplate -> KotlinIcons.Wizard.MULTIPLATFORM_LIBRARY
-        FullStackWebApplicationProjectTemplate -> KotlinIcons.Wizard.WEB
-        NativeApplicationProjectTemplate -> KotlinIcons.Wizard.NATIVE
-        FrontendApplicationProjectTemplate -> KotlinIcons.Wizard.JS
-        ReactApplicationProjectTemplate -> KotlinIcons.Wizard.REACT_JS
-        NodeJsApplicationProjectTemplate -> KotlinIcons.Wizard.NODE_JS
-        else -> null
-    }
 
 class TemplateDescriptionComponent : Component() {
     private val descriptionLabel = CommentLabel().apply {
