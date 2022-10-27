@@ -115,17 +115,6 @@ fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
   }
 }
 
-@Deprecated(replaceWith = ReplaceWith("addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)"),
-            message = "Zhenja please use addContentRootEntity method")
-fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
-                                                                    excludedUrls: List<VirtualFileUrl>,
-                                                                    excludedPatterns: List<String>,
-                                                                    module: ModuleEntity,
-                                                                    source: EntitySource): ContentRootEntity {
-  return addContentRootEntity(url, excludedUrls, excludedPatterns, module, source)
-}
-
-
 fun MutableEntityStorage.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
   val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
