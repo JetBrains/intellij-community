@@ -161,7 +161,7 @@ class LocalModelsManager : ConfigurableModelsManager {
         File(PathManager.getSystemPath())
       }
       else {
-        File("build/resources/test")
+        Files.createTempDirectory("full-line-temp").toFile()
       }.resolve("full-line/models")
         .also { Files.createDirectories(it.toPath()) }
     }
