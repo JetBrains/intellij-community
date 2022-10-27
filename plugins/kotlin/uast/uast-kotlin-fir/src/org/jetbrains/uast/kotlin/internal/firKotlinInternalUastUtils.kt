@@ -281,17 +281,19 @@ internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): TypeNull
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-internal fun KtAnalysisSession.psiForUast(ktSymbol: KtSymbol, project: Project): PsiElement? {
-    return when (ktSymbol.origin) {
-        KtSymbolOrigin.LIBRARY -> {
-            findPsi(ktSymbol, project) ?: ktSymbol.psi
-        }
-        KtSymbolOrigin.INTERSECTION_OVERRIDE,
-        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
-            (ktSymbol as? KtCallableSymbol)?.originalOverriddenSymbol?.let {
-                psiForUast(it, project)
+internal tailrec fun KtAnalysisSession.psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+    if (symbol.origin == KtSymbolOrigin.LIBRARY) {
+        return findPsi(symbol, project) ?: symbol.psi
+    }
+
+    if (symbol is KtCallableSymbol) {
+        if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+            val originalSymbol = symbol.originalOverriddenSymbol
+            if (originalSymbol != null && originalSymbol !== symbol) {
+                return psiForUast(originalSymbol, project)
             }
         }
-        else -> ktSymbol.psi
     }
+
+    return symbol.psi
 }
