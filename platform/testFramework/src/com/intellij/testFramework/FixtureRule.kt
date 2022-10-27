@@ -387,6 +387,33 @@ suspend fun Project.withProjectAsync(action: suspend (Project) -> Unit): Project
   return this
 }
 
+fun <R> closeOpenedProjectsIfFail(action: () -> R): R =
+  closeOpenedProjectsIfFailImpl({ closeProject() }, action)
+
+suspend fun <R> closeOpenedProjectsIfFailAsync(action: suspend () -> R): R =
+  closeOpenedProjectsIfFailImpl({ closeProjectAsync() }, { action() })
+
+private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() -> Unit, action: () -> R): R {
+  val projectManager = ProjectManager.getInstance()
+  val oldOpenedProjects = projectManager.openProjects.toHashSet()
+  try {
+    return action()
+  }
+  catch (ex: Throwable) {
+    for (project in projectManager.openProjects) {
+      if (project !in oldOpenedProjects) {
+        try {
+          project.closeProject()
+        }
+        catch (closeException: Throwable) {
+          ex.addSuppressed(closeException)
+        }
+      }
+    }
+    throw ex
+  }
+}
+
 private fun Project.closeProject(save: Boolean = false) {
   invokeAndWaitIfNeeded {
     ProjectManagerEx.getInstanceEx().forceCloseProject(this, save = save)
