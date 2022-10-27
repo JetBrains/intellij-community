@@ -313,7 +313,7 @@ public abstract class StatusText {
       public Iterator<JComponent> iterator() {
         Iterable<JComponent> components = JBIterable.<Fragment>empty()
           .append(myPrimaryColumn.fragments)
-          .append(myPrimaryColumn.fragments)
+          .append(mySecondaryColumn.fragments)
           .map(it -> it.myComponent);
 
         return components.iterator();
