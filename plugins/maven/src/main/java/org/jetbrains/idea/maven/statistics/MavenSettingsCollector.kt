@@ -115,7 +115,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 6)
+    private val GROUP = EventLogGroup("build.maven.state", 7)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
@@ -128,7 +128,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val USE_WORKSPACE_IMPORT = GROUP.registerEvent("useWorkspaceImport", EventFields.Enabled)
     private val DEDICATED_MODULE_DIR = GROUP.registerEvent("dedicatedModuleDir", EventFields.Enabled)
     private val STORE_PROJECT_FILES_EXTERNALLY = GROUP.registerEvent("storeProjectFilesExternally", EventFields.Enabled)
-    private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("isDrectoryBasedProject", EventFields.Enabled)
+    private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("useDirectoryBasedProject", EventFields.Enabled)
     private val AUTO_DETECT_COMPILER = GROUP.registerEvent("autoDetectCompiler", EventFields.Enabled)
     private val CREATE_MODULES_FOR_AGGREGATORS = GROUP.registerEvent("createModulesForAggregators", EventFields.Enabled)
     private val CREATE_MODULE_GROUPS = GROUP.registerEvent("createModuleGroups", EventFields.Enabled)
