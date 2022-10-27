@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 class SwitchSEListener extends BufferingListenerWrapper {
 
@@ -14,7 +13,7 @@ class SwitchSEListener extends BufferingListenerWrapper {
   private final WaitForContributorsListenerWrapper wfcListener;
   private boolean useWFC = false;
 
-  public SwitchSEListener(SearchListener delegateListener, SearchListModel model) {
+  SwitchSEListener(SearchListener delegateListener, SearchListModel model) {
     super(delegateListener);
     throttlingListener = new ThrottlingListenerWrapper(delegateListener);
     wfcListener = new WaitForContributorsListenerWrapper(delegateListener, model);
@@ -23,46 +22,45 @@ class SwitchSEListener extends BufferingListenerWrapper {
   @Override
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     useWFC = contributors.size() > 1;
-    chooseListenerAndPerform(l -> l.searchStarted(contributors));
+    getListener().searchStarted(contributors);
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-    chooseListenerAndPerform(l -> l.searchFinished(hasMoreContributors));
+    getListener().searchFinished(hasMoreContributors);
   }
 
   @Override
   public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    chooseListenerAndPerform(l -> l.elementsAdded(list));
+    getListener().elementsAdded(list);
   }
 
   @Override
   public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
-    chooseListenerAndPerform(l -> l.elementsRemoved(list));
+    getListener().elementsRemoved(list);
   }
 
   @Override
   public void contributorWaits(@NotNull SearchEverywhereContributor<?> contributor) {
-    chooseListenerAndPerform(l -> l.contributorWaits(contributor));
+    getListener().contributorWaits(contributor);
   }
 
   @Override
   public void contributorFinished(@NotNull SearchEverywhereContributor<?> contributor, boolean hasMore) {
-    chooseListenerAndPerform(l -> l.contributorFinished(contributor, hasMore));
+    getListener().contributorFinished(contributor, hasMore);
   }
 
   @Override
   public void clearBuffer() {
-    chooseListenerAndPerform(l -> l.clearBuffer());
+    getListener().clearBuffer();
   }
 
   @Override
   protected void flushBuffer() {
-    chooseListenerAndPerform(l -> l.flushBuffer());
+    getListener().flushBuffer();
   }
 
-  private void chooseListenerAndPerform(Consumer<BufferingListenerWrapper> command) {
-    BufferingListenerWrapper listener = useWFC ? wfcListener : throttlingListener;
-    command.accept(listener);
+  private BufferingListenerWrapper getListener() {
+    return useWFC ? wfcListener : throttlingListener;
   }
 }
