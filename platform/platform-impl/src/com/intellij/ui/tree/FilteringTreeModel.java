@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,11 +39,11 @@ public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructur
             }
             while (node != null && set.add(node));
           }
-          TreeUtil.promiseExpand(tree, set.stream().map(node -> path -> {
+          TreeUtil.promiseMakeVisible(tree, path -> {
             Object object = TreeUtil.getLastUserObject(path);
             if (!(object instanceof FilteringTreeStructure.FilteringNode)) return TreeVisitor.Action.CONTINUE;
             return set.contains(object) ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.SKIP_CHILDREN;
-          }));
+          });
         }
         adjustSelection(tree, preferredSelection);
       });
@@ -52,22 +51,13 @@ public class FilteringTreeModel extends StructureTreeModel<FilteringTreeStructur
   }
 
   private void adjustSelection(JTree tree, @Nullable Object preferredSelection) {
-    TreePath selectionPath = tree.getSelectionPath();
-    if (selectionPath == null || preferredSelection != null) {
-      TreeUtil.promiseSelect(tree, path -> {
-        Object component = TreeUtil.getUserObject(path.getLastPathComponent());
-        if (component == null) return TreeVisitor.Action.CONTINUE;
-        if (component instanceof FilteringTreeStructure.FilteringNode &&
-            ((FilteringTreeStructure.FilteringNode)component).getDelegate() == preferredSelection) {
-          return TreeVisitor.Action.INTERRUPT;
-        }
-        if (preferredSelection != null) return TreeVisitor.Action.CONTINUE;
-        Object @NotNull [] elements = getTreeStructure().getChildElements(component);
-        return elements.length > 0 ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.INTERRUPT;
-      });
+    if (preferredSelection == null) {
+      return;
     }
-    else {
-      TreeUtil.scrollToVisible(tree, selectionPath, false);
-    }
+    FilteringTreeStructure.FilteringNode node = getTreeStructure().getVisibleNodeFor(preferredSelection);
+    promiseVisitor(node).onSuccess(visitor -> TreeUtil.promiseMakeVisible(tree, visitor).onSuccess(path -> {
+      tree.setSelectionPath(path);
+      TreeUtil.scrollToVisible(tree, path, false);
+    }));
   }
 }
