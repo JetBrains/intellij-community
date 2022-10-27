@@ -105,7 +105,7 @@ public abstract class FileAttributesReadingTest {
     NioFiles.setReadOnly(dir.toPath(), true);
     FileAttributes attributes = getAttributes(dir);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType());
-    assertEquals(SystemInfo.isWindows, attributes.isWritable());
+    assertTrue(attributes.isWritable());
   }
 
   @Test
@@ -218,10 +218,9 @@ public abstract class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.getType());
     assertTrue(attributes.isSymLink());
     assertFalse(attributes.isHidden());
-    assertEquals(SystemInfo.isUnix, !attributes.isWritable());
+    assertTrue(attributes.isWritable());
     assertEquals(dir.length(), attributes.length);
     assertEquals(dir.lastModified(), attributes.lastModified);
-    if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
 
     String target = resolveSymLink(link);
     assertEquals(dir.getPath(), target);
@@ -493,7 +492,6 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notOwned() {
-    assumeUnix();
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -502,7 +500,7 @@ public abstract class FileAttributesReadingTest {
 
     FileAttributes parentAttributes = getAttributes(userHome.getParentFile());
     assertTrue(parentAttributes.isDirectory());
-    assertFalse(parentAttributes.isWritable());
+    assertTrue(parentAttributes.isWritable());
   }
 
   @Test

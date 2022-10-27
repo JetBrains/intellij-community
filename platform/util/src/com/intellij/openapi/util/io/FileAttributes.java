@@ -226,7 +226,7 @@ public final class FileAttributes {
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
     }
     else {
-      try { isWritable = Files.isWritable(path); }
+      try { isWritable = attrs.isDirectory() || Files.isWritable(path); }
       catch (SecurityException ignored) { }
     }
 
