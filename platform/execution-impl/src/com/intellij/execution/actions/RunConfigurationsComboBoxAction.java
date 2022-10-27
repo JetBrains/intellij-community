@@ -117,8 +117,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
-      String name = shortenNameIfNeeded(settings.getName());
+      String name;
       if (!ExperimentalUI.isNewUI()) { // there's a separate combo-box for execution targets in new UI
+        name = Executor.shortenNameIfNeeded(settings.getName());
         if (target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged()) {
           name += " | " + target.getDisplayName();
         }
@@ -127,6 +128,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
             name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
           }
         }
+      }
+      else {
+        name = StringUtil.shortenTextWithEllipsis(settings.getName(), 25, 8, true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -359,7 +363,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", shortenNameIfNeeded(settings.getName())));
+        presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
         //noinspection DialogTitleCapitalization
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
@@ -497,7 +501,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       getTemplatePresentation().setPerformGroup(true);
 
       String fullName = configuration.getName();
-      String name = shortenNameIfNeeded(fullName);
+      String name = Executor.shortenNameIfNeeded(fullName);
       if (name.isEmpty()) {
         name = " ";
       }
@@ -565,15 +569,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
-    }
-  }
-
-  private static @NotNull @NlsSafe String shortenNameIfNeeded(@NotNull @NlsSafe String fullName) {
-    if (ExperimentalUI.isNewUI()) {
-      return StringUtil.shortenTextWithEllipsis(fullName, 25, 8, true);
-    }
-    else {
-      return Executor.shortenNameIfNeeded(fullName);
     }
   }
 }
