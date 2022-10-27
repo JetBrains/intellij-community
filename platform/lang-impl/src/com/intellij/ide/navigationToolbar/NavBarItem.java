@@ -33,7 +33,9 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public final class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final @Nls String myText;
   private final SimpleTextAttributes myAttributes;

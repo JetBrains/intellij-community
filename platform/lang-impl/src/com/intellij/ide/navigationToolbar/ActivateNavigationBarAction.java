@@ -17,7 +17,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Anna Kozlova
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2
  */
+@Deprecated
 final class ActivateNavigationBarAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

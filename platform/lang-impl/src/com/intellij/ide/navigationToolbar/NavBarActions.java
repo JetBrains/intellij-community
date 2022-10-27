@@ -116,6 +116,10 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
     }
   }
 
+  /**
+   * @deprecated unused in ide.navBar.v2
+   */
+  @Deprecated
   public static final class Escape extends NavBarActions {
 
     @Override
@@ -141,6 +145,10 @@ public sealed abstract class NavBarActions extends AnAction implements DumbAware
     }
   }
 
+  /**
+   * @deprecated unused in ide.navBar.v2
+   */
+  @Deprecated
   public static final class Navigate extends NavBarActions {
 
     @Override

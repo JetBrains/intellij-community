@@ -36,7 +36,9 @@ import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";

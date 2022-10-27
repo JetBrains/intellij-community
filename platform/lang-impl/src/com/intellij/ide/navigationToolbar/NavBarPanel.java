@@ -82,7 +82,9 @@ import java.util.function.Supplier;
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable,
                                                    InfoAndProgressPanel.ScrollableToSelected, NavBarActionHandler {
 
