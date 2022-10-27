@@ -16,16 +16,7 @@ open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
             when (element) {
                 is KtTypeParameter -> return true
                 is KtDestructuringDeclarationEntry -> return true
-                is KtParameter -> {
-                    val parent = element.parent
-                    if (parent is KtForExpression) {
-                        return true
-                    }
-                    if (parent is KtParameterList) {
-                        val grandparent = parent.parent
-                        return grandparent is KtCatchClause || grandparent is KtFunctionLiteral
-                    }
-                }
+                is KtParameter -> element.isLoopParameter || element.isCatchParameter || element.isLambdaParameter
                 is KtLabeledExpression, is KtImportAlias -> return true
             }
             return false
