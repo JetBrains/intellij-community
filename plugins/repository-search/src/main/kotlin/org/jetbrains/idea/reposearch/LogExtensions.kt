@@ -124,16 +124,9 @@ internal fun logTrace(throwable: Throwable) = catchAndSuppress {
 private val notificationShown = AtomicBoolean(false)
 
 private fun warnNotLoggable() {
-    logger.warn(
-        """
-        |!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        |Debug logging not enabled. Make sure you have a line like this:
-        |      #${PluginEnvironment.PLUGIN_ID}:trace
-        |in your debug log settings (Help | Diagnostic Tools | Debug Log Settings)
-        |then restart the IDE.
-        |!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        |""".trimMargin()
-    )
+  logger.info("Debug logging for ${PluginEnvironment.PLUGIN_ID} not enabled. Make sure you add " +
+              "\"#${PluginEnvironment.PLUGIN_ID}:trace\" in your debug log settings (Help | " +
+              "Diagnostic Tools | Debug Log Settings)")
 }
 
 private fun buildMessageFrom(
