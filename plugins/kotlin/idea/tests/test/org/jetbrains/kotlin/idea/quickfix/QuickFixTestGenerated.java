@@ -14787,6 +14787,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("arrayToArray.kt")
+            public void testArrayToArray() throws Exception {
+                runTest("testData/quickfix/typeMismatch/convertCollection/arrayToArray.kt");
+            }
+
             @TestMetadata("arrayToCollection.kt")
             public void testArrayToCollection() throws Exception {
                 runTest("testData/quickfix/typeMismatch/convertCollection/arrayToCollection.kt");
