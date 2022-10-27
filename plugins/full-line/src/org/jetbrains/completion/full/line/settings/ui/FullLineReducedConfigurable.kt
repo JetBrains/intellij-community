@@ -7,12 +7,12 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import org.jetbrains.completion.full.line.language.*
 import org.jetbrains.completion.full.line.models.ModelType
@@ -24,8 +24,6 @@ import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSetti
 import org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState
 import org.jetbrains.completion.full.line.settings.ui.components.*
 import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
-import javax.swing.JTextField
-import javax.swing.ListCellRenderer
 import kotlin.reflect.KMutableProperty1
 
 @Suppress("DuplicatedCode")
@@ -41,7 +39,7 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
   private val settings = MLServerCompletionSettings.getInstance()
   private val settingsAuth = MlServerCompletionAuthState.getInstance()
 
-  private lateinit var modelType: CellBuilder<ComboBox<ModelType>>
+  private lateinit var modelType: ComboBox<ModelType>
   private lateinit var flccEnabled: ComponentPredicate
   private val langsEnabled = mutableMapOf<String, ComponentPredicate>()
 
@@ -56,26 +54,26 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
 
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow(message("fl.server.completion.settings.group")) {
+      group(message("fl.server.completion.settings.group")) {
         row {
-          cell {
-            flccEnabled = checkBox(message("fl.server.completion.display"), generalState::enable).selected
-            if (settingsAuth.isVerified()) {
-              label(message("full.line.label.verified.text")).component.apply {
-                foreground = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
-              }
+          flccEnabled = checkBox(message("fl.server.completion.display"))
+            .bindSelected(generalState::enable)
+            .selected
+          if (settingsAuth.isVerified()) {
+            label(message("full.line.label.verified.text")).applyToComponent {
+              foreground = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
             }
           }
-          row {
-            subRowIndent = 2
-            if (settingsAuth.isVerified()) {
-              internal()
-            }
-            else {
-              community()
-            }
-          }.enableSubRowsIf(flccEnabled)
         }
+
+        indent {
+          if (settingsAuth.isVerified()) {
+            internal()
+          }
+          else {
+            community()
+          }
+        }.enabledIf(flccEnabled)
       }
     }.also { panel ->
       // Unite callbacks for enabling same languages if more than on model typ provided
@@ -94,12 +92,12 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
     }
   }
 
-  private fun Row.notAvailable(cause: String?) = row {
+  private fun Panel.notAvailable(cause: String?) = row {
     logger.info("Settings are not available" + (cause?.let { ", cause: $cause." } ?: ""))
     comment("Currently, Full Line is available only for Python language, please install its plugin and restart or use PyCharm")
   }
 
-  private fun Row.community() {
+  private fun Panel.community() {
     logger.info("Using community settings")
     val lang = Language.findLanguageByID("Python")
     if (lang == null) {
@@ -112,172 +110,189 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
     }
     val langState = settings.getLangState(lang)
 
-    row(message("fl.server.completion.enable.languages")) {
+    buttonsGroup(message("fl.server.completion.enable.languages")) {
       localModels(listOf(lang))
     }
-    row(message("fl.server.completion.settings.language")) {
+    buttonsGroup(message("fl.server.completion.settings.language")) {
+      lateinit var useBox: Cell<JBCheckBox>
       row {
-        val useBox = checkBox(message("fl.server.completion.top.n.use"), generalState::useTopN)
-        row { intTextFieldFixed(generalState::topN, 1, IntRange(0, 20)).enableIf(useBox.selected) }
+        useBox = checkBox(message("fl.server.completion.top.n.use")).bindSelected(generalState::useTopN)
+      }
+      indent {
+        row { intTextField(IntRange(0, 20), 1)
+          .bindIntText(generalState::topN)
+          .enabledIf(useBox.selected) }
+      }
+      row(message("fl.server.completion.ref.check")) {
+        comboBox(
+          RedCodePolicy.values().toList(),
+          RedCodePolicyRenderer()
+        ).bindItem(langState::redCodePolicy.toNullableProperty())
       }
       row {
-        cell {
-          label(message("fl.server.completion.ref.check"))
-          comboBox(
-            CollectionComboBoxModel(RedCodePolicy.values().toList()),
-            langState::redCodePolicy,
-            RedCodePolicyRenderer()
-          )
-        }
-      }
-      row {
-        cell {
-          checkBox(message("fl.server.completion.enable.strings.walking"), langState::stringsWalking)
-          component(ContextHelpLabel.create(message("fl.server.completion.enable.strings.walking.help")))
-        }
+        checkBox(message("fl.server.completion.enable.strings.walking"))
+          .bindSelected(langState::stringsWalking)
+          .gap(RightGap.SMALL)
+        contextHelp(message("fl.server.completion.enable.strings.walking.help"))
       }
       extended {
         row {
-          checkBox(message("fl.server.completion.only.full"), langState::onlyFullLines)
+          checkBox(message("fl.server.completion.only.full"))
+            .bindSelected(langState::onlyFullLines)
         }
         row {
-          checkBox(message("fl.server.completion.group.answers"), langState::groupAnswers)
+          checkBox(message("fl.server.completion.group.answers"))
+            .bindSelected(langState::groupAnswers)
         }
         row {
-          checkBox(message("fl.server.completion.score"), langState::showScore)
+          checkBox(message("fl.server.completion.score"))
+            .bindSelected(langState::showScore)
         }
       }
     }
   }
 
-  private fun Row.internal() {
+  private fun Panel.internal() {
     logger.info("Using internal settings")
     if (languages.isEmpty()) {
       notAvailable("No supported languages installed")
       return
     }
 
-    row {
-      cell {
-        label(message("full.line.settings.model.type"))
-        modelType = comboBox(CollectionComboBoxModel(ModelType.values().toList()), generalState::modelType).also {
-          it.component.renderer = listCellRenderer { value, _, _ ->
-            @NlsSafe val valueName = value.name
-            text = valueName
-            icon = value.icon
-          }
-        }
-      }
-    }
-    row(message("fl.server.completion.enable.languages")) {
-      row {
+    row(message("full.line.settings.model.type")) {
+      modelType = comboBox(ModelType.values().toList(), listCellRenderer { value, _, _ ->
+        @NlsSafe val valueName = value.name
+        text = valueName
+        icon = value.icon
+      }).bindItem(generalState::modelType.toNullableProperty())
+        .component
+    }.layout(RowLayout.INDEPENDENT)
+    buttonsGroup(message("fl.server.completion.enable.languages")) {
+      rowsRange {
         localModels(languages)
-      }.visibleIf(modelType.component.selectedValueIs(ModelType.Local))
-      row {
+      }.visibleIf(modelType.selectedValueIs(ModelType.Local))
+      rowsRange {
         cloudModels()
-      }.visibleIf(modelType.component.selectedValueIs(ModelType.Cloud))
+      }.visibleIf(modelType.selectedValueIs(ModelType.Cloud))
     }
 
-    row(message("fl.server.completion.settings.completion")) {
+    buttonsGroup(message("fl.server.completion.settings.completion")) {
+      lateinit var useBox: Cell<JBCheckBox>
       row {
-        val useBox = checkBox(message("fl.server.completion.top.n.use"), generalState::useTopN)
-        row { intTextFieldFixed(generalState::topN, 1, IntRange(0, 20)).enableIf(useBox.selected) }
+        useBox = checkBox(message("fl.server.completion.top.n.use"))
+          .bindSelected(generalState::useTopN)
       }
-      row {
-        cell {
-          label(message("fl.server.completion.ref.check"))
-          comboBox(
-            CollectionComboBoxModel(RedCodePolicy.values().toList()),
-            LangState::redCodePolicy,
-            RedCodePolicyRenderer()
-          )
+      indent {
+        row {
+          intTextField(IntRange(0, 20), 1)
+            .bindIntText(generalState::topN)
+            .enabledIf(useBox.selected)
         }
       }
+      row(message("fl.server.completion.ref.check")) {
+        comboBox(RedCodePolicy.values().toList(),
+          RedCodePolicyRenderer()
+        ).bindItem(langStates.toMutableProperty(LangState::redCodePolicy).toNullableProperty())
+      }.layout(RowLayout.INDEPENDENT)
       row {
-        cell {
-          checkBox(message("fl.server.completion.enable.strings.walking"), LangState::stringsWalking)
-          component(ContextHelpLabel.create(message("fl.server.completion.enable.strings.walking.help")))
-        }
+        checkBox(message("fl.server.completion.enable.strings.walking"))
+          .bindSelected(langStates.toMutableProperty(LangState::stringsWalking))
+          .gap(RightGap.SMALL)
+        contextHelp(message("fl.server.completion.enable.strings.walking.help"))
       }
       extended {
         row {
-          checkBox(message("fl.server.completion.only.full"), LangState::onlyFullLines)
+          checkBox(message("fl.server.completion.only.full"))
+            .bindSelected(langStates.toMutableProperty(LangState::onlyFullLines))
         }
         row {
-          checkBox(message("fl.server.completion.group.answers"), LangState::groupAnswers)
+          checkBox(message("fl.server.completion.group.answers"))
+            .bindSelected(langStates.toMutableProperty(LangState::groupAnswers))
         }
         row {
-          checkBox(message("fl.server.completion.score"), LangState::showScore)
+          checkBox(message("fl.server.completion.score"))
+            .bindSelected(langStates.toMutableProperty(LangState::showScore))
         }
       }
     }
     extended {
-      separatorRow()
-      row(message("fl.server.completion.bs")) {
-        extended {
-          right {
-            link(message("full.line.settings.reset.default")) {
-              generalState.langStates.keys.forEach {
-                val lang = Language.findLanguageByID(it) ?: return@forEach
-                generalState.langStates[it] = FullLineLanguageSupporter.getInstance(lang)?.langState ?: LangState()
-              }
-            }
+      separator()
+      row {
+        label(message("fl.server.completion.bs"))
+        link(message("full.line.settings.reset.default")) {
+          generalState.langStates.keys.forEach {
+            val lang = Language.findLanguageByID(it) ?: return@forEach
+            generalState.langStates[it] = FullLineLanguageSupporter.getInstance(lang)?.langState ?: LangState()
           }
-        }
-        row(message("fl.server.completion.bs.num.iterations")) {
-          intTextFieldFixed(ModelState::numIterations, 1, IntRange(0, 50))
-        }
-        row(message("fl.server.completion.bs.beam.size")) {
-          intTextFieldFixed(ModelState::beamSize, 1, IntRange(0, 20))
-        }
-        row(message("fl.server.completion.bs.len.base")) {
-          doubleTextField(ModelState::lenBase, 1, IntRange(0, 10))
-        }
-        row(message("fl.server.completion.bs.len.pow")) {
-          doubleTextField(ModelState::lenPow, 1, IntRange(0, 1))
-        }
-        row(message("fl.server.completion.bs.diversity.strength")) {
-          doubleTextField(ModelState::diversityStrength, 1, IntRange(0, 10))
-        }
-        row(message("fl.server.completion.bs.diversity.groups")) {
-          intTextFieldFixed(ModelState::diversityGroups, 1, IntRange(0, 5))
-          row {
-            val groupUse = checkBox(
-              message("fl.server.completion.group.top.n.use"),
-              ModelState::useGroupTopN
-            ).selected
-            row {
-              intTextFieldFixed(ModelState::groupTopN, 1, IntRange(0, 20))
-                .enableIf(groupUse)
-            }
-          }
-        }
+        }.align(AlignX.RIGHT)
+      }
+      row(message("fl.server.completion.bs.num.iterations")) {
+        intTextField(IntRange(0, 50), 1)
+          .bindIntText(modelStates.toMutableProperty(ModelState::numIterations))
+      }
+      row(message("fl.server.completion.bs.beam.size")) {
+        intTextField(IntRange(0, 20), 1)
+          .bindIntText(modelStates.toMutableProperty(ModelState::beamSize))
+      }
+      row(message("fl.server.completion.bs.len.base")) {
+        doubleTextField(modelStates.toMutableProperty(ModelState::lenBase), IntRange(0, 10))
+      }
+      row(message("fl.server.completion.bs.len.pow")) {
+        doubleTextField(modelStates.toMutableProperty(ModelState::lenPow), IntRange(0, 1))
+      }
+      row(message("fl.server.completion.bs.diversity.strength")) {
+        doubleTextField(modelStates.toMutableProperty(ModelState::diversityStrength), IntRange(0, 10))
+      }
+      row(message("fl.server.completion.bs.diversity.groups")) {
+        intTextField(IntRange(0, 5), 1)
+          .bindIntText(modelStates.toMutableProperty(ModelState::diversityGroups))
+      }
+      indent {
+        lateinit var groupUse: ComponentPredicate
         row {
-          val groupUse = checkBox(message("fl.server.completion.context.length.use"), ModelState::useCustomContextLength).selected
+          groupUse = checkBox(message("fl.server.completion.group.top.n.use"))
+            .bindSelected(modelStates.toMutableProperty(ModelState::useGroupTopN))
+            .selected
+        }
+        indent {
           row {
-            intTextFieldFixed(ModelState::customContextLength, 1, IntRange(0, 384)).enableIf(groupUse)
+            intTextField(IntRange(0, 20), 1)
+              .bindIntText(modelStates.toMutableProperty(ModelState::groupTopN))
+              .enabledIf(groupUse)
           }
         }
+      }
+
+      lateinit var lengthUse: ComponentPredicate
+      row {
+        lengthUse = checkBox(message("fl.server.completion.context.length.use"))
+          .bindSelected(modelStates.toMutableProperty(ModelState::useCustomContextLength))
+          .selected
+      }
+      indent {
+        row {
+          intTextField(IntRange(0, 384), 1)
+            .bindIntText(modelStates.toMutableProperty(ModelState::customContextLength))
+            .enabledIf(lengthUse)
+        }
+      }
+      panel {
         row(message("fl.server.completion.deduplication.minimum.prefix")) {
-          doubleTextField(ModelState::minimumPrefixDist, 1, IntRange(0, 1))
+          doubleTextField(modelStates.toMutableProperty(ModelState::minimumPrefixDist), IntRange(0, 1))
         }
         row(message("fl.server.completion.deduplication.minimum.edit")) {
-          doubleTextField(ModelState::minimumEditDist, 1, IntRange(0, 1))
+          doubleTextField(modelStates.toMutableProperty(ModelState::minimumEditDist), IntRange(0, 1))
         }
         row(message("fl.server.completion.deduplication.keep.kinds")) {
-          cell {
-            KeepKind.values().map { kind ->
-              @NlsSafe val text = kind.name.toLowerCase().capitalize()
-              checkBox(
-                text,
-                { modelStates.first().keepKinds.contains(kind) },
-                { action ->
-                  modelStates.forEach {
-                    if (action) it.keepKinds.add(kind) else it.keepKinds.remove(kind)
-                  }
-                }
-              )
-            }
+          KeepKind.values().map { kind ->
+            @NlsSafe val text = kind.name.toLowerCase().capitalize()
+            checkBox(text)
+              .bindSelected({ modelStates.first().keepKinds.contains(kind) },
+                            { action ->
+                              modelStates.forEach {
+                                if (action) it.keepKinds.add(kind) else it.keepKinds.remove(kind)
+                              }
+                            })
           }
         }
       }
@@ -289,43 +304,39 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
     //        }
   }
 
-  private fun Row.cloudModels() {
+  private fun Panel.cloudModels() {
     languages.forEach { language ->
-      val checkBox = languageCheckBox(language, biggestLang)
-      val loadingIcon = LoadingComponent()
+      row {
+        val checkBox = languageCheckBox(language, biggestLang)
+          .bindSelected(MLServerCompletionSettings.getInstance().getLangState(language)::enabled)
+        val loadingIcon = LoadingComponent()
 
-      fullRow {
-        component(checkBox)
-          .withSelectedBinding(MLServerCompletionSettings.getInstance().getLangState(language)::enabled.toBinding())
-        component(pingButton(language, loadingIcon, null))
-          .enableIf(checkBox.selected)
+        cell(pingButton(language, loadingIcon, null))
+          .enabledIf(checkBox.selected)
         loadingStatus(loadingIcon).forEach {
           // Do not show even, if model type was changed. Visibility will be controlled from LoadingComponent itself
-          it.enableIf(checkBox.selected).visibleIf(modelType.component.selectedValueMatches { false })
+          it.enabledIf(checkBox.selected).visibleIf(modelType.selectedValueMatches { false })
         }
       }
     }
   }
 
-  private fun Row.localModels(languages: List<Language>) {
+  private fun Panel.localModels(languages: List<Language>) {
     val actions = mutableListOf<SetupLocalModelsTask.ToDoParams>()
 
     languages.map { language ->
       row {
-        component(languageCheckBox(language, biggestLang)).withSelectedBinding(settings.getLangState(language)::enabled.toBinding())
-        extended {
+        languageCheckBox(language, biggestLang).bindSelected(settings.getLangState(language)::enabled)
+      }
+      extended {
+        indent {
           row {
-            subRowIndent = 0
-            cell {
-              component(modelFromLocalFileLinkLabel(language, actions))
-              service<ConfigurableModelsManager>().modelsSchema.models
-                .find { it.currentLanguage == language.id.toLowerCase() }
-                ?.let {
-                  commentNoWrap(
-                    message("fl.server.completion.models.source.local.comment", it.version, it.uid())
-                  )
-                }
-            }
+            cell(modelFromLocalFileLinkLabel(language, actions))
+            service<ConfigurableModelsManager>().modelsSchema.models
+              .find { it.currentLanguage == language.id.toLowerCase() }
+              ?.let {
+                comment(message("fl.server.completion.models.source.local.comment", it.version, it.uid()))
+              }
           }
           //                    Removed cause deleting now exec after language turn off
           //                    row {
@@ -336,16 +347,16 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
     }
 
     var resetCount = 0
-    onGlobalReset {
+    onReset {
       // Add download actions for languages which are enabled, but not downloaded.
       // resetCount flag used cause reset is called firstly called right after components initialisation
       resetCount++
     }
-    onGlobalIsModified {
+    onIsModified {
       settings.getModelMode() == ModelType.Local
       && ((resetCount <= 1 && languages.any { service<ConfigurableModelsManager>().missedLanguage(it) }) || actions.isNotEmpty())
     }
-    onGlobalApply {
+    onApply {
       if (settings.getModelMode() == ModelType.Local) {
         val taskActions = mutableListOf<SetupLocalModelsTask.ToDoParams>()
 
@@ -378,56 +389,14 @@ class FullLineReducedConfigurable : BoundConfigurable(message("fl.server.complet
   override fun getId() = helpTopic
   override fun getDisplayName() = message("full.line.configurable.name")
 
-  // Below listed component wrappers to create settings for all language/modeltype states.
-  // Taking value from first language (sorted by id)
-  // Setting value for all states at ones
+}
 
-  @JvmName("checkBoxLang")
-  private fun Cell.checkBox(
-    @NlsContexts.Checkbox text: String,
-    prop: KMutableProperty1<LangState, Boolean>,
-    @NlsContexts.DetailedDescription comment: String? = null
-  ): CellBuilder<JBCheckBox> {
-    val bindings = langStates.map { prop.toBinding(it) }
-    val component = JBCheckBox(text, bindings.first().get())
-    return component(comment = comment).withSelectedBinding(bindings)
-  }
-
-  @JvmName("checkBoxModel")
-  private fun Cell.checkBox(
-    @NlsContexts.Checkbox text: String,
-    prop: KMutableProperty1<ModelState, Boolean>,
-    @NlsContexts.DetailedDescription comment: String? = null
-  ): CellBuilder<JBCheckBox> {
-    val bindings = modelStates.map { prop.toBinding(it) }
-    val component = JBCheckBox(text, bindings.first().get())
-    return component(comment = comment).withSelectedBinding(bindings)
-  }
-
-  private inline fun <reified T : Any> Cell.comboBox(
-    model: CollectionComboBoxModel<T>,
-    prop: KMutableProperty1<LangState, T>,
-    renderer: ListCellRenderer<T?>? = null
-  ): CellBuilder<ComboBox<T>> {
-    val bindings = langStates.map { prop.toBinding(it) }
-    return comboBox(model, bindings.toBind().toNullable(), renderer)
-  }
-
-  private fun Cell.intTextFieldFixed(
-    prop: KMutableProperty1<ModelState, Int>,
-    columns: Int? = null,
-    range: IntRange? = null
-  ): CellBuilder<JTextField> {
-    val bindings = modelStates.map { prop.toBinding(it) }
-    return intTextFieldFixed(bindings.toBind(), columns, range)
-  }
-
-  private fun Cell.doubleTextField(
-    prop: KMutableProperty1<ModelState, Double>,
-    columns: Int? = null,
-    range: IntRange? = null
-  ): CellBuilder<JTextField> {
-    val bindings = modelStates.map { prop.toBinding(it) }
-    return doubleTextField(bindings.toBind(), columns, range)
-  }
+/**
+ * Below mutable property to create settings for all language/modeltype states.
+ * Taking value from first language (sorted by id)
+ * Setting value for all states at ones
+ */
+private fun <T, V> List<T>.toMutableProperty(field: KMutableProperty1<T, V>): MutableProperty<V> {
+  val bindings = map { MutableProperty({ field.getter(it) }, { value ->  field.setter(it, value) }) }
+  return MutableProperty({ bindings.first().get() }, { v -> bindings.forEach { it.set(v) } })
 }

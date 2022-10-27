@@ -25,6 +25,7 @@ import kotlin.reflect.KMutableProperty0
 // For some reason method intTextField() in com/intellij/ui/layout/Cell.kt
 // throws java.lang.LinkageError: loader constraint violation: when resolving method,
 // But it's copy works fine :/
+@Deprecated("Use Kotlin UI DSL 2 instead, see com.intellij.ui.dsl.builder.Row.intTextField")
 fun Cell.intTextFieldFixed(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
   return textField(
     { binding.get().toString() },
@@ -40,6 +41,7 @@ fun Cell.intTextFieldFixed(binding: PropertyBinding<Int>, columns: Int? = null, 
   }
 }
 
+@Deprecated("Use Kotlin UI DSL 2, see another doubleTextField in this file")
 fun Cell.doubleTextField(binding: PropertyBinding<Double>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
   return textField(
     { binding.get().toString() },
@@ -81,14 +83,12 @@ fun com.intellij.ui.dsl.builder.Row.doubleTextField(prop: MutableProperty<Double
     }
 }
 
-fun Cell.doubleTextField(prop: KMutableProperty0<Double>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
-  return doubleTextField(prop.toBinding(), columns, range)
-}
-
+@Deprecated("Use Kotlin UI DSL 2 instead, see com.intellij.ui.dsl.builder.Row.intTextField")
 fun Cell.intTextFieldFixed(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
   return intTextFieldFixed(prop.toBinding(), columns, range)
 }
 
+@Deprecated("Use Kotlin UI DSL 2")
 fun Row.separatorRow(): Row {
   return row {
     component(SeparatorComponent(0, OnePixelDivider.BACKGROUND, null))
@@ -123,6 +123,7 @@ fun modelTypeComboBox(langPanel: DialogPanel): ComboBox<ModelType> {
   }
 }
 
+@Deprecated("Use Row.languageCheckBox method")
 fun languageCheckBox(language: Language, biggestLang: String?): JBCheckBox {
   return JBCheckBox(language.displayName, MLServerCompletionSettings.getInstance().getLangState(language).enabled).apply {
     minimumSize = Dimension(36 + getFontMetrics(font).stringWidth(biggestLang ?: language.id), preferredSize.height)
@@ -130,6 +131,16 @@ fun languageCheckBox(language: Language, biggestLang: String?): JBCheckBox {
   }
 }
 
+fun com.intellij.ui.dsl.builder.Row.languageCheckBox(language: Language,
+                                                     biggestLang: String?): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
+  return checkBox(language.displayName).applyToComponent {
+    isSelected = MLServerCompletionSettings.getInstance().getLangState(language).enabled
+    minimumSize = Dimension(36 + getFontMetrics(font).stringWidth(biggestLang ?: language.id), preferredSize.height)
+    name = LANGUAGE_CHECKBOX_NAME
+  }
+}
+
+@Deprecated("Use Kotlin UI DSL 2, see another loadingStatus in this file")
 fun Cell.loadingStatus(loadingIcon: LoadingComponent): List<CellBuilder<JComponent>> {
   return listOf(
     component(loadingIcon.loadingIcon),

@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.transform
@@ -65,6 +64,11 @@ fun <T : JTextComponent> Cell<T>.bindIntText(property: ObservableMutableProperty
   }
 }
 
+fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
+  return bindText({ prop.get().toString() },
+                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
+}
+
 fun <T : JTextComponent> Cell<T>.bindIntText(prop: KMutableProperty0<Int>): Cell<T> {
   return bindIntText(prop.toMutableProperty())
 }
@@ -119,11 +123,6 @@ private fun JTextComponent.bind(property: ObservableMutableProperty<String>) {
       }
     }
   }
-}
-
-private fun <T : JTextComponent> Cell<T>.bindIntText(prop: MutableProperty<Int>): Cell<T> {
-  return bindText({ prop.get().toString() },
-                  { value -> catchValidationException { prop.set(component.getValidatedIntValue(value)) } })
 }
 
 fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
