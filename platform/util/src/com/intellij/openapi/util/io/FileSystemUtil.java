@@ -231,7 +231,7 @@ public final class FileSystemUtil {
         long mTime2 = myCoarseTs ? 0 : Native.LONG_SIZE == 4 ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
         long mTime = mTime1 * 1000 + mTime2 / 1000000;
 
-        boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
+        boolean writable = isDirectory || (ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0);
 
         return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
       }
