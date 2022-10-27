@@ -44,6 +44,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.VersionedEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -217,7 +218,9 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   public MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
-    var initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
+    LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
+    var initialStorage = storage.getCurrent();
     return diff = MutableEntityStorage.from(initialStorage);
   }
 
