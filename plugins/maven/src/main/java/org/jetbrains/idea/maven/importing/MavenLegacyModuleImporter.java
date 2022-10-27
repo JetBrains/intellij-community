@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -196,19 +195,16 @@ public final class MavenLegacyModuleImporter {
     }
 
     void config(final List<MavenProjectsProcessorTask> postTasks, Map<Class<? extends MavenImporter>, CountAndTime> counters) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), () -> {
         if (myModule.isDisposed()) return;
-
-        final ModuleType moduleType = ModuleType.get(myModule);
-
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          for (final MavenImporter importer : myImporters) {
-            if (importer.getModuleType() == moduleType) {
-              try {
-                measureImporterTime(importer, counters, false, () -> {
-                  importer.process(myModifiableModelsProvider,
-                                   myModule,
-                                   myRootModelAdapter,
+        final ModuleType<?> moduleType = ModuleType.get(myModule);
+        for (final MavenImporter importer : myImporters) {
+          if (importer.getModuleType() == moduleType) {
+            try {
+              measureImporterTime(importer, counters, false, () -> {
+                importer.process(myModifiableModelsProvider,
+                                 myModule,
+                                 myRootModelAdapter,
                                    myMavenProjectsTree,
                                    myMavenProject,
                                    myMavenProjectChanges,
@@ -222,7 +218,6 @@ public final class MavenLegacyModuleImporter {
             }
           }
         });
-      });
     }
 
     void postConfig(Map<Class<? extends MavenImporter>, CountAndTime> counters) {
