@@ -20,6 +20,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -769,10 +770,11 @@ public class ChangesViewManager implements ChangesViewEx,
 
         DefaultTreeModel treeModel = treeModelBuilder.build();
 
-        ProgressManager.checkCanceled();
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        indicator.checkCanceled();
 
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          refreshViewOnEdt(treeModel, changeLists, unversionedFiles);
+          refreshViewOnEdt(treeModel, changeLists, unversionedFiles, indicator.isCanceled());
         });
       }
       finally {
@@ -795,7 +797,8 @@ public class ChangesViewManager implements ChangesViewEx,
     @RequiresEdt
     private void refreshViewOnEdt(@NotNull DefaultTreeModel treeModel,
                                   @NotNull List<LocalChangeList> changeLists,
-                                  @NotNull List<FilePath> unversionedFiles) {
+                                  @NotNull List<FilePath> unversionedFiles,
+                                  boolean hasPendingRefresh) {
       if (myDisposed) return;
 
       Span span = TRACER.spanBuilder("changes-view-refresh-edt").startSpan();
@@ -803,10 +806,13 @@ public class ChangesViewManager implements ChangesViewEx,
         myModelUpdateInProgress = true;
         try {
           myView.updateModel(treeModel);
-          if (myCommitWorkflowHandler != null) myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
         }
         finally {
           myModelUpdateInProgress = false;
+        }
+
+        if (myCommitWorkflowHandler != null && !hasPendingRefresh) {
+          myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
         }
 
         updatePreview(true);
