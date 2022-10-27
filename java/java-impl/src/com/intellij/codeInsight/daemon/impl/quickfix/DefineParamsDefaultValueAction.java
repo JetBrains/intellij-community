@@ -27,6 +27,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -35,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -42,6 +44,7 @@ import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,12 +53,13 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements LowPriorityAction {
+public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
   @Override
@@ -69,6 +73,10 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     return QuickFixBundle.message("generate.overloaded.method.with.default.parameter.values");
   }
 
+  @Override
+  public Icon getIcon(int flags) {
+    return ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RefactoringBulb;
+  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
