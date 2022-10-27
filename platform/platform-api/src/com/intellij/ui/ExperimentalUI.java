@@ -39,11 +39,17 @@ public abstract class ExperimentalUI {
 
   @Contract(pure = true)
   public static boolean isNewUI() {
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
     // CWM-7348 thin client does not support new UI
     return (EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported()) || Boolean.getBoolean("ide.force.new.ui"); // temp flag for remote dev
   }
 
   public static boolean isSupported() {
+    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
+    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+
     return !PlatformUtils.isJetBrainsClient();
   }
 
