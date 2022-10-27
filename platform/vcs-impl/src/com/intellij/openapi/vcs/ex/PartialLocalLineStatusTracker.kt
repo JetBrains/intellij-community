@@ -532,7 +532,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   override fun getChangesToBeCommitted(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): String? {
     return documentTracker.readLock {
-      if (!isValid()) return@readLock null
+      if (!isValid() || documentTracker.isFrozen()) return@readLock null
       val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
       return@readLock documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
                       ?: run {

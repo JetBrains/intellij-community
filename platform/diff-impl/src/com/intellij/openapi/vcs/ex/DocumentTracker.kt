@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -266,7 +267,7 @@ class DocumentTracker(
   }
 
   fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String? {
-    if (isDisposed || isFrozen()) return null
+    if (isDisposed) return null
 
     val otherSide = side.other()
     val affectedBlocks = tracker.blocks.filter(condition)
