@@ -279,13 +279,10 @@ public final class MigrationPanel extends JPanel implements Disposable {
       if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
         final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
         if (selectedNodes.length == 1) {
-          return (DataProvider)slowId -> {
-            if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-              return selectedNodes[0].getUserObject() instanceof MigrationNode
-                     ? ((MigrationNode)selectedNodes[0].getUserObject()).getInfo().getElement() : null;
-            }
-            return null;
-          };
+          Object userObject = selectedNodes[0].getUserObject();
+          if (userObject instanceof MigrationNode node) {
+            return (DataProvider)slowId -> CommonDataKeys.PSI_ELEMENT.is(dataId) ? node.getInfo().getElement() : null;
+          }
         }
       }
       if (MIGRATION_USAGES_KEY.is(dataId)) {
