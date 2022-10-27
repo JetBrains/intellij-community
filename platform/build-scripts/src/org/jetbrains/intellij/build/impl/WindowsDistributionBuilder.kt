@@ -185,7 +185,7 @@ internal class WindowsDistributionBuilder(
       classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars[i]}\""
     }
 
-    var additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch)
+    var additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
     if (!context.xBootClassPathJarNames.isEmpty()) {
       additionalJvmArguments = additionalJvmArguments.toMutableList()
       val bootCp = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\lib\\${it}" }
