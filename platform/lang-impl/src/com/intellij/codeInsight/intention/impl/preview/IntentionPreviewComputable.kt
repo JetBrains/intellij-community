@@ -107,15 +107,16 @@ internal class IntentionPreviewComputable(private val project: Project,
         IntentionPreviewInfo.DIFF,
         IntentionPreviewInfo.DIFF_NO_TRIM -> {
           val document = psiFileCopy!!.viewProvider.document
-          val anotherFile = psiFileCopy.originalFile != origFile
+          val correctedOrigFile = psiFileCopy.originalFile
+          val anotherFile = correctedOrigFile != origFile
           val policy = if (result == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
           IntentionPreviewDiffResult(
             psiFile = psiFileCopy,
-            origFile = psiFileCopy.originalFile,
+            origFile = correctedOrigFile,
             policy = policy,
             fileName = if (anotherFile) psiFileCopy.name else null,
             normalDiff = !anotherFile,
-            lineFragments = comparisonManager.compareLines(origFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
+            lineFragments = comparisonManager.compareLines(correctedOrigFile.text, document.text, policy, DumbProgressIndicator.INSTANCE))
         }
         IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
         is IntentionPreviewInfo.CustomDiff -> {
