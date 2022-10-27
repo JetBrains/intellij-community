@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.util.graph.DirectedGraph.Edge
  */
 fun <T> DirectedGraph<T>.sortTopologically(): List<Set<T>>? {
     val graph = MutableDirectedGraphOptimizedForTopologicalSort.fromGraph(this)
-    return buildList {
+    return ArrayList<Set<T>>().apply {
         while (!graph.isEmpty()) {
             add(graph.graphIncomingVertices.takeIf(Set<T>::isNotEmpty) ?: return null)
             graph.removeAllGraphIncomingVertices()
