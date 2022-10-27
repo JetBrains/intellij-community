@@ -1,4 +1,4 @@
-// "Create field 'array'" "true"
+// "Create field 'array'" "true-preview"
 class Smth<T> {
 }
 
