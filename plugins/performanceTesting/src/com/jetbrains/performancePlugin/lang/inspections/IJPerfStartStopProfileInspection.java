@@ -16,7 +16,6 @@ import com.jetbrains.performancePlugin.commands.StartProfileCommand;
 import com.jetbrains.performancePlugin.commands.StopProfileCommand;
 import com.jetbrains.performancePlugin.lang.IJPerfLanguage;
 import com.jetbrains.performancePlugin.lang.psi.IJPerfFile;
-import com.jetbrains.performancePlugin.lang.psi.IJPerfStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class IJPerfStartStopProfileInspection implements Annotator {
@@ -52,9 +51,11 @@ public class IJPerfStartStopProfileInspection implements Annotator {
   private static void checkAndRegisterUnclosedProblem(PsiElement startCommand, AnnotationHolder holder) {
     if (startCommand != null) {
       holder
-        .newAnnotation(HighlightSeverity.WARNING, PerformanceTestingBundle.message("inspection.message.activity.started.but.never.closed.with.stopprofile", startCommand.getText()))
+        .newAnnotation(HighlightSeverity.WARNING,
+                       PerformanceTestingBundle.message("inspection.message.activity.started.but.never.closed.with.stopprofile",
+                                                        startCommand.getText()))
         .range(startCommand)
-        .withFix(new AddStopCommandFix((IJPerfStatement)startCommand))
+        .withFix(new AddStopCommandFix())
         .create();
     }
   }
@@ -62,20 +63,16 @@ public class IJPerfStartStopProfileInspection implements Annotator {
   private static void checkAndRegisterRepeatProblem(PsiElement prevStartCommand, PsiElement curStartCommand, AnnotationHolder holder) {
     if (prevStartCommand != null && curStartCommand != null) {
       holder
-        .newAnnotation(HighlightSeverity.ERROR, PerformanceTestingBundle.message("inspection.message.two.startprofile.commands.cant.follow.each.other", curStartCommand.getText()))
+        .newAnnotation(HighlightSeverity.ERROR,
+                       PerformanceTestingBundle.message("inspection.message.two.startprofile.commands.cant.follow.each.other",
+                                                        curStartCommand.getText()))
         .range(curStartCommand)
-        .withFix(new AddStopCommandFix((IJPerfStatement)prevStartCommand))
+        .withFix(new AddStopCommandFix())
         .create();
     }
   }
 
   private static class AddStopCommandFix extends BaseIntentionAction {
-
-    private final IJPerfStatement myStartCommand;
-
-    AddStopCommandFix(IJPerfStatement startCommand) {
-      myStartCommand = startCommand;
-    }
 
     @Override
     public @NotNull String getFamilyName() {
@@ -94,7 +91,7 @@ public class IJPerfStartStopProfileInspection implements Annotator {
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      WriteCommandAction.writeCommandAction(project).run(() -> { file.addBefore(createCRLF(project), file.addAfter(createStopCommand(project), myStartCommand)); });
+      file.addBefore(createCRLF(project), file.add(createStopCommand(project)));
     }
 
     private static IJPerfFile createFile(Project project, String text) {
