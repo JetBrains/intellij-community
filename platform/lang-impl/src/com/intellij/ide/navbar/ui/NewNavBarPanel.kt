@@ -136,11 +136,10 @@ internal class NewNavBarPanel(
       myItemComponents.add(itemComponent)
     }
 
-    revalidate()
-    repaint()
-
     onSizeChange?.run()
-    yield()
+    while (!isValid) {
+      yield()
+    }
     myItemComponents.lastOrNull()?.let {
       scrollRectToVisible(it.bounds)
     }
