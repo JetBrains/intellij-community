@@ -52,7 +52,6 @@ suspend fun createBuildContext(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
-  options.compressZipFiles = false
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(communityHome = communityHomePath,
