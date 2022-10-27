@@ -2,6 +2,7 @@ package com.intellij.mermaid.lang.psi
 
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.parentOfType
 
@@ -48,6 +49,26 @@ class MermaidElementFactory {
 
       val element = file.findElementAt("gitGraph\n  ".length)?.parent?.parent
       return element as? MermaidGitGraphStatement
+    }
+
+    fun createSpaceElement(project: Project, length: Int): PsiElement? {
+      val text = """
+        flowchart
+          ${"&nbsp".repeat(length)}
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      return file.findElementAt("flowchart\n  ".length)
+    }
+
+    fun createIdElement(project: Project, vararg elements: PsiElement): PsiElement? {
+      val text = """
+        flowchart
+          ${elements.joinToString(separator = "") { it.text }}
+      """.trimIndent()
+      val file = createFile(project, text)
+
+      return file.findElementAt("flowchart\n  ".length)
     }
 
     private fun createFile(project: Project?, text: String): MermaidFile {

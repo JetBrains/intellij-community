@@ -38,6 +38,8 @@
 
     <lang.foldingBuilder language="Mermaid"
                          implementationClass="com.intellij.mermaid.lang.folding.MermaidFoldingBuilder"/>
+    <lang.foldingBuilder language="Mermaid"
+                         implementationClass="com.intellij.mermaid.lang.folding.MermaidNbspFoldingBuilder"/>
 
     <psi.declarationProvider
       implementation="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolDeclarationProvider"/>
@@ -57,6 +59,14 @@
     <annotator
       language="Mermaid"
       implementationClass="com.intellij.mermaid.lang.intention.GitGraphAnnotator"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.UnrenderableSpacesAnnotator"/>
+
+    <annotator
+      language="Mermaid"
+      implementationClass="com.intellij.mermaid.lang.intention.NbspAnnotator"/>
 
     <localInspection language="Mermaid" shortName="UnusedAttribute"
                      groupKey="unused.attribute.inspection.display.name"
