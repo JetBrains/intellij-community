@@ -45,29 +45,32 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
         return
       }
 
-      val readerModeSettings = getInstance(project)
-
-      if (isNonAsyncCapable()) {
-        val matchMode = readerModeSettings.enabled && matchMode(project, file, editor)
-        applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
-      } else {
+      if (isBlockingApplication()) {
+        val matchMode = matchMode(project, file, editor)
+        if (matchMode || forceUpdate) {
+          applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+        }
+      }
+      else {
         // caching is required for instant reopen of file with the previously computed mode without irritating file UI changes
         val matchCachedValue = file.getMatchModeCached()
 
         if (!forceUpdate && matchCachedValue != null) {
-          applyModeChanged(project, editor, readerModeSettings.enabled && matchCachedValue, fileIsOpenAlready)
+          if (matchCachedValue) {
+            applyModeChanged(project, editor, true, fileIsOpenAlready)
+          }
         }
         else {
-          readerModeSettings.coroutineScope.launch {
-            val modeEnabledForFile = readerModeSettings.enabled && readAction {
+          getInstance(project).coroutineScope.launch {
+            val matchMode = readAction {
               val value = matchMode(project, file, editor)
               file.setMatchModeCached(value)
               value
             }
 
-            if (modeEnabledForFile || forceUpdate) {
+            if (matchMode || forceUpdate) {
               withContext(Dispatchers.EDT) {
-                applyModeChanged(project, editor, true, fileIsOpenAlready)
+                applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
               }
             }
           }
@@ -85,11 +88,12 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       this.putUserData(MATCHES_READER_MODE_KEY, value)
     }
 
-    private fun applyModeChanged(project: Project, editor: Editor, modeEnabled: Boolean, fileIsOpenAlready: Boolean) {
+    private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
       if (editor.isDisposed) return
 
+      val modeEnabledForFile = getInstance(project).enabled && matchMode
       for (provider in EP_READER_MODE_PROVIDER.extensionList) {
-        provider.applyModeChanged(project, editor, modeEnabled, fileIsOpenAlready)
+        provider.applyModeChanged(project, editor, modeEnabledForFile, fileIsOpenAlready)
       }
     }
 
@@ -129,7 +133,7 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       }
     }
 
-    private fun isNonAsyncCapable(): Boolean {
+    private fun isBlockingApplication(): Boolean {
       val application = ApplicationManager.getApplication()
       return application.isHeadlessEnvironment || application.isUnitTestMode
     }
