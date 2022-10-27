@@ -519,7 +519,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
 
   internal open fun afterFileClosed(file: VirtualFile) {}
 
-  protected open fun afterFileOpen(file: VirtualFile) {}
+  open fun afterFileOpen(file: VirtualFile) {}
 
   fun getTabsAt(point: RelativePoint): JBTabs? {
     val thisPoint = point.getPoint(this)
@@ -933,7 +933,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) {
         val document = readAction {
           fileDocumentManager.getDocument(virtualFile)
         }
-        (fileEditorManager as FileEditorManagerExImpl).openFileOnStartup(window = window,
+        (fileEditorManager as FileEditorManagerImpl).openFileOnStartup(window = window,
                                                                          virtualFile = virtualFile,
                                                                          entry = entry,
                                                                          options = openOptions)

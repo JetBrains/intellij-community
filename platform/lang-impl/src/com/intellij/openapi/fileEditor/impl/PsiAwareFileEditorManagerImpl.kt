@@ -15,7 +15,7 @@ import com.intellij.problems.ProblemListener
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.util.ui.EdtInvocationManager
 
-open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerExImpl(project) {
+open class PsiAwareFileEditorManagerImpl(project: Project) : FileEditorManagerImpl(project) {
   private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(getProject()) }
 
   /**

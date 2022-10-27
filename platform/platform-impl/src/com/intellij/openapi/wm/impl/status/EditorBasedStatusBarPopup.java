@@ -132,9 +132,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return createInstance(getProject());
   }
 
-  @Nullable
   @Override
-  public WidgetPresentation getPresentation() {
+  public @Nullable WidgetPresentation getPresentation() {
     return null;
   }
 
@@ -193,8 +192,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     }
   }
 
-  @NotNull
-  protected DataContext getContext() {
+  protected @NotNull DataContext getContext() {
     Editor editor = getEditor();
     return editor != null ? EditorUtil.getEditorDataContext(editor) :
            DataManager.getInstance().getDataContext((Component)myStatusBar);
@@ -250,25 +248,27 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   public void update(@Nullable Runnable finishUpdate) {
-    if (update.isDisposed()) return;
+    if (update.isDisposed()) {
+      return;
+    }
 
     update.cancelAllRequests();
     update.addRequest(() -> {
-      if (isDisposed()) return;
+      if (isDisposed()) {
+        return;
+      }
 
       VirtualFile file = getSelectedFile();
 
       WidgetState state = ReadAction.compute(() -> {
-        if (isDisposed()) return WidgetState.NO_CHANGE;
-
-        return getWidgetState(file);
+        return isDisposed() ? WidgetState.NO_CHANGE : getWidgetState(file);
       });
       if (state == WidgetState.NO_CHANGE) {
         return;
       }
       ApplicationManager.getApplication().invokeLater(() -> {
         applyUpdate(finishUpdate, file, state);
-      }, ModalityState.any(), (x) -> isDisposed());
+      }, ModalityState.NON_MODAL, __ -> isDisposed());
     }, 200);
   }
 
@@ -337,7 +337,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     /**
      * Returns a special state for dumb mode (when indexes are not ready).
      * Your widget should show this state if it depends on indexes, when DumbService.isDumb is true.
-     *
+     * <p>
      * Use myConnection.subscribe(DumbService.DUMB_MODE, your_listener) inside registerCustomListeners,
      *   and call update() inside listener callbacks, to refresh your widget state when indexes are loaded
      */
@@ -352,8 +352,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       this.icon = icon;
     }
 
-    @Nls
-    public String getText() {
+    public @Nls String getText() {
       return text;
     }
 
@@ -370,9 +369,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     }
   }
 
-  @NotNull
   @RequiresBackgroundThread
-  protected abstract WidgetState getWidgetState(@Nullable VirtualFile file);
+  protected abstract @NotNull WidgetState getWidgetState(@Nullable VirtualFile file);
 
   /**
    * @param file result of {@link EditorBasedStatusBarPopup#getSelectedFile()}
@@ -383,12 +381,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return file == null || !myWriteableFileRequired || file.isWritable();
   }
 
-  @Nullable
-  protected abstract ListPopup createPopup(@NotNull DataContext context);
+  protected abstract @Nullable ListPopup createPopup(@NotNull DataContext context);
 
   protected void registerCustomListeners() {
   }
 
-  @NotNull
-  protected abstract StatusBarWidget createInstance(@NotNull Project project);
+  protected abstract @NotNull StatusBarWidget createInstance(@NotNull Project project);
 }

@@ -31,9 +31,10 @@ import org.jetbrains.annotations.Nullable;
 public final class StatusBarUtil {
   private StatusBarUtil() { }
 
-  @Nullable
-  public static Editor getCurrentTextEditor(@Nullable StatusBar statusBar) {
-    if (statusBar == null) return null;
+  public static @Nullable Editor getCurrentTextEditor(@Nullable StatusBar statusBar) {
+    if (statusBar == null) {
+      return null;
+    }
 
     FileEditor fileEditor = getCurrentFileEditor(statusBar);
     if (fileEditor instanceof TextEditor) {
@@ -46,8 +47,7 @@ public final class StatusBarUtil {
   /**
    * Finds the current file editor.
    */
-  @Nullable
-  public static FileEditor getCurrentFileEditor(@Nullable StatusBar statusBar) {
+  public static @Nullable FileEditor getCurrentFileEditor(@Nullable StatusBar statusBar) {
     if (statusBar == null) {
       return null;
     }

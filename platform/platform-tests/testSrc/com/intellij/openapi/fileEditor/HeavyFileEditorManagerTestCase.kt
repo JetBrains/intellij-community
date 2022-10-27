@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.overrideFileEditorManagerImplementation
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +16,7 @@ abstract class HeavyFileEditorManagerTestCase : CodeInsightFixtureTestCase<Modul
   }
 
   override fun tuneFixture(moduleBuilder: ModuleFixtureBuilder<*>?) {
-    overrideFileEditorManagerImplementation(FileEditorManagerExImpl::class.java, testRootDisposable)
+    overrideFileEditorManagerImplementation(FileEditorManagerImpl::class.java, testRootDisposable)
   }
 
   override fun getBasePath(): String {

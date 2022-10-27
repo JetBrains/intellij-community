@@ -6,7 +6,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -31,7 +30,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
 
   public override fun setUp() {
     super.setUp()
-    manager = FileEditorManagerExImpl(project)
+    manager = FileEditorManagerImpl(project)
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
     check(DockManager.getInstance(project).containers.size == 1) {
