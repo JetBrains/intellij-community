@@ -277,7 +277,7 @@ class BuildContextImpl private constructor(
   }
 
   @Suppress("SpellCheckingInspection")
-  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isPortableDist: Boolean): List<String> {
+  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
     productProperties.classLoader?.let {
       jvmArgs.add("-Djava.system.class.loader=$it")
@@ -290,8 +290,8 @@ class BuildContextImpl private constructor(
       OsFamily.LINUX -> "\$IDE_HOME"
       else -> "%IDE_HOME%"
     }
-    jvmArgs.add("-Djna.boot.library.path=$macroName/lib/jna/${arch.dirName}")
-    jvmArgs.add("-Dpty4j.preferred.native.folder=$macroName/lib/pty4j")
+    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
+    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
     // prefer bundled JNA dispatcher lib
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.nounpack=true")
