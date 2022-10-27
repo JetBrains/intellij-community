@@ -46,6 +46,14 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
+
+  /**
+   * To provide <pre>PYCHARM_HOSTED</pre> or not. Some libs assume output is tty when this var set, which may lead to DS-4036
+   */
+  public boolean providePyCharmHosted() {
+    return true;
+  }
+
   /**
    * Class of flavor data. Always implement it explicitly
    */
