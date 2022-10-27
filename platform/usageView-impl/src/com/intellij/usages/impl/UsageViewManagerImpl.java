@@ -166,39 +166,50 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
       }
 
+      @Override
+      public void onCancel() {
+        UsageViewEx usageView = usageViewRef.get();
+        int count = usageView == null ? 0 : usageView.getUsagesCount();
+        reportSearchCompletedToFus(count, true);
+        super.onCancel();
+      }
+
       @NotNull
       @Override
       public NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
+        long duration = reportSearchCompletedToFus(count, false);
+        String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
+        LOG.debug(notification + " in " + duration + "ms.");
+        return new NotificationInfo("Find Usages", UsageViewBundle.message("notification.title.find.usages.finished"), notification);
+      }
+
+      private long reportSearchCompletedToFus(int count, boolean isCancelled) {
         long currentTS = System.nanoTime();
         long durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstItemFoundTS.get() - start);
         long duration = TimeUnit.NANOSECONDS.toMillis(currentTS - start);
 
-        String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
-        LOG.debug(notification + " in " + duration + "ms.");
 
-        reportFUS(count, durationFirstResults, duration, tooManyUsages.get());
+        PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
+        if (element != null) {
+          Class<? extends PsiElement> targetClass = element.getClass();
+          Language language = ReadAction.compute(element::getLanguage);
+          SearchScope scope = null;
 
-        return new NotificationInfo("Find Usages",
-                                    UsageViewBundle.message("notification.title.find.usages.finished"), notification);
-      }
-
-      private void reportFUS(int count, long durationFirstResults, long duration, boolean tooManyUsages) {
-          PsiElement element = SearchForUsagesRunnable.getPsiElement(searchFor);
-          if (element != null) {
-            Class<? extends PsiElement> targetClass = element.getClass();
-            Language language = ReadAction.compute(element::getLanguage);
-            SearchScope scope = null;
-
-            if (element instanceof DataProvider) {
-              scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
-            }
-
-            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language,
-                                                           count, durationFirstResults, duration, tooManyUsages,
-                                                           CodeNavigateSource.FindToolWindow, usageViewRef.get());
+          if (element instanceof DataProvider) {
+            scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
           }
+          if (isCancelled) {
+            UsageViewStatisticsCollector.logSearchCancelled(myProject, targetClass, scope, language, count, durationFirstResults, duration,
+                                                            tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
+          }
+          else {
+            UsageViewStatisticsCollector.logSearchFinished(myProject, targetClass, scope, language, count, durationFirstResults, duration,
+                                                           tooManyUsages.get(), CodeNavigateSource.FindToolWindow, usageViewRef.get());
+          }
+        }
+        return duration;
       }
     };
     ProgressManager.getInstance().run(task);
