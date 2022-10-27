@@ -2,14 +2,12 @@
 package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.compiler.server.BuildManager
-import com.intellij.ide.impl.ProjectUtil.openOrImport
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.*
+import kotlinx.coroutines.runBlocking
 import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.internal.impldep.org.apache.commons.io.filefilter.DirectoryFileFilter
 import org.gradle.internal.impldep.org.apache.commons.io.filefilter.RegexFileFilter
+import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.io.File
@@ -30,21 +28,15 @@ class GradleRelativeConfigCalculatingTest : GradleJpsCompilingTestCase() {
     createProjectSubFile("$subfolderName/projectName/src/test/resources/dir/file-test.properties")
     createProjectSubFile("$subfolderName/projectName/build.gradle", "apply plugin: 'java'")
     createProjectSubFile("$subfolderName/projectName/settings.gradle", "")
-    try {
-      myProject = ExternalSystemApiUtil.executeOnEdt {
-        openOrImport(projectDir.toNioPath())
-      }
-      assertModules("projectName", "projectName.main", "projectName.test")
-      compileModules("projectName.main", "projectName.test")
-      assertCopied("$subfolderName/projectName/out/production/resources/dir/file.properties")
-      assertCopied("$subfolderName/projectName/out/test/resources/dir/file-test.properties")
-    }
-    finally {
-      UsefulTestCase.edt(ThrowableRunnable<RuntimeException> {
-        if (myProject != null && !myProject.isDisposed) {
-          PlatformTestUtil.forceCloseProjectWithoutSaving(myProject)
+    runBlocking {
+      openProjectAsyncAndWait(projectDir)
+        .withProjectAsync { myProject = it }
+        .useProjectAsync {
+          assertModules("projectName", "projectName.main", "projectName.test")
+          compileModules("projectName.main", "projectName.test")
+          assertCopied("$subfolderName/projectName/out/production/resources/dir/file.properties")
+          assertCopied("$subfolderName/projectName/out/test/resources/dir/file-test.properties")
         }
-      })
     }
   }
 
