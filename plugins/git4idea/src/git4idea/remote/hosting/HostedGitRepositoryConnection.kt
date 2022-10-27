@@ -12,4 +12,14 @@ import com.intellij.collaboration.auth.Account
 interface HostedGitRepositoryConnection<M : HostedGitRepositoryMapping, A : Account> {
   val repo: M
   val account: A
+
+  /**
+   * Close connection and suspend until closed
+   */
+  suspend fun close()
+
+  /**
+   * Suspend until connection is closed
+   */
+  suspend fun awaitClose()
 }
