@@ -24,9 +24,9 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
   private val contributorsWithDependency = contributorList
     .flatMap { contributor -> contributor.dependenciesOnParentEntities.map { it to contributor } }
     .groupBy({ it.second.entityClass }, { it.first to it.second })
+  /** this map is accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
   private val fileSets = MultiMap.create<VirtualFile, StoredFileSet>()
-  private val customExcludedRootContributors = CustomExcludedRootContributors(project, rootFileSupplier, fileSets)
-  private val syntheticLibraryContributors = SyntheticLibraryContributors(project, rootFileSupplier)
+  private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
   private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, rootFileSupplier, fileSets)
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val storeFileSetRegistrar = StoreFileSetsRegistrarImpl()
@@ -44,7 +44,6 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
         registerFileSets(it, entityClass, storage)
       }
     }
-    syntheticLibraryContributors.registerFileSets(fileSets)
     librariesAndSdkContributors.registerFileSets()
   }
 
@@ -57,9 +56,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
-    if (honorExclusion) {
-      customExcludedRootContributors.updateIfNeeded()
-    }
+    nonIncrementalContributors.updateIfNeeded(fileSets)
 
     val originalKindMask = 
       (if (includeContentSets) WorkspaceFileKindMask.CONTENT else 0) or 
@@ -196,9 +193,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun resetCustomContributors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    customExcludedRootContributors.resetCache()
-    syntheticLibraryContributors.unregisterFileSets(fileSets)
-    syntheticLibraryContributors.registerFileSets(fileSets)
+    nonIncrementalContributors.resetCache()
     resetFileCache()
   }
 
