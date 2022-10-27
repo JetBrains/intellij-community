@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_CO
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -94,15 +95,14 @@ internal sealed class GHLoginDialog(
 
     override fun createActions(): Array<Action> = arrayOf(cancelAction)
 
-    override fun show() {
-      doOKAction()
-      super.show()
-    }
-
     override fun createCenterPanel(): JComponent =
       JBUI.Panels.simplePanel(loginPanel)
         .withPreferredWidth(200)
-        .setPaddingCompensated()
+        .setPaddingCompensated().also {
+          UiNotifyConnector.doWhenFirstShown(it) {
+            doOKAction()
+          }
+        }
   }
 }
 
