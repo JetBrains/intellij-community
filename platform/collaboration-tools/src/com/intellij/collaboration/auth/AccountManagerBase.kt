@@ -125,7 +125,9 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
     accountsEventsFlow.transform {
       when (it) {
         is Event.AccountsAddedOrUpdated -> {
-          emit(it.map[account])
+          it.map[account]?.let { creds ->
+            emit(creds)
+          }
         }
         is Event.AccountsRemoved -> {
           if (account in it.accounts) {
