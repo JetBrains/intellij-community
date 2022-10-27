@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
   </component>
 </module>

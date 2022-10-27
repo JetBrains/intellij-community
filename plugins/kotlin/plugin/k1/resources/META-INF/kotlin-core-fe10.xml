@@ -221,7 +221,6 @@
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
 
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
-    <annotatedElementsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAnnotatedElementsSearcher"/>
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
 
