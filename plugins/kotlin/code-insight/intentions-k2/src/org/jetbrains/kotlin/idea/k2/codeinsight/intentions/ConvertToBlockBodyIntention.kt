@@ -45,7 +45,7 @@ internal class ConvertToBlockBodyIntention :
     }
 
     override fun apply(element: KtDeclarationWithBody, context: Context, project: Project, editor: Editor?) {
-        val body = element.bodyExpression!!
+        val body = element.bodyExpression ?: return
 
         val newBody = when (element) {
             is KtNamedFunction -> {
@@ -67,7 +67,7 @@ internal class ConvertToBlockBodyIntention :
             else -> throw RuntimeException("Unknown declaration type: $element")
         }
 
-        element.equalsToken!!.delete()
+        element.equalsToken?.delete()
         val replaced = body.replace(newBody)
         if (context.reformat) element.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
     }

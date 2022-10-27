@@ -31,18 +31,22 @@ internal class AddNameToArgumentIntention :
 
     override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
-    override fun isApplicableByPsi(element: KtValueArgument): Boolean =
+    override fun isApplicableByPsi(element: KtValueArgument): Boolean {
+        if (element.isNamed()) return false
+
         // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`); element is a KtLambdaArgument.
         // Note: IS applicable when lambda is inside an argument list (e.g., `run({  })`); element is a KtValueArgument in this case.
-        !element.isNamed() && element !is KtLambdaArgument
+        if (element is KtLambdaArgument) return false
+
+        // Either mixed named arguments must be allowed or the element must be the last unnamed argument.
+        val argumentList = element.parent as? KtValueArgumentList ?: return false
+        return element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition) ||
+                element == argumentList.arguments.last { !it.isNamed() }
+    }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
-        val argumentList = element.parent as? KtValueArgumentList ?: return null
-        val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
-        if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return null
-
-        val callElement = argumentList.parent as? KtCallElement ?: return null
+        val callElement = element.parent.parent as? KtCallElement ?: return null
         val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {

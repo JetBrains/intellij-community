@@ -16,16 +16,17 @@ internal class ConvertConcatenationToBuildStringIntention : KotlinApplicableInte
     override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.build.string")
     override fun getActionName(element: KtBinaryExpression): String = familyName
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = !element.isAnnotationArgument()
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        element.operationToken == KtTokens.PLUS && !element.isAnnotationArgument()
 
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {
         val parent = element.parent
-        return element.isConcatenation() && (parent !is KtBinaryExpression || !parent.isConcatenation())
+        return element.getKtType()?.isString == true && (
+                parent !is KtBinaryExpression ||
+                parent.operationToken != KtTokens.PLUS ||
+                parent.getKtType()?.isString == false)
     }
-
-    context(KtAnalysisSession)
-    private fun KtBinaryExpression.isConcatenation(): Boolean = operationToken == KtTokens.PLUS && this.getKtType()?.isString == true
 
     override fun apply(element: KtBinaryExpression, project: Project, editor: Editor?) {
         val buildStringCall = convertConcatenationToBuildStringCall(element)

@@ -52,6 +52,7 @@ internal abstract class AbstractAddAccessorIntention(
 
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtProperty): Boolean {
+        if (element.annotationEntries.isEmpty()) return true
         val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
         return !symbol.hasAnnotation(JVM_FIELD_CLASS_ID)
     }

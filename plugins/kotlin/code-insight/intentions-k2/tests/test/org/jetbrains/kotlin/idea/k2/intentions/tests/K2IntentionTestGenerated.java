@@ -455,6 +455,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/both/jvmField.kt");
             }
 
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/both/jvmField2.kt");
+            }
+
             @TestMetadata("lateinit.kt")
             public void testLateinit() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/both/lateinit.kt");
@@ -538,6 +543,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/getter/jvmField.kt");
             }
 
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/getter/jvmField2.kt");
+            }
+
             @TestMetadata("lateinit.kt")
             public void testLateinit() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/getter/lateinit.kt");
@@ -614,6 +624,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("jvmField.kt")
             public void testJvmField() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/setter/jvmField.kt");
+            }
+
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/setter/jvmField2.kt");
             }
 
             @TestMetadata("lateinit.kt")
@@ -1072,6 +1087,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("withComments4.kt")
         public void testWithComments4() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments4.kt");
+        }
+
+        @TestMetadata("withComments5.kt")
+        public void testWithComments5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertConcatenationToBuildString/withComments5.kt");
         }
     }
 

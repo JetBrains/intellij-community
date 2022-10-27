@@ -1728,6 +1728,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/both/jvmField.kt");
             }
 
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("testData/intentions/addPropertyAccessors/both/jvmField2.kt");
+            }
+
             @TestMetadata("lateinit.kt")
             public void testLateinit() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/both/lateinit.kt");
@@ -1811,6 +1816,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/getter/jvmField.kt");
             }
 
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("testData/intentions/addPropertyAccessors/getter/jvmField2.kt");
+            }
+
             @TestMetadata("lateinit.kt")
             public void testLateinit() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/getter/lateinit.kt");
@@ -1887,6 +1897,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("jvmField.kt")
             public void testJvmField() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/setter/jvmField.kt");
+            }
+
+            @TestMetadata("jvmField2.kt")
+            public void testJvmField2() throws Exception {
+                runTest("testData/intentions/addPropertyAccessors/setter/jvmField2.kt");
             }
 
             @TestMetadata("lateinit.kt")
@@ -4906,6 +4921,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("withComments4.kt")
         public void testWithComments4() throws Exception {
             runTest("testData/intentions/convertConcatenationToBuildString/withComments4.kt");
+        }
+
+        @TestMetadata("withComments5.kt")
+        public void testWithComments5() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/withComments5.kt");
         }
     }
 
