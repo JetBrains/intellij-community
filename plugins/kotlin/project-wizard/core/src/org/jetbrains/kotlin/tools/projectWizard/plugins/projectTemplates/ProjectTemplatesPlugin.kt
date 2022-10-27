@@ -25,15 +25,10 @@ class ProjectTemplatesPlugin(context: Context) : Plugin(context) {
                 Failure(ParseError(KotlinNewProjectWizardBundle.message("error.text.project.templates.is.not.supported.in.yaml.for.now")))
             },
         ) {
-            values = ProjectTemplate.ALL + extensionTemplates
+            values = ProjectTemplate.ALL
             isRequired = false
             tooltipText = KotlinNewProjectWizardBundle.message("plugin.templates.setting.template.tooltip")
         }
-
-        private val extensionTemplates: List<ProjectTemplate>
-            get() = mutableListOf<ProjectTemplate>().also { list ->
-                MultiplatformProjectTemplatesProvider.EP_NAME.forEachExtensionSafe { it.addTemplate(list) }
-            }
     }
 
     override val settings: List<PluginSetting<*, *>> = listOf(template)
