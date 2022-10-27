@@ -24,10 +24,10 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -113,12 +113,7 @@ public final class SwitchUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (isPatternMatch) {
       if (canBePatternSwitchCase(expression, switchExpression)) {
-        final PsiPattern pattern;
-        try {
-          pattern = createPatternFromExpression(expression);
-        } catch (IncorrectOperationException ignore) {
-          return false;
-        }
+        final PsiPattern pattern = createPatternFromExpression(expression);
         if (pattern == null) return true;
         for (Object caseValue : existingCaseValues) {
           if (caseValue instanceof PsiPattern && JavaPsiPatternUtil.dominates((PsiPattern) caseValue, pattern)) {
@@ -400,7 +395,12 @@ public final class SwitchUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression instanceOf) {
       final PsiPrimaryPattern pattern = instanceOf.getPattern();
-      if (pattern != null) return pattern.getText();
+      if (pattern != null) {
+        if (pattern instanceof PsiDeconstructionPattern deconstruction && ErrorUtil.containsError(deconstruction.getDeconstructionList())) {
+          return null;
+        }
+        return pattern.getText();
+      }
       final PsiTypeElement typeElement = instanceOf.getCheckType();
       final PsiType type = typeElement != null ? typeElement.getType() : null;
       String name = new VariableNameGenerator(instanceOf, VariableKind.LOCAL_VARIABLE).byType(type).generate(true);
