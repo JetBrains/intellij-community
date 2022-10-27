@@ -67,7 +67,10 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
       else -> ChangeListManager.getInstance(project).defaultChangeList
     }
 
-    val changesConsumer = browser?.let { Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) } }
+    val changesConsumer = if (browser is CommitDialogChangesBrowser) {
+      Consumer { changes: List<Change> -> browser.viewer.includeChanges(changes) }
+    }
+    else null
 
     FileDocumentManager.getInstance().saveAllDocuments()
 
