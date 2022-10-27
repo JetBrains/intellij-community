@@ -33,8 +33,8 @@ class MavenProjectsAware(
     get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
-    isImportCompleted.afterReset({ listener.onProjectReloadStart() }, parentDisposable)
-    isImportCompleted.afterSet({ listener.onProjectReloadFinish(SUCCESS) }, parentDisposable)
+    isImportCompleted.afterReset(parentDisposable) { listener.onProjectReloadStart() }
+    isImportCompleted.afterSet(parentDisposable) { listener.onProjectReloadFinish(SUCCESS) }
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {

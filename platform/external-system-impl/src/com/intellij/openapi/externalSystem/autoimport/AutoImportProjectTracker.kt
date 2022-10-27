@@ -18,7 +18,7 @@ import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrac
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.BooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
@@ -181,8 +181,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     val id = "ProjectSettingsTracker: $projectIdName"
     settingsTracker.beforeApplyChanges { projectReloadOperation.startTask(id) }
     settingsTracker.afterApplyChanges { projectReloadOperation.finishTask(id) }
-    activationProperty.afterSet({ LOG.debug("$projectIdName is activated") }, parentDisposable)
-    activationProperty.afterSet({ scheduleChangeProcessing() }, parentDisposable)
+    activationProperty.afterSet(parentDisposable) { LOG.debug("$projectIdName is activated") }
+    activationProperty.afterSet(parentDisposable) { scheduleChangeProcessing() }
 
     Disposer.register(project, parentDisposable)
     projectAware.subscribe(createProjectReloadListener(projectData), parentDisposable)
@@ -288,7 +288,7 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   private data class ProjectData(
     val status: ProjectStatus,
-    val activationProperty: BooleanProperty,
+    val activationProperty: MutableBooleanProperty,
     val projectAware: ExternalSystemProjectAware,
     val settingsTracker: ProjectSettingsTracker,
     val parentDisposable: Disposable
