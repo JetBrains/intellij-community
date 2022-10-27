@@ -443,31 +443,31 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       projectAware.ignoreSettingsFileWhen(getAbsolutePath(relativePath), condition)
 
     fun whenReloadStarted(parentDisposable: Disposable, action: () -> Unit) =
-      projectAware.whenReloadStarted(action, parentDisposable)
+      projectAware.startReloadEventDispatcher.whenEventHappened(parentDisposable, action)
 
     fun whenReloadStarted(times: Int, action: () -> Unit) =
-      projectAware.whenReloadStarted(times, action)
+      projectAware.startReloadEventDispatcher.whenEventHappened(times, action)
 
     fun onceWhenReloadStarted(action: () -> Unit) =
-      projectAware.onceWhenReloadStarted(action)
+      projectAware.startReloadEventDispatcher.onceWhenEventHappened(action)
 
     fun whenReloading(parentDisposable: Disposable, action: (ExternalSystemProjectReloadContext) -> Unit) =
-      projectAware.whenReloading(action, parentDisposable)
+      projectAware.reloadEventDispatcher.whenEventHappened(parentDisposable, action)
 
     fun whenReloading(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) =
-      projectAware.whenReloading(times, action)
+      projectAware.reloadEventDispatcher.whenEventHappened(times, action)
 
     fun onceWhenReloading(action: (ExternalSystemProjectReloadContext) -> Unit) =
-      projectAware.onceWhenReloading(action)
+      projectAware.reloadEventDispatcher.onceWhenEventHappened(action)
 
     fun whenReloadFinished(parentDisposable: Disposable, action: (ExternalSystemRefreshStatus) -> Unit) =
-      projectAware.whenReloadFinished(action, parentDisposable)
+      projectAware.finishReloadEventDispatcher.whenEventHappened(parentDisposable, action)
 
     fun whenReloadFinished(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) =
-      projectAware.whenReloadFinished(times, action)
+      projectAware.finishReloadEventDispatcher.whenEventHappened(times, action)
 
     fun onceWhenReloadFinished(action: (ExternalSystemRefreshStatus) -> Unit) =
-      projectAware.onceWhenReloadFinished(action)
+      projectAware.finishReloadEventDispatcher.onceWhenEventHappened(action)
 
     fun setReloadStatus(status: ExternalSystemRefreshStatus) = projectAware.reloadStatus.set(status)
 

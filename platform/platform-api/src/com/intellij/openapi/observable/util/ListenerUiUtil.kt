@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.components.DropDownLink
@@ -16,7 +15,6 @@ import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.ItemSelectable
 import java.awt.event.*
@@ -222,11 +220,6 @@ fun Component.addKeyListener(parentDisposable: Disposable? = null, listener: Key
   parentDisposable?.whenDisposed {
     removeKeyListener(listener)
   }
-}
-
-@Internal
-fun Disposable.whenDisposed(listener: () -> Unit): Disposable = apply {
-  Disposer.register(this, Disposable { listener() })
 }
 
 @Experimental
