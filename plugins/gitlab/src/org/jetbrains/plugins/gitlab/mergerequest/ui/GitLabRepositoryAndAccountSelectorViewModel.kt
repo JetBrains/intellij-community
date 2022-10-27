@@ -10,23 +10,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 internal class GitLabRepositoryAndAccountSelectorViewModel(
   private val scope: CoroutineScope,
-  private val connectionManager: GitLabProjectConnectionManager,
   projectsManager: GitLabProjectsManager,
-  private val accountManager: GitLabAccountManager)
+  private val accountManager: GitLabAccountManager,
+  onSelected: suspend (GitLabProjectMapping, GitLabAccount) -> Unit,
+)
   : RepositoryAndAccountSelectorViewModelBase<GitLabProjectMapping, GitLabAccount>(
   scope,
   projectsManager,
   accountManager,
-  onSelected = { repo, account ->
-    connectionManager.tryConnect(repo, account)
-  }) {
+  onSelected) {
 
   val tokenLoginAvailableState: StateFlow<Boolean> =
     combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isTokenLoginAvailable)

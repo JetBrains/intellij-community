@@ -10,10 +10,9 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
 import com.intellij.util.childScope
-import git4idea.remote.hosting.HostedGitRepositoryAutoConnector
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManagerImpl
+import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import javax.swing.JPanel
 
@@ -43,8 +42,7 @@ internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
     val projectsManager = project.service<GitLabProjectsManager>()
     val accountManager = service<GitLabAccountManager>()
 
-    val connectionManager = GitLabProjectConnectionManagerImpl(scope, projectsManager, accountManager)
-    HostedGitRepositoryAutoConnector(scope, connectionManager, projectsManager, accountManager)
+    val connectionManager = GitLabProjectConnectionManager(projectsManager, accountManager)
 
     val vm = GitLabToolWindowTabViewModel(scope, connectionManager, projectsManager, accountManager)
 

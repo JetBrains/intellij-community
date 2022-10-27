@@ -8,9 +8,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.TestGitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.testutil.MainDispatcherRule
@@ -43,13 +41,11 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
   @Mock
   internal lateinit var accountManager: GitLabAccountManager
 
-  private val connectionManager = TestGitLabProjectConnectionManager()
-
   @Test
   fun `initial selection`() = runTest {
     val projectMapping = mock<GitLabProjectMapping> {
       on { repository } doAnswer {
-        mock<GitLabProjectCoordinates> {
+        mock {
           on { serverPath } doReturn GitLabServerPath.DEFAULT_SERVER
         }
       }
@@ -62,7 +58,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, connectionManager, projectManager, accountManager)
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
 
     assertEquals(null, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)
