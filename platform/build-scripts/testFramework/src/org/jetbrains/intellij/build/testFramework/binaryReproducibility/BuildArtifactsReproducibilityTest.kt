@@ -4,13 +4,14 @@ package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
+import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.writeText
 
 class BuildArtifactsReproducibilityTest {
-  private val buildDateInSeconds = System.getenv("SOURCE_DATE_EPOCH")?.toLongOrNull()
+  private val buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)?.toLongOrNull()
   private val randomSeedNumber = Random().nextLong()
 
   companion object {
@@ -20,7 +21,7 @@ class BuildArtifactsReproducibilityTest {
   fun configure(options: BuildOptions) {
     assert(isEnabled)
     requireNotNull(buildDateInSeconds) {
-      "SOURCE_DATE_EPOCH environment variable is required"
+      "${GlobalOptions.BUILD_DATE_IN_SECONDS} environment variable is required"
     }
     options.buildDateInSeconds = buildDateInSeconds
     options.randomSeedNumber = randomSeedNumber
