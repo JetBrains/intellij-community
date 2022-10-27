@@ -46,6 +46,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -504,7 +505,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
     ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
 
-    JList<?> list = that.myListPopup instanceof ListPopupImpl ? ((ListPopupImpl)that.myListPopup).getList() : null;
+    ListPopupImpl list = ObjectUtils.tryCast(that.myListPopup, ListPopupImpl.class);
 
     var selectionListener = new ListSelectionListener() {
       @Override
@@ -518,7 +519,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           if (selectedItem instanceof IntentionActionWithTextCaching) {
             IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
             if (list != null) {
-              updatePreviewPopup(that, action, list.getSelectedIndex());
+              updatePreviewPopup(that, action, list.getOriginalSelectedIndex());
             }
             highlightOnHover(selectedItem);
           }
@@ -566,7 +567,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
         if (list != null) {
-          selectionListener.highlightOnHover(list.getSelectedValue());
+          selectionListener.highlightOnHover(list.getList().getSelectedValue());
         }
       }
 

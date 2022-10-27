@@ -130,6 +130,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     super.goBack();
   }
 
+  /**
+   * @return index of the selected item, regardless of the applied filter
+   */
+  public int getOriginalSelectedIndex() {
+    int index = myList.getSelectedIndex();
+    return index == -1 ? -1 : myListModel.getOriginalIndex(index);
+  }
+
   @Override
   protected void afterShowSync() {
     super.afterShowSync();
