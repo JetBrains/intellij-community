@@ -116,8 +116,12 @@ fun performAction() {
 // external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
 const val ACTION_ID = "CreateAllServicesAndExtensions"
 
+/**
+ * If service instance is obtained on Event Dispatch Thread only, it may expect that its constructor is called on EDT as well, so we must
+ * honor this in the action.
+ */
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val badServices = java.util.Set.of(
+private val servicesWhichRequireEdt = java.util.Set.of(
   "com.intellij.usageView.impl.UsageViewContentManagerImpl",
   "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
   "com.intellij.analysis.pwa.analyser.PwaServiceImpl",
@@ -127,7 +131,7 @@ private val badServices = java.util.Set.of(
 @Suppress("HardCodedStringLiteral")
 private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressIndicator, taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${container.activityNamePrefix()}services..."
-  ComponentManagerImpl.createAllServices(container, badServices)
+  ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt)
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires a read action

@@ -75,7 +75,7 @@ abstract class ComponentManagerImpl(
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
-    fun createAllServices(componentManager: ComponentManagerImpl, exclude: Set<String>) {
+    fun createAllServices(componentManager: ComponentManagerImpl, requireEdt: Set<String>) {
       for (o in componentManager.componentKeyToAdapter.values) {
         if (o !is ServiceComponentAdapter) {
           continue
@@ -92,7 +92,7 @@ abstract class ComponentManagerImpl(
             continue
           }
 
-          if (exclude.contains(implementation)) {
+          if (requireEdt.contains(implementation)) {
             invokeAndWaitIfNeeded {
               o.getInstance<Any>(componentManager, null)
             }
