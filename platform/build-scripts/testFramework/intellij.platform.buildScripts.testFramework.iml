@@ -26,5 +26,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" scope="TEST" />
   </component>
 </module>

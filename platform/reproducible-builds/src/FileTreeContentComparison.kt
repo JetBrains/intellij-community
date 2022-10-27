@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.testFramework.binaryReproducibility
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.reproducibleBuilds.diffTool
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -14,8 +14,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
-class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty("user.dir")).resolve(".diff"),
-                          private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {
+class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getProperty("user.dir")).resolve(".diff"),
+                                private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {
   private companion object {
     fun process(vararg command: String, workDir: Path? = null, ignoreExitCode: Boolean = false): ProcessCallResult {
       val process = ProcessBuilder(*command).directory(workDir?.toFile()).start()
@@ -45,7 +45,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       val path2 = Path.of(args[1])
       require(path1.exists())
       require(path2.exists())
-      val test = FileTreeContentTest()
+      val test = FileTreeContentComparison()
       val assertion = when {
         path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2).error
         path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSameFile(path1, path2)

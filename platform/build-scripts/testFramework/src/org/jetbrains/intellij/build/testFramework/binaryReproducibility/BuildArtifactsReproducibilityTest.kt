@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -42,7 +43,7 @@ class BuildArtifactsReproducibilityTest {
                                                    buildId)
       else -> build1.paths.projectHome
     }.resolve(".diff")
-    val test = FileTreeContentTest(diffDirectory, build1.paths.tempDir)
+    val test = FileTreeContentComparison(diffDirectory, build1.paths.tempDir)
     val result = test.assertTheSameDirectoryContent(build1.paths.artifactDir, build2.paths.artifactDir)
     if (result.error != null) {
       build1.messages.artifactBuilt("$diffDirectory")
@@ -50,7 +51,7 @@ class BuildArtifactsReproducibilityTest {
     report(result, diffDirectory, build1)
   }
 
-  private fun report(result: FileTreeContentTest.ComparisonResult, diffDirectory: Path, context: BuildContext) {
+  private fun report(result: FileTreeContentComparison.ComparisonResult, diffDirectory: Path, context: BuildContext) {
     val report = context.applicationInfo.productName
       .replace(" ", "-")
       .plus("-compared-files.txt")
