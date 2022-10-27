@@ -205,11 +205,11 @@ public final class MavenLegacyModuleImporter {
                 importer.process(myModifiableModelsProvider,
                                  myModule,
                                  myRootModelAdapter,
-                                   myMavenProjectsTree,
-                                   myMavenProject,
-                                   myMavenProjectChanges,
-                                   myMavenProjectToModuleName,
-                                   postTasks);
+                                 myMavenProjectsTree,
+                                 myMavenProject,
+                                 myMavenProjectChanges,
+                                 myMavenProjectToModuleName,
+                                 postTasks);
                 });
               }
               catch (Exception e) {
