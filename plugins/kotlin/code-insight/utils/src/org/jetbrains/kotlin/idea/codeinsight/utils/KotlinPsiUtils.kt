@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
@@ -287,3 +288,18 @@ fun IElementType.invertedComparison(): KtSingleValueToken? = when (this) {
  */
 fun PsiElement.getWrappingPrefixExpressionOrNull(): KtPrefixExpression? =
     (getLastParentOfTypeInRow<KtParenthesizedExpression>() ?: this).parent as? KtPrefixExpression
+
+fun createArgumentWithoutName(argument: KtValueArgument, isVararg: Boolean = false, isArrayOf: Boolean = false): List<KtValueArgument> {
+    if (!argument.isNamed()) return listOf(argument.copied())
+    val argumentExpr = argument.getArgumentExpression() ?: return emptyList()
+    val psiFactory = KtPsiFactory(argument)
+    return when {
+        isVararg && argumentExpr is KtCollectionLiteralExpression ->
+            argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }
+
+        isVararg && argumentExpr is KtCallExpression && isArrayOf ->
+            argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
+
+        else -> listOf(psiFactory.createArgument(argumentExpr, name = null, isVararg))
+    }
+}

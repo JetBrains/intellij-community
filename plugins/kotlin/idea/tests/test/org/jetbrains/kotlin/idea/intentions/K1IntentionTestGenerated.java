@@ -14985,6 +14985,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeAllArgumentNames/simple.kt");
         }
 
+        @TestMetadata("trailingLambdaArgument.kt")
+        public void testTrailingLambdaArgument() throws Exception {
+            runTest("testData/intentions/removeAllArgumentNames/trailingLambdaArgument.kt");
+        }
+
         @TestMetadata("varargIsLast.kt")
         public void testVarargIsLast() throws Exception {
             runTest("testData/intentions/removeAllArgumentNames/varargIsLast.kt");
@@ -15052,6 +15057,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("arrayForVararg2.kt")
             public void testArrayForVararg2() throws Exception {
                 runTest("testData/intentions/removeArgumentName/arrayForVararg2.kt");
+            }
+
+            @TestMetadata("arrayForVararg3.kt")
+            public void testArrayForVararg3() throws Exception {
+                runTest("testData/intentions/removeArgumentName/arrayForVararg3.kt");
             }
 
             @TestMetadata("arrayLiteral.kt")
