@@ -43,6 +43,11 @@ public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
         runTest("../../uast-kotlin-fir/testData/type/classLiteral.kt");
     }
 
+    @TestMetadata("jvmInlineParameter.kt")
+    public void testJvmInlineParameter() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/type/jvmInlineParameter.kt");
+    }
+
     @TestMetadata("nonNullCompanion.kt")
     public void testNonNullCompanion() throws Exception {
         runTest("../../uast-kotlin-fir/testData/type/nonNullCompanion.kt");
