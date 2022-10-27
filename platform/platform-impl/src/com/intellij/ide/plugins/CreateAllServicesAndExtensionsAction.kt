@@ -128,10 +128,20 @@ private val servicesWhichRequireEdt = java.util.Set.of(
   "com.intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
 )
 
+/**
+ * If service instance is obtained under read action only, it may expect that its constructor is called with read access, so we must honor
+ * this in the action.
+ */
+private val servicesWhichRequireReadAction = setOf(
+  "org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.GspTagDescriptorService",
+  "com.intellij.database.psi.DbFindUsagesOptionsProvider",
+  "com.jetbrains.python.findUsages.PyFindUsagesOptions"
+)
+
 @Suppress("HardCodedStringLiteral")
 private fun checkContainer(container: ComponentManagerImpl, indicator: ProgressIndicator, taskExecutor: (task: () -> Unit) -> Unit) {
   indicator.text2 = "Checking ${container.activityNamePrefix()}services..."
-  ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt)
+  ComponentManagerImpl.createAllServices(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   indicator.text2 = "Checking ${container.activityNamePrefix()}extensions..."
   container.extensionArea.processExtensionPoints { extensionPoint ->
     // requires a read action
