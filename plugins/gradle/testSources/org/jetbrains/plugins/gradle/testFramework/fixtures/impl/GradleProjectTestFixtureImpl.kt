@@ -10,18 +10,19 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
-import com.intellij.openapi.observable.operations.ObservableOperationTrace
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+import com.intellij.openapi.observable.operation.core.withCompletedOperation
+import com.intellij.openapi.observable.util.getPromise
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.observable.waitForPromise
 import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
@@ -46,7 +47,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   private lateinit var testDisposable: Disposable
 
-  private val projectOperations = CompoundParallelOperationTrace<Any>()
+  private val projectOperations = AtomicOperationTrace()
 
   override val project: Project get() = _project
   override val module: Module get() = project.modules.single { it.name == project.name }
@@ -92,11 +93,11 @@ internal class GradleProjectTestFixtureImpl private constructor(
   private fun installTaskExecutionWatcher() {
     val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        projectOperations.startTask(id)
+        projectOperations.traceStart()
       }
 
       override fun onEnd(id: ExternalSystemTaskId) {
-        projectOperations.finishTask(id)
+        projectOperations.traceFinish()
       }
     }
 
@@ -134,15 +135,9 @@ internal class GradleProjectTestFixtureImpl private constructor(
   }
 
   companion object {
+
     fun ObservableOperationTrace.waitForOperation() {
-      val promise = AsyncPromise<Nothing?>()
-      afterOperation { promise.setResult(null) }
-      if (isOperationCompleted()) {
-        promise.setResult(null)
-      }
-      runInEdtAndWait {
-        PlatformTestUtil.waitForPromise<Nothing?>(promise, TimeUnit.MINUTES.toMillis(1))
-      }
+      getPromise(null, ::withCompletedOperation).waitForPromise()
     }
 
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {

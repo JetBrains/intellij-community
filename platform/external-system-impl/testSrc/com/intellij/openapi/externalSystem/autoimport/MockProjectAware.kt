@@ -4,11 +4,12 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
-import com.intellij.openapi.observable.operations.onceAfterOperation
+import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.traceRun
+import com.intellij.openapi.observable.operation.core.withCompletedOperation
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ConcurrencyUtil.once
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -28,7 +29,7 @@ class MockProjectAware(
   val reloadCollisionPassType = AtomicReference(DUPLICATE)
   val reloadStatus = AtomicReference(SUCCESS)
 
-  private val reloadProject = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.reloadProject")
+  private val reloadProject = AtomicOperationTrace(name = "$projectId MockProjectAware.reloadProject")
 
   val startReloadEventDispatcher = SingleEventDispatcher.create()
   val reloadEventDispatcher = SingleEventDispatcher.create<ExternalSystemProjectReloadContext>()
@@ -97,12 +98,12 @@ class MockProjectAware(
         reloadProjectImpl(context)
       }
       CANCEL -> {
-        val task = once { reloadProjectImpl(context) }
-        reloadProject.onceAfterOperation({ task.run() }, parentDisposable)
-        if (reloadProject.isOperationCompleted()) task.run()
+        reloadProject.withCompletedOperation(parentDisposable) {
+          reloadProjectImpl(context)
+        }
       }
       IGNORE -> {
-        if (reloadProject.isOperationCompleted()) {
+        if (!reloadProject.isOperationInProgress()) {
           reloadProjectImpl(context)
         }
       }
@@ -113,7 +114,7 @@ class MockProjectAware(
     background {
       val reloadStatus = reloadStatus.get()
       startReloadEventDispatcher.fireEvent()
-      reloadProject.task {
+      reloadProject.traceRun {
         reloadCounter.incrementAndGet()
         reloadEventDispatcher.fireEvent(context)
       }

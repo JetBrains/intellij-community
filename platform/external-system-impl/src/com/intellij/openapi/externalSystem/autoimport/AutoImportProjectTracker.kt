@@ -14,8 +14,10 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.MutableBooleanProperty
@@ -36,33 +38,32 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
-  private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
-  private val projectReloadOperation = CompoundParallelOperationTrace<String>(debugName = "Project reload operation")
+  private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
+  private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, project)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
       override fun batchChangeStarted(activityName: String?) =
-        projectChangeOperation.startTask()
+        projectChangeOperation.traceStart()
 
       override fun batchChangeCompleted() =
-        projectChangeOperation.finishTask()
+        projectChangeOperation.traceFinish()
     }
 
   private fun createProjectReloadListener(projectData: ProjectData) =
     object : ExternalSystemProjectListener {
-      val id = "ProjectTracker: ${projectData.projectAware.projectId.debugName}"
 
       override fun onProjectReloadStart() {
-        projectReloadOperation.startTask(id)
+        projectReloadOperation.traceStart()
         projectData.status.markSynchronized(currentTime())
         projectData.isActivated = true
       }
 
       override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
         if (status != SUCCESS) projectData.status.markBroken(currentTime())
-        projectReloadOperation.finishTask(id)
+        projectReloadOperation.traceFinish()
       }
     }
 
@@ -153,8 +154,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   private fun isDisabledAutoReload(): Boolean {
     return Registry.`is`("external.system.auto.import.disabled") ||
            !isEnabledAutoReload ||
-           !projectChangeOperation.isOperationCompleted() ||
-           !projectReloadOperation.isOperationCompleted()
+           projectChangeOperation.isOperationInProgress() ||
+           projectReloadOperation.isOperationInProgress()
   }
 
   private fun getModificationType(): ExternalSystemModificationType {
@@ -178,9 +179,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
     projectDataMap[projectId] = projectData
 
-    val id = "ProjectSettingsTracker: $projectIdName"
-    settingsTracker.beforeApplyChanges { projectReloadOperation.startTask(id) }
-    settingsTracker.afterApplyChanges { projectReloadOperation.finishTask(id) }
+    settingsTracker.beforeApplyChanges { projectReloadOperation.traceStart() }
+    settingsTracker.afterApplyChanges { projectReloadOperation.traceFinish() }
     activationProperty.afterSet(parentDisposable) { LOG.debug("$projectIdName is activated") }
     activationProperty.afterSet(parentDisposable) { scheduleChangeProcessing() }
 
@@ -268,16 +268,16 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   init {
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
-    projectReloadOperation.beforeOperation { LOG.debug("Project reload started") }
-    projectReloadOperation.beforeOperation { notificationAware.notificationExpire() }
-    projectReloadOperation.afterOperation { scheduleChangeProcessing() }
-    projectReloadOperation.afterOperation { LOG.debug("Project reload finished") }
-    projectChangeOperation.beforeOperation { LOG.debug("Project change started") }
-    projectChangeOperation.beforeOperation { notificationAware.notificationExpire() }
-    projectChangeOperation.afterOperation { scheduleChangeProcessing() }
-    projectChangeOperation.afterOperation { LOG.debug("Project change finished") }
+    projectReloadOperation.whenOperationStarted { notificationAware.notificationExpire() }
+    projectReloadOperation.whenOperationFinished { scheduleChangeProcessing() }
+    projectChangeOperation.whenOperationStarted { notificationAware.notificationExpire() }
+    projectChangeOperation.whenOperationFinished { scheduleChangeProcessing() }
     settings.autoReloadTypeProperty.afterChange { scheduleChangeProcessing() }
     asyncChangesProcessingProperty.afterChange { dispatcher.isPassThrough = !it }
+    projectReloadOperation.whenOperationStarted { LOG.debug("Detected project reload start event") }
+    projectReloadOperation.whenOperationFinished { LOG.debug("Detected project reload finish event") }
+    projectChangeOperation.whenOperationStarted { LOG.debug("Detected project change start event") }
+    projectChangeOperation.whenOperationFinished { LOG.debug("Detected project change finish event") }
   }
 
   private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())

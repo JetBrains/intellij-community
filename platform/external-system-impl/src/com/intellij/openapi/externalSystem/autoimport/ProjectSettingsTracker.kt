@@ -16,7 +16,10 @@ import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.C
 import com.intellij.openapi.externalSystem.autoimport.settings.*
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -40,7 +43,7 @@ class ProjectSettingsTracker(
 
   private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 
-  private val applyChangesOperation = AnonymousParallelOperationTrace(debugName = "Apply changes operation")
+  private val applyChangesOperation = AtomicOperationTrace(name = "Apply changes operation")
 
   private val settingsAsyncSupplier = SettingsFilesAsyncSupplier()
 
@@ -90,7 +93,7 @@ class ProjectSettingsTracker(
    */
   private fun SettingsFilesStatus.adjustCrc(operationName: String, isReloadJustFinished: Boolean): SettingsFilesStatus {
     val modificationType = getModificationType()
-    val isReloadInProgress = !applyChangesOperation.isOperationCompleted()
+    val isReloadInProgress = applyChangesOperation.isOperationInProgress()
     val reloadStatus = when {
       isReloadJustFinished -> ReloadStatus.JUST_FINISHED
       isReloadInProgress -> ReloadStatus.IN_PROGRESS
@@ -221,8 +224,8 @@ class ProjectSettingsTracker(
     }
   }
 
-  fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.beforeOperation(listener)
-  fun afterApplyChanges(listener: () -> Unit) = applyChangesOperation.afterOperation(listener)
+  fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.whenOperationStarted(listener)
+  fun afterApplyChanges(listener: () -> Unit) = applyChangesOperation.whenOperationFinished(listener)
 
   init {
     projectAware.subscribe(ProjectListener(), parentDisposable)
@@ -270,7 +273,7 @@ class ProjectSettingsTracker(
   private inner class ProjectListener : ExternalSystemProjectListener {
 
     override fun onProjectReloadStart() {
-      applyChangesOperation.startTask()
+      applyChangesOperation.traceStart()
       settingsFilesStatus.updateAndGet {
         SettingsFilesStatus(it.newCRC, it.newCRC)
       }
@@ -285,7 +288,7 @@ class ProjectSettingsTracker(
         syncEvent = ::Synchronize,
         changeEvent = ::externalInvalidate
       ) {
-        applyChangesOperation.finishTask()
+        applyChangesOperation.traceFinish()
       }
     }
 
