@@ -6,7 +6,7 @@ class X {
       case Integer i -> 3;
       case default -> 4;
       case null -> 10;
-      case <error descr="Cannot resolve symbol 'Point'">Point</error>() point -> 5;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>() -> 5;
       case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) -> 6;
     };
   }
@@ -17,6 +17,20 @@ class X {
         case <error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">Object obj</error> -> "Object";
         default -> "not ok";
     };
+  }
+
+  void switchTest3(<error descr="Cannot resolve symbol 'Point'">Point</error><? extends String> point1, <error descr="Cannot resolve symbol 'Point'">Point</error><? super String> point2) {
+    switch (point1) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><?>() -> {}
+    }
+
+    switch (point1) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? extends String>() -> {}
+    }
+
+    switch (point2) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? super String>() -> {}
+    }
   }
 
   int instanceofTest(Object obj) {
