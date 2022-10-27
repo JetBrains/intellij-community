@@ -8,10 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData

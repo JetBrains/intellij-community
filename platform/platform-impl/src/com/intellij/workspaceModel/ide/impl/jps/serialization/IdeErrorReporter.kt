@@ -46,7 +46,7 @@ private class ModuleLoadingErrorDescriptionBridge(@NlsContexts.DetailedDescripti
 
   override fun ignoreInvalidElement() {
     runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+      WorkspaceModel.getInstance(project).updateProjectModel("Remove invalid module: $elementName") { builder ->
         val moduleEntity = builder.resolve(ModuleId(elementName))
         if (moduleEntity != null) {
           builder.removeEntity(moduleEntity)

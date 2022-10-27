@@ -100,7 +100,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun commit() {
     prepareForCommit()
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
       it.addDiff(diff)
     }
   }

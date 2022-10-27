@@ -30,10 +30,7 @@ import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -560,7 +557,7 @@ class ModifiableRootModelBridgeImpl(
       moduleDiff.addDiff(diff)
     }
     else {
-      WorkspaceModel.getInstance(project).updateProjectModel {
+      WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
         it.addDiff(diff)
       }
     }

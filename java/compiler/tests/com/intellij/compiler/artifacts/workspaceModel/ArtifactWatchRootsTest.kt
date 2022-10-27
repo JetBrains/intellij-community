@@ -8,15 +8,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.testFramework.updateProjectModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFileCopyPackagingElementEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.junit.Assume.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Path
 

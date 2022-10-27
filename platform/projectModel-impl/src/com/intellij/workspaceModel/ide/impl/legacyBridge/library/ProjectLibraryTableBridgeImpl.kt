@@ -139,7 +139,7 @@ class ProjectLibraryTableBridgeImpl(
     }
 
     if (targetBuilder == null) {
-      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent {
+      (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
         for ((entity, library) in libraries) {
           it.mutableLibraryMap.addIfAbsent(entity, library)
         }

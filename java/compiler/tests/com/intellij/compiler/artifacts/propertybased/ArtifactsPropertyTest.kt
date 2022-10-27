@@ -22,6 +22,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.updateProjectModel
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntitySource

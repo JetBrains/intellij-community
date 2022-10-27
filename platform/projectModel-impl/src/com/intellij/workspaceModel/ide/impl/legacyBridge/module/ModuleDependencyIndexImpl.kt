@@ -17,12 +17,10 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.util.function.Supplier
@@ -187,7 +185,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         val affectedModules = librariesPerModuleMap.getKeys(getLibraryIdentifier(libraryTable, oldName))
         if (affectedModules.isNotEmpty()) {
           val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
-          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+          WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
             affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->
               val updated = module.dependencies.map {
@@ -245,7 +243,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val sdkDependency = ModuleDependencyItem.SdkDependency(previousName, jdk.sdkType.name)
       val affectedModules = sdkDependencies.get(sdkDependency)
       if (affectedModules.isNotEmpty()) {
-        WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: jdk name changed") { builder ->
           for (moduleId in affectedModules) {
             val module = moduleId.resolve(builder) ?: continue
             val updated = module.dependencies.map {

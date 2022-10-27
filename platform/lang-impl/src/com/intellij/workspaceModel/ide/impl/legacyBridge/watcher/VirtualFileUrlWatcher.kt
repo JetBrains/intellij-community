@@ -85,7 +85,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
     try {
       isInsideFilePointersUpdate = true
       val entityWithVirtualFileUrl = mutableListOf<EntityWithVirtualFileUrl>()
-      WorkspaceModel.getInstance(project).updateProjectModel { diff ->
+      WorkspaceModel.getInstance(project).updateProjectModel("On VFS change") { diff ->
         val oldFileUrl = virtualFileManager.fromUrl(oldUrl)
         calculateAffectedEntities(diff, oldFileUrl, entityWithVirtualFileUrl)
         oldFileUrl.subTreeFileUrls.map { fileUrl -> calculateAffectedEntities(diff, fileUrl, entityWithVirtualFileUrl) }

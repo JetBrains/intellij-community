@@ -242,7 +242,7 @@ private class RootsChangeWatcher(private val project: Project) {
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
-    workspaceModel.updateProjectModel { diff ->
+    workspaceModel.updateProjectModel("Update module name") { diff ->
       diff.modifyEntity(moduleEntity) { this.name = newModuleName }
     }
   }

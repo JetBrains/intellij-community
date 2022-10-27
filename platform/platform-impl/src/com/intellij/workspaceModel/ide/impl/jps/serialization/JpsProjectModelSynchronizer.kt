@@ -99,7 +99,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Reload project entities") { updater ->
           val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
                                     || it is DummyParentEntitySource }, storage)
@@ -216,10 +216,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     withContext(Dispatchers.EDT) {
+      // add logs
       ApplicationManager.getApplication().runWriteAction {
         if (project.isDisposed) return@runWriteAction
         childActivity = childActivity?.endAndStart("applying loaded changes")
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Apply JPS storage (iml files)") { updater ->
           updater.replaceBySource({
                                     it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
                                     || it is DummyParentEntitySource
@@ -293,7 +294,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   fun convertToDirectoryBasedFormat() {
     val newSerializers = createSerializers()
-    WorkspaceModel.getInstance(project).updateProjectModel {
+    WorkspaceModel.getInstance(project).updateProjectModel("Convert to directory based format") {
       newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
     }
     val moduleSources = WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).map { it.entitySource }
