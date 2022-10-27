@@ -8,6 +8,7 @@ import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.extension
 import kotlin.io.path.writeText
 
 class BuildArtifactsReproducibilityTest {
@@ -58,7 +59,9 @@ class BuildArtifactsReproducibilityTest {
       .plus("-compared-files.txt")
       .let(diffDirectory::resolve)
     Files.createDirectories(report.parent)
-    val reportText = result.comparedFiles.joinToString(separator = "\n")
+    val reportText = result.comparedFiles
+      .sortedBy { it.extension }
+      .joinToString(separator = "\n")
     report.writeText(reportText)
     context.messages.artifactBuilt("$report")
     context.messages.info("Compared:\n$reportText")

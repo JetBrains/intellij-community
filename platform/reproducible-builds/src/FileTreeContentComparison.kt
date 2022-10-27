@@ -4,6 +4,7 @@ package org.jetbrains.intellij.reproducibleBuilds.diffTool
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFileAttributeView
@@ -18,6 +19,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
                                 private val tempDir: Path = Files.createTempDirectory(this::class.java.simpleName)) {
   private companion object {
     fun process(vararg command: String, workDir: Path? = null, ignoreExitCode: Boolean = false): ProcessCallResult {
+      require(command.isNotEmpty())
       val process = ProcessBuilder(*command).directory(workDir?.toFile()).start()
       val output = process.inputStream.bufferedReader().use { it.readText() }
       if (!process.waitFor(10, TimeUnit.MINUTES)) {
@@ -30,17 +32,19 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
 
     class ProcessCallResult(val exitCode: Int, val stdOut: String)
 
-    val isUnsquashfsAvailable by lazy {
-      process("unsquashfs", "-help", ignoreExitCode = true).exitCode == 0
+    private fun isAvailable(vararg command: String): Boolean = try {
+      process(*command, ignoreExitCode = true).exitCode == 0
+    }
+    catch (e: IOException) {
+      System.err.println("${command.first()} is not available: ${e.message}")
+      false
     }
 
-    val isDiffoscopeAvailable by lazy {
-      process("diffoscope", "--version", ignoreExitCode = true).exitCode == 0
-    }
-
-    val is7zAvailable by lazy {
-      process("7z", "--help", ignoreExitCode = true).exitCode == 0
-    }
+    val isJavapAvailable by lazy { isAvailable("javap", "-version") }
+    val isUnsquashfsAvailable by lazy { isAvailable("unsquashfs", "-help") }
+    val isDiffoscopeAvailable by lazy { isAvailable("diffoscope", "--version") }
+    val is7zAvailable by lazy { isAvailable("7z", "--help") }
+    val isUnzipAvailable by lazy { isAvailable("unzip", "--help") }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -92,7 +96,10 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       "zip", "jar", "ijx", "sit" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
         path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
-      ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      ).error ?: run {
+        saveDiff(relativeFilePath, path1, path2)
+        AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
+      }
       "dmg" -> {
         println(".dmg cannot be built reproducibly, content comparison is required")
         if (SystemInfo.isMac) {
@@ -163,14 +170,18 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       ?.readAttributes()?.permissions() ?: emptySet()
 
   private fun Path.writeContent(target: Path) {
-    when (extension) {
-      "jar", "zip", "tar.gz", "gz", "tar", "ijx", "sit" -> error("$this is expected to be already unpacked")
-      "class" -> target.writeText(process("javap", "-verbose", "$this").stdOut)
-      "dmg", "exe" -> if (is7zAvailable) {
-        target.writeText(process("7z", "l", "$this").stdOut)
-      }
-      else copyTo(target, overwrite = true)
-      else -> copyTo(target, overwrite = true)
+    val content = when (extension) {
+      "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
+      "jar", "zip", "ijx", "sit" -> if (isUnzipAvailable) process("unzip", "-l", "$this").stdOut else null
+      "class" -> if (isJavapAvailable) process("javap", "-verbose", "$this").stdOut else null
+      "dmg", "exe" -> if (is7zAvailable) process("7z", "l", "$this").stdOut else null
+      else -> null
+    }
+    if (content != null) {
+      target.writeText(content)
+    }
+    else {
+      copyTo(target, overwrite = true)
     }
   }
 
