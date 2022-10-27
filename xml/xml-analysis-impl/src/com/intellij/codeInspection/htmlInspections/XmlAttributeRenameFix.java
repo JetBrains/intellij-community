@@ -12,10 +12,10 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameXmlAttributeFix implements LocalQuickFix, HighPriorityAction {
+public class XmlAttributeRenameFix implements LocalQuickFix, HighPriorityAction {
   private final String name;
 
-  public RenameXmlAttributeFix(XmlAttributeDescriptor attr) {
+  public XmlAttributeRenameFix(XmlAttributeDescriptor attr) {
     name = attr.getName();
   }
 

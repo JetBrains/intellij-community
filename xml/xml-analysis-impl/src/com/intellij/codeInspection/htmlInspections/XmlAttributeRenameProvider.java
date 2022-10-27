@@ -10,6 +10,7 @@ import java.util.Collection;
 
 /**
  * Extension point to provide renaming options for xml attributes
+ * Example for JSX markup: class attribute should be fixed to className
  * */
 public interface XmlAttributeRenameProvider {
   ExtensionPointName<XmlAttributeRenameProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.xmlAttributeRenameProvider");
