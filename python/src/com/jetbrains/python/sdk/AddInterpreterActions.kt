@@ -6,6 +6,7 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.target.TargetCustomToolWizardStep
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.TargetEnvironmentWizard
+import com.intellij.execution.target.getTargetType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -22,13 +23,26 @@ import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import java.util.function.Consumer
 
-fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> =
-  listOf(AddLocalInterpreterAction(project, module, onSdkCreated::accept)) +
-  collectNewInterpreterOnTargetActions(project, onSdkCreated::accept)
+fun collectAddInterpreterActions(project: Project, module: Module?, onSdkCreated: Consumer<Sdk>): List<AnAction> {
+  // If module resides on this target, we can't use any target
+  // example: on ``\\wsl$`` you can only use wsl target
+  val targetTypeModuleSitsOn = module?.let {
+    PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it)?.asTargetConfig?.getTargetType()
+  }
+  return mutableListOf<AnAction>().apply {
+    if (targetTypeModuleSitsOn == null) {
+      add(AddLocalInterpreterAction(project, module, onSdkCreated::accept))
+    }
+    addAll(collectNewInterpreterOnTargetActions(project, targetTypeModuleSitsOn, onSdkCreated::accept))
+  }
+}
 
-private fun collectNewInterpreterOnTargetActions(project: Project, onSdkCreated: Consumer<Sdk>): List<AnAction> =
+private fun collectNewInterpreterOnTargetActions(project: Project,
+                                                 targetTypeModuleSitsOn: TargetEnvironmentType<*>?,
+                                                 onSdkCreated: Consumer<Sdk>): List<AnAction> =
   PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
     .filter { it.getTargetType().isSystemCompatible() }
+    .filter { targetTypeModuleSitsOn == null || it.getTargetType() == targetTypeModuleSitsOn }
     .map { AddInterpreterOnTargetAction(project, it.getTargetType(), onSdkCreated) }
 
 private class AddLocalInterpreterAction(private val project: Project,

@@ -19,7 +19,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.tryMapToSynchronizedVolume
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
@@ -107,14 +106,16 @@ fun detectSystemWideSdks(module: Module?,
                          existingSdks: List<Sdk>,
                          context: UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
   if (module != null && module.isDisposed) return emptyList()
-  val targetWithFs = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
+  val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   return PythonSdkFlavor.getApplicableFlavors(false)
     .asSequence()
     .flatMap { it.suggestLocalHomePaths(module, context).asSequence() }
-    .map { targetWithFs?.tryMapToSynchronizedVolume(it) ?: it.pathString }
-    .filter { TargetAndPath(targetWithFs?.asTargetConfig, it) !in existingPaths }
-    .map { createDetectedSdk(it, targetWithFs?.asTargetConfig) }
+    .mapNotNull {
+      if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
+    }
+    .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }
+    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig) }
     .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
                                          { it.homePath }).reversed())
     .toList()
@@ -393,15 +394,17 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<Path>,
                                  module: Module?,
                                  context: UserDataHolder,
                                  mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
-  val targetWithFs = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
+  val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   val baseDirFromContext = context.getUserData(BASE_DIR)
   return suggestedPaths
     .asSequence()
-    .filterNot { TargetAndPath(targetWithFs?.asTargetConfig, it.toString()) in existingPaths }
+    .filterNot { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it.toString()) in existingPaths }
     .distinct()
-    .map { targetWithFs?.tryMapToSynchronizedVolume(it) ?: it.pathString }
-    .map { createDetectedSdk(it, targetWithFs?.asTargetConfig) }
+    .mapNotNull {
+      if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
+    }
+    .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig) }
     .sortedWith(
       compareBy(
         { !it.isAssociatedWithModule(module) && !it.isLocatedInsideBaseDir(baseDirFromContext) },
