@@ -290,14 +290,15 @@ private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, javaExec
   val json = generateMultiPlatformProductJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
-    launch = listOf(ProductInfoLaunchData(os = OsFamily.LINUX.osName,
-                                          arch = arch.dirName,
-                                          launcherPath = "bin/$scriptName.sh",
-                                          javaExecutablePath = javaExecutablePath,
-                                          vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
-                                          startupWmClass = getLinuxFrameClass(context),
-                                          bootClassPathJarNames = context.bootClassPathJarNames,
-                                          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
+    launch = listOf(ProductInfoLaunchData(
+      os = OsFamily.LINUX.osName,
+      arch = arch.dirName,
+      launcherPath = "bin/$scriptName.sh",
+      javaExecutablePath = javaExecutablePath,
+      vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
+      startupWmClass = getLinuxFrameClass(context),
+      bootClassPathJarNames = context.bootClassPathJarNames,
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch))),
     context = context
   )
   Files.writeString(file, json)

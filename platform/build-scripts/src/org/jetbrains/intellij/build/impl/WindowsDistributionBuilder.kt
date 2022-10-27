@@ -418,22 +418,19 @@ private fun generateProductJson(targetDir: Path, isJreIncluded: Boolean, arch: J
   val json = generateMultiPlatformProductJson(
     "bin",
     context.builtinModule,
-    listOf(
-      ProductInfoLaunchData(
-        os = OsFamily.WINDOWS.osName,
-        arch = arch.dirName,
-        launcherPath = launcherPath,
-        javaExecutablePath = javaExecutablePath,
-        vmOptionsFilePath = vmOptionsPath,
-        startupWmClass = null,
-        bootClassPathJarNames = context.bootClassPathJarNames,
-        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-      )
-    ), context)
+    listOf(ProductInfoLaunchData(
+      os = OsFamily.WINDOWS.osName,
+      arch = arch.dirName,
+      launcherPath = launcherPath,
+      javaExecutablePath = javaExecutablePath,
+      vmOptionsFilePath = vmOptionsPath,
+      startupWmClass = null,
+      bootClassPathJarNames = context.bootClassPathJarNames,
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch))),
+    context)
   Files.writeString(file, json)
   return json
 }
 
-private fun toDosLineEndings(x: String): String {
-  return x.replace("\r", "").replace("\n", "\r\n")
-}
+private fun toDosLineEndings(x: String): String =
+  x.replace("\r", "").replace("\n", "\r\n")

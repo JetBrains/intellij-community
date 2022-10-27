@@ -279,16 +279,18 @@ class BuildContextImpl private constructor(
   @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
+
     productProperties.classLoader?.let {
-      jvmArgs.add("-Djava.system.class.loader=$it")
+      jvmArgs.add("-Djava.system.class.loader=${it}")
     }
+
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
-    jvmArgs.add("-Didea.paths.selector=$systemSelector")
+    jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
     val macroName = when (os) {
+      OsFamily.WINDOWS -> "%IDE_HOME%"
       OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
       OsFamily.LINUX -> "\$IDE_HOME"
-      else -> "%IDE_HOME%"
     }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
@@ -299,13 +301,16 @@ class BuildContextImpl private constructor(
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
+
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
 
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
+
     return jvmArgs
   }
 

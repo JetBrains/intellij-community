@@ -952,22 +952,18 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           arch = arch.dirName,
           launcherPath = "bin/${executableName}.bat",
           javaExecutablePath = null,
-          // todo arm?
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
-        ),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)),
         ProductInfoLaunchData(
           os = OsFamily.LINUX.osName,
           arch = arch.dirName,
           launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
-          // todo arm?
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
           startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isScript = true)
-        ),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isScript = true)),
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
@@ -975,8 +971,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
-        ),
+          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true))
       )
     }.toList(),
     context = context,

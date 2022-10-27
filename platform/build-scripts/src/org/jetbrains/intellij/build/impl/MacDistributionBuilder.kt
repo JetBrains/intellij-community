@@ -468,19 +468,16 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?,
   return generateMultiPlatformProductJson(
     relativePathToBin = "../bin",
     builtinModules = builtinModule,
-    launch = listOf(
-      ProductInfoLaunchData(
-        os = OsFamily.MACOS.osName,
-        arch = arch.dirName,
-        launcherPath = "../MacOS/${executable}",
-        javaExecutablePath = javaExecutablePath,
-        vmOptionsFilePath = "../bin/${executable}.vmoptions",
-        startupWmClass = null,
-        bootClassPathJarNames = context.bootClassPathJarNames,
-        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch)
-      )
-    ), context = context
-  )
+    launch = listOf(ProductInfoLaunchData(
+      os = OsFamily.MACOS.osName,
+      arch = arch.dirName,
+      launcherPath = "../MacOS/${executable}",
+      javaExecutablePath = javaExecutablePath,
+      vmOptionsFilePath = "../bin/${executable}.vmoptions",
+      startupWmClass = null,
+      bootClassPathJarNames = context.bootClassPathJarNames,
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch))),
+    context = context)
 }
 
 private fun MacDistributionBuilder.buildMacZip(targetFile: Path,
