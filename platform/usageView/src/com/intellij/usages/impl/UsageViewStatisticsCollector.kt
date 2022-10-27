@@ -35,7 +35,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 9)
+    val GROUP = EventLogGroup("usage.view", 10)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView>() {
       override val name: String = "usage_view"
 
@@ -63,16 +63,26 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 
     private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION)
 
+    private val searchCancelled = GROUP.registerVarargEvent("cancelled",
+                                                            SYMBOL_CLASS,
+                                                            SEARCH_SCOPE,
+                                                            EventFields.Language,
+                                                            RESULTS_TOTAL,
+                                                            FIRST_RESULT_TS,
+                                                            EventFields.DurationMs,
+                                                            TOO_MANY_RESULTS,
+                                                            UI_LOCATION,
+                                                            USAGE_VIEW)
     private val searchFinished = GROUP.registerVarargEvent("finished",
-      SYMBOL_CLASS,
-      SEARCH_SCOPE,
-      EventFields.Language,
-      RESULTS_TOTAL,
-      FIRST_RESULT_TS,
-      EventFields.DurationMs,
-      TOO_MANY_RESULTS,
-      UI_LOCATION,
-    USAGE_VIEW)
+                                                           SYMBOL_CLASS,
+                                                           SEARCH_SCOPE,
+                                                           EventFields.Language,
+                                                           RESULTS_TOTAL,
+                                                           FIRST_RESULT_TS,
+                                                           EventFields.DurationMs,
+                                                           TOO_MANY_RESULTS,
+                                                           UI_LOCATION,
+                                                           USAGE_VIEW)
 
     private val tabSwitched = GROUP.registerEvent("switch.tab", USAGE_VIEW)
 
@@ -123,7 +133,33 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language) = itemChosen.log(project, usageView, source, language)
+    fun logItemChosen(project: Project?, usageView: UsageView, source: CodeNavigateSource, language: Language) = itemChosen.log(project,
+                                                                                                                                usageView,
+                                                                                                                                source,
+                                                                                                                                language)
+
+    @JvmStatic
+    fun logSearchCancelled(project: Project?,
+                           targetClass: Class<*>,
+                           scope: SearchScope?,
+                           language: Language?,
+                           results: Int,
+                           durationFirstResults: Long,
+                           duration: Long,
+                           tooManyResult: Boolean,
+                           source: CodeNavigateSource,
+                           usageView: UsageView) {
+      searchCancelled.log(project,
+                          SYMBOL_CLASS.with(targetClass),
+                          SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
+                          EventFields.Language.with(language),
+                          RESULTS_TOTAL.with(results),
+                          FIRST_RESULT_TS.with(durationFirstResults),
+                          EventFields.DurationMs.with(duration),
+                          TOO_MANY_RESULTS.with(tooManyResult),
+                          UI_LOCATION.with(source),
+                          USAGE_VIEW.with(usageView))
+    }
 
     @JvmStatic
     fun logSearchFinished(
