@@ -293,6 +293,7 @@ class GitBranchesTreePopupStep(private val project: Project,
   companion object {
     internal const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
+    internal const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
     internal val ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup")

@@ -216,6 +216,13 @@
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
+    <group id="Git.Branches.Popup.SpeedSearch">
+      <reference ref="EditorBackSpace"/>
+      <reference ref="EditorCut"/>
+      <reference ref="EditorPaste"/>
+      <reference ref="$Undo"/>
+    </group>
+
     <group id="Git.Branch">
       <action class="git4idea.actions.branch.GitCheckoutAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
