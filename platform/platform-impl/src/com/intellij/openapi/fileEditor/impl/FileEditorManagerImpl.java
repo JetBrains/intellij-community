@@ -1121,11 +1121,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   protected final @NotNull FileEditorComposite doOpenInEdtImpl(@NotNull EditorWindow window,
-                                                                @NotNull VirtualFile file,
-                                                                @Nullable HistoryEntry entry,
-                                                                @NotNull FileEditorOpenOptions options,
-                                                                @Nullable List<FileEditorProvider> newProviders,
-                                                                @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
+                                                               @NotNull VirtualFile file,
+                                                               @Nullable HistoryEntry entry,
+                                                               @NotNull FileEditorOpenOptions options,
+                                                               @Nullable List<FileEditorProvider> newProviders,
+                                                               @NotNull List<AsyncFileEditorProvider.@Nullable Builder> builders) {
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
     if (newEditor) {

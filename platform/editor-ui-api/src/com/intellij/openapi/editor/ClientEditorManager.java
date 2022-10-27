@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class ClientEditorManager {
+public final class ClientEditorManager {
   public static @NotNull ClientEditorManager getCurrentInstance() {
     return ApplicationManager.getApplication().getService(ClientEditorManager.class);
   }

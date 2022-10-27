@@ -48,9 +48,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     super(project, file, provider, editor);
   }
 
-  @NotNull
   @Override
-  protected Runnable loadEditorInBackground() {
+  protected @NotNull Runnable loadEditorInBackground() {
     Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
@@ -116,9 +115,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     return null;
   }
 
-  @NotNull
   @Override
-  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
+  protected @NotNull TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
     return new PsiAwareTextEditorComponent(project, file, this, editor);
   }
 
@@ -155,9 +153,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
       }
     }
 
-    @Nullable
     @Override
-    public DataProvider createBackgroundDataProvider() {
+    public @Nullable DataProvider createBackgroundDataProvider() {
       DataProvider superProvider = super.createBackgroundDataProvider();
       if (superProvider == null) return null;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -22,18 +22,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 public class PsiAwareTextEditorProvider extends TextEditorProvider {
-  @NonNls
-  private static final String FOLDING_ELEMENT = "folding";
+  private static final @NonNls String FOLDING_ELEMENT = "folding";
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new PsiAwareTextEditorImpl(project, file, this);
   }
 
   @Override
-  @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = (TextEditorState)super.readState(element, project, file);
 
     // Foldings
@@ -78,9 +75,8 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
-  @NotNull
   @Override
-  protected TextEditorState getStateImpl(Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
+  protected @NotNull TextEditorState getStateImpl(Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
     TextEditorState state = super.getStateImpl(project, editor, level);
     // Save folding only on FULL level. It's very expensive to commit document on every type (caused by undo).
     if (FileEditorStateLevel.FULL == level) {
@@ -112,9 +108,8 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
-  @NotNull
   @Override
-  protected EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
+  protected @NotNull EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
     return new PsiAwareEditorWrapper(editor);
   }
 

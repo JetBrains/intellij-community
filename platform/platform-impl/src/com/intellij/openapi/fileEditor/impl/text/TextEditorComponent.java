@@ -42,9 +42,9 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
   private static final Logger LOG = Logger.getInstance(TextEditorComponent.class);
 
   private final Project myProject;
-  @NotNull private final VirtualFile myFile;
+  private final @NotNull VirtualFile myFile;
   private final TextEditorImpl myTextEditor;
-  @NotNull private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
   private final LoadingDecorator loadingDecorator;
 
   /**
@@ -58,9 +58,9 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
 
   private final EditorHighlighterUpdater myEditorHighlighterUpdater;
 
-  TextEditorComponent(@NotNull final Project project,
-                      @NotNull final VirtualFile file,
-                      @NotNull final TextEditorImpl textEditor,
+  TextEditorComponent(@NotNull Project project,
+                      @NotNull VirtualFile file,
+                      @NotNull TextEditorImpl textEditor,
                       @NotNull EditorImpl editor) {
     super(new BorderLayout());
 
@@ -69,8 +69,8 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
     myTextEditor = textEditor;
     myEditor = editor;
     myEditor.getDocument().addDocumentListener(new MyDocumentListener(), this);
-    ((EditorMarkupModel) myEditor.getMarkupModel()).setErrorStripeVisible(true);
-    ((EditorGutterComponentEx) myEditor.getGutterComponentEx()).setForceShowRightFreePaintersArea(true);
+    ((EditorMarkupModel)myEditor.getMarkupModel()).setErrorStripeVisible(true);
+    ((EditorGutterComponentEx)myEditor.getGutterComponentEx()).setForceShowRightFreePaintersArea(true);
     myEditor.setFile(myFile);
     myEditor.setContextMenuGroupId(IdeActions.GROUP_EDITOR_POPUP);
     myEditor.setDropHandler(new FileDropHandler(myEditor));
@@ -84,9 +84,9 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
     myValid = isEditorValidImpl();
     LOG.assertTrue(myValid);
 
-    MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
-    myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
-    Disposer.register(this, () -> myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener));
+    MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
+    myFile.getFileSystem().addVirtualFileListener(virtualFileListener);
+    Disposer.register(this, () -> myFile.getFileSystem().removeVirtualFileListener(virtualFileListener));
 
     myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, myEditor, myFile);
 
@@ -108,13 +108,14 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
   }
 
   private volatile boolean myDisposed;
+
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
    * editors, unregisters listeners. The behaviour of the splitter after disposing is
    * unpredictable.
    */
   @Override
-  public void dispose(){
+  public void dispose() {
     disposeEditor();
     myDisposed = true;
   }
@@ -128,7 +129,7 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
     myEditor.getComponent().setVisible(true);
   }
 
-  private static void assertThread(){
+  private static void assertThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
@@ -140,14 +141,14 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
     return myEditor;
   }
 
-  private void disposeEditor(){
+  private void disposeEditor() {
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
   /**
    * @return whether the editor's document is modified or not
    */
-  boolean isModified(){
+  boolean isModified() {
     assertThread();
     return myModified;
   }
@@ -155,15 +156,15 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
   /**
    * Just calculates "modified" property
    */
-  private boolean isModifiedImpl(){
+  private boolean isModifiedImpl() {
     return FileDocumentManager.getInstance().isFileModified(myFile);
   }
 
   /**
    * Updates "modified" property and fires event if necessary
    */
-  void updateModifiedProperty(){
-    Boolean oldModified= myModified;
+  void updateModifiedProperty() {
+    Boolean oldModified = myModified;
     myModified = isModifiedImpl();
     myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, myModified);
   }
@@ -174,30 +175,30 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
    *
    * @return whether the editor is valid or not
    */
-  boolean isEditorValid(){
+  boolean isEditorValid() {
     return myValid && !myEditor.isDisposed();
   }
 
   /**
    * Just calculates
    */
-  private boolean isEditorValidImpl(){
+  private boolean isEditorValidImpl() {
     return FileDocumentManager.getInstance().getDocument(myFile) != null;
   }
 
-  private void updateValidProperty(){
+  private void updateValidProperty() {
     Boolean oldValid = myValid;
     myValid = isEditorValidImpl();
     myTextEditor.firePropertyChange(FileEditor.PROP_VALID, oldValid, myValid);
   }
 
-  @Nullable
   @Override
-  public DataProvider createBackgroundDataProvider() {
+  public @Nullable DataProvider createBackgroundDataProvider() {
     if (myEditor.isDisposed()) return null;
 
     // There's no FileEditorManager for default project (which is used in diff command-line application)
-    FileEditorManager fileEditorManager = !myProject.isDisposed() && !myProject.isDefault() ? FileEditorManager.getInstance(myProject) : null;
+    FileEditorManager fileEditorManager =
+      !myProject.isDisposed() && !myProject.isDefault() ? FileEditorManager.getInstance(myProject) : null;
     Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
     return dataId -> {
       if (fileEditorManager != null) {
@@ -244,7 +245,7 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
 
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
-    public void fileTypesChanged(@NotNull final FileTypeEvent event) {
+    public void fileTypesChanged(final @NotNull FileTypeEvent event) {
       assertThread();
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
@@ -257,34 +258,31 @@ class TextEditorComponent extends JPanel implements DataProvider, Disposable, Ba
    */
   private final class MyVirtualFileListener implements VirtualFileListener {
     @Override
-    public void propertyChanged(@NotNull final VirtualFilePropertyEvent e) {
-      if(VirtualFile.PROP_NAME.equals(e.getPropertyName())){
-        // File can be invalidated after file changes name (extension also
-        // can changes). The editor should be removed if it's invalid.
+    public void propertyChanged(final @NotNull VirtualFilePropertyEvent e) {
+      if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
+        // File can be invalidated after file changes name (extension also can change). The editor should be removed if it's invalid.
         updateValidProperty();
         if (Comparing.equal(e.getFile(), myFile) &&
-            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor()) ||
-             !Comparing.equal(e.getOldValue(), e.getNewValue()))) {
+            (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor()) || !Comparing.equal(e.getOldValue(), e.getNewValue()))) {
           myEditorHighlighterUpdater.updateHighlighters();
         }
       }
     }
 
     @Override
-    public void contentsChanged(@NotNull VirtualFileEvent event){
-      if (event.isFromSave()){ // commit
+    public void contentsChanged(@NotNull VirtualFileEvent event) {
+      if (event.isFromSave()) { // commit
         assertThread();
         VirtualFile file = event.getFile();
         LOG.assertTrue(file.isValid());
-        if(myFile.equals(file)){
+        if (myFile.equals(file)) {
           updateModifiedProperty();
         }
       }
     }
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
