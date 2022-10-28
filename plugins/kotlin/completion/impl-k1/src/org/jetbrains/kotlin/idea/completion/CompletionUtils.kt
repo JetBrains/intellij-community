@@ -159,6 +159,9 @@ fun thisExpressionItems(
     return result
 }
 
+/**
+ * Implementation in K2: [org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler]
+ */
 fun returnExpressionItems(bindingContext: BindingContext, position: KtElement): Collection<LookupElement> {
     val result = mutableListOf<LookupElement>()
 
