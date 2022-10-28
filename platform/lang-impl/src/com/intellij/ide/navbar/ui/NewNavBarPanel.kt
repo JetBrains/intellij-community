@@ -136,6 +136,9 @@ internal class NewNavBarPanel(
       myItemComponents.add(itemComponent)
     }
 
+    revalidate()
+    repaint()
+
     onSizeChange?.run()
     while (!isValid) {
       yield()
