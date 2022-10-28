@@ -26,7 +26,9 @@ endif()
 if(NOT JAVA_HOME)
   message(FATAL_ERROR "JDK_11_0/JDK_11_0_x64/JDK_11_0_ARM64 variables not defined (x64=${TARGET_X64}, arm64=${TARGET_ARM64}).")
 endif()
+
 set(FILE_NAME "WinLauncher")
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WinLauncher.rc ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc @ONLY)
 
 add_executable(WinLauncher WIN32 WinLauncher.cpp WinLauncher.manifest ${CMAKE_CURRENT_BINARY_DIR}/WinLauncher.rc)

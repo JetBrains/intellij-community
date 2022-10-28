@@ -463,7 +463,6 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(path, k -> {
           try {
-            //noinspection RedundantCast -- Java 17 compatibility
             return FileSystems.newFileSystem(path, (ClassLoader)null);
           }
           catch (IOException e) {
