@@ -51,8 +51,8 @@
       <synonym text="Syn Text"/>
       <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
 
-      <<error descr="<synonym> must specify either 'key' or 'text' attribute">synonym</error>/>
-      <<error descr="<synonym> must not specify both 'key' or 'text' attributes">synonym</error> text="Syn Text" key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+      <<error descr="'<synonym>' must specify either 'key' or 'text' attribute">synonym</error>/>
+      <<error descr="'<synonym>' must not specify both 'key' or 'text' attributes">synonym</error> text="Syn Text" key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
     </action>
 
     <reference id="myGroup"/>
