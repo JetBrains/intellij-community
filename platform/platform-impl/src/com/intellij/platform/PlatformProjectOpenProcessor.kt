@@ -71,21 +71,16 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     internal fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 
     @JvmStatic
-    fun getInstance() = getInstanceIfItExists()!!
+    fun getInstance(): PlatformProjectOpenProcessor = EXTENSION_POINT_NAME.findExtensionOrFail(PlatformProjectOpenProcessor::class.java)
 
     @JvmStatic
     fun getInstanceIfItExists(): PlatformProjectOpenProcessor? {
-      for (processor in EXTENSION_POINT_NAME.extensionList) {
-        if (processor is PlatformProjectOpenProcessor) {
-          return processor
-        }
-      }
-      return null
+      return EXTENSION_POINT_NAME.findExtension(PlatformProjectOpenProcessor::class.java)
     }
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
+    @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)}", level = DeprecationLevel.ERROR)
     fun doOpenProject(virtualFile: VirtualFile,
                       projectToClose: Project?,
                       line: Int,
@@ -365,19 +360,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   }
 
   // force open in a new frame if temp project
-  override fun openProjectAndFile(file: Path, line: Int, column: Int, tempProject: Boolean): Project? {
-    return if (tempProject) {
-      createTempProjectAndOpenFile(file, OpenProjectTask {
-        forceOpenInNewFrame = true
-        this.line = line
-        this.column = column
-      })
+  override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
+    if (tempProject) {
+      return createTempProjectAndOpenFile(file = file, options = options.copy(forceOpenInNewFrame = true))
     }
     else {
-      doOpenProject(file, OpenProjectTask {
-        this.line = line
-        this.column = column
-      })
+      return openProjectAsync(file = file, originalOptions = options)
     }
   }
 

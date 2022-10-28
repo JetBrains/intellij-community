@@ -522,7 +522,7 @@ object ProjectUtil {
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
-          val opened = PlatformProjectOpenProcessor.openProjectAsync(file)
+          val opened = processor.openProjectAndFile(file = file, tempProject = false)
           if (opened != null && result == null) {
             result = opened
           }
