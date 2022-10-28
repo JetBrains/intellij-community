@@ -71,6 +71,13 @@ class MermaidElementFactory {
       return file.findElementAt("flowchart\n  ".length)
     }
 
+    fun createEOL(project: Project): PsiElement {
+      val text = "\n"
+      val file = createFile(project, text)
+
+      return file.firstChild
+    }
+
     private fun createFile(project: Project?, text: String): MermaidFile {
       val name = "dummy.mermaid"
       return PsiFileFactory.getInstance(project).createFileFromText(name, MermaidLanguage, text) as MermaidFile

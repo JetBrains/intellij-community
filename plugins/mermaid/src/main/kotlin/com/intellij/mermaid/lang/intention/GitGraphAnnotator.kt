@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.intention
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -52,7 +53,7 @@ class GitGraphAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.branch"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateBranchDeclarationIntention(identifier, parent))
+      .withFix(CreateBranchDeclarationIntention(identifier.text))
       .create()
   }
 
@@ -77,7 +78,7 @@ class GitGraphAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.commit.id"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateCommitDeclarationIntention(identifier, parent))
+      .withFix(CreateCommitDeclarationIntention(identifier.text))
       .create()
   }
 
@@ -154,15 +155,15 @@ class GitGraphAnnotator : Annotator {
     }
   }
 
-  private class CreateBranchDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
-    AbstractCreateDeclarationIntention(psiElement, statement, className) {
+  private class CreateBranchDeclarationIntention(@SafeFieldForPreview private val className: String) :
+    AbstractCreateDeclarationIntention(className) {
     override fun getText(): String = MermaidBundle.message("fix.create.branch.declaration", className)
 
     override fun createDeclarationPsiElement(project: Project, name: String) = createBranchStatement(project, name)
   }
 
-  private class CreateCommitDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
-    AbstractCreateDeclarationIntention(psiElement, statement, className) {
+  private class CreateCommitDeclarationIntention(@SafeFieldForPreview private val className: String) :
+    AbstractCreateDeclarationIntention(className) {
     override fun getText(): String = MermaidBundle.message("fix.create.commit.declaration", className)
 
     override fun createDeclarationPsiElement(project: Project, name: String) = createCommitStatement(project, name)

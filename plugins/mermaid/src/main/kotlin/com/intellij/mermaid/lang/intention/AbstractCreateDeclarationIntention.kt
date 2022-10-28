@@ -1,42 +1,33 @@
 package com.intellij.mermaid.lang.intention
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.lang.ASTFactory
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_DOCUMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
+import com.intellij.mermaid.lang.psi.MermaidElementFactory
+import com.intellij.mermaid.lang.psi.parentOfType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 
-abstract class AbstractCreateDeclarationIntention(
-  private val psiElement: PsiElement,
-  private val statement: PsiElement,
-  private val className: String = psiElement.text
-) : BaseIntentionAction() {
+abstract class AbstractCreateDeclarationIntention(private val className: String) : BaseElementAtCaretIntentionAction() {
   abstract fun createDeclarationPsiElement(project: Project, name: String): PsiElement?
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = true
+  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement) = true
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    invokeLater {
-      createDeclaration(project)
-    }
+  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    createDeclaration(project, element)
   }
 
-  private fun createDeclaration(project: Project) {
-    WriteCommandAction.runWriteCommandAction(project) {
-      val parent = statement.parent
-      val declaration = createDeclarationPsiElement(project, className.replace(" ", "\\\\ "))
-        ?: return@runWriteCommandAction
+  private fun createDeclaration(project: Project, element: PsiElement) {
+    val statement = element.parentOfType(type = STATEMENTS) ?: return
+    val document = element.parentOfType(type = DIAGRAM_DOCUMENTS) ?: return
+    val declaration = createDeclarationPsiElement(project, className.replace(" ", "\\\\ "))
+      ?: return
 
-      parent.node.addChild(declaration.node, statement.node)
-      parent.node.addChild(ASTFactory.whitespace("\n"), statement.node)
-      (psiElement.lastChild.navigationElement as? Navigatable)?.navigate(true)
-    }
+    document.addBefore(declaration, statement)
+    document.addBefore(MermaidElementFactory.createEOL(project), statement)
   }
 }

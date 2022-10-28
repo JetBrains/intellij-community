@@ -1,5 +1,6 @@
 package com.intellij.mermaid.lang.intention
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -14,15 +15,13 @@ import com.intellij.psi.util.siblings
 
 class ClassDiagramAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element is MermaidMemberStatement || element is MermaidAnnotationStatement) {
+    if (element is MermaidClassDiagramIdentifierHolder && element !is MermaidClassDiagramIdentifierDeclarationHolder) {
       annotateUnresolvedClass(element, holder)
     }
   }
 
-  private fun annotateUnresolvedClass(element: PsiElement, holder: AnnotationHolder) {
-    val identifier = (element as? MermaidMemberStatement)?.classDiagramIdentifier
-      ?: (element as? MermaidAnnotationStatement)?.classDiagramIdentifier
-      ?: return
+  private fun annotateUnresolvedClass(element: MermaidClassDiagramIdentifierHolder, holder: AnnotationHolder) {
+    val identifier = element.classDiagramIdentifier
     val text = identifier.text
     val parent = element.parent ?: return
 
@@ -48,12 +47,12 @@ class ClassDiagramAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.class"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateClassDeclarationIntention(identifier, parent))
+      .withFix(CreateClassDeclarationIntention(identifier.text))
       .create()
   }
 
-  private class CreateClassDeclarationIntention(psiElement: PsiElement, statement: PsiElement, private val className: String = psiElement.text) :
-    AbstractCreateDeclarationIntention(psiElement, statement, className) {
+  private class CreateClassDeclarationIntention(@SafeFieldForPreview private val className: String) :
+    AbstractCreateDeclarationIntention(className) {
     override fun getText(): String = MermaidBundle.message("fix.create.class.declaration", className)
     override fun createDeclarationPsiElement(project: Project, name: String) = createClassDiagramStatement(project, name)
   }
