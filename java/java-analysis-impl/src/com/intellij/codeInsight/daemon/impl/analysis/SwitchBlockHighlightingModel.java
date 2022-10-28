@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -391,9 +392,25 @@ public class SwitchBlockHighlightingModel {
       PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
       if (patternClass != null) {
         patternClasses.put(patternClass, patternLabelElement);
+        visitAllPermittedClasses(patternClass, permittedClass -> patternClasses.put(permittedClass, patternLabelElement));
       }
     }
     return patternClasses;
+  }
+
+  private static void visitAllPermittedClasses(@NotNull PsiClass psiClass, Consumer<PsiClass> consumer){
+    Set<PsiClass> visitedClasses = new HashSet<>();
+    Queue<PsiClass> notVisitedClasses = new LinkedList<>();
+    notVisitedClasses.add(psiClass);
+    while (!notVisitedClasses.isEmpty()) {
+      PsiClass notVisitedClass = notVisitedClasses.poll();
+      if (!notVisitedClass.hasModifierProperty(SEALED) || visitedClasses.contains(notVisitedClass)) continue;
+      visitedClasses.add(notVisitedClass);
+      for (PsiClass permittedClass : PatternsInSwitchBlockHighlightingModel.getPermittedClasses(psiClass)) {
+        consumer.accept(permittedClass);
+        notVisitedClasses.add(permittedClass);
+      }
+    }
   }
 
   private static @NotNull Set<PsiClass> findMissedClasses(@NotNull PsiType selectorType, Map<PsiClass, PsiPattern> patternClasses) {
