@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -6,10 +6,11 @@ import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
 import com.intellij.credentialStore.isMacOsCredentialStoreSupported
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -71,7 +72,10 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
     if (userNameItem == null && passwordItem == null) {
       return false
     }
-    return runBlocking { doGet(uri, userNameItem, passwordItem, sshKeyFile) }
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    return runBlockingCancellable {
+      doGet(uri, userNameItem, passwordItem, sshKeyFile)
+    }
   }
 
   private suspend fun doGet(uri: URIish, userNameItem: CredentialItem.Username?, passwordItem: CredentialItem?, sshKeyFile: String?): Boolean {

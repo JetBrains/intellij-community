@@ -15,13 +15,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
@@ -63,10 +63,10 @@ class IcsManager @JvmOverloads constructor(dir: Path,
   val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(Runnable {
-    runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
+    runBackgroundableTask(icsMessage("task.commit.title")) {
       LOG.runAndLogException {
-        runBlocking {
-          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
+        runBlockingCancellable {
+          repositoryManager.commit(fixStateIfCannotCommit = false)
         }
       }
     }

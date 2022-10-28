@@ -4,13 +4,13 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.*
+import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
@@ -28,6 +28,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>,
                            dir: Path,
@@ -116,11 +117,11 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     repository.deletePath(path, isFile, false)
   }
 
-  override suspend fun commit(indicator: ProgressIndicator?, syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
+  override suspend fun commit(syncType: SyncType?, fixStateIfCannotCommit: Boolean): Boolean {
     lock.write {
       try {
         // will be reset if OVERWRITE_LOCAL, so, we should not fix state in this case
-        return commitIfCan(indicator, if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.repositoryState else repository.fixAndGetState())
+        return commitIfCan(if (!fixStateIfCannotCommit || syncType == SyncType.OVERWRITE_LOCAL) repository.repositoryState else repository.fixAndGetState())
       }
       catch (e: UnmergedPathsException) {
         if (syncType == SyncType.OVERWRITE_LOCAL) {
@@ -128,11 +129,11 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
           return false
         }
         else {
-          indicator?.checkCanceled()
+          coroutineContext.ensureActive()
           LOG.warn("Unmerged detected, will be attempted to resolve", e)
           resolveUnmergedConflicts(repository)
-          indicator?.checkCanceled()
-          return commitIfCan(indicator, repository.fixAndGetState())
+          coroutineContext.ensureActive()
+          return commitIfCan(repository.fixAndGetState())
         }
       }
       catch (e: NoHeadException) {
@@ -142,9 +143,9 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  private fun commitIfCan(indicator: ProgressIndicator?, state: RepositoryState): Boolean {
+  private suspend fun commitIfCan(state: RepositoryState): Boolean {
     if (state.canCommit()) {
-      return commit(repository, indicator)
+      return commit(repository)
     }
     else {
       LOG.warn("Cannot commit, repository in state ${state.description}")
@@ -154,7 +155,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun getAheadCommitsCount() = repository.getAheadCommitsCount()
 
-  override fun push(indicator: ProgressIndicator?) {
+  override suspend fun push() {
     LOG.debug("Push")
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
@@ -165,12 +166,14 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       }
     }
 
-    val monitor = indicator.asProgressMonitor()
+    val monitor = progressMonitor()
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
       for (attempt in 0..1) {
         transport.credentialsProvider = credentialsProvider
         try {
-          val result = transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
+          val result = blockingContext {
+            transport.push(monitor, transport.findRemoteRefUpdatesFor(refSpecs))
+          }
           if (LOG.isDebugEnabled) {
             printMessages(result)
 
@@ -203,15 +206,15 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override fun fetch(indicator: ProgressIndicator?): Updater {
-    val pullTask = Pull(this, indicator ?: EmptyProgressIndicator())
+  override suspend fun fetch(): Updater {
+    val pullTask = Pull(this)
     val refToMerge = pullTask.fetch()
     return object : Updater {
       override var definitelySkipPush = false
 
       // KT-8632
       override suspend fun merge(): UpdateResult? = lock.write {
-        val committed = commit(pullTask.indicator)
+        val committed = commit()
         if (refToMerge == null) {
           definitelySkipPush = !committed && getAheadCommitsCount() == 0
           return null
@@ -221,11 +224,11 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
   }
 
-  override suspend fun pull(indicator: ProgressIndicator?) = Pull(this, indicator).pull()
+  override suspend fun pull() = Pull(this).pull()
 
-  override suspend fun resetToTheirs(indicator: ProgressIndicator) = Reset(this, indicator).reset(true)
+  override suspend fun resetToTheirs() = Reset(this).reset(true)
 
-  override suspend fun resetToMy(indicator: ProgressIndicator, localRepositoryInitializer: (() -> Unit)?) = Reset(this, indicator).reset(false, localRepositoryInitializer)
+  override suspend fun resetToMy(localRepositoryInitializer: (() -> Unit)?) = Reset(this).reset(false, localRepositoryInitializer)
 
   override fun canCommit() = repository.repositoryState.canCommit()
 
