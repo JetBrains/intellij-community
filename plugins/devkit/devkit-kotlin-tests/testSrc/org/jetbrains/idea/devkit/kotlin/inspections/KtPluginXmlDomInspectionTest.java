@@ -42,4 +42,9 @@ public class KtPluginXmlDomInspectionTest extends PluginXmlDomInspectionTestBase
   public void testActionWrongClass() {
     myFixture.testHighlighting("ActionWrongClass.xml");
   }
+
+  public void testComponentClassNotAssignableToInterface() {
+    myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
+                               "ApplicationComponent.kt");
+  }
 }
