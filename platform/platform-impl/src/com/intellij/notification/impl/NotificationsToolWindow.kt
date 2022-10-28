@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.NullableComponent
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -52,6 +53,8 @@ import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.function.Consumer
 import javax.accessibility.AccessibleContext
@@ -109,6 +112,7 @@ internal class NotificationContent(val project: Project,
   private val suggestions: NotificationGroupComponent
   private val timeline: NotificationGroupComponent
   private val searchController: SearchController
+  private val autoProportionController: AutoProportionController
 
   private val singleSelectionHandler = SingleTextSelectionHandler()
 
@@ -133,6 +137,8 @@ internal class NotificationContent(val project: Project,
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
     myMainPanel.add(splitter)
+
+    autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
     suggestions.setRemoveCallback(Consumer(::remove))
     timeline.setClearCallback(::clear)
@@ -269,6 +275,7 @@ internal class NotificationContent(val project: Project,
     myNotifications.add(notification)
     myIconNotifications.add(notification)
     searchController.update()
+    autoProportionController.update()
     setStatusMessage(notification)
     updateIcon()
   }
@@ -310,6 +317,7 @@ internal class NotificationContent(val project: Project,
     myNotifications.remove(notification)
     myIconNotifications.remove(notification)
     searchController.update()
+    autoProportionController.update()
     setStatusMessage()
     updateIcon()
   }
@@ -318,6 +326,7 @@ internal class NotificationContent(val project: Project,
     myNotifications.removeAll(notifications)
     myIconNotifications.removeAll(notifications)
     searchController.update()
+    autoProportionController.update()
     setStatusMessage()
     updateIcon()
   }
@@ -470,6 +479,50 @@ private class SearchController(private val mainContent: NotificationContent,
     suggestions.iterateComponents(function)
     timeline.iterateComponents(function)
     mainContent.fullRepaint()
+  }
+}
+
+private class AutoProportionController(private val splitter: MySplitter,
+                                       private val suggestions: NotificationGroupComponent,
+                                       private val timeline: NotificationGroupComponent) : PropertyChangeListener {
+  private var myEvent = false
+  private var myEnabled = true
+
+  init {
+    splitter.addPropertyChangeListener(Splitter.PROP_PROPORTION, this)
+  }
+
+  override fun propertyChange(evt: PropertyChangeEvent?) {
+    if (!myEvent) {
+      myEnabled = false
+      splitter.removePropertyChangeListener(Splitter.PROP_PROPORTION, this)
+    }
+  }
+
+  fun update() {
+    if (!myEnabled || suggestions.isEmpty() || timeline.isEmpty()) {
+      return
+    }
+
+    val height = splitter.height
+    val firstHeight = suggestions.preferredSize.height
+
+    if (firstHeight < height / 2) {
+      setProportion((firstHeight + JBUI.scale(10)) / height.toFloat())
+    }
+    else {
+      setProportion(0.5f)
+    }
+  }
+
+  private fun setProportion(value: Float) {
+    try {
+      myEvent = true
+      splitter.proportion = value
+    }
+    finally {
+      myEvent = false
+    }
   }
 }
 
@@ -1036,8 +1089,8 @@ private class NotificationComponent(val project: Project,
       timeComponents.add(timeComponent)
 
       if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        val button = object: InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Ide.Notification.Gear,
-                                   ActionListener { doShowSettings() }) {
+        val button = object : InplaceButton(IdeBundle.message("tooltip.turn.notification.off"), AllIcons.Ide.Notification.Gear,
+                                            ActionListener { doShowSettings() }) {
           override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
             super.setBounds(x, y - 1, width, height)
           }
@@ -1274,7 +1327,7 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
     setListener(LinkListener { link, _ ->
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myMoreAwtPopup = popup
-      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+      popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
           notificationComponent.myMoreAwtPopup = null
         }
@@ -1305,7 +1358,7 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
       val popup = NotificationsManagerImpl.showPopup(link, group)
       notificationComponent.myDropDownPopup = popup
-      popup?.addPopupMenuListener(object: PopupMenuListenerAdapter() {
+      popup?.addPopupMenuListener(object : PopupMenuListenerAdapter() {
         override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
           notificationComponent.myDropDownPopup = null
         }
@@ -1524,7 +1577,7 @@ internal class ApplicationNotificationModel {
 
     synchronized(myLock) {
       myNotifications.remove(notification)
-      for ((project , model) in myProjectToModel) {
+      for ((project, model) in myProjectToModel) {
         model.expire(project, notification, runnables)
       }
     }
