@@ -1,12 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -26,7 +24,7 @@ internal class ChangesViewCommitWorkflowHandler(
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
     CommitAuthorListener,
-    ProjectManagerListener {
+    ProjectCloseListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
@@ -73,7 +71,6 @@ internal class ChangesViewCommitWorkflowHandler(
     ui.setCompletionContext(changeListManager.changeLists)
 
     setupDumbModeTracking()
-    ProjectManager.TOPIC.subscribe(this, this)
     setupCommitHandlersTracking()
     setupCommitChecksResultTracking()
 
@@ -83,6 +80,7 @@ internal class ChangesViewCommitWorkflowHandler(
     if (isToggleMode()) deactivate(false)
 
     val busConnection = project.messageBus.connect(this)
+    busConnection.subscribe(ProjectCloseListener.TOPIC, this)
     CommitModeManager.subscribeOnCommitModeChange(busConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
         if (isToggleMode()) {
