@@ -178,6 +178,8 @@ internal class GitLabMergeRequestsPanelFactory {
     init {
       scope.launch {
         combine(listVm.loadingState, listVm.filterVm.searchState) { isLoading, searchState ->
+          isLoading to searchState
+        }.collect { (isLoading, searchState) ->
           updateEmptyState(isLoading, searchState, listVm.repository)
         }
       }
