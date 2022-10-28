@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="rd-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2022.3.3" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2022.3.4" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.3/rd-text-2022.3.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.4/rd-text-2022.3.4.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.3/rd-text-2022.3.3-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.4/rd-text-2022.3.4-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.3/rd-text-2022.3.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2022.3.4/rd-text-2022.3.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
