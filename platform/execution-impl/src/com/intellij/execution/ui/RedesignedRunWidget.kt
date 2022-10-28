@@ -72,7 +72,7 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     return createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }.component.let {
-      Wrapper(it).apply { border = JBUI.Borders.empty(RUN_TOOLBAR_BORDER_HEIGHT, 2) }
+      Wrapper(it).apply { border = JBUI.Borders.empty(RUN_TOOLBAR_BORDER_HEIGHT, 12, RUN_TOOLBAR_BORDER_HEIGHT, 2) }
     }
   }
 
