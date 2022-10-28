@@ -5,12 +5,9 @@ import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.dialog
@@ -25,34 +22,29 @@ import kotlin.properties.Delegates
 
 internal class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val owner = e.project?.let(ModalTaskOwner::project)
-                ?: e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)?.let(ModalTaskOwner::component)
-                ?: ModalTaskOwner.guess()
-    runBlockingModal(owner, "") { // TODO title
-      icsManager.runInAutoCommitDisabledMode {
-        var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
-        val panel = panel {
-          row(icsMessage("settings.upstream.url")) {
-            urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
-                                                     fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
-              .text(icsManager.repositoryManager.getUpstream() ?: "")
-              .align(AlignX.FILL)
-              .component
-          }
-          row {
-            comment(IcsBundle.message("message.see.help.pages.for.more.info",
-                                      "https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository"))
-          }
+    icsManager.runInAutoCommitDisabledModeSync {
+      var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
+      val panel = panel {
+        row(icsMessage("settings.upstream.url")) {
+          urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
+                                                   fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+            .text(icsManager.repositoryManager.getUpstream() ?: "")
+            .align(AlignX.FILL)
+            .component
         }
-        dialog(title = icsMessage("settings.panel.title"),
-               panel = panel,
-               focusedComponent = urlTextField,
-               project = e.project,
-               createActions = {
-                 createMergeActions(e.project, urlTextField, it)
-               })
-          .show()
+        row {
+          comment(IcsBundle.message("message.see.help.pages.for.more.info",
+                                    "https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository"))
+        }
       }
+      dialog(title = icsMessage("settings.panel.title"),
+             panel = panel,
+             focusedComponent = urlTextField,
+             project = e.project,
+             createActions = {
+               createMergeActions(e.project, urlTextField, it)
+             })
+        .show()
     }
   }
 
