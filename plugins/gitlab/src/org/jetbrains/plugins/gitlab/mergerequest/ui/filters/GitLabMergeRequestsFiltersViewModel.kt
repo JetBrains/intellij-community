@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabProjectDetailsLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
@@ -20,8 +21,11 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
   val authorFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val assigneeFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
+  val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
   suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
+
+  suspend fun getLabels(): List<GitLabLabelDTO>
 }
 
 internal class GitLabMergeRequestsFiltersViewModelImpl(
@@ -59,6 +63,12 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
   override val reviewerFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::reviewer) {
     copy(reviewer = it)
   }
+
+  override val labelFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::label) {
+    copy(label = it)
+  }
+
+  override suspend fun getLabels(): List<GitLabLabelDTO> = projectDetailsLoader.projectLabels()
 
   override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> = projectDetailsLoader.projectMembers().filter { member ->
     isValidMergeRequestAccessLevel(member.accessLevel)

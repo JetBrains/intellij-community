@@ -35,7 +35,8 @@ internal class GitLabFiltersPanelFactory(
     createStateFilter(viewScope),
     createAuthorFilter(viewScope),
     createAssigneeFilter(viewScope),
-    createReviewerFilter(viewScope)
+    createReviewerFilter(viewScope),
+    createLabelFilter(viewScope)
   )
 
   override fun GitLabMergeRequestsQuickFilter.getQuickFilterTitle(): String = when (this) {
@@ -70,6 +71,19 @@ internal class GitLabFiltersPanelFactory(
     participantFilterState = vm.reviewerFilterState,
     filterName = GitLabBundle.message("merge.request.list.filter.category.reviewer"),
     participantCreator = { user -> MergeRequestsReviewerFilterValue(user.username, user.name) }
+  )
+
+  private fun createLabelFilter(viewScope: CoroutineScope): JComponent = DropDownComponentFactory(vm.labelFilterState).create(
+    viewScope,
+    filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
+    valuePresenter = { labelFilterValue -> labelFilterValue.title },
+    chooseValue = { point, popupState ->
+      ChooserPopupUtil.showAsyncChooserPopup(
+        point, popupState,
+        itemsLoader = { vm.getLabels().map { label -> LabelFilterValue(label.title) } },
+        presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
+      )
+    }
   )
 
   private fun <T : MergeRequestsMemberFilterValue> createParticipantFilter(

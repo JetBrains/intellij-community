@@ -12,9 +12,10 @@ data class GitLabMergeRequestsFiltersValue(
   val state: MergeRequestStateFilterValue? = null,
   val author: MergeRequestsMemberFilterValue? = null,
   val assignee: MergeRequestsMemberFilterValue? = null,
-  val reviewer: MergeRequestsMemberFilterValue? = null
+  val reviewer: MergeRequestsMemberFilterValue? = null,
+  val label: LabelFilterValue? = null,
 ) : ReviewListSearchValue {
-  private val filters: List<FilterValue?> = listOf(state, author, assignee, reviewer)
+  private val filters: List<FilterValue?> = listOf(state, author, assignee, reviewer, label)
 
   @Transient
   override val filterCount: Int = calcFilterCount()
@@ -38,6 +39,7 @@ data class GitLabMergeRequestsFiltersValue(
     fun queryValue(): String
   }
 
+  @Serializable
   enum class MergeRequestStateFilterValue : FilterValue {
     OPENED, MERGED, CLOSED;
 
@@ -68,6 +70,12 @@ data class GitLabMergeRequestsFiltersValue(
   internal class MergeRequestsReviewerFilterValue(username: String, fullname: String)
     : MergeRequestsMemberFilterValue(username, fullname) {
     override fun queryField(): String = "reviewer_username"
+  }
+
+  @Serializable
+  class LabelFilterValue(val title: String) : FilterValue {
+    override fun queryField(): String = "labels"
+    override fun queryValue(): String = title
   }
 
   companion object {
