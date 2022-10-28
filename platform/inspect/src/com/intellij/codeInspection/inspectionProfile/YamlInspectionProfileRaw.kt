@@ -61,7 +61,7 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
 }
 
 private fun readRaw(project: Project, filePath: String): Map<String, *> {
-  val configFile = File(filePath)
+  val configFile = File(filePath).absoluteFile
   require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(configFile.reader())
