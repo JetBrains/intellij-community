@@ -125,14 +125,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
           intfName = intf.getTrimmedText();
           intfClass = findClass(intfName);
         }
-        final String implClassName = impl.getTrimmedText();
-        final PsiClass implClass = findClass(implClassName);
-        if (implClass != null) {
-          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            addProblem(impl, DevKitBundle.message("inspections.registration.problems.abstract"), myOnTheFly);
-          }
-        }
-        if (intfName != null && intfClass != null && implClass != null) {
+        if (intfName != null && intfClass != null) {
           final String fqn = intfClass.getQualifiedName();
           if (type == ComponentType.MODULE) {
             if (!checkInterface(type, fqn, intf)) {
@@ -148,7 +141,9 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             checkInterface(type, fqn, intf);
             myInterfaceClasses.putValue(type, fqn);
           }
-          if (intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
+          final String implClassName = impl.getTrimmedText();
+          final PsiClass implClass = findClass(implClassName);
+          if (implClass != null && intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
             addProblem(impl, DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn), myOnTheFly);
           }
         }
