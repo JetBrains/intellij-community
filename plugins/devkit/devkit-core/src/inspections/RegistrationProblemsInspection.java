@@ -205,14 +205,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             final String actionClassName = attributeValue.trim();
             final PsiClass actionClass = findClass(actionClassName);
             if (actionClass != null) {
-              if (!type.isOfType(actionClass)) {
-                final PsiClass psiClass = findClass(type.myClassName);
-                if (psiClass != null && !actionClass.isInheritor(psiClass, true)) {
-                  addProblem(token,
-                             DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
-                             myOnTheFly, ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
-                }
-              }
               final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
               if (noArgCtor == null) {
                 addProblem(token,

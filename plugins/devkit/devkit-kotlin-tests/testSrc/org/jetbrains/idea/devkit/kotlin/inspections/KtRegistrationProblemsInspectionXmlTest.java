@@ -41,8 +41,4 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
     myFixture.testHighlighting("ActionWithoutDefaultCtor.xml",
                                "MyActionWithoutDefaultCtor.kt");
   }
-
-  public void testActionWrongClass() {
-    myFixture.testHighlighting("ActionWrongClass.xml");
-  }
 }
