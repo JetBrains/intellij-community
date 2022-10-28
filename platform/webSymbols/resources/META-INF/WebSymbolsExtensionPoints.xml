@@ -19,8 +19,8 @@
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport$Factory"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.registryExtension"
-                    interface="com.intellij.webSymbols.registry.WebSymbolsRegistryExtension"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.queryConfigurator"
+                    interface="com.intellij.webSymbols.query.WebSymbolsQueryConfigurator"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.filter"
                     beanClass="com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP"
@@ -34,10 +34,10 @@
                     interface="com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.defaultIconProvider"
-                    interface="com.intellij.webSymbols.registry.WebSymbolDefaultIconProvider"
+                    interface="com.intellij.webSymbols.query.WebSymbolDefaultIconProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.scopeProvider"
-                    interface="com.intellij.webSymbols.registry.WebSymbolsScopeProvider"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.queryResultsCustomizerFactory"
+                    interface="com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
                     interface="com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider"

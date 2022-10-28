@@ -21,11 +21,11 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.registry.WebSymbolNameConversionRules
-import com.intellij.webSymbols.registry.WebSymbolNameConverter
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
-import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.asSymbolNamespace
-import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryImpl.Companion.parsePath
+import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.WebSymbolNameConverter
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.asSymbolNamespace
+import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorImpl.Companion.parsePath
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
@@ -157,49 +157,49 @@ internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKin
     }
 
 internal fun Reference.resolve(name: String?,
-                               context: List<WebSymbolsContainer>,
-                               registry: WebSymbolsRegistry,
+                               scope: List<WebSymbolsScope>,
+                               queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<WebSymbol> {
   if (name != null && name.isEmpty())
     return emptyList()
   return when (val reference = this.value) {
-    is String -> registry.runNameMatchQuery(
+    is String -> queryExecutor.runNameMatchQuery(
       reference + if (name != null) "/$name" else "",
-      virtualSymbols, abstractSymbols, context = context)
+      virtualSymbols, abstractSymbols, scope = scope)
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules()
-      val matches = registry.withNameConversionRules(nameConversionRules).runNameMatchQuery(
+      val matches = queryExecutor.withNameConversionRules(nameConversionRules).runNameMatchQuery(
         (reference.path ?: return emptyList()) + if (name != null) "/$name" else "",
         reference.includeVirtual ?: virtualSymbols,
         reference.includeAbstract ?: abstractSymbols,
-        context = context)
+        scope = scope)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
-        .filterNameMatches(matches, registry, context, properties)
+        .filterNameMatches(matches, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
   }
 }
 
 internal fun Reference.codeCompletion(name: String,
-                                      context: List<WebSymbolsContainer>,
-                                      registry: WebSymbolsRegistry,
+                                      scope: List<WebSymbolsScope>,
+                                      queryExecutor: WebSymbolsQueryExecutor,
                                       position: Int = 0,
                                       virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {
   return when (val reference = this.value) {
-    is String -> registry.runCodeCompletionQuery("$reference/$name", position, virtualSymbols, context)
+    is String -> queryExecutor.runCodeCompletionQuery("$reference/$name", position, virtualSymbols, scope)
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules()
-      val codeCompletions = registry.withNameConversionRules(nameConversionRules).runCodeCompletionQuery(
+      val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules).runCodeCompletionQuery(
         (reference.path ?: return emptyList()) + "/$name", position,
         reference.includeVirtual ?: virtualSymbols,
-        context)
+        scope)
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
       WebSymbolsFilter.get(reference.filter)
-        .filterCodeCompletions(codeCompletions, registry, context, properties)
+        .filterCodeCompletions(codeCompletions, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
   }

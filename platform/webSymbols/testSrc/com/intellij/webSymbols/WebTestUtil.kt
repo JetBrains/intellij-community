@@ -48,8 +48,8 @@ import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
-import com.intellij.webSymbols.registry.WebSymbolMatch
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
@@ -466,7 +466,7 @@ fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: Strin
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture, fileName: String) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
   fixture.configureByFile(fileName)
-  WriteAction.runAndWait<Throwable> { WebSymbolsRegistryManager.getInstance(fixture.project) }
+  WriteAction.runAndWait<Throwable> { WebSymbolsQueryExecutorFactory.getInstance(fixture.project) }
 
   val document = fixture.getDocument(fixture.file)
 

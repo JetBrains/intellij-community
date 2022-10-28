@@ -4,8 +4,8 @@
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.webSymbols.registry.WebSymbolsRegistryManager"
-                    serviceImplementation="com.intellij.webSymbols.registry.impl.WebSymbolsRegistryManagerImpl"/>
+    <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
+                    serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
     <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar"/>
 

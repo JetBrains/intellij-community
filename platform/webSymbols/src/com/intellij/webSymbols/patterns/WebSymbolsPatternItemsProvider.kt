@@ -4,9 +4,9 @@ package com.intellij.webSymbols.patterns
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 interface WebSymbolsPatternItemsProvider {
   fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
@@ -16,11 +16,11 @@ interface WebSymbolsPatternItemsProvider {
 
   fun codeCompletion(name: String,
                      position: Int,
-                     contextStack: Stack<WebSymbolsContainer>,
-                     registry: WebSymbolsRegistry): List<WebSymbolCodeCompletionItem>
+                     scopeStack: Stack<WebSymbolsScope>,
+                     queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem>
 
   fun matchName(name: String,
-                contextStack: Stack<WebSymbolsContainer>,
-                registry: WebSymbolsRegistry): List<WebSymbol>
+                scopeStack: Stack<WebSymbolsScope>,
+                queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol>
 
 }

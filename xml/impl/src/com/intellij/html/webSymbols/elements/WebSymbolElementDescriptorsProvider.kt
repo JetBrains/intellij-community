@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols.elements
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.hasOnlyStandardHtmlSymbols
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor.Companion.toElementDescriptor
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlElementDescriptor
 
@@ -19,8 +19,8 @@ class WebSymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
     if (tag == null || DumbService.isDumb(tag.project) || tag.containingFile !is HtmlCompatibleFile)
       null
     else {
-      val rootRegistry = WebSymbolsRegistryManager.get(tag)
-      rootRegistry
+      val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag)
+      queryExecutor
         .runNameMatchQuery(listOf(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name))
         .takeIf {
           it.isNotEmpty()

@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
 
@@ -20,14 +20,14 @@ class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBea
 
     private val NOOP_FILTER = object : WebSymbolsFilter {
       override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
-                                         registry: WebSymbolsRegistry,
-                                         context: List<WebSymbolsContainer>,
+                                         queryExecutor: WebSymbolsQueryExecutor,
+                                         scope: List<WebSymbolsScope>,
                                          properties: Map<String, Any>): List<WebSymbolCodeCompletionItem> =
         codeCompletions
 
       override fun filterNameMatches(matches: List<WebSymbol>,
-                                     registry: WebSymbolsRegistry,
-                                     context: List<WebSymbolsContainer>,
+                                     queryExecutor: WebSymbolsQueryExecutor,
+                                     scope: List<WebSymbolsScope>,
                                      properties: Map<String, Any>): List<WebSymbol> =
         matches
 

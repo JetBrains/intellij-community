@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 
 internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): WebSymbolCodeCompletionItem =
@@ -77,22 +77,22 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
   return pattern
 }
 
-internal fun <T> withPrevMatchContext(contextStack: Stack<WebSymbolsContainer>,
-                                      prevResult: List<WebSymbolNameSegment>?,
-                                      action: () -> T): T =
+internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
+                                    prevResult: List<WebSymbolNameSegment>?,
+                                    action: () -> T): T =
   if (prevResult == null) {
     action()
   }
   else {
-    val additionalContext = prevResult
+    val additionalScope = prevResult
       .flatMap { it.symbols }
-      .flatMap { it.contextContainers }
-    contextStack.addAll(additionalContext)
+      .flatMap { it.queryScope }
+    scopeStack.addAll(additionalScope)
     try {
       action()
     }
     finally {
-      repeat(additionalContext.size) { contextStack.pop() }
+      repeat(additionalScope.size) { scopeStack.pop() }
     }
   }
 

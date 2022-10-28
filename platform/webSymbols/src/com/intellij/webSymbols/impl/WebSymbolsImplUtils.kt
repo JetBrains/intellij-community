@@ -7,10 +7,10 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.applyIcons
-import com.intellij.webSymbols.registry.WebSymbolNamesProvider
-import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.registry.WebSymbolsRegistryQueryParams
+import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.WebSymbolsQueryParams
 import javax.swing.Icon
 
 internal fun Icon.scaleToHeight(height: Int): Icon {
@@ -64,7 +64,7 @@ internal fun List<WebSymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tru
                .thenComparingInt { -(it.priority ?: WebSymbol.Priority.NORMAL).ordinal }
                .thenComparingInt { -(it.proximity ?: 0) })
 
-internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsRegistryQueryParams): Sequence<T> =
+internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.origin.framework.let { it == null || it == params.framework }
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true || !symbol.abstract)
@@ -73,7 +73,7 @@ internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsR
 
 internal fun WebSymbol.toCodeCompletionItems(name: String?,
                                              params: WebSymbolsCodeCompletionQueryParams,
-                                             context: Stack<WebSymbolsContainer>): List<WebSymbolCodeCompletionItem> =
+                                             context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -84,6 +84,6 @@ internal fun WebSymbol.toCodeCompletionItems(name: String?,
       context.pop()
     }
   }
-  ?: params.registry.namesProvider
+  ?: params.queryExecutor.namesProvider
     .getNames(namespace, kind, matchedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
