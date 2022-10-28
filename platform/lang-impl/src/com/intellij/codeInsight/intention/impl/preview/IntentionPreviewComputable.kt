@@ -18,6 +18,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.SideEffectGuard
+import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -62,6 +63,13 @@ internal class IntentionPreviewComputable(private val project: Project,
     }
     catch (e: ProcessCanceledException) {
       throw e
+    }
+    catch (e: SideEffectNotAllowedException) {
+      val wrapper = RuntimeException(e.message)
+      wrapper.stackTrace = e.stackTrace
+      logger<IntentionPreviewComputable>().error("Side effect occurred on invoking the intention '${action.text}' on a copy of the file",
+                                                 wrapper)
+      return null
     }
     catch (e: Exception) {
       logger<IntentionPreviewComputable>().error("Exceptions occurred on invoking the intention '${action.text}' on a copy of the file.", e)
