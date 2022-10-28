@@ -1238,6 +1238,11 @@ abstract class ComponentManagerImpl(
     return adapter?.getInstance(this, keyClass = null)
   }
 
+  fun getServiceImplementation(key: Class<*>): Class<*>? {
+    checkState()
+    return (componentKeyToAdapter.get(key.name) as? ServiceComponentAdapter?)?.componentImplementation
+  }
+
   open fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean = descriptor.client == null
 
   protected open fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
