@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.psi.PsiElement
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -16,10 +16,9 @@ import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
@@ -40,29 +39,6 @@ fun createKeywordElement(
         element = element.withTailText(tail, false)
     }
     return element
-}
-
-fun breakOrContinueExpressionItems(position: KtElement, breakOrContinue: String): Collection<LookupElement> {
-    val result = ArrayList<LookupElement>()
-
-    parentsLoop@
-    for (parent in position.parentsWithSelf) {
-        when (parent) {
-            is KtLoopExpression -> {
-                if (result.isEmpty()) {
-                    result.add(createKeywordElement(breakOrContinue))
-                }
-
-                val label = (parent.parent as? KtLabeledExpression)?.getLabelNameAsName()
-                if (label != null) {
-                    result.add(createKeywordElement(breakOrContinue, tail = label.labelNameToTail()))
-                }
-            }
-
-            is KtDeclarationWithBody -> break@parentsLoop //TODO: support non-local break's&continue's when they are supported by compiler
-        }
-    }
-    return result
 }
 
 fun createKeywordElementWithSpace(
