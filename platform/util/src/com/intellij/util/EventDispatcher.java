@@ -71,7 +71,7 @@ public final class EventDispatcher<T extends EventListener> {
   static @NotNull <T> T createMulticaster(@NotNull Class<T> listenerClass,
                                           @Nullable Map<String, Object> methodReturnValues,
                                           @NotNull Supplier<? extends Iterable<T>> listeners) {
-    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
+    LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface: " + listenerClass.getName());
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
       String methodName = method.getName();
