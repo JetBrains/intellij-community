@@ -280,6 +280,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       PlatformNioHelper.visitDirectory(Path.of(toIoPath(dir)), (file, attrs) -> {
         var fsuAttrs = attrs != null ? copyWithCustomTimestamp(file, FileAttributes.fromNio(file, attrs)) : null;
         result.put(file.getFileName().toString(), fsuAttrs);
+        return true;
       });
       return result;
     }

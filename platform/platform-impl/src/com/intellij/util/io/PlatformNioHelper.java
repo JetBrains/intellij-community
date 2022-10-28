@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 
 @ApiStatus.Internal
 public final class PlatformNioHelper {
@@ -25,7 +25,7 @@ public final class PlatformNioHelper {
    * @see NioFiles#readAttributes
    */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static void visitDirectory(@NotNull Path directory, @NotNull BiConsumer<Path, @Nullable BasicFileAttributes> consumer) {
+  public static void visitDirectory(@NotNull Path directory, @NotNull BiPredicate<Path, @Nullable BasicFileAttributes> consumer) {
     try (var dirStream = Files.newDirectoryStream(directory)) {
       for (var path : dirStream) {
         BasicFileAttributes attrs = null;
@@ -40,7 +40,9 @@ public final class PlatformNioHelper {
             LOG.debug(e);
           }
         }
-        consumer.accept(path, attrs);
+        if (!consumer.test(path, attrs)) {
+          break;
+        }
       }
     }
     catch (IOException | SecurityException e) {
