@@ -31,9 +31,4 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
                                "MyModuleComponent.kt",
                                "MyModuleComponentInterface.kt");
   }
-
-  public void testActionAbstractClass() {
-    myFixture.testHighlighting("ActionAbstractClass.xml",
-                               "MyAbstractAction.kt");
-  }
 }

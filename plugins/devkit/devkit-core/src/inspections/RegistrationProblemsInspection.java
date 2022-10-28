@@ -95,13 +95,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
       final RegistrationChecker checker = new RegistrationChecker(manager, (XmlFile)file, isOnTheFly);
       DescriptorUtil.processComponents(rootTag, checker);
-      DescriptorUtil.processActions(rootTag, checker);
       return checker.getProblems();
     }
     return null;
   }
 
-  private static final class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
+  private static final class RegistrationChecker implements ComponentType.Processor {
     private List<ProblemDescriptor> myList;
     private final InspectionManager myManager;
     private final PsiManager myPsiManager;
@@ -190,42 +189,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
       }
       return new String[]{fqn};
-    }
-    //</editor-fold>
-
-    //<editor-fold desc="Actions">
-    @Override
-    public boolean process(ActionType type, XmlTag action) {
-      final XmlAttribute attribute = action.getAttribute("class");
-      if (attribute != null) {
-        final PsiElement token = getAttValueToken(attribute);
-        if (token != null) {
-          String attributeValue = attribute.getValue();
-          if (attributeValue != null) {
-            final String actionClassName = attributeValue.trim();
-            final PsiClass actionClass = findClass(actionClassName);
-            if (actionClass != null) {
-              if (actionClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                addProblem(token, DevKitBundle.message("inspections.registration.problems.abstract"), myOnTheFly);
-              }
-            }
-          }
-        }
-      }
-      return true;
-    }
-
-    @Nullable
-    private static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
-      final XmlAttributeValue valueElement = attribute.getValueElement();
-      if (valueElement == null) return null;
-
-      final PsiElement[] children = valueElement.getChildren();
-      if (children.length == 3 && children[1] instanceof XmlToken) {
-        return children[1];
-      }
-      if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
-      return valueElement;
     }
     //</editor-fold>
 

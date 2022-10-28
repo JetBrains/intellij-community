@@ -30,9 +30,4 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
                                "MyModuleComponent.java",
                                "MyModuleComponentInterface.java");
   }
-
-  public void testActionAbstractClass() {
-    myFixture.testHighlighting("ActionAbstractClass.xml",
-                               "MyAbstractAction.java");
-  }
 }
