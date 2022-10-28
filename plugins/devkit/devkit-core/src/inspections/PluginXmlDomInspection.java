@@ -922,14 +922,21 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     Module module = component.getModule();
-    if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      componentModuleRegistrationChecker.checkProperXmlFileForClass(
-        component, component.getImplementationClass().getValue());
+    GenericDomValue<PsiClass> implementationClassDomValue = component.getImplementationClass();
+    PsiClass implementationClass = implementationClassDomValue.getValue();
+    if (implementationClass != null) {
+      if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
+        componentModuleRegistrationChecker.checkProperXmlFileForClass(component, implementationClass);
+      }
+      if (implementationClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        holder.createProblem(implementationClassDomValue,
+                             DevKitBundle.message("inspections.registration.problems.abstract"));
+      }
     }
 
     GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
     PsiClass interfaceClass = interfaceClassElement.getValue();
-    if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue()) &&
+    if (interfaceClass != null && interfaceClass.equals(implementationClass) &&
         component.getHeadlessImplementationClass().getValue() == null) {
       highlightRedundant(interfaceClassElement,
                          DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),

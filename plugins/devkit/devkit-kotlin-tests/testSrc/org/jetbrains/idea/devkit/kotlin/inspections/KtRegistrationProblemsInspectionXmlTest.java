@@ -12,11 +12,6 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
   }
 
-  public void testComponentAbstractImplementation() {
-    myFixture.testHighlighting("ComponentAbstractImplementation.xml",
-                               "AbstractApplicationComponent.kt");
-  }
-
   public void testComponentClassNotAssignableToInterface() {
     myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
                                "ApplicationComponent.kt");

@@ -11,11 +11,6 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
   }
 
-  public void testComponentAbstractImplementation() {
-    myFixture.testHighlighting("ComponentAbstractImplementation.xml",
-                               "AbstractApplicationComponent.java");
-  }
-
   public void testComponentClassNotAssignableToInterface() {
     myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
                                "ApplicationComponent.java");
