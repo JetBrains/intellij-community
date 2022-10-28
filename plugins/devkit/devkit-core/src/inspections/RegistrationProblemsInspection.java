@@ -205,12 +205,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             final String actionClassName = attributeValue.trim();
             final PsiClass actionClass = findClass(actionClassName);
             if (actionClass != null) {
-              final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);
-              if (noArgCtor == null) {
-                addProblem(token,
-                           DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
-                           myOnTheFly, new CreateConstructorFix(actionClass, myOnTheFly));
-              }
               if (actionClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 addProblem(token, DevKitBundle.message("inspections.registration.problems.abstract"), myOnTheFly);
               }
