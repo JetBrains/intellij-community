@@ -146,7 +146,6 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   /**
    * Default implementation of {@link SingleContentSupplier}.
-   *
    * Isn't used directly by {@link RunTab}, but can be used by inheritors.
    */
   protected class RunTabSupplier implements SingleContentSupplier {
