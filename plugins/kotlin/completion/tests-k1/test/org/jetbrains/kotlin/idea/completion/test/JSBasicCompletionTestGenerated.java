@@ -2254,6 +2254,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
             }
 
+            @TestMetadata("EnumValuesMethodLowerPriority.kt")
+            public void testEnumValuesMethodLowerPriority() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodLowerPriority.kt");
+            }
+
+            @TestMetadata("EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt")
+            public void testEnumValuesMethodUsualPriorityWhenFeatureDisabled() throws Exception {
+                runTest("../testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
                 runTest("../testData/basic/common/ExtendClassName.kt");

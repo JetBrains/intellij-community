@@ -88,6 +88,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/EnumEntry/");
     }
 
+    @TestMetadata("EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled")
+    public void testEnumValuesMethodJavaUsualPriorityWhenFeatureDisabled() throws Exception {
+        runTest("../completion/testData/basic/multifile/EnumValuesMethodJavaUsualPriorityWhenFeatureDisabled/");
+    }
+
+    @TestMetadata("EnumValuesMethodLowerPriorityJava")
+    public void testEnumValuesMethodLowerPriorityJava() throws Exception {
+        runTest("../completion/testData/basic/multifile/EnumValuesMethodLowerPriorityJava/");
+    }
+
     @TestMetadata("ExactMatchPreferImported")
     public void testExactMatchPreferImported() throws Exception {
         runTest("../completion/testData/basic/multifile/ExactMatchPreferImported/");

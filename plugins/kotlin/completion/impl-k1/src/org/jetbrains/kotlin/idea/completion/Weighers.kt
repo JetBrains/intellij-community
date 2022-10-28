@@ -9,8 +9,10 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.proximity.PsiProximityComparator
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.implCommon.weighers.EnumValuesSoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.smart.*
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
@@ -235,6 +238,19 @@ object K1SoftDeprecationWeigher : LookupElementWeigher(SoftDeprecationWeigher.WE
         val descriptor = declarationLookupObject.descriptor ?: return false
         val languageVersionSettings = declarationLookupObject.psiElement?.languageVersionSettings ?: return false
         return SoftDeprecationWeigher.isSoftDeprecatedFqName(descriptor.fqNameSafe, languageVersionSettings)
+                || isEnumValuesSoftDeprecatedMethod(declarationLookupObject, descriptor, languageVersionSettings)
+    }
+
+    private fun isEnumValuesSoftDeprecatedMethod(
+        declarationLookupObject: DescriptorBasedDeclarationLookupObject,
+        descriptor: DeclarationDescriptor,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        return EnumValuesSoftDeprecationWeigher.weigherIsEnabled(languageVersionSettings) &&
+                isEnumClass(descriptor.containingDeclaration) &&
+                EnumValuesSoftDeprecationWeigher.VALUES_METHOD_NAME == declarationLookupObject.name &&
+                // Don't touch user-declared methods with the name "values"
+                (descriptor as? CallableMemberDescriptor)?.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
     }
 }
 

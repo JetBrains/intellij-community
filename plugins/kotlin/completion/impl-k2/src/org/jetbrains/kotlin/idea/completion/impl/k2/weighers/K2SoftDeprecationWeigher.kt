@@ -6,9 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.completion.implCommon.weighers.EnumValuesSoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -21,9 +21,26 @@ internal object K2SoftDeprecationWeigher {
         symbol: KtSymbol,
         languageVersionSettings: LanguageVersionSettings
     ) {
-        val fqName = (symbol as? KtCallableSymbol)?.callableIdIfNonLocal?.asSingleFqName()
-        lookupElement.isSoftDeprecated = fqName != null &&
+        val callableSymbol = symbol as? KtCallableSymbol ?: return
+        lookupElement.isSoftDeprecated = isLibrarySoftDeprecatedMethod(callableSymbol, languageVersionSettings) ||
+                isEnumValuesSoftDeprecatedMethod(callableSymbol, languageVersionSettings)
+    }
+
+    private fun isLibrarySoftDeprecatedMethod(symbol: KtCallableSymbol, languageVersionSettings: LanguageVersionSettings): Boolean {
+        val fqName = symbol.callableIdIfNonLocal?.asSingleFqName()
+        return fqName != null &&
                 SoftDeprecationWeigher.isSoftDeprecatedFqName(fqName, languageVersionSettings)
+    }
+
+    private fun KtAnalysisSession.isEnumValuesSoftDeprecatedMethod(
+        symbol: KtCallableSymbol,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        return EnumValuesSoftDeprecationWeigher.weigherIsEnabled(languageVersionSettings) &&
+                KtClassKind.ENUM_CLASS == (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind &&
+                EnumValuesSoftDeprecationWeigher.VALUES_METHOD_NAME == symbol.callableIdIfNonLocal?.callableName &&
+                // Don't touch user-declared methods with the name "values"
+                symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
     }
 
     object Weigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {
