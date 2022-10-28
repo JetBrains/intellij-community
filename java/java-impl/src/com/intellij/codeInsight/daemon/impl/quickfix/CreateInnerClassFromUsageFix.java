@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.util.IntentionName;
@@ -195,7 +196,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       CreateFromUsageBaseFix.startTemplate(editor, template, project, null, text);
     }
-    else {
+    else if (!IntentionPreviewUtils.isPreviewElement(deconstructionList)) {
       CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
   }
