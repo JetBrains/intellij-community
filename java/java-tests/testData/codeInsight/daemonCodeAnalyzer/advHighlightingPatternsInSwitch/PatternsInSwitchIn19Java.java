@@ -8,6 +8,8 @@ class X {
       case null -> 10;
       case <error descr="Cannot resolve symbol 'Point'">Point</error>() -> 5;
       case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) -> 6;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>() point -> 7;
+      case <error descr="Cannot resolve symbol 'Point'">Point</error>(double x, double y) point -> 8;
     };
   }
 
@@ -25,11 +27,23 @@ class X {
     }
 
     switch (point1) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><?>() point -> {}
+    }
+
+    switch (point1) {
       case <error descr="Cannot resolve symbol 'Point'">Point</error><? extends String>() -> {}
+    }
+
+    switch (point1) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? extends String>()  point -> {}
     }
 
     switch (point2) {
       case <error descr="Cannot resolve symbol 'Point'">Point</error><? super String>() -> {}
+    }
+
+    switch (point2) {
+      case <error descr="Cannot resolve symbol 'Point'">Point</error><? super String>() point -> {}
     }
   }
 
