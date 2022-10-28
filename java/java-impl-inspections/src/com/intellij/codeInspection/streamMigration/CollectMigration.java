@@ -850,8 +850,13 @@ class CollectMigration extends BaseStreamApiMigration {
       if (toArrayCandidate == null) return null;
       PsiReferenceExpression methodExpression = toArrayCandidate.getMethodExpression();
       if (!"toArray".equals(methodExpression.getReferenceName())) return null;
-      if (!(PsiUtil.skipParenthesizedExprUp(toArrayCandidate.getParent()) instanceof PsiReturnStatement) &&
-          usages.stream().anyMatch(usage -> !PsiTreeUtil.isAncestor(toArrayCandidate, usage, false))) {
+      /* We want to allow reusing the same empty collection in another branch of code after return.
+       * However, in this case, return should be on the same level as the stream itself.
+       * See beforeToArrayInBranch.java and beforeToArrayReusedCollection.java tests.
+       */
+      if ((!(PsiUtil.skipParenthesizedExprUp(toArrayCandidate.getParent()) instanceof PsiReturnStatement stmt) 
+           || stmt.getParent() != element.getParent()) &&
+          ContainerUtil.exists(usages, usage -> !PsiTreeUtil.isAncestor(toArrayCandidate, usage, false))) {
         return null;
       }
       PsiLocalVariable var = tryCast(PsiUtil.skipParenthesizedExprUp(toArrayCandidate.getParent()), PsiLocalVariable.class);
