@@ -24,8 +24,8 @@ public class ComparisonFailureData {
   private final String myFilePath;
   private final String myActualFilePath;
 
-  private static final Map<String, Field> EXPECTED = new HashMap<>();
-  private static final Map<String, Field> ACTUAL = new HashMap<>();
+  private static final Map<Class<?>, Field> EXPECTED = new HashMap<>();
+  private static final Map<Class<?>, Field> ACTUAL = new HashMap<>();
 
   static {
     try {
@@ -38,11 +38,11 @@ public class ComparisonFailureData {
     Class<?> exceptionClass = Class.forName(exceptionClassName, false, ComparisonFailureData.class.getClassLoader());
     final Field expectedField = exceptionClass.getDeclaredField("fExpected");
     expectedField.setAccessible(true);
-    EXPECTED.put(exceptionClassName, expectedField);
+    EXPECTED.put(exceptionClass, expectedField);
 
     final Field actualField = exceptionClass.getDeclaredField("fActual");
     actualField.setAccessible(true);
-    ACTUAL.put(exceptionClassName, actualField);
+    ACTUAL.put(exceptionClass, actualField);
   }
 
   public ComparisonFailureData(String expected, String actual) {
@@ -255,25 +255,16 @@ public class ComparisonFailureData {
     return get(assertion, EXPECTED, "fExpected");
   }
 
-  private static String get(
-    final Throwable assertion, final Map<String, Field> staticMap, final String fieldName
-  ) throws IllegalAccessException, NoSuchFieldException {
-    Class<?> assertionClass = assertion.getClass();
-    while (!COMPARISON_FAILURES.contains(assertionClass.getName())) {
-      Class<?> superClass = assertionClass.getSuperclass();
-      if (superClass.getName().equals("java.lang.Object")) break;
-      assertionClass = assertionClass.getSuperclass();
+  private static String get(final Throwable assertion, final Map<Class<?>, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
+    Class<? extends Throwable> assertionClass = assertion.getClass();
+    for (Class<?> comparisonClass : staticMap.keySet()) {
+      if (comparisonClass.isAssignableFrom(assertionClass)) {
+        return (String)staticMap.get(comparisonClass).get(assertion);
+      }
     }
-    Field actualField = staticMap.get(assertionClass.getName());
-    String actual;
-    if (actualField != null) {
-      actual = (String)actualField.get(assertion);
-    }
-    else {
-      Field field = assertionClass.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      actual = (String)field.get(assertion);
-    }
-    return actual;
+
+    Field field = assertionClass.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return (String)field.get(assertion);
   }
 }
