@@ -139,6 +139,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
                 val lambdaImplicitReceiverType = expectedType?.ownTypeArguments?.get(0)?.type?.asPsiType(
                     ktLambdaExpression,
+                    allowErrorTypes = false,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType
@@ -161,6 +162,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return valueParameters.map { p ->
                 val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
+                    allowErrorTypes = false,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType

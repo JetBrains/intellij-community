@@ -231,6 +231,7 @@ internal fun KtAnalysisSession.toPsiType(
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context
     return ktType.asPsiType(
         psiTypeParent,
+        allowErrorTypes = false,
         ktTypeMappingMode,
         isAnnotationMethod = false
     ) ?: UastErrorType
