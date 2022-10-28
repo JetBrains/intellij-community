@@ -111,6 +111,18 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     }
   }
 
+  fun runInAutoCommitDisabledModeSync(task: () -> Unit) {
+    cancelAndDisableAutoCommit()
+    try {
+      task()
+    }
+    finally {
+      autoCommitEnabled = true
+      isRepositoryActive = repositoryManager.isRepositoryExists()
+    }
+  }
+
+
   fun setApplicationLevelStreamProvider() {
     val storageManager = ApplicationManager.getApplication().stateStore.storageManager
     // just to be sure
