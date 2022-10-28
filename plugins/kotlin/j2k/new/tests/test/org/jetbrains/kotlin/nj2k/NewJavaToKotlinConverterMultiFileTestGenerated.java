@@ -88,6 +88,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         runTest("testData/multiFile/NullabilityByDFa/");
     }
 
+    @TestMetadata("OverrideFieldToPrimaryConstructorProperty")
+    public void testOverrideFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
+    }
+
     @TestMetadata("ProtectedVisibility")
     public void testProtectedVisibility() throws Exception {
         runTest("testData/multiFile/ProtectedVisibility/");

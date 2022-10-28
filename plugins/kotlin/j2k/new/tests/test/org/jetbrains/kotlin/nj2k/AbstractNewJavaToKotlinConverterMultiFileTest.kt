@@ -22,8 +22,17 @@ import java.io.File
 abstract class AbstractNewJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlinConverterTest() {
     fun doTest(dirPath: String) {
         val psiManager = PsiManager.getInstance(project)
-        val filesToConvert = File(dirPath).listFiles { _, name -> name.endsWith(".java") }!!
+        val directory = File(dirPath)
+        val filesToConvert = directory.listFiles { _, name -> name.endsWith(".java") }!!
         val psiFilesToConvert = filesToConvert.map { javaFile ->
+            val expectedFileName = "${javaFile.nameWithoutExtension}.external"
+            val expectedFiles = directory.listFiles { _, name ->
+                name == "$expectedFileName.kt" || name == "$expectedFileName.java"
+            }!!.filterNotNull()
+            for (expectedFile in expectedFiles) {
+                addFile(expectedFile, dirName = null)
+            }
+
             val virtualFile = addFile(javaFile, "test")
             psiManager.findFile(virtualFile) as PsiJavaFile
         }
