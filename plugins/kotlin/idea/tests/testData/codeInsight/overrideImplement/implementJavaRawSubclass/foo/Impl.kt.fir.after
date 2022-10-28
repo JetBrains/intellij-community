@@ -1,3 +1,5 @@
+// ERROR: [ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class C is not abstract and does not implement abstract member foo
+// ERROR: [NOTHING_TO_OVERRIDE] 'foo' overrides nothing
 import foo.A
 import foo.B
 
