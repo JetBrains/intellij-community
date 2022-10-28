@@ -325,7 +325,7 @@ internal class SingleContentLayout(
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
           val tabLabel = e.component as? MyContentTabLabel
           if (tabLabel != null && tabLabel.content.isCloseable) {
-            tabLabel?.closeContent()
+            tabLabel.closeContent()
           }
         }
       }
