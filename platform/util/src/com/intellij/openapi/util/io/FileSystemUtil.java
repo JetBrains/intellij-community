@@ -255,15 +255,15 @@ public final class FileSystemUtil {
       }
     }
 
-    private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
+    private static boolean loadFileStatus(String path, Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
-    private int getModeFlags(@NotNull Memory buffer) {
+    private int getModeFlags(Memory buffer) {
       return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
-    private boolean ownFile(@NotNull Memory buffer) {
+    private boolean ownFile(Memory buffer) {
       return buffer.getInt(myOffsets[OFF_UID]) == myUid && buffer.getInt(myOffsets[OFF_GID]) == myGid;
     }
   }
@@ -398,7 +398,7 @@ public final class FileSystemUtil {
     return detected;
   }
 
-  private static @NotNull String toggleCase(@NotNull String name) {
+  private static String toggleCase(String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
@@ -414,7 +414,7 @@ public final class FileSystemUtil {
 
   // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
   // or null if there are none (e.g., there's only one child "123.456").
-  private static @Nullable String findCaseToggleableChild(@NotNull File dir) {
+  private static @Nullable String findCaseToggleableChild(File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
