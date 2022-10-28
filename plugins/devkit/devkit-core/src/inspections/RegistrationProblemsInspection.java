@@ -115,7 +115,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       myScope = xmlFile.getResolveScope();
     }
 
-    //<editor-fold desc="Components">
     @Override
     public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
       if (impl != null) {
@@ -140,11 +139,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
           else {
             checkInterface(type, fqn, intf);
             myInterfaceClasses.putValue(type, fqn);
-          }
-          final String implClassName = impl.getTrimmedText();
-          final PsiClass implClass = findClass(implClassName);
-          if (implClass != null && intfClass != implClass && !implClass.isInheritor(intfClass, true)) {
-            addProblem(impl, DevKitBundle.message("inspections.registration.problems.component.incompatible.interface", fqn), myOnTheFly);
           }
         }
       }
@@ -185,7 +179,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       }
       return new String[]{fqn};
     }
-    //</editor-fold>
 
     private void addProblem(PsiElement element, @InspectionMessage String problem, boolean onTheFly, LocalQuickFix... fixes) {
       if (myList == null) myList = new SmartList<>();

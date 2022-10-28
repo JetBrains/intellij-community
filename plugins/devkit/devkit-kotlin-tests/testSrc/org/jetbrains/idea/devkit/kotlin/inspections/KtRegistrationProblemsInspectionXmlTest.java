@@ -12,11 +12,6 @@ public class KtRegistrationProblemsInspectionXmlTest extends RegistrationProblem
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml";
   }
 
-  public void testComponentClassNotAssignableToInterface() {
-    myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
-                               "ApplicationComponent.kt");
-  }
-
   public void testComponentMultipleWithSameInterface() {
     myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 

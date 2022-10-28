@@ -942,6 +942,13 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                          DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
                          ProblemHighlightType.WARNING, holder);
     }
+
+    if (implementationClass != null && interfaceClass != null &&
+        implementationClass != interfaceClass && !implementationClass.isInheritor(interfaceClass, true)) {
+      holder.createProblem(implementationClassDomValue,
+                           DevKitBundle.message("inspections.registration.problems.component.incompatible.interface",
+                                                interfaceClass.getQualifiedName()));
+    }
   }
 
   private static void annotateVendor(Vendor vendor, DomElementAnnotationHolder holder) {

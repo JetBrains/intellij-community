@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-// TODO: kotlin
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml")
 public class PluginXmlDomInspectionTest extends PluginXmlDomInspectionTestBase {
   @Override
@@ -41,5 +40,10 @@ public class PluginXmlDomInspectionTest extends PluginXmlDomInspectionTestBase {
 
   public void testActionWrongClass() {
     myFixture.testHighlighting("ActionWrongClass.xml");
+  }
+
+  public void testComponentClassNotAssignableToInterface() {
+    myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
+                               "ApplicationComponent.java");
   }
 }
