@@ -41,6 +41,10 @@ object JUnit4Assertions : Assertions() {
         exceptions.forEach { throw it }
     }
 
+    override fun assertAll(vararg blocks: () -> Unit) {
+        blocks.forEach { it.invoke() }
+    }
+
     override fun fail(message: () -> String): Nothing {
         throw AssertionError(message.invoke())
     }
