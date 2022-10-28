@@ -545,7 +545,7 @@ internal class MutableEntityStorageImpl(
   }
 
   internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
+    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right, true)
   }
 
   private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
@@ -810,15 +810,25 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-        val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
-        if (ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS) {
-          consistencyChecker.execute(report)
-        }
-        else {
-          report()
-        }
+        reportConsistencyIssue(message, e, sourceFilter, left, right,
+                               ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
       }
+    }
+  }
+
+  internal fun reportConsistencyIssue(message: String,
+                                     e: Throwable,
+                                     sourceFilter: ((EntitySource) -> Boolean)?,
+                                     left: EntityStorage?,
+                                     right: EntityStorage?,
+                                     reportInBackgroundThread: Boolean) {
+    val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
+    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+    if (reportInBackgroundThread) {
+      consistencyChecker.execute(report)
+    }
+    else {
+      report()
     }
   }
 
