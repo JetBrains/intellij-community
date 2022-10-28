@@ -41,7 +41,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.*;
@@ -757,6 +756,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
       if (actionsSize > 0) {
+        buttonInsetsCorrectionActionLayout(actionPanel);
+
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
         button.setOpaque(false);
@@ -819,6 +820,32 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     hoverAdapter.addSource(actionPanel);
+  }
+
+  public static void buttonInsetsCorrectionActionLayout(@NotNull JPanel actionPanel) {
+    actionPanel.setLayout(new FinalLayoutWrapper((LayoutManager2)actionPanel.getLayout()) {
+      @Override
+      public void layoutContainer(@NotNull Container parent) {
+        super.layoutContainer(parent);
+
+        int count = parent.getComponentCount();
+        if (count == 0) {
+          return;
+        }
+
+        Component first = parent.getComponent(0);
+        if (first instanceof JButton button) {
+          int delta = button.getInsets().left;
+
+          for (int i = 0; i < count; i++) {
+            Component component = parent.getComponent(i);
+            Rectangle bounds = component.getBounds();
+            bounds.x -= delta;
+            component.setBounds(bounds);
+          }
+        }
+      }
+    });
   }
 
   private static void setButtonColor(@NotNull JButton button, @NotNull String colorKey, @NotNull String colorProperty) {
@@ -1087,22 +1114,24 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
-      setIconTextGap(0);
+      setIconTextGap(JBUI.scale(1));
 
       setIcon(new Icon() {
+        private final Icon icon = AllIcons.General.LinkDropTriangle;
+
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          IconUtil.colorize((Graphics2D)g, AllIcons.Ide.Notification.DropTriangle, getTextColor()).paintIcon(c, g, x - 1, y + 1);
+          icon.paintIcon(c, g, x, y + 1);
         }
 
         @Override
         public int getIconWidth() {
-          return AllIcons.Ide.Notification.DropTriangle.getIconWidth();
+          return icon.getIconWidth();
         }
 
         @Override
         public int getIconHeight() {
-          return AllIcons.Ide.Notification.DropTriangle.getIconHeight();
+          return icon.getIconHeight();
         }
       });
     }

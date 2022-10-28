@@ -39,11 +39,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.JBPanelWithEmptyText
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -129,7 +125,7 @@ internal class NotificationContent(val project: Project,
     timeline = NotificationGroupComponent(this, false, project)
     searchController = SearchController(this, suggestions, timeline)
 
-    myMainPanel.add(createSearchComponent(toolWindow), BorderLayout.NORTH)
+    myMainPanel.add(createSearchComponent(), BorderLayout.NORTH)
 
     createGearActions()
 
@@ -164,7 +160,7 @@ internal class NotificationContent(val project: Project,
     }
   }
 
-  private fun createSearchComponent(toolWindow: ToolWindow): SearchTextField {
+  private fun createSearchComponent(): SearchTextField {
     val searchField = object : SearchTextField() {
       override fun updateUI() {
         super.updateUI()
@@ -912,6 +908,8 @@ private class NotificationComponent(val project: Project,
 
       if (notification.isSuggestionType) {
         if (actionsSize > 0) {
+          NotificationsManagerImpl.buttonInsetsCorrectionActionLayout(actionPanel)
+
           val button = JButton(actions[0].templateText)
           button.isOpaque = false
           button.addActionListener {
