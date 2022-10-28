@@ -11,11 +11,6 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
-    </component>
-  </project-components>
   <xi:include href="/META-INF/XmlActions.xml"/>
   <xi:include href="/META-INF/DomPlugin.xml">
     <xi:fallback/>
@@ -686,5 +681,7 @@
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
+
+    <postStartupActivity implementation="com.intellij.javaee.PsiExternalResourceNotifier" />
   </extensions>
 </idea-plugin>
