@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -18,7 +18,7 @@ class ReportProblemAction : DumbAwareAction() {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project,
                                                                      IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
         override fun run(indicator: ProgressIndicator) {
-          SendFeedbackAction.submit(project, appInfo.youtrackUrl, SendFeedbackAction.getDescription(project, indicator))
+          SendFeedbackAction.submit(project, appInfo.youtrackUrl, SendFeedbackAction.getDescription(project))
         }
       })
     }

@@ -75,7 +75,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project, indicator));
+        submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
       }
     });
   }
@@ -97,7 +97,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     BrowserUtil.browse(url, project);
   }
 
-  public static @NotNull String getDescription(@Nullable Project project, @Nullable ProgressIndicator progressIndicator) {
+  public static @NotNull String getDescription(@Nullable Project project) {
     @NonNls StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -140,7 +140,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       }
     }
     for (FeedbackDescriptionProvider ext : EP_NAME.getExtensions()) {
-      String pluginDescription = ext.getDescription(project, progressIndicator);
+      String pluginDescription = ext.getDescription(project);
       if (pluginDescription != null && pluginDescription.length() > 0) {
         sb.append("\n").append(pluginDescription);
       }
