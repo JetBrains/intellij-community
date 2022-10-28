@@ -46,8 +46,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
     List<BuildTask> preprocessingTasks = createArtifactTasks(target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
+    final Set<JarInfo> missingJars = collectMissingJars(target, context);
     try {
-      if (!holder.hasRemovedFiles() && !holder.hasDirtyFiles() && preprocessingTasks.isEmpty()) {
+      if (!holder.hasRemovedFiles() && !holder.hasDirtyFiles() && preprocessingTasks.isEmpty() && missingJars.isEmpty()) {
         return;
       }
     }
@@ -99,7 +100,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       final Set<String> changedOutputPaths = CollectionFactory.createFilePathSet();
-      holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
+      holder.processDirtyFiles(new FileProcessor<>() {
         @Override
         public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
           int rootIndex = root.getRootIndex();
@@ -121,7 +122,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       for (String outputPath : changedOutputPaths) {
         outSrcMapping.remove(outputPath);
       }
-      if (filesToDelete.isEmpty() && filesToProcess.isEmpty()) {
+      if (filesToDelete.isEmpty() && filesToProcess.isEmpty() && missingJars.isEmpty()) {
         return;
       }
 
@@ -129,7 +130,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       context.checkCanceled();
 
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.building.artifact.0.copying.files", artifact.getName())));
-      final Set<JarInfo> changedJars = new HashSet<>();
+      final Set<JarInfo> changedJars = new HashSet<>(missingJars);
       for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
         context.checkCanceled();
         final Set<String> sourcePaths = filesToProcess.get(descriptor.getRootIndex());
@@ -150,8 +151,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           else {
             List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(destination.getOutputFilePath());
             if (sources == null || sources.size() > 0 && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
-              outSrcMapping.update(destination.getOutputFilePath(),
-                                   Collections.emptyList());
+              outSrcMapping.update(destination.getOutputFilePath(), Collections.emptyList());
               changedJars.add(((JarDestinationInfo)destination).getJarInfo());
             }
           }
@@ -169,6 +169,21 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     catch (IOException e) {
       throw new ProjectBuildException(e);
     }
+  }
+
+  private static Set<JarInfo> collectMissingJars(@NotNull ArtifactBuildTarget target, @NotNull final CompileContext context) {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    Set<JarInfo> missingJars = new HashSet<>();
+    for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+      DestinationInfo destination = descriptor.getDestinationInfo();
+      if (destination instanceof JarDestinationInfo) {
+        JarDestinationInfo jarDestinationInfo = ((JarDestinationInfo)destination);
+        if (!new File(jarDestinationInfo.getOutputFilePath()).exists()) {
+          missingJars.add(jarDestinationInfo.getJarInfo());
+        }
+      }
+    }
+    return missingJars;
   }
 
   private static void collectSourcesCorrespondingToOutput(String outputPath, String sourcePath,
