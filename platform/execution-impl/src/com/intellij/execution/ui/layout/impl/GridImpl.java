@@ -247,7 +247,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
             Content[] contents = myContentProvider.getContents();
             if (contents != null && contents.length > 0) {
               Component preferred = contents[first ? 0 : contents.length - 1].getPreferredFocusableComponent();
-              if (preferred != null && accept(preferred)) {
+              if (preferred != null && preferred.isShowing() && accept(preferred)) {
                 return preferred;
               }
             }
