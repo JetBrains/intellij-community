@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
+import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
@@ -294,6 +295,8 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
 abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.title")
     override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.description")
+    override val icon: Icon
+        get() = KotlinBaseResourcesIcons.Wizard.MultiplatformMobile
 
     @NonNls
     override val suggestedProjectName = "myIOSApplication"
