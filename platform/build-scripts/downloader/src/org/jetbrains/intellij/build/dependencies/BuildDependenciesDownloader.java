@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -59,7 +60,7 @@ public final class BuildDependenciesDownloader {
 
   // init is very expensive due to SSL initialization
   private static final class HttpClientHolder {
-    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+    private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
       .version(HttpClient.Version.HTTP_1_1).build();
   }
 
@@ -379,6 +380,20 @@ public final class BuildDependenciesDownloader {
 
     HttpResponse<Path> response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
     int statusCode = response.statusCode();
+
+    if (statusCode == 301 || statusCode == 302 || statusCode == 307 || statusCode == 308) {
+      Optional<String> locationHeader = response.headers().firstValue("Location");
+      if (locationHeader.isPresent()) {
+        requestBuilder = HttpRequest.newBuilder()
+          .GET()
+          .uri(new URI(locationHeader.get()))
+          .setHeader("User-Agent", "Build Script Downloader");
+        request = requestBuilder.build();
+        response = HttpClientHolder.httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+        statusCode = response.statusCode();
+      }
+    }
+
     if (statusCode != 200) {
       StringBuilder builder = new StringBuilder("Cannot download\n");
 
