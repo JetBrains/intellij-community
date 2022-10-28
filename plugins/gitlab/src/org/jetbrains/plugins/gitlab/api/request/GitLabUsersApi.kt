@@ -18,9 +18,10 @@ suspend fun GitLabApi.getCurrentUser(server: GitLabServerPath): GitLabUserDTO? {
 
 suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> {
   val pagesLoader = GraphQLPagesLoader<GitLabMemberDTO> { pagination ->
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProject, GraphQLPagesLoader.arguments(pagination) + mapOf(
+    val parameters = GraphQLPagesLoader.arguments(pagination) + mapOf(
       "fullPath" to project.projectPath.fullPath()
-    ))
+    )
+    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectMembers, parameters)
     loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
   }
 
