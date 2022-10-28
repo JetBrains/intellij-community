@@ -20,13 +20,14 @@ import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * IDEA-303801: create 'reproducible'/canonical version of {@linkplain PersistentHashMap}
  */
 @RunWith(Parameterized.class)
 public class PersistentHashMapCanonicalizationTest {
-  public static final int KEYS_COUNT = 100_000;
+  public static final int KEYS_COUNT = 10_101;
   public static final int ENOUGH_SHUFFLE_TRIES = 32;
 
   public static final int MAX_KEY_VALUE_SIZE = 50;
@@ -48,31 +49,46 @@ public class PersistentHashMapCanonicalizationTest {
   public static <K> List<K> stableSortBySerializedBytes(final List<K> keys,
                                                         final DataExternalizer<K> externalizer) {
     return keys.stream()
-      .map(key -> {
-        try {
-          final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-          final java.io.DataOutputStream dos = new DataOutputStream(bos);
-          externalizer.save(dos, key);
-          dos.close();
-          final byte[] serializedKey = bos.toByteArray();
-          return Pair.pair(key, serializedKey);
-        }
-        catch (IOException e) {
-          throw new UncheckedIOException(e);
-        }
-      })
+      .map(key -> new Pair<>(key, keyToBytes(externalizer, key)))
       .sorted((o1, o2) -> Arrays.compare(o1.second, o2.second))
       .map(pair -> pair.first)
       .collect(toList());
   }
 
-  public static <K> List<K> stableSortByHashCode(final List<K> keys,
-                                                 final KeyDescriptor<K> descriptor) {
+  public static <K> List<K> stableSortByHashCodeAndBytes(final List<K> keys,
+                                                         final KeyDescriptor<K> descriptor) {
+    //RC: sorting keys by serialized bytes could be demanding (CPU/memory-wise), sorting by hash is much
+    //    cheaper. But hash-collisions make such a sort unstable -- keys with same hash are 'unordered'
+    //    We mitigate it by sorting such (collided) keys by serializedBytes, while non-colliding
+    //    keys by hash -- should be still much more effective than pure stableSortBySerializedBytes()
     return keys.stream()
-      .sorted(Comparator.comparingInt(descriptor::getHashCode))
-      .collect(toList());
+      .sorted((k1, k2) -> {
+        final int k1Hash = descriptor.getHashCode(k1);
+        final int k2Hash = descriptor.getHashCode(k1);
+        if (k1Hash != k2Hash) {
+          return Integer.compare(k1Hash, k2Hash);
+        }
+        else {
+          final byte[] k1Bytes = keyToBytes(descriptor, k1);
+          final byte[] k2Bytes = keyToBytes(descriptor, k2);
+          return Arrays.compare(k1Bytes, k2Bytes);
+        }
+      }).toList();
   }
 
+  private static <K> byte[] keyToBytes(final @NotNull DataExternalizer<K> externalizer,
+                                       final K key) {
+    try {
+      final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      final DataOutputStream dos = new DataOutputStream(bos);
+      externalizer.save(dos, key);
+      dos.close();
+      return bos.toByteArray();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Can't serialize key: " + key, e);
+    }
+  }
 
   @Parameterized.Parameters(name = "{0}")
   public static List<Object[]> sorters() {
@@ -102,25 +118,21 @@ public class PersistentHashMapCanonicalizationTest {
             return "SortBySerializedBytes";
           }
         }
-      }
+      },
 
-      //new Object[]{
-      //  new Function<List<String>, List<String>>() {
-      //    @Override
-      //    public List<String> apply(List<String> keys) {
-      //      //FIXME RC: sorting by hashcode is potentially much faster than by byte[], but it doesn't
-      //      //          provide stable sort -- hash-collided keys are sorted randomly. Hence in its
-      //      //          current form it is not suitable. If we could invent a way to resolve collisions
-      //      //          it could be a solution again
-      //      return stableSortByHashCode(keys, EnumeratorStringDescriptor.INSTANCE);
-      //    }
-      //
-      //    @Override
-      //    public String toString() {
-      //      return "SortByKeyHashCodes";
-      //    }
-      //  }
-      //}
+      new Object[]{
+        new Function<List<String>, List<String>>() {
+          @Override
+          public List<String> apply(List<String> keys) {
+            return stableSortByHashCodeAndBytes(keys, EnumeratorStringDescriptor.INSTANCE);
+          }
+
+          @Override
+          public String toString() {
+            return "SortByKeyHashCodesAndBytes";
+          }
+        }
+      }
     );
   }
 
@@ -129,43 +141,52 @@ public class PersistentHashMapCanonicalizationTest {
     final Map<String, String> keysValues = generateKeyValues(KEYS_COUNT, MAX_KEY_VALUE_SIZE);
     final List<String> keys = keysValues.keySet().stream().toList();
 
-    final List<List<String>> sortedKeys = new ArrayList<>();
+    final List<List<? extends String>> sortedKeys = new ArrayList<>();
     for (int i = 0; i < ENOUGH_SHUFFLE_TRIES; i++) {
       final List<String> keysCopy = new ArrayList<>(keys);
       Collections.shuffle(keysCopy);
       final List<String> sorted = sorter.apply(keysCopy);
       sortedKeys.add(sorted);
     }
+
     assertEquals(
+      "Stable sort must produce same sorted list, regardless of initial order of items",
       1,
       new HashSet<>(sortedKeys).size()
     );
   }
 
   @Test
-  public void canonicalizedMapIsInvariantOnKeyValueAppendingOrder() throws IOException {
+  public void canonicalizedMapIsInvariantOnKeyValueAppendingOrder_StringKeys() throws IOException {
     final Map<String, String> keysValues = generateKeyValues(KEYS_COUNT, MAX_KEY_VALUE_SIZE);
     final List<String> keys = keysValues.keySet().stream().toList();
 
     final List<String> canonicalMapsContentHashes = new ArrayList<>();
+    final List<String> originalMapsContentHashes = new ArrayList<>();
     for (int i = 0; i < ENOUGH_SHUFFLE_TRIES; i++) {
-      final List<String> keysCopy = new ArrayList<>(keys);
-      Collections.shuffle(keysCopy);
-      try (final PersistentHashMap<String, String> map = createPHMap()) {
-        for (String key : keysCopy) {
+      final List<String> shuffledKeys = new ArrayList<>(keys);
+      Collections.shuffle(shuffledKeys);
+      try (final PersistentHashMap<String, String> map = createPHMap(EnumeratorStringDescriptor.INSTANCE,
+                                                                     EnumeratorStringDescriptor.INSTANCE)) {
+        for (String key : shuffledKeys) {
           final String value = keysValues.get(key);
           map.put(key, value);
         }
+        originalMapsContentHashes.add(hashOfContent(map));
         final PersistentHashMap<String, String> canonicalMap = canonicalize(map, sorter);
-        final String hash = hashOfContent(canonicalMap);
-        canonicalMapsContentHashes.add(hash);
+        canonicalMapsContentHashes.add(hashOfContent(canonicalMap));
       }
     }
 
     assertEquals(
-      "All content hashes must be the same",
+      "All content hashes must be the same for canonical maps",
       1,
       new HashSet<>(canonicalMapsContentHashes).size()
+    );
+    assertNotEquals(
+      "Content expected to be different for original maps",
+      1,
+      new HashSet<>(originalMapsContentHashes).size()
     );
   }
 
@@ -205,51 +226,50 @@ public class PersistentHashMapCanonicalizationTest {
     return sb.toString();
   }
 
-  private PersistentHashMap<String, String> canonicalize(
-    final @NotNull PersistentHashMap<String, String> originalMap,
-    final @NotNull Function<List<String>, List<String>> stableSorter) throws IOException {
+  private <K, V> PersistentHashMap<K, V> canonicalize(
+    final @NotNull PersistentHashMap<K, V> originalMap,
+    final @NotNull Function<List<K>, List<K>> stableSorter) throws IOException {
     //'Canonical' version of PersistentMap is the map with the same key-values, but added in strict
     // deterministic order (natural string order in this case).
-    final PersistentHashMap<String, String> canonicalMap = createPHMap();
-    return PersistentHashMap.canonicalize(originalMap, canonicalMap, stableSorter);
-  }
-
-  private PersistentMapBase<String, String> canonicalize(
-    final @NotNull PersistentMapBase<String, String> originalMap,
-    final @NotNull Function<List<String>, List<String>> stableSorter) throws IOException {
-    //'Canonical' version of PersistentMap is the map with the same key-values, but added in strict
-    // deterministic order (natural string order in this case).
-    final PersistentMapBase<String, String> canonicalMap = createPHMapBase();
-    return PersistentMapBase.canonicalize(originalMap, canonicalMap, stableSorter);
+    final PersistentMapBase<K, V> mapImpl = originalMap.getImpl();
+    final KeyDescriptor<K> keysDescriptor = ((PersistentMapImpl<K, V>)mapImpl).getKeyDescriptor();
+    final DataExternalizer<V> valuesExternalizer = mapImpl.getValuesExternalizer();
+    final PersistentHashMap<K, V> canonicalMap = createPHMap(
+      keysDescriptor,
+      valuesExternalizer
+    );
+    return PersistentHashMap.canonicalize(originalMap, canonicalMap, stableSorter, v -> v);
   }
 
   @NotNull
-  private PersistentHashMap<String, String> createPHMap() throws IOException {
+  private <K, V> PersistentHashMap<K, V> createPHMap(final @NotNull KeyDescriptor<K> keyDescriptor,
+                                                     final @NotNull DataExternalizer<V> valueDescriptor) throws IOException {
     //RC: PHM uses >1 file to store data, but doesn't provide methods to get all files it is used. Hence,
     //    the workaround here: create dedicated folder for each PHM, and treat all files in that folder
     //    as apt PHM content
     final File folder = tmpDirectory.newFolder();
     final File mainFile = new File(folder, "map");
-    final PersistentHashMap<String, String> persistentMap = new PersistentHashMap<>(
+    final PersistentHashMap<K, V> persistentMap = new PersistentHashMap<>(
       mainFile,
-      EnumeratorStringDescriptor.INSTANCE,
-      EnumeratorStringDescriptor.INSTANCE
+      keyDescriptor,
+      valueDescriptor
     );
     mapsEntries.put(persistentMap, new PHMEntry(folder));
     return persistentMap;
   }
 
-  private PersistentMapBase<String, String> createPHMapBase() throws IOException {
-    final PersistentHashMap<String, String> map = createPHMap();
+  private <K, V> PersistentMapBase<K, V> createPHMapBase(final @NotNull KeyDescriptor<K> keyDescriptor,
+                                                         final @NotNull DataExternalizer<V> valueExternalizer) throws IOException {
+    final PersistentHashMap<K, V> map = createPHMap(keyDescriptor, valueExternalizer);
     return stealTheImpl(map);
   }
 
   @SuppressWarnings("unchecked")
-  private static PersistentMapBase<String, String> stealTheImpl(final PersistentHashMap<String, String> map) {
+  private static <K, V> PersistentMapBase<K, V> stealTheImpl(final PersistentHashMap<K, V> map) {
     try {
       final Field impl = map.getClass().getDeclaredField("myImpl");
       impl.setAccessible(true);
-      return (PersistentMapBase<String, String>)impl.get(map);
+      return (PersistentMapBase<K, V>)impl.get(map);
     }
     catch (Throwable t) {
       throw new AssertionError("Can't steal PersistentHashMap.myImpl field", t);

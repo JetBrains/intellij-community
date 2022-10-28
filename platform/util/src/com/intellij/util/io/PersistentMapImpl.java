@@ -37,10 +37,11 @@ import java.util.stream.Stream;
  * <li> When the key is removed from PHM, offset storage is set to zero. </li>
  * </ul>
  * <p>
- * It is important to note that offset
- * is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
+ * It is important to note that offset is non-negative and can be 4 or 8 bytes, depending on the size of the ".values" file.
+ * <br/>
  * PHM can work in appendable mode: for particular key additional calculated chunk of value can be appended to ".values" file with the offset
  * of previously calculated chunk.
+ * <br/>
  * For performance reasons we try hard to minimize storage occupied by keys / offsets in ".values" file: this storage is allocated as (limited)
  * direct byte buffers so 4 bytes offset is used until it is possible. Generic record produced by enumerator used with PHM as part of new
  * key enumeration is <enumerated_id>? [.values file offset 4 or 8 bytes], however for unique integral keys enumerate_id isn't produced.

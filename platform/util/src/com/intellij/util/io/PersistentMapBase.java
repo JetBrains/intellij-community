@@ -16,6 +16,7 @@ import java.util.function.Function;
  * A base interface for custom persistent map implementations.
  * It is intentionally made not to extend other interfaces.
  * Wrap this class with {@link PersistentHashMap} if you need it to implement other interfaces
+ *
  * @see PersistentHashMap
  * @see PersistentMapBuilder
  */
@@ -108,7 +109,7 @@ public interface PersistentMapBase<Key, Value> {
   void closeAndDelete() throws IOException;
 
   /** @return keys count, or -1 if implementation doesn't provide this info */
-  default int keysCount(){
+  default int keysCount() {
     return -1;
   }
 
@@ -121,25 +122,39 @@ public interface PersistentMapBase<Key, Value> {
    * binary content. It is done by copying entries to canonicalMap in some stable order, defined by
    * stableKeysSorter, which guarantees canonicalMap to have fixed binary representation on disk.
    *
-   * @param stableKeysSorter function to sort List of keys. Must provide stable sort -- i.e. same set
-   *                         of keys must always come out sorted in the same order, regardless of their
-   *                         original order
+   * @param stableKeysSorter   function to sort List of keys. Must provide stable sort -- i.e. same set
+   *                           of keys must always come out sorted in the same order, regardless of their
+   *                           original order
    * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
-   *                     receiver of keys-values from originalMap)
+   *                           receiver of keys-values from originalMap)
+   * @param valueCanonicalizer function to create canonicalized version of map values
    */
   static <K, V, M extends PersistentMapBase<? super K, ? super V>> M canonicalize(
     final @NotNull PersistentMapBase<K, V> originalMap,
-    /* @OutParam */
-    final @NotNull M targetCanonicalMap,
-    final @NotNull Function<List<K>, List<K>> stableKeysSorter
+    final @NotNull /* @OutParam */ M targetCanonicalMap,
+    final @NotNull Function<List<K>, List<K>> stableKeysSorter,
+    final @NotNull Function<V, V> valueCanonicalizer
   ) throws IOException {
     final List<K> keys = new ArrayList<>();
-    originalMap.processExistingKeys(keys::add);
-    final List<K> sortedKeys = stableKeysSorter.apply(keys);
+    originalMap.processExistingKeys(k -> {
+      keys.add(k);
+      return true;
+    });
+
+    final List<? extends K> sortedKeys = stableKeysSorter.apply(keys);
     for (K key : sortedKeys) {
       final V value = originalMap.get(key);
-      targetCanonicalMap.put(key, value);
+      final V canonicalizedValue = valueCanonicalizer.apply(value);
+      targetCanonicalMap.put(key, canonicalizedValue);
     }
     return targetCanonicalMap;
+  }
+
+  static <K, V, M extends PersistentMapBase<? super K, ? super V>> M canonicalize(
+    final @NotNull PersistentMapBase<K, V> originalMap,
+    final @NotNull /* @OutParam */ M targetCanonicalMap,
+    final @NotNull Function<List<K>, List<K>> stableKeysSorter) throws IOException {
+    
+    return canonicalize(originalMap, targetCanonicalMap, stableKeysSorter, Function.identity());
   }
 }
