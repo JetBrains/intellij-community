@@ -45,36 +45,34 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   public void build(@NotNull ArtifactBuildTarget target,
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
-    List<BuildTask> preprocessingTasks = createArtifactTasks(target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
-    final Set<JarInfo> missingJars = collectMissingJars(target, context);
     try {
-      if (!holder.hasRemovedFiles() && !holder.hasDirtyFiles() && preprocessingTasks.isEmpty() && missingJars.isEmpty()) {
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      final Int2ObjectMap<Set<String>> filesToProcess = new Int2ObjectOpenHashMap<>();
+      List<BuildTask> preprocessingTasks = createArtifactTasks(target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
+      final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
+      collectMissingFiles(target, context, List.of(), outSrcMapping, filesToProcess);
+      final Set<JarInfo> missingJars = collectMissingJars(target, context);
+
+      if (!holder.hasRemovedFiles() && !holder.hasDirtyFiles() && preprocessingTasks.isEmpty() && missingJars.isEmpty() && filesToProcess.isEmpty()) {
         return;
       }
-    }
-    catch (IOException e) {
-      throw new ProjectBuildException(e);
-    }
 
-    JpsArtifact artifact = target.getArtifact();
-    String outputFilePath = artifact.getOutputFilePath();
-    if (StringUtil.isEmpty(outputFilePath)) {
-      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
-                                                 JpsBuildBundle.message("build.message.cannot.build.0.artifact.output.path.is.not.specified", artifact.getName())));
-      return;
-    }
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final ArtifactSorter sorter = new ArtifactSorter(pd.getModel());
-    final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
-    final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
-    if (selfIncluding != null) {
-      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
-                                                 JpsBuildBundle.message("build.message.cannot.build.0.artifact.it.includes.itself", artifact.getName(), selfIncluding.getName(), selfIncluding.equals(artifact) ? 0 : 1)));
-      return;
-    }
+      JpsArtifact artifact = target.getArtifact();
+      String outputFilePath = artifact.getOutputFilePath();
+      if (StringUtil.isEmpty(outputFilePath)) {
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                   JpsBuildBundle.message("build.message.cannot.build.0.artifact.output.path.is.not.specified", artifact.getName())));
+        return;
+      }
+      final ArtifactSorter sorter = new ArtifactSorter(pd.getModel());
+      final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
+      final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
+      if (selfIncluding != null) {
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                   JpsBuildBundle.message("build.message.cannot.build.0.artifact.it.includes.itself", artifact.getName(), selfIncluding.getName(), selfIncluding.equals(artifact) ? 0 : 1)));
+        return;
+      }
 
-
-    try {
       final Collection<String> deletedFiles = holder.getRemovedFiles(target);
 
       String messageText = JpsBuildBundle.message("progress.message.building.artifact.0", artifact.getName());
@@ -83,9 +81,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       runArtifactTasks(preprocessingTasks, target.getArtifact(), context, ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
-      final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
 
-      final Int2ObjectMap<Set<String>> filesToProcess = new Int2ObjectOpenHashMap<>();
       final MultiMap<String, String> filesToDelete = new MultiMap<>();
       final Set<String> deletedOutputPaths = CollectionFactory.createFilePathSet();
       for (String sourcePath : deletedFiles) {
@@ -184,6 +180,29 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
     }
     return missingJars;
+  }
+
+  private static void collectMissingFiles(@NotNull ArtifactBuildTarget target, @NotNull final CompileContext context,
+                                          Collection<String> deletedFiles,
+                                          ArtifactOutputToSourceMapping outSrcMapping,
+                                          Int2ObjectMap<Set<String>> filesToProcess) throws IOException {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
+      DestinationInfo destination = descriptor.getDestinationInfo();
+      if (destination instanceof ExplodedDestinationInfo) {
+        ExplodedDestinationInfo explodedDestinationInfo = ((ExplodedDestinationInfo)destination);
+        if (!new File(explodedDestinationInfo.getOutputFilePath()).exists()) {
+          String outputPath = explodedDestinationInfo.getOutputFilePath();
+          final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+          if (sources != null) {
+            for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+              addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+              outSrcMapping.remove(outputPath);
+            }
+          }
+        }
+      }
+    }
   }
 
   private static void collectSourcesCorrespondingToOutput(String outputPath, String sourcePath,
