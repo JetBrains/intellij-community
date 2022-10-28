@@ -232,7 +232,10 @@ impl RemoteDevLaunchConfiguration {
     pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
         let per_project_config_dir_name = project_path.file_name()
             .context("Failed to get project dir name, project path: {project_path:?}")
-            ?.to_string_lossy();
+            ?.to_string_lossy()
+            .replace("/", "_")
+            .replace("\\", "_")
+            .replace(":", "_");
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
         let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;
