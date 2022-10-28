@@ -34,7 +34,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(MemoryDumpCommand.PREFIX, MemoryDumpCommand::new),
       Map.entry(CleanCaches.PREFIX, CleanCaches::new),
       Map.entry(FindUsagesCommand.PREFIX, FindUsagesCommand::new),
-      Map.entry(EnterCommand.PREFIX, EnterCommand::new),
+      Map.entry(IdeEditorKeyCommand.PREFIX, IdeEditorKeyCommand::new),
       Map.entry(ShowAltEnter.PREFIX, ShowAltEnter::new),
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
       Map.entry(CompareIndicesKt.PREFIX, CompareIndices::new),
@@ -64,7 +64,9 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(TestTipsAndFeaturesIntegrationCommand.PREFIX, TestTipsAndFeaturesIntegrationCommand::new),
       Map.entry(ExpandMainMenuCommand.PREFIX, ExpandMainMenuCommand::new),
       Map.entry(ExpandEditorMenuCommand.PREFIX, ExpandEditorMenuCommand::new),
-      Map.entry(OpenRandomFileCommand.PREFIX, OpenRandomFileCommand::new)
+      Map.entry(OpenRandomFileCommand.PREFIX, OpenRandomFileCommand::new),
+      Map.entry(PressEnterKeyCommand.PREFIX, PressEnterKeyCommand::new),
+      Map.entry(WaitForDumbCommand.PREFIX, WaitForDumbCommand::new)
     );
   }
 }

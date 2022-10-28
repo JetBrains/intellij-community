@@ -24,12 +24,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-public class EnterCommand extends KeyCodeTypeCommand {
+public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
 
   public static final String PREFIX = CMD_PREFIX + "pressKey";
   private String actionID;
 
-  public EnterCommand(@NotNull String text, int line) {
+  public IdeEditorKeyCommand(@NotNull String text, int line) {
     super(text, line);
   }
 
