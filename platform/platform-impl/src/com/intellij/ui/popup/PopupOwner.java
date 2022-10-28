@@ -17,9 +17,14 @@ package com.intellij.ui.popup;
 
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 public interface PopupOwner {
   @Nullable
   Point getBestPopupPosition();
+  @Nullable
+  default JComponent getPopupComponent() {
+    return null;
+  }
 }
