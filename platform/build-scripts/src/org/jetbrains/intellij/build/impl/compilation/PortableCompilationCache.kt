@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
@@ -45,9 +46,18 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * Server which stores [PortableCompilationCache]
    */
-  private class RemoteCache(context: CompilationContext) {
+  internal class RemoteCache(context: CompilationContext) {
     val url by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
     val uploadUrl by lazy { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url", context) }
+    val authHeader by lazy {
+      val username = System.getProperty("jps.auth.spaceUsername")
+      val password = System.getProperty("jps.auth.spacePassword")
+      when {
+        password == null -> ""
+        username == null -> "Bearer $password"
+        else -> "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray())
+      }
+    }
   }
 
   private val forceDownload = bool(FORCE_DOWNLOAD_PROPERTY)
@@ -62,13 +72,13 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private val downloader by lazy {
     val availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY)
-    PortableCompilationCacheDownloader(context, git, remoteCache.url, remoteGitUrl, availableForHeadCommit, jpsCaches.skipDownload)
+    PortableCompilationCacheDownloader(context, git, remoteCache, remoteGitUrl, availableForHeadCommit, jpsCaches.skipDownload)
   }
 
   private val uploader by lazy {
     val s3Folder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder", context)
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit", context)
-    PortableCompilationCacheUploader(context, remoteCache.uploadUrl, remoteGitUrl, commitHash, s3Folder, jpsCaches.skipUpload, forceRebuild)
+    PortableCompilationCacheUploader(context, remoteCache, remoteGitUrl, commitHash, s3Folder, jpsCaches.skipUpload, forceRebuild)
   }
 
   /**

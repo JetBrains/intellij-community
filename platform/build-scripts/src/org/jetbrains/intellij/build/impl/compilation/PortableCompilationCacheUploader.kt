@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,
-  remoteCacheUrl: String,
+  private val remoteCache: PortableCompilationCache.RemoteCache,
   private val remoteGitUrl: String,
   private val commitHash: String,
   s3Folder: String,
@@ -39,7 +39,7 @@ internal class PortableCompilationCacheUploader(
   private val uploadedOutputCount = AtomicInteger()
 
   private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
-  private val uploader = Uploader(remoteCacheUrl)
+  private val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
 
@@ -150,7 +150,7 @@ internal class PortableCompilationCacheUploader(
 
   private fun remoteCommitHistory(): CommitsHistory {
     return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
-      CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE))
+      CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE, remoteCache.authHeader))
     }
     else {
       CommitsHistory(emptyMap())
@@ -167,7 +167,7 @@ internal class PortableCompilationCacheUploader(
   }
 }
 
-private class Uploader(serverUrl: String) {
+private class Uploader(serverUrl: String, val authHeader: String) {
   private val serverUrl = toUrlWithTrailingSlash(serverUrl)
 
   fun upload(path: String, file: Path): Boolean {
@@ -178,6 +178,7 @@ private class Uploader(serverUrl: String) {
       }
       retryWithExponentialBackOff {
         httpClient.newCall(Request.Builder().url(url)
+          .header("Authorization", authHeader)
           .put(object : RequestBody() {
             override fun contentType() = MEDIA_TYPE_BINARY
 
@@ -196,7 +197,7 @@ private class Uploader(serverUrl: String) {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).use { span ->
       val code = retryWithExponentialBackOff {
-        httpClient.head(url).use {
+        httpClient.head(url, authHeader).use {
           check(it.code == 200 || it.code == 404) {
             "HEAD $url responded with unexpected ${it.code}"
           }
@@ -208,7 +209,7 @@ private class Uploader(serverUrl: String) {
           /**
            * FIXME dirty workaround for unreliable [serverUrl]
            */
-          httpClient.get(url).use {
+          httpClient.get(url, authHeader).use {
             it.peekBody(byteCount = 1)
           }
         }
@@ -224,8 +225,8 @@ private class Uploader(serverUrl: String) {
     return false
   }
 
-  fun getAsString(path: String) = retryWithExponentialBackOff {
-    httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+  fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
+    httpClient.get(pathToUrl(path), authHeader).useSuccessful { it.body.string() }
   }
 
   private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"
