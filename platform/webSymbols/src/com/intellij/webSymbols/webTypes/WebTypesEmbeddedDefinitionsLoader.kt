@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
-import com.intellij.webSymbols.WebSymbolsContainer
 import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
 
@@ -33,8 +32,8 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
     fun getPackagesEnabledByDefault(project: Project): Map<String, SemVer?> =
       getInstance(project).packagesEnabledByDefault
 
-    fun getDefaultWebTypesContainer(project: Project): WebTypesSymbolsContainerBase =
-      getInstance(project).myDefaultWebTypesContainer
+    fun getDefaultWebTypesScope(project: Project): WebTypesSymbolsScopeBase =
+      getInstance(project).myDefaultWebTypesScope
 
     private val LOG = Logger.getInstance(WebTypesEmbeddedDefinitionsLoader::class.java)
 
@@ -45,20 +44,20 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
     WebTypesDefinitionsEP.EP_NAME_DEPRECATED.addChangeListener(Runnable { it.drop() }, this)
   }
 
-  private val webTypesEnabledPackages: Set<String> = state.value.registry.packages
+  private val webTypesEnabledPackages: Set<String> = state.value.versionsRegistry.packages
   private val packagesEnabledByDefault: Map<String, SemVer> = state.value.packagesEnabledByDefault
-  private val myDefaultWebTypesContainer: WebTypesSymbolsContainerBase = state.value.myDefaultWebTypesContainer
+  private val myDefaultWebTypesScope: WebTypesSymbolsScopeBase = state.value.myDefaultWebTypesScope
 
   private fun getWebTypes(packageName: String, packageVersion: SemVer?): Pair<PluginDescriptor, WebTypes>? =
-    state.value.registry.get(packageName, packageVersion)
+    state.value.versionsRegistry.get(packageName, packageVersion)
 
   override fun dispose() {
   }
 
   private class State(private val project: Project) {
-    val registry = WebTypesVersionsRegistry<Pair<PluginDescriptor, WebTypes>>()
+    val versionsRegistry = WebTypesVersionsRegistry<Pair<PluginDescriptor, WebTypes>>()
     val packagesEnabledByDefault: Map<String, SemVer>
-    val myDefaultWebTypesContainer: WebTypesSymbolsContainerBase
+    val myDefaultWebTypesScope: WebTypesSymbolsScopeBase
 
     init {
       val packagesEnabledByDefault = mutableMapOf<String, SemVer>()
@@ -70,17 +69,17 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
             packagesEnabledByDefault.merge(webTypes.name, semVer) { a, b ->
               if (a.isGreaterOrEqualThan(b)) a else b
             }
-          registry.put(webTypes.name, semVer, Pair(it.pluginDescriptor, webTypes))
+          versionsRegistry.put(webTypes.name, semVer, Pair(it.pluginDescriptor, webTypes))
         }
         catch (e: PluginException) {
           LOG.error(e)
         }
       }
       this.packagesEnabledByDefault = packagesEnabledByDefault
-      myDefaultWebTypesContainer = object : WebTypesSymbolsContainerBase() {
+      myDefaultWebTypesScope = object : WebTypesSymbolsScopeBase() {
         init {
           packagesEnabledByDefault.forEach {
-            registry.get(it.key, it.value)?.let { (pluginDescriptor, webTypes) ->
+            versionsRegistry.get(it.key, it.value)?.let { (pluginDescriptor, webTypes) ->
               addWebTypes(webTypes, WebTypesJsonOriginImpl(
                 webTypes,
                 typeSupport = WebTypesSymbolTypeSupport.get(webTypes),
@@ -91,11 +90,11 @@ class WebTypesEmbeddedDefinitionsLoader(val project: Project) : Disposable {
           }
         }
 
-        override fun createPointer(): Pointer<out WebTypesSymbolsContainerBase> {
+        override fun createPointer(): Pointer<out WebTypesSymbolsScopeBase> {
           val project = this@State.project
-          return Pointer<WebTypesSymbolsContainerBase> {
+          return Pointer<WebTypesSymbolsScopeBase> {
             if (project.isDisposed) return@Pointer null
-            getInstance(project).state.value.myDefaultWebTypesContainer
+            getInstance(project).state.value.myDefaultWebTypesScope
           }
         }
       }

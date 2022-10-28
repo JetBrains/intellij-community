@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.webSymbols
 
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension.Companion.hasOnlyStandardHtmlSymbols
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator.Companion.hasOnlyStandardHtmlSymbols
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector
@@ -20,7 +20,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
 
@@ -32,11 +32,11 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
         ?.parent?.asSafely<HtmlTag>()
         ?.let { tag ->
           CachedValuesManager.getCachedValue(tag) {
-            val registry = WebSymbolsRegistryManager.get(tag, false)
+            val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              registry.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name))
+              queryExecutor.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name))
                 .getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, registry
+              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
           }
         }
@@ -46,11 +46,11 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
         ?.let { attr ->
           CachedValuesManager.getCachedValue(attr) {
             val tag = attr.parent as HtmlTag
-            val registry = WebSymbolsRegistryManager.get(tag, false)
+            val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              registry.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS,
-                                                tag.name, WebSymbol.KIND_HTML_ATTRIBUTES, attr.name)).getLanguageToInject(),
-              PsiModificationTracker.MODIFICATION_COUNT, registry
+              queryExecutor.runNameMatchQuery(listOf(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS,
+                                                     tag.name, WebSymbol.KIND_HTML_ATTRIBUTES, attr.name)).getLanguageToInject(),
+              PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
           }
         }

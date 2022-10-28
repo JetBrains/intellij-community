@@ -19,9 +19,9 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.registry.WebSymbolMatch
-import com.intellij.webSymbols.registry.WebSymbolNamesProvider
-import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import java.util.*
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts
@@ -96,7 +96,7 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
   }
 
 fun WebSymbol.match(nameToMatch: String,
-                    context: Stack<WebSymbolsContainer>,
+                    context: Stack<WebSymbolsScope>,
                     params: WebSymbolsNameMatchQueryParams): List<WebSymbol> {
   pattern?.let { pattern ->
     context.push(this)
@@ -118,11 +118,11 @@ fun WebSymbol.match(nameToMatch: String,
     }
   }
 
-  val registry = params.registry
-  val queryNames = registry.namesProvider.getNames(this.namespace, this.kind,
-                                                   nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = registry.namesProvider.getNames(this.namespace, this.kind, this.matchedName,
-                                                    WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  val queryExecutor = params.queryExecutor
+  val queryNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind,
+                                                        nameToMatch, WebSymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(this.namespace, this.kind, this.matchedName,
+                                                         WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return if (queryNames.any { symbolNames.contains(it) }) {
     listOf(this.withMatchedName(nameToMatch))
   }

@@ -7,7 +7,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
@@ -33,14 +33,14 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     configProvider.isStaticAndRequired
 
   override fun match(owner: WebSymbol?,
-                     contextStack: Stack<WebSymbolsContainer>,
+                     scopeStack: Stack<WebSymbolsScope>,
                      itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
-    process(contextStack, params) { patterns, newItemsProvider, isDeprecated,
-                                    isRequired, priority, proximity, repeats, unique ->
-      performPatternMatch(params, start, end, patterns, repeats, unique, contextStack, newItemsProvider)
+    process(scopeStack, params) { patterns, newItemsProvider, isDeprecated,
+                                  isRequired, priority, proximity, repeats, unique ->
+      performPatternMatch(params, start, end, patterns, repeats, unique, scopeStack, newItemsProvider)
         .let { matchResults ->
           if (!isRequired)
             matchResults.filter { matchResult ->
@@ -86,19 +86,19 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
 
   override fun getCompletionResults(owner: WebSymbol?,
-                                    contextStack: Stack<WebSymbolsContainer>,
+                                    scopeStack: Stack<WebSymbolsScope>,
                                     itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
-    process(contextStack, params) { patterns, newItemsProvider, isDeprecated,
-                                    isRequired, priority, proximity, repeats, unique ->
+    process(scopeStack, params) { patterns, newItemsProvider, isDeprecated,
+                                  isRequired, priority, proximity, repeats, unique ->
       var staticPrefixes: Set<String> = emptySet()
       val runs = if (start == end) {
         listOf(Triple(start, start, emptySet()))
       }
       else if (repeats && getStaticPrefixes().filter { it != "" }.toSet().also { staticPrefixes = it }.isNotEmpty()) {
-        repeatingPatternMatch(start, end, params, staticPrefixes, contextStack, patterns, newItemsProvider, true)
+        repeatingPatternMatch(start, end, params, staticPrefixes, scopeStack, patterns, newItemsProvider, true)
           .map { (lastMatchStart, matchSegments) ->
             val prevNames = mutableSetOf<String>()
             for (matchedSegment in matchSegments) {
@@ -129,7 +129,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
       val patternsItems = runs.flatMap { (localStart, localEnd, prevNames) ->
         patterns.flatMap { pattern ->
-          pattern.getCompletionResults(null, contextStack, newItemsProvider, params, localStart, localEnd)
+          pattern.getCompletionResults(null, scopeStack, newItemsProvider, params, localStart, localEnd)
             .items
             .asSequence()
             .let { items ->
@@ -141,7 +141,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
               else items
             }
             .let { items ->
-              val defaultSource = itemsProvider?.delegate ?: contextStack.peek() as? WebSymbol
+              val defaultSource = itemsProvider?.delegate ?: scopeStack.peek() as? WebSymbol
               items.map { item ->
                 item.with(
                   priority = priority ?: item.priority,
@@ -158,7 +158,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       CompletionResults(patternsItems, isRequired)
     }
 
-  private fun <T> process(contextStack: Stack<WebSymbolsContainer>,
+  private fun <T> process(scopeStack: Stack<WebSymbolsScope>,
                           params: MatchParameters,
                           action: (patterns: List<WebSymbolsPattern>,
                                    itemsProvider: WebSymbolsPatternItemsProvider?,
@@ -168,11 +168,11 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                    patternProximity: Int?,
                                    patternRepeat: Boolean,
                                    patternUnique: Boolean) -> T): T {
-    val options = configProvider.getOptions(params, contextStack)
+    val options = configProvider.getOptions(params, scopeStack)
 
     val delegate = options.delegate
     if (delegate != null) {
-      contextStack.push(delegate)
+      scopeStack.push(delegate)
     }
     try {
       return action(patterns, options.itemsProvider, options.isDeprecated, options.isRequired, options.priority,
@@ -180,7 +180,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
     finally {
       if (delegate != null) {
-        contextStack.pop()
+        scopeStack.pop()
       }
     }
   }
@@ -191,7 +191,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                   patterns: List<WebSymbolsPattern>,
                                   repeats: Boolean,
                                   unique: Boolean,
-                                  contextStack: Stack<WebSymbolsContainer>,
+                                  contextStack: Stack<WebSymbolsScope>,
                                   newItemsProvider: WebSymbolsPatternItemsProvider?): List<MatchResult> {
     // shortcut
     if (start == end) {
@@ -220,7 +220,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                     end: Int,
                                     params: MatchParameters,
                                     staticPrefixes: Set<String>,
-                                    contextStack: Stack<WebSymbolsContainer>,
+                                    scopeStack: Stack<WebSymbolsScope>,
                                     patterns: List<WebSymbolsPattern>,
                                     newItemsProvider: WebSymbolsPatternItemsProvider?,
                                     unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {
@@ -231,9 +231,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       val matchStart = prevResult?.first?.lastOrNull()?.end ?: start
       val matchEnd = findMatchEnd(params.name, staticPrefixes, matchStart, end)
 
-      withPrevMatchContext(contextStack, prevResult?.first?.flatMap { it.segments }) {
+      withPrevMatchScope(scopeStack, prevResult?.first?.flatMap { it.segments }) {
         for (pattern in patterns) {
-          pattern.match(null, contextStack, newItemsProvider, params, matchStart, matchEnd).forEach {
+          pattern.match(null, scopeStack, newItemsProvider, params, matchStart, matchEnd).forEach {
             val prevMatchedSegments: List<CharSequence>
             var matchResult: MatchResult = it
             if (unique) {

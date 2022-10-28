@@ -35,8 +35,8 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextProvider
 import com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkExtension
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
-import com.intellij.webSymbols.registry.impl.WebSymbolsRegistryManagerImpl
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
+import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl
 import com.intellij.webSymbols.utils.findOriginalFile
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -229,8 +229,8 @@ private fun calcProximityPerContextFromRules(directory: PsiDirectory,
 }
 
 private fun loadContextConfiguration(directory: PsiDirectory): ContextConfigInDir {
-  val registryManager = WebSymbolsRegistryManager.getInstance(directory.project) as WebSymbolsRegistryManagerImpl
-  val (rules, tracker) = registryManager.getContextRules(directory)
+  val queryExecutorFactory = WebSymbolsQueryExecutorFactory.getInstance(directory.project) as WebSymbolsQueryExecutorFactoryImpl
+  val (rules, tracker) = queryExecutorFactory.getContextRules(directory)
 
   val flatRules = rules.keySet().associateBy({ it }, { kind ->
     val kindRules = rules[kind]

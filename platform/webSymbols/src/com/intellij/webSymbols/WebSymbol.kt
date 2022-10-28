@@ -17,7 +17,7 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import java.util.*
 import javax.swing.Icon
 
@@ -26,7 +26,7 @@ import javax.swing.Icon
  * DEPRECATION -> @JvmDefault
  **/
 @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
-interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, PresentableSymbol, DocumentationSymbol, NavigatableSymbol {
 
   val origin: WebSymbolOrigin
 
@@ -51,7 +51,7 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   val nameSegments: List<WebSymbolNameSegment>
     get() = listOf(WebSymbolNameSegment(0, matchedName.length, this))
 
-  val contextContainers: Sequence<WebSymbolsContainer>
+  val queryScope: Sequence<WebSymbolsScope>
     get() = sequenceOf(this)
 
   @get:NlsSafe
@@ -154,8 +154,8 @@ interface WebSymbol : WebSymbolsContainer, Symbol, PresentableSymbol, Documentat
   fun isEquivalentTo(symbol: Symbol): Boolean =
     this == symbol
 
-  fun adjustNameForRefactoring(registry: WebSymbolsRegistry, newName: String, occurence: String): String =
-    registry.namesProvider.adjustRename(namespace, kind, matchedName, newName, occurence)
+  fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
+    queryExecutor.namesProvider.adjustRename(namespace, kind, matchedName, newName, occurence)
 
   fun validateName(name: String): String? = null
 

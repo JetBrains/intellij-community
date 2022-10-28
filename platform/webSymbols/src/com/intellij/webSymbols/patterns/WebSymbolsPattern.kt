@@ -5,8 +5,8 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.*
-import com.intellij.webSymbols.registry.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.registry.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 
 abstract class WebSymbolsPattern {
 
@@ -15,26 +15,26 @@ abstract class WebSymbolsPattern {
   internal open fun isStaticAndRequired(): Boolean = true
 
   internal fun match(owner: WebSymbol?,
-                     context: Stack<WebSymbolsContainer>,
+                     scope: Stack<WebSymbolsScope>,
                      name: String,
                      params: WebSymbolsNameMatchQueryParams): List<MatchResult> =
-    match(owner, context, null, MatchParameters(name, params), 0, name.length)
+    match(owner, scope, null, MatchParameters(name, params), 0, name.length)
       .map { it.removeEmptySegments() }
 
   internal fun getCompletionResults(owner: WebSymbol?,
-                                    context: Stack<WebSymbolsContainer>,
+                                    scope: Stack<WebSymbolsScope>,
                                     name: String,
                                     params: WebSymbolsCodeCompletionQueryParams): List<WebSymbolCodeCompletionItem> =
-    getCompletionResults(owner, Stack(context), null,
+    getCompletionResults(owner, Stack(scope), null,
                          CompletionParameters(name, params), 0, name.length).items
 
   internal abstract fun match(owner: WebSymbol?,
-                              contextStack: Stack<WebSymbolsContainer>,
+                              scopeStack: Stack<WebSymbolsScope>,
                               itemsProvider: WebSymbolsPatternItemsProvider?,
                               params: MatchParameters, start: Int, end: Int): List<MatchResult>
 
   internal abstract fun getCompletionResults(owner: WebSymbol?,
-                                             contextStack: Stack<WebSymbolsContainer>,
+                                             scopeStack: Stack<WebSymbolsScope>,
                                              itemsProvider: WebSymbolsPatternItemsProvider?,
                                              params: CompletionParameters, start: Int, end: Int): CompletionResults
 

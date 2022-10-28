@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsContainer
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternItemsProvider
 import com.intellij.webSymbols.utils.hideFromCompletion
@@ -15,7 +15,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun match(owner: WebSymbol?,
-                     contextStack: Stack<WebSymbolsContainer>,
+                     scopeStack: Stack<WebSymbolsScope>,
                      itemsProvider: WebSymbolsPatternItemsProvider?,
                      params: MatchParameters,
                      start: Int,
@@ -23,7 +23,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
     listOf(MatchResult(WebSymbolNameSegment(start, start)))
 
   override fun getCompletionResults(owner: WebSymbol?,
-                                    contextStack: Stack<WebSymbolsContainer>,
+                                    scopeStack: Stack<WebSymbolsScope>,
                                     itemsProvider: WebSymbolsPatternItemsProvider?,
                                     params: CompletionParameters,
                                     start: Int,

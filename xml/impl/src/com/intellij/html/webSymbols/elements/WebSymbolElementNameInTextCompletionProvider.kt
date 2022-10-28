@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 
 class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
@@ -26,14 +26,14 @@ class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompletionProvide
                               result: CompletionResultSet,
                               position: Int,
                               name: String,
-                              registry: WebSymbolsRegistry,
+                              queryExecutor: WebSymbolsQueryExecutor,
                               context: XmlElement) {
     if (!canProvideHtmlElementInTextCompletion(parameters)) return
 
     val patchedResultSet = patchResultSetForHtmlElementInTextCompletion(
       result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name)), parameters)
 
-    processCompletionQueryResults(registry, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS, name, position,
+    processCompletionQueryResults(queryExecutor, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS, name, position,
                                   filter = WebSymbolElementNameCompletionProvider.Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .withName("<" + it.name)

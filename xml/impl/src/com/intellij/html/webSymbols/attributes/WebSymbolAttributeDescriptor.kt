@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
-import com.intellij.html.webSymbols.WebSymbolsHtmlRegistryExtension
+import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -120,12 +120,12 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   override fun hasIdType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdType() }
 
   override fun hasIdRefType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<WebSymbolsHtmlRegistryExtension.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
   private fun matchEnum(value: String): List<WebSymbolCodeCompletionItem> =

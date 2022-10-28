@@ -2,21 +2,21 @@
 package com.intellij.webSymbols.webTypes.filters
 
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolsContainer
-import com.intellij.webSymbols.registry.WebSymbolsRegistry
+import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP
 
 interface WebSymbolsFilter {
 
   fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
-                            registry: WebSymbolsRegistry,
-                            context: List<WebSymbolsContainer>,
+                            queryExecutor: WebSymbolsQueryExecutor,
+                            scope: List<WebSymbolsScope>,
                             properties: Map<String, Any>): List<WebSymbolCodeCompletionItem>
 
   fun filterNameMatches(matches: List<WebSymbol>,
-                        registry: WebSymbolsRegistry,
-                        context: List<WebSymbolsContainer>,
+                        queryExecutor: WebSymbolsQueryExecutor,
+                        scope: List<WebSymbolsScope>,
                         properties: Map<String, Any>): List<WebSymbol>
 
 

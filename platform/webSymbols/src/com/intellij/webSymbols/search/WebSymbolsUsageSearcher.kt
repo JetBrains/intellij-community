@@ -21,8 +21,8 @@ import com.intellij.util.Query
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.references.WebSymbolReference
-import com.intellij.webSymbols.registry.WebSymbolNamesProvider
-import com.intellij.webSymbols.registry.WebSymbolsRegistryManager
+import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import java.util.*
 
 class WebSymbolsUsageSearcher : UsageSearcher {
@@ -38,7 +38,7 @@ class WebSymbolsUsageSearcher : UsageSearcher {
     @JvmStatic
     fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope) =
       (symbol.psiContext
-         ?.let { WebSymbolsRegistryManager.get(it, true) }
+         ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
          ?.namesProvider
          ?.getNames(symbol.namespace, symbol.kind,
                     symbol.name, WebSymbolNamesProvider.Target.NAMES_QUERY)?.asSequence()
