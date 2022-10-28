@@ -103,10 +103,14 @@ object CommandLineProcessor {
     }
 
     if (projects.isEmpty()) {
-      val project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject)
-                    ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
-      return CommandLineProcessorResult(project,
-                                        if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE)
+      val project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, tempProject, OpenProjectTask {
+        this.line = line
+        this.column = column
+      }) ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
+      return CommandLineProcessorResult(
+        project = project,
+        future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE,
+      )
     }
 
     NonProjectFileWritingAccessProvider.allowWriting(listOf(file))

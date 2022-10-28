@@ -18,15 +18,14 @@ abstract class ProjectOpenProcessor {
     val EXTENSION_POINT_NAME = ExtensionPointName<ProjectOpenProcessor>("com.intellij.projectOpenProcessor")
 
     @JvmStatic
-    fun getImportProvider(file: VirtualFile): ProjectOpenProcessor? = getImportProvider(file, false)
+    fun getImportProvider(file: VirtualFile): ProjectOpenProcessor? = getImportProvider(file = file, onlyIfExistingProjectFile = false)
 
     /**
      * @param onlyIfExistingProjectFile when true, doesn't return 'generic' providers that can open any non-project directory/text file
      * (e.g. PlatformProjectOpenProcessor)
      */
-    @JvmStatic
     fun getImportProvider(file: VirtualFile, onlyIfExistingProjectFile: Boolean): ProjectOpenProcessor? {
-      return EXTENSION_POINT_NAME.findFirstSafe { provider: ProjectOpenProcessor ->
+      return EXTENSION_POINT_NAME.findFirstSafe { provider ->
         provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))
       }
     }
