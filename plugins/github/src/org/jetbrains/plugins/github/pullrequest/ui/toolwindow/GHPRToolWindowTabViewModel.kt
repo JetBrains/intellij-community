@@ -3,12 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapStateScoped
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.URIUtil
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,14 +13,10 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 internal class GHPRToolWindowTabViewModel(private val scope: CoroutineScope,
-                                          private val project: Project,
                                           private val repositoriesManager: GHHostedRepositoriesManager,
                                           private val accountManager: GHAccountManager,
                                           private val connectionManager: GHRepositoryConnectionManager,
@@ -90,9 +81,7 @@ internal class GHPRToolWindowTabViewModel(private val scope: CoroutineScope,
     settings.selectedRepoAndAccount = repo to account
   }
 
-  private fun createConnectedVm(scope: CoroutineScope, connection: GHRepositoryConnection): GHPRTabContentViewModel.PullRequests {
-    return GHPRTabContentViewModel.PullRequests(scope, project.service(), connection)
-  }
+  private fun createConnectedVm(connection: GHRepositoryConnection) = GHPRTabContentViewModel.PullRequests(connection)
 
   fun canSelectDifferentRepoOrAccount(): Boolean {
     return viewState.value is GHPRTabContentViewModel.PullRequests && singleRepoAndAccountState.value == null
@@ -107,32 +96,6 @@ internal class GHPRToolWindowTabViewModel(private val scope: CoroutineScope,
 }
 
 internal sealed interface GHPRTabContentViewModel {
-
-  class Selectors(val selectorVm: GHRepositoryAndAccountSelectorViewModel)
-    : GHPRTabContentViewModel
-
-  class PullRequests(scope: CoroutineScope,
-                     private val dataContextRepo: GHPRDataContextRepository,
-                     private val connection: GHRepositoryConnection)
-    : GHPRTabContentViewModel, Disposable {
-
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(this)
-
-    val account = connection.account
-
-    init {
-      Disposer.register(scope.nestedDisposable(), this)
-      reloadContext()
-    }
-
-    fun reloadContext() {
-      dataContextRepo.clearContext(connection.repo.repository)
-      loadingModel.future = dataContextRepo.acquireContext(connection.repo.repository, connection.repo.remote,
-                                                           connection.account, connection.executor)
-    }
-
-    override fun dispose() {
-      dataContextRepo.clearContext(connection.repo.repository)
-    }
-  }
+  class Selectors(val selectorVm: GHRepositoryAndAccountSelectorViewModel) : GHPRTabContentViewModel
+  class PullRequests(val connection: GHRepositoryConnection) : GHPRTabContentViewModel
 }

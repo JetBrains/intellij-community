@@ -12,8 +12,6 @@ import com.intellij.ui.content.Content
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
-import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -44,22 +42,17 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
       }
     }
     is GHPRTabContentViewModel.PullRequests -> {
-      GHLoadingPanelFactory(vm.loadingModel, null, GithubBundle.message("cannot.load.data.from.github"),
-                            GHApiLoadingErrorHandler(project, vm.account) {
-                              vm.reloadContext()
-                            }).create { parent, ctx ->
-        val wrapper = Wrapper()
-        GHPRToolWindowTabComponentControllerImpl(project,
-                                                 project.service(),
-                                                 project.service(),
-                                                 ctx, wrapper, scope.nestedDisposable(),
-                                                 initialView) {
-          content.displayName = it
-        }.also {
-          ClientProperty.put(parent, GHPRToolWindowTabComponentController.KEY, it)
-        }
-        wrapper
+      val wrapper = Wrapper()
+      GHPRToolWindowTabComponentControllerImpl(project,
+                                               project.service(),
+                                               project.service(),
+                                               vm.connection.dataContext, wrapper, scope.nestedDisposable(),
+                                               initialView) {
+        content.displayName = it
+      }.also {
+        ClientProperty.put(wrapper, GHPRToolWindowTabComponentController.KEY, it)
       }
+      wrapper
     }
   }
 

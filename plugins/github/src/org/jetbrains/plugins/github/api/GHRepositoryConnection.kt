@@ -6,12 +6,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
-class GHRepositoryConnection(private val scope: CoroutineScope,
-                             override val repo: GHGitRepositoryMapping,
-                             override val account: GithubAccount,
-                             val executor: GithubApiRequestExecutor)
+internal class GHRepositoryConnection(private val scope: CoroutineScope,
+                                      override val repo: GHGitRepositoryMapping,
+                                      override val account: GithubAccount,
+                                      val dataContext: GHPRDataContext)
   : HostedGitRepositoryConnection<GHGitRepositoryMapping, GithubAccount> {
 
   override suspend fun close() {

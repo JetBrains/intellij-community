@@ -1,28 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.async.disposingScope
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -36,61 +36,58 @@ import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.Image
 import java.io.IOException
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 @Service
-internal class GHPRDataContextRepository(private val project: Project) {
+internal class GHPRDataContextRepository(private val project: Project) : Disposable {
 
-  private val repositories = mutableMapOf<GHRepositoryCoordinates, LazyCancellableBackgroundProcessValue<GHPRDataContext>>()
+  private val cs = disposingScope()
 
-  @RequiresEdt
-  fun acquireContext(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates,
-                     account: GithubAccount, requestExecutor: GithubApiRequestExecutor): CompletableFuture<GHPRDataContext> {
+  private val cache = ConcurrentHashMap<GHRepositoryCoordinates, GHPRDataContext>()
+  private val cacheGuard = Mutex()
 
-    return repositories.getOrPut(repository) {
-      val contextDisposable = Disposer.newDisposable()
-      LazyCancellableBackgroundProcessValue.create { indicator ->
-        ProgressManager.getInstance().submitIOTask(indicator) {
-          try {
-            loadContext(indicator, account, requestExecutor, repository, remote)
+  suspend fun getContext(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates,
+                         account: GithubAccount, requestExecutor: GithubApiRequestExecutor): GHPRDataContext =
+    withContext(cs.coroutineContext) {
+      cacheGuard.withLock {
+        val existing = cache[repository]
+        if (existing != null) return@withLock existing
+        try {
+          val context = withContext(Dispatchers.IO) {
+            runUnderIndicator {
+              loadContext(account, requestExecutor, repository, remote)
+            }
           }
-          catch (e: Exception) {
-            if (e !is ProcessCanceledException) LOG.info("Error occurred while creating data context", e)
-            throw e
-          }
-        }.successOnEdt { ctx ->
-          if (Disposer.isDisposed(contextDisposable)) {
-            Disposer.dispose(ctx)
-          }
-          else {
-            Disposer.register(contextDisposable, ctx)
-          }
-          ctx
+          cache[repository] = context
+          context
         }
-      }.also {
-        it.addDropEventListener {
-          Disposer.dispose(contextDisposable)
+        catch (e: Exception) {
+          if (e !is CancellationException) LOG.info("Error occurred while creating data context", e)
+          throw e
         }
       }
-    }.value
-  }
+    }
 
-  @RequiresEdt
-  fun clearContext(repository: GHRepositoryCoordinates) {
-    repositories.remove(repository)?.drop()
+  suspend fun clearContext(repository: GHRepositoryCoordinates) {
+    cacheGuard.withLock {
+      withContext(cs.coroutineContext) {
+        cache.remove(repository)?.let {
+          Disposer.dispose(it)
+        }
+      }
+    }
   }
 
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  private fun loadContext(indicator: ProgressIndicator,
-                          account: GithubAccount,
+  private fun loadContext(account: GithubAccount,
                           requestExecutor: GithubApiRequestExecutor,
                           parsedRepositoryCoordinates: GHRepositoryCoordinates,
                           remoteCoordinates: GitRemoteUrlCoordinates): GHPRDataContext {
+    val indicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     indicator.text = GithubBundle.message("pull.request.loading.account.info")
     val accountDetails = GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
     indicator.checkCanceled()
@@ -176,8 +173,22 @@ internal class GHPRDataContextRepository(private val project: Project) {
       ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
   }
 
-  @RequiresEdt
-  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = repositories[repositoryCoordinates]?.lastLoadedValue
+  // dangerous to do this without lock, but making it suspendable is too much work
+  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = cache[repositoryCoordinates]
+
+  override fun dispose() {
+    runBlocking { cacheGuard.lock() }
+    try {
+      val toDispose = cache.values.toList()
+      cache.clear()
+      toDispose.forEach {
+        Disposer.dispose(it)
+      }
+    }
+    finally {
+      runBlocking { cacheGuard.unlock() }
+    }
+  }
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()
