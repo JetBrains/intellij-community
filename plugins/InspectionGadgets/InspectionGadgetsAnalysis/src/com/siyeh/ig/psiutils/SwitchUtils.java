@@ -169,7 +169,9 @@ public final class SwitchUtils {
 
   public static @Nullable PsiPattern createPatternFromExpression(@NotNull PsiExpression expression) {
     PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
-    final String switchText = "switch(o) { case " + createPatternCaseText(expression) + ": break; }";
+    final String patternCaseText = createPatternCaseText(expression);
+    if (patternCaseText == null) return null;
+    final String switchText = "switch(o) { case " + patternCaseText + ": break; }";
     final PsiElement switchStatement = factory.createStatementFromText(switchText, expression.getContext());
     return PsiTreeUtil.findChildOfType(switchStatement, PsiPattern.class);
   }
