@@ -545,7 +545,8 @@ internal class MutableEntityStorageImpl(
   }
 
   internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
-    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right, true)
+    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right,
+                                ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
   }
 
   private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
