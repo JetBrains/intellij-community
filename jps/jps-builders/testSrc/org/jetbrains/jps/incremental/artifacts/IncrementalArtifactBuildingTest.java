@@ -352,8 +352,8 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
   public void testCreateJarIfMissing() {
     final String file = createFile("a/a.txt", "a");
     JpsArtifact a = addArtifact(root()
-                  .archive("x.jar")
-                  .fileCopy(file));
+                                  .archive("x.jar")
+                                  .fileCopy(file));
     var createdJar = "out/artifacts/a/x.jar";
     buildAll();
     assertOutput(a, fs().file("x.jar"));
@@ -363,5 +363,18 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
 
     buildAll();
     assertOutput(a, fs().file("x.jar"));
+  }
+
+  public void testCopyFileIfMissing() {
+    final String file = createFile("a/a.txt", "a");
+    JpsArtifact a = addArtifact(root().fileCopy(file));
+    buildAll();
+    assertOutput(a, fs().file("a.txt"));
+
+    deleteFile("out/artifacts/a/a.txt");
+    assertOutput(a, fs());
+
+    buildAll();
+    assertOutput(a, fs().file("a.txt"));
   }
 }
