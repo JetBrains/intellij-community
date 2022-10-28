@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.IdeBorderFactory.createTitledBorder
@@ -17,7 +20,8 @@ import javax.swing.JCheckBox
 import javax.swing.JPanel
 import kotlin.collections.set
 
-class CommitOptionsPanel(private val actionNameSupplier: () -> String,
+class CommitOptionsPanel(private val project: Project,
+                         private val actionNameSupplier: () -> String,
                          private val nonFocusable: Boolean) : BorderLayoutPanel(), CommitOptionsUi {
   private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
   private val vcsOptionsPanel = verticalPanel()
@@ -84,7 +88,7 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String,
 
       beforeOptions += newOptions
       if (beforeOptions.isNotEmpty()) {
-        val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
+        val panel = verticalPanel(commitChecksGroupTitle(project, actionName))
         beforeOptions.forEach { panel.add(it.component) }
         beforeOptionsPanel.add(panel)
       }
@@ -110,6 +114,17 @@ class CommitOptionsPanel(private val actionNameSupplier: () -> String,
 
     fun verticalPanel(title: @Nls String) = JPanel(VerticalFlowLayout(0, 5)).apply {
       border = createTitledBorder(title)
+    }
+
+    fun commitChecksGroupTitle(project: Project, actionName: @Nls String): @Nls String {
+      if (Registry.`is`("vcs.non.modal.post.commit.checks")) {
+        if (ProjectLevelVcsManager.getInstance(project).allActiveVcss
+            .any { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter != null }) {
+          return message("border.standard.checkin.options.group.with.post.commit", actionName)
+        }
+      }
+
+      return message("border.standard.checkin.options.group", actionName)
     }
   }
 }

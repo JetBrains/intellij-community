@@ -8,13 +8,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getDefaultCommitActionName
 import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.CommitOptionsPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel
 import org.jetbrains.annotations.NonNls
 
@@ -24,7 +24,6 @@ class CommitDialogConfigurable(private val project: Project)
     val disposable = disposable!!
     val appSettings = VcsApplicationSettings.getInstance()
     val settings = VcsConfiguration.getInstance(project)
-    val changelistsEnabled = ChangelistConflictConfigurable.ChangeListsEnabledPredicate(project, disposable)
 
     return panel {
       row {
@@ -51,7 +50,7 @@ class CommitDialogConfigurable(private val project: Project)
       }
 
       val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
-      group(VcsBundle.message("border.standard.checkin.options.group", actionName)) {
+      group(CommitOptionsPanel.commitChecksGroupTitle(project, actionName)) {
         val panel = CommitOptionsConfigurable(project)
         Disposer.register(disposable, panel)
         row {

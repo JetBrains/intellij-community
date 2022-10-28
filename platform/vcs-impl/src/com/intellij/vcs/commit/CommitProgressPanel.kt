@@ -363,7 +363,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
       }
     })
     if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
-    return HtmlChunk.raw(message("label.commit.checks.failed", failureLinks))
+    return HtmlChunk.raw(failureLinks)
   }
 
   private fun showDetails(event: HyperlinkEvent) {

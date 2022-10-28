@@ -129,7 +129,7 @@ abstract class NonModalCommitPanel(
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel(actionNameSupplier = { actionName }, nonFocusable = false).apply {
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false).apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 

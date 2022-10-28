@@ -248,7 +248,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
-    myCommitOptions = new CommitOptionsPanel(() -> getDefaultCommitActionName(), nonFocusable);
+    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable);
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
