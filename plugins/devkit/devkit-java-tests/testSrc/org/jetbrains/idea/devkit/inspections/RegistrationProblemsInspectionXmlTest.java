@@ -40,8 +40,4 @@ public class RegistrationProblemsInspectionXmlTest extends RegistrationProblemsI
     myFixture.testHighlighting("ActionWithoutDefaultCtor.xml",
                                "MyActionWithoutDefaultCtor.java");
   }
-
-  public void testActionWrongClass() {
-    myFixture.testHighlighting("ActionWrongClass.xml");
-  }
 }
