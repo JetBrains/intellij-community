@@ -43,6 +43,8 @@
                               Settings the value to 0 or less disables syncing by timer."/>
 
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
+
+    <settingsSyncMigration implementation="com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration"/>
   </extensions>
 
   <applicationListeners>
