@@ -10,10 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.ContextKind
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
@@ -32,7 +32,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     application.assertReadAccessAllowed()
 
     WebSymbolsQueryConfigurator.EP_NAME.extensionList
-      .forEach { it.beforeQueryExecutorCreation(project, location) }
+      .forEach { it.beforeQueryExecutorCreation(project) }
 
     val context = location?.let { buildWebSymbolsContext(it) } ?: WebSymbolsContext.empty()
 
@@ -79,7 +79,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
   override fun dispose() {
   }
 
-  internal fun getContextRules(dir: PsiDirectory): Pair<MultiMap<ContextKind, WebSymbolsContextKindRules>, ModificationTracker> {
+  internal fun getContextRules(project: Project,
+                               dir: VirtualFile): Pair<MultiMap<ContextKind, WebSymbolsContextKindRules>, ModificationTracker> {
     val result = MultiMap<ContextKind, WebSymbolsContextKindRules>()
 
     getCustomScope(dir)
@@ -91,8 +92,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     val providers = mutableListOf<Pointer<out WebSymbolsContextRulesProvider>>()
     for (provider in WebSymbolsQueryConfigurator.EP_NAME.extensionList.flatMap {
-      it.beforeQueryExecutorCreation(dir.project, dir)
-      it.getContextRulesProviders(dir)
+      it.beforeQueryExecutorCreation(project)
+      it.getContextRulesProviders(project, dir)
     }) {
       result.putAllValues(provider.getContextRules())
       providers.add(provider.createPointer())
@@ -112,19 +113,20 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     return WebSymbolNamesProviderImpl(context.framework, nameConversionRules, createModificationTracker(providers))
   }
 
-  private fun getCustomScope(context: PsiElement?): List<WebSymbolsScope> {
-    val file = context
+  private fun getCustomScope(context: PsiElement?): List<WebSymbolsScope> =
+    context
       ?.let { InjectedLanguageManager.getInstance(it.project).getTopLevelFile(it) }
       ?.originalFile
       ?.virtualFile
       ?.let { findOriginalFile(it) }
-      ?.let { return emptyList() }
+      ?.let { getCustomScope(it) }
+    ?: emptyList()
 
+  private fun getCustomScope(context: VirtualFile): List<WebSymbolsScope> {
     val result = mutableListOf<WebSymbolsScope>()
     if (!customScope.isEmpty) {
       result.addAll(customScope.get(null))
-      var f: VirtualFile? = file
-      @Suppress("KotlinConstantConditions")
+      var f: VirtualFile? = context
       while (f != null) {
         if (customScope.containsKey(f)) {
           result.addAll(customScope.get(f))
