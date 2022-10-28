@@ -110,30 +110,39 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     }
   }
 
+  private static @Nullable Editor getEditorForVirtualFile(@NotNull Project project,
+                                                          @NotNull VirtualFile file) {
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
+    return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+  }
+
   private static void logEdited(@NotNull Project project,
                                 @NotNull VirtualFile file) {
-    List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, false);
-    EDIT.log(data);
+    EDIT.log(project, pairs -> {
+      pairs.addAll(buildCommonEventPairs(project, file, null, false));
+    });
   }
 
   private static void logOpened(@NotNull Project project,
                                 @NotNull VirtualFile file,
                                 @Nullable FileEditor fileEditor,
                                 long timeToShow, long durationMs) {
-    List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, true);
-    if (fileEditor != null) {
-      data.add(FILE_EDITOR.with(fileEditor.getClass()));
-      FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
-      if (composite != null) {
-        data.add(IS_PREVIEW_TAB.with(composite.isPreview()));
+    final Editor editor = getEditorForVirtualFile(project, file);
+    final FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
+    OPEN.log(project, pairs -> {
+      pairs.addAll(buildCommonEventPairs(project, file, editor, true));
+      if (fileEditor != null) {
+        pairs.add(FILE_EDITOR.with(fileEditor.getClass()));
+        if (composite != null) {
+          pairs.add(IS_PREVIEW_TAB.with(composite.isPreview()));
+        }
       }
-    }
-    data.add(EventFields.TimeToShowMs.with(timeToShow));
-    if (durationMs != -1) {
-      data.add(EventFields.DurationMs.with(durationMs));
-    }
-    buildFileNamePattern(data, file);
-    OPEN.log(data);
+      pairs.add(EventFields.TimeToShowMs.with(timeToShow));
+      if (durationMs != -1) {
+        pairs.add(EventFields.DurationMs.with(durationMs));
+      }
+      buildFileNamePattern(pairs, file);
+    });
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
@@ -141,11 +150,15 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file, boolean withWritable) {
-    eventId.log(project, buildCommonEventPairs(project, file, withWritable));
+    final Editor editor = withWritable ? getEditorForVirtualFile(project, file) : null;
+    eventId.log(project, pairs -> {
+      pairs.addAll(buildCommonEventPairs(project, file, editor, withWritable));
+    });
   }
 
   private static List<@NotNull EventPair<?>> buildCommonEventPairs(@NotNull Project project,
                                                                    @NotNull VirtualFile file,
+                                                                   @Nullable Editor editor,
                                                                    boolean withWritable) {
     FileType fileType = file.getFileType();
     List<EventPair<?>> data = ContainerUtil.newArrayList(
@@ -157,7 +170,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
 
     if (withWritable) {
       data.add(IS_WRITABLE.with(file.isWritable()));
-      data.add(IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file)));
+      data.add(IS_IN_READER_MODE.with(ReaderModeSettings.matchModeForStats(project, file, editor)));
     }
     return data;
   }

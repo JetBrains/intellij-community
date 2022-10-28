@@ -11,8 +11,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Key
@@ -23,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [
@@ -97,9 +96,9 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
       }
     }
 
+    @Internal
     @JvmStatic
-    fun matchModeForStats(project: Project, file: VirtualFile): Boolean {
-      val editor = (FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor)?.editor
+    fun matchModeForStats(project: Project, file: VirtualFile, editor: Editor? = null): Boolean {
       return getInstance(project).enabled && matchMode(project, file, editor)
     }
 
