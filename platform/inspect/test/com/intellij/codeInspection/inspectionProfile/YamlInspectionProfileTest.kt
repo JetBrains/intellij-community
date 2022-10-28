@@ -6,10 +6,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.TestDataPath
 import junit.framework.TestCase
 import org.jdom.Element
 import java.io.File
 
+@TestDataPath("\$CONTENT_ROOT/testData/")
 class YamlInspectionProfileTest: LightPlatformTestCase() {
 
   override fun getTestDirectoryName(): String = PathManager.getCommunityHomePath() + "/platform/inspect/testData/"
