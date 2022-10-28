@@ -12,7 +12,7 @@
                         serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
@@ -287,7 +287,7 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.roots.VcsRootScanner$DetectRootsStartupActivity"/>
     <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$MyFileDocumentManagerListener"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage"/>
     <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.messages"/>
     <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control" bundle="messages.VcsBundle" key="notification.group.vcs.common.messages"/>
     <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
@@ -306,7 +306,7 @@
                     serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupportImpl"
                     overrides="true"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector" preload="notHeadless"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$MyPostStartUpActivity"/>
 
     <searchScopesProvider implementation="com.intellij.vcs.changes.ChangeListsSearchScopeProvider"/>
