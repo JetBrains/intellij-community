@@ -220,7 +220,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements,
-                                          allOutsideRanges, filteredVisitors, insideResult, forceHighlightParents);
+                                          allOutsideRanges, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
       myHighlights.addAll(insideResult);
       myHighlights.addAll(outsideResult);
 
@@ -262,6 +262,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull LongList ranges2,
                                     HighlightVisitor @NotNull [] visitors,
                                     @NotNull List<HighlightInfo> insideResult,
+                                    @NotNull List<? super HighlightInfo> outsideResult,
                                     boolean forceHighlightParents) {
     Set<PsiElement> skipParentsSet = new HashSet<>();
 
@@ -273,13 +274,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
       LongStack nestedRange = new LongStack();
       Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
-      runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, forceHighlightParents, visitors,
+      runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
       boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
-      runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, forceHighlightParents, visitors,
+      runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
     });
     // there can be extra highlights generated in PostHighlightVisitor
@@ -315,6 +316,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                            int chunkSize,
                            @NotNull Set<? super PsiElement> skipParentsSet,
                            @NotNull HighlightInfoHolder holder,
+                           @NotNull List<? super HighlightInfo> insideResult,
+                           @NotNull List<? super HighlightInfo> outsideResult,
                            boolean forceHighlightParents,
                            HighlightVisitor @NotNull [] visitors,
                            @NotNull LongStack nestedRange,
@@ -367,6 +370,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         HighlightInfo info = holder.get(j);
 
         if (!myRestrictRange.contains(info)) continue;
+        List<? super HighlightInfo> result = myPriorityRange.contains(info) && !(element instanceof PsiFile) ? insideResult : outsideResult;
+        result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
           if (!forceHighlightParents && parent != null) {
@@ -378,7 +383,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
         // We also know that we can remove syntax error element.
         info.setVisitingTextRange(elementRange);
-        assert infosForThisRange != null;
         infosForThisRange.add(info);
       }
       holder.clear();
