@@ -1,8 +1,8 @@
-package com.intellij.mermaid.lang.intention
+package com.intellij.mermaid.lang.intention.nbsp
 
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
-class NbspAnnotatorTest : MermaidBaseTestCase("intention/nbsp_annotator") {
+class UnrenderableSpacesAnnotatorTest : MermaidBaseTestCase("intention/nbsp") {
   fun `test state diagram`() = doTest()
 
   fun `test flowchart`() = doTest()

@@ -1,6 +1,7 @@
-package com.intellij.mermaid.lang.intention
+package com.intellij.mermaid.lang.intention.undeclared_generic
 
 import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection
 
 class UndeclaredGenericUsageInspectionTest : MermaidBaseTestCase("intention/undeclared_generic") {
   fun `test not declared in class statement`() = doTest()

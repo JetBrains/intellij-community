@@ -1,9 +1,9 @@
-package com.intellij.mermaid.lang.intention
+package com.intellij.mermaid.lang.intention.nbsp
 
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
-class RemoveSpaceIntentionTest : MermaidBaseTestCase("intention/nbsp_annotator/remove_space") {
+class ChangeSpaceSymbolIntentionTest : MermaidBaseTestCase("intention/nbsp/change_space_symbol") {
   fun `test state diagram`() = doTest()
 
   fun `test flowchart`() = doTest()
@@ -12,7 +12,7 @@ class RemoveSpaceIntentionTest : MermaidBaseTestCase("intention/nbsp_annotator/r
     val testName = getTestName(true)
     myFixture.configureByFile("${testName}_before.mermaid")
 
-    val targetText = MermaidBundle.message("fix.remove.space")
+    val targetText = MermaidBundle.message("fix.change.space.symbol")
     val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
     assertNotNull(fix)
     myFixture.checkPreviewAndLaunchAction(fix!!)

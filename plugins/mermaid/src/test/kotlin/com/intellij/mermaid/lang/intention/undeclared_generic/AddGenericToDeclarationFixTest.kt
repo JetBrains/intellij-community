@@ -1,9 +1,10 @@
-package com.intellij.mermaid.lang.intention
+package com.intellij.mermaid.lang.intention.undeclared_generic
 
 import com.intellij.mermaid.MermaidBundle
 import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection
 
-class RemoveGenericFixTest : MermaidBaseTestCase("intention/undeclared_generic/remove_generic") {
+class AddGenericToDeclarationFixTest : MermaidBaseTestCase("intention/undeclared_generic/add_generic_to_declaration") {
   fun `test not declared in class statement`() = doTest()
 
   fun `test not declared in relation statement left`() = doTest()
@@ -21,7 +22,7 @@ class RemoveGenericFixTest : MermaidBaseTestCase("intention/undeclared_generic/r
     myFixture.configureByFile("${testName}_before.mermaid")
     myFixture.enableInspections(UndeclaredGenericUsageInspection())
 
-    val targetText = MermaidBundle.message("fix.remove.generic")
+    val targetText = MermaidBundle.message("fix.add.generic.to.declaration")
     val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
     assertNotNull(fix)
     myFixture.checkPreviewAndLaunchAction(fix!!)
