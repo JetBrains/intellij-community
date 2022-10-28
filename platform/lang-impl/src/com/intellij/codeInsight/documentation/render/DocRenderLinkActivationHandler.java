@@ -45,7 +45,7 @@ public interface DocRenderLinkActivationHandler {
 
   @NotNull
   static Point popupPosition(@NotNull Rectangle2D linkLocationWithinInlay, DocRenderer renderer) {
-    CustomFoldRegion foldRegion = renderer.getData().getFoldRegion();
+    CustomFoldRegion foldRegion = renderer.getItem().getFoldRegion();
     if (foldRegion == null) return new Point(0, 0);
     Point rendererPosition = Objects.requireNonNull(foldRegion.getLocation());
     Rectangle relativeBounds = renderer.getEditorPaneBoundsWithinRenderer(foldRegion.getWidthInPixels(), foldRegion.getHeightInPixels());

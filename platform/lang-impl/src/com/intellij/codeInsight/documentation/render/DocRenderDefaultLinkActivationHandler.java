@@ -34,8 +34,7 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
     Element element = event.getSourceElement();
     if (element == null) return;
 
-    if (!(renderer.getData() instanceof DocRenderItem)) return;
-    DocRenderItem item = (DocRenderItem)renderer.getData();
+    DocRenderItem item = renderer.getItem();
 
     Rectangle2D location = null;
     try {
@@ -64,7 +63,7 @@ public class DocRenderDefaultLinkActivationHandler implements DocRenderLinkActiv
   }
 
   private void activateLinkV2(@NotNull String url, @NotNull Rectangle2D location, @NotNull DocRenderer renderer) {
-    DocRenderItem item = (DocRenderItem)renderer.getData();
+    DocRenderItem item = renderer.getItem();
     Editor editor = item.getEditor();
     Project project = editor.getProject();
     if (project == null) {

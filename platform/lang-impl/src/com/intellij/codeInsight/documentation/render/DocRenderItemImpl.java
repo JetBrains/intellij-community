@@ -7,14 +7,11 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -30,8 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.Topic;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,38 +35,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.BooleanSupplier;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.findInlineDocumentation;
 
-public final class DocRenderItem implements DocRenderData {
-  @Topic.AppLevel
-  public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
-
+public final class DocRenderItemImpl implements DocRenderItem {
   private final Editor editor;
   private final RangeHighlighter highlighter;
   private @Nls String textToRender;
   private CustomFoldRegion foldRegion;
-
-  static boolean isValidRange(@NotNull Editor editor, @NotNull TextRange range) {
-    Document document = editor.getDocument();
-    CharSequence text = document.getImmutableCharSequence();
-    int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
-    int startLine = document.getLineNumber(startOffset);
-    int endLine = document.getLineNumber(endOffset);
-    if (!CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) ||
-        !CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(endOffset, document.getLineEndOffset(endLine)))) {
-      return false;
-    }
-    return startLine < endLine || document.getLineStartOffset(startLine) < document.getLineEndOffset(endLine);
-  }
 
   @Nls
   @Nullable
   @Override
   public String getTextToRender() {
     return textToRender;
+  }
+
+  void setTextToRender(@Nls String text) {
+    textToRender = text;
   }
 
   @Override
@@ -99,103 +80,13 @@ public final class DocRenderItem implements DocRenderData {
                                       ((MyGutterIconRenderer)highlighter.getGutterIconRenderer()).isIconVisible());
   }
 
-  static void setItemsToEditor(@NotNull Editor editor, @NotNull DocRenderPassFactory.Items itemsToSet, boolean collapseNewItems) {
-    DocRenderDataProvider provider = DocRenderDataProvider.getInstance();
-    if (!(provider instanceof DocRenderDataProviderImpl)) return;
-    Collection<DocRenderItem> items = ((DocRenderDataProviderImpl)provider).getItems(editor);
-    keepScrollingPositionWhile(editor, () -> {
-      List<Runnable> foldingTasks = new ArrayList<>();
-      List<DocRenderItem> itemsToUpdateRenderers = new ArrayList<>();
-      List<String> itemsToUpdateText = new ArrayList<>();
-      boolean updated = false;
-      for (Iterator<DocRenderItem> it = items.iterator(); it.hasNext(); ) {
-        DocRenderItem existingItem = it.next();
-        DocRenderPassFactory.Item matchingNewItem = existingItem.isValid() ? itemsToSet.removeItem(existingItem.highlighter) : null;
-        if (matchingNewItem == null) {
-          updated |= existingItem.remove(foldingTasks);
-          it.remove();
-        }
-        else if (matchingNewItem.textToRender != null && !matchingNewItem.textToRender.equals(existingItem.textToRender)) {
-          itemsToUpdateRenderers.add(existingItem);
-          itemsToUpdateText.add(matchingNewItem.textToRender);
-        }
-        else {
-          existingItem.updateIcon(foldingTasks);
-        }
-      }
-      Collection<DocRenderItem> newRenderItems = new ArrayList<>();
-      for (DocRenderPassFactory.Item item : itemsToSet) {
-        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, collapseNewItems ? null : item.textToRender);
-        newRenderItems.add(newItem);
-        if (collapseNewItems) {
-          updated |= newItem.toggle(foldingTasks);
-          itemsToUpdateRenderers.add(newItem);
-          itemsToUpdateText.add(item.textToRender);
-        }
-      }
-      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      if (!newRenderItems.isEmpty() && collapseNewItems) {
-        for (DocRenderItem item : newRenderItems) {
-          CustomFoldRegion r = item.getFoldRegion();
-          if (r != null) {
-            r.update();
-          }
-        }
-      }
-      for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
-        itemsToUpdateRenderers.get(i).textToRender = itemsToUpdateText.get(i);
-      }
-      DocRenderUpdater.updateRenderers(itemsToUpdateRenderers, true);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).onItemsUpdate(editor, itemsToUpdateRenderers, true);
-      items.addAll(newRenderItems);
-      return updated;
-    });
-    DocRenderListenersSetup.setupListeners(editor, items.isEmpty(), (connection) -> {
-      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-        @Override
-        public void editorReleased(@NotNull EditorFactoryEvent event) {
-          if (event.getEditor() == editor) {
-            // this ensures renderers are not kept for the released editors
-            setItemsToEditor(editor, new DocRenderPassFactory.Items(), false);
-          }
-        }
-      }, connection);
-      editor.getCaretModel().addCaretListener(new MyCaretListener(), connection);
-    });
-  }
-
-  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
-    keeper.savePosition();
-    if (task.getAsBoolean()) keeper.restorePosition(false);
-  }
-
-  static void resetToDefaultState(@NotNull Editor editor) {
-    DocRenderDataProvider provider = DocRenderDataProvider.getInstance();
-    if (!(provider instanceof DocRenderDataProviderImpl)) return;
-    Collection<DocRenderItem> items = ((DocRenderDataProviderImpl)provider).getItems(editor);
-    if (items == null) return;
-    boolean editorSetting = DocRenderManager.isDocRenderingEnabled(editor);
-    keepScrollingPositionWhile(editor, () -> {
-      List<Runnable> foldingTasks = new ArrayList<>();
-      boolean updated = false;
-      for (DocRenderItem item : items) {
-        if (item.isValid() && (item.foldRegion == null) == editorSetting) {
-          updated |= item.toggle(foldingTasks);
-        }
-      }
-      editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
-      return updated;
-    });
-  }
-
   public static CustomFoldRegionRenderer createDemoRenderer(@NotNull Editor editor) {
-    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), CodeInsightBundle.message(
+    DocRenderItemImpl item = new DocRenderItemImpl(editor, new TextRange(0, 0), CodeInsightBundle.message(
       "documentation.rendered.documentation.with.href.link"));
     return new DocRenderer(item);
   }
 
-  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
+  DocRenderItemImpl(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
@@ -209,7 +100,7 @@ public final class DocRenderItem implements DocRenderData {
            new ItemLocation(highlighter).matches(foldRegion);
   }
 
-  private boolean remove(@NotNull Collection<Runnable> foldingTasks) {
+  boolean remove(@NotNull Collection<Runnable> foldingTasks) {
     highlighter.dispose();
     if (foldRegion != null && foldRegion.isValid()) {
       foldingTasks.add(() -> foldRegion.getEditor().getFoldingModel().removeFoldRegion(foldRegion));
@@ -218,11 +109,12 @@ public final class DocRenderItem implements DocRenderData {
     return false;
   }
 
-  void toggle() {
+  @Override
+  public void toggle() {
     toggle(null);
   }
 
-  private boolean toggle(@Nullable Collection<? super Runnable> foldingTasks) {
+  boolean toggle(@Nullable Collection<? super Runnable> foldingTasks) {
     if (!(editor instanceof EditorEx)) return false;
     FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
     if (foldRegion == null) {
@@ -278,7 +170,8 @@ public final class DocRenderItem implements DocRenderData {
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @Nullable InlineDocumentation getInlineDocumentation() {
+  @Override
+  public @Nullable InlineDocumentation getInlineDocumentation() {
     if (highlighter.isValid()) {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
@@ -289,6 +182,7 @@ public final class DocRenderItem implements DocRenderData {
     return null;
   }
 
+  @Override
   public @Nullable DocumentationTarget getInlineDocumentationTarget() {
     InlineDocumentation documentation = getInlineDocumentation();
     return documentation == null ? null : documentation.getOwnerTarget();
@@ -306,7 +200,7 @@ public final class DocRenderItem implements DocRenderData {
     if (items != null) updateRenderers(items, recreateContent);
   }
 
-  private void updateIcon(List<? super Runnable> foldingTasks) {
+  void updateIcon(List<? super Runnable> foldingTasks) {
     boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     boolean iconExists = highlighter.getGutterIconRenderer() != null;
     if (iconEnabled != iconExists) {
@@ -322,7 +216,8 @@ public final class DocRenderItem implements DocRenderData {
     }
   }
 
-  AnAction createToggleAction() {
+  @Override
+  public AnAction createToggleAction() {
     return new ToggleRenderingAction(this);
   }
 
@@ -363,34 +258,6 @@ public final class DocRenderItem implements DocRenderData {
              foldRegion.isValid() &&
              foldRegion.getStartOffset() == foldRegion.getEditor().getDocument().getLineStartOffset(foldStartLine) &&
              foldRegion.getEndOffset() == foldRegion.getEditor().getDocument().getLineEndOffset(foldEndLine);
-    }
-  }
-
-  private static class MyCaretListener implements CaretListener {
-    @Override
-    public void caretPositionChanged(@NotNull CaretEvent event) {
-      onCaretUpdate(event);
-    }
-
-    @Override
-    public void caretAdded(@NotNull CaretEvent event) {
-      onCaretUpdate(event);
-    }
-
-    private static void onCaretUpdate(@NotNull CaretEvent event) {
-      Caret caret = event.getCaret();
-      if (caret == null) return;
-      int caretOffset = caret.getOffset();
-      FoldRegion foldRegion = caret.getEditor().getFoldingModel().getCollapsedRegionAtOffset(caretOffset);
-      if (foldRegion instanceof CustomFoldRegion && caretOffset > foldRegion.getStartOffset()) {
-        CustomFoldRegionRenderer renderer = ((CustomFoldRegion)foldRegion).getRenderer();
-        if (renderer instanceof DocRenderer) {
-          DocRenderData data = ((DocRenderer)renderer).getData();
-          if (data instanceof DocRenderItem) {
-            ((DocRenderItem)data).toggle();
-          }
-        }
-      }
     }
   }
 
@@ -466,9 +333,9 @@ public final class DocRenderItem implements DocRenderData {
   }
 
   private static final class ToggleRenderingAction extends DumbAwareAction {
-    private final DocRenderItem item;
+    private final DocRenderItemImpl item;
 
-    private ToggleRenderingAction(DocRenderItem item) {
+    private ToggleRenderingAction(DocRenderItemImpl item) {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC));
       this.item = item;
     }
@@ -482,6 +349,6 @@ public final class DocRenderItem implements DocRenderData {
   }
 
   public interface Listener {
-    void onItemsUpdate(@NotNull Editor editor, @NotNull Collection<DocRenderItem> items, boolean recreateContent);
+    void onItemsUpdate(@NotNull Editor editor, @NotNull Collection<DocRenderItemImpl> items, boolean recreateContent);
   }
 }

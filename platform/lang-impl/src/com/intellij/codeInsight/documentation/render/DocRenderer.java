@@ -74,24 +74,24 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static StyleSheet ourCachedStyleSheet;
   private static String ourCachedStyleSheetLinkColor = "non-existing";
 
-  private final DocRenderData myData;
+  private final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
   private EditorPane myPane;
   private int myCachedWidth = -1;
   private int myCachedHeight = -1;
   private final @NotNull DocRenderLinkActivationHandler myLinkActivationHandler;
 
-  DocRenderer(@NotNull DocRenderItem data) {
-    myData = data;
-    myLinkActivationHandler = new DocRenderDefaultLinkActivationHandler();
+  DocRenderer(@NotNull DocRenderItemImpl item) {
+    this(item, new DocRenderDefaultLinkActivationHandler());
   }
 
-  public DocRenderer(@NotNull DocRenderData data, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
-    myData = data;
+  public DocRenderer(@NotNull DocRenderItem item, @NotNull DocRenderLinkActivationHandler linkActivationHandler) {
+    myItem = item;
     myLinkActivationHandler = linkActivationHandler;
   }
+
   void update(boolean updateSize, boolean updateContent, List<? super Runnable> foldingTasks) {
-    CustomFoldRegion foldRegion = myData.getFoldRegion();
+    CustomFoldRegion foldRegion = myItem.getFoldRegion();
     if (foldRegion != null) {
       if (updateSize) {
         myCachedWidth = -1;
@@ -124,8 +124,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       Editor editor = region.getEditor();
       int indent = 0;
       // optimize editor opening: skip 'proper' width calculation for 'Loading...' inlays
-      if (myData.getTextToRender() != null) {
-        if (((FoldingModelImpl)myData.getEditor().getFoldingModel()).isInBatchFoldingOperation()) {
+      if (myItem.getTextToRender() != null) {
+        if (((FoldingModelImpl)myItem.getEditor().getFoldingModel()).isInBatchFoldingOperation()) {
           return myCachedHeight;
         }
         indent = calcInlayStartX() - editor.getInsets().left;
@@ -190,7 +190,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
   @Override
   public @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull CustomFoldRegion region) {
-    return myData.calcGutterIconRenderer();
+    return myItem.calcGutterIconRenderer();
   }
 
   @Override
@@ -198,9 +198,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CopySelection());
     group.addSeparator();
-    if (myData instanceof DocRenderItem){
-      group.add(((DocRenderItem)myData).createToggleAction());
-    }
+    group.add((myItem).createToggleAction());
     AnAction toggleRenderAllAction = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC_FOR_ALL);
     if (toggleRenderAllAction != null) {
       group.add(toggleRenderAllAction);
@@ -209,19 +207,18 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     PsiDocCommentBase comment = getComment();
     for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
-      provider.additionalActions(myData.getEditor(), comment, myData.getTextToRender()).forEach(group::add);
+      provider.additionalActions(myItem.getEditor(), comment, myItem.getTextToRender()).forEach(group::add);
     }
 
     return group;
   }
 
-  public DocRenderData getData() {
-    return myData;
+  public DocRenderItem getItem() {
+    return myItem;
   }
 
   private @Nullable PsiDocCommentBase getComment() {
-    if (!(myData instanceof DocRenderItem)) return null;
-    InlineDocumentation documentation = ((DocRenderItem)myData).getInlineDocumentation();
+    InlineDocumentation documentation = myItem.getInlineDocumentation();
     return documentation instanceof PsiCommentInlineDocumentation
            ? ((PsiCommentInlineDocumentation)documentation).getComment()
            : null;
@@ -242,8 +239,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   }
 
   private int calcInlayStartX() {
-    Editor editor = myData.getEditor();
-    RangeHighlighter highlighter = myData.getHighlighter();
+    Editor editor = myItem.getEditor();
+    RangeHighlighter highlighter = myItem.getHighlighter();
     if (highlighter.isValid()) {
       Document document = editor.getDocument();
       int nextLineNumber = document.getLineNumber(highlighter.getEndOffset()) + 1;
@@ -257,7 +254,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   }
 
   Rectangle getEditorPaneBoundsWithinRenderer(int width, int height) {
-    int relativeX = calcInlayStartX() - myData.getEditor().getInsets().left + scale(LEFT_INSET);
+    int relativeX = calcInlayStartX() - myItem.getEditor().getInsets().left + scale(LEFT_INSET);
     int relativeY = scale(TOP_BOTTOM_MARGINS) + scale(TOP_BOTTOM_INSETS);
     return new Rectangle(relativeX, relativeY, width - relativeX - scale(RIGHT_INSET), height - relativeY * 2);
   }
@@ -268,11 +265,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (pane == null || myContentUpdateNeeded) {
       myContentUpdateNeeded = false;
       clearCachedComponent();
-      if (myData.getTextToRender() == null) {
+      if (myItem.getTextToRender() == null) {
         pane = getLoadingPane(editor);
       }
       else {
-        myPane = pane = createEditorPane(editor, myData.getTextToRender(), false);
+        myPane = pane = createEditorPane(editor, myItem.getTextToRender(), false);
         newInstance = true;
       }
     }
@@ -433,7 +430,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
 
     private void repaintRenderer() {
-      CustomFoldRegion foldRegion = myData.getFoldRegion();
+      CustomFoldRegion foldRegion = myItem.getFoldRegion();
       if (foldRegion != null) {
         foldRegion.repaint();
       }
@@ -449,7 +446,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     }
 
     Editor getEditor() {
-      return myData.getEditor();
+      return myItem.getEditor();
     }
 
     void removeSelection() {
@@ -464,7 +461,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (myPane != this) {
         return null;
       }
-      CustomFoldRegion foldRegion = myData.getFoldRegion();
+      CustomFoldRegion foldRegion = myItem.getFoldRegion();
       if (foldRegion == null || foldRegion.getRenderer() != DocRenderer.this) {
         return null;
       }
@@ -491,7 +488,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
           myRepaintScheduled.set(false);
           myUpdateScheduled.set(false);
           if (this == myPane) {
-            CustomFoldRegion foldRegion = myData.getFoldRegion();
+            CustomFoldRegion foldRegion = myItem.getFoldRegion();
             if (foldRegion != null) {
               DocRenderUpdater.getInstance().updateFoldRegions(Collections.singleton(foldRegion), false);
             }

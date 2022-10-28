@@ -268,7 +268,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void verifyItem(int startOffset, int endOffset, @Nullable String textInContent) {
-    DocRenderData item = DocRenderDataProvider.getInstance().getDataAroundOffset(getEditor(), startOffset);
+    DocRenderItem item = DocRenderItemManager.getInstance().getItemAroundOffset(getEditor(), startOffset);
     assertNotNull("Item is not found at offset " + startOffset, item);
     assertEquals("Unexpected item start offset", startOffset, item.getHighlighter().getStartOffset());
     assertEquals("Unexpected item end offset", endOffset, item.getHighlighter().getEndOffset());

@@ -49,7 +49,7 @@ public final class DocRenderManager {
   public static void resetAllEditorsToDefaultState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     for (Editor editor : ClientEditorManager.getCurrentInstance().editors().toList()) {
-      DocRenderItem.resetToDefaultState(editor);
+      DocRenderItemManager.getInstance().resetToDefaultState(editor);
       DocRenderPassFactory.forceRefreshOnNextPass(editor);
     }
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -64,7 +64,7 @@ public final class DocRenderManager {
    */
   public static void resetEditorToDefaultState(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    DocRenderItem.resetToDefaultState(editor);
+    DocRenderItemManager.getInstance().resetToDefaultState(editor);
     DocRenderPassFactory.forceRefreshOnNextPass(editor);
     Project project = editor.getProject();
     if (project != null) {

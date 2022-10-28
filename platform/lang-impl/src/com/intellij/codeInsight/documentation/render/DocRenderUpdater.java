@@ -26,7 +26,7 @@ public final class DocRenderUpdater implements Runnable {
     return ApplicationManager.getApplication().getService(DocRenderUpdater.class);
   }
 
-  public static void updateRenderers(@NotNull Collection<? extends DocRenderData> items, boolean recreateContent) {
+  public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent) {
     getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
   }
 
@@ -34,7 +34,7 @@ public final class DocRenderUpdater implements Runnable {
     if (recreateContent) {
       DocRenderer.clearCachedLoadingPane(editor);
     }
-    Collection<? extends DocRenderData> items = DocRenderDataProvider.getInstance().getItems(editor);
+    Collection<? extends DocRenderItem> items = DocRenderItemManager.getInstance().getItems(editor);
     if (items != null) updateRenderers(items, recreateContent);
   }
 

@@ -1022,8 +1022,8 @@
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.CodeVisionView"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderDataProvider"
-                    serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderDataProviderImpl" />
+    <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
+                    serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
 
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 

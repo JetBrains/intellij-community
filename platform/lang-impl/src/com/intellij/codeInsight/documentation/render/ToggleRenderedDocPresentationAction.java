@@ -29,9 +29,7 @@ public class ToggleRenderedDocPresentationAction extends EditorAction {
     }
 
     private static DocRenderItem getItem(@NotNull Editor editor) {
-      DocRenderDataProvider provider = DocRenderDataProvider.getInstance();
-      if (!(provider instanceof DocRenderDataProviderImpl)) return null;
-      return (DocRenderItem)provider.getDataAroundOffset(editor, editor.getCaretModel().getOffset());
+      return DocRenderItemManager.getInstance().getItemAroundOffset(editor, editor.getCaretModel().getOffset());
     }
   }
 }

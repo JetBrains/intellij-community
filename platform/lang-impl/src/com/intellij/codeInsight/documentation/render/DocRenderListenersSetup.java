@@ -108,7 +108,7 @@ public class DocRenderListenersSetup {
   }
 
   private static class IconVisibilityController implements EditorMouseListener, EditorMouseMotionListener, VisibleAreaListener, Disposable {
-    private DocRenderData myCurrentItem;
+    private DocRenderItem myCurrentItem;
     private Editor myQueuedEditor;
 
     @Override
@@ -162,7 +162,7 @@ public class DocRenderListenersSetup {
         y = event.getMouseEvent().getY();
         offset = event.getOffset();
       }
-      DocRenderData item = offset < 0 ? null : findItem(editor, y, offset);
+      DocRenderItem item = offset < 0 ? null : findItem(editor, y, offset);
       if (item != myCurrentItem) {
         if (myCurrentItem != null) myCurrentItem.setIconVisible(false);
         myCurrentItem = item;
@@ -170,14 +170,14 @@ public class DocRenderListenersSetup {
       }
     }
 
-    private static DocRenderData findItem(Editor editor, int y, int neighborOffset) {
+    private static DocRenderItem findItem(Editor editor, int y, int neighborOffset) {
       Document document = editor.getDocument();
       int lineNumber = document.getLineNumber(neighborOffset);
       int searchStartOffset = document.getLineStartOffset(Math.max(0, lineNumber - 1));
       int searchEndOffset = document.getLineEndOffset(lineNumber);
-      Collection<? extends DocRenderData> items = DocRenderDataProvider.getInstance().getItems(editor);
+      Collection<? extends DocRenderItem> items = DocRenderItemManager.getInstance().getItems(editor);
       assert items != null;
-      for (DocRenderData item : items) {
+      for (DocRenderItem item : items) {
         RangeHighlighter highlighter = item.getHighlighter();
         if (highlighter.isValid() && highlighter.getStartOffset() <= searchEndOffset && highlighter.getEndOffset() >= searchStartOffset) {
           int itemStartY = 0;
