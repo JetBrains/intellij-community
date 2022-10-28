@@ -45,10 +45,7 @@ import kotlinx.coroutines.flow.onEach
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.ContainerEvent
-import java.awt.event.ContainerListener
+import java.awt.event.*
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.border.Border
@@ -256,19 +253,19 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
     fun install() {
       panel.addContainerListener(this)
 
-      for (component in panel.components) {
-        component.addComponentListener(childListener)
+      for (child in panel.components) {
+        child.addComponentListener(childListener)
       }
       syncVisibility()
     }
 
     override fun componentAdded(e: ContainerEvent) {
-      e.component.addComponentListener(childListener)
+      e.child.addComponentListener(childListener)
       syncVisibility()
     }
 
     override fun componentRemoved(e: ContainerEvent) {
-      e.component.removeComponentListener(childListener)
+      e.child.removeComponentListener(childListener)
       syncVisibility()
     }
 
