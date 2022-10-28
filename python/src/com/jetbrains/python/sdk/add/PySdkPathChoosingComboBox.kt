@@ -98,7 +98,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
           ActionListener {
             val dialog = ManualPathEntryDialog(project = null, platform = Platform.UNIX)
             if (dialog.showAndGet()) {
-              childComponent.selectedItem = createDetectedSdk(dialog.path, isLocal = false).apply { addSdkItemOnTop(this) }
+              childComponent.selectedItem = createDetectedSdk(dialog.path, targetEnvironmentConfiguration).apply { addSdkItemOnTop(this) }
             }
           }
         }

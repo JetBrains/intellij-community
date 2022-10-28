@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
 import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -48,7 +49,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                private val module: Module?,
                                private val existingSdks: List<Sdk>,
                                private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                               private val config: PythonLanguageRuntimeConfiguration) {
+                               private val config: PythonLanguageRuntimeConfiguration,
+                               private val introspectable: LanguageRuntimeType.Introspectable?) {
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
@@ -154,8 +156,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     }
   }
 
-  private fun createAnacondaPanel(): PyAddSdkView = PyAddCondaPanelView(
-    PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!))
+  private fun createAnacondaPanel(): PyAddSdkView =
+    PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!, introspectable = introspectable))
 
   private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 

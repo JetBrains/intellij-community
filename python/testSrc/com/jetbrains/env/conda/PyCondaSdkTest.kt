@@ -89,7 +89,7 @@ internal class PyCondaSdkTest {
     """.trimIndent())
 
     Assume.assumeTrue("Windows only", SystemInfoRt.isWindows)
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
     val baseEnv = condaEnvs.first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val nonBaseEnv = condaEnvs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.NamedEnv } ?: createCondaEnv()
 
@@ -119,7 +119,7 @@ internal class PyCondaSdkTest {
 
   @Test
   fun testExecuteCommandOnSdk(): Unit = runTest {
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first()
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(condaEnv.envIdentity, emptyList(), projectRule.project)
     val request = LocalTargetEnvironmentRequest()
 
@@ -133,7 +133,7 @@ internal class PyCondaSdkTest {
   fun testConvertToConda() = runTest {
     System.setProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
 
-    val env = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first()
+    val env = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
     val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
     val pythonPath = condaSdk.homePath
 
@@ -162,7 +162,7 @@ internal class PyCondaSdkTest {
 
   @Test
   fun testCreateFromExisting() = runTest {
-    val env = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first()
+    val env = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
     Assert.assertEquals(sdk.getOrCreateAdditionalData().flavor, CondaEnvSdkFlavor.getInstance())
     Assert.assertTrue(env.toString(), getPythonVersion(sdk, LocalTargetEnvironmentRequest())?.isNotBlank() == true)

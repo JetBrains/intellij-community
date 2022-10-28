@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.target.conda
 
 import com.intellij.execution.target.TargetBrowserHints
+import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -115,12 +116,16 @@ class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : PyAddTarget
   override fun validateAll(): List<ValidationInfo> =
     panel.validateAll() + (model.getValidationError()?.let { listOf(ValidationInfo(it)) } ?: emptyList())
 
-  override fun getOrCreateSdk(): Sdk? = runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
-    model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink).onFailure {
-      logger<PyAddCondaPanelModel>().warn(it)
-      showError(
-        PyBundle.message("python.sdk.conda.cant.create.title"),
-        PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
-    }.getOrNull()
-  }
+  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
+
+  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? =
+    runBlockingModalWithRawProgressReporter(model.project, PyBundle.message("python.add.sdk.panel.wait")) {
+      model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), progressSink,
+                                    targetEnvironmentConfiguration).onFailure {
+        logger<PyAddCondaPanelModel>().warn(it)
+        showError(
+          PyBundle.message("python.sdk.conda.cant.create.title"),
+          PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
+      }.getOrNull()
+    }
 }

@@ -65,7 +65,7 @@ internal class PyCondaTest {
 
   @Test
   fun testBasePython(): Unit = runTest {
-    val baseConda = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+    val baseConda = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
       .first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val targetRequest = LocalTargetEnvironmentRequest()
     val commandLineBuilder = TargetedCommandLineBuilder(targetRequest)
@@ -89,8 +89,8 @@ internal class PyCondaTest {
   fun testCondaCreateByYaml() = runTest {
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).mapFlat { it.getResultStdoutStr() }.getOrThrow()
-    val condaEnv = PyCondaEnv.getEnvs(
-      condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
@@ -102,12 +102,13 @@ internal class PyCondaTest {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).mapFlat { it.getResultStdout() }
-    PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
+    PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
   }
 
   @Test
   fun testCondaListEnvs(): Unit = runTest {
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
     Assert.assertTrue("No environments returned", condaEnvs.isNotEmpty())
 
     var baseFound = false
