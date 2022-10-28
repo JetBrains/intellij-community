@@ -105,7 +105,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
   private volatile InspectionResultsView myView;
   private Content myContent;
-  private volatile boolean myViewClosed = true;
+  protected volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
   private Span runToolsSpan;
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolPresentation> myPresentationMap = new ConcurrentHashMap<>();
