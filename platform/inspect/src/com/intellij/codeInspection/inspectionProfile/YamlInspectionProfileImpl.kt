@@ -146,9 +146,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       tools.asSequence().mapNotNull { tool -> effectiveProfile.getToolsOrNull(tool.shortName, null) }.forEach { inspectionTools ->
         val enabled = configuration.enabled
         if (enabled != null) {
-          inspectionTools.tools.forEach {
-            it.isEnabled = enabled
-          }
+          inspectionTools.isEnabled = enabled
         }
         val severity = HighlightDisplayLevel.find(configuration.severity)
         if (severity != null) {
@@ -163,8 +161,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
         scopes.forEach { (scope, enabled) ->
-          val state = inspectionTools.defaultState
-          inspectionTools.prependTool(scope, state.tool, state.isEnabled && enabled, inspectionTools.level)
+          inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
         }
       }
     }
