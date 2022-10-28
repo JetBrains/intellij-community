@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public class ExternalSystemTaskProgressTextConfigurator {
+public class ExternalSystemTaskProgressIndicatorUpdater {
 
-  private ExternalSystemTaskProgressTextConfigurator() {
+  private ExternalSystemTaskProgressIndicatorUpdater() {
   }
 
   public static void updateProgressIndicator(@NotNull ExternalSystemTaskNotificationEvent event,

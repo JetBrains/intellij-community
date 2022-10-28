@@ -5,11 +5,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskProgressTextConfigurator
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskProgressIndicatorUpdater
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventHelper.areGradleBuildProgressEventsSupported
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -17,7 +18,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
-internal class GradleProgressIndicatorHelper(
+internal class GradleProgressIndicatorWrapper(
   private val id: ExternalSystemTaskId,
   private val effectiveSettings: GradleExecutionSettings,
   private val listener: ExternalSystemTaskNotificationListener
@@ -25,15 +26,17 @@ internal class GradleProgressIndicatorHelper(
 
   fun runWithProgressIndicator(consumer: Consumer<ExternalSystemTaskNotificationListener>) {
     if (!areGradleBuildProgressEventsSupported(effectiveSettings)) {
-      // Don't run with indicator if build phase events are not supported
+      // Don't run with progress indicator if build progress events are not supported
       consumer.accept(listener)
       return
     }
 
-    val progressIndicator = AtomicReference<ProgressIndicator?>()
+    val progressIndicator = AtomicReference<ProgressIndicator>()
     val countDownLatch = CountDownLatch(1)
     ProgressManager.getInstance().run(object : Task.Backgroundable(id.findProject(), "Gradle build", false) {
       override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = true
+        indicator.text = wrapText("Initializing...")
         progressIndicator.set(indicator)
         countDownLatch.await()
       }
@@ -43,7 +46,7 @@ internal class GradleProgressIndicatorHelper(
       override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
         super.onStatusChange(event)
         if (progressIndicator.get() != null) {
-          updateProgressIndicator(event, progressIndicator.get()!!)
+          updateProgressIndicator(event, progressIndicator.get())
         }
       }
     }
@@ -57,8 +60,9 @@ internal class GradleProgressIndicatorHelper(
   }
 
   private fun updateProgressIndicator(event: ExternalSystemTaskNotificationEvent, indicator: ProgressIndicator) {
-    ExternalSystemTaskProgressTextConfigurator.updateProgressIndicator(event, indicator) {
-      ExternalSystemBundle.message("progress.update.text", GradleConstants.SYSTEM_ID.readableName, it)
-    }
+    ExternalSystemTaskProgressIndicatorUpdater.updateProgressIndicator(event, indicator) { wrapText(it) }
   }
+
+  private fun wrapText(text: String): @Nls String =
+    ExternalSystemBundle.message("progress.update.text", GradleConstants.SYSTEM_ID.readableName, text)
 }

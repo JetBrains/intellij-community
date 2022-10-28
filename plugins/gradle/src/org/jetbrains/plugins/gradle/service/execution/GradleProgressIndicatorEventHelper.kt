@@ -23,7 +23,8 @@ import org.jetbrains.plugins.gradle.service.execution.GradleProgressListener.Pro
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
-internal object GradleProgressIndicatorEventHelper {
+internal
+object GradleProgressIndicatorEventHelper {
 
   @JvmStatic
   fun areGradleBuildProgressEventsSupported(effectiveSettings: GradleExecutionSettings): Boolean {
@@ -58,19 +59,9 @@ internal object GradleProgressIndicatorEventHelper {
     event: ProgressEvent,
     progressState: GradleProgressState
   ): ExternalSystemTaskNotificationEvent? {
-    val workItemId = event.progressItemId() ?: return null
-    when {
-      event.isWorkItemStartEventForCurrentPhase(progressState) -> {
-        progressState.addRunningWorkItem(workItemId)
-        progressState.incrementCurrentProgress()
-      }
-      event.isWorkItemFinishEventForCurrentPhase(progressState) -> {
-        progressState.removeRunningWorkItem(workItemId)
-      }
-    }
-
+    if (!progressState.shouldUpdateProgressIndicator) return null
     val operationName = progressState.operationName() ?: return null
-    val total = progressState.totalItems
+    val total = progressState.totalWorkItems
     val progress = progressState.currentProgress
     return ExternalSystemBuildEvent(
       taskId,
@@ -78,16 +69,38 @@ internal object GradleProgressIndicatorEventHelper {
     )
   }
 
-  private fun ProgressEvent.isWorkItemStartEventForCurrentPhase(progressState: GradleProgressState) = when (progressState.currentPhase) {
-    CONFIGURATION -> this is ProjectConfigurationStartEvent
-    EXECUTION -> this is TaskStartEvent
-    else -> false
+  private fun GradleProgressState.operationName(): String? {
+    val runningWorkItem = firstRunningWorkItem ?: return null
+    return when (currentPhase) {
+      CONFIGURATION -> "${GradleBundle.message("progress.title.configure.projects")}: $runningWorkItem"
+      EXECUTION -> "${GradleBundle.message("progress.title.run.tasks")}: $runningWorkItem"
+      else -> null
+    }
   }
 
-  private fun ProgressEvent.isWorkItemFinishEventForCurrentPhase(progressState: GradleProgressState) = when (progressState.currentPhase) {
-    CONFIGURATION -> this is ProjectConfigurationFinishEvent
-    EXECUTION -> this is TaskFinishEvent
-    else -> false
+  @JvmStatic
+  fun updateGradleProgressState(progressState: GradleProgressState, event: ProgressEvent): GradleProgressState {
+    progressState.shouldUpdateProgressIndicator = false
+    return when {
+      progressState.currentPhase == CONFIGURATION && event is ProjectConfigurationProgressEvent -> updateBuildProgress(progressState, event)
+      progressState.currentPhase == EXECUTION && event is TaskProgressEvent -> updateBuildProgress(progressState, event)
+      event is BuildPhaseProgressEvent -> updateBuildPhase(progressState, event)
+      else -> progressState
+    }
+  }
+
+  private fun updateBuildProgress(progressState: GradleProgressState, event: ProgressEvent): GradleProgressState {
+    val workItemId = event.progressItemId() ?: return progressState
+    if (event is ProjectConfigurationStartEvent || event is TaskStartEvent) {
+      progressState.addRunningWorkItem(workItemId)
+      progressState.incrementCurrentProgress()
+      progressState.shouldUpdateProgressIndicator = true
+    }
+    else if (event is ProjectConfigurationFinishEvent || event is TaskFinishEvent) {
+      progressState.removeRunningWorkItem(workItemId)
+      progressState.shouldUpdateProgressIndicator = true
+    }
+    return progressState
   }
 
   private fun ProgressEvent.progressItemId(): String? = when (this) {
@@ -96,57 +109,40 @@ internal object GradleProgressIndicatorEventHelper {
     else -> null
   }
 
-  private fun GradleProgressState.operationName(): String? {
-    val runningItem = firstRunningWorkItem ?: return null
-    return if (currentPhase.isExecution) {
-      "${GradleBundle.message("progress.title.run.tasks")}: $runningItem"
-    }
-    else {
-      "${GradleBundle.message("progress.title.configure.projects")}: $runningItem"
-    }
-  }
-
-  @JvmStatic
-  fun maybeUpdateGradleProgressState(myGradleProgressState: GradleProgressState, event: ProgressEvent): GradleProgressState {
-    if (event !is BuildPhaseProgressEvent) return myGradleProgressState
-
+  private fun updateBuildPhase(progressState: GradleProgressState, event: BuildPhaseProgressEvent): GradleProgressState {
     val buildPhase = event.descriptor.buildPhase
     if (event is BuildPhaseStartEvent) {
       return when {
         "CONFIGURE_ROOT_BUILD" == buildPhase -> {
           // When root build starts configuring, build gets from initialization to configuration phase
-          myGradleProgressState.setIsConfiguringRootBuild(true)
           val totalItems = event.descriptor.buildItemsCount.toLong()
           GradleProgressState(totalItems, CONFIGURATION)
         }
-        "CONFIGURE_BUILD" == buildPhase && myGradleProgressState.currentPhase.isConfiguration -> {
+        "CONFIGURE_BUILD" == buildPhase && progressState.currentPhase == CONFIGURATION -> {
           // Ignore configuration events if in initialization phase: these will be triggered if user has settings plugins
           val additionalItems = event.descriptor.buildItemsCount.toLong()
-          myGradleProgressState.incrementTotalItems(additionalItems)
-          myGradleProgressState
+          progressState.incrementTotalWorkItems(additionalItems)
+          progressState
         }
-        "RUN_MAIN_TASKS" == buildPhase && !myGradleProgressState.isConfiguringRootBuild -> {
-          // Ignore execution events from nested or buildSrc builds before the root build is done configuring
+        "RUN_MAIN_TASKS" == buildPhase && progressState.isConfigurationDone -> {
+          // Ignore execution events from nested or buildSrc builds before the configuration is done
           val totalItems = event.descriptor.buildItemsCount.toLong()
-          GradleProgressState(totalItems, EXECUTION);
+          GradleProgressState(totalItems, EXECUTION)
         }
-        "RUN_WORK" == buildPhase && myGradleProgressState.currentPhase.isExecution -> {
+        "RUN_WORK" == buildPhase && progressState.currentPhase == EXECUTION -> {
           val additionalItems = event.descriptor.buildItemsCount.toLong()
-          myGradleProgressState.incrementTotalItems(additionalItems)
-          myGradleProgressState
+          progressState.incrementTotalWorkItems(additionalItems)
+          progressState
         }
-        else -> myGradleProgressState
+        else -> progressState
       }
     }
 
-    return when {
-      event is BuildPhaseFinishEvent && "CONFIGURE_ROOT_BUILD" == buildPhase -> {
-        // Configure root build finish event is send after everything else is done configuring
-        myGradleProgressState.setIsConfiguringRootBuild(false)
-        myGradleProgressState
-      }
-      else -> myGradleProgressState
+    if (event is BuildPhaseFinishEvent && "CONFIGURE_ROOT_BUILD" == buildPhase) {
+      // Configure root build finish event is sent after everything else is done configuring
+      progressState.markConfigurationDone()
     }
+    return progressState
   }
 
 }

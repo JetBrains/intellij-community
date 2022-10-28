@@ -1,14 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
@@ -19,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -244,7 +239,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   private void updateProgressIndicator(@NotNull ExternalSystemTaskNotificationEvent event, @NotNull ProgressIndicator indicator) {
-    ExternalSystemTaskProgressTextConfigurator.updateProgressIndicator(event, indicator, description -> wrapProgressText(description));
+    ExternalSystemTaskProgressIndicatorUpdater.updateProgressIndicator(event, indicator, description -> wrapProgressText(description));
   }
 
   @NotNull

@@ -26,7 +26,6 @@ import org.gradle.tooling.events.test.*;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.Message;
 
@@ -36,6 +35,7 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 import static org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEventHelper.*;
+import static org.jetbrains.plugins.gradle.service.execution.GradleProgressListener.ProgressPhase.CONFIGURATION;
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
@@ -78,9 +78,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public void statusChanged(ProgressEvent event) {
 
     ExternalSystemTaskNotificationEvent progressBuildEvent;
-    if (areGradleBuildProgressEventsSupported(myGradleVersion) && isGradleBuildProgressEvent(event)) {
+    if (isGradleBuildProgressEvent(event) && areGradleBuildProgressEventsSupported(myGradleVersion)) {
       // Progress indicator supported with Gradle >= 7.6
-      myGradleProgressState = maybeUpdateGradleProgressState(myGradleProgressState, event);
+      myGradleProgressState = updateGradleProgressState(myGradleProgressState, event);
       progressBuildEvent = createProgressIndicatorEvent(myTaskId, myTaskId, event, myGradleProgressState);
       if (progressBuildEvent != null) {
         // update IDE progress determinate indicator
@@ -208,42 +208,45 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   enum ProgressPhase {
-    INITIALIZATION,
-    CONFIGURATION,
-    EXECUTION;
+    INITIALIZATION(0),
+    CONFIGURATION(1),
+    EXECUTION(2);
 
-    boolean isConfiguration() {
-      return this == CONFIGURATION;
+    private final int order;
+
+    ProgressPhase(int order) {
+      this.order = order;
     }
-    boolean isExecution() {
-      return this == EXECUTION;
+
+    public boolean isAfter(ProgressPhase other) {
+      return order > other.order;
     }
   }
 
   static class GradleProgressState {
 
-    private long totalItems;
+    private final ProgressPhase currentPhase;
+    private final Set<String> runningWorkItems;
+    private long totalWorkItems;
     private long currentProgress;
-    private ProgressPhase currentPhase;
-    private final HashSet<String> runningWorkItems;
-    private boolean isConfiguringRootBuild;
+    private boolean isConfigurationDone;
 
-    private boolean isProgressStateEnabled;
+    private boolean shouldUpdateProgressIndicator;
 
-    GradleProgressState(long totalItems, ProgressPhase currentPhase) {
-      this.totalItems = totalItems;
+    GradleProgressState(long totalWorkItems, ProgressPhase currentPhase) {
+      this.totalWorkItems = totalWorkItems;
       this.currentProgress = 0;
       this.currentPhase = currentPhase;
       this.runningWorkItems = new LinkedHashSet<>();
-      this.isProgressStateEnabled = false;
+      this.isConfigurationDone = currentPhase.isAfter(CONFIGURATION);
     }
 
-    long getTotalItems() {
-      return totalItems;
+    long getTotalWorkItems() {
+      return totalWorkItems;
     }
 
-    void incrementTotalItems(long additionalItems) {
-      this.totalItems += additionalItems;
+    void incrementTotalWorkItems(long additionalItems) {
+      this.totalWorkItems += additionalItems;
     }
 
     long getCurrentProgress() {
@@ -271,12 +274,20 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       return runningWorkItems.isEmpty() ? null : runningWorkItems.iterator().next();
     }
 
-    void setIsConfiguringRootBuild(boolean isConfiguringRootBuild) {
-      this.isConfiguringRootBuild = isConfiguringRootBuild;
+    void markConfigurationDone() {
+      this.isConfigurationDone = true;
     }
 
-    boolean isConfiguringRootBuild() {
-      return isConfiguringRootBuild;
+    boolean isConfigurationDone() {
+      return isConfigurationDone;
+    }
+
+    void setShouldUpdateProgressIndicator(boolean value) {
+      this.shouldUpdateProgressIndicator = value;
+    }
+
+    boolean getShouldUpdateProgressIndicator() {
+      return shouldUpdateProgressIndicator;
     }
   }
 }
