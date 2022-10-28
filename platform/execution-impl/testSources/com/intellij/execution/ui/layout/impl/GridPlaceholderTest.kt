@@ -2,6 +2,7 @@
 package com.intellij.execution.ui.layout.impl
 
 import com.intellij.execution.ui.layout.impl.GridImpl.Placeholder
+import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.ui.content.TabDescriptor
 import com.intellij.ui.content.TabGroupId
 import com.intellij.ui.content.impl.TabbedContentImpl
@@ -12,6 +13,7 @@ import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
+@SkipInHeadlessEnvironment
 class GridPlaceholderTest {
   @Test
   fun preferredFocusComponentWhenParentInvisible() {
@@ -38,6 +40,8 @@ class GridPlaceholderTest {
       placeholder.setContentProvider{ arrayOf(content) }
 
       Assert.assertNull(placeholder.focusTraversalPolicy.getDefaultComponent(panel))
+
+      frame.dispose()
     }
   }
 }
