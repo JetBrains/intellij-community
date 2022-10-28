@@ -3,18 +3,22 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import git4idea.remote.hosting.HostedGitRepositoryConnectionManager
 import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionManager
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-typealias GHRepositoryConnectionManager = HostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection>
+internal typealias GHRepositoryConnectionManager = HostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection>
 
 internal fun GHRepositoryConnectionManager(repositoriesManager: GHHostedRepositoriesManager,
-                                           accountManager: GHAccountManager): GHRepositoryConnectionManager =
+                                           accountManager: GHAccountManager,
+                                           dataContextRepository: GHPRDataContextRepository): GHRepositoryConnectionManager =
   ValidatingHostedGitRepositoryConnectionManager(repositoriesManager, accountManager) { repo, account, tokenState ->
     val tokenSupplier = GithubApiRequestExecutor.MutableTokenSupplier(tokenState.value)
     launch {
@@ -23,5 +27,15 @@ internal fun GHRepositoryConnectionManager(repositoriesManager: GHHostedReposito
       }
     }
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(tokenSupplier)
-    GHRepositoryConnection(this, repo, account, executor)
+
+    val dataContext = dataContextRepository.getContext(repo.repository, repo.remote, account, executor)
+    launch(start = CoroutineStart.UNDISPATCHED) {
+      try {
+        awaitCancellation()
+      }
+      catch (_: Exception) {
+      }
+      dataContextRepository.clearContext(repo.repository)
+    }
+    GHRepositoryConnection(this, repo, account, dataContext)
   }
