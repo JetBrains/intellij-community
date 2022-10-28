@@ -29,19 +29,10 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-
-abstract class AbstractIntentionTest : AbstractIntentionTestBase() {
-    override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10) {
-            super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
-        }
-    }
-}
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -160,10 +151,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     protected open fun checkForErrorsAfter(fileText: String) {
         val file = this.file
 
-        if (file is KtFile && isApplicableDirective(fileText) && !InTextDirectivesUtils.isDirectiveDefined(
-                fileText,
-                "// SKIP_ERRORS_AFTER"
-            )
+        if (file is KtFile &&
+            isApplicableDirective(fileText) &&
+            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
         ) {
             if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
                 DirectiveBasedActionUtils.checkForUnexpectedWarnings(
