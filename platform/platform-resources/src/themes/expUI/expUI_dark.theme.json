@@ -555,6 +555,12 @@
       "shortcutBackground": "Grey5"
     },
 
+    "UnattendedHostStatus": {
+      "warningBackground": "Yellow7",
+      "warningForeground": "Grey3",
+      "dangerBackground": "Red6"
+    },
+
     "PackageSearch": {
       "SearchResult": {
         "background": "#1c2433",
