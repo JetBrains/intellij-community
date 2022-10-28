@@ -168,7 +168,7 @@ public final class NioFiles {
   }
 
   /**
-   * A file attributes reading routine tolerant to exceptions caused by broken symlinks (in particular, the ones exported by WSL).
+   * A file attributes reading routine, tolerant to exceptions caused by broken symlinks (in particular, the ones exported by WSL).
    *
    * @see #BROKEN_SYMLINK
    */
@@ -176,6 +176,7 @@ public final class NioFiles {
     try {
       return Files.readAttributes(path, BasicFileAttributes.class, NO_FOLLOW);
     }
+    catch (NoSuchFileException | AccessDeniedException e) { throw e; }
     catch (FileSystemException e) {
       if (SystemInfo.isWindows && JnaLoader.isLoaded() && isNtfsReparsePoint(path)) {
         LOG.debug(e);
