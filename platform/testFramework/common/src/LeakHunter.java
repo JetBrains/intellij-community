@@ -27,6 +27,9 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.common.DumpKt.HEAP_DUMP_IS_PUBLISHED;
+import static com.intellij.testFramework.common.TestApplicationKt.LEAKED_PROJECTS;
+
 public final class LeakHunter {
 
   @TestOnly
@@ -58,10 +61,10 @@ public final class LeakHunter {
                                    @NotNull Class<T> suspectClass,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (leaked, backLink)->{
-      String place = leaked instanceof Project ? getCreationPlace((Project)leaked) : "";
-      String message ="Found leaked "+leaked.getClass() + ": "+leaked +
-                      "; hash: " + System.identityHashCode(leaked) + "; place: " + place + "\n" +
-                      backLink;
+      StringBuilder builder = new StringBuilder();
+      appendLeakedObjectDetails(builder, leaked, backLink, true);
+      String message = builder.toString();
+
       System.out.println(message);
       System.out.println(";-----");
       ThreadUtil.printThreadDump();
@@ -136,5 +139,46 @@ public final class LeakHunter {
       }
       return result;
     };
+  }
+
+  @TestOnly
+  public static void appendLeakedObjectDetails(
+    @NotNull StringBuilder builder,
+    @NotNull Object leaked,
+    @Nullable Object backLink,
+    boolean detailedErrorDescription
+  ) {
+    String creationPlace = leaked instanceof Project ? getCreationPlace((Project)leaked) : null;
+    int hashCode = System.identityHashCode(leaked);
+
+    builder.append("Found a leaked instance of ").append(leaked.getClass())
+      .append("\nInstance: ").append(leaked)
+      .append("\nHashcode: ").append(hashCode);
+    if (detailedErrorDescription) {
+      appendLeakedObjectErrorDescription(builder, null);
+    }
+    if (backLink != null) {
+      builder.append("\nExisting strong reference path to the instance:\n")
+        .append(backLink.toString().indent(2));
+    }
+
+    if (creationPlace != null) {
+      builder.append("\nThe instance was created at: ").append(creationPlace);
+    }
+  }
+
+  @TestOnly
+  public static void appendLeakedObjectErrorDescription(@NotNull StringBuilder builder, @Nullable String knownHeapDumpPath) {
+    builder.append("\nError description:")
+      .append("\n  This error means that the object is expected to be collected by the GC by this time, but it was not.")
+      .append("\n  Please, make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html");
+
+    if (knownHeapDumpPath != null) {
+      builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
+    }
+    else {
+      builder.append("\n  If this is a TC build, you can find a memory snapshot `").append(LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
+        .append("\n  Otherwise, try looking for '").append(HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below ↓.");
+    }
   }
 }

@@ -26,6 +26,8 @@ import com.intellij.openapi.project.impl.runInitProjectActivities
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.LeakHunter.appendLeakedObjectDetails
+import com.intellij.testFramework.LeakHunter.appendLeakedObjectErrorDescription
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
@@ -278,31 +280,17 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   for (project in leakedProjects) {
     val hashCode = System.identityHashCode(project)
     hashCodes.add(hashCode)
-    appendProjectDetails(message, project, hashCode, null)
+    appendLeakedObjectDetails(message, project, null, false)
   }
   val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
-                          { leaked: ProjectImpl?, backLink: Any? ->
+                          { leaked, backLink ->
                             val hashCode = System.identityHashCode(leaked)
-                            appendProjectDetails(message, leaked!!, hashCode, backLink)
+                            appendLeakedObjectDetails(message, leaked, backLink, false)
                             hashCodes.remove(hashCode)
                             !hashCodes.isEmpty()
                           })
-  message.append("\nPlease see `").append(dumpPath).append("` for a memory dump")
+  appendLeakedObjectErrorDescription(message, dumpPath)
   throw AssertionError(message.toString())
-}
-
-private fun appendProjectDetails(message: StringBuilder,
-                                 leaked: Project,
-                                 hashCode: Int,
-                                 backLink: Any?) {
-  message.append("Leaked project ").append(leaked)
-    .append(", hash=").append(hashCode)
-    .append(", creation place=").append(LeakHunter.getCreationPlace(leaked)).append('\n')
-  if (backLink != null) {
-    message.append(" retained by:\n")
-      .append(backLink).append('\n')
-      .append("-----\n")
-  }
 }
