@@ -46,7 +46,7 @@ public interface ToolWindowManagerListener extends EventListener {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   default void stateChanged(@NotNull ToolWindowManager toolWindowManager,
-                            @Nullable ToolWindow toolWindow,
+                            @NotNull ToolWindow toolWindow,
                             @NotNull ToolWindowManagerListener.ToolWindowManagerEventType changeType) {
     stateChanged(toolWindowManager, changeType);
   }

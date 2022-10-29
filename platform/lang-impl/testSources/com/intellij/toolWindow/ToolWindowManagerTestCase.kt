@@ -30,7 +30,7 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
     runBlocking {
       val project = project
       manager = object : ToolWindowManagerImpl(project) {
-        override fun fireStateChanged(toolWidow: ToolWindow?, changeType: ToolWindowManagerEventType) {}
+        override fun fireStateChanged(changeType: ToolWindowManagerEventType, toolWindow: ToolWindow?) {}
       }
       project.replaceService(ToolWindowManager::class.java, manager!!, testRootDisposable)
 
