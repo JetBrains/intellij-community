@@ -21,6 +21,7 @@ public enum ConfigKey {
   TOSTRING_CALL_SUPER("lombok.toString.callSuper", "skip"),
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
+  TOSTRING_ONLY_EXPLICITLY_INCLUDED("lombok.toString.onlyExplicitlyIncluded", "false"),
 
   ACCESSORS_PREFIX("lombok.accessors.prefix", "", false),
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),

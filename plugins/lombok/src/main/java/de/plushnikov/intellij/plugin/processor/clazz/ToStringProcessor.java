@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -49,7 +48,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean result = validateAnnotationOnRigthType(psiClass, builder);
+    final boolean result = validateAnnotationOnRightType(psiClass, builder);
     if (result) {
       validateExistingMethods(psiClass, builder);
     }
@@ -68,7 +67,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private static boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError(LombokBundle.message("inspection.message.to.string.only.supported.on.class.or.enum.type"));
@@ -99,13 +98,16 @@ public final class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final Collection<MemberInfo> memberInfos = EqualsAndHashCodeToStringHandler.filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
+    final Collection<MemberInfo> memberInfos = EqualsAndHashCodeToStringHandler.filterMembers(psiClass, psiAnnotation, false,
+                                                                                              INCLUDE_ANNOTATION_METHOD,
+                                                                                              ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED);
     final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation, false);
     return Collections.singletonList(stringMethod);
   }
 
   @NotNull
-  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos,
+                                        @NotNull PsiAnnotation psiAnnotation, boolean forceCallSuper) {
     final PsiManager psiManager = psiClass.getManager();
 
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
@@ -187,9 +189,11 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final String psiFieldName = StringUtil.notNullize(psiField.getName());
-      if (EqualsAndHashCodeToStringHandler.filterFields(containingClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD).stream()
-        .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
+      final String psiFieldName = psiField.getName();
+      final Collection<MemberInfo> memberInfos =
+        EqualsAndHashCodeToStringHandler.filterMembers(containingClass, psiAnnotation, false,
+                                                       INCLUDE_ANNOTATION_METHOD, ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED);
+      if (memberInfos.stream().filter(MemberInfo::isField).map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }
     }

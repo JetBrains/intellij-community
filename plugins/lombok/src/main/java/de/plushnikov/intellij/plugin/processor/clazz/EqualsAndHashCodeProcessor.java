@@ -197,7 +197,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       PsiClass aClass = m.getContainingClass();
       PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
       return createEqualsBlockString(aClass, anno, hasCanEqualMethod,
-                                     EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
+                                     EqualsAndHashCodeToStringHandler.filterMembers(aClass, anno, true, INCLUDE_ANNOTATION_METHOD, null));
     });
     return methodBuilder;
   }
@@ -215,7 +215,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
         PsiClass aClass = m.getContainingClass();
         PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
         return createHashcodeBlockString(aClass, anno,
-                                         EqualsAndHashCodeToStringHandler.filterFields(aClass, anno, true, INCLUDE_ANNOTATION_METHOD));
+                                         EqualsAndHashCodeToStringHandler.filterMembers(aClass, anno, true, INCLUDE_ANNOTATION_METHOD, null));
       });
   }
 
@@ -394,7 +394,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
       final String psiFieldName = StringUtil.notNullize(psiField.getName());
-      if (EqualsAndHashCodeToStringHandler.filterFields(containingClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD).stream()
+      if (EqualsAndHashCodeToStringHandler.filterMembers(containingClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD, null).stream()
         .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }

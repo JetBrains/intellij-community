@@ -34,6 +34,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       ConfigKey.LOG_FIELD_IS_STATIC.getConfigKey(),
       ConfigKey.TOSTRING_DO_NOT_USE_GETTERS.getConfigKey(),
       ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES.getConfigKey(),
+      ConfigKey.TOSTRING_ONLY_EXPLICITLY_INCLUDED.getConfigKey(),
       ConfigKey.FIELDDEFAULTS_FINAL.getConfigKey(), ConfigKey.FIELDDEFAULTS_PRIVATE.getConfigKey(),
       ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE.getConfigKey());
 
