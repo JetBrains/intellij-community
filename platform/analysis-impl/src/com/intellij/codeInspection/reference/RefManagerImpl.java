@@ -4,6 +4,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
@@ -330,6 +331,10 @@ public class RefManagerImpl extends RefManager {
 
     SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
     PsiFile psiFile = pointer.getContainingFile();
+
+    Element language = new Element(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE);
+    language.addContent(psiFile != null ? psiFile.getLanguage().getID() : "");
+    element.addContent(language);
 
     if (psiFile == null) return element;
 
