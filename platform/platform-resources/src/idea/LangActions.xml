@@ -257,6 +257,8 @@
                 class="com.intellij.ide.bookmark.actions.NodeMoveDownAction"/>
         <action id="BookmarksView.SortGroupBookmarks"
                 class="com.intellij.ide.bookmark.actions.SortGroupBookmarksAction"/>
+        <action id="OpenBookmarkGroup" icon="AllIcons.Actions.MenuOpen" use-shortcut-of="EditSource"
+                class="com.intellij.ide.bookmark.actions.OpenBookmarkedFilesAction"/>
       </group>
 
       <group id="Bookmarks.ToolWindow.TitleActions">
