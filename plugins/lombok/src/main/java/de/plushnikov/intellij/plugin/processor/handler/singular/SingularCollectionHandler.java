@@ -19,13 +19,17 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   }
 
   @Override
-  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(psiFieldType, methodBuilder.getManager());
     methodBuilder.withParameter(singularName, oneElementType);
   }
 
   @Override
-  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
+  protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
+                                       @NotNull PsiType psiFieldType,
+                                       @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
     final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_COLLECTION, elementType);
@@ -50,7 +54,7 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, info.getBuilderChainResult(),
-      oneElementType.getCanonicalText(false));
+                                oneElementType.getCanonicalText(false));
   }
 
   @Override
@@ -62,12 +66,17 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     final PsiType oneElementType = PsiTypeUtil.extractOneElementType(info.getFieldType(), info.getManager());
 
     return MessageFormat.format(codeBlockTemplate, singularName, info.getBuilderChainResult(),
-      oneElementType.getCanonicalText(false));
+                                oneElementType.getCanonicalText(false));
   }
 
   @Override
   public String renderBuildPrepare(@NotNull BuilderInfo info) {
     return renderBuildCode(info.getVariable(), info.getFieldName(), "this");
+  }
+
+  @Override
+  public String renderBuildCall(@NotNull BuilderInfo info) {
+    return info.renderFieldName();
   }
 
   @Override
@@ -85,13 +94,15 @@ class SingularCollectionHandler extends AbstractSingularHandler {
         if ({3}.{0} != null) {0}.addAll({3}.{0});
         {0} = java.util.Collections.unmodifiableNavigableSet({0});
         """;
-    } else if (SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName)) {
+    }
+    else if (SingularCollectionClassNames.JAVA_UTIL_SORTED_SET.equals(collectionQualifiedName)) {
       result = """
         {2}<{1}> {0} = new java.util.TreeSet<{1}>();
         if ({3}.{0} != null) {0}.addAll({3}.{0});
         {0} = java.util.Collections.unmodifiableSortedSet({0});
         """;
-    } else if (SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
+    }
+    else if (SingularCollectionClassNames.JAVA_UTIL_SET.equals(collectionQualifiedName)) {
       result = """
         {2}<{1}> {0};
         switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'
@@ -107,7 +118,8 @@ class SingularCollectionHandler extends AbstractSingularHandler {
            {0} = java.util.Collections.unmodifiableSet({0});
         '}'
         """;
-    } else {
+    }
+    else {
       result = """
         {2}<{1}> {0};
         switch ({3}.{0} == null ? 0 : {3}.{0}.size()) '{'
@@ -129,7 +141,8 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   protected String getEmptyCollectionCall() {
     if (ContainerUtil.exists(SingularCollectionClassNames.JAVA_SETS, collectionQualifiedName::equals)) {
       return "java.util.Collections.emptySet()";
-    } else {
+    }
+    else {
       return "java.util.Collections.emptyList()";
     }
   }

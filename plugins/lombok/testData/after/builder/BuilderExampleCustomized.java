@@ -36,7 +36,7 @@ public class BuilderExampleCustomized {
 
     @java.lang.SuppressWarnings("all")
     public BuilderExampleCustomized execute() {
-      return new BuilderExampleCustomized(name, age);
+      return new BuilderExampleCustomized(this.name, this.age);
     }
 
     @java.lang.Override

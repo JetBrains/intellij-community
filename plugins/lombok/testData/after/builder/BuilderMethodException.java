@@ -33,7 +33,7 @@ public class BuilderMethodException {
 
     @java.lang.SuppressWarnings("all")
     public void build() throws Exception {
-      BuilderMethodException.foo(i);
+      BuilderMethodException.foo(this.i);
     }
 
     @java.lang.Override

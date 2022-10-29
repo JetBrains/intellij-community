@@ -20,9 +20,8 @@ public class LombokUtilsAllSetterTest {
     lombokResult.clear();
     result.clear();
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(false, false, false, false);
-    lombokResult.addAll(LombokHandlerUtil.toAllSetterNames(accessorsInfo, fieldName, isBoolean));
-    result.addAll(LombokUtils.toAllSetterNames(accessorsInfo, fieldName, isBoolean));
+    lombokResult.addAll(LombokHandlerUtil.toAllSetterNames(AccessorsInfo.DEFAULT, fieldName, isBoolean));
+    result.addAll(LombokUtils.toAllSetterNames(AccessorsInfo.DEFAULT, fieldName, isBoolean));
 
     assertThat(result, is(lombokResult));
   }

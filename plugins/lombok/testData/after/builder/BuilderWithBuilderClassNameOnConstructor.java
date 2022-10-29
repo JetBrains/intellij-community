@@ -61,7 +61,7 @@ public final class BuilderWithBuilderClassNameOnConstructor {
     }
 
     public BuilderWithBuilderClassNameOnConstructor build() {
-      return new BuilderWithBuilderClassNameOnConstructor(name, age);
+      return new BuilderWithBuilderClassNameOnConstructor(this.name, this.age);
     }
 
     public String toString() {

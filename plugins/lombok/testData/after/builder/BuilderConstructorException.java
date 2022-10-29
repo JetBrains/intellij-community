@@ -36,7 +36,7 @@ public class BuilderConstructorException {
         @java.lang.SuppressWarnings("all")
         //added "throws Exception" to delomboked code
         public BuilderConstructorException build() throws Exception {
-            return new BuilderConstructorException(i);
+            return new BuilderConstructorException(this.i);
         }
 
         @java.lang.Override

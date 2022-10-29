@@ -4,6 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
+import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,8 @@ class EmptyBuilderElementHandler implements BuilderElementHandler {
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation) {
+  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
+                                            CapitalizationStrategy capitalizationStrategy) {
     return Collections.emptyList();
   }
 

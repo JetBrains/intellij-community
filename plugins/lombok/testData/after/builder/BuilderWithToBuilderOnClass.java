@@ -60,7 +60,7 @@ class BuilderWithToBuilderOnClass<T> {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderWithToBuilderOnClass<T> build() {
-			return new BuilderWithToBuilderOnClass<T>(one, two, foo, bar);
+			return new BuilderWithToBuilderOnClass<T>(this.one, this.two, this.foo, this.bar);
 		}
 
 		@java.lang.Override

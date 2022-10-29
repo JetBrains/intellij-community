@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
+import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,8 @@ import java.util.Collections;
  * @author Plushnikov Michail
  */
 public class AccessorsInfo {
-  public static final AccessorsInfo EMPTY = new AccessorsInfo(false, false, false, false);
+  public static final AccessorsInfo DEFAULT = new AccessorsInfo(false, false, false,
+                                                                false, CapitalizationStrategy.defaultValue());
   private static final String CHAIN_VALUE = "chain";
   private static final String FLUENT_VALUE = "fluent";
   private static final String MAKE_FINAL_VALUE = "makeFinal";
@@ -28,14 +30,18 @@ public class AccessorsInfo {
   private final boolean fluent;
   private final boolean chain;
   private final boolean makeFinal;
-  private final String[] prefixes;
+  private final CapitalizationStrategy capitalizationStrategy;
   private final boolean doNotUseIsPrefix;
+  private final String[] prefixes;
 
-  private AccessorsInfo(boolean fluentValue, boolean chainValue, boolean makeFinal, boolean doNotUseIsPrefix, String... prefixes) {
+  private AccessorsInfo(boolean fluentValue, boolean chainValue, boolean makeFinal,
+                        boolean doNotUseIsPrefix, CapitalizationStrategy capitalizationStrategy,
+                        String... prefixes) {
     this.fluent = fluentValue;
     this.chain = chainValue;
     this.makeFinal = makeFinal;
     this.doNotUseIsPrefix = doNotUseIsPrefix;
+    this.capitalizationStrategy = capitalizationStrategy;
     this.prefixes = null == prefixes ? ArrayUtil.EMPTY_STRING_ARRAY : prefixes;
   }
 
@@ -44,8 +50,9 @@ public class AccessorsInfo {
                                     boolean chainValue,
                                     boolean makeFinal,
                                     boolean doNotUseIsPrefix,
+                                    CapitalizationStrategy capitalizationStrategy,
                                     String... prefixes) {
-    return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, prefixes);
+    return new AccessorsInfo(fluentValue, chainValue, makeFinal, doNotUseIsPrefix, capitalizationStrategy, prefixes);
   }
 
   @NotNull
@@ -57,6 +64,7 @@ public class AccessorsInfo {
     final boolean isChained;
     final boolean makeFinal;
     final boolean doNotUseIsPrefix;
+    final CapitalizationStrategy capitalizationStrategy;
     final String[] prefixes;
 
     if (null != psiClass) {
@@ -90,6 +98,9 @@ public class AccessorsInfo {
       }
 
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
+
+      final String capitalizationStrategyValue = configDiscovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION, psiClass);
+      capitalizationStrategy = CapitalizationStrategy.convertValue(capitalizationStrategyValue);
     }
     else {
       isFluent = null != fluentDeclaredValue && fluentDeclaredValue;
@@ -97,18 +108,20 @@ public class AccessorsInfo {
       makeFinal = null != makeFinalDeclaredValue && makeFinalDeclaredValue;
       prefixes = ArrayUtil.toStringArray(prefixDeclared);
       doNotUseIsPrefix = false;
+      capitalizationStrategy = CapitalizationStrategy.defaultValue();
     }
 
     boolean isChainDeclaredOrImplicit = isChained || (isFluent && null == chainDeclaredValue);
-    return build(isFluent, isChainDeclaredOrImplicit, makeFinal, doNotUseIsPrefix, prefixes);
+    return build(isFluent, isChainDeclaredOrImplicit, makeFinal, doNotUseIsPrefix, capitalizationStrategy, prefixes);
   }
 
   public record AccessorsValues(Boolean chainDeclaredValue, Boolean fluentDeclaredValue, Boolean makeFinalDeclaredValue,
-                                 Collection<String> prefixes) {
+                                Collection<String> prefixes) {
 
     private AccessorsValues() {
       this(null, null, null, Collections.emptyList());
     }
+
     private AccessorsValues combine(AccessorsValues defaults) {
       Boolean combinedChain = chainDeclaredValue;
       Boolean combinedFluent = fluentDeclaredValue;
@@ -203,7 +216,7 @@ public class AccessorsInfo {
     if (fluent == fluentValue) {
       return this;
     }
-    return build(fluentValue, chain, makeFinal, doNotUseIsPrefix, prefixes);
+    return build(fluentValue, chain, makeFinal, doNotUseIsPrefix, capitalizationStrategy, prefixes);
   }
 
   public boolean isChain() {
@@ -216,6 +229,10 @@ public class AccessorsInfo {
 
   public boolean isDoNotUseIsPrefix() {
     return doNotUseIsPrefix;
+  }
+
+  public CapitalizationStrategy getCapitalizationStrategy() {
+    return capitalizationStrategy;
   }
 
   public String[] getPrefixes() {

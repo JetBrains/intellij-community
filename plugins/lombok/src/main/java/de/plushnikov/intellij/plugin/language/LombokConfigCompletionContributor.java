@@ -20,6 +20,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
 
   private static final String LOMBOK_EQUALS_AND_HASH_CODE_CALL_SUPER = ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey();
   private static final String LOMBOK_TOSTRING_CALL_SUPER = ConfigKey.TOSTRING_CALL_SUPER.getConfigKey();
+  private static final String LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION = ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.getConfigKey();
 
   public LombokConfigCompletionContributor() {
     final Collection<String> booleanOptions = ContainerUtil.set(
@@ -54,7 +55,8 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
     final Collection<String> flagUsageAllowable = ContainerUtil.set("lombok.var.flagUsage");
 
     final Collection<String> otherOptions = ContainerUtil.set(
-      ConfigKey.ACCESSORS_PREFIX.getConfigKey(), ConfigKey.COPYABLE_ANNOTATIONS.getConfigKey(),
+      ConfigKey.ACCESSORS_PREFIX.getConfigKey(), LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION,
+      ConfigKey.COPYABLE_ANNOTATIONS.getConfigKey(),
       ConfigKey.LOG_FIELDNAME.getConfigKey(), ConfigKey.LOG_CUSTOM_DECLARATION.getConfigKey(),
       ConfigKey.NONNULL_EXCEPTIONTYPE.getConfigKey(), ConfigKey.EQUALSANDHASHCODE_CALL_SUPER.getConfigKey(),
       ConfigKey.FIELD_NAME_CONSTANTS_PREFIX.getConfigKey(), ConfigKey.FIELD_NAME_CONSTANTS_SUFFIX.getConfigKey(),
@@ -93,6 +95,10 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
                    resultSet.addElement(LookupElementBuilder.create("CALL"));
                    resultSet.addElement(LookupElementBuilder.create("SKIP"));
                    resultSet.addElement(LookupElementBuilder.create("WARN"));
+                 }
+                 else if (LOMBOK_ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION.equals(configPropertyKey)) {
+                   resultSet.addElement(LookupElementBuilder.create("BASIC"));
+                   resultSet.addElement(LookupElementBuilder.create("BEANSPEC"));
                  }
                }
              }

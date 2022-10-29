@@ -44,7 +44,7 @@ public class BuilderMultipleConstructorException {
     }
 
     public BuilderMultipleConstructorException build() {
-      return new BuilderMultipleConstructorException(first, second);
+      return new BuilderMultipleConstructorException(this.first, this.second);
     }
 
     public String toString() {

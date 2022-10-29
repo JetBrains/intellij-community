@@ -49,7 +49,7 @@ class BuilderInstanceMethod<T> {
 
 		@java.lang.SuppressWarnings("all")
 		public String build() {
-			return BuilderInstanceMethod.this.create(show, yes, also, $andMe);
+			return BuilderInstanceMethod.this.create(this.show, this.yes, this.also, this.$andMe);
 		}
 
 		@java.lang.Override

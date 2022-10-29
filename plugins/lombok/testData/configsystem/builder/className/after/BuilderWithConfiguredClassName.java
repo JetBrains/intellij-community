@@ -29,7 +29,7 @@ public class BuilderWithConfiguredClassName {
 
     @java.lang.SuppressWarnings("all")
     public BuilderWithConfiguredClassName build() {
-      return new BuilderWithConfiguredClassName(field);
+      return new BuilderWithConfiguredClassName(this.field);
     }
 
     @java.lang.Override

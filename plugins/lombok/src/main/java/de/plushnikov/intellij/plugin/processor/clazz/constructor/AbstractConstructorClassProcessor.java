@@ -384,13 +384,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     methodBuilder.withMethodReturnType(returnType);
 
     if (!useJavaDefaults) {
-      for (PsiField param : params) {
-        final String parameterName = StringUtil.notNullize(param.getName());
-        final PsiType parameterType = substitutor.substitute(param.getType());
+      for (PsiField psiField : params) {
+        final String parameterName = psiField.getName();
+        final PsiType parameterType = substitutor.substitute(psiField.getType());
         final LombokLightParameter parameter = new LombokLightParameter(parameterName, parameterType, methodBuilder);
-        parameter.setNavigationElement(param);
+        parameter.setNavigationElement(psiField);
         methodBuilder.withParameter(parameter);
-        copyCopyableAnnotations(param, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
+        copyCopyableAnnotations(psiField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
       }
     }
 

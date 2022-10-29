@@ -31,7 +31,7 @@ public class BuilderPredefined {
 
     @java.lang.SuppressWarnings("all")
     public BuilderPredefined build() {
-      return new BuilderPredefined(name, age);
+      return new BuilderPredefined(this.name, this.age);
     }
 
     @java.lang.Override

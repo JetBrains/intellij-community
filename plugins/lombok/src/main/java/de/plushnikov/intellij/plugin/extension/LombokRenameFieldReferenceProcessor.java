@@ -66,8 +66,8 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
       if (null != builderAnnotation) {
         final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
         final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiField, null!=singularAnnotation);
-        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation);
-        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation);
+        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation, accessorsInfo.getCapitalizationStrategy());
+        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation, accessorsInfo.getCapitalizationStrategy());
 
         if (currentBuilderMethodNames.size() == newBuilderMethodNames.size()) {
           Arrays.stream(containingClass.getInnerClasses())

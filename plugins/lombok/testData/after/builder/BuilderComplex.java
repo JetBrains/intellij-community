@@ -48,7 +48,7 @@ class BuilderComplex {
 
 		@java.lang.SuppressWarnings("all")
 		public void execute() {
-			BuilderComplex.<T>testVoidWithGenerics(number, arg2, arg3, selfRef);
+			BuilderComplex.<T>testVoidWithGenerics(this.number, this.arg2, this.arg3, this.selfRef);
 		}
 
 		@java.lang.Override

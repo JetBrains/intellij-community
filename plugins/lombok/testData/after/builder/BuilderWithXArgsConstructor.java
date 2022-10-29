@@ -30,7 +30,7 @@ public class BuilderWithXArgsConstructor {
 
         @Generated
         public BuilderWithXArgsConstructor build() {
-            return new BuilderWithXArgsConstructor(someProperty);
+            return new BuilderWithXArgsConstructor(this.someProperty);
         }
 
         @Generated
@@ -69,7 +69,7 @@ class BuilderWithAllArgsConstructorPrivate {
 
     @Generated
     public BuilderWithAllArgsConstructorPrivate build() {
-      return new BuilderWithAllArgsConstructorPrivate(someProperty);
+      return new BuilderWithAllArgsConstructorPrivate(this.someProperty);
     }
 
     @Generated
@@ -108,7 +108,7 @@ class BuilderWithReqArgsConstructor {
 
     @Generated
     public BuilderWithReqArgsConstructor build() {
-      return new BuilderWithReqArgsConstructor(someProperty);
+      return new BuilderWithReqArgsConstructor(this.someProperty);
     }
 
     @Generated
@@ -147,7 +147,7 @@ class BuilderWithReqArgsConstructorPrivate {
 
     @Generated
     public BuilderWithReqArgsConstructorPrivate build() {
-      return new BuilderWithReqArgsConstructorPrivate(someProperty);
+      return new BuilderWithReqArgsConstructorPrivate(this.someProperty);
     }
 
     @Generated

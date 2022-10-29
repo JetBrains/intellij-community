@@ -27,6 +27,7 @@ public enum ConfigKey {
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
   ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
   ACCESSORS_MAKE_FINAL("lombok.accessors.makeFinal", "false"),
+  ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION("lombok.accessors.capitalization", "BASIC"),
   GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
 
   SINGULAR_USE_GUAVA("lombok.singular.useGuava", "false"),

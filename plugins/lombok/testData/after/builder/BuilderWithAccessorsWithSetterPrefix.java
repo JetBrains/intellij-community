@@ -57,7 +57,7 @@ class BuilderWithAccessorsWithSetterPrefix {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderWithAccessorsWithSetterPrefix build() {
-			return new BuilderWithAccessorsWithSetterPrefix(plower, upper, foo, _bar);
+			return new BuilderWithAccessorsWithSetterPrefix(this.plower, this.upper, this.foo, this._bar);
 		}
 
 		@java.lang.Override

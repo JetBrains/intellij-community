@@ -26,7 +26,7 @@ public class ObjectApiResponse<K> {
 
     @java.lang.SuppressWarnings("all")
     public ObjectApiResponse<T> build() {
-      return new ObjectApiResponse<T>(response);
+      return new ObjectApiResponse<T>(this.response);
     }
 
     public String toString() {

@@ -49,7 +49,7 @@ public class BuilderWithFieldAccessors {
 
     @java.lang.SuppressWarnings("all")
     public BuilderWithFieldAccessors build() {
-      return new BuilderWithFieldAccessors(upper, foo, bar);
+      return new BuilderWithFieldAccessors(this.upper, this.foo, this.bar);
     }
 
     @java.lang.Override

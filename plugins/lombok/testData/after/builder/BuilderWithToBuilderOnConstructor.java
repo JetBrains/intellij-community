@@ -35,7 +35,7 @@ class BuilderWithToBuilderOnConstructor<T> {
 
 		@java.lang.SuppressWarnings("all")
 		public BuilderWithToBuilderOnConstructor<T> build() {
-			return new BuilderWithToBuilderOnConstructor<T>(one, bar);
+			return new BuilderWithToBuilderOnConstructor<T>(this.one, this.bar);
 		}
 
 		@java.lang.Override

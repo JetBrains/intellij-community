@@ -86,7 +86,7 @@ public class BuilderWithSetterPrefixAndExistedMethods {
         }
 
         public BuilderWithSetterPrefixAndExistedMethods build() {
-            return new BuilderWithSetterPrefixAndExistedMethods(secret, name);
+            return new BuilderWithSetterPrefixAndExistedMethods(this.secret, this.name);
         }
 
         public String toString() {

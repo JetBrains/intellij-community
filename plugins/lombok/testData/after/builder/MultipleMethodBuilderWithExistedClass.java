@@ -36,7 +36,7 @@ public class MultipleMethodBuilderWithExistedClass {
 
 
     public MultipleMethodBuilderWithExistedClass build() {
-      return MultipleMethodBuilderWithExistedClass.builderB(id);
+      return MultipleMethodBuilderWithExistedClass.builderB(this.id);
     }
 
 
@@ -61,7 +61,7 @@ public class MultipleMethodBuilderWithExistedClass {
 
 
     public MultipleMethodBuilderWithExistedClass build() {
-      return MultipleMethodBuilderWithExistedClass.builderA(name);
+      return MultipleMethodBuilderWithExistedClass.builderA(this.name);
     }
 
 

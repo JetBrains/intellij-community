@@ -18,7 +18,7 @@ public record Person(String name) {
     }
 
     public Person build() {
-      return new Person(name);
+      return new Person(this.name);
     }
 
     public String toString() {

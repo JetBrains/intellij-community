@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -393,7 +392,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final String psiFieldName = StringUtil.notNullize(psiField.getName());
+      final String psiFieldName = psiField.getName();
       if (EqualsAndHashCodeToStringHandler.filterMembers(containingClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD, null).stream()
         .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
