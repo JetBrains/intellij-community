@@ -11,15 +11,7 @@ import java.util.Set;
  * @author Plushnikov Michail
  */
 public class ProblemNewBuilder implements ProblemBuilder {
-  private final Set<LombokProblem> problems;
-
-  public ProblemNewBuilder() {
-    this(1);
-  }
-
-  public ProblemNewBuilder(int size) {
-    this.problems = new HashSet<>(size);
-  }
+  private final Set<LombokProblem> problems = new HashSet<>();
 
   public Set<LombokProblem> getProblems() {
     return problems;
@@ -31,18 +23,8 @@ public class ProblemNewBuilder implements ProblemBuilder {
   }
 
   @Override
-  public void addWarning(@InspectionMessage String message, Object... params) {
-    addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-  }
-
-  @Override
   public void addError(@InspectionMessage String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR);
-  }
-
-  @Override
-  public void addError(@InspectionMessage String message, Object... params) {
-    addProblem(String.format(message, params), ProblemHighlightType.GENERIC_ERROR);
   }
 
   @Override

@@ -54,8 +54,8 @@ public class DelegateHandler {
     boolean result = true;
     for (PsiType psiType : psiTypes) {
       if (!checkConcreteClass(psiType)) {
-        builder.addError(LombokBundle.message("inspection.message.delegate.can.only.use.concrete.class.types"),
-                         psiType.getCanonicalText());
+        builder.addError(LombokBundle.message("inspection.message.delegate.can.only.use.concrete.class.types",
+                         psiType.getCanonicalText()));
         result = false;
       } else {
         result &= validateRecursion(psiType, builder);
@@ -274,7 +274,7 @@ public class DelegateHandler {
 
     private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE)) {
-        builder.addError(LombokBundle.message("inspection.message.delegate.does.not.support.recursion.delegating"), ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
+        builder.addError(LombokBundle.message("inspection.message.delegate.does.not.support.recursion.delegating", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText()));
         valid = false;
       }
     }

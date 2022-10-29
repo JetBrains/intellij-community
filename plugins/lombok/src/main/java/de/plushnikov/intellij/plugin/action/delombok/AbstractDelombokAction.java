@@ -163,7 +163,7 @@ public abstract class AbstractDelombokAction extends AnAction {
       return true;
     }
     final Collection<PsiClass> classesIntern = PsiClassUtil.collectInnerClassesIntern(psiClass);
-    return classesIntern.stream().anyMatch(this::isValidForClass);
+    return ContainerUtil.exists(classesIntern, this::isValidForClass);
   }
 
   @Nullable

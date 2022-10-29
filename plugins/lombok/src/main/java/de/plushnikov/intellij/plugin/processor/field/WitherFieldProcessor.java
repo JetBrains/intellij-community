@@ -106,7 +106,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       final Collection<String> possibleWitherNames = LombokUtils.toAllWitherNames(accessorsInfo, psiFieldName, PsiType.BOOLEAN.equals(psiField.getType()));
       for (String witherName : possibleWitherNames) {
         if (PsiMethodUtil.hasSimilarMethod(classMethods, witherName, 1)) {
-          builder.addWarning(LombokBundle.message("inspection.message.not.generating.s.method.with.that.name.already.exists"), witherName);
+          builder.addWarning(LombokBundle.message("inspection.message.not.generating.s.method.with.that.name.already.exists", witherName));
           return false;
         }
       }
@@ -139,7 +139,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     }
 
     if (!constructorExists) {
-      builder.addWarning(LombokBundle.message("inspection.message.wither.needs.constructor.for.all.fields.d.parameters"), constructorParameters.size());
+      builder.addWarning(LombokBundle.message("inspection.message.wither.needs.constructor.for.all.fields.d.parameters", constructorParameters.size()));
     }
     return constructorExists;
   }

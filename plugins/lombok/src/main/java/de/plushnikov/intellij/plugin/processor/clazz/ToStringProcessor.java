@@ -78,7 +78,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
   private static void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasToStringMethodDefined(psiClass)) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists"), TO_STRING_METHOD_NAME);
+      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists", TO_STRING_METHOD_NAME));
     }
   }
 

@@ -26,14 +26,6 @@ public class ProblemEmptyBuilder implements ProblemBuilder {
   }
 
   @Override
-  public void addWarning(String message, Object... params) {
-  }
-
-  @Override
-  public void addError(String message, Object... params) {
-  }
-
-  @Override
   public void addWarning(String message, LocalQuickFix... quickFixes) {
   }
 

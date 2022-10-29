@@ -10,11 +10,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 public interface ProblemBuilder {
   void addWarning(@InspectionMessage  String message);
 
-  void addWarning(@InspectionMessage String message, Object... params);
-
   void addError(@InspectionMessage String message);
-
-  void addError(@InspectionMessage String message, Object... params);
 
   void addWarning(@InspectionMessage String message, LocalQuickFix... quickFixes);
 

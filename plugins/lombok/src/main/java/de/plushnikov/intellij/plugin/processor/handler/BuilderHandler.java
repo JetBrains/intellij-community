@@ -195,13 +195,13 @@ public class BuilderHandler {
       final PsiType psiVariableType = builderInfo.getVariable().getType();
       final String qualifiedName = ((PsiClassReferenceType)psiVariableType).getClassName();//PsiTypeUtil.getQualifiedName(psiVariableType);
       if (SingularHandlerFactory.isInvalidSingularType(qualifiedName)) {
-        problemBuilder.addError(LombokBundle.message("inspection.message.lombok.does.not.know"),
-                                qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText());
+        problemBuilder.addError(LombokBundle.message("inspection.message.lombok.does.not.know",
+                                qualifiedName != null ? qualifiedName : psiVariableType.getCanonicalText()));
         result.set(false);
       }
 
       if (!AbstractSingularHandler.validateSingularName(builderInfo.getSingularAnnotation(), builderInfo.getFieldName())) {
-        problemBuilder.addError(LombokBundle.message("inspection.message.can.t.singularize.this.name"), builderInfo.getFieldName());
+        problemBuilder.addError(LombokBundle.message("inspection.message.can.t.singularize.this.name", builderInfo.getFieldName()));
         result.set(false);
       }
     });
@@ -213,7 +213,7 @@ public class BuilderHandler {
                                                    @NotNull ProblemBuilder builder) {
     final PsiNameHelper psiNameHelper = PsiNameHelper.getInstance(project);
     if (!psiNameHelper.isIdentifier(builderClassName)) {
-      builder.addError(LombokBundle.message("inspection.message.s.not.valid.identifier"), builderClassName);
+      builder.addError(LombokBundle.message("inspection.message.s.not.valid.identifier", builderClassName));
       return false;
     }
     return true;
@@ -239,8 +239,7 @@ public class BuilderHandler {
                                                        @NotNull PsiAnnotation psiAnnotation,
                                                        @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(
-        String.format(LombokBundle.message("inspection.message.s.can.be.used.on.classes.only"), psiAnnotation.getQualifiedName()));
+      builder.addError(LombokBundle.message("inspection.message.s.can.be.used.on.classes.only", psiAnnotation.getQualifiedName()));
       return false;
     }
     return true;

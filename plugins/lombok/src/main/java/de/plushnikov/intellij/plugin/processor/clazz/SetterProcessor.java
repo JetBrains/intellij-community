@@ -43,7 +43,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
                                                        @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(LombokBundle.message("inspection.message.s.only.supported.on.class.or.field.type"), psiAnnotation.getQualifiedName());
+      builder.addError(LombokBundle.message("inspection.message.s.only.supported.on.class.or.field.type", psiAnnotation.getQualifiedName()));
       result = false;
     }
     return result;

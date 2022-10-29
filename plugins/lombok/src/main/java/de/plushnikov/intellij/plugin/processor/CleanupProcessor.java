@@ -34,7 +34,7 @@ public class CleanupProcessor extends AbstractProcessor {
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     // TODO warning: "You're assigning an auto-cleanup variable to something else. This is a bad idea."
-    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(2);
+    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
 
     PsiLocalVariable psiVariable = PsiTreeUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
     if (null != psiVariable) {
@@ -74,7 +74,7 @@ public class CleanupProcessor extends AbstractProcessor {
         }
 
         if (!hasCleanupMethod) {
-          problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.method.s.not.found.on.target.class"), cleanupName);
+          problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.method.s.not.found.on.target.class", cleanupName));
         }
       }
     } else {

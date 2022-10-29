@@ -154,8 +154,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       classMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod.getMethod(), LombokClassNames.TOLERATE));
 
       if (!classMethods.isEmpty()) {
-        builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists"),
-                           accessorName, accessorName);
+        builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
+                           accessorName, accessorName));
         return false;
       }
     }

@@ -83,13 +83,13 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isInterface() || psiClass.isAnnotationType()) {
-      builder.addError(LombokBundle.message("inspection.message.s.legal.only.on.classes.enums"), getSupportedAnnotationClasses()[0]);
+      builder.addError(LombokBundle.message("inspection.message.s.legal.only.on.classes.enums", getSupportedAnnotationClasses()[0]));
       result = false;
     }
     if (result) {
       final String loggerName = getLoggerName(psiClass);
       if (hasFieldByName(psiClass, loggerName)) {
-        builder.addError(LombokBundle.message("inspection.message.not.generating.field.s.field.with.same.name.already.exists"), loggerName);
+        builder.addError(LombokBundle.message("inspection.message.not.generating.field.s.field.with.same.name.already.exists", loggerName));
         result = false;
       }
     }
