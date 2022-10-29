@@ -27,6 +27,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
+import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
@@ -279,7 +280,7 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
     hashCodes.add(hashCode)
     appendProjectDetails(message, project, hashCode, null)
   }
-  val dumpPath = publishHeapDump("leakedProjects")
+  val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
                           { leaked: ProjectImpl?, backLink: Any? ->
