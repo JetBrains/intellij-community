@@ -93,7 +93,7 @@ class LanguageCommentFolding : FoldingBuilderEx() {
           }
         }
       })
-    }.toArray(FoldingDescriptor.EMPTY)
+    }.toArray(FoldingDescriptor.EMPTY_ARRAY)
   }
 
   override fun getPlaceholderText(node: ASTNode): String? {

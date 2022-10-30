@@ -234,7 +234,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
                                                               Collections.singleton(ModificationTracker.EVER_CHANGED))};
       }
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
   }
 }
