@@ -447,7 +447,7 @@ public abstract class Invoker implements Disposable {
     }
 
     private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
-      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", parent.toString(), useReadAction);
+      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction);
       executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
       Disposer.register(parent, this);
     }
