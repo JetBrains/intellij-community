@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassProcessor {
 
@@ -44,14 +46,21 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   }
 
   @NotNull
-  Collection<PsiField> filterFields(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
-    final Collection<PsiField> psiFields = new ArrayList<>();
+  Collection<PsiMember> filterMembers(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
+    final Collection<PsiMember> result = new ArrayList<>();
 
     final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
 
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+    Collection<? extends PsiMember> psiMembers;
+    if(psiClass.isRecord()) {
+      psiMembers = List.of(psiClass.getRecordComponents());
+    }else{
+      psiMembers =  PsiClassUtil.collectClassFieldsIntern(psiClass);
+    }
+
+    for (PsiMember psiMember : psiMembers) {
       boolean useField = true;
-      PsiModifierList modifierList = psiField.getModifierList();
+      PsiModifierList modifierList = psiMember.getModifierList();
       if (null != modifierList) {
 
         //Skip static fields.
@@ -60,20 +69,20 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
         useField &= !modifierList.hasModifierProperty(PsiModifier.TRANSIENT);
       }
       //Skip fields that start with $
-      useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+      useField &= !StringUtil.notNullize(psiMember.getName()).startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       //Skip fields annotated with @FieldNameConstants.Exclude
-      useField &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, FIELD_NAME_CONSTANTS_EXCLUDE);
+      useField &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_EXCLUDE);
 
       if (onlyExplicitlyIncluded) {
         //Only use fields annotated with @FieldNameConstants.Include, Include annotation overrides other rules
-        useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, FIELD_NAME_CONSTANTS_INCLUDE);
+        useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_INCLUDE);
       }
 
       if (useField) {
-        psiFields.add(psiField);
+        result.add(psiMember);
       }
     }
-    return psiFields;
+    return result;
   }
 
   @NotNull
@@ -88,7 +97,7 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterFields(containingClass, psiAnnotation)).contains(psiField.getName())) {
+      if (PsiClassUtil.getNames(filterMembers(containingClass, psiAnnotation)).contains(psiField.getName())) {
         return LombokPsiElementUsage.USAGE;
       }
     }

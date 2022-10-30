@@ -1,9 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
@@ -71,9 +68,9 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
   }
 
   private void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiClass existingInnerClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation);
-    if (!psiFields.isEmpty()) {
-      List<PsiField> newFields = FieldNameConstantsHandler.createFields(existingInnerClass, psiFields);
+    final Collection<PsiMember> psiMembers = filterMembers(psiClass, psiAnnotation);
+    if (!psiMembers.isEmpty()) {
+      List<PsiField> newFields = FieldNameConstantsHandler.createFields(existingInnerClass, psiMembers);
       target.addAll(newFields);
     }
   }
