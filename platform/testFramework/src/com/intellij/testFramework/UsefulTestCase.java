@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -948,6 +949,16 @@ public abstract class UsefulTestCase extends TestCase {
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Objects.equals(expected, actual)) {
       throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+    }
+  }
+
+  public static void assertTextEquals(@NotNull String expectedText, @NotNull String actualText) {
+    assertTextEquals(null, expectedText, actualText);
+  }
+
+  public static void assertTextEquals(@Nullable String message, @NotNull String expectedText, @NotNull String actualText) {
+    if (!expectedText.equals(actualText)) {
+      throw new FileComparisonFailure(Strings.notNullize(message), expectedText, actualText, null);
     }
   }
 
