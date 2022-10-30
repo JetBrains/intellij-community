@@ -606,7 +606,7 @@ def should_evaluate_shape():
 def _series_to_str(s, max_items):
     res = []
     s = s[:max_items]
-    for item in s.iteritems():
+    for item in s.items():
         # item: (index, value)
         res.append(str(item))
     return ' '.join(res)
