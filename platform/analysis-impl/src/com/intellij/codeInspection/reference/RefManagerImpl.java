@@ -330,11 +330,14 @@ public class RefManagerImpl extends RefManager {
     if (!(entity instanceof RefElement)) return element;
 
     SmartPsiElementPointer<?> pointer = ((RefElement)entity).getPointer();
-    PsiFile psiFile = pointer.getContainingFile();
+
+    PsiElement psiElement = pointer.getElement();
 
     Element language = new Element(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_LANGUAGE);
-    language.addContent(psiFile != null ? psiFile.getLanguage().getID() : "");
+    language.addContent(psiElement != null ? psiElement.getLanguage().getID() : "");
     element.addContent(language);
+
+    PsiFile psiFile = pointer.getContainingFile();
 
     if (psiFile == null) return element;
 
