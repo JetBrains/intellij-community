@@ -297,11 +297,11 @@ fun assertNonDefaultProjectsAreNotLeaked() {
     LeakHunter.checkNonDefaultProjectLeak()
   }
   catch (e: AssertionError) {
-    val heapDump = publishHeapDump(LEAKED_PROJECTS)
+    publishHeapDump(LEAKED_PROJECTS)
     throw AssertionError(e)
   }
   catch (e: Exception) {
-    val heapDump = publishHeapDump(LEAKED_PROJECTS)
+    publishHeapDump(LEAKED_PROJECTS)
     throw AssertionError(e)
   }
 }
