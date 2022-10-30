@@ -12,7 +12,6 @@ import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
-import java.util.Comparator;
 
 public class PlatformDataKeys extends PlatformCoreDataKeys {
 
@@ -46,6 +45,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<String> PREDEFINED_TEXT = DataKey.create("predefined.text.value");
 
+  public static final DataKey<String> SPEED_SEARCH_TEXT = DataKey.create("speed.search.text");
   public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component.value");
 
   /**

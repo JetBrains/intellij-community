@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -101,15 +100,8 @@ internal val Bookmark.firstGroupWithDescription
 /**
  * Creates and registers an action that navigates to a bookmark by a digit or a letter, if speed search is not active.
  */
-internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = createBookmarkTypeAction(type)
+internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: BookmarkType) = GotoBookmarkTypeAction(type, true)
   .registerCustomShortcutSet(CustomShortcutSet.fromString(type.mnemonic.toString()), this, parent)
-
-/**
- * Creates an action that navigates to a bookmark by its type, if speed search is not active.
- */
-private fun createBookmarkTypeAction(type: BookmarkType) = GotoBookmarkTypeAction(type) {
-  null == it.bookmarksView?.run { SpeedSearchSupply.getSupply(tree) }
-}
 
 /**
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
