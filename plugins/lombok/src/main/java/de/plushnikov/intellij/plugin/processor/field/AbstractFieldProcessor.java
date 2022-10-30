@@ -4,12 +4,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.RecordAugmentProvider;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -53,7 +52,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
-            && validate(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+            && validate(psiAnnotation, psiField, new ProblemProcessingSink())) {
 
           generatePsiElements(psiField, psiAnnotation, result);
         }
@@ -87,7 +86,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
     PsiField psiField = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class);
     if (null != psiField) {
-      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, psiField, problemNewBuilder);
       result = problemNewBuilder.getProblems();
     }
@@ -95,11 +94,11 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
+  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemSink builder);
 
   protected void validateOnXAnnotations(@NotNull PsiAnnotation psiAnnotation,
                                         @NotNull PsiField psiField,
-                                        @NotNull ProblemBuilder builder,
+                                        @NotNull ProblemSink builder,
                                         @NotNull String parameterName) {
     final @NotNull List<PsiAnnotation> copyableAnnotations = copyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
 
@@ -109,7 +108,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
         for (String onXAnnotation : onXAnnotations) {
           if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
-            builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN));
+            builder.addErrorMessage("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN);
           }
         }
       }
@@ -118,7 +117,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
     if (psiField.isDeprecated()) {
       final Iterable<String> onMethodAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, "onMethod");
       if (StreamSupport.stream(onMethodAnnotations.spliterator(), false).anyMatch(CommonClassNames.JAVA_LANG_DEPRECATED::equals)) {
-        builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED));
+        builder.addErrorMessage("inspection.message.annotation.copy.duplicate", CommonClassNames.JAVA_LANG_DEPRECATED);
       }
     }
   }
@@ -128,7 +127,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                               @NotNull List<? super PsiElement> target);
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField,
-                                            @NotNull ProblemBuilder builder,
+                                            @NotNull ProblemSink builder,
                                             boolean isGetter) {
 
     final PsiClass psiClass = psiField.getContainingClass();
@@ -154,8 +153,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       classMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod.getMethod(), LombokClassNames.TOLERATE));
 
       if (!classMethods.isEmpty()) {
-        builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
-                           accessorName, accessorName));
+        builder.addWarningMessage("inspection.message.not.generated.s.method.with.similar.name.s.already.exists",
+                           accessorName, accessorName);
         return false;
       }
     }

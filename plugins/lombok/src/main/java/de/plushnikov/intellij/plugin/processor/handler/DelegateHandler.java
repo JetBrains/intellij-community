@@ -6,9 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -25,19 +24,19 @@ public class DelegateHandler {
   public static boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner,
                                  @NotNull PsiType psiType,
                                  @NotNull PsiAnnotation psiAnnotation,
-                                 @NotNull ProblemBuilder builder) {
+                                 @NotNull ProblemSink problemSink) {
     boolean result = true;
 
     if (psiModifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
-      builder.addError(LombokBundle.message("inspection.message.delegate.legal.only.on.instance.fields"));
+      problemSink.addErrorMessage("inspection.message.delegate.legal.only.on.instance.fields");
       result = false;
     }
 
     final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiType);
-    result &= validateTypes(types, builder);
+    result &= validateTypes(types, problemSink);
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
-    result &= validateTypes(excludes, builder);
+    result &= validateTypes(excludes, problemSink);
 
     return result;
   }
@@ -50,24 +49,23 @@ public class DelegateHandler {
     return types;
   }
 
-  private static boolean validateTypes(Collection<PsiType> psiTypes, ProblemBuilder builder) {
+  private static boolean validateTypes(Collection<PsiType> psiTypes, ProblemSink problemSink) {
     boolean result = true;
     for (PsiType psiType : psiTypes) {
       if (!checkConcreteClass(psiType)) {
-        builder.addError(LombokBundle.message("inspection.message.delegate.can.only.use.concrete.class.types",
-                         psiType.getCanonicalText()));
+        problemSink.addErrorMessage("inspection.message.delegate.can.only.use.concrete.class.types", psiType.getCanonicalText());
         result = false;
       } else {
-        result &= validateRecursion(psiType, builder);
+        result &= validateRecursion(psiType, problemSink);
       }
     }
     return result;
   }
 
-  private static boolean validateRecursion(PsiType psiType, ProblemBuilder builder) {
+  private static boolean validateRecursion(PsiType psiType, ProblemSink problemSink) {
     final PsiClass psiClass = PsiTypesUtil.getPsiClass(psiType);
     if (null != psiClass) {
-      final DelegateAnnotationElementVisitor delegateAnnotationElementVisitor = new DelegateAnnotationElementVisitor(psiType, builder);
+      final DelegateAnnotationElementVisitor delegateAnnotationElementVisitor = new DelegateAnnotationElementVisitor(psiType, problemSink);
       psiClass.acceptChildren(delegateAnnotationElementVisitor);
       return delegateAnnotationElementVisitor.isValid();
     }
@@ -253,10 +251,10 @@ public class DelegateHandler {
 
   private static class DelegateAnnotationElementVisitor extends JavaElementVisitor {
     private final PsiType psiType;
-    private final ProblemBuilder builder;
+    private final ProblemSink builder;
     private boolean valid;
 
-    DelegateAnnotationElementVisitor(PsiType psiType, ProblemBuilder builder) {
+    DelegateAnnotationElementVisitor(PsiType psiType, ProblemSink builder) {
       this.psiType = psiType;
       this.builder = builder;
       this.valid = true;
@@ -274,7 +272,7 @@ public class DelegateHandler {
 
     private void checkModifierListOwner(PsiModifierListOwner modifierListOwner) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE)) {
-        builder.addError(LombokBundle.message("inspection.message.delegate.does.not.support.recursion.delegating", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText()));
+        builder.addErrorMessage("inspection.message.delegate.does.not.support.recursion.delegating", ((PsiMember) modifierListOwner).getName(), psiType.getPresentableText());
         valid = false;
       }
     }

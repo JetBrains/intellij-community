@@ -3,10 +3,9 @@ package de.plushnikov.intellij.plugin.processor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,14 +33,14 @@ public class CleanupProcessor extends AbstractProcessor {
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     // TODO warning: "You're assigning an auto-cleanup variable to something else. This is a bad idea."
-    final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+    final ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
 
     PsiLocalVariable psiVariable = PsiTreeUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
     if (null != psiVariable) {
       final String cleanupName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value", "close");
 
       if (StringUtil.isEmptyOrSpaces(cleanupName)) {
-        problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.value.cannot.be.empty.string"));
+        problemNewBuilder.addErrorMessage("inspection.message.cleanup.value.cannot.be.empty.string");
       } else {
         validateCleanUpMethodExists(psiVariable, cleanupName, problemNewBuilder);
       }
@@ -49,7 +48,7 @@ public class CleanupProcessor extends AbstractProcessor {
       validateInitializerExist(problemNewBuilder, psiVariable);
 
     } else {
-      problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.legal.only.on.local.variable.declarations"));
+      problemNewBuilder.addErrorMessage("inspection.message.cleanup.legal.only.on.local.variable.declarations");
     }
 
     return problemNewBuilder.getProblems();
@@ -57,7 +56,7 @@ public class CleanupProcessor extends AbstractProcessor {
 
   private static void validateCleanUpMethodExists(@NotNull PsiLocalVariable psiVariable,
                                                   @NotNull String cleanupName,
-                                                  @NotNull ProblemNewBuilder problemNewBuilder) {
+                                                  @NotNull ProblemValidationSink problemNewBuilder) {
     final PsiType psiType = psiVariable.getType();
     if (psiType instanceof PsiClassType) {
       final PsiClassType psiClassType = (PsiClassType) psiType;
@@ -74,17 +73,17 @@ public class CleanupProcessor extends AbstractProcessor {
         }
 
         if (!hasCleanupMethod) {
-          problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.method.s.not.found.on.target.class", cleanupName));
+          problemNewBuilder.addErrorMessage("inspection.message.cleanup.method.s.not.found.on.target.class", cleanupName);
         }
       }
     } else {
-      problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.legal.only.on.local.variable.declaration.inside.block"));
+      problemNewBuilder.addErrorMessage("inspection.message.cleanup.legal.only.on.local.variable.declaration.inside.block");
     }
   }
 
-  private static void validateInitializerExist(@NotNull ProblemNewBuilder problemNewBuilder, @NotNull PsiLocalVariable psiVariable) {
+  private static void validateInitializerExist(@NotNull ProblemValidationSink problemNewBuilder, @NotNull PsiLocalVariable psiVariable) {
     if (!psiVariable.hasInitializer()) {
-      problemNewBuilder.addError(LombokBundle.message("inspection.message.cleanup.variable.declarations.need.to.be.initialized"));
+      problemNewBuilder.addErrorMessage("inspection.message.cleanup.variable.declarations.need.to.be.initialized");
     }
   }
 

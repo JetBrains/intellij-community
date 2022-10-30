@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  */
 public final class LombokBundle extends DynamicBundle {
   @NonNls
-  private static final String PATH_TO_BUNDLE = "messages.LombokBundle";
+  public static final String PATH_TO_BUNDLE = "messages.LombokBundle";
   private static final AbstractBundle ourInstance = new LombokBundle();
 
   private LombokBundle() {

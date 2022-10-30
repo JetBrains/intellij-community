@@ -4,11 +4,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
   @NotNull
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
-    final ProblemNewBuilder problemBuilder = new ProblemNewBuilder();
+    final ProblemValidationSink problemBuilder = new ProblemValidationSink();
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
@@ -44,13 +43,12 @@ public class SynchronizedProcessor extends AbstractProcessor {
 
       if (null != containingClass) {
         if (containingClass.isAnnotationType() || containingClass.isInterface() || containingClass.isRecord()) {
-          problemBuilder.addError(LombokBundle.message("inspection.message.synchronized.legal.only.on.methods.in.classes.enums"));
+          problemBuilder.addErrorMessage("inspection.message.synchronized.legal.only.on.methods.in.classes.enums");
         }
         else {
           if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            problemBuilder.addError(LombokBundle.message("inspection.message.synchronized.legal.only.on.concrete.methods"),
-                                       PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false)
-            );
+            problemBuilder.addErrorMessage("inspection.message.synchronized.legal.only.on.concrete.methods")
+              .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false));
           }
           else {
             validateReferencedField(problemBuilder, psiAnnotation, psiMethod, containingClass);
@@ -62,7 +60,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
     return problemBuilder.getProblems();
   }
 
-  private static void validateReferencedField(@NotNull ProblemBuilder problemNewBuilder, @NotNull PsiAnnotation psiAnnotation,
+  private static void validateReferencedField(@NotNull ProblemSink problemNewBuilder, @NotNull PsiAnnotation psiAnnotation,
                                               @NotNull PsiMethod psiMethod, @NotNull PsiClass containingClass) {
     @NlsSafe final String lockFieldName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value", "");
     if (StringUtil.isNotEmpty(lockFieldName)) {
@@ -71,9 +69,8 @@ public class SynchronizedProcessor extends AbstractProcessor {
       final PsiField lockField = containingClass.findFieldByName(lockFieldName, true);
       if (null != lockField) {
         if (isStatic && !lockField.hasModifierProperty(PsiModifier.STATIC)) {
-          problemNewBuilder.addError(
-            LombokBundle.message("inspection.message.synchronized.field.is.not.static", lockFieldName),
-            PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.STATIC, true, false));
+          problemNewBuilder.addErrorMessage("inspection.message.synchronized.field.is.not.static", lockFieldName)
+            .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.STATIC, true, false));
         }
       }
       else {
@@ -87,9 +84,9 @@ public class SynchronizedProcessor extends AbstractProcessor {
         else {
           modifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.FINAL};
         }
-        problemNewBuilder.addError(LombokBundle.message("inspection.message.field.s.does.not.exist", lockFieldName),
-                                   PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType,
-                                                                        "new Object()", modifiers));
+        problemNewBuilder.addErrorMessage("inspection.message.field.s.does.not.exist", lockFieldName)
+          .withLocalQuickFixes(
+            PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", modifiers));
       }
     }
   }

@@ -2,9 +2,8 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
@@ -43,7 +42,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemSink builder) {
     boolean result;
     validateOnXAnnotations(psiAnnotation, psiField, builder, "onParam");
 
@@ -62,11 +61,11 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
 
   private static boolean validateFinalModifier(@NotNull PsiAnnotation psiAnnotation,
                                                @NotNull PsiField psiField,
-                                               @NotNull ProblemBuilder builder) {
+                                               @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL) && null != LombokProcessorUtil.getMethodModifier(psiAnnotation)) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generating.setter.for.this.field.setters"),
-                         PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+      builder.addWarningMessage("inspection.message.not.generating.setter.for.this.field.setters")
+        .withLocalQuickFixes(PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }
     return result;
@@ -77,10 +76,10 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     return null != methodVisibility;
   }
 
-  private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
+  private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemSink builder) {
     boolean result = true;
     if (AccessorsInfo.buildFor(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
-      builder.addWarning(LombokBundle.message("inspection.message.not.generating.setter.for.this.field.it"));
+      builder.addWarningMessage("inspection.message.not.generating.setter.for.this.field.it");
       result = false;
     }
     return result;
@@ -114,12 +113,12 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     if (isStatic) {
       methodBuilder.withModifier(PsiModifier.STATIC);
     }
-    if(accessorsInfo.isMakeFinal()) {
+    if (accessorsInfo.isMakeFinal()) {
       methodBuilder.withModifier(PsiModifier.FINAL);
     }
 
     LombokLightParameter setterParameter = methodBuilder.getParameterList().getParameter(0);
-    if(null!=setterParameter) {
+    if (null != setterParameter) {
       LombokLightModifierList methodParameterModifierList = setterParameter.getModifierList();
       copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
       copyOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");

@@ -3,9 +3,8 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -33,17 +32,17 @@ public class SuperBuilderHandler extends BuilderHandler {
   @Override
   protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
                                                Collection<BuilderInfo> builderInfos,
-                                               @NotNull ProblemBuilder problemBuilder) {
+                                               @NotNull ProblemSink problemSink) {
     return true;
   }
 
   @Override
-  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemSink problemSink) {
     final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 
     if (existingInnerBuilderClass.isPresent()) {
 
-      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemBuilder)) {
+      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemSink)) {
         return false;
       }
 
@@ -52,7 +51,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
       if (isStaticAndAbstract.isEmpty()) {
-        problemBuilder.addError(LombokBundle.message("inspection.message.existing.builder.must.be.abstract.static.inner.class"));
+        problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
         return false;
       }
     }

@@ -6,11 +6,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -39,17 +38,17 @@ public class StandardExceptionProcessor extends AbstractClassProcessor {
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation,
                              @NotNull PsiClass psiClass,
-                             @NotNull ProblemBuilder builder) {
+                             @NotNull ProblemSink builder) {
     if (checkWrongType(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.class.only.supported.on.class"));
+      builder.addErrorMessage("inspection.message.standardexception.class.only.supported.on.class");
       return false;
     }
     if (checkWrongInheritorOfThrowable(psiClass)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.should.extend.throwable"));
+      builder.addErrorMessage("inspection.message.standardexception.should.extend.throwable");
       return false;
     }
     if (checkWrongAccessVisibility(psiAnnotation)) {
-      builder.addError(LombokBundle.message("inspection.message.standardexception.accesslevel.none.not.valid"));
+      builder.addErrorMessage("inspection.message.standardexception.accesslevel.none.not.valid");
       //log error but continue
     }
     return true;
