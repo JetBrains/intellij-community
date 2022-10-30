@@ -8,8 +8,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
@@ -77,24 +75,10 @@ public abstract class TextComponentEditorAction extends EditorAction {
     if (data instanceof JTextComponent) {
       return new TextComponentEditorImpl(project, (JTextComponent)data);
     }
-    if (isEDT && allowSpeedSearch && data instanceof JComponent) {
-      JTextField field = findActiveSpeedSearchTextField((JComponent)data);
-      if (field != null) {
-        return new TextComponentEditorImpl(project, field);
-      }
-    }
-    return null;
-  }
-
-  private static JTextField findActiveSpeedSearchTextField(JComponent c) {
-    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
-    if (supply instanceof SpeedSearchBase) {
-      return ((SpeedSearchBase<?>)supply).getSearchField();
-    }
-    if (c instanceof DataProvider) {
-      Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);
+    if (allowSpeedSearch) {
+      Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData(dataContext);
       if (component instanceof JTextField) {
-        return (JTextField)component;
+        return new TextComponentEditorImpl(project, (JTextField)component);
       }
     }
     return null;
