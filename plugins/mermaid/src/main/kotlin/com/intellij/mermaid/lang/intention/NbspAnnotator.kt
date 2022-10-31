@@ -14,25 +14,27 @@ import com.intellij.refactoring.suggested.startOffset
 
 
 class NbspAnnotator : Annotator {
+  companion object {
+    val nbspRegex = Regex("&nbsp")
+  }
+
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element is MermaidNamedPsiElement) {
-      when (element.parent) {
-        is MermaidVertex,
-        is MermaidStateDiagramStatement -> {
-          Regex("&nbsp")
-            .findAll(element.text)
-            .map {
-              val startOffset = element.startOffset + it.range.first
-              val endOffset = startOffset + it.range.length
-              TextRange.create(startOffset, endOffset)
-            }
-            .forEach {
-              holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
-                .range(it)
-                .textAttributes(MermaidTextAttributes.constant)
-                .needsUpdateOnTyping()
-                .create()
-            }
+      val parent = element.parent ?: return
+      if (parent is MermaidVertex || parent is MermaidStateDiagramStatement) {
+        val matches = nbspRegex.findAll(element.text)
+        val ranges = matches
+          .map {
+            val startOffset = element.startOffset + it.range.first
+            val endOffset = startOffset + it.range.length
+            TextRange.create(startOffset, endOffset)
+          }
+        for (range in ranges) {
+          holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
+            .range(range)
+            .textAttributes(MermaidTextAttributes.constant)
+            .needsUpdateOnTyping()
+            .create()
         }
       }
     }

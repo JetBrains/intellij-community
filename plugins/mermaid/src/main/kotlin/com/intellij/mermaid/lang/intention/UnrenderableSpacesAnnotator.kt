@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.MermaidBundle
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.WHITE_SPACES_WITHOUT_EOL
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.psi.MermaidComplexIdentifier
 import com.intellij.mermaid.lang.psi.MermaidElementFactory
@@ -13,8 +14,6 @@ import com.intellij.mermaid.lang.psi.MermaidVertex
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.TokenType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.nextLeaf
 import com.intellij.psi.util.prevLeaf
@@ -22,7 +21,7 @@ import com.intellij.psi.util.prevLeaf
 
 class UnrenderableSpacesAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element.elementType in TokenSet.create(MermaidTokens.WHITE_SPACE, TokenType.WHITE_SPACE)) {
+    if (element.elementType in WHITE_SPACES_WITHOUT_EOL) {
       val parent = element.parent ?: return
       when (parent) {
         is MermaidComplexIdentifier -> {
@@ -66,7 +65,7 @@ class UnrenderableSpacesAnnotator : Annotator {
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
       val prevLeaf = element.prevLeaf() ?: return
       val nextLeaf = element.nextLeaf() ?: return
-      val spaceElement = MermaidElementFactory.createSpaceElement(project, element.textLength) ?: return
+      val spaceElement = MermaidElementFactory.createSpaceElement(project, element.textLength)
       val newId = MermaidElementFactory.createIdElement(project, *arrayOf(prevLeaf, spaceElement, nextLeaf)) ?: return
 
       element.replace(newId)

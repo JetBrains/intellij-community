@@ -4,6 +4,7 @@ import ai.grazie.nlp.utils.length
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
+import com.intellij.mermaid.lang.intention.NbspAnnotator.Companion.nbspRegex
 import com.intellij.mermaid.lang.psi.MermaidFile
 import com.intellij.mermaid.lang.psi.MermaidNamedPsiElement
 import com.intellij.openapi.editor.Document
@@ -23,36 +24,35 @@ class MermaidNbspFoldingBuilder : CustomFoldingBuilder() {
       return
     }
 
-    SyntaxTraverser.psiTraverser(root)
-      .filterIsInstance<MermaidNamedPsiElement>()
-      .forEach { identifier ->
-        Regex("&nbsp")
-          .findAll(identifier.text)
-          .map {
-            val startOffset = identifier.startOffset + it.range.first
-            val endOffset = startOffset + it.range.length
-            TextRange.create(startOffset, endOffset)
-          }
-          .fold(mutableListOf(mutableListOf<TextRange>())) { ranges, r ->
-            val lastRangeList = ranges.lastOrNull()
-
-            if (lastRangeList != null) {
-              val lastRange = lastRangeList.lastOrNull()
-              if (lastRange == null || lastRange.endOffset == r.startOffset) {
-                lastRangeList.add(r)
-              } else {
-                ranges.add(mutableListOf(r))
-              }
-            }
-            ranges
-          }
-          .filter { it.isNotEmpty() }
-          .forEach {
-            val range = TextRange.create(it.first().startOffset, it.last().endOffset)
-            val placeholderText = " ".repeat(it.size)
-            descriptors.add(FoldingDescriptor(identifier.node, range, null, placeholderText, true, emptySet()))
-          }
+    val elements = SyntaxTraverser.psiTraverser(root).filterIsInstance<MermaidNamedPsiElement>()
+    for (element in elements) {
+      val matches = nbspRegex.findAll(element.text)
+      val rangeSequence = matches.map {
+        val startOffset = element.startOffset + it.range.first
+        val endOffset = startOffset + it.range.length
+        TextRange.create(startOffset, endOffset)
       }
+      val spaceRangesList = rangeSequence
+        .fold(mutableListOf(mutableListOf<TextRange>())) { ranges, r ->
+          val lastRangeList = ranges.lastOrNull()
+
+          if (lastRangeList != null) {
+            val lastRange = lastRangeList.lastOrNull()
+            if (lastRange == null || lastRange.endOffset == r.startOffset) {
+              lastRangeList.add(r)
+            } else {
+              ranges.add(mutableListOf(r))
+            }
+          }
+          return@fold ranges
+        }
+        .filter { it.isNotEmpty() }
+      for (spaceRange in spaceRangesList) {
+        val range = TextRange.create(spaceRange.first().startOffset, spaceRange.last().endOffset)
+        val placeholderText = " ".repeat(spaceRange.size)
+        descriptors.add(FoldingDescriptor(element.node, range, null, placeholderText, true, emptySet()))
+      }
+    }
   }
 
   override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {

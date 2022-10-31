@@ -51,14 +51,15 @@ class MermaidElementFactory {
       return element as? MermaidGitGraphStatement
     }
 
-    fun createSpaceElement(project: Project, length: Int): PsiElement? {
+    fun createSpaceElement(project: Project, length: Int): PsiElement {
+      check(length > 0) { "Length of element should be > 0" }
       val text = """
         flowchart
           ${"&nbsp".repeat(length)}
       """.trimIndent()
       val file = createFile(project, text)
 
-      return file.findElementAt("flowchart\n  ".length)
+      return checkNotNull(file.findElementAt("flowchart\n  ".length))
     }
 
     fun createIdElement(project: Project, vararg elements: PsiElement): PsiElement? {

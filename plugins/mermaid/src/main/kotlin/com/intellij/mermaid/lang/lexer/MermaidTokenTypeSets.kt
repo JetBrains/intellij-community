@@ -6,6 +6,7 @@ import com.intellij.psi.tree.TokenSet
 
 object MermaidTokenTypeSets {
   val WHITE_SPACES = TokenSet.create(MermaidTokens.WHITE_SPACE, MermaidTokens.EOL, TokenType.WHITE_SPACE)
+  val WHITE_SPACES_WITHOUT_EOL = TokenSet.create(MermaidTokens.WHITE_SPACE, TokenType.WHITE_SPACE)
 
   val STATEMENTS = TokenSet.create(
     MermaidTokens.EOL,
