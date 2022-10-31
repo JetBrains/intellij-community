@@ -49,8 +49,12 @@ public final class TestLoggerFactory implements Logger.Factory {
   private final StringBuilder myBuffer = new StringBuilder();
   private long myTestStartedMillis;
   private boolean myInitialized;
-  // when {@code true}, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout
+
+  /** When enabled, logs produced during a failed test are saved to a separate file instead of being dumped to the stdout. */
   private boolean mySplitTestLogs = Boolean.getBoolean("idea.split.test.logs");
+
+  /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
+  private final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
   private TestLoggerFactory() { }
 
@@ -66,7 +70,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     var julLogger = java.util.logging.Logger.getLogger(category);
-    if (System.getenv("TEAMCITY_VERSION") != null) {
+    if (myEchoDebugToStdout) {
       configureLogToStdoutIfDebug(julLogger);
     }
     return new TestLogger(julLogger, this);
