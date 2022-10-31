@@ -156,14 +156,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun getCompiledCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
-        val contextElement = codeFragment.context ?: return compileCodeFragment(context)
-
         val cache = runReadAction {
+            val contextElement = codeFragment.context ?: return@runReadAction null
             CachedValuesManager.getCachedValue(contextElement) {
                 val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
                 CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
             }
         }
+        if (cache == null) return compileCodeFragment(context)
 
         val key = buildString {
             appendLine(codeFragment.importsToString())
