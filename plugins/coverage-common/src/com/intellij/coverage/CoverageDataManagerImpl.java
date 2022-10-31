@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -51,6 +52,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -687,12 +689,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           final Document document = editor.getDocument();
           return documentManager.getPsiFile(document);
         });
-        if (psiFile != null && psiFile.isPhysical()) {
-          final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
-          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
-            return;
-          }
-
+        if (psiFile == null || !psiFile.isPhysical()) return;
+        final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
+        ReadAction.nonBlocking(() -> engine.coverageEditorHighlightingApplicableTo(psiFile)).finishOnUiThread(ModalityState.NON_MODAL, (isApplicable) -> {
+          if (!isApplicable) return;
           CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
           if (annotator == null) {
             annotator = engine.createSrcFileAnnotator(psiFile, editor);
@@ -715,7 +715,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
           };
           myCurrentEditors.put(editor, request);
           getRequestsAlarm(manager).addRequest(request, 100);
-        }
+        }).submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 
