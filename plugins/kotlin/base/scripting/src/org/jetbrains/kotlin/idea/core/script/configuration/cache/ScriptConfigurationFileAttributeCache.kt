@@ -92,7 +92,7 @@ internal class ScriptConfigurationFileAttributeCache(
         ScriptConfigurationSnapshotFile[project, file] = value?.let {
             ScriptConfigurationSnapshotForFS(
                 it.inputs,
-                it.reports,
+                it.reports.filter { report -> report.exception == null /* exceptions deserialization might later result in ClassNotFoundError */},
                 it.configuration?.configuration
             )
         }
