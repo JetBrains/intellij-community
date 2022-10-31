@@ -37,7 +37,9 @@ final class ObjectNode {
       Disposable object = childNode.getObject();
       Throwable trace = childNode.getTrace();
       String message =
-        "Memory leak detected: '" + object + "' of " + object.getClass() + " is registered in Disposer but wasn't disposed.\n" +
+        "Memory leak detected: '" + object + "' (" + object.getClass() + ") was registered in Disposer" +
+        " as a child of '"+getObject()+"' (" + getObject().getClass() + ")"+
+        " but wasn't disposed.\n" +
         "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
         "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
         "The corresponding Disposer.register() stacktrace is shown as the cause:\n";
