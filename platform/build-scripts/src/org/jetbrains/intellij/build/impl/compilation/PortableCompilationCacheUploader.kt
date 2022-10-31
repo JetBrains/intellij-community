@@ -176,17 +176,18 @@ private class Uploader(serverUrl: String) {
       check(Files.exists(file)) {
         "The file $file does not exist"
       }
+      retryWithExponentialBackOff {
+        httpClient.newCall(Request.Builder().url(url)
+          .put(object : RequestBody() {
+            override fun contentType() = MEDIA_TYPE_BINARY
 
-      val call = httpClient.newCall(Request.Builder().url(url).put(object : RequestBody() {
-        override fun contentType() = MEDIA_TYPE_BINARY
+            override fun contentLength() = Files.size(file)
 
-        override fun contentLength() = Files.size(file)
-
-        override fun writeTo(sink: BufferedSink) {
-          file.source().use(sink::writeAll)
-        }
-      }).build())
-      retryWithExponentialBackOff { call.execute().useSuccessful {} }
+            override fun writeTo(sink: BufferedSink) {
+              file.source().use(sink::writeAll)
+            }
+          }).build()).execute().useSuccessful {}
+      }
     }
     return true
   }
