@@ -25,13 +25,6 @@ import java.util.Set;
 public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "ComponentRegistrationProblems";
-  }
-
-  @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiIdentifier nameIdentifier = checkedClass.getNameIdentifier();
     if (nameIdentifier != null &&
@@ -58,13 +51,11 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
-        if (ActionType.ACTION.isOfType(checkedClass)) {
-          if (ConstructorType.getNoArgCtor(checkedClass) == null) {
-            problems.add(manager.createProblemDescriptor(nameIdentifier,
-                                                         DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
-                                                         new CreateConstructorFix(checkedClass, isOnTheFly),
-                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
-          }
+        if (ActionType.ACTION.isOfType(checkedClass) && !hasNoArgConstructor(checkedClass)) {
+          problems.add(manager.createProblemDescriptor(nameIdentifier,
+                                                       DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
+                                                       new CreateConstructorFix(checkedClass, isOnTheFly),
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
         }
         if (checkedClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           problems.add(manager.createProblemDescriptor(nameIdentifier,
@@ -77,30 +68,21 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  static class ConstructorType {
-    static final ConstructorType DEFAULT = new ConstructorType();
-    final PsiMethod myCtor;
-
-    private ConstructorType() {
-      myCtor = null;
-    }
-
-    protected ConstructorType(PsiMethod ctor) {
-      assert ctor != null;
-      myCtor = ctor;
-    }
-
-    public static ConstructorType getNoArgCtor(PsiClass checkedClass) {
-      final PsiMethod[] constructors = checkedClass.getConstructors();
-      if (constructors.length > 0) {
-        for (PsiMethod ctor : constructors) {
-          if (ctor.getParameterList().isEmpty()) {
-            return new ConstructorType(ctor);
-          }
-        }
-        return null;
+  private static boolean hasNoArgConstructor(PsiClass checkedClass) {
+    final PsiMethod[] constructors = checkedClass.getConstructors();
+    if (constructors.length == 0) return true; // default constructor
+    for (PsiMethod constructor : constructors) {
+      if (constructor.getParameterList().isEmpty()) {
+        return true;
       }
-      return DEFAULT;
     }
+    return false;
+  }
+
+  @Override
+  @NotNull
+  @NonNls
+  public String getShortName() {
+    return "ComponentRegistrationProblems";
   }
 }
