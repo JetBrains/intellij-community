@@ -12,7 +12,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -129,9 +128,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
         pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
         migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
-        runBlocking {
-          saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
-        }
+        saveIdeSettings()
         migration.executeAfterApplying()
       }
       settingsLog.setCloudPosition(masterPosition)
