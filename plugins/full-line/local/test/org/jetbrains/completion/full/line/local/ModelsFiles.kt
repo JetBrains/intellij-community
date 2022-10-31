@@ -11,7 +11,6 @@ import kotlin.io.path.absolutePathString
 
 val modelsDir = Files.createTempDirectory("flcc-models").absolutePathString()
 
-// Temporary convenience class
 data class ModelDir(
   private val modelName: String,
   private val mavenName: String,
@@ -32,10 +31,10 @@ data class ModelDir(
 }
 
 object ModelsFiles {
-  val gpt2_py_4L_256_78 = ModelDir("gpt2-py-4L-256-78", "local-model-python/0.0.7/")
-  val gpt2_py_6L_82_old_data = ModelDir("gpt2-py-6L-82-old-data", "local-model-python/0.0.6/")
   val gpt2_py_4L_512_83_q_local = ModelDir("gpt2-py-4L-512-83-q-local", "local-model-python/0.0.4/")
 
+  //val gpt2_py_4L_256_78 = ModelDir("gpt2-py-4L-256-78", "local-model-python/0.0.7/")
+  //val gpt2_py_6L_82_old_data = ModelDir("gpt2-py-6L-82-old-data", "local-model-python/0.0.6/")
   //val gpt2_py_4L_512_83_local = ModelDir("gpt2-py-4L-512-83-local")
   //val gpt2_py_6L_82_old_data_q_local = ModelDir("gpt2-py-6L-82-old-data-q-local")
   //val gpt2_py_18L_89_q_local = ModelDir("gpt2-py-18L-89-q-local")

@@ -41,7 +41,7 @@ internal class ServerInputComparisonTest {
   }
 
   companion object {
-    private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_6L_82_old_data.tokenizer, nThreads = 2)
+    private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_4L_512_83_q_local.tokenizer, nThreads = 2)
     private val mockModel = Mockito.mock(GPT2ModelWrapper::class.java)
     private val mockedCompletionsGenerator: FullLineCompletionsGenerator
 

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class FullLineTest {
   companion object {
-    private val modelFiles = ModelsFiles.gpt2_py_4L_256_78
+    private val modelFiles = ModelsFiles.gpt2_py_4L_512_83_q_local
     val context = """
             def hello_
         """.trimIndent()
