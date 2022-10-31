@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
+import org.gradle.api.file.RegularFile
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.bundling.War
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 
 /**
  * @author Vladislav.Soroka
@@ -53,8 +55,9 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
     project.tasks.each { Task task ->
       if (task instanceof War) {
 
-        final WarModelImpl warModel = is6OrBetter ? new WarModelImpl((task as War).archiveFileName.get(), webAppDirName, webAppDir)
-                                                  : new WarModelImpl((task as War).archiveName, webAppDirName, webAppDir)
+        final WarModelImpl warModel =
+          is6OrBetter ? new WarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), webAppDirName, webAppDir) :
+          new WarModelImpl((task as War).archiveName, webAppDirName, webAppDir)
 
 
         final List<WebConfiguration.WebResource> webResources = []
@@ -88,7 +91,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         }
 
         warModel.webResources = webResources
-        warModel.archivePath = is6OrBetter ? warTask.archiveFile.get().asFile : warTask.archivePath
+        warModel.archivePath = is6OrBetter ? reflectiveGetProperty(warTask, "getArchiveFile", RegularFile).asFile : warTask.archivePath
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {
