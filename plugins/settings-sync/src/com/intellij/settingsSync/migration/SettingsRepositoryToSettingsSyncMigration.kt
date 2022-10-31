@@ -1,11 +1,15 @@
 package com.intellij.settingsSync.migration
 
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
+import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.util.io.isFile
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -15,6 +19,8 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import kotlin.io.path.*
 
+private const val SETTINGS_REPOSITORY_ID = "org.jetbrains.settingsRepository"
+
 internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration {
   override fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
     return processLocalData(appConfigDir) { path ->
@@ -23,7 +29,7 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
   }
 
   override fun isLocalDataAvailable(appConfigDir: Path): Boolean {
-    if (PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.settingsRepository"))) {
+    if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
       return false
     }
     return null != processLocalData(appConfigDir) { it }
@@ -80,6 +86,33 @@ internal class SettingsRepositoryToSettingsSyncMigration : SettingsSyncMigration
 
   override fun shouldEnableNewSync(): Boolean {
     return false
+  }
+
+  override fun executeAfterApplying() {
+    if (!PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
+      showNotificationAboutUnbundling()
+    }
+  }
+
+  private fun showNotificationAboutUnbundling() {
+    val installOldPluginAction = NotificationAction.createSimpleExpiring(
+      @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
+      SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
+      PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
+    }
+    val useNewSettingsSyncAction = NotificationAction.createSimpleExpiring(
+      @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
+      SettingsSyncBundle.message("settings.repository.unbundled.notification.action.use.new.settings.sync")) {
+      SettingsSyncSettings.getInstance().syncEnabled = true
+    }
+    NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+      .createNotification(
+        title = SettingsSyncBundle.message("settings.repository.unbundled.notification.title"),
+        content = SettingsSyncBundle.message("settings.repository.unbundled.notification.description"),
+        type = NotificationType.INFORMATION)
+      .addAction(installOldPluginAction)
+      .addAction(useNewSettingsSyncAction)
+      .notify(null)
   }
 
   internal companion object {

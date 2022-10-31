@@ -130,6 +130,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         runBlocking {
           saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
         }
+        migration.executeAfterApplying()
       }
       settingsLog.setCloudPosition(masterPosition)
     }
