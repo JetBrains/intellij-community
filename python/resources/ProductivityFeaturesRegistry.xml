@@ -1,13 +1,4 @@
 <component>
-  <group id="editing">
-    <feature
-      id="editing.select.word"
-      tip-id="CtrlW"
-      min-usage-count="10"
-      first-show="2"
-      successive-show="4"/>
-  </group>
-
   <group id="codeassists">
     <feature
       id="codeassists.quickjavadoc"
