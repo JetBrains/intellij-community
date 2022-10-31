@@ -7,31 +7,31 @@ import ml.intellij.nlc.local.generation.search.BeamSearch
 import ml.intellij.nlc.local.tokenizer.Tokenizer
 
 internal class FairSeqGeneration(model: ModelWrapper, tokenizer: Tokenizer) :
-    BaseGeneration<CompletionConfig.Generation>(model, tokenizer) {
-    override fun generate(
-        context: IntArray,
-        prefix: String,
-        config: CompletionConfig.Generation,
-        execContext: ExecutionContext
-    ): List<List<GenerationInfo>> {
-        val search = BeamSearch(vocabSize, config.numBeams, config.repetitionPenalty)
+  BaseGeneration<CompletionConfig.Generation>(model, tokenizer) {
+  override fun generate(
+    context: IntArray,
+    prefix: String,
+    config: CompletionConfig.Generation,
+    execContext: ExecutionContext
+  ): List<List<GenerationInfo>> {
+    val search = BeamSearch(vocabSize, config.numBeams, config.repetitionPenalty)
 
-        initState(prefix, config)
-        initLogProbs(context, execContext)
-        sortState(IntArray(search.batchSize))
+    initState(prefix, config)
+    initLogProbs(context, execContext)
+    sortState(IntArray(search.batchSize))
 
-        val result = ArrayList<List<GenerationInfo>>()
-        for (i in 0 until config.maxLen) {
-            val stepResult = search.step(nextLogProbs!!, context)
-            updateState(stepResult.sortMask, stepResult.newTokens)
+    val result = ArrayList<List<GenerationInfo>>()
+    for (i in 0 until config.maxLen) {
+      val stepResult = search.step(nextLogProbs!!, context)
+      updateState(stepResult.sortMask, stepResult.newTokens)
 
-            if (i < config.maxLen - 1) {
-                updateLogProbs(stepResult.newTokens, execContext)
-            }
-            result.add(currentHypotheses(search))
-        }
-
-        resetState()
-        return result
+      if (i < config.maxLen - 1) {
+        updateLogProbs(stepResult.newTokens, execContext)
+      }
+      result.add(currentHypotheses(search))
     }
+
+    resetState()
+    return result
+  }
 }

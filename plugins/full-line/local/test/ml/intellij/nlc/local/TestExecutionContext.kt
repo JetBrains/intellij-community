@@ -4,5 +4,5 @@ import io.kinference.model.ExecutionContext
 import kotlinx.coroutines.Dispatchers
 
 object TestExecutionContext {
-    val default = ExecutionContext(Dispatchers.Default, checkCancelled = {})
+  val default = ExecutionContext(Dispatchers.Default, checkCancelled = {})
 }

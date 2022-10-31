@@ -8,11 +8,13 @@ import ml.intellij.nlc.local.suggest.feature.Features
  * and match rank between it and prefix
  */
 internal class ProbRankingModel : RankingModel {
-    override fun rank(context: String, prefix: String, completions: List<CompletionModel.CompletionResult>): List<CompletionModel.CompletionResult> {
-        val ranked = completions.map { completion ->
-            completion to Features.stepProfit(completion.info)
-        }.toMap()
+  override fun rank(context: String,
+                    prefix: String,
+                    completions: List<CompletionModel.CompletionResult>): List<CompletionModel.CompletionResult> {
+    val ranked = completions.map { completion ->
+      completion to Features.stepProfit(completion.info)
+    }.toMap()
 
-        return ranked.entries.sortedByDescending { it.value }.map { it.key }
-    }
+    return ranked.entries.sortedByDescending { it.value }.map { it.key }
+  }
 }

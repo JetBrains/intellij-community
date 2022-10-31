@@ -7,9 +7,9 @@ import ml.intellij.nlc.local.suggest.filtering.FilterModel
 import ml.intellij.nlc.local.suggest.ranking.RankingModel
 
 class FullLineCompletionPipeline internal constructor(
-    generator: FullLineCompletionsGenerator,
-    rankingModel: RankingModel?,
-    filterModel: FilterModel<CompletionConfig.Filter>?
+  generator: FullLineCompletionsGenerator,
+  rankingModel: RankingModel?,
+  filterModel: FilterModel<CompletionConfig.Filter>?
 ) : BaseCompletionPipeline<FullLineGenerationConfig, CompletionConfig.Filter, FullLineCompletionPipelineConfig>(
-    generator, rankingModel, filterModel
+  generator, rankingModel, filterModel
 )

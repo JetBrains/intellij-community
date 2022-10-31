@@ -10,34 +10,34 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.Mockito
 
 class IncompleteContextTest {
-    @Test
-    fun `incomplete context - single token parts`() {
-        for (entry in tokenizer.vocab) {
-            if (!specialTokenIds.contains(entry.value) && (entry.key.length < mockedCompletionsGenerator.tokenLengthThreshold)) {
-                val (context, _) = mockedCompletionsGenerator.resolveIncompleteContext(
-                    entry.key.substring(0, entry.key.length - 1)
-                )
-                Assertions.assertEquals("", context, "Wrong on token ${entry.value}: >>>${entry.key}<<<")
-            }
-        }
+  @Test
+  fun `incomplete context - single token parts`() {
+    for (entry in tokenizer.vocab) {
+      if (!specialTokenIds.contains(entry.value) && (entry.key.length < mockedCompletionsGenerator.tokenLengthThreshold)) {
+        val (context, _) = mockedCompletionsGenerator.resolveIncompleteContext(
+          entry.key.substring(0, entry.key.length - 1)
+        )
+        Assertions.assertEquals("", context, "Wrong on token ${entry.value}: >>>${entry.key}<<<")
+      }
     }
+  }
 
-    @ParameterizedTest
-    @CsvSource("cur_node = TrieNo,cur_node = Trie", "value_sou,value_", "df.app,df.", "adfasb.app,adfasb")
-    fun `incomplete context - markers`(context: String, expected: String) {
-        val (prepContext, _) = mockedCompletionsGenerator.resolveIncompleteContext(context)
-        Assertions.assertEquals(expected, prepContext)
+  @ParameterizedTest
+  @CsvSource("cur_node = TrieNo,cur_node = Trie", "value_sou,value_", "df.app,df.", "adfasb.app,adfasb")
+  fun `incomplete context - markers`(context: String, expected: String) {
+    val (prepContext, _) = mockedCompletionsGenerator.resolveIncompleteContext(context)
+    Assertions.assertEquals(expected, prepContext)
+  }
+
+  companion object {
+    private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_6L_82_old_data.tokenizer, nThreads = 2)
+    private val mockModel = Mockito.mock(GPT2ModelWrapper::class.java)
+    private val mockedCompletionsGenerator: FullLineCompletionsGenerator
+    private val specialTokenIds = setOf(0, 1, 2, 3)
+
+    init {
+      Mockito.`when`(mockModel.maxSeqLen).thenReturn(384)
+      mockedCompletionsGenerator = FullLineCompletionsGenerator(mockModel, tokenizer)
     }
-
-    companion object {
-        private val tokenizer = FullLineTokenizer(ModelsFiles.gpt2_py_6L_82_old_data.tokenizer, nThreads = 2)
-        private val mockModel = Mockito.mock(GPT2ModelWrapper::class.java)
-        private val mockedCompletionsGenerator: FullLineCompletionsGenerator
-        private val specialTokenIds = setOf(0, 1, 2, 3)
-
-        init {
-            Mockito.`when`(mockModel.maxSeqLen).thenReturn(384)
-            mockedCompletionsGenerator = FullLineCompletionsGenerator(mockModel, tokenizer)
-        }
-    }
+  }
 }

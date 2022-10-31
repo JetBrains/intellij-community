@@ -10,22 +10,22 @@ import kotlin.math.ln
  * and filters out variants with too small completion length or non-symbol starting completions
  */
 internal class ProbFilterModel : FilterModel<CompletionConfig.Filter> {
-    override fun filter(
-        context: String,
-        prefix: String,
-        completions: List<CompletionModel.CompletionResult>,
-        config: CompletionConfig.Filter
-    ): List<CompletionModel.CompletionResult> {
-        return completions.filter { completion ->
-            val prob = Features.prob(completion.info)
-            val meanProb = Features.meanProb(completion.info)
-            val startFromWord = completion.text[0] == ' ' && completion.text[1].isLetter()
-            val symbolLen = completion.text.length - prefix.length
+  override fun filter(
+    context: String,
+    prefix: String,
+    completions: List<CompletionModel.CompletionResult>,
+    config: CompletionConfig.Filter
+  ): List<CompletionModel.CompletionResult> {
+    return completions.filter { completion ->
+      val prob = Features.prob(completion.info)
+      val meanProb = Features.meanProb(completion.info)
+      val startFromWord = completion.text[0] == ' ' && completion.text[1].isLetter()
+      val symbolLen = completion.text.length - prefix.length
 
-            ln(meanProb) >= config.minAvgLogProb
-                && prob >= config.minProb
-                && symbolLen >= config.minSymbolLen
-                && startFromWord
-        }
+      ln(meanProb) >= config.minAvgLogProb
+      && prob >= config.minProb
+      && symbolLen >= config.minSymbolLen
+      && startFromWord
     }
+  }
 }
