@@ -6,23 +6,18 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateConstructorFix;
 import org.jetbrains.idea.devkit.util.ActionType;
-import org.jetbrains.idea.devkit.util.ComponentType;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -80,119 +75,6 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       }
     }
     return null;
-  }
-
-  @Override
-  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (DescriptorUtil.isPluginXml(file)) {
-      final XmlDocument document = ((XmlFile)file).getDocument();
-      if (document == null) {
-        return null;
-      }
-
-      final XmlTag rootTag = document.getRootTag();
-      assert rootTag != null;
-
-      final RegistrationChecker checker = new RegistrationChecker(manager, (XmlFile)file, isOnTheFly);
-      DescriptorUtil.processComponents(rootTag, checker);
-      return checker.getProblems();
-    }
-    return null;
-  }
-
-  private static final class RegistrationChecker implements ComponentType.Processor {
-    private List<ProblemDescriptor> myList;
-    private final InspectionManager myManager;
-    private final PsiManager myPsiManager;
-    private final GlobalSearchScope myScope;
-    private final MultiMap<ComponentType, String> myInterfaceClasses = MultiMap.createSet();
-    private final boolean myOnTheFly;
-
-    private RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
-      myManager = manager;
-      myOnTheFly = onTheFly;
-      myPsiManager = xmlFile.getManager();
-      myScope = xmlFile.getResolveScope();
-    }
-
-    @Override
-    public boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf) {
-      if (impl != null) {
-        String intfName = null;
-        PsiClass intfClass = null;
-        if (intf != null) {
-          intfName = intf.getTrimmedText();
-          intfClass = findClass(intfName);
-        }
-        if (intfName != null && intfClass != null) {
-          final String fqn = intfClass.getQualifiedName();
-          if (type == ComponentType.MODULE) {
-            if (!checkInterface(type, fqn, intf)) {
-              // module components can be restricted to modules of certain types
-              final String[] keys = makeQualifiedModuleInterfaceNames(component, fqn);
-              for (String key : keys) {
-                checkInterface(type, key, intf);
-                myInterfaceClasses.putValue(type, key);
-              }
-            }
-          }
-          else {
-            checkInterface(type, fqn, intf);
-            myInterfaceClasses.putValue(type, fqn);
-          }
-        }
-      }
-      return true;
-    }
-
-    private void addProblem(XmlTagValue impl, @InspectionMessage String problem, boolean isOnTheFly, LocalQuickFix... fixes) {
-      final XmlText[] textElements = impl.getTextElements();
-      for (XmlText text : textElements) {
-        if (text.getValue().trim().length() > 0) {
-          addProblem(text, problem, isOnTheFly, fixes);
-        }
-      }
-    }
-
-    private boolean checkInterface(ComponentType type, String fqn, XmlTagValue value) {
-      if (myInterfaceClasses.get(type).contains(fqn)) {
-        addProblem(value, DevKitBundle.message("inspections.registration.problems.component.duplicate.interface", fqn), myOnTheFly);
-        return true;
-      }
-      return false;
-    }
-
-    private static String[] makeQualifiedModuleInterfaceNames(XmlTag component, String fqn) {
-      final XmlTag[] children = component.findSubTags("option");
-      for (XmlTag child : children) {
-        if ("type".equals(child.getAttributeValue("name"))) {
-          final String value = child.getAttributeValue("value");
-          final SmartList<String> names = new SmartList<>();
-          if (value != null) {
-            final String[] moduleTypes = value.split(";");
-            for (String moduleType : moduleTypes) {
-              names.add(fqn + "#" + moduleType);
-            }
-          }
-          return ArrayUtilRt.toStringArray(names);
-        }
-      }
-      return new String[]{fqn};
-    }
-
-    private void addProblem(PsiElement element, @InspectionMessage String problem, boolean onTheFly, LocalQuickFix... fixes) {
-      if (myList == null) myList = new SmartList<>();
-      myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-    }
-
-    @Nullable
-    private PsiClass findClass(@NotNull String fqn) {
-      return ClassUtil.findPsiClass(myPsiManager, fqn, null, true, myScope);
-    }
-
-    public ProblemDescriptor @Nullable [] getProblems() {
-      return myList != null ? myList.toArray(ProblemDescriptor.EMPTY_ARRAY) : null;
-    }
   }
 
   static class ConstructorType {

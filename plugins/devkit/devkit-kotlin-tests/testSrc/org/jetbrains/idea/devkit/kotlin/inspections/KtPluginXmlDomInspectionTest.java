@@ -47,4 +47,17 @@ public class KtPluginXmlDomInspectionTest extends PluginXmlDomInspectionTestBase
     myFixture.testHighlighting("ComponentClassNotAssignableToInterface.xml",
                                "ApplicationComponent.kt");
   }
+
+  public void testComponentMultipleWithSameInterface() {
+    myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
+
+    myFixture.testHighlighting("ComponentMultipleWithSameInterface.xml",
+                               "ApplicationComponent.kt",
+                               "ApplicationComponent2.kt",
+                               "ApplicationComponentInterface.kt",
+                               "MyModuleComponent.kt",
+                               "MyModuleComponent2.kt",
+                               "MyModuleComponent3.kt",
+                               "MyModuleComponentInterface.kt");
+  }
 }
