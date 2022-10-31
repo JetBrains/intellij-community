@@ -113,7 +113,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.analyzing.code"))
 
-    val isPostCommit = commitInfo.commitContext.isPostCommitCheck
+    val isPostCommit = commitInfo.isPostCommitCheck
     val changesByFile = mutableMapOf<VirtualFile, Change>()
     for (change in commitInfo.committedChanges) {
       val changeFile = change.afterRevision?.file?.virtualFile ?: continue

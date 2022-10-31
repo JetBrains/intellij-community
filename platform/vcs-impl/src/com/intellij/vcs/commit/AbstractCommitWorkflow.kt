@@ -57,8 +57,7 @@ private class CommitProperty<T>(private val key: Key<T>, private val defaultValu
 fun commitProperty(key: Key<Boolean>): ReadWriteProperty<CommitContext, Boolean> = commitProperty(key, false)
 fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitContext, T> = CommitProperty(key, defaultValue)
 
-private val IS_POST_COMMIT_CHECK_KEY = Key.create<Boolean>("Vcs.Commit.IsPostCommitCheck")
-var CommitContext.isPostCommitCheck: Boolean by commitProperty(IS_POST_COMMIT_CHECK_KEY)
+val CommitInfo.isPostCommitCheck: Boolean get() = this is PostCommitInfo
 
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)

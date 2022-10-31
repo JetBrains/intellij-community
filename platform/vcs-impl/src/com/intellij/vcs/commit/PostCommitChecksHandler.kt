@@ -153,10 +153,7 @@ class PostCommitChecksHandler(val project: Project) {
     val changeConverters = commitInfo.affectedVcses.mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
     if (changeConverters.isEmpty()) LOG.error("Post-commit change converters not found for ${commitInfo.affectedVcses}")
 
-    val commitContext = commitInfo.commitContext
-    commitContext.isPostCommitCheck = true
-
-    val staticChanges = collectChangesFor(commitContext, changeConverters)
+    val staticChanges = collectChangesFor(commitInfo.commitContext, changeConverters)
 
     return PostCommitInfo(commitInfo, staticChanges ?: commitInfo.committedChanges)
   }
@@ -230,7 +227,7 @@ class PostCommitChecksHandler(val project: Project) {
   }
 }
 
-private class PostCommitInfo(
+internal class PostCommitInfo(
   commitInfo: StaticCommitInfo,
   staticChanges: List<Change>
 ) : CommitInfo {

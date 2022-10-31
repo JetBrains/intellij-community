@@ -77,7 +77,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
     val sink = coroutineContext.progressSink
     sink?.text(message("progress.text.checking.for.todo"))
 
-    val isPostCommit = commitInfo.commitContext.isPostCommitCheck
+    val isPostCommit = commitInfo.isPostCommitCheck
     val todoFilter = settings.myTodoPanelSettings.todoFilterName?.let { TodoConfiguration.getInstance().getTodoFilter(it) }
     val changes = commitInfo.committedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
