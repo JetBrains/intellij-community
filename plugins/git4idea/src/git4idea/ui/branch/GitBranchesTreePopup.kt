@@ -650,8 +650,11 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           append(step.getText(userObject).orEmpty())
         }
 
+        val (inOutIcon, inOutTooltip) = step.getIncomingOutgoingIconWithTooltip(userObject)
+        tree?.toolTipText = inOutTooltip
+
         incomingOutgoingLabel.apply {
-          icon = step.getIncomingOutgoingIcon(userObject)
+          icon = inOutIcon
           isVisible = icon != null
         }
 

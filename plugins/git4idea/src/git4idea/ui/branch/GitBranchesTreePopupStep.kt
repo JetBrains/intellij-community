@@ -39,6 +39,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -167,15 +168,16 @@ class GitBranchesTreePopupStep(private val project: Project,
       }
     }
 
-  fun getIncomingOutgoingIcon(treeNode: Any?): Icon? {
-    val value = treeNode ?: return null
+  fun getIncomingOutgoingIconWithTooltip(treeNode: Any?): Pair<Icon?, @Nls(capitalization = Nls.Capitalization.Sentence) String?> {
+    val empty = null to null
+    val value = treeNode ?: return empty
     return when (value) {
-      is GitBranch -> getIncomingOutgoingBranchIcon(value)
-      else -> null
+      is GitBranch -> getIncomingOutgoingIconWithTooltip(value)
+      else -> empty
     }
   }
 
-  private fun getIncomingOutgoingBranchIcon(branch: GitBranch): Icon? {
+  private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
     val branchName = branch.name
     val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
     val hasIncoming =
@@ -184,12 +186,14 @@ class GitBranchesTreePopupStep(private val project: Project,
     val hasOutgoing =
       repositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
 
+    val tooltip = GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip(hasIncoming, hasOutgoing).orEmpty()
+
     return when {
       hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
       hasIncoming -> DvcsImplIcons.Incoming
       hasOutgoing -> DvcsImplIcons.Outgoing
       else -> null
-    }
+    } to tooltip
   }
 
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
