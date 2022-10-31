@@ -20,9 +20,9 @@ class IdentifierSymbolReference(
 ) : MermaidPsiSymbolReferenceBase(element, rangeInElement), PsiCompletableReference {
   override fun resolveReference(): Collection<Symbol> {
     val file = element.containingFile
-    val declarations = file.collectNamedElements().asSequence().filter { it.isDeclaration }
+    val declarations = file.collectNamedElements().filter { it.isDeclaration }
     val matchingDeclarations = declarations.filter { it.text == text }
-    if (!matchingDeclarations.iterator().hasNext()) {
+    if (matchingDeclarations.isEmpty()) {
       return listOf(element).mapNotNull {
         (it as? MermaidNamedPsiElement)?.let { element ->
           UnresolvedIdentifierSymbol.createPointer(
@@ -31,14 +31,13 @@ class IdentifierSymbolReference(
         }
       }
     }
-    val symbols = matchingDeclarations.mapNotNull { IdentifierSymbol.createPointer(it).dereference() }
-    return symbols.toList()
+    return matchingDeclarations.mapNotNull { IdentifierSymbol.createPointer(it).dereference() }
   }
 
   override fun getCompletionVariants(): Collection<LookupElement> {
     val file = element.containingFile
-    val labels = file.collectNamedElements().asSequence()
-    return labels.map { LookupElementBuilder.create(it.name) }.toList()
+    val labels = file.collectNamedElements()
+    return labels.map { LookupElementBuilder.create(it.name) }
   }
 
   companion object {
