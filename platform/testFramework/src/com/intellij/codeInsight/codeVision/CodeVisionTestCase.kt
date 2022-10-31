@@ -32,6 +32,11 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
     val editor = myFixture.editor
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
+    codeVisionHost.providers.forEach {
+      if (it.id == "vcs.code.vision" && enabledProviderIds.contains(it.id)) {
+        it.preparePreview(myFixture.editor, myFixture.file)
+      }
+    }
     myFixture.doHighlighting()
 
     codeVisionHost.calculateCodeVisionSync(editor, testRootDisposable)
