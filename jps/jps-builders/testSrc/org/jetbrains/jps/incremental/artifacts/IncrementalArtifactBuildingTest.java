@@ -325,9 +325,8 @@ public class IncrementalArtifactBuildingTest extends ArtifactBuilderTestCase {
     assertOutput(a2, fs().file("a.txt", "2"));
   }
 
-  //todo[nik] fix
   //ZD-51993
-  public void _testFilesCopiedToTwoDifferentPlacesInArtifact() {
+  public void testFilesCopiedToTwoDifferentPlacesInArtifact() {
     final String fileA = createFile("res/a.txt", "0");
     final String fileB = createFile("res/b.txt", "0");
     String dir = PathUtil.getParentPath(fileA);
