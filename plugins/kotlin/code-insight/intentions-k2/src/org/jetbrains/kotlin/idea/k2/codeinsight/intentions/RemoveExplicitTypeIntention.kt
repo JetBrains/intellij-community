@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.calls
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
@@ -18,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
@@ -28,15 +27,13 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RemoveExplicitTypeIntention :
-    AbstractKotlinApplicatorBasedIntention<KtDeclaration, KotlinApplicatorInput.Empty>(KtDeclaration::class),
-    HighPriorityAction {
-
+class RemoveExplicitTypeIntention : AbstractKotlinApplicatorBasedIntention<KtDeclaration, KotlinApplicatorInput.Empty>(
+    KtDeclaration::class
+) {
     override fun getApplicator(): KotlinApplicator<KtDeclaration, KotlinApplicatorInput.Empty> = applicator {
         familyAndActionName(KotlinBundle.lazyMessage("remove.explicit.type.specification"))
         isApplicableByPsi { declaration ->
             when {
-                declaration.containingFile is KtCodeFragment -> false
                 declaration.typeReference == null || declaration.typeReference?.isAnnotatedDeep() == true -> false
                 declaration is KtParameter -> declaration.isLoopParameter || declaration.isSetterParameter
                 declaration is KtNamedFunction -> true
@@ -51,8 +48,9 @@ class RemoveExplicitTypeIntention :
         applicabilityRanges ranges@{ declaration ->
             val typeReference = declaration.typeReference ?: return@ranges emptyList()
 
-            if (declaration is KtParameter && declaration.isSetterParameter)
-                return@ranges listOf(typeReference.textRange.shiftLeft(declaration.startOffset))
+            if (declaration is KtParameter && declaration.isSetterParameter) {
+                return@ranges listOf(typeReference.textRangeIn(declaration))
+            }
 
             val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
             listOf(TextRange(0, typeReferenceRelativeEndOffset))
@@ -95,7 +93,10 @@ class RemoveExplicitTypeIntention :
     }
 
     private val KtDeclaration.isVar: Boolean
-        get() = ((this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property)?.isVar ?: false
+        get() {
+            val property = (this as? KtProperty) ?: (this as? KtPropertyAccessor)?.property
+            return property?.isVar == true
+        }
 
     private fun KtAnalysisSession.publicReturnTypeShouldBePresentInApiMode(declaration: KtCallableDeclaration): Boolean {
         if (declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED) return false
@@ -113,7 +114,11 @@ class RemoveExplicitTypeIntention :
         val initializerType = getInitializerTypeIfContextIndependent(initializer) ?: return true
         val explicitType = declaration.getReturnKtType()
 
-        val typeCanBeRemoved = if (declaration.isVar) initializerType.isEqualTo(explicitType) else initializerType.isSubTypeOf(explicitType)
+        val typeCanBeRemoved = if (declaration.isVar) {
+            initializerType.isEqualTo(explicitType)
+        } else {
+            initializerType.isSubTypeOf(explicitType)
+        }
         return !typeCanBeRemoved
     }
 
@@ -129,13 +134,13 @@ class RemoveExplicitTypeIntention :
             else -> {
                 // get type for expressions that a compiler views as constants, e.g. `1 + 2`
                 val evaluatedConstant = initializer.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
-                evaluatedConstant?.let { initializer.getKtType() }
+                if (evaluatedConstant != null) initializer.getKtType() else null
             }
         }
     }
 
     private fun KtAnalysisSession.returnTypeOfCallDependsOnTypeParameters(callExpression: KtCallExpression): Boolean {
-        val call = callExpression.resolveCall().calls.singleOrNull() as? KtFunctionCall<*> ?: return true
+        val call = callExpression.resolveCall().singleFunctionCallOrNull() ?: return true
         val callSymbol = call.partiallyAppliedSymbol.symbol
         val typeParameters = callSymbol.typeParameters
         val returnType = callSymbol.returnType
