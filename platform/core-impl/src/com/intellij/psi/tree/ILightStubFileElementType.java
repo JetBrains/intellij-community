@@ -22,7 +22,6 @@ import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 
 public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileElementType<T> {
@@ -56,10 +55,5 @@ public class ILightStubFileElementType<T extends PsiFileStub> extends IStubFileE
       parser.parse(this, builder);
     }
     return builder.getLightTree();
-  }
-
-  @Override
-  public @NotNull String getExternalId() {
-    return getLanguage() + ".file";
   }
 }

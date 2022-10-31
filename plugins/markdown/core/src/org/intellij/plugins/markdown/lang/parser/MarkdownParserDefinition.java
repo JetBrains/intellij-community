@@ -22,12 +22,7 @@ import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownParserDefinition implements ParserDefinition {
-  public static final IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = new IStubFileElementType("Markdown file", MarkdownLanguage.INSTANCE) {
-    @Override
-    public @NotNull String getExternalId() {
-      return "markdown.file";
-    }
-  };
+  public static final IFileElementType MARKDOWN_FILE_ELEMENT_TYPE = new IStubFileElementType("Markdown file", MarkdownLanguage.INSTANCE);
 
   @NotNull
   @Override

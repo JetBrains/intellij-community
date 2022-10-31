@@ -5,7 +5,6 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -13,16 +12,11 @@ public class HtmlFileElementType extends IStubFileElementType<PsiFileStub<?>> {
 
   private static volatile int stubVersion = -1;
   
-  public HtmlFileElementType() {super(HTMLLanguage.INSTANCE);}
+  public HtmlFileElementType() {super("html.file", HTMLLanguage.INSTANCE);}
 
   @Override
   public int getStubVersion() {
     return getHtmlStubVersion() + 3;
-  }
-
-  @Override
-  public @NotNull String getExternalId() {
-    return "html.file";
   }
 
   public static int getHtmlStubVersion() {
