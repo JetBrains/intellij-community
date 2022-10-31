@@ -482,17 +482,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
-    Component focusedComponent = getWndManager().getFocusedComponent(project);
-    if (focusedComponent != null) {
-      Component parent = UIUtil.findUltimateParent(focusedComponent);
-      if (parent instanceof Window) {
-        window = (Window)parent;
+    WindowManagerEx manager = getWndManager();
+    if (manager != null) {
+      Component focusedComponent = manager.getFocusedComponent(project);
+      if (focusedComponent != null) {
+        Component parent = UIUtil.findUltimateParent(focusedComponent);
+        if (parent instanceof Window) {
+          window = (Window)parent;
+        }
       }
     }
     if (window == null) {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     }
-
+    if ((window == null || !window.isShowing()) && manager != null) {
+      window = manager.getFrame(project);
+    }
     if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
