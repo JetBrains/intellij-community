@@ -128,6 +128,13 @@
              successive-show="8"
     />
 
+    <feature id="codeassists.complete.statement"
+             tip-id="CompleteStatement"
+             first-show="3"
+             successive-show="5"
+             min-usage-count="10"
+    />
+
     <feature id="editing.completion.finishByCtrlDot"
              tip-id="CtrlDotInLookups"
              min-usage-count="7"
@@ -168,6 +175,13 @@
              min-usage-count="10"
              first-show="2"
              successive-show="3"/>
+
+    <feature id="codeassists.liveTemplates"
+             tip-id="LiveTemplates"
+             min-usage-count="3"
+             first-show="3"
+             successive-show="5"
+    />
   </group>
 
 
@@ -245,6 +259,81 @@
     <feature id="editing.copy.line"
              tip-id="CopyWithNoSelection"
              show-in-guide="false"
+    />
+  </group>
+
+
+  <group id="codeassists">
+    <feature id="codeassists.quickjavadoc"
+             tip-id="QuickJavaDoc"
+             min-usage-count="3"
+             first-show="3"
+             successive-show="5"
+    />
+
+    <feature id="codeassists.quickdefinition"
+             tip-id="CtrlShiftI"
+             min-usage-count="9"
+             first-show="3"
+             successive-show="5"
+    />
+
+    <feature id="codeassists.quickdefinition.lookup"
+             tip-id="CtrlShiftIForLookup"
+             min-usage-count="1"
+             first-show="5"
+             successive-show="7">
+      <dependency id="codeassists.quickdefinition"/>
+    </feature>
+
+    <feature id="codeassists.quickjavadoc.lookup"
+             tip-id="QuickJavaDocInLookups"
+             min-usage-count="1"
+             first-show="5"
+             successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+
+    <feature id="codeassists.quickjavadoc.ctrln"
+             tip-id="QuickJavaDocInLookups"
+             min-usage-count="1"
+             first-show="5"
+             successive-show="7">
+      <dependency id="codeassists.quickjavadoc"/>
+    </feature>
+
+    <feature id="codeassists.comment.line"
+             tip-id="CommentCode"
+             first-show="6"
+             successive-show="5"
+             min-usage-count="3"
+    />
+
+    <feature id="codeassists.overrideimplement"
+             tip-id="OverrideImplementMethods"
+             first-show="3"
+             successive-show="6"
+             min-usage-count="7"
+    />
+
+    <feature id="codeassists.highlight.usages"
+             tip-id="HighlightUsagesInFile"
+             show-in-guide="false">
+      <track-action id="HighlightUsagesInFile"/>
+    </feature>
+
+    <feature id="codeassist.inspect.batch"
+             tip-id="InspectCode"
+             first-show="3"
+             min-usage-count="5"
+             successive-show="5"
+    />
+
+    <feature id="codeassists.parameterInfo"
+             tip-id="ParameterInfo"
+             min-usage-count="3"
+             first-show="3"
+             successive-show="5"
     />
   </group>
 </component>
