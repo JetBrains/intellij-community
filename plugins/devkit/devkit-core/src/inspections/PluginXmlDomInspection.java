@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -41,10 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
@@ -922,30 +919,41 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                         DomElementAnnotationHolder holder,
                                         ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     Module module = component.getModule();
-    GenericDomValue<PsiClass> implementationClassDomValue = component.getImplementationClass();
-    PsiClass implementationClass = implementationClassDomValue.getValue();
+    GenericDomValue<PsiClass> implementationClassElement = component.getImplementationClass();
+    PsiClass implementationClass = implementationClassElement.getValue();
     if (implementationClass != null) {
       if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
         componentModuleRegistrationChecker.checkProperXmlFileForClass(component, implementationClass);
       }
       if (implementationClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        holder.createProblem(implementationClassDomValue,
+        holder.createProblem(implementationClassElement,
                              DevKitBundle.message("inspections.registration.problems.abstract"));
       }
     }
 
     GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
     PsiClass interfaceClass = interfaceClassElement.getValue();
-    if (interfaceClass != null && interfaceClass.equals(implementationClass) &&
-        component.getHeadlessImplementationClass().getValue() == null) {
-      highlightRedundant(interfaceClassElement,
-                         DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
-                         ProblemHighlightType.WARNING, holder);
+    if (interfaceClass != null) {
+      if (interfaceClass.equals(implementationClass) && component.getHeadlessImplementationClass().getValue() == null) {
+        highlightRedundant(interfaceClassElement,
+                           DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
+                           ProblemHighlightType.WARNING, holder);
+      }
+      IdeaPlugin plugin = component.getParentOfType(IdeaPlugin.class, false);
+      if (plugin != null) {
+        DuplicateComponentInterfaceChecker checker = new DuplicateComponentInterfaceChecker(component, interfaceClass);
+        plugin.accept(checker);
+        if (checker.declarationBeforeComponentFound) {
+          holder.createProblem(interfaceClassElement,
+                               DevKitBundle.message("inspections.registration.problems.component.duplicate.interface",
+                                                    interfaceClass.getQualifiedName()));
+        }
+      }
     }
 
     if (implementationClass != null && interfaceClass != null &&
         implementationClass != interfaceClass && !implementationClass.isInheritor(interfaceClass, true)) {
-      holder.createProblem(implementationClassDomValue,
+      holder.createProblem(implementationClassElement,
                            DevKitBundle.message("inspections.registration.problems.component.incompatible.interface",
                                                 interfaceClass.getQualifiedName()));
     }
@@ -1352,5 +1360,64 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     @XCollection(elementName = "module", valueAttributeName = "name")
     @Property(surroundWithTag = false)
     public Set<String> modules = new LinkedHashSet<>();
+  }
+
+  private static class DuplicateComponentInterfaceChecker implements DomElementVisitor {
+    private final Component component;
+    private final PsiClass componentInterfaceClass;
+    private final int componentTextOffset;
+    private String componentType;
+    private boolean declarationBeforeComponentFound = false;
+
+    private DuplicateComponentInterfaceChecker(@NotNull Component component, @NotNull PsiClass componentInterfaceClass) {
+      this.component = component;
+      this.componentInterfaceClass = componentInterfaceClass;
+      XmlElement componentElement = component.getXmlElement();
+      this.componentTextOffset = componentElement != null ? componentElement.getTextOffset() : -1;
+    }
+
+    @Override
+    public void visitDomElement(DomElement element) {
+      element.acceptChildren(this);
+      if (!declarationBeforeComponentFound && element instanceof Component checkedComponent
+          && isFirstDuplicateDeclaration(checkedComponent)) {
+        declarationBeforeComponentFound = true;
+      }
+    }
+
+    private boolean isFirstDuplicateDeclaration(Component checkedComponent) {
+      if (checkedComponent == component) return false;
+      XmlElement element = checkedComponent.getXmlElement();
+      if (element != null && element.getTextOffset() >= componentTextOffset) return false; // do not check after component's offset
+      if (componentLevelsEqual(component, checkedComponent)) {
+        if (componentInterfaceClass.equals(checkedComponent.getInterfaceClass().getValue())) {
+          if (component instanceof Component.Module) {
+            if (componentType == null) {
+              componentType = getComponentType(component);
+            }
+            String checkedComponentType = getComponentType(checkedComponent);
+            return Objects.equals(componentType, checkedComponentType);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean componentLevelsEqual(Component component, Component checkedComponent) {
+      return (component instanceof Component.Application && checkedComponent instanceof Component.Application) ||
+             (component instanceof Component.Project && checkedComponent instanceof Component.Project) ||
+             (component instanceof Component.Module && checkedComponent instanceof Component.Module);
+    }
+
+    private static String getComponentType(Component component) {
+      return component.getOptions().stream()
+        .filter(option -> "type".equals(option.getName().getValue()))
+        .map(Option::getValue)
+        .map(GenericValue::getValue)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+    }
   }
 }
