@@ -39,6 +39,16 @@ class AccountSelectorComponentFactory<A : Account>(
 
     val comboModel = ComboBoxWithActionsModel<A>().apply {
       bind(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
+
+      if (size > 0) {
+        for (i in 0 until size) {
+          val item = getElementAt(i)
+          if (item is ComboBoxWithActionsModel.Item.Wrapper) {
+            selectedItem = item
+            break
+          }
+        }
+      }
     }
 
     val label = JLabel().apply {
