@@ -1,116 +1,12 @@
 <component>
   <group id="navigation">
     <feature
-      id="navigation.popup.class"
-      tip-id="GoToClass"
-      min-usage-count="3"
-      first-show="1"
-      successive-show="5">
-      <track-action id="GotoClass"/>
-    </feature>
-    <feature
-      id="navigation.popup.file"
-      tip-id="GoToFile"
-      min-usage-count="2"
-      first-show="3"
-      successive-show="5">
-      <track-action id="GotoFile"/>
-    </feature>
-    <feature
-      id="navigation.popup.symbol"
-      tip-id="GoToSymbol"
-      first-show="5"
-      successive-show="8">
-      <track-action id="GotoSymbol"/>
-    </feature>
-    <feature
-        id="SearchEverywhere"
-        tip-id="SearchEverywhere"
-        first-show="1"
-        successive-show="1"
-        min-usage-count="1">
-      <track-action id="SearchEverywhere"/>
-    </feature>
-    <feature
-      id="navigation.popup.camelprefix"
-      tip-id="CamelPrefixesInNavigationPopups"
-      min-usage-count="3"
-      first-show="4"
-      successive-show="7">
-      <dependency id="navigation.popup.class"/>
-      <dependency id="navigation.popup.file"/>
-      <dependency id="navigation.popup.symbol"/>
-    </feature>
-    <feature
-      id="navigation.popup.wildcards"
-      tip-id="WildcardsInNavigationPopups"
-      min-usage-count="2"
-      first-show="3"
-      successive-show="5">
-      <dependency id="navigation.popup.class"/>
-      <dependency id="navigation.popup.file"/>
-      <dependency id="navigation.popup.symbol"/>
-    </feature>
-    <feature
-      id="navigation.popup.file.structure"
-      tip-id="FileStructurePopup"
-      min-usage-count="3"
-      first-show="2"
-      successive-show="5"
-      />
-    <feature
-      id="navigation.recent.files"
-      tip-id="RecentFiles"
-      min-usage-count="3"
-      first-show="3"
-      successive-show="5"
-      />
-    <feature
-      id="navigation.select.in"
-      tip-id="SelectIn"
-      min-usage-count="3"
-      first-show="4"
-      successive-show="7"
-      />
-    <feature
-      id="navigation.goto.declaration"
-      tip-id="GoToDeclaration"
-      min-usage-count="15"
-      first-show="1"
-      successive-show="4"
-      />
-    <feature
       id="navigation.goto.implementation"
       tip-id="GoToImplementation"
       min-usage-count="10"
       first-show="2"
       successive-show="5"
       />
-    <feature
-      id="navigation.goto.usages"
-      tip-id="ShowUsages"
-      min-usage-count="3"
-      first-show="5"
-      successive-show="5"/>
-    <feature
-      id="navigation.goto.inspection"
-      tip-id="GoToInspection"
-      min-usage-count="3"
-      first-show="5"
-      successive-show="5"/>
-    <feature id="navigation.recent.locations"
-             tip-id="recent-locations"
-             show-in-guide="false">
-      <track-action id="RecentLocations"/>
-    </feature>
-    <feature id="navigation.find.usages"
-             tip-id="find_usages"
-             show-in-guide="false">
-      <track-action id="FindUsages"/>
-    </feature>
-    <feature id="navigation.goto.file.line"
-             tip-id="GotoLineInFile"
-             show-in-guide="false"/>
   </group>
 
   <group id="completion">
