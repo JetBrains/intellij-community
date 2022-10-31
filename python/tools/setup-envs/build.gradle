@@ -38,5 +38,5 @@ envs {
   python "python37", "3.7.9"
   python "python38", "3.8.10"
   python "python39", "3.9.13"
-  python "python310", "3.10.0"
+  python "python310", "3.10.8"
 }
