@@ -3,6 +3,8 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,15 +22,15 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
                                                itemsState: StateFlow<Collection<T>>,
                                                selectionState: MutableStateFlow<T?>,
                                                sortComparator: Comparator<T>) {
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     itemsState.collect {
       items = it.sortedWith(sortComparator)
     }
   }
-  addSelectionChangeListener {
+  addSelectionChangeListener(scope) {
     selectionState.value = selectedItem?.wrappee
   }
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     selectionState.collect { item ->
       if (selectedItem?.wrappee != item) {
         selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
@@ -45,26 +47,34 @@ fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
                                                sortComparator: Comparator<T>) {
   bind(scope, itemsState, selectionState, sortComparator)
 
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     actionsState.collect {
       actions = it
     }
   }
 }
 
-private fun <T> ComboBoxModel<T>.addSelectionChangeListener(listener: () -> Unit) {
-  addListDataListener(object : ListDataListener {
-    override fun contentsChanged(e: ListDataEvent) {
-      if (e.index0 == -1 && e.index1 == -1) listener()
-    }
+private fun <T> ComboBoxModel<T>.addSelectionChangeListener(scope: CoroutineScope, listener: () -> Unit) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    val dataListener = object : ListDataListener {
+      override fun contentsChanged(e: ListDataEvent) {
+        if (e.index0 == -1 && e.index1 == -1) listener()
+      }
 
-    override fun intervalAdded(e: ListDataEvent) {}
-    override fun intervalRemoved(e: ListDataEvent) {}
-  })
+      override fun intervalAdded(e: ListDataEvent) {}
+      override fun intervalRemoved(e: ListDataEvent) {}
+    }
+    try {
+      addListDataListener(dataListener)
+      awaitCancellation()
+    } finally {
+      removeListDataListener(dataListener)
+    }
+  }
 }
 
 fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolean>) {
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     visibilityFlow.collect {
       isVisible = it
     }
@@ -72,7 +82,7 @@ fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolea
 }
 
 fun JComponent.bindDisabled(scope: CoroutineScope, disabledFlow: Flow<Boolean>) {
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     disabledFlow.collect {
       isEnabled = !it
     }
@@ -80,7 +90,7 @@ fun JComponent.bindDisabled(scope: CoroutineScope, disabledFlow: Flow<Boolean>) 
 }
 
 fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
-  scope.launch {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
     }

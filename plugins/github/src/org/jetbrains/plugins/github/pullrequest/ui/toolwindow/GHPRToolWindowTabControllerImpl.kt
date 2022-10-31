@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.BorderLayout
@@ -21,12 +23,14 @@ internal class GHPRToolWindowTabControllerImpl(scope: CoroutineScope,
                                                private val content: Content) :
   GHPRToolWindowTabController {
 
+  private val cs = scope.childScope(Dispatchers.Main.immediate)
+
   override var initialView = GHPRToolWindowViewType.LIST
   override val componentController: GHPRToolWindowTabComponentController?
     get() = ClientProperty.findInHierarchy(content.component, GHPRToolWindowTabComponentController.KEY)
 
   init {
-    scope.launch {
+    cs.launch {
       tabVm.viewState.collectScoped { scope, vm ->
         content.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
         CollaborationToolsUIUtil.setComponentPreservingFocus(content, createNestedComponent(scope, vm))

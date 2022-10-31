@@ -78,7 +78,6 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         vm.submitSelection()
       }
 
-      isVisible = false
       bindVisibility(scope, vm.submitAvailableState)
       bindDisabled(scope, vm.busyState)
     }
@@ -108,11 +107,9 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
-      isVisible = false
       bindVisibility(scope, vm.errorState.map { it != null })
     }
     val busyLabel = JLabel(AnimatedIcon.Default()).apply {
-      isVisible = false
       bindVisibility(scope, vm.busyState)
     }
 

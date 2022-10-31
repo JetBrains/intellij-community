@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -54,7 +53,6 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
-        isVisible = false
         bindVisibility(scope, vm.githubLoginAvailableState)
         bindDisabled(scope, vm.busyState)
       },
@@ -64,7 +62,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           vm.submitSelection()
         }
       }.apply {
-        isVisible = false
+
         bindVisibility(scope, vm.githubLoginAvailableState)
         autoHideOnDisable = false
         bindDisabled(scope, vm.busyState)
@@ -80,7 +78,6 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
-        isVisible = false
         bindVisibility(scope, vm.gheLoginAvailableState)
         bindDisabled(scope, vm.busyState)
       }
