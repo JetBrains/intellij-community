@@ -388,6 +388,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
             className.startsWith("kotlin.jvm.internal.MutablePropertyReference") ||
             className.startsWith("kotlin.jvm.internal.PropertyReference") ||
             className.startsWith("kotlin.jvm.internal.TypeReference") ||
+            className.equals("kotlin.jvm.internal.Lambda") ||
             className.startsWith("kotlin.jvm.internal.LocalVariableReference") ||
             className.startsWith("kotlin.jvm.internal.MutableLocalVariableReference") ||
             className.equals("kotlin.jvm.internal.ReflectionFactory") ||
