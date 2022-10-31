@@ -491,4 +491,9 @@ public abstract class StubIndexEx extends StubIndex {
   public boolean areAllProblemsProcessedInTheCurrentThread() {
     return myStubProcessingHelper.areAllProblemsProcessedInTheCurrentThread();
   }
+
+  @ApiStatus.Internal
+  public void cleanCaches() {
+    myCachedStubIds.clear();
+  }
 }
