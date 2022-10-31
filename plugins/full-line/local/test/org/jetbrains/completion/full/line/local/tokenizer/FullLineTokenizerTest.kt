@@ -2,12 +2,14 @@ package org.jetbrains.completion.full.line.local.tokenizer
 
 import org.jetbrains.completion.full.line.local.ModelsFiles
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
 internal class FullLineTokenizerTest {
+  @Disabled("new tokens or test override must be provided")
   @ParameterizedTest
   @MethodSource("encodeTests")
   fun encode(testId: String, sentences: List<String>, expected_ids: List<List<Int>>) {
@@ -15,6 +17,7 @@ internal class FullLineTokenizerTest {
     assertEquals(expected_ids, ids)
   }
 
+  @Disabled("new tokens or test override must be provided")
   @ParameterizedTest
   @MethodSource("decodeTests")
   fun decode(testId: String, ids: List<List<Int>>, expected_sentences: List<String>) {
