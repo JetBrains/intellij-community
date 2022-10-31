@@ -11,12 +11,6 @@
 
   <group id="completion">
     <feature
-      id="editing.completion.basic"
-      tip-id="CodeCompletion"
-      min-usage-count="15"
-      first-show="1"
-      successive-show="3"/>
-    <feature
       id="editing.completion.smarttype.general"
       tip-id="SmartTypeCompletion"
       min-usage-count="10"
@@ -100,27 +94,6 @@
       successive-show="3"
       />
     <feature
-      id="editing.completion.replace"
-      tip-id="TabInLookups"
-      min-usage-count="10"
-      first-show="6"
-      successive-show="8"
-      />
-    <feature
-        id="editing.completion.finishByCtrlDot"
-        tip-id="CtrlDotInLookups"
-        min-usage-count="7"
-        first-show="4"
-        successive-show="8"
-        />
-    <feature
-      id="editing.completion.finishByDotEtc"
-      tip-id="DotEtcInLookups"
-      min-usage-count="7"
-      first-show="4"
-      successive-show="8"
-      />
-    <feature
       id="editing.completion.finishBySmartEnter"
       tip-id="FinishBySmartEnter"
       min-usage-count="7"
@@ -128,31 +101,6 @@
       successive-show="8">
       <dependency id="editing.completion.finishByDotEtc"/>
       </feature>
-    <feature
-      id="editing.completion.camelHumps"
-      tip-id="CamelHumpsInCodeCompletion"
-      min-usage-count="8"
-      first-show="5"
-      successive-show="7"
-      />
-    <feature
-      id="editing.completion.cancelByControlArrows"
-      tip-id="CancelByControlArrows"
-      min-usage-count="10"
-      first-show="2"
-      successive-show="3"/>
-    <feature
-      id="editing.completion.changeSorting"
-      tip-id="ChangeSorting"
-      min-usage-count="10"
-      first-show="2"
-      successive-show="3"/>
-    <feature
-      id="editing.completion.postfix"
-      tip-id="PostfixCompletion"
-      min-usage-count="10"
-      first-show="2"
-      successive-show="3"/>
   </group>
   
   <group id="editing">
