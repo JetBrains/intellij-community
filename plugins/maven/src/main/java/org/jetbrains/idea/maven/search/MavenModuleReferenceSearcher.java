@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.search;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -34,7 +35,7 @@ import java.util.List;
  *   }
  * </pre>
  */
-public class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   private static final String DELIMITER = "/";
 
   // split with lookaheads and lookbehinds to keep the delimiters
@@ -97,9 +98,11 @@ public class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference
     if (queryParameters.getElementToSearch() instanceof PsiDirectory directory) {
       var project = queryParameters.getProject();
       var modules = ModuleManager.getInstance(project).getModules();
-      for (var module : modules) {
-        processModule(project, module, directory, consumer);
-      }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (var module : modules) {
+          processModule(project, module, directory, consumer);
+        }
+      });
     }
   }
 }
