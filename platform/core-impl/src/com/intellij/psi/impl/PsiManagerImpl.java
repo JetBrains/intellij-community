@@ -191,7 +191,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   private static @NonNls String logPsi(@Nullable PsiElement element) {
-    return element == null ? " null" : element.getClass().getName();
+    return element == null ? "null" : element.getClass().getName();
   }
 
   @Override
