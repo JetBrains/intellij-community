@@ -1029,6 +1029,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addFunModifier/hasNoArguments.kt");
         }
 
+        @TestMetadata("nonSource.kt")
+        public void testNonSource() throws Exception {
+            runTest("testData/quickfix/addFunModifier/nonSource.kt");
+        }
+
         @TestMetadata("notSam.kt")
         public void testNotSam() throws Exception {
             runTest("testData/quickfix/addFunModifier/notSam.kt");
