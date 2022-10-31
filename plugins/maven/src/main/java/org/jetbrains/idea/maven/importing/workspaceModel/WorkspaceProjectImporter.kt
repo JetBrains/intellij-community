@@ -533,23 +533,26 @@ private class NotifyUserAboutWorkspaceImportTask : MavenProjectsProcessorTask {
                        indicator: MavenProgressIndicator) {
     val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
 
-    ApplicationManager.getApplication().invokeLater {
-      if (project.isDisposed) return@invokeLater
-
+    val showNotification = {
       val notification = notificationGroup
-        .createNotification(SyncBundle.message("maven.workspace.first.import.notification.title"),
-                            SyncBundle.message("maven.workspace.first.import.notification.text"),
-                            NotificationType.INFORMATION)
+        .createNotification(
+          SyncBundle.message("maven.workspace.first.import.notification.title"),
+          SyncBundle.message("maven.workspace.first.import.notification.text"),
+          NotificationType.INFORMATION)
 
-      notification.addAction(object : AnAction(SyncBundle.message("maven.sync.quickfixes.open.settings")) {
+      notification.addAction(object : AnAction(
+        SyncBundle.message("maven.sync.quickfixes.open.settings")) {
         override fun actionPerformed(e: AnActionEvent) {
           notification.expire()
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenProjectBundle.message("maven.tab.importing"))
+          ShowSettingsUtil.getInstance().showSettingsDialog(project,
+                                                            MavenProjectBundle.message(
+                                                              "maven.tab.importing"))
         }
       })
-
       notification.notify(project)
     }
+
+    ApplicationManager.getApplication().invokeLater(showNotification, project.disposed)
   }
 }
 
