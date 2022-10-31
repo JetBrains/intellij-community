@@ -1,0 +1,21 @@
+training/gpt2_lightning/model.py
+import logging
+import math
+import os
+import time
+from typing import Dict, List, Tuple, Union
+import pytorch_lightning as pl
+import torch
+from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader
+from transformers import GPT2Config, GPT2LMHeadModel, AdamW, get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
+from flcc.data_preprocessing.bpe import GitBPE
+from training.data_utils.fixed_length_dataset import DataPreparer, FixedLengthDataset
+from training.gpt2_lightning.metrics import accuracy_MRR
+class GPT2Model(pl.LightningModule):
+	def __init__(self, config) -> None:
+		super().__init__()
+		self.tokenizer = GitBPE(config.bpe.tokenizer_path)
+		model_config = GPT2Config(
+			vocab_size=len(self
