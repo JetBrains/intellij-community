@@ -605,7 +605,7 @@ def should_evaluate_shape():
 
 def _series_to_str(s, max_items):
     res = []
-    s = s[:max_items]
+    s = s.iloc[:max_items]
     for item in s.items():
         # item: (index, value)
         res.append(str(item))
