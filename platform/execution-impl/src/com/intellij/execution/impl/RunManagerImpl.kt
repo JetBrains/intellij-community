@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -386,7 +387,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     removeConfigurations(deletedRunConfigs, deleteFileIfStoredInArbitraryFile = false)
 
     for (filePath in updatedFilePaths) {
-      val deletedAndAddedRunConfigs = lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) }
+      val deletedAndAddedRunConfigs = runReadAction {  lock.read { rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath) } }
 
       for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
         addConfiguration(runConfig)
