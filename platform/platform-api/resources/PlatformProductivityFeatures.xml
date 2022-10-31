@@ -169,4 +169,82 @@
              first-show="2"
              successive-show="3"/>
   </group>
+
+
+  <group id="editing">
+    <feature id="editing.select.word"
+             tip-id="CtrlW"
+             min-usage-count="10"
+             first-show="2"
+             successive-show="4">
+      <track-action id="EditorSelectWord"/>
+      <track-action id="EditorUnSelectWord"/>
+    </feature>
+
+    <feature id="editor.delete.line"
+             tip-id="DeleteLine"
+             min-usage-count="1"
+             first-show="2"
+             successive-show="1"
+    />
+
+    <feature id="editing.duplicate"
+             tip-id="CtrlD"
+             show-in-guide="false">
+      <track-action id="EditorDuplicate"/>
+    </feature>
+
+    <feature id="scratch"
+             tip-id="Scratch"
+             min-usage-count="10"
+             first-show="2"
+             successive-show="3"/>
+
+    <feature id="editing.add.carets.using.double.ctrl"
+             tip-id="Multicursor"
+    />
+
+    <feature id="editing.convert.line.separators"
+             tip-id="LineEndings">
+      <track-action id="ConvertToMacLineSeparators"/>
+      <track-action id="ConvertToWindowsLineSeparators"/>
+      <track-action id="ConvertToUnixLineSeparators"/>
+    </feature>
+
+    <feature id="editing.move.statement.up.down"
+             tip-id="MoveUpDown"
+             show-in-guide="false">
+      <track-action id="MoveStatementUp"/>
+      <track-action id="MoveStatementDown"/>
+    </feature>
+
+    <feature id="editing.join.lines"
+             tip-id="JoinLines"
+             show-in-guide="false">
+      <track-action id="EditorJoinLines"/>
+    </feature>
+
+    <feature id="editing.clipboard.history"
+             tip-id="ClipboardStack"
+             show-in-guide="false">
+      <track-action id="PasteMultiple"/>
+    </feature>
+
+    <feature id="editing.compare.editor.with.clipboard"
+             tip-id="CompareEditorWithClipboard"
+             show-in-guide="false">
+      <track-action id="CompareClipboardWithSelection"/>
+    </feature>
+
+    <feature id="editing.copy.reference"
+             tip-id="CopyPasteReference"
+             show-in-guide="false">
+      <track-action id="CopyReference"/>
+    </feature>
+
+    <feature id="editing.copy.line"
+             tip-id="CopyWithNoSelection"
+             show-in-guide="false"
+    />
+  </group>
 </component>
