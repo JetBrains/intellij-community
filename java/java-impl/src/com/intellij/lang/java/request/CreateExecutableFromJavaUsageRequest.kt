@@ -20,7 +20,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val psiManager = call.manager
   private val project = psiManager.project
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
-  protected val call: T get() = callPointer.element ?: error("dead pointer")
+  internal val call: T get() = callPointer.element ?: error("dead pointer")
 
   override fun isValid() = callPointer.element != null
 
