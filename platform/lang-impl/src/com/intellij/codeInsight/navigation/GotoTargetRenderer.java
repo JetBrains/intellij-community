@@ -25,29 +25,36 @@ final class GotoTargetRenderer implements ListCellRenderer<Object> {
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    Component renderer;
-    if (value == null) {
-      renderer = myNullRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-    }
-    else if (value instanceof GotoTargetHandler.AdditionalAction) {
-      renderer = myActionRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
-    else {
-      renderer = myPresentationRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
-
     if (!ExperimentalUI.isNewUI()) {
-      return renderer;
+      return getRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
 
-    SelectablePanel result = SelectablePanel.wrap(renderer, list.getBackground());
+    Component unselectedComponent = getRendererComponent(list, value, index, false, cellHasFocus);
+    Color rowBackground = getBackground(unselectedComponent, list);
+    Component renderer = getRendererComponent(list, value, index, isSelected, cellHasFocus);
+    SelectablePanel result = SelectablePanel.wrap(renderer, rowBackground);
     PopupUtil.configListRendererFixedHeight(result);
-    Color background = renderer.getBackground();
-    if (background == UIUtil.getListBackground()) {
-      background = list.getBackground();
+    if (isSelected) {
+      result.setSelectionColor(getBackground(renderer, list));
     }
-    result.setSelectionColor(background);
     ((JComponent)renderer).setOpaque(false);
     return result;
+  }
+
+  private Component getRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    if (value == null) {
+      return myNullRenderer.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
+    }
+    else if (value instanceof GotoTargetHandler.AdditionalAction) {
+      return myActionRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+    else {
+      return myPresentationRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+  }
+
+  private static Color getBackground(Component component, JList<?> list) {
+    Color background = component.getBackground();
+    return background == UIUtil.getListBackground() ? list.getBackground() : background;
   }
 }
