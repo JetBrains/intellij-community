@@ -3,9 +3,7 @@ package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleGetterPrototype
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreateReadOnlyPropertyActionGroup
@@ -31,13 +29,7 @@ internal class CreateGetterWithFieldAction(target: PsiClass, request: CreateMeth
     return message("create.read.only.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
   }
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val field = createRenderer(project).generatePrototypeField()
-    val getter = generateSimpleGetterPrototype(field)
-    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", getter.text)
-  }
-
-  override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
+  override fun createRenderer(project: Project, targetClass: PsiClass) = object : PropertyRenderer(project, targetClass, request, propertyInfo) {
 
     override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()
