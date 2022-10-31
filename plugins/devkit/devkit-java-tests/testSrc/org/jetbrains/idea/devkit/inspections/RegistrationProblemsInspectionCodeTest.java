@@ -5,7 +5,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/code")
-public class RegistrationProblemsInspectionCodeTest extends RegistrationProblemsInspectionCodeBaseTest {
+public class RegistrationProblemsInspectionCodeTest extends RegistrationProblemsInspectionCodeTestBase {
 
   @Override
   protected String getBasePath() {
