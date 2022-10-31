@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.util.SystemProperties;
@@ -26,17 +26,16 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final ConcurrentMap<String, List<StubFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>();
   private final ConcurrentMap<StubFileElementType, Long> myModCounts = new ConcurrentHashMap<>();
-  private final NotNullLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = NotNullLazyValue.atomicLazy(() -> {
+  private final ClearableLazyValue<StubUpdatingIndexStorage> myStubUpdatingIndexStorage = ClearableLazyValue.createAtomic(() -> {
     UpdatableIndex index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
     while (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
       index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex)index).getBaseIndex();
     }
     return (StubUpdatingIndexStorage)index;
   });
-  private final NotNullLazyValue<DataIndexer<Integer, SerializedStubTree, FileContent>> myStubIndexer =
-    NotNullLazyValue.atomicLazy(() -> {
-      return myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
-    });
+  private final ClearableLazyValue<DataIndexer<Integer, SerializedStubTree, FileContent>> myStubIndexer = ClearableLazyValue.createAtomic(() -> {
+    return myStubUpdatingIndexStorage.getValue().getExtension().getIndexer(); // new indexer instance ?????
+  });
 
   private record FileInfo(VirtualFile file, Project project, StubFileElementType type) { }
 
@@ -82,7 +81,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (file.isDirectory()) continue;
       if (!file.isValid()) {
         // file is deleted or changed externally
-        var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
+        var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
         for (var type : beforeSuitableTypes) {
           registerModificationFor(type);
         }
@@ -92,7 +91,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (project != null && project.isDisposed()) continue;
       IndexedFile indexedFile = new IndexedFileImpl(file, project);
       var current = determineCurrentFileElementType(indexedFile);
-      var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.get());
+      var beforeSuitableTypes = determinePreviousFileElementType(FileBasedIndex.getFileId(file), myStubUpdatingIndexStorage.getValue());
       if (beforeSuitableTypes.size() > 1) {
         for (var type : beforeSuitableTypes) {
           registerModificationFor(type);
@@ -156,6 +155,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myPendingUpdates.clear();
     myProbablyExpensiveUpdates.clear();
     myModificationsInCurrentBatch.clear();
+    myStubUpdatingIndexStorage.drop();
+    myStubIndexer.drop();
   }
 
   public void flush() {
@@ -176,9 +177,11 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
       if (value != null) return value;
       List<StubFileElementType> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
       if (types.size() > 1) {
-        LOG.error("Cannot distinguish StubFileElementTypes. This might worsen the performance. Version: " + storedVersion + " -> " +
+        LOG.error("Cannot distinguish StubFileElementTypes. This might worsen the performance. " +
+                  "Providing unique externalId or adding a distinctive debugName when instantiating StubFileElementTypes can help. " +
+                  "Version: " + storedVersion + " -> " +
                   ContainerUtil.map(types, t -> {
-                    return t.getClass().getName() + "{" + t.getExternalId() + ";" + t.getDebugName() + "}";
+                    return t.getClass().getName() + "{" + t.getExternalId() + ";" + t.getDebugName() + ";" + t.getLanguage() + "}";
                   }));
       }
       return types;
