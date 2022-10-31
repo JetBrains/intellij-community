@@ -3,10 +3,10 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.libraries.LibraryEx.ModifiableModelEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -16,8 +16,8 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
@@ -189,6 +189,23 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
+    }.assertTiming()
+  }
+
+  @Test
+  fun `access to index after change`() {
+    assertTrue(WorkspaceFileIndexEx.IS_ENABLED, "This test is expected to fail if the old implementation of DirectoryIndex is used")
+    val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
+    val module = ourProjectModel.moduleManager.findModuleByName("big")!!
+    PlatformTestUtil.startPerformanceTest("Checking status of file after adding and removing content root", 5) {
+      runReadAction {
+        repeat(50) {
+          assertFalse(fileIndex.isInContent(newRoot))
+        }
+      }
+    }.setup {
+      PsiTestUtil.addContentRoot(module, newRoot)
+      PsiTestUtil.removeContentEntry(module, newRoot)
     }.assertTiming()
   }
 }
