@@ -164,9 +164,9 @@
                  description="Full line completion server"/>
     <registryKey key="full.line.server.host.kotlin" defaultValue="https://kotlin.flcc.iml.aws.intellij.net"
                  description="Full line completion server"/>
-    <registryKey key="full.line.server.host.javascript" defaultValue="http://35.157.179.218:5005"
+    <registryKey key="full.line.server.host.javascript" defaultValue="https://python.flcc.iml.aws.intellij.net"
                  description="Full line completion server"/>
-    <registryKey key="full.line.server.host.typescript" defaultValue="http://35.157.179.218:5005"
+    <registryKey key="full.line.server.host.typescript" defaultValue="https://python.flcc.iml.aws.intellij.net"
                  description="Full line completion server"/>
 
     <registryKey key="full.line.server.host.psi.java" defaultValue="http://0.0.0.0:5000/"
