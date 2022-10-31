@@ -26,9 +26,11 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
             .toList()
     }
 
-    override fun sdk(): Sdk? = module.cacheByClassInvalidatingOnRootModifications(KeyForSdks::class.java) {
+    final override fun sdk(): Sdk? = module.cacheByClassInvalidatingOnRootModifications(keyForSdk()::class.java) {
         super.sdk()
     }
+
+    protected abstract fun keyForSdk(): Any
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
         return module.cacheByClassInvalidatingOnRootModifications(KeyForModulesWhoseInternalsAreVisible::class.java) {
@@ -37,5 +39,4 @@ sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) 
     }
 
     private object KeyForModulesWhoseInternalsAreVisible
-    private object KeyForSdks
 }

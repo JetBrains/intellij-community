@@ -15,6 +15,10 @@ data class ModuleProductionSourceInfo internal constructor(
 
     override val stableName: Name by lazy { module.stableName }
 
+    override fun keyForSdk() = KeyForSdks
+
     override val contentScope: GlobalSearchScope
         get() = KotlinResolveScopeEnlarger.enlargeScope(module.moduleProductionSourceScope, module, isTestScope = false)
+
+    protected object KeyForSdks
 }
