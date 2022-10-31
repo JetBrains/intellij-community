@@ -65,7 +65,7 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     RefManager refManager = globalContext.getRefManager();
     for (Module module : ModuleManager.getInstance(globalContext.getProject()).getModules()) {
-      if (scope.containsModule(module)) {
+      if (ReadAction.compute(() -> scope.containsModule(module))) {
         RefModule refModule = refManager.getRefModule(module);
         if (refModule != null) {
           CommonProblemDescriptor[] descriptors = getDescriptors(manager, refModule, module);
