@@ -58,13 +58,16 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     settingsLog.initialize()
 
-    // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-    SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
-    ideMediator.activateStreamProvider()
+    if (initMode.shouldEnableSync()) { // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+      SettingsSyncEvents.getInstance().addSettingsChangedListener(settingsChangeListener)
+      ideMediator.activateStreamProvider()
+    }
 
     applyInitialChanges(initMode)
 
-    queue.activate()
+    if (initMode.shouldEnableSync()) {
+      queue.activate()
+    }
   }
 
   private fun saveIdeSettings() {
@@ -120,8 +123,9 @@ class SettingsSyncBridge(parentDisposable: Disposable,
         pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
       }
       else {
-        // otherwise we place our migrated data to the cloud
-        forcePushToCloud(masterPosition)
+        if (migration.shouldEnableNewSync()) {
+          forcePushToCloud(masterPosition) // otherwise we place our migrated data to the cloud
+        }
 
         pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
         migration.migrateCategoriesSyncStatus(appConfigPath, SettingsSyncSettings.getInstance())
@@ -147,8 +151,15 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
-    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode()
     object PushToServer : InitMode()
+
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode() {
+      override fun shouldEnableSync(): Boolean {
+        return migration.shouldEnableNewSync()
+      }
+    }
+
+    open fun shouldEnableSync(): Boolean = true
   }
 
   @RequiresBackgroundThread
