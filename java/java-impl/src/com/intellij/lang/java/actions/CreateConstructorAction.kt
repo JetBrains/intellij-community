@@ -9,14 +9,13 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.request.CreateConstructorFromJavaUsageRequest
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -41,8 +40,10 @@ internal class CreateConstructorAction(
   private fun constructorRenderer(project: Project) = JavaConstructorRenderer(project, target, request)
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val constructor = constructorRenderer(project).renderConstructor()
-    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", constructor.text)
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+    val javaFieldRenderer = JavaConstructorRenderer(project, copyClass, request)
+    javaFieldRenderer.doMagic()
+    return IntentionPreviewInfo.DIFF
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
@@ -107,7 +108,7 @@ private class JavaConstructorRenderer(
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) return
-        WriteCommandAction.runWriteCommandAction(project) { setupBody() }
+        IntentionPreviewUtils.write<Throwable> { setupBody() }
       }
 
       private fun setupBody() {
