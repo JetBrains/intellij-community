@@ -32,6 +32,12 @@ public interface Disposable {
    */
   void dispose();
 
+  interface Default extends Disposable {
+
+    @Override
+    default void dispose() { }
+  }
+
   interface Parent extends Disposable {
     /**
      * This method is called before {@link #dispose()}

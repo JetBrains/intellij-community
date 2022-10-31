@@ -224,8 +224,15 @@ class ProjectSettingsTracker(
     }
   }
 
-  fun beforeApplyChanges(listener: () -> Unit) = applyChangesOperation.whenOperationStarted(listener)
-  fun afterApplyChanges(listener: () -> Unit) = applyChangesOperation.whenOperationFinished(listener)
+  fun beforeApplyChanges(
+    parentDisposable: Disposable,
+    listener: () -> Unit
+  ) = applyChangesOperation.whenOperationStarted(parentDisposable, listener)
+
+  fun afterApplyChanges(
+    parentDisposable: Disposable,
+    listener: () -> Unit
+  ) = applyChangesOperation.whenOperationFinished(parentDisposable, listener)
 
   init {
     projectAware.subscribe(ProjectListener(), parentDisposable)
