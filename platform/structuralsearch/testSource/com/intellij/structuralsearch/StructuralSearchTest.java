@@ -2598,6 +2598,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     String pattern10 = "() -> '_B";
     assertEquals("match empty lambda expression body", 1, findMatchesCount(source5, pattern10));
+    final String pattern11 = "() -> { '_body*; }";
+    assertEquals("match empty lambda expression body 2", 1, findMatchesCount(source5, pattern11));
+
+    String source6 = "class X {" +
+                     "  void x() {" +
+                     "    Runnable r = () -> {\n" +
+                     "      // comment\n" +
+                     "      System.out.println();\n" +
+                     "      System.out.println();\n" +
+                     "    };" +
+                     "  }" +
+                     "}";
+    assertEquals("match lambda code block body", 1, findMatchesCount(source6, pattern10));
+    assertEquals("match lambda body starting with comment", 1, findMatchesCount(source6, pattern11));
   }
 
   public void testFindDefaultMethods() {
