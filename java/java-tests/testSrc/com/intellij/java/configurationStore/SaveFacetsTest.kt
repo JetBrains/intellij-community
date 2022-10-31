@@ -11,7 +11,7 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.updateProjectModel
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*

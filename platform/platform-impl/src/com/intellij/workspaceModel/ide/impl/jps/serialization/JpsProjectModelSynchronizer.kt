@@ -99,7 +99,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
-        WorkspaceModel.getInstance(project).updateProjectModel("Reload project entities") { updater ->
+        WorkspaceModel.getInstance(project).updateProjectModel("Reload entities after changes in JPS configuration files") { updater ->
           val storage = builder.toSnapshot()
           updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
                                     || it is DummyParentEntitySource }, storage)
