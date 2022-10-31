@@ -10310,6 +10310,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayOf.kt")
+        public void testArrayOf() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/arrayOf.kt");
+        }
+
         @TestMetadata("builderInference.kt")
         public void testBuilderInference() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/builderInference.kt");
@@ -10333,6 +10338,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("inferredIntoUpperBounds.kt")
         public void testInferredIntoUpperBounds() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inferredIntoUpperBounds.kt");
+        }
+
+        @TestMetadata("inlineFunction.kt")
+        public void testInlineFunction() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inlineFunction.kt");
+        }
+
+        @TestMetadata("inlineReifiedFunction.kt")
+        public void testInlineReifiedFunction() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inlineReifiedFunction.kt");
+        }
+
+        @TestMetadata("inlineReifiedFunction2.kt")
+        public void testInlineReifiedFunction2() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inlineReifiedFunction2.kt");
+        }
+
+        @TestMetadata("inlineReifiedFunction3.kt")
+        public void testInlineReifiedFunction3() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/inlineReifiedFunction3.kt");
         }
 
         @TestMetadata("ktij-10623.kt")
