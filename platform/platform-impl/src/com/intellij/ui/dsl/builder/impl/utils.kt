@@ -74,10 +74,14 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
 
 internal val JComponent.origin: JComponent
   get() {
+    // todo Move into components implementation
     return when (this) {
       is TextFieldWithBrowseButton -> textField
       is ComponentWithBrowseButton<*> -> childComponent
-      else -> this
+      else -> {
+        val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
+        interactiveComponent ?: this
+      }
     }
   }
 

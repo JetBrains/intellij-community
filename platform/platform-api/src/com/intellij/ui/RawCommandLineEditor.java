@@ -19,6 +19,7 @@ import com.intellij.execution.ui.FragmentWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
