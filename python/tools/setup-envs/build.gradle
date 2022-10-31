@@ -30,11 +30,6 @@ envs {
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
-  if (!(Os.isFamily(Os.FAMILY_MAC) && (Os.isVersion("10.16") || Os.isVersion("11.6")))) {
-    // https://github.com/pyenv/pyenv/issues/1737#issuecomment-794592631
-    python "python36", "3.6.8"
-  }
-
   python "python37", "3.7.9"
   python "python38", "3.8.10"
   python "python39", "3.9.13"
