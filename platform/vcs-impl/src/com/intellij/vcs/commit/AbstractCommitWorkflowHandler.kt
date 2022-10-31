@@ -271,6 +271,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
 class StaticCommitInfo(
   override val commitContext: CommitContext,
+  override val isVcsCommit: Boolean,
   override val executor: CommitExecutor?,
   override val commitActionText: String,
   override val committedChanges: List<Change>,
@@ -284,6 +285,7 @@ class DynamicCommitInfoImpl(
   private val workflowUi: CommitWorkflowUi,
   private val workflow: AbstractCommitWorkflow
 ) : DynamicCommitInfo {
+  override val isVcsCommit: Boolean = sessionInfo.isVcsCommit
   override val executor: CommitExecutor? get() = sessionInfo.executor
 
   override val committedChanges: List<Change>
@@ -305,7 +307,7 @@ class DynamicCommitInfoImpl(
     get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
 
   override fun asStaticInfo(): StaticCommitInfo {
-    return StaticCommitInfo(commitContext, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
+    return StaticCommitInfo(commitContext, isVcsCommit, executor, commitActionText, committedChanges, affectedVcses, commitMessage)
   }
 }
 

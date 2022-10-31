@@ -158,6 +158,7 @@ class TextCommitProblem(override val text: String) : CommitProblem
 
 interface CommitInfo {
   val commitContext: CommitContext
+  val isVcsCommit: Boolean
   val executor: CommitExecutor?
 
   val committedChanges: List<Change>

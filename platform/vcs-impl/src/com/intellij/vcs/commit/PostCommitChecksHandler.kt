@@ -235,6 +235,7 @@ private class PostCommitInfo(
   staticChanges: List<Change>
 ) : CommitInfo {
   override val commitContext: CommitContext = commitInfo.commitContext
+  override val isVcsCommit: Boolean = commitInfo.isVcsCommit
   override val executor: CommitExecutor? = commitInfo.executor
   override val commitActionText: String = commitInfo.commitActionText
   override val committedChanges: List<Change> = staticChanges
