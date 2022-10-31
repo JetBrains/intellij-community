@@ -9,12 +9,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkAllNotificationsAsReadAction extends DumbAwareAction {
   public MarkAllNotificationsAsReadAction() {
     super(IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.text"),
-          IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.description"), AllIcons.Actions.Selectall);
+          IdeBundle.messagePointer("action.MarkAllNotificationsAsReadAction.description"),
+          ExperimentalUI.isNewUI() ? null : AllIcons.Actions.Selectall);
   }
 
   @Override

@@ -15,6 +15,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -1008,11 +1009,10 @@ private class NotificationComponent(val project: Project,
     add(centerPanel)
 
     if (notification.isSuggestionType) {
-      val group = DefaultActionGroup()
-      group.isPopup = true
+      val group = MyActionGroup()
 
       if (NotificationsConfigurationImpl.getInstanceImpl().isRegistered(notification.groupId)) {
-        group.add(object : DumbAwareAction(IdeBundle.message("action.text.settings")) {
+        group.add(object : DumbAwareAction(IdeBundle.message("notification.settings.action.text")) {
           override fun actionPerformed(e: AnActionEvent) {
             doShowSettings()
           }
@@ -1046,6 +1046,7 @@ private class NotificationComponent(val project: Project,
       })
 
       val presentation = Presentation()
+      presentation.description = IdeBundle.message("tooltip.turn.notification.off")
       presentation.icon = AllIcons.Actions.More
       presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, java.lang.Boolean.TRUE)
 
@@ -1116,6 +1117,12 @@ private class NotificationComponent(val project: Project,
         titlePanel!!.add(timeComponent, BorderLayout.EAST)
         myMoreButton = null
       }
+    }
+  }
+
+  private class MyActionGroup: DefaultActionGroup(), TooltipDescriptionProvider {
+    init {
+      isPopup = true
     }
   }
 
