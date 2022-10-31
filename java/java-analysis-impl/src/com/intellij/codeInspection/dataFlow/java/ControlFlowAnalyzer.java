@@ -2172,6 +2172,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(operandType);
     if (unboxedType == null) {
+      // Unknown type; likely erroneous code: replace old_value with unknown
+      addInstruction(new PopInstruction());
       pushUnknown();
     } else {
       generateBoxingUnboxingInstructionFor(operand, unboxedType);
