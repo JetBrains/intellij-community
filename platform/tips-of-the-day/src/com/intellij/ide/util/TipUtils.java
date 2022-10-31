@@ -39,7 +39,6 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -147,35 +146,7 @@ public final class TipUtils {
         return Trinity.create(content, null, tipFile.getParentFile().getAbsolutePath());
       }
       else {
-        final ClassLoader fallbackLoader = TipUtils.class.getClassLoader();
-        final PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
-        final DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-
-        //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
-        ClassLoader tipLoader = null;
-
-        if (langBundle != null) {
-          final PluginDescriptor langBundleLoader = langBundle.pluginDescriptor;
-          if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
-        }
-
-        if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.getPluginClassLoader() != null) {
-          tipLoader = pluginDescriptor.getPluginClassLoader();
-        }
-
-        if (tipLoader == null) tipLoader = fallbackLoader;
-
-        String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
-        //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
-        if (ideCode.contains("ic")) ideCode = "iu";
-        //So primary loader is determined. Now we're constructing retrievers that use a pair of path/loader to try to get the tips.
-        final List<TipRetriever> retrievers = new ArrayList<>();
-
-        retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
-        retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
-        retrievers.add(new TipRetriever(tipLoader, "tips", ""));
-        retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
-
+        List<TipRetriever> retrievers = getTipRetrievers(tip);
         for (final TipRetriever retriever : retrievers) {
           String tipContent = retriever.getTipContent(tip.fileName);
           if (tipContent != null) {
@@ -191,6 +162,50 @@ public final class TipUtils {
     }
     //All retrievers have failed or error occurred, return error.
     return Trinity.create(getCantReadText(tip), null, null);
+  }
+
+  public static boolean checkTipFileExist(@NotNull TipAndTrickBean tip) {
+    List<TipRetriever> retrievers = getTipRetrievers(tip);
+    for (TipRetriever retriever : retrievers) {
+      if (retriever.getTipUrl(tip.fileName) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static List<TipRetriever> getTipRetrievers(@NotNull TipAndTrickBean tip) {
+    final ClassLoader fallbackLoader = TipUtils.class.getClassLoader();
+    final PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+    final DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+
+    //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
+    ClassLoader tipLoader = null;
+
+    if (langBundle != null) {
+      final PluginDescriptor langBundleLoader = langBundle.pluginDescriptor;
+      if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
+    }
+
+    if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.getPluginClassLoader() != null) {
+      tipLoader = pluginDescriptor.getPluginClassLoader();
+    }
+
+    if (tipLoader == null) tipLoader = fallbackLoader;
+
+    String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
+    //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+    if (ideCode.contains("ic")) ideCode = "iu";
+    //So primary loader is determined. Now we're constructing retrievers that use a pair of path/loader to try to get the tips.
+    final List<TipRetriever> retrievers = new ArrayList<>();
+
+    retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
+    retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
+    retrievers.add(new TipRetriever(tipLoader, "tips", ""));
+    retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
+
+    return retrievers;
   }
 
   private static Map<String, Icon> loadImages(@NotNull Element tipContent,
@@ -330,24 +345,27 @@ public final class TipUtils {
 
     @Nullable
     String getTipContent(final @Nullable String tipName) {
-      String result = null;
-      if (tipName != null) {
-        final String tipLocation = String.format("/%s/%s", myPath, mySubPath.length() > 0 ? mySubPath + "/" : "");
-        InputStream tipStream =
-          ResourceUtil.getResourceAsStream(myLoader, tipLocation, tipName);
-        //Tip not found, but if its name starts with prefix, try without as a safety measure.
-        if (tipStream == null && tipName.startsWith("neue-")) {
-          tipStream = ResourceUtil.getResourceAsStream(myLoader, tipLocation, tipName.substring(5));
+      if (tipName == null) return null;
+      URL tipUrl = getTipUrl(tipName);
+      if (tipUrl != null) {
+        try {
+          return ResourceUtil.loadText(tipUrl.openStream());
         }
-        if (tipStream != null) {
-          try {
-            result = ResourceUtil.loadText(tipStream);
-          }
-          catch (IOException ignored) {
-          }
+        catch (IOException ignored) {
         }
       }
-      return result;
+      return null;
+    }
+
+    @Nullable
+    URL getTipUrl(final @NotNull String tipName) {
+      final String tipLocation = String.format("/%s/%s", myPath, mySubPath.length() > 0 ? mySubPath + "/" : "");
+      URL tipUrl = ResourceUtil.getResource(myLoader, tipLocation, tipName);
+      //Tip not found, but if its name starts with prefix, try without as a safety measure.
+      if (tipUrl == null && tipName.startsWith("neue-")) {
+        tipUrl = ResourceUtil.getResource(myLoader, tipLocation, tipName.substring(5));
+      }
+      return tipUrl;
     }
   }
 
