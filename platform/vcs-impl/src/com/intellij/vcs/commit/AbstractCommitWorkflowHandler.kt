@@ -7,7 +7,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -216,20 +215,23 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       }
     }
 
+    /**
+     * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit Anyway'.
+     */
     fun getActionTextWithoutEllipsis(vcses: Collection<AbstractVcs>,
                                      executor: CommitExecutor?,
                                      isAmend: Boolean,
                                      isSkipCommitChecks: Boolean): @Nls String {
       if (executor == null) {
         val actionText = getDefaultCommitActionName(vcses, isAmend, isSkipCommitChecks)
-        return StringUtil.removeEllipsisSuffix(actionText)
+        return cleanActionText(actionText)
       }
 
       if (executor is CommitExecutorWithRichDescription) {
         val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
         val actionText = executor.getText(state)
         if (actionText != null) {
-          return StringUtil.removeEllipsisSuffix(actionText)
+          return cleanActionText(actionText)
         }
       }
 
@@ -237,10 +239,10 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       // Ex: executor might not support this flag.
       val actionText = executor.actionText
       if (isSkipCommitChecks) {
-        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", StringUtil.removeEllipsisSuffix(actionText))
+        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", cleanActionText(actionText))
       }
       else {
-        return StringUtil.removeEllipsisSuffix(actionText)
+        return cleanActionText(actionText)
       }
     }
 
