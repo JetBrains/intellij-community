@@ -3,6 +3,7 @@ package org.jetbrains.completion.full.line.services.managers
 import com.intellij.lang.Language
 import org.jetbrains.completion.full.line.local.LocalModelsSchema
 import org.jetbrains.completion.full.line.local.ModelSchema
+import org.jetbrains.completion.full.line.models.CachingLocalPipeline
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 
 interface ConfigurableModelsManager : ModelsManager {
@@ -17,6 +18,8 @@ interface ConfigurableModelsManager : ModelsManager {
   fun apply()
 
   fun reset()
+
+  fun loadModel(model: ModelSchema, loggingCallback: ((String) -> Unit)? = null): CachingLocalPipeline
 }
 
 fun ConfigurableModelsManager.missedLanguage(language: Language): Boolean {

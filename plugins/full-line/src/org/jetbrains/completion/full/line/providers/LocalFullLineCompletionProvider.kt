@@ -5,13 +5,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
-import ml.intellij.nlc.local.CompletionException
-import ml.intellij.nlc.local.pipeline.FullLineCompletionPipelineConfig
+import io.kinference.model.ExecutionContext
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.completion.full.line.FullLineCompletionMode
 import org.jetbrains.completion.full.line.FullLineProposal
 import org.jetbrains.completion.full.line.RawFullLineProposal
 import org.jetbrains.completion.full.line.currentOpenProject
 import org.jetbrains.completion.full.line.language.ModelState
+import org.jetbrains.completion.full.line.local.CompletionException
+import org.jetbrains.completion.full.line.local.pipeline.FullLineCompletionPipelineConfig
 import org.jetbrains.completion.full.line.models.CachingLocalPipeline
 import org.jetbrains.completion.full.line.platform.FullLineCompletionQuery
 import org.jetbrains.completion.full.line.platform.diagnostics.FullLinePart
@@ -44,8 +46,8 @@ class LocalFullLineCompletionProvider private constructor(
           filename = query.filename,
           oneTokenMode = query.mode == FullLineCompletionMode.ONE_TOKEN,
           numSuggestions = config.proposalsLimit,
-          cancellationCallback = { indicator.checkCanceled() }
-        )
+        ),
+        ExecutionContext(Dispatchers.Main, indicator::checkCanceled) // TODO: move to full.line.local
       )
       rawCompletions.mapNotNull {
         if (it.fullLineCompletionResult.text.trim().isNotEmpty()) {

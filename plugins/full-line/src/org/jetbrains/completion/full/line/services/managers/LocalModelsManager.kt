@@ -9,6 +9,7 @@ import org.jetbrains.completion.full.line.local.LocalModelsSchema
 import org.jetbrains.completion.full.line.local.ModelSchema
 import org.jetbrains.completion.full.line.local.decodeFromXml
 import org.jetbrains.completion.full.line.local.encodeToXml
+import org.jetbrains.completion.full.line.models.CachingLocalPipeline
 import org.jetbrains.completion.full.line.services.LocalModelsCache
 import java.io.File
 import java.nio.file.Files
@@ -135,6 +136,16 @@ class LocalModelsManager : ConfigurableModelsManager {
     removeExcessModels(true)
     modelsSchema.models.clear()
     modelsSchema.models.addAll(decodeFromXml<LocalModelsSchema>(modelsFile.readText()).models)
+  }
+
+  override fun loadModel(model: ModelSchema, loggingCallback: ((String) -> Unit)?): CachingLocalPipeline {
+    assert(!ApplicationManager.getApplication().isDispatchThread) { "IO operations are prohibited in EDT" }
+    return CachingLocalPipeline(
+      root.resolve(model.bpe.path),
+      root.resolve(model.binary.path),
+      root.resolve(model.config.path),
+      loggingCallback,
+    )
   }
 
   /**

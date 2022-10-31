@@ -1,10 +1,11 @@
 package org.jetbrains.completion.full.line.models
 
-import ml.intellij.nlc.local.CompletionModel
-import ml.intellij.nlc.local.CompletionModelFactory
-import ml.intellij.nlc.local.generation.model.HiddenStateCache
-import ml.intellij.nlc.local.pipeline.CompletionPipeline
-import ml.intellij.nlc.local.pipeline.FullLineCompletionPipelineConfig
+import io.kinference.model.ExecutionContext
+import org.jetbrains.completion.full.line.local.CompletionModel
+import org.jetbrains.completion.full.line.local.CompletionModelFactory
+import org.jetbrains.completion.full.line.local.generation.model.HiddenStateCache
+import org.jetbrains.completion.full.line.local.pipeline.CompletionPipeline
+import org.jetbrains.completion.full.line.local.pipeline.FullLineCompletionPipelineConfig
 import java.io.File
 
 class CachingLocalPipeline(
@@ -25,10 +26,11 @@ class CachingLocalPipeline(
   override fun generateCompletions(
     context: String,
     prefix: String,
-    config: FullLineCompletionPipelineConfig
+    config: FullLineCompletionPipelineConfig,
+    execContext: ExecutionContext,
   ): List<CompletionResult> {
     cacheHitLength = 0
-    val completions = fullLineCompletionPipeline.generateCompletions(context, prefix, config)
+    val completions = fullLineCompletionPipeline.generateCompletions(context, prefix, config, execContext)
     return completions.map { CompletionResult(it, cacheHitLength) }
   }
 }

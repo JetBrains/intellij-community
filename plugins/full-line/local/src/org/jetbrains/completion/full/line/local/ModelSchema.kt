@@ -1,10 +1,7 @@
 package org.jetbrains.completion.full.line.local
 
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.xmlb.annotations.*
-import org.jetbrains.completion.full.line.models.CachingLocalPipeline
-import org.jetbrains.completion.full.line.services.managers.LocalModelsManager
 import java.io.File
 import java.util.*
 
@@ -58,21 +55,7 @@ data class ModelSchema(
   @Suppress("unused")
   constructor() : this("", 1, "", emptyList(), BinarySchema(), BPESchema(), ConfigSchema(), "")
 
-  private val root by lazy { LocalModelsManager.root.resolve(this.uid()) }
-
   fun uid() = UUID.nameUUIDFromBytes("${version}-${languages.joinToString()}".toByteArray()).toString()
-
-  fun bpeFile() = root.resolve(bpe.path)
-  fun binaryFile() = root.resolve(binary.path)
-  fun configFile() = root.resolve(config.path)
-
-  fun loadModel(loggingCallback: ((String) -> Unit)? = null): CachingLocalPipeline {
-    assert(!ApplicationManager.getApplication().isDispatchThread) { "IO operations are prohibited in EDT" }
-    return CachingLocalPipeline(
-      bpeFile(), binaryFile(), configFile(),
-      loggingCallback,
-    )
-  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

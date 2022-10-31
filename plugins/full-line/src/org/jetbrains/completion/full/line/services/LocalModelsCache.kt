@@ -35,13 +35,14 @@ class LocalModelsCache {
 
   private fun scheduleModelLoad(languageId: String) {
     val startTimestamp = System.currentTimeMillis()
-    val suitableModel = service<ConfigurableModelsManager>().modelsSchema.targetLanguage(languageId.toLowerCase())
+    val modelsManager = service<ConfigurableModelsManager>()
+    val suitableModel = modelsManager.modelsSchema.targetLanguage(languageId.toLowerCase())
 
     if (suitableModel != null) {
       MODELS_LOADER.submit {
         try {
           val tracer = DiagnosticsService.getInstance().logger(FullLinePart.BEAM_SEARCH, log = LOG)
-          models[languageId] = suitableModel.loadModel { msg -> tracer.debug(msg) }
+          models[languageId] = modelsManager.loadModel(suitableModel) { msg -> tracer.debug(msg) }
           LOG.info("Loading local model with key: \"$languageId\" took ${System.currentTimeMillis() - startTimestamp}ms.")
         }
         catch (e: Throwable) {
