@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.fullLine.core" />
     <orderEntry type="module" module-name="intellij.fullLine.local" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="library" name="kinference.core.jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="commons-io" level="project" />
   </component>
