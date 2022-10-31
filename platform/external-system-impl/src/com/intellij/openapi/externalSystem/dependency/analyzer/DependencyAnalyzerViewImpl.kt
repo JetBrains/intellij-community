@@ -9,7 +9,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware.Companion.isNotificationVisibleProperty
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
@@ -24,7 +24,6 @@ import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrac
 import com.intellij.openapi.observable.operations.asProperty
 import com.intellij.openapi.observable.operations.whenOperationCompleted
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -350,7 +349,7 @@ class DependencyAnalyzerViewImpl(
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
       .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
-    val reloadNotificationProperty = ProjectReloadNotificationProperty()
+    val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId)
     val projectReloadSeparator = separator()
       .bindVisible(reloadNotificationProperty)
     val projectReloadAction = action { ProjectRefreshAction.refreshProject(project) }
@@ -452,22 +451,6 @@ class DependencyAnalyzerViewImpl(
     dependencyLoadingProperty.afterChange { updateDependencyEmptyState() }
     contributor.whenDataChanged(::updateViewModel, parentDisposable)
     updateViewModel()
-  }
-
-  private inner class ProjectReloadNotificationProperty : ObservableProperty<Boolean> {
-    private val notificationAware get() = ExternalSystemProjectNotificationAware.getInstance(project)
-
-    override fun get() = systemId in notificationAware.getSystemIds()
-
-    override fun afterChange(listener: (Boolean) -> Unit) =
-      ExternalSystemProjectNotificationAware.whenNotificationChanged(project) {
-        listener(get())
-      }
-
-    override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) =
-      ExternalSystemProjectNotificationAware.whenNotificationChanged(project, {
-        listener(get())
-      }, parentDisposable)
   }
 
   private class DependencyDataComparator(private val showDependencyGroupId: Boolean) : Comparator<Dependency.Data> {
