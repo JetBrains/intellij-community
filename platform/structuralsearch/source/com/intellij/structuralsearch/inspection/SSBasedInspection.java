@@ -290,7 +290,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     @NotNull
     public String getName() {
-      return SSRBundle.message("SSRInspection.replace.with", myReplacementInfo.getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementInfo.getReplacement());
     }
 
     @Override
