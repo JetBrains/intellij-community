@@ -539,7 +539,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                     getScopeForJUnit(module, project),
                                     useModulePath() && module != null && ReadAction.compute(() -> findJavaModule(module, true)) != null);
         if (forkPerModule()) {
-          for (Module packageModule : collectPackageModules(configuration.getPackage())) {
+          for (Module packageModule : ReadAction.compute(() -> collectPackageModules(configuration.getPackage()))) {
             JavaParameters parameters = new JavaParameters();
             ParamsGroup group = getJigsawOptions(javaParameters);
             if (group != null) {
