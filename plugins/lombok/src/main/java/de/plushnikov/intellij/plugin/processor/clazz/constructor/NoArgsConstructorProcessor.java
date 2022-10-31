@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -22,25 +23,40 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink problemSink) {
     boolean result;
 
-    result = super.validate(psiAnnotation, psiClass, builder);
+    result = super.validate(psiAnnotation, psiClass, problemSink);
 
-    final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-    result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), builder);
+    if (!isForceConstructor(psiAnnotation)) {
+      final String staticConstructorName = getStaticConstructorName(psiAnnotation);
+      result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
+
+      if (problemSink.deepValidation()) {
+        final Collection<PsiField> requiredFields = getRequiredFields(psiClass);
+        if (!requiredFields.isEmpty()) {
+          problemSink.addErrorMessage("inspection.message.constructor.noargs.needs.to.be.forced")
+            .withLocalQuickFixes(() -> PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "force", "true"));
+        }
+      }
+    }
 
     return result;
   }
 
   @NotNull
-  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                       @NotNull String methodVisibility,
+                                                       @NotNull PsiAnnotation psiAnnotation) {
     final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
     return createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults);
   }
 
   @NotNull
-  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, boolean withJavaDefaults) {
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                       @NotNull String methodVisibility,
+                                                       @NotNull PsiAnnotation psiAnnotation,
+                                                       boolean withJavaDefaults) {
     final Collection<PsiField> params = getConstructorFields(psiClass, withJavaDefaults);
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, withJavaDefaults, params);
   }
@@ -50,7 +66,9 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
       target.addAll(createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation));
@@ -77,7 +95,8 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
     Collection<PsiField> params;
     if (forceConstructorWithJavaDefaults) {
       params = getRequiredFields(containingClass);
-    } else {
+    }
+    else {
       params = Collections.emptyList();
     }
     return params;

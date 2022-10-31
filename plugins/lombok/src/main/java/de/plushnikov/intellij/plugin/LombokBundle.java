@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -16,7 +15,7 @@ import java.util.function.Supplier;
 public final class LombokBundle extends DynamicBundle {
   @NonNls
   public static final String PATH_TO_BUNDLE = "messages.LombokBundle";
-  private static final AbstractBundle ourInstance = new LombokBundle();
+  private static final LombokBundle ourInstance = new LombokBundle();
 
   private LombokBundle() {
     super(PATH_TO_BUNDLE);

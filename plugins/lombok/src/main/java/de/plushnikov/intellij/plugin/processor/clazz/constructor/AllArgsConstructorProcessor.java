@@ -50,12 +50,7 @@ public final class AllArgsConstructorProcessor extends AbstractConstructorClassP
   @NotNull
   private Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
     final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
-    return createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticName, allNotInitializedNotStaticFields);
-  }
-
-  @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
-    return createAllArgsConstructor(psiClass, methodModifier, psiAnnotation, staticName, allNotInitializedNotStaticFields, false);
+    return createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticName, allNotInitializedNotStaticFields, false);
   }
 
   @NotNull

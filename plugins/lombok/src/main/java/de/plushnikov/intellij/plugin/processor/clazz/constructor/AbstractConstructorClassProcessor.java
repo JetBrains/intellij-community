@@ -270,8 +270,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
+    // check, if we should skip verification for presence of any (not Tolerated) constructors
     if (!skipConstructorIfAnyConstructorExists || !isAnyConstructorDefined(psiClass)) {
-      boolean hasConstructor = !validateIsConstructorNotDefined(psiClass, params, new ProblemProcessingSink());
+      boolean hasConstructor = !validateIsConstructorNotDefined(psiClass,
+                                                                useJavaDefaults ? Collections.emptyList() : params,
+                                                                new ProblemProcessingSink());
       if (!hasConstructor) {
         final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
         methods.add(constructor);
@@ -300,28 +303,39 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withNavigationElement(psiAnnotation)
       .withModifier(modifier);
 
-    final List<String> fieldNames = new ArrayList<>();
-    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
-    for (PsiField psiField : params) {
-      final AccessorsInfo paramAccessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
-      fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
-    }
-
-    if (!fieldNames.isEmpty()) {
-      boolean addConstructorProperties =
-        configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
-      if (addConstructorProperties ||
-          !configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES, psiClass)) {
-        final String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
-                                                       fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
-                                                       "} ) ";
-        constructorBuilder.withAnnotation(constructorPropertiesAnnotation);
-      }
-    }
-
     copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
 
-    if (!useJavaDefaults) {
+    if (useJavaDefaults) {
+      final StringBuilder blockText = new StringBuilder();
+
+      for (PsiField param : params) {
+        final String fieldInitializer = PsiTypesUtil.getDefaultValueOfType(param.getType());
+        blockText.append(String.format("this.%s = %s;\n", param.getName(), fieldInitializer));
+      }
+      constructorBuilder.withBodyText(blockText.toString());
+    }
+    else {
+      final List<String> fieldNames = new ArrayList<>();
+      final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
+      for (PsiField psiField : params) {
+        final AccessorsInfo paramAccessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
+        fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
+      }
+
+      if (!fieldNames.isEmpty()) {
+        boolean addConstructorProperties =
+          configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_ADD_CONSTRUCTOR_PROPERTIES, psiClass);
+        if (addConstructorProperties ||
+            !configDiscovery.getBooleanLombokConfigProperty(ConfigKey.ANYCONSTRUCTOR_SUPPRESS_CONSTRUCTOR_PROPERTIES, psiClass)) {
+          final String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
+                                                         fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
+                                                         "} ) ";
+          constructorBuilder.withAnnotation(constructorPropertiesAnnotation);
+        }
+      }
+
+      final StringBuilder blockText = new StringBuilder();
+
       final Iterator<String> fieldNameIterator = fieldNames.iterator();
       final Iterator<PsiField> fieldIterator = params.iterator();
       while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
@@ -332,21 +346,12 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         parameter.setNavigationElement(parameterField);
         constructorBuilder.withParameter(parameter);
         copyCopyableAnnotations(parameterField, parameter.getModifierList(), LombokCopyableAnnotations.BASE_COPYABLE);
+
+        blockText.append(String.format("this.%s = %s;\n", parameterField.getName(), parameterName));
       }
+
+      constructorBuilder.withBodyText(blockText.toString());
     }
-
-    final StringBuilder blockText = new StringBuilder();
-
-    final Iterator<String> fieldNameIterator = fieldNames.iterator();
-    final Iterator<PsiField> fieldIterator = params.iterator();
-    while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
-      final PsiField param = fieldIterator.next();
-      final String fieldName = fieldNameIterator.next();
-      final String fieldInitializer = useJavaDefaults ? PsiTypesUtil.getDefaultValueOfType(param.getType()) : fieldName;
-      blockText.append(String.format("this.%s = %s;\n", param.getName(), fieldInitializer));
-    }
-
-    constructorBuilder.withBodyText(blockText.toString());
 
     return constructorBuilder;
   }
