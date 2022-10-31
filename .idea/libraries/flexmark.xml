@@ -124,6 +124,7 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-options/0.64.0/flexmark-util-options-0.64.0-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-sequence/0.64.0/flexmark-util-sequence-0.64.0-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-util-visitor/0.64.0/flexmark-util-visitor-0.64.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark-youtrack-converter/0.64.0/flexmark-youtrack-converter-0.64.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/com/vladsch/flexmark/flexmark/0.64.0/flexmark-0.64.0-sources.jar!/" />
