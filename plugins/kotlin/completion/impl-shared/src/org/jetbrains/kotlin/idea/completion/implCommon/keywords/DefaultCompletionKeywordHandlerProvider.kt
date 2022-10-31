@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
 import org.jetbrains.kotlin.idea.completion.handlers.withLineIndentAdjuster
-import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
 
@@ -68,8 +67,6 @@ object DefaultCompletionKeywordHandlerProvider : CompletionKeywordHandlerProvide
         }
 
     override val handlers = CompletionKeywordHandlers(
-        BreakContinueKeywordHandler(KtTokens.BREAK_KEYWORD),
-        BreakContinueKeywordHandler(KtTokens.CONTINUE_KEYWORD),
         GETTER_HANDLER, SETTER_HANDLER,
         CONTRACT_HANDLER,
     )

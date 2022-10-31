@@ -7,18 +7,20 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
+import org.jetbrains.kotlin.idea.completion.implCommon.keywords.isInlineFunctionCall
 import org.jetbrains.kotlin.idea.completion.isLikelyInPositionForReturn
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.labelNameToTail
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
@@ -108,11 +110,6 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
                 add(ExpressionTarget("emptySet()", addToLookupElementTail = true))
             }
         }
-    }
-
-    private fun KtAnalysisSession.isInlineFunctionCall(call: KtCallExpression?): Boolean {
-        val callee = call?.calleeExpression as? KtReferenceExpression ?: return false
-        return (callee.mainReference.resolveToSymbol() as? KtFunctionSymbol)?.isInline == true
     }
 
     var LookupElement.isReturnAtHighlyLikelyPosition: Boolean by NotNullableUserDataProperty(

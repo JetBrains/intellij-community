@@ -17,6 +17,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -687,12 +688,14 @@ class BasicCompletionSession(
 
                     "break", "continue" -> {
                         if (expression != null) {
-                            val ktKeywordToken = when (keyword) {
-                                "break" -> KtTokens.BREAK_KEYWORD
-                                "continue" -> KtTokens.CONTINUE_KEYWORD
-                                else -> error("'$keyword' can only be 'break' or 'continue'")
+                            analyze(expression) {
+                                val ktKeywordToken = when (keyword) {
+                                    "break" -> KtTokens.BREAK_KEYWORD
+                                    "continue" -> KtTokens.CONTINUE_KEYWORD
+                                    else -> error("'$keyword' can only be 'break' or 'continue'")
+                                }
+                                collector.addElements(BreakContinueKeywordHandler(ktKeywordToken).createLookups(this, expression))
                             }
-                            collector.addElements(BreakContinueKeywordHandler(ktKeywordToken).createLookups(expression))
                         }
                     }
 
