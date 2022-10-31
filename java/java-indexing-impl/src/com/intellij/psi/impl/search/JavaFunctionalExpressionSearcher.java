@@ -113,7 +113,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   private static Set<VirtualFile> getLikelyFiles(@NotNull List<? extends SamDescriptor> descriptors,
                                                  @NotNull Collection<? extends VirtualFile> candidateFiles,
                                                  @NotNull Project project) {
-    final GlobalSearchScope candidateFilesScope = GlobalSearchScope.filesScope(project, candidateFiles);
+    final GlobalSearchScope candidateFilesScope = ReadAction.compute(() -> GlobalSearchScope.filesScope(project, candidateFiles));
     return JBIterable.from(descriptors).flatMap(descriptor -> ((SamDescriptor)descriptor).getMostLikelyFiles(candidateFilesScope)).toSet();
   }
 

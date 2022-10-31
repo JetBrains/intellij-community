@@ -239,8 +239,8 @@ public final class CompileDriver {
   @Nullable
   private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
-    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
-    List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
+    final Collection<String> paths = ReadAction.compute(() -> CompileScopeUtil.fetchFiles(compileContext));
+    List<TargetTypeBuildScope> scopes = ReadAction.compute(() -> getBuildScopes(compileContext, scope, paths));
 
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
