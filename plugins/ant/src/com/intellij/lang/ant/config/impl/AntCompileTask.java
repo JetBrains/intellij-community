@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileTask;
@@ -21,7 +22,7 @@ abstract class AntCompileTask implements CompileTask {
   protected static DataContext createDataContext(CompileContext context) {
     Project project = context.getProject();
     CompileScope scope = context.getCompileScope();
-    Module[] modules = scope.getAffectedModules();
+    Module[] modules = ReadAction.compute(() -> scope.getAffectedModules());
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(PlatformCoreDataKeys.MODULE, modules.length == 1? modules[0] : null)
