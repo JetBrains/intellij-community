@@ -93,31 +93,33 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (!projectModelUpdating.compareAndSet(false, true)) {
       throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
     }
-    log.info("-------------------------------------------")
-    log.info("Updating project model. Current version ${entityStorage.pointer.version}.")
-    log.info("Update description: $description")
 
     val result: R
+    val updateTimeMillis: Long
+    val preHandlersTimeMillis: Long
+    val collectChangesTimeMillis: Long
+    val initializingTimeMillis: Long
+    val toSnapshotTimeMillis: Long
     val generalTime = measureTimeMillis {
       val before = entityStorage.current
       val builder = MutableEntityStorage.from(before)
-      val updateTimeMillis = measureTimeMillis {
+      updateTimeMillis = measureTimeMillis {
         result = updater(builder)
       }
-      val preHandlersTimeMillis = measureTimeMillis {
+      preHandlersTimeMillis = measureTimeMillis {
         startPreUpdateHandlers(before, builder)
       }
 
       val changes: Map<Class<*>, List<EntityChange<*>>>
-      val collectChangesTimeMillis = measureTimeMillis {
+      collectChangesTimeMillis = measureTimeMillis {
         changes = builder.collectChanges(before)
       }
-      val initializingTimeMillis = measureTimeMillis {
+      initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
       }
 
       val newStorage: EntityStorageSnapshot
-      val toSnapshotTimeMillis = measureTimeMillis {
+      toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
       }
       if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
@@ -125,11 +127,19 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
         newStorage.assertConsistency()
       }
       entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
-      log.info("Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
+    }
+    if (generalTime > 1000) {
+      log.info(
+        "Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
       log.info("Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms")
     }
-    log.info("Whole update took $generalTime ms")
-    log.info("-------------------------------------------")
+    else {
+      log.debug {
+        "Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms"
+      }
+      log.debug { "Bridge initialization: $initializingTimeMillis ms, To snapshot: $toSnapshotTimeMillis ms" }
+    }
+    log.info("Updating project model. New version: ${entityStorage.pointer.version}. Whole update took $generalTime ms. Desc: $description")
     return result
   }
 

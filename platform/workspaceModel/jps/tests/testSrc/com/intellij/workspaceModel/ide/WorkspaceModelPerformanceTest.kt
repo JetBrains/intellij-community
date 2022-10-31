@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.junit.Assert.assertEquals
 import org.junit.Before

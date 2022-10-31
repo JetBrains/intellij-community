@@ -16,7 +16,7 @@ interface WorkspaceModel {
    * Modifies the current model by calling [updater] and applying it to the storage. Requires write action.
    *
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
-   *   For testing there is an extension method that doesn't require a description.
+   *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
   fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R
 

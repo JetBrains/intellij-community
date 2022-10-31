@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
-import com.intellij.testFramework.updateProjectModel
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
