@@ -184,7 +184,7 @@ class PostCommitChecksHandler(val project: Project) {
     val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
       .createNotification(VcsBundle.message("post.commit.checks.failed.notification.title"),
                           problems.joinToString("<br/>") { it.text },
-                          NotificationType.ERROR)
+                          NotificationType.WARNING)
       .setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
 
     for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
