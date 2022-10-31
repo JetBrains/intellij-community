@@ -93,8 +93,8 @@ internal class PortableCompilationCacheUploader(
     val cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
-      moveFile(zipFile, s3Folder.resolve(cachePath))
     }
+    moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
   private fun uploadMetadata() {
@@ -121,8 +121,8 @@ internal class PortableCompilationCacheUploader(
         if (forcedUpload || !uploader.isExist(sourcePath)) {
           uploader.upload(sourcePath, zipFile)
           uploadedOutputCount.incrementAndGet()
-          moveFile(zipFile, s3Folder.resolve(sourcePath))
         }
+        moveFile(zipFile, s3Folder.resolve(sourcePath))
       }
     }
   }
