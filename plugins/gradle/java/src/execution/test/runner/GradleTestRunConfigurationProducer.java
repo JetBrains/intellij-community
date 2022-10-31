@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -181,7 +182,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   public static List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
     String sourcePath = source.getPath();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    Module module = projectFileIndex.getModuleForFile(source);
+    Module module = ReadAction.compute(() -> projectFileIndex.getModuleForFile(source));
     if (module == null) return Collections.emptyList();
     List<TasksToRun> testTasks = new ArrayList<>();
     for (GradleTestTasksProvider provider : GradleTestTasksProvider.EP_NAME.getExtensions()) {
