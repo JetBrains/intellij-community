@@ -28,7 +28,7 @@ fun <T> concatVectors(vararg lists: List<T>): List<T> {
   return listOf(*lists).flatten()
 }
 
-// hardcoded compatibility fix
+// hardcoded compatibility fix, https://github.com/JetBrains-Research/YouTokenToMe/blob/master/youtokentome/cpp/bpe.cpp#L400
 const val SPACE_ID = 4
 const val SPACE_TOKEN_OLD = 9601
 const val UNK_TOKEN = "<UNK>"
