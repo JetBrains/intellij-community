@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitModeManager
@@ -69,6 +71,20 @@ object GitLessonsUtil {
         ui.selectionModel.clearSelection()
         true
       }
+    }
+  }
+
+  fun LessonContext.refreshGitLogOnOpen() {
+    prepareRuntimeTask {
+      val connection = project.messageBus.connect(lessonDisposable)
+      connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+        override fun toolWindowShown(toolWindow: ToolWindow) {
+          if (toolWindow.id == ToolWindowId.VCS) {
+            VcsProjectLog.getInstance(project).mainLogUi?.refresher?.setValid(true, false)
+            connection.disconnect()
+          }
+        }
+      })
     }
   }
 
