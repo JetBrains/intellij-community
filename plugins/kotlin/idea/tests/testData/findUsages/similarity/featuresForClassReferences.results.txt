@@ -1,12 +1,17 @@
 [{
-37|test.f(B.|getB|()),
-38|test2.f(B.|getB|()),
-39|globalB.f(B.|getB|()),
-40|outer.f(B.|getB|()),
-41|inner.f(B.|getB|())}
+38|test3.f(B.|getB|()),
+39|test.f(B.|getB|()),
+40|test2.f(B.|getB|()),
+45|i.f(B.|getB|()),
+46|j.f(B.|getB|()),
+50|outer.f(B.|getB|()),
+51|inner.f(B.|getB|()),
+61|destructingEntry1.f(B.|getB|())}
 , {
-42|A1.f(B.|getB|()),
-43|A1.f(B.|getB|())}
+49|globalB.f(B.|getB|())}
 , {
-44|A2.f(B.|getB|())}
+52|A1.f(B.|getB|()),
+53|A1.f(B.|getB|())}
+, {
+54|A2.f(B.|getB|())}
 ]

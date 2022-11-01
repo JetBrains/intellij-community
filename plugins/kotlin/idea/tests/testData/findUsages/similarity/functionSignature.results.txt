@@ -1,12 +1,12 @@
 [{
-8|fun| f(a: |A|, count:Int) {,
-13|fun| f(a:|A|, count:Int) {,
-22|fun| f(a:|A|, count: Int) {}
+7|fun| f(a: |A|, count:Int) {,
+12|fun| f(a:|A|, count:Int) {,
+21|fun| f(a:|A|, count: Int) {}
 , {
-18|fun| Bar.f(a:|A|) {}
+17|fun| Bar.f(a:|A|) {}
 , {
-26|fun| f(a:|A|) {}
+25|fun| f(a:|A|) {}
 , {
-30|fun| f (b:Bar):List<|A|> {,
-33|fun| f (b:Bar):List<|A| > { |//spaces in type reference}
+29|fun| f (b:Bar):List<|A|> {,
+32|fun| f (b:Bar):List<|A| > { |//spaces in type reference}
 ]
