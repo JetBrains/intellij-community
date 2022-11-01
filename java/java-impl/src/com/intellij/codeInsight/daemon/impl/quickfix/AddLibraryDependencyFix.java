@@ -41,7 +41,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;
-    myLibraries = libraries;
+    myLibraries = ContainerUtil.<Library, String>immutableMapBuilder().putAll(libraries).build();
     myScope = scope;
     myExported = exported;
   }

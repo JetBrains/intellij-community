@@ -428,6 +428,10 @@ public final class ContainerUtil {
       myMap.put(key, value);
       return this;
     }
+    public @NotNull ImmutableMapBuilder<K, V> putAll(@NotNull Map<? extends K, ? extends V> fromMap) {
+      myMap.putAll(fromMap);
+      return this;
+    }
 
     @Contract(pure = true)
     public @NotNull Map<K, V> build() {
