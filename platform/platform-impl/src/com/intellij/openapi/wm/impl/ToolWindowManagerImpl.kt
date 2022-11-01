@@ -68,7 +68,7 @@ import com.intellij.util.ui.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
-import org.intellij.lang.annotations.JdkConstants
+import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -1561,13 +1561,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     fireStateChanged(ToolWindowManagerEventType.SetVisibleOnLargeStripe)
   }
 
-  private fun setToolWindowAnchorImpl(entry: ToolWindowEntry,
-                                      currentInfo: WindowInfo,
-                                      layoutInfo: WindowInfoImpl,
-                                      paneId: String,
-                                      anchor: ToolWindowAnchor,
-                                      order: Int,
-                                      layoutState: DesktopLayout?,
+  private fun setToolWindowAnchorImpl(
+    entry: ToolWindowEntry,
+    currentInfo: WindowInfo,
+    layoutInfo: WindowInfoImpl,
+    paneId: String,
+    anchor: ToolWindowAnchor,
+    order: Int,
+    layoutState: DesktopLayout?,
   ) {
     // Get the current tool window pane, not the one we're aiming for
     val toolWindowPane = getToolWindowPane(currentInfo.safeToolWindowPaneId)
@@ -2103,24 +2104,24 @@ private enum class KeyState {
   WAITING, PRESSED, RELEASED, HOLD
 }
 
-private fun areAllModifiersPressed(@JdkConstants.InputEventMask modifiers: Int, @JdkConstants.InputEventMask mask: Int): Boolean {
+private fun areAllModifiersPressed(@MagicConstant(flagsFromClass = InputEvent::class) modifiers: Int, @MagicConstant(flagsFromClass = InputEvent::class) mask: Int): Boolean {
   return (modifiers xor mask) == 0
 }
 
+@MagicConstant(flagsFromClass = InputEvent::class)
 @Suppress("DEPRECATION")
-@JdkConstants.InputEventMask
 private fun keyCodeToInputMask(code: Int): Int {
   return when (code) {
-    KeyEvent.VK_SHIFT -> Event.SHIFT_MASK
-    KeyEvent.VK_CONTROL -> Event.CTRL_MASK
-    KeyEvent.VK_META -> Event.META_MASK
-    KeyEvent.VK_ALT -> Event.ALT_MASK
+    KeyEvent.VK_SHIFT -> InputEvent.SHIFT_MASK
+    KeyEvent.VK_CONTROL -> InputEvent.CTRL_MASK
+    KeyEvent.VK_META -> InputEvent.META_MASK
+    KeyEvent.VK_ALT -> InputEvent.ALT_MASK
     else -> 0
   }
 }
 
 // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
-@JdkConstants.InputEventMask
+@MagicConstant(flagsFromClass = InputEvent::class)
 private fun getActivateToolWindowVKsMask(): Int {
   if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
     return 0
