@@ -555,6 +555,9 @@ public final class PluginManagerCore {
     BuildNumber result = ourBuildNumber;
     if (result == null) {
       result = BuildNumber.fromPluginsCompatibleBuild();
+      if (getLogger().isDebugEnabled()) {
+        getLogger().debug("getBuildNumber: fromPluginsCompatibleBuild=" + (result != null ? result.asString() : "null"));
+      }
       if (result == null) {
         if (isUnitTestMode) {
           result = BuildNumber.currentVersion();
