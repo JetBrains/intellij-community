@@ -8,11 +8,9 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -59,12 +57,21 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        manager = new PyTargetEnvironmentPackageManager(sdk);
-       // TODO:
+        // TODO:
         // * There should be no difference between local and "Remote" package manager
         // * But python flavor makes the difference.
         // So one must check flavor and execute appropriate command on SDK target
         // (be it localRequest or target request)
+
+        // This is a temporary solution to support local conda
+        if (PythonSdkUtil.isConda(sdk) &&
+            sdk.getHomePath() != null &&
+            PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
+          manager = new PyCondaPackageManagerImpl(sdk);
+        }
+        else {
+          manager = new PyTargetEnvironmentPackageManager(sdk);
+        }
       }
       cache.put(key, manager);
       if (sdk instanceof Disposable) {
