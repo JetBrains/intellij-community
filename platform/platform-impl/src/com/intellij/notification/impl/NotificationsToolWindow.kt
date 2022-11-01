@@ -165,6 +165,10 @@ internal class NotificationContent(val project: Project,
     for (notification in newNotifications) {
       add(notification)
     }
+
+    ApplicationManager.getApplication().invokeLater {
+      autoProportionController.update()
+    }
   }
 
   private fun createSearchComponent(): SearchTextField {
@@ -506,6 +510,10 @@ private class AutoProportionController(private val splitter: MySplitter,
     }
 
     val height = splitter.height
+    if (height == 0) {
+      return
+    }
+
     val firstHeight = suggestions.preferredSize.height
 
     if (firstHeight < height / 2) {
