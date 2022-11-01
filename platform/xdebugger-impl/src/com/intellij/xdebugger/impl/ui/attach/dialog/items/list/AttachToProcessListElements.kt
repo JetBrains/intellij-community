@@ -18,7 +18,7 @@ internal class AttachToProcessListItem(
   override fun getProcessItem(): AttachDialogProcessItem = item
 }
 
-internal abstract class AttachToProcessListGroupBase(val groupName: String) : AttachToProcessElement, AttachSelectionIgnoredNode {
+internal abstract class AttachToProcessListGroupBase(val groupName: String?) : AttachToProcessElement, AttachSelectionIgnoredNode {
 
   private val relatedNodes = mutableListOf<AttachToProcessListItem>()
 
@@ -58,4 +58,12 @@ internal class AttachToProcessListRecentGroup : AttachToProcessListGroupBase(
   }
 
   override fun getOrder(): Int = Int.MIN_VALUE
+}
+
+internal class AttachToProcessAllItemsGroup : AttachToProcessListGroupBase(null) {
+  override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
+    return getNodes().any { filters.matches(it) }
+  }
+
+  override fun getOrder(): Int = Int.MAX_VALUE
 }

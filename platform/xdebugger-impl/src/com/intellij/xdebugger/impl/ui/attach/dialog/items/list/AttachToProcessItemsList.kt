@@ -9,6 +9,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
+import com.intellij.xdebugger.impl.ui.attach.dialog.isListMerged
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupColumnRenderer
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.AttachGroupFirstColumnRenderer
@@ -83,12 +84,11 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
     val element = model.getValueAt<AttachToProcessElement>(row) ?: throw IllegalStateException("Should not be null")
     if (element is AttachToProcessListItem) return super.getCellRenderer(row, column)
     if (element !is AttachToProcessListGroupBase) throw IllegalStateException("Unexpected element type: ${element.javaClass.simpleName}")
-    return when (column) {
-      0 -> AttachGroupFirstColumnRenderer()
-      1 -> AttachGroupColumnRenderer()
-      2 -> AttachGroupLastColumnRenderer()
-      else -> throw IllegalStateException("Unexpected column index: $column")
-    }
+
+    if (column >= model.columnCount || column < 0) throw IllegalStateException("Unexpected column index: $column")
+    if (column == 0) return AttachGroupFirstColumnRenderer()
+    if (column == model.columnCount - 1) return AttachGroupLastColumnRenderer()
+    return AttachGroupColumnRenderer()
   }
 
   override fun updateFilter(searchFilterValue: String) {
@@ -145,9 +145,13 @@ internal class AttachToProcessItemsList(itemNodes: List<AttachToProcessElement>,
 
 class AttachToProcessListColumnModel : DefaultTableColumnModel() {
   init {
+    val columnsCount = if (isListMerged()) 4 else 3
     addColumn(TableColumn(0).apply { identifier = 0; headerValue = XDebuggerBundle.message("xdebugger.attach.executable.column.name") })
     addColumn(TableColumn(1).apply { identifier = 1; headerValue = XDebuggerBundle.message("xdebugger.attach.pid.column.name") })
-    addColumn(TableColumn(2).apply { identifier = 2; headerValue = XDebuggerBundle.message("xdebugger.attach.command.line.column.name") })
+    if (isListMerged()) {
+      addColumn(TableColumn(2).apply { identifier = 2; headerValue = XDebuggerBundle.message("xdebugger.attach.debuggers.column.name") })
+    }
+    addColumn(TableColumn(columnsCount - 1).apply { identifier = columnsCount - 1; headerValue = XDebuggerBundle.message("xdebugger.attach.command.line.column.name") })
   }
 }
 
@@ -156,23 +160,32 @@ internal class AttachToProcessTableModel(private val itemNodes: List<AttachToPro
 
   override fun getRowCount(): Int = itemNodes.size
 
-  override fun getColumnCount(): Int = 3
+  override fun getColumnCount(): Int = if (isListMerged()) 4 else 3
 
   override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
     val itemNode = itemNodes[rowIndex]
     if (itemNode is AttachToProcessListGroupBase) return itemNode
     if (itemNode !is AttachToProcessListItem) throw IllegalStateException("Unexpected element type: ${itemNode.javaClass.simpleName}")
-    return when (columnIndex) {
-      0 -> ExecutableListCell(state.attachListColumnSettings, itemNode)
-      1 -> PidListCell(itemNode.item.processInfo.pid, state.attachListColumnSettings)
-      2 -> CommandLineListCell(itemNode, state.attachListColumnSettings)
-      else -> throw IllegalStateException("Unexpected column number: $columnIndex")
-    }
+
+    if (columnIndex < 0 || columnIndex >= columnCount) throw IllegalStateException("Unexpected column number: $columnIndex")
+    if (columnIndex == 0) return ExecutableListCell(state.attachListColumnSettings, itemNode)
+    if (columnIndex == 1) return PidListCell(itemNode.item.processInfo.pid, state.attachListColumnSettings)
+    if (isListMerged() && columnIndex == 2) return DebuggersListCell(itemNode, state.attachListColumnSettings)
+    if (columnIndex == columnCount - 1) return CommandLineListCell(itemNode, state.attachListColumnSettings)
+    throw IllegalStateException("Unexpected column number: $columnIndex")
   }
 }
 
 internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
+  return if (isListMerged()) {
+    buildMergedList(itemsInfo, dialogState)
+  }
+  else {
+    buildListGroupedByProvider(itemsInfo, dialogState)
+  }
+}
 
+private suspend fun buildListGroupedByProvider(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
   val allGroups = mutableSetOf<AttachToProcessListGroupBase>()
 
   val recentItems = itemsInfo.recentItems
@@ -203,6 +216,42 @@ internal suspend fun buildList(itemsInfo: AttachItemsInfo, dialogState: AttachDi
     itemNodes.add(group)
     itemNodes.addAll(group.getNodes())
   }
+
+  return AttachToProcessItemsList(itemNodes, dialogState)
+}
+
+private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: AttachDialogState): AttachToProcessItemsList {
+
+  val itemNodes = mutableListOf<AttachToProcessElement>()
+  val recentItems = itemsInfo.recentItems
+  if (recentItems.any()) {
+    val recentGroup = AttachToProcessListRecentGroup()
+    itemNodes.add(recentGroup)
+
+    for (recentItem in recentItems) {
+      val itemNode = AttachToProcessListItem(recentItem)
+      recentGroup.add(itemNode)
+      itemNodes.add(itemNode)
+    }
+  }
+
+  val allItems = mutableListOf<AttachToProcessListItem>()
+
+  for (item in itemsInfo.processItems.filter { it.debuggers.any() }) {
+    coroutineContext.ensureActive()
+
+    val itemNode = AttachToProcessListItem(item)
+    allItems.add(itemNode)
+  }
+
+  val allItemsSorted = allItems.sortedBy { itemNode -> itemNode.getProcessItem().getGroups().minBy { it.order }.order }
+  if (itemNodes.any()) {
+    itemNodes.add(AttachToProcessAllItemsGroup().apply {
+      allItemsSorted.forEach { this.add(it) }
+    })
+  }
+
+  itemNodes.addAll(allItemsSorted)
 
   return AttachToProcessItemsList(itemNodes, dialogState)
 }

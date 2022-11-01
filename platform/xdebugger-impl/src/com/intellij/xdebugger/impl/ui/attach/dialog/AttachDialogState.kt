@@ -32,7 +32,7 @@ internal class AttachDialogState(val dialogDisposable: Disposable) {
   val selectedDebuggersFilter = AtomicLazyProperty<AttachDialogDebuggersFilter> { AttachDialogAllDebuggersFilter }
 
   val attachTreeColumnSettings = AttachTreeColumnSettingsState()
-  val attachListColumnSettings = AttachListColumnSettingsState()
+  val attachListColumnSettings = if (isListMerged()) AttachTreeColumnSettingsState() else AttachListColumnSettingsState()
 
   val selectedViewType = AtomicLazyProperty { getDefaultView() }
 
