@@ -43,8 +43,8 @@ class IdentifierSymbolReference(
   companion object {
     private fun PsiFile.collectNamedElements(): Sequence<MermaidNamedPsiElement> {
       return SyntaxTraverser.psiTraverser(this)
-        .filterIsInstance<MermaidNamedPsiElement>()
         .asSequence()
+        .filterIsInstance<MermaidNamedPsiElement>()
     }
   }
 }
