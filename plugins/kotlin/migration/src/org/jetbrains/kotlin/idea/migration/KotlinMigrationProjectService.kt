@@ -11,7 +11,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.notifications.showMigrationNotification
@@ -33,16 +32,14 @@ class KotlinMigrationProjectService(val project: Project) : Disposable {
 
         val oldState = synchronized(this) { currentState.also { currentState = newState } }
         val migrationInfo = prepareMigrationInfo(old = oldState, new = newState) ?: return
-        project.runWhenSmart {
-            ReadAction.nonBlocking<Boolean> { applicableMigrationToolExists(migrationInfo) || isUnitTestMode() }
-                .expireWith(this)
-                .finishOnUiThread(ModalityState.any()) { toolExists ->
-                    if (toolExists) {
-                        showMigrationNotification(project, migrationInfo)
-                    }
+        ReadAction.nonBlocking<Boolean> { applicableMigrationToolExists(migrationInfo) || isUnitTestMode() }
+            .inSmartMode(project)
+            .finishOnUiThread(ModalityState.any()) { toolExists ->
+                if (toolExists) {
+                    showMigrationNotification(project, migrationInfo)
                 }
-                .submit(AppExecutorUtil.getAppExecutorService())
-        }
+            }
+            .submit(AppExecutorUtil.getAppExecutorService())
     }
 
     override fun dispose() = Unit
