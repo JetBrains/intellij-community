@@ -377,7 +377,7 @@ public final class GradleManager
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
               }
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project, true);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project);
             });
           }
         });

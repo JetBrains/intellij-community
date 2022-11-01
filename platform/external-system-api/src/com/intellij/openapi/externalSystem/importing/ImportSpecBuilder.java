@@ -164,8 +164,8 @@ public class ImportSpecBuilder {
       PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
 
       ProjectDataManager.getInstance().importData(externalProject,
-                                                  myProject,
-                                                  synchronous);
+                                                  myProject
+      );
     }
   }
 }

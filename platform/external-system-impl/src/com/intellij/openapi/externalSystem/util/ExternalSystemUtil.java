@@ -1056,7 +1056,7 @@ public final class ExternalSystemUtil {
           }
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, true);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
         if (importResultCallback != null) {
           importResultCallback.consume(true);
         }
@@ -1172,7 +1172,7 @@ public final class ExternalSystemUtil {
       if (externalProject == null) {
         return;
       }
-      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject, true);
+      ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, myProject);
     }
 
     @Override

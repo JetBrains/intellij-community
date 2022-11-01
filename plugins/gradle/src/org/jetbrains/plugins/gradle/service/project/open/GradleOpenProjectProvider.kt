@@ -91,6 +91,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   private fun importData(project: Project, externalProject: DataNode<ProjectData>) {
-    ProjectDataManager.getInstance().importData(externalProject, project, false)
+    ProjectDataManager.getInstance().importData(externalProject, project)
   }
 }
