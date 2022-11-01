@@ -67,5 +67,6 @@
                  restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarComponentService" preload="await" />
+    <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService" order="last"/>
   </extensions>
 </idea-plugin>
