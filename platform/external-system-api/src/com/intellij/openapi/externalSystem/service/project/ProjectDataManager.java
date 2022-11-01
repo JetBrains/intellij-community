@@ -37,10 +37,8 @@ public interface ProjectDataManager {
     importData(node, project);
   }
 
-  default <T> void importData(@NotNull DataNode<T> node,
-                              @NotNull Project project) {
-    importData(node, project, createModifiableModelsProvider(project));
-  }
+  <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project);
 
   <T> void importData(@NotNull DataNode<T> node,
                       @NotNull Project project,

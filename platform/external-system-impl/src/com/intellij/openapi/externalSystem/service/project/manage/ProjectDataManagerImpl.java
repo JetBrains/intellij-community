@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
@@ -37,6 +39,8 @@ import java.util.function.Function;
 public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
+
+  private final Lock myLock = new ReentrantLock();
 
   public static ProjectDataManagerImpl getInstance() {
     return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
@@ -49,6 +53,17 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
                                                               .getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
     ExternalSystemApiUtil.orderAwareSort(result);
     return result;
+  }
+
+  @Override
+  public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    myLock.lock();
+    try {
+      importData(node, project, createModifiableModelsProvider(project));
+    } finally {
+      myLock.unlock();
+    }
   }
 
   @SuppressWarnings("unchecked")
