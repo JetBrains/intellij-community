@@ -61,12 +61,21 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       val project = editor.project ?: return@runReadAction READY_EMPTY
       val document = editor.document
       val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
-      val language = file.language
 
       if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
 
       val virtualFile = file.virtualFile ?: return@runReadAction READY_EMPTY
       if (ProjectFileIndex.getInstance(project).isInLibrarySource(virtualFile)) return@runReadAction READY_EMPTY
+
+      val fileLanguage = file.language
+      val fileContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(fileLanguage)
+      val additionalContexts: List<VcsCodeVisionLanguageContext> =
+        if (fileContext == null)
+          VcsCodeVisionLanguageContext.providersExtensionPoint.point?.extensionList?.map { it.instance }?.filter {
+            it.isCustomFileAccepted(file)
+          } ?: emptyList()
+        else emptyList()
+      if (fileContext == null && additionalContexts.isEmpty()) return@runReadAction READY_EMPTY
 
       val aspect = when (val aspectResult = getAspect(file, editor)) {
         AnnotationResult.NoAnnotation -> return@runReadAction CodeVisionState.Ready(emptyList())
@@ -76,11 +85,23 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
-      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                  ?: return@runReadAction READY_EMPTY
       val traverser = SyntaxTraverser.psiTraverser(file)
       for (element in traverser.preOrderDfsTraversal()) {
-        if (visionLanguageContext.isAccepted(element)) {
+        val elementContext: VcsCodeVisionLanguageContext?
+        val language: Language
+        if (fileContext != null) {
+          elementContext = fileContext
+          language = fileLanguage
+        }
+        else {
+          language = element.language
+          elementContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+          if (!additionalContexts.contains(elementContext)) {
+            continue
+          }
+        }
+
+        if (elementContext != null && elementContext.isAccepted(element)) {
           val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
           val length = editor.document.textLength
           val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
