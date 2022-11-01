@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.reproducibleBuilds.diffTool
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.Decompressor
@@ -45,6 +48,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     val isDiffoscopeAvailable by lazy { isAvailable("diffoscope", "--version") }
     val is7zAvailable by lazy { isAvailable("7z", "--help") }
     val isUnzipAvailable by lazy { isAvailable("unzip", "--help") }
+    val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -175,6 +179,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       "jar", "zip", "ijx", "sit" -> if (isUnzipAvailable) process("unzip", "-l", "$this").stdOut else null
       "class" -> if (isJavapAvailable) process("javap", "-verbose", "$this").stdOut else null
       "dmg", "exe" -> if (is7zAvailable) process("7z", "l", "$this").stdOut else null
+      "json", "manifest" -> gson.toJson(JsonParser.parseString(readText()))
       else -> null
     }
     if (content != null) {
