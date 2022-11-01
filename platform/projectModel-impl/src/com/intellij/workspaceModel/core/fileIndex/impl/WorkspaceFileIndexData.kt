@@ -56,6 +56,7 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     nonIncrementalContributors.updateIfNeeded(fileSets)
 
     val originalKindMask = 
