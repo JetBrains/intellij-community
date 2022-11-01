@@ -83,13 +83,9 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement
             collectVariableNames(scope)
             scope = PsiTreeUtil.findFirstParent(scope, true, Condition { e: PsiElement? -> e is KtFunction || e is KtFile })
         }
-        val containingFile = myContext.containingFile
-        collectAllProperties(containingFile, myContext)
     }
 
-    private fun collectVariableNames(
-        scope: PsiElement
-    ) {
+    private fun collectVariableNames(scope: PsiElement) {
         if (scope is KtFunction) {
             collectFunctionParameters(scope)
         }
@@ -97,25 +93,33 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement
     }
 
     private fun collectFunctionParameters(scope: KtFunction) {
-        val valueParameterList = scope.valueParameterList
-        if (valueParameterList != null) {
-            for (typeParameter in valueParameterList.parameters) {
-                typeParameter.name?.let { myVariableNames.add(it) }
-            }
+        for (valueParameter in scope.valueParameters) {
+            valueParameter.name?.let(myVariableNames::add)
         }
     }
 
-    private fun collectAllProperties(
-        scope: PsiElement,
-        context: PsiElement
-    ) {
+    private fun collectAllProperties(scope: PsiElement, context: PsiElement) {
         scope.accept(object : KtTreeVisitorVoid() {
             override fun visitProperty(property: KtProperty) {
-                val startOffset = context.textRange.startOffset
-                if (property.textRange.startOffset < startOffset) {
-                    property.name?.let { myVariableNames.add(it) }
+                if (!property.isTopLevel) {
+                    val startOffset = context.textRange.startOffset
+                    if (property.textRange.startOffset < startOffset) {
+                        property.name?.let { myVariableNames.add(it) }
+                    }
                 }
-                super.visitProperty(property)
+            }
+
+            override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
+                val startOffset = context.textRange.startOffset
+                if (multiDeclarationEntry.textRange.startOffset < startOffset) {
+                    multiDeclarationEntry.name?.let { myVariableNames.add(it) }
+                }
+                super.visitDestructuringDeclarationEntry(multiDeclarationEntry)
+            }
+
+            override fun visitForExpression(expression: KtForExpression) {
+                expression.loopParameter?.name?.let { myVariableNames.add(it) }
+                super.visitForExpression(expression)
             }
 
             override fun visitElement(element: PsiElement) {

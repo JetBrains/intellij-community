@@ -34,8 +34,18 @@ class Test {
         fun(inner: Test) {
             val test = Test()
             val test2 = Test()
+            val (test3, test4) = Test()
+            test3.f(B.getB())
             test.f(B.getB())
             test2.f(B.getB())
+            val a = arrayOf(Test())
+            val b = mapOf(Pair(Test(), 1))
+            for (i in a) {
+                for ((j, k) in b) {
+                    i.f(B.getB())
+                    j.f(B.getB())
+                }
+            }
             globalB.f(B.getB())
             outer.f(B.getB())
             inner.f(B.getB())
@@ -44,4 +54,25 @@ class Test {
             A2.f(B.getB())
         }
     }
+
+    fun d() {
+        fun d() {
+            call { (destructingEntry1, destructingEntry2), c ->
+                destructingEntry1.f(B.getB())
+            }
+
+        }
+        fun call() {
+
+        }
+    }
+    private operator fun component1(): Test {
+        return Test()
+    }
+
+    private operator fun component2(): Test {
+        return Test()
+    }
 }
+inline fun call(f: (Test, Test) -> Unit) = f()
+

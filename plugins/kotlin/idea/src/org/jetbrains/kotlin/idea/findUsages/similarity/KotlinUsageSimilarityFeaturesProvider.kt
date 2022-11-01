@@ -6,11 +6,11 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -24,12 +24,7 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
         }
         val context = getContext(usage)
         if (context is KtParameter || context is KtFunction) {
-            val function = PsiTreeUtil.findFirstParent(
-                context,
-                false,
-                Condition { e: PsiElement? ->
-                    e is KtFunction
-                })
+            val function = context.parentOfType<KtFunction>(withSelf = true)
             if (function is KtFunction) {
                 features.addAll(collectFeaturesForFunctionSignature(function, context))
             }
@@ -41,16 +36,16 @@ class KotlinUsageSimilarityFeaturesProvider : UsageSimilarityFeaturesProvider {
 
     private fun collectFeaturesForFunctionSignature(function: KtFunction, context: PsiElement): Bag {
         val features = Bag()
-        features.add("""OVERRIDE: ${function.modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD) != null}""")
-        features.add("""NAME: ${function.name}""")
-        features.add("""FUNCTION_CLASS: ${function::class}""")
-        features.add("""RETURN_TYPE: ${toFeature(function.getReturnTypeReference())}""")
-        features.add("""RECEIVER_TYPE_REFERENCE: ${function.receiverTypeReference != null}""")
+        features.add("OVERRIDE: ${function.hasModifier(KtTokens.OVERRIDE_KEYWORD)}")
+        features.add("NAME: ${function.name}")
+        features.add("FUNCTION_CLASS: ${function::class}")
+        features.add("RETURN_TYPE: ${toFeature(function.typeReference)}")
+        features.add("RECEIVER_TYPE_REFERENCE: ${function.receiverTypeReference != null}")
         function.valueParameters.forEach {
             features.add(
-                """PARAMETER_TYPE: ${
-                    if (it == context) "USAGE: " + toFeature(it.typeReference) else toFeature(it?.typeReference)
-                }"""
+                "PARAMETER_TYPE: ${
+                    if (it == context) "USAGE: " + toFeature(it.typeReference) else toFeature(it.typeReference)
+                }"
             )
         }
         return features
