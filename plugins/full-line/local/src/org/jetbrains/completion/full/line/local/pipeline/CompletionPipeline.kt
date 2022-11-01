@@ -1,6 +1,6 @@
 package org.jetbrains.completion.full.line.local.pipeline
 
-import io.kinference.model.ExecutionContext
+import org.jetbrains.completion.full.line.local.ExecutionContext
 
 interface CompletionPipeline<CompletionPipelineConfig, CompletionResult> {
   fun generateCompletions(

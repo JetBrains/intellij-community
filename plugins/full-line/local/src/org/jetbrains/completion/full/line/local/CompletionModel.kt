@@ -1,6 +1,5 @@
 package org.jetbrains.completion.full.line.local
 
-import io.kinference.model.ExecutionContext
 import org.jetbrains.completion.full.line.local.generation.generation.GenerationInfo
 import org.jetbrains.completion.full.line.local.pipeline.CompletionPipeline
 import org.jetbrains.completion.full.line.local.suggest.collector.CompletionsGenerator
@@ -29,7 +28,7 @@ class CompletionModel(
   fun generate(
     context: String, prefix: String, config: CompletionConfig.Generation, execContext: ExecutionContext
   ): List<CompletionResult> {
-    return generator.generate(context, prefix, config, execContext)
+    return generator.generate(context, prefix, config, execContext.toInference())
   }
 
   /**

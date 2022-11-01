@@ -1,8 +1,8 @@
 package org.jetbrains.completion.full.line.models
 
-import io.kinference.model.ExecutionContext
 import org.jetbrains.completion.full.line.local.CompletionModel
 import org.jetbrains.completion.full.line.local.CompletionModelFactory
+import org.jetbrains.completion.full.line.local.ExecutionContext
 import org.jetbrains.completion.full.line.local.generation.model.HiddenStateCache
 import org.jetbrains.completion.full.line.local.pipeline.CompletionPipeline
 import org.jetbrains.completion.full.line.local.pipeline.FullLineCompletionPipelineConfig

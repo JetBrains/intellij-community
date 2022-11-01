@@ -1,7 +1,7 @@
 package org.jetbrains.completion.full.line.local.pipeline
 
-import io.kinference.model.ExecutionContext
 import org.jetbrains.completion.full.line.local.CompletionModel
+import org.jetbrains.completion.full.line.local.ExecutionContext
 import org.jetbrains.completion.full.line.local.generation.generation.BaseGenerationConfig
 import org.jetbrains.completion.full.line.local.suggest.collector.CompletionsGenerator
 import org.jetbrains.completion.full.line.local.suggest.filtering.FilterModel
@@ -26,7 +26,7 @@ abstract class BaseCompletionPipeline<GenerationConfig : BaseGenerationConfig, F
   protected open fun generate(
     context: String, prefix: String, config: GenerationConfig, execContext: ExecutionContext
   ): List<CompletionModel.CompletionResult> {
-    return generator.generate(context, prefix, config, execContext)
+    return generator.generate(context, prefix, config, execContext.toInference())
   }
 
   protected open fun filter(
