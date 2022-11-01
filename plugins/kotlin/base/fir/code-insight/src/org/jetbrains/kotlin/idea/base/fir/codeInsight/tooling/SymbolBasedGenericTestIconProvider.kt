@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
     override fun isKotlinTestDeclaration(declaration: KtClassOrObject): Boolean {
         analyze(declaration) {
-            return isTestDeclaration(declaration.getClassOrObjectSymbol())
+            val symbol = declaration.getClassOrObjectSymbol()
+            return symbol != null && isTestDeclaration(symbol)
         }
     }
 

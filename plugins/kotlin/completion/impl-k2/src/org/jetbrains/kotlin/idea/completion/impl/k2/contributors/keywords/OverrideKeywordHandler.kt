@@ -79,6 +79,7 @@ internal class OverrideKeywordHandler(
     ): OverridesCompletionLookupElementDecorator {
         val memberSymbol = member.symbol
         check(memberSymbol is KtNamedSymbol)
+        check(classOrObject !is KtEnumEntry)
 
         val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getIcon(memberSymbol)
