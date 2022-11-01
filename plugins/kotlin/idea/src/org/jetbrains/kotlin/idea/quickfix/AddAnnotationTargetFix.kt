@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.constants.EnumValue
+import org.jetbrains.kotlin.resolve.constants.TypedArrayValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.firstArgument
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -87,11 +90,27 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
     annotationClassDescriptor: ClassDescriptor,
     project: Project
 ): List<KotlinTarget> {
-    val ignoreAnnotationTargets = if (annotationClassDescriptor.hasRequiresOptInAnnotation()) {
-        setOf(AnnotationTarget.EXPRESSION, AnnotationTarget.FILE, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
+    val ignoredTargets = if (annotationClassDescriptor.hasRequiresOptInAnnotation()) {
+        listOf(AnnotationTarget.EXPRESSION, AnnotationTarget.FILE, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER)
+            .map { it.name }
+            .toSet()
     } else emptySet()
-    val annotationTargetValueNames = AnnotationTarget.values().toSet().minus(ignoreAnnotationTargets).map { it.name }
-    if (annotationTargetValueNames.isEmpty()) return emptyList()
+
+    val existingTargets = annotationClassDescriptor.annotations
+        .firstOrNull { it.fqName == StandardNames.FqNames.target }
+        ?.firstArgument()
+        .safeAs<TypedArrayValue>()
+        ?.value
+        ?.mapNotNull { it.safeAs<EnumValue>()?.enumEntryName?.asString() }
+        ?.toSet()
+        .orEmpty()
+
+    val validTargets = AnnotationTarget.values()
+        .map { it.name }
+        .minus(ignoredTargets)
+        .minus(existingTargets)
+        .toSet()
+    if (validTargets.isEmpty()) return emptyList()
 
     val requiredTargets = getActualTargetList()
     if (requiredTargets.isEmpty()) return emptyList()
@@ -110,7 +129,7 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
 
         (requiredTargets + otherReferenceRequiredTargets).asSequence()
             .distinct()
-            .filter { it.name in annotationTargetValueNames }
+            .filter { it.name in validTargets }
             .sorted()
             .toList()
     } ?: emptyList()
