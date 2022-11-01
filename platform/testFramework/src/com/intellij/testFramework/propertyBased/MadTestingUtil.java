@@ -537,7 +537,23 @@ public final class MadTestingUtil {
       @Override
       protected File[] create(@NotNull File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
-        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+        if (files == null) {
+          return null;
+        }
+        if (files.length == 0) {
+          return EMPTY_DIRECTORY;
+        }
+        for (int i = 0; i < files.length; i++) {
+          File file = files[i];
+          boolean isDirectory = file.isDirectory();
+          files[i] = new File(file.getPath()) {
+            @Override
+            public boolean isDirectory() {
+              return isDirectory;
+            }
+          };
+        }
+        return files;
       }
     };
 
