@@ -3522,6 +3522,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/compilerError")
+    public static class CompilerError extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noInspectionOptions.kt")
+        public void testNoInspectionOptions() throws Exception {
+            runTest("testData/quickfix/compilerError/noInspectionOptions.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/conflictingImports")
     public static class ConflictingImports extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
