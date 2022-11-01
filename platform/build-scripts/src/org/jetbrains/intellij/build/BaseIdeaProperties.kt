@@ -61,7 +61,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = JB_BUNDLED_PLUGINS + persiste
   "intellij.emojipicker",
   "intellij.textmate",
   "intellij.editorconfig",
-  "intellij.settingsRepository",
   "intellij.settingsSync",
   "intellij.configurationScript",
   "intellij.yaml",
