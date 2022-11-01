@@ -9,16 +9,17 @@ import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectSafe
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
 import java.util.StringJoiner
 
 @ApiStatus.Experimental
@@ -53,18 +54,17 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   abstract fun setupAssets(project: Project)
 
   override fun setupProject(project: Project) {
-    setupAssets(project)
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.sample.code", context.isCreatingNewProjectInt)) {
+      setupAssets(project)
 
-    WriteAction.runAndWait<Throwable> {
-      try {
-        val generatedFiles = AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
-        runWhenCreated(project) { //IDEA-244863
-          reformatCode(project, generatedFiles)
-          openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
+      val generatedFiles = invokeAndWaitIfNeeded {
+        runWriteAction {
+          AssetsProcessor().generateSources(outputDirectory, assets, templateProperties)
         }
       }
-      catch (e: IOException) {
-        logger<NewProjectWizardStep>().error("Unable generating sources", e)
+      runWhenCreated(project) { //IDEA-244863
+        reformatCode(project, generatedFiles)
+        openFilesInEditor(project, generatedFiles.filter { it.path in filesToOpen })
       }
     }
   }

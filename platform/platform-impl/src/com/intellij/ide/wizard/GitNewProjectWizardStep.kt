@@ -39,15 +39,19 @@ class GitNewProjectWizardStep(
   }
 
   override fun setupProject(project: Project) {
-    if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
-      if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          gitRepositoryInitializer!!.initRepository(project, projectBaseDirectory, true)
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+      if (git) {
+        val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
+        if (projectBaseDirectory != null) {
+          runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
+            setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+              gitRepositoryInitializer!!.initRepository(project, projectBaseDirectory, true)
+            }
+          }
         }
       }
+      NewProjectWizardCollector.logGitFinished(context, git)
     }
-    NewProjectWizardCollector.logGitFinished(context, git)
   }
 
   init {
