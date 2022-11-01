@@ -31,7 +31,7 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
 
     val allItems = mutableListOf<AttachToProcessItem>()
 
-    val processesToAttachItems = processes.map { processInfo ->
+    val processesToAttachItems = processes.associateWith { processInfo ->
       coroutineContext.ensureActive()
 
       val providersWithItems = mutableMapOf<XAttachPresentationGroup<*>, MutableList<AttachToProcessItem>>()
@@ -48,8 +48,18 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
       AttachDialogProcessItem(processInfo, providersWithItems, dataHolder)
     }
 
-    val recentItems = getRecentItems(allItems, host, project, dataHolder)
-    return AttachItemsInfo(processesToAttachItems, recentItems, dataHolder)
+    val recentItems = getRecentItems(allItems, host, project, dataHolder).mapNotNull { recentItem ->
+      val itemWithAllDebuggers = processesToAttachItems[recentItem.processInfo]
+      return@mapNotNull if (itemWithAllDebuggers == null) {
+        logger.error("Unable to get all available debuggers for the recent item ${recentItem.processInfo}")
+        null
+      }
+      else {
+        itemWithAllDebuggers
+      }
+    }
+
+    return AttachItemsInfo(processesToAttachItems.values.toList(), recentItems, dataHolder)
 
   }
   catch (processesFetchingProblemException: ProcessesFetchingProblemException) {
@@ -118,7 +128,11 @@ private fun getRecentItems(currentItems: MutableList<AttachToProcessItem>,
                            host: XAttachHost,
                            project: Project,
                            dataHolder: UserDataHolderBase): List<AttachDialogProcessItem> {
-  return AttachToProcessActionBase.getRecentItems(currentItems, host, project, dataHolder).map { it.toDialogItem() }
+  return AttachToProcessActionBase.getRecentItems(currentItems, host, project, dataHolder).groupBy { it.processInfo.pid }.map { groupedItems ->
+    val firstItem = groupedItems.value.first()
+    val processInfo = firstItem.processInfo
+    return@map AttachDialogProcessItem(processInfo, groupedItems.value.groupBy { it.group }, dataHolder)
+  }
 }
 
 private fun AttachToProcessItem.toDialogItem(): AttachDialogProcessItem {
