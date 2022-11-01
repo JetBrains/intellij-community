@@ -442,16 +442,15 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
     }
 
-    return executeBackgroundTask(
-      () ->
-      {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.documentation")));
+    return ApplicationUtil.runWithCheckCanceled(
+      () -> {
         final String resultDescription = getPythonConsoleBackendClient().getDescription(text);
         myPrevNameToDescription = Pair.create(text, resultDescription);
         return resultDescription;
       },
-      true,
-      createRuntimeMessage(PyBundle.message("console.getting.documentation")),
-      "Error when Getting Description in Python Console: ");
+      indicator);
   }
 
   /**
