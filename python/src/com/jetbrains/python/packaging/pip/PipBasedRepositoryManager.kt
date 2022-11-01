@@ -16,13 +16,11 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
-import com.jetbrains.python.packaging.repository.PyPIPackageRepository
-import com.jetbrains.python.packaging.repository.PyPackageRepositories
-import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.repository.*
+import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
@@ -56,11 +54,13 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     if (rawInfo == null) {
       val versions = tryParsingVersionsFromPage(spec.name, spec.repository?.repositoryUrl)
-      if (versions != null) return PythonSimplePackageDetails(spec.name,
+      val repository = if (spec.repository !is PyEmptyPackagePackageRepository) spec.repository else PyPIPackageRepository
+      val repositoryName = repository?.name ?: PyPIPackageRepository.name!!
+      return if (versions != null) PythonSimplePackageDetails(spec.name,
                                                               versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
                                                               spec.repository!!,
-                                                              description = PyBundle.message("python.packaging.no.package.info"))
-      else return EmptyPythonPackageDetails(spec.name, PyBundle.message("python.packages.request.failed"))
+                                                              description = PyBundle.message("python.packages.no.details.in.repo", repositoryName))
+      else EmptyPythonPackageDetails(spec.name, PyBundle.message("python.packages.no.details.in.repo", repositoryName))
     }
 
     try {
