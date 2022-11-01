@@ -34,7 +34,8 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     if (version == null) {
       return UpdateResult.NoFileOnServer
     }
-    return UpdateResult.Success(getSnapshotFromVersion(version!!.content)!!, version!!.id)
+    val snapshot = getSnapshotFromVersion(version!!.content)!!
+    return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version!!.id)
   }
 
   override fun awaitForPush(): SettingsSnapshot? {

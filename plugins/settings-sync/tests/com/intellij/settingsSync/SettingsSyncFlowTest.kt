@@ -41,7 +41,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     bridge = controls.bridge
     bridge.initialize(initMode)
   }
-  
+
   @Test fun `existing settings should be copied on initialization`() {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
@@ -91,17 +91,21 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState(fileName, initialContent)
     }
 
-    val cdl = CountDownLatch(1)
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
-      cdl.countDown()
-    })
-    cdl.wait()
+    deleteServerDataAndWait()
 
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     assertNotNull("There is no version on the server", versionOnServer)
     assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
     assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
+  }
+
+  private fun deleteServerDataAndWait() {
+    val cdl = CountDownLatch(1)
+    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+      cdl.countDown()
+    })
+    cdl.wait()
   }
 
   @Test fun `disable settings sync if data on server was deleted`() {
@@ -335,6 +339,19 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
+  }
+
+  @Test fun `deletion should be recognized correctly`() {
+    writeToConfig {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    deleteServerDataAndWait()
+
+    val migration = migrationFromLafXml()
+    initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
+
+    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
   private fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
