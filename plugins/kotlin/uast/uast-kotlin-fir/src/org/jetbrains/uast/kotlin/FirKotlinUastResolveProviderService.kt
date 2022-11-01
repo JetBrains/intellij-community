@@ -185,6 +185,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         return psiElement.annotations
     }
 
+    override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
+        analyzeForUast(ktExpression) {
+            return ktExpression.collectCallCandidates().asSequence().mapNotNull {
+                when (val candidate = it.candidate) {
+                    is KtFunctionCall<*> -> {
+                        toPsiMethod(candidate.partiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    is KtCompoundAccessCall -> {
+                        toPsiMethod(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol, ktExpression)
+                    }
+                    else -> null
+                }
+            }
+        }
+    }
+
     override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
         val other = UastBinaryOperator.OTHER
         analyzeForUast(ktBinaryExpression) {
