@@ -93,6 +93,7 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
     builder.add("Database", weight = 0.25f)
     builder.add("Gradle", weight = 0.25f)
     builder.add("Maven", weight = 0.25f)
+    builder.add("Web Inspector", weight = 0.25f)
   }
 
   open fun configureBottomVisibleOnLargeStripe(builder: DefaultToolWindowLayoutBuilder) {
