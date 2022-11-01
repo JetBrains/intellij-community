@@ -26,11 +26,10 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     maskProjectDataServices(new TestDataService(callTrace));
     new ProjectDataManagerImpl().importData(
-      Collections.singletonList(
         new DataNode<>(ProjectKeys.PROJECT, new ProjectData(ProjectSystemId.IDE,
                                                             "externalName",
                                                             "externalPath",
-                                                            "linkedPath"), null)), myProject, true);
+                                                            "linkedPath"), null), myProject);
 
     assertContainsElements(callTrace, "computeOrphanData");
   }
@@ -40,11 +39,10 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     maskProjectDataServices(new RunAfterTestDataService(callTrace), new TestDataService(callTrace));
     new ProjectDataManagerImpl().importData(
-      Collections.singletonList(
         new DataNode<>(ProjectKeys.PROJECT, new ProjectData(ProjectSystemId.IDE,
                                                             "externalName",
                                                             "externalPath",
-                                                            "linkedPath"), null)), myProject, true);
+                                                            "linkedPath"), null), myProject);
 
     assertOrderedEquals(callTrace,
                         "importData",

@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -54,13 +53,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void importData(@NotNull Collection<? extends DataNode<?>> nodes,
-                         @NotNull Project project,
-                         @NotNull IdeModifiableModelsProvider modelsProvider,
-                         boolean synchronous) {
+  public <T> void importData(@NotNull DataNode<T> node,
+                             @NotNull Project project,
+                             @NotNull IdeModifiableModelsProvider modelsProvider) {
     if (project.isDisposed()) return;
 
-    MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
+    MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(Collections.singletonList(node));
 
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
@@ -138,7 +136,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         postImportTask.run();
       }
 
-      commit(modelsProvider, project, synchronous, "Imported data");
+      commit(modelsProvider, project, true, "Imported data");
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
@@ -155,13 +153,13 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
     finally {
       if (importSucceeded) {
-        runFinalTasks(project, projectPath, synchronous, onSuccessImportTasks);
+        runFinalTasks(project, projectPath, onSuccessImportTasks);
       }
       else {
-        runFinalTasks(project, projectPath, synchronous, onFailureImportTasks);
+        runFinalTasks(project, projectPath, onFailureImportTasks);
       }
       if (!importSucceeded) {
-        dispose(modelsProvider, project, synchronous);
+        dispose(modelsProvider, project, true);
       }
 
       long timeMs = System.currentTimeMillis() - allStartTime;
@@ -179,34 +177,18 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void runFinalTasks(
     @NotNull Project project,
     @Nullable String projectPath,
-    boolean synchronous,
     @NotNull List<Runnable> tasks
   ) {
     var topic = project.getMessageBus()
       .syncPublisher(ProjectDataImportListener.TOPIC);
 
     topic.onFinalTasksStarted(projectPath);
-    runOnEdt(synchronous, () -> {
-      for (Runnable task : ContainerUtil.reverse(tasks)) {
-        task.run();
-      }
+    try {
+      ContainerUtil.reverse(tasks).forEach(Runnable::run);
       topic.onFinalTasksFinished(projectPath);
-    }, project.getDisposed());
-  }
-
-  private static void runOnEdt(boolean synchronous, @NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    if (synchronous) {
-      try {
-        if (!expired.value(null)) {
-          runnable.run();
-        }
-      }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
     }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, expired);
+    catch (Exception e) {
+      LOG.warn(e);
     }
   }
 
@@ -227,30 +209,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     return buffer.toString();
-  }
-
-  @Override
-  public <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
-    Collection<DataNode<?>> dummy = new SmartList<>();
-    dummy.addAll(nodes);
-    importData(dummy, project, createModifiableModelsProvider(project), synchronous);
-  }
-
-  @Override
-  public <T> void importData(@NotNull DataNode<T> node,
-                             @NotNull Project project,
-                             @NotNull IdeModifiableModelsProvider modelsProvider,
-                             boolean synchronous) {
-    Collection<DataNode<?>> dummy = new SmartList<>();
-    dummy.add(node);
-    importData(dummy, project, modelsProvider, synchronous);
-  }
-
-  @Override
-  public <T> void importData(@NotNull DataNode<T> node,
-                             @NotNull Project project,
-                             boolean synchronous) {
-    importData(node, project, createModifiableModelsProvider(project), synchronous);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

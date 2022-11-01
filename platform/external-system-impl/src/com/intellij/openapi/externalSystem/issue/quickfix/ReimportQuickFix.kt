@@ -33,7 +33,7 @@ class ReimportQuickFix(private val myProjectPath: String, private val systemId: 
           override fun onSuccess(externalProject: DataNode<ProjectData>?) {
             if (externalProject != null) {
               try {
-                ProjectDataManager.getInstance().importData(externalProject, project, true /* synchronous */)
+                ProjectDataManager.getInstance().importData(externalProject, project  /* synchronous */)
               }
               catch (pce: ProcessCanceledException) {
                 future.completeExceptionally(CancellationException())
