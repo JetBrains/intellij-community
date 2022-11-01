@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.messages.Topic
@@ -23,7 +24,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-      return PackageManagerHolder.forSdk(project, sdk)
+      return service<PackageManagerHolder>().forSdk(project, sdk)
     }
 
     @Topic.AppLevel
