@@ -17,11 +17,6 @@ fun int2comb(a: Int, b: Int): Long {
   return (a.toLong() shl 32) + b.toLong()
 }
 
-fun isSpace(ch: Int): Boolean {
-  // TODO: why do we need two
-  return ch == '\n'.toInt() || ch == SPACE_TOKEN
-}
-
 fun token2word(source: List<Int>, id2char: Map<Int, Int>): String {
   // TODO: check for utf8
   return String(source.map {
@@ -33,7 +28,9 @@ fun <T> concatVectors(vararg lists: List<T>): List<T> {
   return listOf(*lists).flatten()
 }
 
-const val SPACE_TOKEN = 9601
+// hardcoded compatibility fix
+const val SPACE_ID = 4
+const val SPACE_TOKEN_OLD = 9601
 const val UNK_TOKEN = "<UNK>"
 const val PAD_TOKEN = "<PAD>"
 const val BOS_TOKEN = "<BOS>"
@@ -58,10 +55,6 @@ data class BPERule(
     if (javaClass != other?.javaClass) return false
 
     other as BPERule
-
-    if (x != other.x) return false
-    if (y != other.y) return false
-    if (z != other.z) return false
 
     return x == other.x && y == other.y && z == other.z
   }
@@ -209,7 +202,6 @@ class FullLineTokenizer(modelFile: File, nThreads: Int) : Tokenizer {
   override val vocab: Map<String, Int> = encoder.vocabulary().mapIndexed { index, s -> Pair(s, index) }.toMap()
 }
 
-
 // TODO: use better hashmap (or maybe this is good enough)
 class BaseEncoder(modelFile: File, private var nThreads: Int) {
   // BPEState bpeState;
@@ -226,6 +218,8 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
 
   // flat_hash_map<std::string, uint32_t> reversed_recipe;
   private var reversedRecipe = HashMap<String, Int>()
+
+  private val spaceToken by lazy { id2char[SPACE_ID]!! }
 
 
   init {
@@ -354,10 +348,6 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
 
     val text: List<Int> = sentence.map { it.toInt() }
 
-    // TODO: why do we need to assert in each encoding
-    assert(bpeState.char2id.keys.any { it == SPACE_TOKEN })
-
-
     //        TODO: trim trailing separators, why commented?
     //        while (text.isNotEmpty() && isSpace(text.last())){
     //            text = text.subList(0, text.size)
@@ -385,7 +375,7 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
       val endOfWordIndex = textIndex
 
       newTokenCur = newTokensStart
-      list.add(NodeDecoder(bpeState.char2id.getValue(SPACE_TOKEN), 0))
+      list.add(NodeDecoder(SPACE_ID, 0))
 
       var charInWordIndex = beginOfWordIndex
       while (charInWordIndex < endOfWordIndex) {
@@ -480,6 +470,8 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
     return outputIds
   }
 
+  private fun isSpace(i: Int) = i == spaceToken
+
   fun decodeIds(
     ids: List<List<Int>>, ignoreIds: Set<Int>?
   ): DecodingResult {
@@ -530,9 +522,10 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
 
 
     assert(recipe.containsKey(id))
-    if (replaceSpace) {
+    // Compatibility fix
+    if (replaceSpace && spaceToken == SPACE_TOKEN_OLD) {
       val symbols = recipe.getValue(id)
-      if (id2char.getValue(symbols[0]) == SPACE_TOKEN) {
+      if (id2char.getValue(symbols[0]) == spaceToken) {
         return "\n" + token2word(symbols.subList(1, symbols.size), id2char)
       }
     }
