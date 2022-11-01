@@ -32,27 +32,30 @@ class MermaidNbspFoldingBuilder : CustomFoldingBuilder() {
         val endOffset = startOffset + it.range.length
         TextRange.create(startOffset, endOffset)
       }
-      val spaceRangesList = rangeSequence
-        .fold(mutableListOf(mutableListOf<TextRange>())) { ranges, r ->
-          val lastRangeList = ranges.lastOrNull()
+      if (rangeSequence.iterator().hasNext()) {
+        var spaceRange = rangeSequence.iterator().next()
+        var length = 1
 
-          if (lastRangeList != null) {
-            val lastRange = lastRangeList.lastOrNull()
-            if (lastRange == null || lastRange.endOffset == r.startOffset) {
-              lastRangeList.add(r)
-            } else {
-              ranges.add(mutableListOf(r))
-            }
+        for (range in rangeSequence) {
+          if (spaceRange.endOffset == range.startOffset) {
+            spaceRange = TextRange(spaceRange.startOffset, range.endOffset)
+            length++
+          } else {
+            addDescriptor(descriptors, element, spaceRange, length)
+
+            spaceRange = range
+            length = 1
           }
-          return@fold ranges
         }
-        .filter { it.isNotEmpty() }
-      for (spaceRange in spaceRangesList) {
-        val range = TextRange.create(spaceRange.first().startOffset, spaceRange.last().endOffset)
-        val placeholderText = " ".repeat(spaceRange.size)
-        descriptors.add(FoldingDescriptor(element.node, range, null, placeholderText, true, emptySet()))
+
+        addDescriptor(descriptors, element, spaceRange, length)
       }
     }
+  }
+
+  private fun addDescriptor(descriptors: MutableList<FoldingDescriptor>, element: PsiElement, spaceRange: TextRange, length: Int) {
+    val placeholderText = " ".repeat(length)
+    descriptors.add(FoldingDescriptor(element.node, spaceRange, null, placeholderText, true, emptySet()))
   }
 
   override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
