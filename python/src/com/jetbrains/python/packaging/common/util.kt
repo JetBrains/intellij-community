@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -18,12 +19,16 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 
-object PackageManagerHolder {
+@Service
+class PackageManagerHolder {
   private val cache = mutableMapOf<UUID, PythonPackageManager>()
 
   fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
     val cacheKey = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid ?: return null
-    if (cacheKey in cache) return cache[cacheKey]
+    if (cacheKey in cache) {
+      val manager = cache[cacheKey]!!
+      if (manager.project == project) return manager
+    }
 
     val manager = PythonPackageManagerProvider.EP_NAME.extensionList
       .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
