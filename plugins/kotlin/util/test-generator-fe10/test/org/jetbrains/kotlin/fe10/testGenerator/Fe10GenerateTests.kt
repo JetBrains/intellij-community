@@ -635,6 +635,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("findUsages/stdlibUsages", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""))
         }
 
+        testClass<AbstractKotlinGroupUsagesBySimilarityTest> {
+            model("findUsages/similarity/grouping", pattern = Patterns.forRegex("""^(.+)\.kt$"""))
+        }
+
         testClass<AbstractMoveTest> {
             model("refactoring/move", pattern = TEST, flatten = true)
         }
