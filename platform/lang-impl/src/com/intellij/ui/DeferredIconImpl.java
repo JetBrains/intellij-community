@@ -53,7 +53,6 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   private static final Icon EMPTY_ICON = EmptyIcon.create(16).withIconPreScaled(false);
   private final boolean myNeedReadAction;
   private boolean myDone;
-  private final boolean myAutoUpdatable;
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
@@ -74,7 +73,6 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     myParam = icon.myParam;
     myNeedReadAction = icon.myNeedReadAction;
     myDone = icon.myDone;
-    myAutoUpdatable = icon.myAutoUpdatable;
     myLastCalcTime = icon.myLastCalcTime;
     myLastTimeSpent = icon.myLastTimeSpent;
     myEvalListener = icon.myEvalListener;
@@ -84,7 +82,6 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   DeferredIconImpl(Icon baseIcon,
                    T param,
                    boolean needReadAction,
-                   boolean autoUpdatable,
                    @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator,
                    @Nullable BiConsumer<? super DeferredIcon, ? super Icon> listener) {
     myParam = param;
@@ -94,12 +91,11 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     myEvaluator = evaluator;
     myNeedReadAction = needReadAction;
     myEvalListener = listener;
-    myAutoUpdatable = autoUpdatable;
     checkDelegationDepth();
   }
 
   public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
-    this(baseIcon, param, needReadAction, false, t -> evaluator.fun(t), null);
+    this(baseIcon, param, needReadAction, t -> evaluator.fun(t), null);
   }
 
   @Override
@@ -136,7 +132,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   }
 
   public static <T> @NotNull DeferredIcon withoutReadAction(Icon baseIcon, T param, @NotNull java.util.function.Function<? super T, ? extends Icon> evaluator) {
-    return new DeferredIconImpl<>(baseIcon, param, false, false, evaluator, null);
+    return new DeferredIconImpl<>(baseIcon, param, false, evaluator, null);
   }
 
   @NotNull
@@ -192,23 +188,14 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
       int oldWidth = myScaledDelegateIcon.getIconWidth();
       final Icon[] evaluated = new Icon[1];
 
-      final long startTime = System.currentTimeMillis();
       boolean success = true;
       if (myNeedReadAction) {
         success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
           IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
-          if (myAutoUpdatable) {
-            myLastCalcTime = System.currentTimeMillis();
-            myLastTimeSpent = myLastCalcTime - startTime;
-          }
         });
       }
       else {
         IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
-        if (myAutoUpdatable) {
-          myLastCalcTime = System.currentTimeMillis();
-          myLastTimeSpent = myLastCalcTime - startTime;
-        }
       }
       final Icon result = evaluated[0];
       if (!success || result == null) {
@@ -253,9 +240,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
     }
 
     myDone = true;
-    if (!myAutoUpdatable) {
-      myEvaluator = null;
-    }
+    myEvaluator = null;
   }
 
   @NotNull
@@ -337,10 +322,6 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   }
 
   public boolean isDone() {
-    if (myAutoUpdatable && myDone && myLastCalcTime > 0 && System.currentTimeMillis() - myLastCalcTime > Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * myLastTimeSpent)) {
-      myDone = false;
-      myIsScheduled = false;
-    }
     return myDone;
   }
 
