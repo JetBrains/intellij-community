@@ -119,12 +119,13 @@ class SearchEverywhereFileFeaturesProvider
 
     return searchQuery.asSequence()
       .map { if (it == '\\') '/' else it }
-      .filterIndexed { index, c ->
+      .filterIndexed { searchQueryCharIndex, c ->
         // check if query starts with slash and contains just the filename (i.e. "/foo.ext")
         // by comparing query length and filename length we can check we should expect any more slashes in the query
-        if ((index == 0 && c == '/') && (searchQuery.length - 1) == fileName.length) return@filterIndexed true
+        if ((searchQueryCharIndex == 0 && c == '/') && (searchQuery.length - 1) == fileName.length) return@filterIndexed true
 
-        filePath[filePath.length - searchQuery.length + index] != c
+        val index = (filePath.length - searchQuery.length + searchQueryCharIndex).takeIf { it >= 0 } ?: return@filterIndexed true
+        filePath[index] != c
       }.none()
   }
 
