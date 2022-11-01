@@ -7,7 +7,7 @@ class PsiElement() {
         myTextRange = textRange;
     }
 
-    public fun getTex<caret>tRange(): TextRange {
+    public fun get<caret>TextRange(): TextRange {
         return myTextRange;
     }
 }
@@ -15,7 +15,7 @@ class PsiElement() {
 class TextRange(val startOffset: Int, val endOffset: Int) {
 
     fun containsOffset(caretOffset: Int): Boolean {
-
+        return true
     }
 
 }
