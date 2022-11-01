@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,13 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PackageDirectoryCache {
-  private static final Logger LOG = Logger.getInstance(PackageDirectoryCache.class);
+public class PackageDirectoryCacheImpl implements PackageDirectoryCache {
+  private static final Logger LOG = Logger.getInstance(PackageDirectoryCacheImpl.class);
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
-  public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
+  public PackageDirectoryCacheImpl(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
     for (String prefix : rootsByPackagePrefix.keySet()) {
       for (VirtualFile file : rootsByPackagePrefix.get(prefix)) {
         if (!file.isValid()) {
@@ -46,6 +47,7 @@ public class PackageDirectoryCache {
     myNonExistentPackages.clear();
   }
 
+  @Override
   public @NotNull List<VirtualFile> getDirectoriesByPackageName(final @NotNull String packageName) {
     PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
@@ -90,6 +92,7 @@ public class PackageDirectoryCache {
     return info;
   }
 
+  @Override
   public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName, @NotNull GlobalSearchScope scope) {
     final PackageInfo info = getPackageInfo(packageName);
     if (info == null) return Collections.emptySet();
@@ -103,12 +106,6 @@ public class PackageDirectoryCache {
       }
     }
     return Collections.unmodifiableSet(result);
-  }
-
-  public static @NotNull PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
-    MultiMap<String, VirtualFile> map = MultiMap.create();
-    map.putValues("", roots);
-    return new PackageDirectoryCache(map);
   }
 
   private final class PackageInfo {

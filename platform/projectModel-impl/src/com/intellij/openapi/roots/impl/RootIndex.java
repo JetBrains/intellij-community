@@ -57,7 +57,7 @@ class RootIndex {
   private final ConcurrentBitSet myNonInterestingIds = ConcurrentBitSet.create();
   @NotNull private final Project myProject;
   private final RootFileSupplier myRootSupplier;
-  final PackageDirectoryCache myPackageDirectoryCache;
+  final PackageDirectoryCacheImpl myPackageDirectoryCache;
   private volatile OrderEntryGraph myOrderEntryGraph;
 
   RootIndex(@NotNull Project project) {
@@ -100,7 +100,7 @@ class RootIndex {
     storeContentsBeneathExcluded(allRoots, hierarchies);
     storeOutsideProjectRootsButHasContentInside();
 
-    myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
+    myPackageDirectoryCache = new PackageDirectoryCacheImpl(rootsByPackagePrefix) {
       @Override
       protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
         return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
