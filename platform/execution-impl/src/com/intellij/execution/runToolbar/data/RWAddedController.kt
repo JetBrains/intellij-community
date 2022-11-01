@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar.data
 
+import javax.swing.SwingUtilities
+
 class RWAddedController : RWListenersController<RWActiveListener>() {
   fun enabled() {
     doWithListeners { listeners ->
@@ -11,6 +13,12 @@ class RWAddedController : RWListenersController<RWActiveListener>() {
   fun disabled() {
     doWithListeners { listeners ->
       listeners.forEach { it.disabled() }
+    }
+  }
+
+  fun initialize() {
+    doWithListeners { listeners ->
+      listeners.forEach { it.initialize() }
     }
   }
 }
@@ -59,8 +67,10 @@ abstract class RWListenersController<T> {
   }
 
   fun removeListener(listener: T) {
-    doWithListeners { listeners ->
-      listeners.remove(listener)
+    SwingUtilities.invokeLater {
+      doWithListeners { listeners ->
+        listeners.remove(listener)
+      }
     }
   }
 
