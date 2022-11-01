@@ -22,7 +22,7 @@ class IdentifierSymbolReference(
     val file = element.containingFile
     val declarations = file.collectNamedElements().filter { it.isDeclaration }
     val matchingDeclarations = declarations.filter { it.text == text }
-    if (matchingDeclarations.isEmpty()) {
+    if (!matchingDeclarations.iterator().hasNext()) {
       return listOf(element).mapNotNull {
         (it as? MermaidNamedPsiElement)?.let { element ->
           UnresolvedIdentifierSymbol.createPointer(
@@ -31,20 +31,20 @@ class IdentifierSymbolReference(
         }
       }
     }
-    return matchingDeclarations.mapNotNull { IdentifierSymbol.createPointer(it).dereference() }
+    return matchingDeclarations.mapNotNull { IdentifierSymbol.createPointer(it).dereference() }.toList()
   }
 
   override fun getCompletionVariants(): Collection<LookupElement> {
     val file = element.containingFile
     val labels = file.collectNamedElements()
-    return labels.map { LookupElementBuilder.create(it.name) }
+    return labels.map { LookupElementBuilder.create(it.name) }.toList()
   }
 
   companion object {
-    private fun PsiFile.collectNamedElements(): List<MermaidNamedPsiElement> {
+    private fun PsiFile.collectNamedElements(): Sequence<MermaidNamedPsiElement> {
       return SyntaxTraverser.psiTraverser(this)
         .filterIsInstance<MermaidNamedPsiElement>()
-        .toList()
+        .asSequence()
     }
   }
 }
