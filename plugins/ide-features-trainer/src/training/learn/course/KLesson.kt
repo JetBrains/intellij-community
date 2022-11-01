@@ -23,7 +23,7 @@ abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name)
   override lateinit var module: IftModule
     internal set
 
-  val fullLessonContent: LessonContext.() -> Unit get() = {
+  open val fullLessonContent: LessonContext.() -> Unit get() = {
     showWarningIfLessonsDisabled()
     showIndexingTask()
     lessonContent()
