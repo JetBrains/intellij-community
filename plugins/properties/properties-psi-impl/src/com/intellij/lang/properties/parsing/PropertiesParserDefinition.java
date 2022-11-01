@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PropertiesParserDefinition implements ParserDefinition {
 
-  public static final ILightStubFileElementType FILE_ELEMENT_TYPE = new ILightStubFileElementType(PropertiesLanguage.INSTANCE) {
+  public static final ILightStubFileElementType FILE_ELEMENT_TYPE = new ILightStubFileElementType("properties.file", PropertiesLanguage.INSTANCE) {
     @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
       PsiElement psi = chameleon.getPsi();
