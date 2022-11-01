@@ -63,6 +63,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private TreePath rollOverPath;
 
+  private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScroll());
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -639,6 +641,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
 
+  @ApiStatus.Internal
+  public void blockAutoScroll() {
+    putClientProperty(MOUSE_PRESSED_NON_FOCUSED, true);
+    System.out.println("set " + System.currentTimeMillis());
+    autoScrollUnblockTimer.restart();
+  }
+
+  @ApiStatus.Internal
+  public void unblockAutoScroll() {
+    System.out.println("reset " + System.currentTimeMillis());
+    putClientProperty(MOUSE_PRESSED_NON_FOCUSED, null);
+  }
+
   private static class MySelectionModel extends DefaultTreeSelectionModel {
 
     private TreePath[] myHeldSelection;
@@ -663,8 +678,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   private class MyMouseListener extends MouseAdapter {
+
+    private MyMouseListener() {
+      autoScrollUnblockTimer.setRepeats(false);
+    }
+
     @Override
     public void mousePressed(MouseEvent event) {
+      if (!hasFocus()) {
+        blockAutoScroll();
+      }
+
       setPressed(event, true);
 
       if (Boolean.FALSE.equals(UIUtil.getClientProperty(event.getSource(), AUTO_SELECT_ON_MOUSE_PRESSED))
@@ -722,7 +746,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     private void setPressed(MouseEvent e, boolean pressed) {
-      putClientProperty(MOUSE_PRESSED_NON_FOCUSED, pressed && !hasFocus());
       if (UIUtil.isUnderWin10LookAndFeel()) {
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);

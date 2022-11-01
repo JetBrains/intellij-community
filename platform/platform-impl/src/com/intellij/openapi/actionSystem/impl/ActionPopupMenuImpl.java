@@ -25,6 +25,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -200,6 +201,9 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         HelpTooltip.enableTooltip(targetComponent);
+        if (targetComponent instanceof Tree tree) {
+          tree.unblockAutoScroll();
+        }
         disposeMenu();
       }
 
