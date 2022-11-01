@@ -21,7 +21,6 @@ import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
@@ -82,7 +81,7 @@ object TraceManager {
 
       //if metrics path is relative -> resolve it against IDEA logDir:
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(metricsPathWithDatetime)
-      metricExporters.add(CsvMetricsExporter(pathResolvedAgainstLogDir));
+      metricExporters.add(CsvMetricsExporter(pathResolvedAgainstLogDir))
     }
 
     if (endpoint != null) {
