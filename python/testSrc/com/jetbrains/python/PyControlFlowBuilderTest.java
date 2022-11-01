@@ -478,6 +478,30 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-7758
+  public void testControlFlowAbruptedOnExit() {
+    doTest();
+  }
+
+  // PY-7758
+  public void testControlFlowAbruptedOnSysExit() {
+    doTest();
+  }
+
+  // PY-23859
+  public void testControlFlowAbruptedOnRealSelfFailAssumedByClassName() {
+    final String testName = getTestName(false);
+    configureByFile(testName + ".py");
+    final String fullPath = getTestDataPath() + testName + ".txt";
+    final PyClass pyClass = ((PyFile)myFile).getTopLevelClasses().get(0);
+    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods()[0]);
+    check(fullPath, flow);
+  }
+
+  public void testControlFlowAbruptedOnPytestFail() {
+    doTestFirstStatement();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");
