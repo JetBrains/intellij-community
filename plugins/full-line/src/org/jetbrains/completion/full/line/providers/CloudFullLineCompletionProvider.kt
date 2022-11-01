@@ -35,7 +35,6 @@ import java.util.concurrent.Future
 class CloudFullLineCompletionProvider : FullLineCompletionProvider {
   override fun getId(): String = "server"
 
-  @Suppress("RemoveExplicitTypeArguments")
   override fun getVariants(query: FullLineCompletionQuery, indicator: ProgressIndicator): List<RawFullLineProposal> {
     if (MlServerCompletionAuthState.getInstance().state.authToken.isBlank()) {
       FullLineNotifications.Cloud.showAuthorizationError(query.project)

@@ -20,7 +20,6 @@ object CreateComponentFunctionActionFactory : CreateCallableMemberFromUsageFacto
     override fun getElementOfInterest(diagnostic: Diagnostic): KtDestructuringDeclaration? {
         val element = diagnostic.psiElement
 
-        @Suppress("RemoveExplicitTypeArguments")
         return element.findParentOfType<KtDestructuringDeclaration>(strict = false)
             ?: element.findParentOfType<KtForExpression>(strict = false)?.destructuringDeclaration
     }

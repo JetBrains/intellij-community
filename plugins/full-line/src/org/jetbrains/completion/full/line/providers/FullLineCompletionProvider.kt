@@ -14,7 +14,6 @@ import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSetti
 import java.util.concurrent.CopyOnWriteArrayList
 
 interface FullLineCompletionProvider {
-  @Suppress("RemoveExplicitTypeArguments")
   fun getVariants(query: FullLineCompletionQuery, indicator: ProgressIndicator): List<RawFullLineProposal>
 
   fun getId(): String //@NlsSafe String TODO: mark API @NlsSafe when since build is 203+

@@ -1239,9 +1239,9 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
       continue
     }
 
-    @Suppress("RemoveExplicitTypeArguments") val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                                                      ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
+    val ep = app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
+             ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)
     if (ep != null) {
       if (!ep.isDynamic) {
         return getNonDynamicUnloadError(optionalDependencyPluginId)
