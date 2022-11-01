@@ -245,7 +245,21 @@ public class TestNGTreeHierarchyTest {
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError:' expected='expected|nnewline' actual='actual|nnewline'";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
-    
+  }
+
+  @Test
+  public void testComparisonFailureWithMessage() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    AssertionError throwable = new AssertionError("expected a new line expected [expected\nnewline] but found [actual\nnewline]");
+    MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
+                                                throwable, new Object[0]);
+    listener.onTestFailure(foo);
+    String message = buf.toString();
+    String expectedFailureMessage =
+      "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError: expected a new line' expected='expected|nnewline' actual='actual|nnewline'";
+    Assert.assertTrue(message, message.contains(expectedFailureMessage));
   }
   
   @Test
@@ -261,7 +275,6 @@ public class TestNGTreeHierarchyTest {
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='org.junit.ComparisonFailure: |[there is an unexpected value|] ' expected='1' actual='0' ";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
-
   }
 
   @Test
