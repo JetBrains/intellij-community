@@ -170,15 +170,15 @@ public final class LeakHunter {
   @TestOnly
   public static void appendLeakedObjectErrorDescription(@NotNull StringBuilder builder, @Nullable String knownHeapDumpPath) {
     builder.append("\nError description:")
-      .append("\n  This error means that the object is expected to be collected by the GC by this time, but it was not.")
+      .append("\n  This error means that the object is expected to be collected by the garbage collector by this time, but it was not.")
       .append("\n  Please, make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html");
 
     if (knownHeapDumpPath != null) {
       builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
     }
     else {
-      builder.append("\n  If this is a TC build, you can find a memory snapshot `").append(LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
-        .append("\n  Otherwise, try looking for '").append(HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below ↓.");
+      builder.append("\n  If this is a TeamCity build, you can find a memory snapshot `").append(LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
+        .append("\n  Otherwise, try looking for '").append(HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below in the log ↓.");
     }
   }
 }
