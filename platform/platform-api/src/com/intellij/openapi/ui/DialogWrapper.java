@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientDisposableProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -1667,7 +1668,7 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
-    Disposable uiParent = ApplicationManager.getApplication();
+    Disposable uiParent = ClientDisposableProvider.getCurrentDisposable();
     if (uiParent != null) { // may be null if no app yet (license agreement)
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
