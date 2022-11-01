@@ -30,6 +30,9 @@ class PythonDebuggerRunsWithoutErrorsTest : PyEnvTestCase() {
       }
 
       override fun before() {
+        // It's essential to stop at a breakpoint. Otherwise, the debugger process
+        // can finish before it is fully initialized. `KeyboardInterrupt` may be raised
+        // and not caught in such a case.
         toggleBreakpoint(6)
       }
 
