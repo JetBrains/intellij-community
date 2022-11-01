@@ -52,17 +52,16 @@ fun forEachKotlinOverride(
             val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
                 ?: return@runReadAction true
 
-            baseDescriptors.forEach { baseDescriptor ->
-                val superMember = baseDescriptor.source.getPsi()!!
-                val overridingDescriptor = (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
-                    inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+            baseDescriptors.asSequence()
+                .mapNotNull { baseDescriptor ->
+                    val superMember = baseDescriptor.source.getPsi()!!
+                    val overridingDescriptor =
+                        (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
+                            inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+                        }
+                    overridingDescriptor?.source?.getPsi()?.let { overridingMember -> superMember to overridingMember }
                 }
-                val overridingMember = overridingDescriptor?.source?.getPsi()
-                if (overridingMember != null) {
-                    if (!processor(superMember, overridingMember)) return@runReadAction false
-                }
-            }
-            true
+                .all { (superMember, overridingMember) -> processor(superMember, overridingMember) }
         }
     })
 

@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.util.takeWhileInclusive
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRunConfigurationModule, factory: ConfigurationFactory?) :
@@ -438,17 +439,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                     pkg.getFiles(scope).filterIsInstance<KtFile>().filter { ktFile ->
                         // for top level functions
                         ktFile.javaFileFacadeFqName.shortName().asString() == shortName ||
-                                run {
-                                    // or within a nested class-or-object
-                                    var parent: KtDeclarationContainer? = ktFile
-
-                                    className.split('.').forEach { name ->
-                                        parent = parent?.declarations
-                                            ?.filterIsInstance<KtClassOrObject>()
-                                            ?.firstOrNull { it.name == name } ?: return@run false
-                                    }
-                                    parent?.getMainFunCandidates()?.isNotEmpty() ?: false
-                                }
+                                ktFile.resolveClassNameInFile(className)?.getMainFunCandidates()?.isNotEmpty() == true
                     }
                 } ?: emptyList()
             }
@@ -468,6 +459,14 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 candidates.firstOrNull { it.hasMainFun(false) }
             }
         }
+
+        private fun KtFile.resolveClassNameInFile(className: String): KtDeclarationContainer? =
+            className.split('.').asSequence()
+                .runningFold<_, KtDeclarationContainer?>(this) { psiNode, classNamePart ->
+                    psiNode?.declarations?.filterIsInstance<KtClassOrObject>()?.firstOrNull { it.name == classNamePart }
+                }
+                .takeWhileInclusive { it != null }
+                .lastOrNull()
 
         private fun Project.shouldUseSlowResolve(): Boolean =
             takeUnless { it.isDefault }?.let { DumbService.getInstance(this).isDumb } ?: false
