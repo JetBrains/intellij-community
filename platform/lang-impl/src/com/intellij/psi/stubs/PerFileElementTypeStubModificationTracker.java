@@ -14,6 +14,7 @@ import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,7 +131,14 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
             FileBasedIndex.getFileId(info.file),
             null // see SingleEntryIndexForwardIndexAccessor#getDiffBuilder
           );
-        FileContent fileContent = FileContentImpl.createByFile(info.file, info.project);
+        // file might be deleted from actual fs, but still be "valid" in vfs (e.g. that happen sometimes in tests)
+        final FileContent fileContent;
+        try {
+           fileContent = FileContentImpl.createByFile(info.file, info.project);
+        } catch (FileNotFoundException ignored) {
+          registerModificationFor(info.type);
+          continue;
+        }
         Stub stub;
         try {
           FileBasedIndexImpl.markFileIndexed(info.file, fileContent);
