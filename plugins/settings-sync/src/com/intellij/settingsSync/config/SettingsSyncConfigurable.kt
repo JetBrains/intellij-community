@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.Cell
@@ -140,13 +141,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     return configPanel
   }
 
-  override fun serverStateCheckFinished(state: ServerState) {
-    when (state) {
-      ServerState.FileNotExists -> showEnableSyncDialog(false)
-      ServerState.UpToDate, ServerState.UpdateNeeded -> showEnableSyncDialog(true)
-      is ServerState.Error -> {
-        if (state != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), state.message)
+  override fun serverStateCheckFinished(updateResult: UpdateResult) {
+    when (updateResult) {
+      NoFileOnServer, FileDeletedFromServer  -> showEnableSyncDialog(false)
+      is Success -> showEnableSyncDialog(true)
+      is Error -> {
+        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
+          showError(message("notification.title.update.error"), updateResult.message)
         }
       }
     }
@@ -154,13 +155,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun updateFromServerFinished(result: UpdateResult) {
     when (result) {
-      is UpdateResult.Success -> {
+      is Success -> {
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
-      UpdateResult.NoFileOnServer -> {
+      NoFileOnServer, FileDeletedFromServer -> {
         showError(message("notification.title.update.error"), message("notification.title.update.no.such.file"))
       }
-      is UpdateResult.Error -> {
+      is Error -> {
         showError(message("notification.title.update.error"), result.message)
       }
     }
