@@ -32,7 +32,9 @@ import org.jetbrains.kotlin.resolve.CompositeBindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
+import org.jetbrains.kotlin.storage.SimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 internal class ProjectResolutionFacade(
@@ -215,8 +217,11 @@ internal class ProjectResolutionFacade(
     }
 
     internal fun fetchAnalysisResultsForElement(element: KtElement): AnalysisResult? {
-        val cache = analysisResultsSimpleLock.guarded { analysisResults.value!! }
-        val perFileCache = cache.getIfCached(element.containingKtFile)
+        val cache: SLRUCache<KtFile, PerFileAnalysisCache>? =
+            analysisResultsLock.tryGuarded {
+                analysisResults.upToDateOrNull?.get()
+            }
+        val perFileCache = cache?.getIfCached(element.containingKtFile)
         return perFileCache?.fetchAnalysisResults(element)
     }
 
@@ -248,6 +253,7 @@ internal class ProjectResolutionFacade(
     }
 
     companion object {
+
         /*
          * Concurrent access to Errors may lead to the class loading dead lock because of non-trivial initialization in Errors.
          * As a work-around, all Error classes are initialized beforehand.
@@ -265,3 +271,15 @@ internal class ProjectResolutionFacade(
         }
     }
 }
+
+const val CHECK_CANCELLATION_PERIOD_MS: Long = 50
+inline fun <T> ReentrantLock.tryGuarded(crossinline computable: () -> T): T? =
+    if (tryLock(CHECK_CANCELLATION_PERIOD_MS, TimeUnit.MILLISECONDS)) {
+        try {
+            computable()
+        } finally {
+            unlock()
+        }
+    } else {
+        null
+    }
