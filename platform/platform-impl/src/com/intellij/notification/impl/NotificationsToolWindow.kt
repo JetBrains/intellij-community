@@ -168,7 +168,7 @@ internal class NotificationContent(val project: Project,
   }
 
   private fun createSearchComponent(): SearchTextField {
-    val searchField = object : SearchTextField() {
+    val searchField = object : SearchTextField(false) {
       override fun updateUI() {
         super.updateUI()
         textEditor?.border = null
