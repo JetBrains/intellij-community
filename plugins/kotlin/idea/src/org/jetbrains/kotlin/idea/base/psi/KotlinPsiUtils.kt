@@ -207,9 +207,10 @@ fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
 
 fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
     sequence {
-        suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
-            element.children.forEach { visit(it) }
-            yield(element)
-        }
         visit(this@childrenDfsSequence)
     }
+
+private suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
+    element.children.forEach { visit(it) }
+    yield(element)
+}
