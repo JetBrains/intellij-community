@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.ui.IconReplacer;
+import com.intellij.ui.UpdatableIcon;
 import com.intellij.ui.icons.ReplaceableIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,9 @@ class FilteredIcon implements Icon {
       toPaint = IconLoader.renderFilteredIcon(baseIcon, filterSupplier, c);
       iconToPaint = toPaint;
     }
+    else {
+      new PaintNotifier(c, x, y).replaceIcon(baseIcon);
+    }
     toPaint.paintIcon(c != null ? c : IconLoader.fakeComponent, g, x, y);
   }
 
@@ -70,6 +74,30 @@ class FilteredIcon implements Icon {
         else {
           modificationCount += withModificationCount.getModificationCount();
         }
+      }
+      if (icon instanceof ReplaceableIcon replaceableIcon) {
+        replaceableIcon.replaceBy(this);
+      }
+      return IconReplacer.super.replaceIcon(icon);
+    }
+  }
+
+  // This replacer play visitor role
+  private static class PaintNotifier implements IconReplacer {
+    final @NotNull Component c;
+    final int x;
+    final int y;
+
+    private PaintNotifier(@NotNull Component c, int x, int y) {
+      this.c = c;
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override
+    public Icon replaceIcon(Icon icon) {
+      if (icon instanceof UpdatableIcon updatableIcon) {
+        updatableIcon.notifyPaint(c, x, y);
       }
       if (icon instanceof ReplaceableIcon replaceableIcon) {
         replaceableIcon.replaceBy(this);
