@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.Language
-import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.mermaid.lang.MermaidLanguage
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
 
 class MermaidCodeFenceLanguageProvider : CodeFenceLanguageProvider {
@@ -29,8 +29,7 @@ class MermaidCodeFenceLanguageProvider : CodeFenceLanguageProvider {
     }
 
     internal fun obtainMermaidLanguage(): Language {
-      val existingLanguage = Language.findLanguageByID("Mermaid")
-      return existingLanguage ?: PlainTextLanguage.INSTANCE
+      return MermaidLanguage
     }
   }
 }

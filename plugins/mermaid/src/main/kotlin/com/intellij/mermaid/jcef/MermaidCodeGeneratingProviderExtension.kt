@@ -4,19 +4,17 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
-import com.intellij.util.Base64
 import org.intellij.markdown.ast.ASTNode
-import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
-import org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
+import java.util.*
 
 @Suppress("UnstableApiUsage")
 internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFencePluginCacheCollector? = null) :
   MarkdownCodeFenceCacheableProvider(collector) {
   override fun isApplicable(language: String): Boolean {
-    return browserExtensionProvider?.let { it.isEnabled && it.isAvailable } == true && language == "mermaid"
+    return language == "mermaid"
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
@@ -38,7 +36,7 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
   }
 
   private fun escapeContent(content: String): String {
-    return Base64.encode(content.toByteArray())
+    return String(Base64.getEncoder().encode(content.toByteArray()))
   }
 
   private fun createRawContentElement(hash: String, content: String): String {
@@ -46,9 +44,6 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
   }
 
   companion object {
-    private val browserExtensionProvider
-      get() = MarkdownBrowserPreviewExtension.Provider.all.find { it is MermaidBrowserExtension.Provider } as? MermaidBrowserExtension.Provider
-
     fun determineTheme(): String {
       val registryValue = Registry.stringValue("markdown.mermaid.theme")
       if (registryValue == "follow-ide") {
