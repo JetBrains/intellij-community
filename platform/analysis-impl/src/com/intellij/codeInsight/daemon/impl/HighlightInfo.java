@@ -1111,7 +1111,7 @@ public class HighlightInfo implements Segment {
       setHint(true);
     }
     RangeHighlighterEx myHighlighter = highlighter;
-    if (myHighlighter != null) {
+    if (myHighlighter != null && myHighlighter.isValid()) {
       // highlighter already has been created, we need to update quickFixActionMarkers
       updateQuickFixFields(myHighlighter.getDocument(), new Long2ObjectOpenHashMap<>(), TextRangeScalarUtil.toScalarRange(myHighlighter));
     }
