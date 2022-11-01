@@ -102,6 +102,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
+import static com.jetbrains.python.console.PyConsoleUtil.ASYNCIO_REPL_ENV;
 
 /**
  * @author traff, oleg
@@ -118,8 +119,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
   public static final @NonNls String INLINE_OUTPUT_SUPPORTED = "INLINE_OUTPUT_SUPPORTED";
-
-  private static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
   private static final @NonNls String ASYNCIO_REPL_COMMAND = "-m asyncio";
 
   private static final Long WAIT_BEFORE_FORCED_CLOSE_MILLIS = 2000L;

@@ -74,6 +74,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
 import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
@@ -97,8 +98,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
-
-  private static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
 
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
@@ -140,11 +139,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) {
-    RunProfile runProfile = environment.getRunProfile();
-    if (RegistryManager.getInstance().is("python.debug.asyncio.repl") && runProfile instanceof AbstractPythonRunConfiguration<?>) {
-      ((AbstractPythonRunConfiguration<?>) runProfile).getEnvs().put(ASYNCIO_ENV, "True");
-    }
-
     return AppUIExecutor.onUiThread()
       .submit(FileDocumentManager.getInstance()::saveAllDocuments)
       .thenAsync(ignored -> {
@@ -626,6 +620,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     if (addCythonExtensionsToPythonPath) {
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, CYTHON_EXTENSIONS_DIR);
+    }
+
+    if (RegistryManager.getInstance().is("python.debug.asyncio.repl")) {
+      environmentController.putFixedValue(ASYNCIO_ENV, "True");
     }
 
     final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?

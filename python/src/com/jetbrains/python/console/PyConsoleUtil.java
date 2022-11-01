@@ -25,6 +25,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,8 @@ public final class PyConsoleUtil {
   public static final String EXECUTING_PROMPT = "";
 
   private static final String IPYTHON_PAGING_PROMPT = "---Return to continue, q to quit---";
+
+  public static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
 
   private static final String[] PROMPTS = new String[]{
     ORDINARY_PROMPT,
