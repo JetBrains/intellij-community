@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.impl.computeDocumentationBlocking
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -45,6 +46,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
@@ -53,6 +55,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
+import java.util.concurrent.Callable
 
 internal val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
 
@@ -362,6 +365,7 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<o
 }
 
 @JvmOverloads
+@RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {
   if (signature != null) {
     moveToOffsetBySignature(signature)
@@ -373,9 +377,10 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
     file = editor.injectedFile
     offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
   }
+  val gtduOutcome = ReadAction.nonBlocking(Callable { GotoDeclarationOrUsageHandler2.testGTDUOutcome (editor, file, offset) }).submit(com.intellij.util.concurrency.AppExecutorUtil.getAppExecutorService()).get()
   Assert.assertEquals(signature,
                       expectedOutcome,
-                      GotoDeclarationOrUsageHandler2.testGTDUOutcome(editor, file, offset))
+                      gtduOutcome)
 }
 
 fun CodeInsightTestFixture.checkGotoDeclaration(signature: String, expectedOffset: Int, expectedFileName: String? = null) {

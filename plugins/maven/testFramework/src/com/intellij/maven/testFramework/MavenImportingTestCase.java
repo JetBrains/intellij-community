@@ -48,7 +48,6 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -619,11 +618,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
-      myProjectsManager.importProjects();
     });
+    myProjectsManager.importProjects();
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
-    PlatformTestUtil.waitForPromise(promise);
+    ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
 
 
     if (failOnReadingError) {

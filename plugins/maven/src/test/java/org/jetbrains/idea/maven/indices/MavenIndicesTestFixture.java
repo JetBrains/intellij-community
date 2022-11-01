@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -61,6 +62,8 @@ public class MavenIndicesTestFixture {
 
     getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
     getIndicesManager().scheduleUpdateIndicesList(null);
+    getIndicesManager().waitForBackgroundTasksInTests();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void addToRepository(String relPath) throws IOException {

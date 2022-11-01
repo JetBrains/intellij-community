@@ -10,11 +10,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -25,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Internal api class for update maven indices state.
@@ -176,5 +181,18 @@ public final class MavenIndexUpdateManager implements Disposable {
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
+  }
+
+  @TestOnly
+  void waitForBackgroundTasksInTests() {
+    while (!myUpdatingQueue.isEmpty()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    try {
+      myUpdateQueueList.waitForAllExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

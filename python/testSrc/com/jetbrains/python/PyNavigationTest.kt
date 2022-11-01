@@ -4,8 +4,10 @@ package com.jetbrains.python
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -17,6 +19,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import junit.framework.TestCase
+import java.util.concurrent.Callable
 
 class PyNavigationTest : PyTestCase() {
 
@@ -220,7 +223,8 @@ class PyNavigationTest : PyTestCase() {
 
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = ReadAction.nonBlocking(
+      Callable{GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)}).submit(AppExecutorUtil.getAppExecutorService()).get()
     assertEquals(expectedOutcome, actualOutcome)
   }
 

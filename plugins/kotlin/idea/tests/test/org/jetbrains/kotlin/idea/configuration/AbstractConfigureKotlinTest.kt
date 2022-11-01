@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import junit.framework.TestCase
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
@@ -52,8 +55,16 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
         val collector = NotificationMessageCollector.create(project)
 
         configurator.getOrCreateKotlinLibrary(project, collector)
+        val writeActions = ArrayList<() -> Unit>()
         for (module in modules) {
-            configurator.configureModule(module, collector)
+            ReadAction.nonBlocking {
+                configurator.configureModule (module, collector, writeActions)
+            }.submit(AppExecutorUtil.getAppExecutorService()).get()
+        }
+        ApplicationManager.getApplication().runWriteAction{
+            writeActions.forEach { writeAction ->
+              writeAction.invoke()
+            }
         }
         collector.showNotification()
     }

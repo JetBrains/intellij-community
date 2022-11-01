@@ -6,6 +6,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -26,11 +27,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Collections.emptySet;
 
@@ -190,20 +193,24 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     VirtualFile t = root.findFileByRelativePath("foo.java");
     Object source1 = new Object();
     Object source2 = new Object();
-    myWolfTheProblemSolver.reportProblemsFromExternalSource(t, source1);
+    reportExternalProblem(source1, t);
     handler.verifyEvents(Collections.singleton(t), emptySet(), emptySet());
     myWolfTheProblemSolver.waitForFilesQueuedForInvalidationAreProcessed();
     assertTrue(myWolfTheProblemSolver.isProblemFile(t));
     assertTrue(myWolfTheProblemSolver.hasProblemFilesBeneath(myModule));
 
-    myWolfTheProblemSolver.reportProblemsFromExternalSource(t, source2);
+    reportExternalProblem(source2, t);
     handler.verifyEvents(emptySet(), Collections.singleton(t), emptySet());
 
-    myWolfTheProblemSolver.clearProblemsFromExternalSource(t, source2);
+    clearExternalProblem(t, source2);
     handler.verifyEvents(emptySet(), Collections.singleton(t), emptySet());
 
-    myWolfTheProblemSolver.clearProblemsFromExternalSource(t, source1);
+    clearExternalProblem(t, source1);
     handler.verifyEvents(emptySet(), emptySet(), Collections.singleton(t));
+  }
+
+  private void clearExternalProblem(VirtualFile t, Object source2) throws ExecutionException, InterruptedException {
+    ReadAction.nonBlocking(() -> myWolfTheProblemSolver.clearProblemsFromExternalSource(t, source2)).submit(AppExecutorUtil.getAppExecutorService()).get();
   }
 
   public void testRegularAndExternalProblems() throws Exception {
@@ -213,7 +220,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
     Object source1 = new Object();
     VirtualFile x = root.findFileByRelativePath("x/X.java");
-    myWolfTheProblemSolver.reportProblemsFromExternalSource(x, source1);
+    reportExternalProblem(source1, x);
     handler.verifyEvents(Collections.singleton(x), emptySet(), emptySet());
 
     assertNotEmpty(highlightErrors(x));
@@ -222,6 +229,10 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     deleteMethodWithProblem(x);
     assertEmpty(highlightErrors(x));
     handler.verifyEvents(emptySet(), Collections.singleton(x), emptySet());
+  }
+
+  private void reportExternalProblem(@NotNull Object source1, @NotNull VirtualFile x) throws ExecutionException, InterruptedException {
+    ReadAction.nonBlocking(() -> myWolfTheProblemSolver.reportProblemsFromExternalSource(x, source1)).submit(AppExecutorUtil.getAppExecutorService()).get();
   }
 
   @NotNull

@@ -29,7 +29,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -90,7 +89,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
   private fun getTestsExecutionTree() = invokeAndWaitIfNeeded {
     val tree = testExecutionConsole.resultsViewer.treeView!!
     TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
-    TreeUtil.expandAll(tree)
+    PlatformTestUtil.expandAll(tree)
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
     PlatformTestUtil.waitWhileBusy(tree)
     PlatformTestUtil.print(tree, false)

@@ -13,7 +13,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
 import java.io.File
 
 class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -48,7 +47,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val view = runInspections()
 
     updateTree(view)
-    TreeUtil.expandAll(view.tree)
+    PlatformTestUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
       -Inspection Results
@@ -67,7 +66,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     view.update()
 
     updateTree(view)
-    TreeUtil.expandAll(view.tree)
+    PlatformTestUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
       -Inspection Results
@@ -92,7 +91,7 @@ class InspectionResultViewTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     view.globalInspectionContext.uiOptions.SHOW_STRUCTURE = true
     view.update()
     updateTree(view)
-    TreeUtil.expandAll(view.tree)
+    PlatformTestUtil.expandAll(view.tree)
     updateTree(view)
     PlatformTestUtil.assertTreeEqual(view.tree, """
       -Inspection Results

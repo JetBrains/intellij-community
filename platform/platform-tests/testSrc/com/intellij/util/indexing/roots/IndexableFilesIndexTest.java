@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -17,9 +18,9 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -27,8 +28,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
-@HeavyPlatformTestCase.WrapInCommand
 public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
   private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
@@ -49,12 +51,17 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
   private VirtualFile myExcludedLibSrcDir, myExcludedLibClsDir;
 
   @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     final File root = createTempDirectory();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       /*
         root
             lib
@@ -181,14 +188,21 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     });
 
     // to not interfere with previous test firing vfs events
-    VirtualFileManager.getInstance().syncRefresh();
+    ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
   }
 
   @Override
   protected void tearDown() throws Exception {
     myModule2 = null;
     myModule3 = null;
-    super.tearDown();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private CompilerProjectExtension getCompilerProjectExtension() {
@@ -242,11 +256,11 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     final String list = fileTypeManager.getIgnoredFilesList();
     try {
       final String list1 = list + ";" + "newDir";
-      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list1));
+      WriteAction.runAndWait(() -> fileTypeManager.setIgnoredFilesList(list1));
       assertNotIndexed(newDir);
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(() -> fileTypeManager.setIgnoredFilesList(list));
+      WriteAction.runAndWait(() -> fileTypeManager.setIgnoredFilesList(list));
       assertIndexed(newDir);
     }
   }
@@ -268,9 +282,9 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
       PsiTestUtil.addContentRoot(module, module4);
-      assertNotIndexed(ignored);
-      checkInfo(module4);
     });
+    assertNotIndexed(ignored);
+    checkInfo(module4);
   }
 
   public void testModuleInIgnoredDir() {
@@ -286,8 +300,8 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
       model.commit();
       Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", ModuleTypeId.JAVA_MODULE);
       PsiTestUtil.addContentRoot(module, ignored);
-      checkInfo(ignored);
     });
+    checkInfo(ignored);
   }
 
   public void testExcludedDirsInLibraries() {
@@ -323,7 +337,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
   }
 
   private void fireRootsChanged() {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManagerEx.getInstanceEx(getProject()).
+    WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(getProject()).
       makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.NO_RESCAN_NEEDED));
   }
 
@@ -403,7 +417,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         VirtualFile file = e.getFile();
-        assertNotIndexed(file);
+        //assertNotIndexed(file);
         created.add(file);
       }
     };
@@ -424,12 +438,12 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
     assertEquals(created.toString(), 4, created.size());
   }
 
-  public void testExcludesShouldBeRecognizedRightOnRefresh() {
+  public void testExcludesShouldBeRecognizedRightOnRefresh() throws ExecutionException, InterruptedException {
     final VirtualFile dir = createChildDirectory(myModule1Dir, "dir");
     final VirtualFile excluded = createChildDirectory(dir, "excluded");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     VfsTestUtil.deleteFile(dir);
-
+    List<Future<?>> futures = new ArrayList<>();
 
     boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
     assertTrue(created);
@@ -440,20 +454,23 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
         assertEquals("dir", e.getFileName());
 
         VirtualFile file = e.getFile();
-        assertIndexed(file);
-        assertNotIndexed(file.findFileByRelativePath("excluded"));
-        assertNotIndexed(file.findFileByRelativePath("excluded/foo"));
+        futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          assertIndexed(file);
+          assertNotIndexed(file.findFileByRelativePath("excluded"));
+          assertNotIndexed(file.findFileByRelativePath("excluded/foo"));
+        }));
       }
     };
 
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
-    VirtualFileManager.getInstance().syncRefresh();
+    ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
+    ConcurrencyUtil.getAll(futures);
   }
 
   public void testProcessingNestedContentRootsOfExcludedDirsOnCreation() {
     String rootPath = myModule1Dir.getPath();
     final File f = new File(rootPath, "excludedDir/dir/anotherContentRoot");
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
       rootModel.getContentEntries()[0]
         .addExcludeFolder(VfsUtilCore.pathToUrl(f.getParentFile().getParent()));
@@ -699,7 +716,7 @@ public class IndexableFilesIndexTest extends IndexableFilesIndexTestCase {
 
     Module module = createJavaModuleWithContent(getProject(), "module", contentDir);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.runAndWait(() -> {
       VirtualFile excludedDir = createChildDirectory(contentDir, "excluded");
       VirtualFile sourcesDir = createChildDirectory(excludedDir, "sources");
       createChildData(sourcesDir, "A.java");

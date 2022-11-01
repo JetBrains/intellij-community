@@ -2,6 +2,7 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -21,6 +22,7 @@ import git4idea.repo.GitRepository;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.Future;
 
 import static com.intellij.tasks.vcs.GitTaskBranchesTest.createRepository;
 
@@ -46,8 +48,13 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     );
   }
 
-  public void testBranchWorkspace() throws IOException {
-    GitRepository repository = (GitRepository)createRepository("fooBar", getProject());
+  public void testBranchWorkspace() throws Exception {
+    Future<GitRepository> future =
+      ApplicationManager.getApplication().executeOnPooledThread(() -> (GitRepository)createRepository("fooBar", getProject()));
+    while (!future.isDone()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    GitRepository repository = future.get();
 
     VirtualFile firstFile = createFile(repository, "first.txt");
     VirtualFile secondFile = createFile(repository, "second.txt");

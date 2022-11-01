@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.notification
 
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -27,7 +28,7 @@ fun catchNotifications(project: Project, action: () -> Unit): List<Notification>
 
         action()
         connection.deliverImmediately()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        ApplicationManager.getApplication().invokeAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
         return notifications
     } finally {
         Disposer.dispose(myDisposable)

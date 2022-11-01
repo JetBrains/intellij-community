@@ -1,13 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.Executor.cd
@@ -69,7 +67,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     settings = GitVcsSettings.getInstance(project)
     appSettings = GitVcsApplicationSettings.getInstance()
     appSettings.setPathToGit(gitExecutable())
-    GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
+    BackgroundTaskUtil.executeOnPooledThread(testRootDisposable, {
+          GitExecutableManager.getInstance().testGitExecutableVersionValid(project) })
 
     logProvider = findGitLogProvider(project)
 

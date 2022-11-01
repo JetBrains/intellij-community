@@ -306,4 +306,9 @@ public final class MavenIndicesManager implements Disposable {
       }
     }
   }
+
+  @TestOnly
+  public void waitForBackgroundTasksInTests() {
+    myIndexUpdateManager.waitForBackgroundTasksInTests();
+  }
 }

@@ -297,7 +297,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return isWriteThread() && EDT.isCurrentThreadEdt();
+    return isWriteThread();
   }
 
   @Override
@@ -1028,7 +1028,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsNonDispatchThread() {
-    if (!isUnitTestMode() && !isHeadlessEnvironment() && isDispatchThread()) {
+    if (isDispatchThread()) {
       throwThreadAccessException("Access from event dispatch thread is not allowed");
     }
   }

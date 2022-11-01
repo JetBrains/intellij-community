@@ -159,6 +159,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     List<HighlightInfo> outsideResult = new ArrayList<>(100);
     List<HighlightInfo> insideResult = new ArrayList<>(100);
 

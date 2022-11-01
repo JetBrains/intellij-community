@@ -651,7 +651,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
-    return getFile().findReferenceAt(myEditor.getCaretModel().getOffset());
+    return ReadAction.compute(() -> getFile().findReferenceAt(myEditor.getCaretModel().getOffset()));
   }
 
   @Override
