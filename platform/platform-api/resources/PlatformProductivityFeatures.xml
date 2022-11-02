@@ -125,6 +125,48 @@
              successive-show="5"
              min-usage-count="5"
     />
+
+    <feature id="navigation.find.in.files"
+             tip-id="FindInPath"
+             min-usage-count="7">
+      <track-action id="FindInPath"/>
+    </feature>
+
+    <feature id="navigation.replace.in.files"
+             tip-id="FindReplaceToggle"
+             min-usage-count="3">
+      <track-action id="ReplaceInPath"/>
+    </feature>
+
+    <feature id="navigation.find.replace.in.files.toggle"
+             tip-id="FindReplaceToggle"
+             min-usage-count="3">
+      <track-action id="com.intellij.find.impl.FindUIHelper$1"/>
+    </feature>
+
+    <feature id="navigation.find"
+             tip-id="FindReplaceToggle"
+             min-usage-count="7">
+      <track-action id="Find"/>
+    </feature>
+
+    <feature id="navigation.replace"
+             tip-id="FindReplaceToggle"
+             min-usage-count="5">
+      <track-action id="Replace"/>
+    </feature>
+
+    <feature id="navigation.find.replace.toggle"
+             tip-id="FindReplaceToggle"
+             min-usage-count="3">
+      <track-action id="com.intellij.find.SearchReplaceComponent$ModeAction"/>
+    </feature>
+
+    <feature id="navigation.inheritance.hierarchy"
+             tip-id="HierarchyBrowser"
+             min-usage-count="3">
+      <track-action id="TypeHierarchy"/>
+    </feature>
   </group>
 
 
@@ -197,6 +239,14 @@
              first-show="3"
              successive-show="5"
     />
+
+    <feature id="editing.completion.show.liveTemplates"
+             tip-id="InsertLiveTemplate"
+             min-usage-count="3"
+             first-show="2"
+             successive-show="3">
+      <track-action id="InsertLiveTemplate"/>
+    </feature>
 
     <feature id="find.completion"
              tip-id="CodeCompletionInSearch"
@@ -282,6 +332,12 @@
              tip-id="CopyWithNoSelection"
              show-in-guide="false"
     />
+
+    <feature id="editing.reformat.code"
+             tip-id="LayoutCode"
+             min-usage-count="5">
+      <track-action id="ReformatCode"/>
+    </feature>
   </group>
 
 
@@ -362,6 +418,12 @@
              tip-id="AltInsertInEditor"
              min-usage-count="3">
       <track-action id="Generate"/>
+    </feature>
+
+    <feature id="codeassists.context.actions"
+             tip-id="ContextActions"
+             min-usage-count="7">
+      <track-action id="ShowIntentionActions"/>
     </feature>
   </group>
 
@@ -458,6 +520,24 @@
              show-in-guide="false">
       <track-action id="CloseAllEditors"/>
     </feature>
+
+    <feature id="ui.hide.tool.window"
+             tip-id="Escape"
+             min-usage-count="7">
+      <track-action id="HideActiveWindow"/>
+    </feature>
+
+    <feature id="ui.open.last.tool.window"
+             tip-id="Escape"
+             min-usage-count="3">
+      <track-action id="JumpToLastWindow"/>
+    </feature>
+
+    <feature id="ui.open.project.tool.window"
+             tip-id="FocusProjectToolWindow"
+             min-usage-count="7">
+      <track-action id="ActivateProjectToolWindow"/>
+    </feature>
   </group>
 
 
@@ -488,6 +568,16 @@
   </group>
 
 
+  <group id="profiler">
+    <feature id="profiler.open.snapshot"
+             tip-id="hprof"
+             min-usage-count="1">
+      <track-action id="com.intellij.profiler.actions.ImportProfilerResultAction$Open"/>
+      <track-action id="com.intellij.profiler.actions.ImportProfilerResultAction$Recent"/>
+    </feature>
+  </group>
+
+
   <group id="vcs">
     <feature id="vcs.show.local.history"
              tip-id="local_history"
@@ -502,6 +592,12 @@
              tip-id="CheckRegExp"
              show-in-guide="false">
       <track-intention class-name="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
+    </feature>
+
+    <feature id="intentions.edit.regexp"
+             tip-id="EditRegExp"
+             min-usage-count="1">
+      <track-intention class-name="com.intellij.codeInsight.intention.impl.QuickEditAction"/>
     </feature>
   </group>
 </component>
