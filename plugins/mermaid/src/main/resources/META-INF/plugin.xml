@@ -88,5 +88,7 @@
 
     <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
 
+    <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>
+
   </extensions>
 </idea-plugin>
