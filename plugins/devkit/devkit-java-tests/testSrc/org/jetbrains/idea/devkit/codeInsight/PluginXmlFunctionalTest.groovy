@@ -110,9 +110,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     String ideCore = PathUtil.getJarPathForClass(Configurable.class)
     moduleBuilder.addLibrary("ide-core", ideCore)
     String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
-    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl);
+    moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl)
 
-    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class));
+    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class))
   }
 
   // Gradle-like setup, but JBList not in Library
@@ -232,9 +232,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     String moduleDescriptorFilename = name+ ".xml"
     VirtualFile moduleRoot = myFixture.tempDirFixture.findOrCreateDir(name)
     VirtualFile file = myFixture.copyFileToProject(moduleDescriptorFilename, "/" + name + "/" + moduleDescriptorFilename)
-    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot);
-    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17());
-    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule);
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, name, moduleRoot)
+    ModuleRootModificationUtil.setModuleSdk(dependencyModule, IdeaTestUtil.getMockJdk17())
+    ModuleRootModificationUtil.addDependency(getModule(), dependencyModule)
     return file
   }
 
@@ -691,28 +691,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   @SuppressWarnings("ComponentNotRegistered")
-  void testActionHighlighting() {
-    configureByFile()
-    myFixture.copyFileToProject("MyBundle.properties")
-    myFixture.copyFileToProject("AnotherBundle.properties")
-    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
-    myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
-                                        PackagePrivateActionBase() {}
-                                    } """)
-    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase { }")
-    myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup { }")
-    myFixture.addClass("package foo.bar; import org.jetbrains.annotations.NotNull;" +
-                       "public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup { " +
-                       "    @Override " +
-                       "    public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) {" +
-                       "    return true;" +
-                       "  }" +
-                       "}")
-    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>")
-    myFixture.testHighlighting()
-  }
-
-  @SuppressWarnings("ComponentNotRegistered")
   void testActionCompletion() {
     configureByFile()
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
@@ -827,12 +805,12 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                 true)
   }
   static List<IntentionAction> actions(HighlightInfo info) {
-    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    List<IntentionAction> result = new ArrayList<IntentionAction>()
     info.findRegisteredQuickFix((descriptor,range) -> {
       result.add(descriptor.getAction())
-      return null;
-    });
-    return result;
+      return null
+    })
+    return result
   }
 
 

@@ -28,4 +28,28 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
   public void testActionWrongClass() {
     myFixture.testHighlighting("ActionWrongClass.xml");
   }
+
+  @SuppressWarnings({"ComponentNotRegistered", "removal"})
+  public void testActionComplexHighlighting() {
+    myFixture.copyFileToProject("MyBundle.properties");
+    myFixture.copyFileToProject("AnotherBundle.properties");
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
+    myFixture.addClass("""
+                       package foo;
+                       class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
+                         PackagePrivateActionBase() {}
+                       }""");
+    myFixture.addClass("package foo; public class ActionWithDefaultConstructor extends PackagePrivateActionBase {}");
+    myFixture.addClass("package foo.bar; public class BarGroup extends com.intellij.openapi.actionSystem.ActionGroup {}");
+    myFixture.addClass("""
+                       package foo.bar;
+                       import org.jetbrains.annotations.NotNull;
+                       public class GroupWithCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup {
+                         @Override
+                         public boolean canBePerformed(@NotNull com.intellij.openapi.actionSystem.DataContext context) { return true; }
+                       }""");
+
+    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>");
+    myFixture.testHighlighting("ActionComplexHighlighting.xml");
+  }
 }

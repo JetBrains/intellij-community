@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 
@@ -28,5 +29,38 @@ public class KtPluginXmlDomInspectionActionHighlightingTest extends PluginXmlDom
 
   public void testActionWrongClass() {
     myFixture.testHighlighting("ActionWrongClass.xml");
+  }
+
+  public void testActionComplexHighlighting() {
+    myFixture.copyFileToProject("MyBundle.properties");
+    myFixture.copyFileToProject("AnotherBundle.properties");
+    addKotlinClass("foo/bar/BarAction.kt",
+                   """
+                       package foo.bar
+                       class BarAction : com.intellij.openapi.actionSystem.AnAction() {}""");
+    addKotlinClass("foo/InternalActionBase.kt", """
+                       package foo
+                       internal class InternalActionBase : com.intellij.openapi.actionSystem.AnAction() {
+                         constructor() {}
+                       }""");
+    addKotlinClass("foo/ActionWithDefaultConstructor.kt", """
+                       package foo
+                       class ActionWithDefaultConstructor : InternalActionBase() {}""");
+    addKotlinClass("foo/bar/BarGroup.kt", """
+                       package foo.bar
+                       public class BarGroup : com.intellij.openapi.actionSystem.ActionGroup() {}""");
+    addKotlinClass("foo/bar/GroupWithCanBePerformed.kt", """
+                       package foo.bar
+                       public class GroupWithCanBePerformed : com.intellij.openapi.actionSystem.ActionGroup() {
+                         override fun canBePerformed(context: com.intellij.openapi.actionSystem.DataContext): Boolean {
+                           return true
+                         }
+                       }""");
+    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>");
+    myFixture.testHighlighting("ActionComplexHighlighting.xml");
+  }
+
+  private void addKotlinClass(String fileName, @Language("kotlin") String code) {
+    myFixture.addFileToProject(fileName, code);
   }
 }
