@@ -310,8 +310,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       replaceOptions.setToShortenFQN(myShortenFqn.isSelected());
       replaceOptions.setToUseStaticImport(myStaticImport.isSelected());
       replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
-
-
     }
     return result;
   }
@@ -329,6 +327,12 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
         setTextForEditor(text, myReplaceCriteriaEdit);
         myScopePanel.setScopesFromContext(null);
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (file != null) {
+          final Language language = file.getLanguage();
+          myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+        }
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
