@@ -150,7 +150,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   }
 
 
-  private val notEmptyRegex = Regex("^[a-zA-Z0-9_]+$")
+  private val notEmptyRegex = Regex("^[a-zA-Z0-9_-]+$")
 
 
   /**
