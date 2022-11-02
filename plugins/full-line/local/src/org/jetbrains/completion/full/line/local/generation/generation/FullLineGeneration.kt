@@ -14,7 +14,7 @@ class FullLineGeneration(
   model: ModelWrapper, tokenizer: Tokenizer, private val loggingCallback: ((String) -> Unit)? = null
 ) : BaseGeneration<FullLineGenerationConfig>(model, tokenizer) {
   override val prefixMatcher = FullLinePrefixMatcher(tokenizer)
-  private val eosIds = setOf(tokenizer.encode("\n").last(), tokenizer.encode("⇥").last(), tokenizer.encode("⇤").last())
+  private val eosIds = setOf(tokenizer.encode("\n").last())
   internal val oneTokenEosRegex = Regex("\\W+")
 
   override fun generate(
