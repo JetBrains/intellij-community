@@ -75,12 +75,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
   private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
   private var progress: CommitChecksProgressIndicator? by progressFlow::value
 
-  private val panel = object : NonOpaquePanel(VerticalLayout(4)) {
-    override fun updateUI() {
-      super.updateUI()
-      background = UIUtil.getTextFieldBackground() // Yes, background in NonOpaquePanel. See JBViewport.getBackground.
-    }
-  }
+  private val panel = NonOpaquePanel(VerticalLayout(4))
   private val scrollPane = FixedSizeScrollPanel(panel, JBDimension(400, 150))
 
   private val failuresPanel = FailuresPanel()

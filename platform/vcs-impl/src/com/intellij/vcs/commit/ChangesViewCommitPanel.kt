@@ -75,7 +75,6 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {
         border = emptyRight(6)
-        background = changesView.background
 
         addToLeft(toolbarPanel)
       }
