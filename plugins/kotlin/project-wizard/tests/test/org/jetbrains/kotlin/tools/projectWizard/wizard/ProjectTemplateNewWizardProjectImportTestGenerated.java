@@ -25,16 +25,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
         }
 
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
-        }
-
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
-        }
-
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("testData/projectTemplatesBuildFileGeneration/consoleApplication/");
@@ -68,16 +58,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
         }
 
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
-        }
-
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
-        }
-
         @TestMetadata("consoleApplication")
         public void testConsoleApplication() throws Exception {
             runTest("testData/projectTemplatesBuildFileGeneration/consoleApplication/");
@@ -109,16 +89,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
     public static class Maven extends AbstractProjectTemplateNewWizardProjectImportTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
-        }
-
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
-        }
-
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
         }
 
         @TestMetadata("consoleApplication")

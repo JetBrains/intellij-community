@@ -77,7 +77,6 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
                     KOTLIN_REPO_BOOTSTRAP_PLACEHOLDER
                 )
                 .replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
-                .replace("gradle-${Versions.GRADLE_VERSION_FOR_COMPOSE.text}-bin.zip", "gradle-GRADLE_VERSION_FOR_COMPOSE-bin.zip")
         }
         additionalChecks(expectedDirectory, tempDirectory)
     }

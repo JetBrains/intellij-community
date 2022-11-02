@@ -133,7 +133,7 @@ class KotlinPlugin(context: Context) : Plugin(context) {
             withAction {
                 val version = version.propertyValue
                 if (version.kind.isStable) return@withAction UNIT_SUCCESS
-                val pluginRepository = version.buildSystemPluginRepository(buildSystemType) ?: return@withAction UNIT_SUCCESS
+                val pluginRepository = version.buildSystemPluginRepository(buildSystemType)
                 BuildSystemPlugin.pluginRepositoreis.addValues(pluginRepository) andThen
                         updateBuildFiles { buildFile ->
                             buildFile.withIrs(
@@ -218,12 +218,6 @@ enum class ProjectKind(
     Multiplatform(KotlinNewProjectWizardBundle.message("project.kind.multiplatform"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Android(KotlinNewProjectWizardBundle.message("project.kind.android"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
     Js(KotlinNewProjectWizardBundle.message("project.kind.kotlin.js"), supportedBuildSystems = BuildSystemType.ALL_GRADLE),
-    COMPOSE(
-        KotlinNewProjectWizardBundle.message("project.kind.compose"),
-        supportedBuildSystems = setOf(BuildSystemType.GradleKotlinDsl),
-        shortName = KotlinNewProjectWizardBundle.message("project.kind.compose.short.name"),
-        message = "uses Kotlin ${Versions.KOTLIN_VERSION_FOR_COMPOSE}"
-    )
 }
 
 fun List<Module>.withAllSubModules(includeSourcesets: Boolean = false): List<Module> = buildList {
