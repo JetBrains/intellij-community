@@ -4,7 +4,6 @@ package com.intellij.ide.ui.customization;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -491,7 +490,6 @@ public final class CustomizationUtil {
                                      setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
                                      init();
                                      setSize(600, 600);
-                                     setOKButtonText(ActionsBundle.message("apply.toolbar.customization"));
                                    }
 
                                    @Override
