@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHi
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1LocalInspectionTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -40,11 +41,7 @@ import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.kotlin.idea.completion.test.*
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionCharFilterTest
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractJavaCompletionHandlerTest
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractKeywordCompletionHandlerTest
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractSmartCompletionHandlerTest
+import org.jetbrains.kotlin.idea.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.configuration.AbstractGradleConfigureProjectByChangingFileTest
@@ -89,7 +86,6 @@ import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest2
 import org.jetbrains.kotlin.idea.intentions.AbstractMultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocHighlightingTest
 import org.jetbrains.kotlin.idea.kdoc.AbstractKDocTypingTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
@@ -636,7 +632,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinGroupUsagesBySimilarityTest> {
-            model("findUsages/similarity/grouping", pattern = Patterns.forRegex("""^(.+)\.kt$"""))
+            model("findUsages/similarity/grouping", pattern = KT)
+        }
+
+        testClass<AbstractKotlinGroupUsagesBySimilarityFeaturesTest> {
+            model("findUsages/similarity/features", pattern = KT)
         }
 
         testClass<AbstractMoveTest> {
