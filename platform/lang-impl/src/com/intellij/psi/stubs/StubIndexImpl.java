@@ -201,7 +201,6 @@ public final class StubIndexImpl extends StubIndexEx {
     if (!myInitialized) {
       return;
     }
-    myPerFileElementTypeStubModificationTracker.flush();
     for (UpdatableIndex<?, Void, FileContent, ?> index : getAsyncState().myIndices.values()) {
       index.flush();
     }

@@ -170,10 +170,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myStubIndexer.drop();
   }
 
-  public void flush() {
-    endUpdatesBatch();
-  }
-
   private static @Nullable StubFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
     if (shouldSkipFile(indexedFile)) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
