@@ -140,6 +140,7 @@ class LocalModelsManager : ConfigurableModelsManager {
 
   override fun loadModel(model: ModelSchema, loggingCallback: ((String) -> Unit)?): CachingLocalPipeline {
     assert(!ApplicationManager.getApplication().isDispatchThread) { "IO operations are prohibited in EDT" }
+    val root = root.resolve(model.uid())
     return CachingLocalPipeline(
       root.resolve(model.bpe.path),
       root.resolve(model.binary.path),
