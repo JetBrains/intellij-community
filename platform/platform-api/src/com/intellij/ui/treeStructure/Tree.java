@@ -48,7 +48,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
   @ApiStatus.Internal
-  public static final Key<Boolean> MOUSE_PRESSED_NON_FOCUSED = Key.create("mouse pressed state");
+  public static final Key<Boolean> AUTO_SCROLL_FROM_SOURCE_BLOCKED = Key.create("auto scroll from source temporarily blocked");
 
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
@@ -63,7 +63,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private TreePath rollOverPath;
 
-  private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScroll());
+  private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
 
   public Tree() {
     this(new DefaultMutableTreeNode());
@@ -641,17 +641,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
 
-  @ApiStatus.Internal
-  public void blockAutoScroll() {
-    putClientProperty(MOUSE_PRESSED_NON_FOCUSED, true);
-    System.out.println("set " + System.currentTimeMillis());
+  private void blockAutoScrollFromSource() {
+    ClientProperty.put(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED, true);
     autoScrollUnblockTimer.restart();
   }
 
   @ApiStatus.Internal
-  public void unblockAutoScroll() {
-    System.out.println("reset " + System.currentTimeMillis());
-    putClientProperty(MOUSE_PRESSED_NON_FOCUSED, null);
+  public void unblockAutoScrollFromSource() {
+    ClientProperty.remove(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
   private static class MySelectionModel extends DefaultTreeSelectionModel {
@@ -686,7 +683,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override
     public void mousePressed(MouseEvent event) {
       if (!hasFocus()) {
-        blockAutoScroll();
+        blockAutoScrollFromSource();
       }
 
       setPressed(event, true);

@@ -202,7 +202,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
         HelpTooltip.enableTooltip(targetComponent);
         if (targetComponent instanceof Tree tree) {
-          tree.unblockAutoScroll();
+          tree.unblockAutoScrollFromSource();
         }
         disposeMenu();
       }
