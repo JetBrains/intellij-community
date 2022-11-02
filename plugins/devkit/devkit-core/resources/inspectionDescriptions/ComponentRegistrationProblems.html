@@ -1,20 +1,14 @@
 <html>
 <body>
-Reports incorrect registration of plugin components
-(Components and Actions) both in code and in the <code>plugin.xml</code> descriptor.
+Reports incorrect registration of plugin components (Actions and Components).
 <p>
   The following problems are reported:
 </p>
 <ul>
-  <li>Component implementation-class is not assignable to its interface-class (<code>plugin.xml</code>)</li>
-  <li>Incorrect component registration, e.g. <code>ProjectComponent</code> is registered as Application Component,
-    or the class doesn't implement any component interface at all (<code>plugin.xml</code> and Java code)
+  <li>Action/Component implementation class is abstract.</li>
+  <li>Class is registered in plugin.xml as action but does not extend <code>AnAction</code> class.</li>
+  <li>Action class does not have a public no-argument constructor.
   </li>
-  <li>Incorrect class modifiers: Action classes must be <code>public</code> and must have a public
-    no-argument constructor. Additionally, Action and Component implementation classes
-    must not be abstract (<code>plugin.xml</code> and Java code)
-  </li>
-  <li>Duplicate interface-class: A class may only be used once as interface-class (<code>plugin.xml</code>)</li>
 </ul>
 </body>
 </html>
