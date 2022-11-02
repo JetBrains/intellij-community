@@ -29,7 +29,6 @@ import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public final class JUnitUtil {
   public static final String TEST_CASE_CLASS = "junit.framework.TestCase";
   private static final String TEST_INTERFACE = "junit.framework.Test";
@@ -150,6 +149,7 @@ public final class JUnitUtil {
     if (!psiMethod.getName().startsWith("test")) return false;
     if (checkClass) {
       PsiClass testCaseClass = getTestCaseClassOrNull(aClass);
+      if (psiMethod.getContainingClass() == null) return false;
       if (testCaseClass == null || !psiMethod.getContainingClass().isInheritor(testCaseClass, true)) return false;
     }
     return PsiType.VOID.equals(psiMethod.getReturnType());
@@ -496,7 +496,7 @@ public final class JUnitUtil {
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-      return psiClass != null && Arrays.stream(runners).anyMatch(runner -> InheritanceUtil.isInheritor(psiClass, runner));
+      return psiClass != null && ContainerUtil.exists(runners, runner -> InheritanceUtil.isInheritor(psiClass, runner));
     }
     return false;
   }
