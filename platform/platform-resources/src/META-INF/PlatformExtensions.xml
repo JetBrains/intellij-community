@@ -1023,8 +1023,6 @@
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs" defaultValue=""/>
     <registryKey key="jdk.downloader.reuse.installed" defaultValue="true" description="Allow to reuse locally installed with the JDK Downloader JDK instead of download it again"/>
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true" description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
-    <registryKey key="jdk.downloader.assume.m1" defaultValue="false" description="Makes IntelliJ truly believe it's running on Apple Silicon compatible hardware"/>
-    <registryKey key="jdk.downloader.assume.linux.aarch64" defaultValue="false" description="Makes IntelliJ truly believe it's running on arm64 compatible hardware for Linux OS"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration" />
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
