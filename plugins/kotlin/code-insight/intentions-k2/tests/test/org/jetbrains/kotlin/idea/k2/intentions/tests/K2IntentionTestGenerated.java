@@ -1528,6 +1528,94 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertForEachToForLoop")
+    public static class ConvertForEachToForLoop extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("complexReceiver.kt")
+        public void testComplexReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/complexReceiver.kt");
+        }
+
+        @TestMetadata("explicitFunctionLiteral.kt")
+        public void testExplicitFunctionLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/explicitFunctionLiteral.kt");
+        }
+
+        @TestMetadata("extraArguments.kt")
+        public void testExtraArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/extraArguments.kt");
+        }
+
+        @TestMetadata("implicitFunctionLiteralParameter.kt")
+        public void testImplicitFunctionLiteralParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
+        }
+
+        @TestMetadata("keepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");
+        }
+
+        @TestMetadata("parenthesizedExpression.kt")
+        public void testParenthesizedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple2.kt");
+        }
+
+        @TestMetadata("simpleCharSequence.kt")
+        public void testSimpleCharSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleCharSequence.kt");
+        }
+
+        @TestMetadata("simpleNotAvailable.kt")
+        public void testSimpleNotAvailable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleNotAvailable.kt");
+        }
+
+        @TestMetadata("simpleSequence.kt")
+        public void testSimpleSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleSequence.kt");
+        }
+
+        @TestMetadata("typeArgumentPresent.kt")
+        public void testTypeArgumentPresent() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/typeArgumentPresent.kt");
+        }
+
+        @TestMetadata("userDefined.kt")
+        public void testUserDefined() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/userDefined.kt");
+        }
+
+        @TestMetadata("withNestedReturn.kt")
+        public void testWithNestedReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withNestedReturn.kt");
+        }
+
+        @TestMetadata("withReturn.kt")
+        public void testWithReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withReturn.kt");
+        }
+
+        @TestMetadata("zeroArguments.kt")
+        public void testZeroArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/zeroArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitType")
     public static class RemoveExplicitType extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

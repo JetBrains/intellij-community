@@ -5362,16 +5362,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
-        @TestMetadata("infixCall.kt")
-        public void testInfixCall() throws Exception {
-            runTest("testData/intentions/convertForEachToForLoop/infixCall.kt");
-        }
-
-        @TestMetadata("infixCallNotAvailable.kt")
-        public void testInfixCallNotAvailable() throws Exception {
-            runTest("testData/intentions/convertForEachToForLoop/infixCallNotAvailable.kt");
-        }
-
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/keepComments.kt");
@@ -5387,9 +5377,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/simple.kt");
         }
 
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/simple2.kt");
+        }
+
         @TestMetadata("simpleCharSequence.kt")
         public void testSimpleCharSequence() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/simpleCharSequence.kt");
+        }
+
+        @TestMetadata("simpleNotAvailable.kt")
+        public void testSimpleNotAvailable() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/simpleNotAvailable.kt");
         }
 
         @TestMetadata("simpleSequence.kt")

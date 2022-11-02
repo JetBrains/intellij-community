@@ -13,6 +13,12 @@ fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
 }
 
 /**
+ * Returns a [Set] with its [SmartPsiElementPointer]s dereferenced. Pointers that cannot be dereferenced are ignored.
+ */
+fun <E : PsiElement> Set<SmartPsiElementPointer<E>>.dereferenceValidPointers(): Set<E> = mapNotNull { it.element }.toSet()
+
+
+/**
  * Returns a [Map] with its [SmartPsiElementPointer] keys dereferenced. Entries whose pointers cannot be dereferenced are ignored.
  */
 fun <E : PsiElement, V> Map<SmartPsiElementPointer<E>, V>.dereferenceValidKeys(): Map<E, V> =
