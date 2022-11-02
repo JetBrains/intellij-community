@@ -170,7 +170,7 @@ public final class LeakHunter {
   public static void appendLeakedObjectErrorDescription(@NotNull StringBuilder builder, @Nullable String knownHeapDumpPath) {
     builder.append("\nError description:")
       .append("\n  This error means that the object is expected to be collected by the garbage collector by this time, but it was not.")
-      .append("\n  Please, make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html");
+      .append("\n  Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html");
 
     if (knownHeapDumpPath != null) {
       builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
