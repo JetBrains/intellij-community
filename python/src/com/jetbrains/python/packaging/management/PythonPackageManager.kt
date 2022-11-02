@@ -23,7 +23,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract suspend fun reloadPackages(): Result<List<PythonPackage>>
 
   companion object {
-    fun forSdk(project: Project, sdk: Sdk): PythonPackageManager? {
+    fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       return service<PackageManagerHolder>().forSdk(project, sdk)
     }
 

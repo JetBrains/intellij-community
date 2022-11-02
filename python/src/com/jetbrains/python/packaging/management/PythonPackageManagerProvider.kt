@@ -9,6 +9,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface PythonPackageManagerProvider {
 
+  /**
+   * Creates PythonPackageManager for Python SDK depending on interpreter type,
+   * package management files etc.
+   * Sdk is expected to be a Python Sdk and have PythonSdkAdditionalData.
+   */
   fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager?
 
   companion object {
