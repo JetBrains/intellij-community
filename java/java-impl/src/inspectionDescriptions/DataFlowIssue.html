@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports code constructs that always violate nullability contracts, may throw exceptions, or just redundant, based on data flow analysis.
+Reports code constructs that always violate nullability contracts, may throw exceptions, or are just redundant, based on data flow analysis.
 <p>Examples:</p>
 <pre><code>if (array.length &lt; index) {
   System.out.println(array[index]);
@@ -16,9 +16,9 @@ Integer square(@Nullable Integer input) {
     return input == null ? null : input * input;
 }</code></pre>
 <p>
-  The inspection behavior may be controlled by a number of annotations, such as 
+  The inspection behavior may be controlled by a number of annotations, such as
   <a href="https://www.jetbrains.com/help/idea/nullable-and-notnull-annotations.html">nullability</a> annotations,
-  <code><a href="https://www.jetbrains.com/help/idea/contract-annotations.html">@Contract</a></code> annotation, 
+  <code><a href="https://www.jetbrains.com/help/idea/contract-annotations.html">@Contract</a></code> annotation,
   <code>@Range</code> annotation and so on.
 </p>
 <!-- tooltip end -->
@@ -45,7 +45,8 @@ Integer square(@Nullable Integer input) {
   </li>
 </ul>
 <p>
-  Before IntelliJ IDEA 2022.3, this inspection was part of "Constant Conditions & Exceptions" inspection. Now, it split into two inspections:
+  Before IntelliJ IDEA 2022.3, this inspection was part of the "Constant Conditions & Exceptions" inspection.
+  Now, it is split into two inspections:
   "Constant Values" and "Nullability and data flow problems".
 </p>
 </body>
