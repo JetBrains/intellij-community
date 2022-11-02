@@ -86,5 +86,7 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection"/>
 
+    <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
+
   </extensions>
 </idea-plugin>
