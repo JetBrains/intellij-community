@@ -64,15 +64,17 @@
              tip-id="FileStructurePopup"
              min-usage-count="3"
              first-show="2"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="FileStructurePopup"/>
+    </feature>
 
     <feature id="navigation.recent.files"
              tip-id="RecentFiles"
              min-usage-count="3"
              first-show="3"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="RecentFiles"/>
+    </feature>
 
     <feature id="navigation.recent.locations"
              tip-id="recent-locations"
@@ -84,22 +86,25 @@
              tip-id="SelectIn"
              min-usage-count="3"
              first-show="4"
-             successive-show="7"
-    />
+             successive-show="7">
+      <track-action id="SelectIn"/>
+    </feature>
 
     <feature id="navigation.goto.declaration"
              tip-id="GoToDeclaration"
              min-usage-count="15"
              first-show="1"
-             successive-show="4"
-    />
+             successive-show="4">
+      <track-action id="GotoDeclaration"/>
+    </feature>
 
     <feature id="navigation.goto.usages"
              tip-id="ShowUsages"
              min-usage-count="3"
              first-show="5"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="ShowUsages"/>
+    </feature>
 
     <feature id="navigation.find.usages"
              tip-id="find_usages"
@@ -111,8 +116,9 @@
              tip-id="GoToInspection"
              min-usage-count="3"
              first-show="5"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="RunInspection"/>
+    </feature>
 
     <feature id="navigation.goto.file.line"
              tip-id="GotoLineInFile"
@@ -123,8 +129,9 @@
              tip-id="Switcher"
              first-show="10"
              successive-show="5"
-             min-usage-count="5"
-    />
+             min-usage-count="5">
+      <track-action id="Switcher"/>
+    </feature>
 
     <feature id="navigation.find.in.files"
              tip-id="FindInPath"
@@ -175,29 +182,33 @@
              tip-id="CodeCompletion"
              min-usage-count="15"
              first-show="1"
-             successive-show="3"
-    />
+             successive-show="3">
+      <track-action id="EditorChooseLookupItem"/>
+    </feature>
 
     <feature id="editing.completion.replace"
              tip-id="TabInLookups"
              min-usage-count="10"
              first-show="6"
-             successive-show="8"
-    />
+             successive-show="8">
+      <track-action id="EditorChooseLookupItemReplace"/>
+    </feature>
 
     <feature id="codeassists.complete.statement"
              tip-id="CompleteStatement"
              first-show="3"
              successive-show="5"
-             min-usage-count="10"
-    />
+             min-usage-count="10">
+      <track-action id="EditorChooseLookupItemCompleteStatement"/>
+    </feature>
 
     <feature id="editing.completion.finishByCtrlDot"
              tip-id="CtrlDotInLookups"
              min-usage-count="7"
              first-show="4"
-             successive-show="8"
-    />
+             successive-show="8">
+      <track-action id="EditorChooseLookupItemDot"/>
+    </feature>
 
     <feature id="editing.completion.finishByDotEtc"
              tip-id="DotEtcInLookups"
@@ -217,15 +228,18 @@
              tip-id="CancelByControlArrows"
              min-usage-count="10"
              first-show="2"
-             successive-show="3"
-    />
+             successive-show="3">
+      <track-action id="EditorLookupDown"/>
+      <track-action id="EditorLookupUp"/>
+    </feature>
 
     <feature id="editing.completion.changeSorting"
              tip-id="ChangeSorting"
              min-usage-count="10"
              first-show="2"
-             successive-show="3"
-    />
+             successive-show="3">
+      <track-action id="com.intellij.codeInsight.lookup.impl.LookupUi$ChangeSortingAction"/>
+    </feature>
 
     <feature id="editing.completion.postfix"
              tip-id="PostfixCompletion"
@@ -252,8 +266,9 @@
              tip-id="CodeCompletionInSearch"
              first-show="10"
              successive-show="3"
-             min-usage-count="5"
-    />
+             min-usage-count="5">
+      <track-action id="com.intellij.find.editorHeaderActions.VariantsCompletionAction"/>
+    </feature>
   </group>
 
 
@@ -271,8 +286,9 @@
              tip-id="DeleteLine"
              min-usage-count="1"
              first-show="2"
-             successive-show="1"
-    />
+             successive-show="1">
+      <track-action id="EditorDeleteLine"/>
+    </feature>
 
     <feature id="editing.duplicate"
              tip-id="CtrlD"
@@ -284,11 +300,15 @@
              tip-id="Scratch"
              min-usage-count="10"
              first-show="2"
-             successive-show="3"/>
+             successive-show="3">
+      <track-action id="NewScratchFile"/>
+    </feature>
 
     <feature id="editing.add.carets.using.double.ctrl"
-             tip-id="Multicursor"
-    />
+             tip-id="Multicursor">
+      <track-action id="EditorCloneCaretAbove"/>
+      <track-action id="EditorCloneCaretBelow"/>
+    </feature>
 
     <feature id="editing.convert.line.separators"
              tip-id="LineEndings">
@@ -346,15 +366,17 @@
              tip-id="QuickJavaDoc"
              min-usage-count="3"
              first-show="3"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="QuickJavaDoc"/>
+    </feature>
 
     <feature id="codeassists.quickdefinition"
              tip-id="CtrlShiftI"
              min-usage-count="9"
              first-show="3"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="QuickImplementations"/>
+    </feature>
 
     <feature id="codeassists.quickdefinition.lookup"
              tip-id="CtrlShiftIForLookup"
@@ -384,8 +406,9 @@
              tip-id="CommentCode"
              first-show="6"
              successive-show="5"
-             min-usage-count="3"
-    />
+             min-usage-count="3">
+      <track-action id="CommentByLineComment"/>
+    </feature>
 
     <feature id="codeassists.overrideimplement"
              tip-id="OverrideImplementMethods"
@@ -404,15 +427,17 @@
              tip-id="InspectCode"
              first-show="3"
              min-usage-count="5"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="InspectCode"/>
+    </feature>
 
     <feature id="codeassists.parameterInfo"
              tip-id="ParameterInfo"
              min-usage-count="3"
              first-show="3"
-             successive-show="5"
-    />
+             successive-show="5">
+      <track-action id="ParameterInfo"/>
+    </feature>
 
     <feature id="codeassists.generate.code"
              tip-id="AltInsertInEditor"
@@ -433,8 +458,9 @@
              tip-id="SurroundWith"
              first-show="5"
              successive-show="5"
-             min-usage-count="4"
-    />
+             min-usage-count="4">
+      <track-action id="SurroundWith"/>
+    </feature>
 
     <feature id="refactoring.introduceVariable"
              tip-id="IntroduceVariable"
@@ -454,8 +480,9 @@
              tip-id="Rename"
              min-usage-count="2"
              first-show="1"
-             successive-show="3"
-    />
+             successive-show="3">
+      <track-action id="RenameElement"/>
+    </feature>
 
     <feature id="refactoring.show.quick.list"
              tip-id="RefactorThis"
@@ -467,8 +494,9 @@
              tip-id="ExtractMethod"
              min-usage-count="5"
              first-show="1"
-             successive-show="3"
-    />
+             successive-show="3">
+      <track-action id="ExtractMethod"/>
+    </feature>
   </group>
 
 
@@ -484,8 +512,9 @@
              tip-id="QuickSwitchScheme"
              first-show="7"
              successive-show="3"
-             min-usage-count="1"
-    />
+             min-usage-count="1">
+      <track-action id="QuickChangeScheme"/>
+    </feature>
 
     <feature id="ui.recentchanges"
              tip-id="RecentChanges"
@@ -506,8 +535,9 @@
              tip-id="RecentSearch"
              first-show="10"
              successive-show="3"
-             min-usage-count="5"
-    />
+             min-usage-count="5">
+      <track-action id="com.intellij.find.SearchTextArea$ShowHistoryAction"/>
+    </feature>
 
     <feature id="ui.close.other.editors"
              tip-id="CloseOthers"

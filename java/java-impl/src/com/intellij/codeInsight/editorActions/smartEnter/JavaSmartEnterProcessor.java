@@ -4,7 +4,6 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
@@ -101,8 +100,6 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
-
     return invokeProcessor(editor, psiFile, false);
   }
 

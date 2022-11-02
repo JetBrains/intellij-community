@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -47,7 +46,6 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration")
     if (navigateToLookupItem(project)) {
       return
     }

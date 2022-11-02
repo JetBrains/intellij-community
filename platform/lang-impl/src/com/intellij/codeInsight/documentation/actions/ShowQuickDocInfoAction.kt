@@ -63,7 +63,6 @@ open class ShowQuickDocInfoAction : AnAction(),
     val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
     if (editor != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE)
       val activeLookup = LookupManager.getActiveLookup(editor)
       if (activeLookup != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE)
