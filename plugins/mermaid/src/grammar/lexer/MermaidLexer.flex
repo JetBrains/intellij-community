@@ -535,6 +535,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---entity-relationship----------------------------------------------------------
 <entity_relationship> {
 	[a-zA-Z][\w\-\.]* { return ID; }
+  [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+
   \|o { return EntityRelationship.ZERO_OR_ONE_LEFT; }
   \}o { return EntityRelationship.ZERO_OR_MORE_LEFT; }
   \}\| { return EntityRelationship.ONE_OR_MORE_LEFT; }

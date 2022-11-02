@@ -1,23 +1,5 @@
 package com.intellij.mermaid.lang.lexer
 
-import com.intellij.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.COLON
-import com.intellij.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EOL
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ATTR_KEY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.IDENTIFYING
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.NON_IDENTIFYING
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ONE_OR_MORE_LEFT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ONE_OR_MORE_RIGHT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ONLY_ONE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EntityRelationship.ZERO_OR_MORE_RIGHT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.ID
-import com.intellij.mermaid.lang.lexer.MermaidTokens.LABEL
-import com.intellij.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
-
 class EntityRelationshipTest : MermaidLexerTestCase() {
   override val diagramName: String
     get() = "entityRelationship"
@@ -66,6 +48,23 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     erDiagram
       CUSTOMER ||--o{ ORDER : "pla ce s"
       ORDER ||--|{ LINE-ITEM : ""
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test entity names with double quotes`() {
+    val content = """
+    erDiagram
+      "Service::User" {
+        string name
+        string password
+      }
+    
+      "Service::Log" {
+        string message
+      }
+    
+      "Service::User" }o--o{ "Service::Log" : has_many
     """.trimIndent()
     doTest(content)
   }

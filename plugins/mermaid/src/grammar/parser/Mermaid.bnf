@@ -310,13 +310,17 @@ private noteLine ::= simpleNoteContent [EOL] | EOL
 erDocument ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramDocument" }
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
-erStatement ::= identifier relationship identifier COLON (complexLabel | string)
+erStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | string)
 	| entityDeclaration
-	| identifier
+	| erIdentifier
 	| directive
 	| accStatement
 
-entityDeclaration ::= identifier OPEN_CURLY EOL erAttributesDocument? CLOSE_CURLY
+erIdentifier ::= ID | string {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+entityDeclaration ::= erIdentifier OPEN_CURLY EOL erAttributesDocument? CLOSE_CURLY
 
 relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
 private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE

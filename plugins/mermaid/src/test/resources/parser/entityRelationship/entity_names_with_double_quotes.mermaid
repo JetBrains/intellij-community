@@ -1,0 +1,11 @@
+erDiagram
+  "Service::User" {
+    string name
+    string password
+  }
+
+  "Service::Log" {
+    string message
+  }
+
+  "Service::User" }o--o{ "Service::Log" : has_many
