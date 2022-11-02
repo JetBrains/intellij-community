@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito-junit-jupiter" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
@@ -24,7 +23,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
     <orderEntry type="module-library">
       <library name="kinference.core.jvm" type="repository">
-        <properties maven-id="io.kinference:inference-core-jvm:0.2.0">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.0">
           <exclude>
             <dependency maven-id="net.java.dev.jna:jna-platform" />
             <dependency maven-id="net.java.dev.jna:jna" />
@@ -59,8 +58,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="apache.commons.math3" type="repository">
-        <properties maven-id="org.apache.commons:commons-math3:3.6.1" />
+      <library name="commons-math3" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-math3:3.6.1" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar!/" />
         </CLASSES>
@@ -70,7 +69,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="google.guava" type="repository">
-        <properties maven-id="com.google.guava:guava:31.1-jre" />
+        <properties include-transitive-deps="false" maven-id="com.google.guava:guava:31.1-jre" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/31.1-jre/guava-31.1-jre.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar!/" />
@@ -85,19 +84,20 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="info.debatty.java.string.similarity" type="repository">
+      <library name="java-string-similarity" type="repository">
         <properties include-transitive-deps="false" maven-id="info.debatty:java-string-similarity:2.0.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/2.0.0/java-string-similarity-2.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="github.ben.manes.caffeine" type="repository">
-        <properties maven-id="com.github.ben-manes.caffeine:caffeine:3.1.1" />
+        <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.1.1" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.1.1/caffeine-3.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/3.22.0/checker-qual-3.22.0.jar!/" />

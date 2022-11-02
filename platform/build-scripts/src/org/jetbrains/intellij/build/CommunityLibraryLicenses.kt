@@ -147,6 +147,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons Logging", libraryName = "commons-logging",
                    url = "https://commons.apache.org/proper/commons-logging/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-logging.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+    LibraryLicense(name = "Apache Commons Math", libraryName = "commons-math3",
+                   url = "https://commons.apache.org/proper/commons-math/").apache(),
     LibraryLicense(name = "Apache Commons Net", libraryName = "commons-net",
                    url = "https://commons.apache.org/proper/commons-net/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-net.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
