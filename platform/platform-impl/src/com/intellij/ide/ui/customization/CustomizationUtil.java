@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -539,13 +540,7 @@ public final class CustomizationUtil {
 
   @Nullable
   private static String getGroupID(ActionGroup actionGroup) {
-    AnAction actionForId = actionGroup;
-    if (actionGroup instanceof ActionWithDelegate) {
-      Object delegate = ((ActionWithDelegate<?>)actionGroup).getDelegate();
-      if (delegate instanceof AnAction) {
-        actionForId = (AnAction)delegate;
-      }
-    }
+    AnAction actionForId = ActionUtil.getDelegateChainRootAction(actionGroup);
     return ActionManager.getInstance().getId(actionForId);
   }
 

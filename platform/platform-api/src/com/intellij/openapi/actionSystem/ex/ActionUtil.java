@@ -304,7 +304,9 @@ public final class ActionUtil {
   }
 
   @ApiStatus.Internal
-  public static void doPerformActionOrShowPopup(@NotNull AnAction action, @NotNull AnActionEvent e, @Nullable Consumer<? super JBPopup> popupShow) {
+  public static void doPerformActionOrShowPopup(@NotNull AnAction action,
+                                                @NotNull AnActionEvent e,
+                                                @Nullable Consumer<? super JBPopup> popupShow) {
     if (action instanceof ActionGroup && !e.getPresentation().isPerformGroup()) {
       DataContext dataContext = e.getDataContext();
       ActionGroup group = (ActionGroup)action;
@@ -577,6 +579,27 @@ public final class ActionUtil {
     if (ids.length == 1) return getActionGroup(ids[0]);
     List<AnAction> actions = ContainerUtil.mapNotNull(ids, ActionUtil::getAction);
     return actions.isEmpty() ? null : new DefaultActionGroup(actions);
+  }
+
+  public static @NotNull Object getDelegateChainRoot(@NotNull AnAction action) {
+    Object delegate = action;
+    while (delegate instanceof ActionWithDelegate<?>) {
+      delegate = ((ActionWithDelegate<?>)delegate).getDelegate();
+    }
+    return delegate;
+  }
+
+  public static @NotNull AnAction getDelegateChainRootAction(@NotNull AnAction action) {
+    while (action instanceof ActionWithDelegate<?>) {
+      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
+      if (delegate instanceof AnAction) {
+        action = (AnAction)delegate;
+      }
+      else {
+        return action;
+      }
+    }
+    return action;
   }
 
   @ApiStatus.Experimental

@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,21 +51,8 @@ public final class UiInspectorUtil {
 
   @Nullable
   public static String getActionId(@NotNull AnAction action) {
-    AnAction delegate = getDelegateChainRootAction(action);
+    AnAction delegate = ActionUtil.getDelegateChainRootAction(action);
     return getRawActionId(delegate);
-  }
-
-  private static @NotNull AnAction getDelegateChainRootAction(@NotNull AnAction action) {
-    while (action instanceof ActionWithDelegate<?>) {
-      Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
-      if (delegate instanceof AnAction) {
-        action = (AnAction)delegate;
-      }
-      else {
-        return action;
-      }
-    }
-    return action;
   }
 
   @NotNull
