@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.common.DumpKt;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
@@ -26,9 +28,6 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static com.intellij.testFramework.common.DumpKt.HEAP_DUMP_IS_PUBLISHED;
-import static com.intellij.testFramework.common.TestApplicationKt.LEAKED_PROJECTS;
 
 public final class LeakHunter {
 
@@ -177,8 +176,8 @@ public final class LeakHunter {
       builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
     }
     else {
-      builder.append("\n  If this is a TeamCity build, you can find a memory snapshot `").append(LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
-        .append("\n  Otherwise, try looking for '").append(HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below in the log ↓.");
+      builder.append("\n  If this is a TeamCity build, you can find a memory snapshot `").append(TestApplicationKt.LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
+        .append("\n  Otherwise, try looking for '").append(DumpKt.HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below in the log ↓.");
     }
   }
 }
