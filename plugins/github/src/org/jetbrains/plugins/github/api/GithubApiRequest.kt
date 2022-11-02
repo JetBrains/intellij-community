@@ -88,9 +88,9 @@ sealed class GithubApiRequest<out T>(val url: String) {
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
-        val list = parseJsonList(response, clazz)
+        val page = parseJsonSearchPage(response, clazz)
         val linkHeader = response.findHeader(LinkHttpHeaderValue.HEADER_NAME)?.let(LinkHttpHeaderValue::parse)
-        return GithubResponsePage(list, linkHeader)
+        return GithubResponsePage(page.items, linkHeader)
       }
     }
   }
