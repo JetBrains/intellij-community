@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.j2k.JKPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.files
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.CONST_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.*
@@ -235,16 +236,9 @@ private val inspectionLikePostProcessingGroup =
         intentionBasedProcessing(ReplaceMapGetOrDefaultIntention()),
         inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
         inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
-        intentionBasedProcessing(ConvertToRawStringTemplateIntention()) { element ->
-            element.parents.none {
-                (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true
-            } && ConvertToStringTemplateIntention.buildReplacement(element).entries.any {
-                (it as? KtEscapeStringTemplateEntry)?.unescapedValue == "\n"
-            }
-        },
+        intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
         intentionBasedProcessing(IndentRawStringIntention())
     )
-
 
 private val cleaningUpDiagnosticBasedPostProcessingGroup =
     DiagnosticBasedPostProcessingGroup(
@@ -297,3 +291,17 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
         )
     )
 )
+
+private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {
+    fun KtStringTemplateEntry.isNewline(): Boolean =
+        this is KtEscapeStringTemplateEntry && unescapedValue == "\n"
+
+    val middleNewlinesExist = ConvertToStringTemplateIntention.buildReplacement(element)
+        .entries
+        .dropLastWhile { it.isNewline() }
+        .any { it.isNewline() }
+
+    return middleNewlinesExist && element.parents.none {
+        (it as? KtProperty)?.hasModifier(CONST_KEYWORD) == true
+    }
+}
