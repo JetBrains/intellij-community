@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import javax.swing.Icon
 import kotlin.math.max
 
@@ -71,7 +71,8 @@ internal class RunConfigurationIconAndInvalidCache {
       IconCalcResult(icon, invalid, startTime)
     }.expireWith(project)
       .coalesceBy(this, id)
-      .submit(AppExecutorUtil.getAppExecutorService()).onSuccess {
+      .submit(NonUrgentExecutor.getInstance())
+      .onSuccess {
         if (it == null) {
           resultMap.remove(id)
         }
