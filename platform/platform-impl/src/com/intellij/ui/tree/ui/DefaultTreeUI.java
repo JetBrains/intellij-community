@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
-import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -36,7 +35,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
@@ -174,6 +172,10 @@ public class DefaultTreeUI extends BasicTreeUI {
   }
 
   private @Nullable Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+    if (isSeparator(value) && value instanceof Component) {
+      return (Component)value;
+    }
+
     TreeCellRenderer renderer = value instanceof LoadingNode ? LoadingNodeRenderer.SHARED : super.currentCellRenderer;
     if (renderer == null) return null;
     Component component = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, focused);
@@ -192,7 +194,11 @@ public class DefaultTreeUI extends BasicTreeUI {
   }
 
   private boolean isLeaf(@Nullable Object value) {
-    return value == null || super.treeModel.isLeaf(value); // TODO: treeModel ???
+    return value == null || isSeparator(value) || super.treeModel.isLeaf(value); // TODO: treeModel ???
+  }
+
+  private static boolean isSeparator(@Nullable Object value) {
+    return value instanceof SeparatorWithText;
   }
 
   private boolean isValid(@Nullable JTree tree) {
@@ -239,14 +245,15 @@ public class DefaultTreeUI extends BasicTreeUI {
           bounds.y += insets.top;
 
           int depth = TreeUtil.getNodeDepth(tree, path);
-          boolean leaf = isLeaf(path.getLastPathComponent());
+          Object value = path.getLastPathComponent();
+          boolean leaf = isLeaf(value);
           boolean expanded = !leaf && cache.getExpandedState(path);
           boolean selected = tree.isRowSelected(row);
           boolean focused = RenderingUtil.isFocused(tree);
           boolean lead = focused && row == getLeadSelectionRow();
           boolean selectedControl = selected && focused;
 
-          Color background = getBackground(tree, path, row, selected);
+          Color background = isSeparator(value) ? null : getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
             if (g instanceof Graphics2D && ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
@@ -295,17 +302,6 @@ public class DefaultTreeUI extends BasicTreeUI {
             if (selectedControl && !dark && !isDark(background)) selectedControl = false;
           }
 
-          Predicate<TreePath> separatorAbovePredicate = ClientProperty.get(c, RenderingUtil.SEPARATOR_ABOVE_PREDICATE);
-
-          if (separatorAbovePredicate != null && separatorAbovePredicate.test(path)) {
-            Rectangle rowBounds = getPathBounds(tree, path);
-            if (rowBounds != null) {
-              int offset = JBUI.scale(SeparatorWithText.DEFAULT_H_GAP);
-              paintHorizontalLine(g, paintBounds.x + offset, rowBounds.y,
-                                  paintBounds.x + paintBounds.width - offset, rowBounds.y);
-            }
-          }
-
           Control control = getControl(c, path);
 
           int offset = painter.getRendererOffset(control, depth, leaf);
@@ -314,9 +310,25 @@ public class DefaultTreeUI extends BasicTreeUI {
           if (editingComponent == null || editingRow != row) {
             int width = helper.getX() + helper.getWidth() - insets.left - offset;
             if (width > 0) {
-              Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
-              if (component != null) {
+
+              if (isSeparator(component)) {
+                int x;
+                if (ExperimentalUI.isNewUI()) {
+                  Insets separatorInsets = JBUI.CurrentTheme.Popup.separatorInsets();
+                  x = paintBounds.x + separatorInsets.left;
+                  width = paintBounds.width - separatorInsets.left - separatorInsets.right;
+                }
+                else {
+                  int separatorWidthGap = JBUI.scale(SeparatorWithText.DEFAULT_H_GAP);
+                  x = paintBounds.x + separatorWidthGap;
+                  width = paintBounds.width - 2 * separatorWidthGap;
+                }
+                if (width > 0) {
+                  rendererPane.paintComponent(g, component, tree, x, bounds.y, width, bounds.height, true);
+                }
+              }
+              else if (component != null) {
                 width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
@@ -356,20 +368,6 @@ public class DefaultTreeUI extends BasicTreeUI {
       painting.set(false);
       removeCachedRenderers();
     }
-  }
-
-  private static void paintHorizontalLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
-    Color usedColor = g.getColor();
-    g.setColor(JBUI.CurrentTheme.Popup.separatorColor());
-    if (g instanceof Graphics2D g2) {
-      LinePainter2D.paint(g2, x1, y1, x2, y2,
-                          LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON);
-    }
-    else {
-      g.drawLine(x1, y1, x2, y2);
-    }
-
-    g.setColor(usedColor);
   }
 
   // BasicTreeUI
