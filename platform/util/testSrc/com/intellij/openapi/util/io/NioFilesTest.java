@@ -168,7 +168,7 @@ public class NioFilesTest {
 
   @Test
   public void circularSymlinkAttributesReading() throws IOException {
-    assumeNioSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
     var symlink = tempDir.getRootPath().resolve("symlink");
     Files.createSymbolicLink(symlink, symlink);
     assertTrue(NioFiles.readAttributes(symlink).isSymbolicLink());

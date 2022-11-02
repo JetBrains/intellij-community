@@ -656,7 +656,9 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     File target = tempDir.newDirectory("target");
     File link = new File(tempDir.getRoot(), "link");
-    createSymbolicLink(link.toPath(), target.toPath());
+    @NotNull Path link1 = link.toPath();
+    @NotNull Path target1 = target.toPath();
+    Files.createSymbolicLink(link1, target1);
 
     VirtualFile vTop = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
     assertNotNull(vTop);
@@ -790,7 +792,9 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newDirectory("src");
       File link = new File(tempDir.getRoot(), "link");
-      createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
+      @NotNull Path link1 = link.toPath();
+      @NotNull Path target1 = new File(tempDir.getRoot(), "missing").toPath();
+      Files.createSymbolicLink(link1, target1);
       File dstDir = tempDir.newDirectory("dst");
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
@@ -972,7 +976,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void directoryListingViaSymlink() throws IOException {
-    assumeNioSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     var dir = tempDir.newFile("dir/1").toPath().getParent();
     var dirLink = Files.createSymbolicLink(tempDir.getRootPath().resolve("dirLink"), dir);

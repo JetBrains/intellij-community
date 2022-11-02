@@ -245,7 +245,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
     val root = tempDir.newDirectory("root")
     val cDir = tempDir.newDirectory("root/A/B/C")
-    val aLink = createSymbolicLink(root.resolve("aLink"), root.resolve("A"))
+    val aLink = Files.createSymbolicLink(root.resolve("aLink"), root.resolve("A"))
     val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
     val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
     refresh(root)
@@ -258,7 +258,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testMultipleSymbolicLinkPathsToFile() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val root = tempDir.newDirectory("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
@@ -277,7 +277,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testSymbolicLinkWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -293,7 +293,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testSymbolicLinkAboveWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -352,7 +352,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testSymlinkBelowWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
@@ -368,7 +368,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testCircularSymlinkBelowWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectory("top")
     val topA = tempDir.newDirectory("top/a")
@@ -393,7 +393,7 @@ class WslFileWatcherTest : BareTestFixtureTestCase() {
 
   @Ignore("symlink resolution doesn't work over 9P")
   @Test fun testSymlinkBelowWatchRootCreation() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")

@@ -251,7 +251,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val root = tempDir.newDirectoryPath("root")
     val cDir = tempDir.newDirectoryPath("root/A/B/C")
@@ -267,7 +267,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testMultipleSymbolicLinkPathsToFile() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val root = tempDir.newDirectoryPath("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
@@ -285,7 +285,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectoryPath("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
@@ -300,7 +300,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymbolicLinkAboveWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectoryPath("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
@@ -360,7 +360,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymlinkBelowWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectoryPath("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()
@@ -375,7 +375,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testCircularSymlinkBelowWatchRoot() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectoryPath("top")
     val topA = tempDir.newDirectoryPath("top/a")
@@ -399,7 +399,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testSymlinkBelowWatchRootCreation() {
-    assumeNioSymLinkCreationIsSupported()
+    assumeSymLinkCreationIsSupported()
 
     val top = tempDir.newDirectoryPath("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt").toPath()

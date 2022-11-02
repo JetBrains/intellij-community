@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported;
 import static org.junit.Assert.assertEquals;
 
 public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
@@ -34,7 +34,7 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
 
   @Before
   public void setUp() throws IOException {
-    assumeNioSymLinkCreationIsSupported();
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     tempDir.newFile("d1/f1.1");
     tempDir.newFile("d1/d11/f11.1");
