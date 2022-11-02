@@ -100,12 +100,13 @@ class RootIndex {
     storeContentsBeneathExcluded(allRoots, hierarchies);
     storeOutsideProjectRootsButHasContentInside();
 
-    myPackageDirectoryCache = new PackageDirectoryCacheImpl(rootsByPackagePrefix) {
-      @Override
-      protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-        return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
-      }
-    };
+    myPackageDirectoryCache = new PackageDirectoryCacheImpl((packageName, result) -> {
+      PackageDirectoryCacheImpl.addValidDirectories(rootsByPackagePrefix.get(packageName), result);
+    }, this::isPackageDirectory);
+  }
+
+  private boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
+    return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
   }
 
   private void storeOutsideProjectRootsButHasContentInside() {

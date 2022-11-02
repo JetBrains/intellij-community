@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -18,29 +17,32 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 
-public class PackageDirectoryCacheImpl implements PackageDirectoryCache {
-  private static final Logger LOG = Logger.getInstance(PackageDirectoryCacheImpl.class);
-  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
+public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
+  private final BiConsumer<@NotNull String, @NotNull List<? super VirtualFile>> myFillDirectoriesByPackage;
+  private final BiPredicate<@NotNull VirtualFile, @NotNull String> myPackageDirectoryFilter;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
-  public PackageDirectoryCacheImpl(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
-    for (String prefix : rootsByPackagePrefix.keySet()) {
-      for (VirtualFile file : rootsByPackagePrefix.get(prefix)) {
-        if (!file.isValid()) {
-          LOG.error("Invalid root: " + file);
-        }
-        else {
-          myRootsByPackagePrefix.putValue(prefix, file);
-        }
-      }
-    }
+  public PackageDirectoryCacheImpl(@NotNull BiConsumer<@NotNull String, @NotNull List<? super VirtualFile>> fillDirectoriesByPackage,
+                                   @NotNull BiPredicate<@NotNull VirtualFile, @NotNull String> packageDirectoryFilter) {
+    myFillDirectoriesByPackage = fillDirectoriesByPackage;
+    myPackageDirectoryFilter = packageDirectoryFilter;
   }
 
   void clear() {
     myNonExistentPackages.clear();
     myDirectoriesByPackageNameCache.clear();
+  }
+
+  public static void addValidDirectories(@NotNull Collection<? extends VirtualFile> source, @NotNull List<? super VirtualFile> target) {
+    for (VirtualFile file : source) {
+      if (file.isDirectory() && file.isValid()) {
+        target.add(file);
+      }
+    }
   }
 
   public void onLowMemory() {
@@ -75,11 +77,7 @@ public class PackageDirectoryCacheImpl implements PackageDirectoryCache {
         }
       }
 
-      for (VirtualFile file : myRootsByPackagePrefix.get(packageName)) {
-        if (file.isDirectory() && file.isValid()) {
-          result.add(file);
-        }
-      }
+      myFillDirectoriesByPackage.accept(packageName, result);
 
       if (!result.isEmpty()) {
         myDirectoriesByPackageNameCache.put(packageName, info = new PackageInfo(packageName, result));
@@ -123,7 +121,7 @@ public class PackageDirectoryCacheImpl implements PackageDirectoryCache {
           for (VirtualFile child : directory.getChildren()) {
             String childName = child.getName();
             String packageName = myQname.isEmpty() ? childName : myQname + "." + childName;
-            if (child.isDirectory() && isPackageDirectory(child, packageName)) {
+            if (child.isDirectory() && myPackageDirectoryFilter.test(child, packageName)) {
               result.putValue(childName, child);
             }
           }
@@ -136,9 +134,5 @@ public class PackageDirectoryCacheImpl implements PackageDirectoryCache {
     Collection<VirtualFile> getSubPackageDirectories(String shortName) {
       return mySubPackages.getValue().get(shortName);
     }
-  }
-
-  protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-    return true;
   }
 }

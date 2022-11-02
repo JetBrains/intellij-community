@@ -4,7 +4,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +18,10 @@ public interface PackageDirectoryCache {
   @NotNull Set<String> getSubpackageNames(@NotNull String packageName, @NotNull GlobalSearchScope scope);
 
   static @NotNull PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
-    MultiMap<String, VirtualFile> map = MultiMap.create();
-    map.putValues("", roots);
-    return new PackageDirectoryCacheImpl(map);
+    return new PackageDirectoryCacheImpl((packageName, result) -> {
+      if ("".equals(packageName)) {
+        PackageDirectoryCacheImpl.addValidDirectories(roots, result);
+      }
+    }, (dir, name) -> true);
   }
 }
