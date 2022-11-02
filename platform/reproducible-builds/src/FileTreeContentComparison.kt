@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import java.io.IOException
 import java.nio.file.Files
@@ -59,7 +60,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       require(path2.exists())
       val test = FileTreeContentComparison()
       val assertion = when {
-        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2).error
+        path1.isDirectory() && path2.isDirectory() -> test.assertTheSameDirectoryContent(path1, path2, deleteBothAfterwards = false).error
         path1.isRegularFile() && path2.isRegularFile() -> test.assertTheSameFile(path1, path2)
         else -> throw IllegalArgumentException()
       }
@@ -82,7 +83,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     return assertTheSameFile(path1, path2, "$relativeFilePath")
   }
 
-  private fun assertTheSameFile(path1: Path, path2: Path, relativeFilePath: String = path1.name): AssertionError? {
+  fun assertTheSameFile(path1: Path, path2: Path, relativeFilePath: String = path1.name): AssertionError? {
     if (!Files.exists(path1) ||
         !Files.exists(path2) ||
         !path1.isRegularFile() ||
@@ -95,11 +96,13 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     val contentError = when (path1.extension) {
       "tar.gz", "gz", "tar" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
-        path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
+        path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) },
+        deleteBothAfterwards = true
       ).error ?: AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
       "zip", "jar", "ijx", "sit" -> assertTheSameDirectoryContent(
         path1.unpackingDir().also { Decompressor.Zip(path1).withZipExtensions().extract(it) },
-        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) }
+        path2.unpackingDir().also { Decompressor.Zip(path2).withZipExtensions().extract(it) },
+        deleteBothAfterwards = true
       ).error ?: run {
         saveDiff(relativeFilePath, path1, path2)
         AssertionError("No difference in $relativeFilePath content. Timestamp or ordering issue?")
@@ -109,7 +112,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
         if (SystemInfo.isMac) {
           path1.mountDmg { dmg1Content ->
             path2.mountDmg { dmg2Content ->
-              assertTheSameDirectoryContent(dmg1Content, dmg2Content).error
+              assertTheSameDirectoryContent(dmg1Content, dmg2Content, deleteBothAfterwards = false).error
             }
           }
         }
@@ -123,7 +126,8 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
         if (isUnsquashfsAvailable) {
           assertTheSameDirectoryContent(
             path1.unSquash(path1.unpackingDir()),
-            path2.unSquash(path2.unpackingDir())
+            path2.unSquash(path2.unpackingDir()),
+            deleteBothAfterwards = true
           ).error
         }
         else {
@@ -241,7 +245,7 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
     }
   }
 
-  fun assertTheSameDirectoryContent(dir1: Path, dir2: Path): ComparisonResult {
+  fun assertTheSameDirectoryContent(dir1: Path, dir2: Path, deleteBothAfterwards: Boolean): ComparisonResult {
     val listing1 = dir1.listDirectory()
     val listing2 = dir2.listDirectory()
     val relativeListing1 = listing1.map(dir1::relativize)
@@ -258,6 +262,10 @@ class FileTreeContentComparison(private val diffDir: Path = Path.of(System.getPr
       .filterNot { it.isDirectory() }
       .map(dir1::relativize)
       .minus(listingDiff.toSet())
+    if (deleteBothAfterwards) {
+      NioFiles.deleteRecursively(dir1)
+      NioFiles.deleteRecursively(dir2)
+    }
     return ComparisonResult(comparedFiles, error)
   }
 

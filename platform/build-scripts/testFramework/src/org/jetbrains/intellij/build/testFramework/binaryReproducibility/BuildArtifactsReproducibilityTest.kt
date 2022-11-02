@@ -46,7 +46,11 @@ class BuildArtifactsReproducibilityTest {
       else -> build1.paths.projectHome
     }.resolve(".diff")
     val test = FileTreeContentComparison(diffDirectory, build1.paths.tempDir)
-    val result = test.assertTheSameDirectoryContent(build1.paths.artifactDir, build2.paths.artifactDir)
+    val result = test.assertTheSameDirectoryContent(
+      build1.paths.artifactDir,
+      build2.paths.artifactDir,
+      deleteBothAfterwards = true
+    )
     if (result.error != null) {
       build1.messages.artifactBuilt("$diffDirectory")
     }
