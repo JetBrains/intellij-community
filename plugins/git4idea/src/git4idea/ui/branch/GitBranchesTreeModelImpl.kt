@@ -6,7 +6,6 @@ import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
@@ -27,8 +26,10 @@ private typealias MatchResult = Pair<Collection<GitBranch>, Pair<GitBranch, Int>
 class GitBranchesTreeModelImpl(
   private val project: Project,
   private val repositories: List<GitRepository>,
-  private val topLevelActions: List<PopupFactoryImpl.ActionItem> = emptyList()
+  private val topLevelActions: List<Any> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
+
+  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
   private val branchComparator = compareBy<GitBranch> {
@@ -86,7 +87,7 @@ class GitBranchesTreeModelImpl(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    val repositoriesOrEmpty = if (repositories.size > 1) repositories else emptyList()
+    val repositoriesOrEmpty = if (repositories.size > 1) repositories + branchesSubtreeSeparator else emptyList()
 
     return if (branchTypeFilter != null) topLevelActions + repositoriesOrEmpty + branchTypeFilter!!
     else topLevelActions + repositoriesOrEmpty + GitBranchType.LOCAL + GitBranchType.REMOTE

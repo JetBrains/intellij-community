@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
@@ -62,7 +63,6 @@ import java.awt.Point
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.util.function.Function
-import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.tree.TreeCellRenderer
@@ -297,8 +297,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
 
-    ClientProperty.put(this, RenderingUtil.SEPARATOR_ABOVE_PREDICATE, Predicate { treeStep.isSeparatorAboveRequired(it) })
-
     val renderer = Renderer(treeStep)
 
     ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
@@ -313,7 +311,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     accessibleContext.accessibleName = GitBundle.message("git.branches.popup.tree.accessible.name")
 
     ClientProperty.put(this, DefaultTreeUI.LARGE_MODEL_ALLOWED, true)
-    rowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+    rowHeight = treeRowHeight
     isLargeModel = true
     expandsSelectedPaths = true
   }
@@ -554,6 +552,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopup>("GIT_BRANCHES_TREE_POPUP")
 
+    private val treeRowHeight = if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
+
     @JvmStatic
     fun isEnabled() = Registry.`is`("git.branches.popup.tree", false)
                       && !ExperimentalUI.isNewUI()
@@ -568,6 +568,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       val repositories = GitRepositoryManager.getInstance(project).repositories
       return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, repositories, true))
     }
+
+    @JvmStatic
+    internal fun createTreeSeparator(text: @NlsContexts.Separator String? = null) =
+      SeparatorWithText().apply {
+        caption = text
+        border = JBUI.Borders.emptyTop(
+          if (text == null) treeRowHeight / 2 else JBUIScale.scale(SeparatorWithText.DEFAULT_H_GAP))
+      }
 
     private fun uiScope(parent: Disposable) =
       CoroutineScope(SupervisorJob() + Dispatchers.Main).also {

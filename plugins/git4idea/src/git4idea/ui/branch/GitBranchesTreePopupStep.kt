@@ -32,7 +32,6 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
-import git4idea.actions.branch.GitNewBranchAction
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
@@ -58,20 +57,33 @@ class GitBranchesTreePopupStep(private val project: Project,
 
 
   init {
-    val topLevelItems = mutableListOf<PopupFactoryImpl.ActionItem>()
+    val topLevelItems = mutableListOf<Any>()
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(createActionItems(experimentalUIActionsGroup, project, repositories))
+        topLevelItems.addAll(createActionItems(experimentalUIActionsGroup, project, repositories).addSeparators())
+        topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
       }
     }
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createActionItems(actionGroup, project, repositories))
+      topLevelItems.addAll(createActionItems(actionGroup, project, repositories).addSeparators())
+      topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
     }
 
     _treeModel = GitBranchesTreeModelImpl(project, repositories, topLevelItems)
+  }
+
+  private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {
+    val actionsWithSeparators = mutableListOf<Any>()
+    for (action in this) {
+      if (action.isPrependWithSeparator) {
+        actionsWithSeparators.add(GitBranchesTreePopup.createTreeSeparator(action.separatorText))
+      }
+      actionsWithSeparators.add(action)
+    }
+    return actionsWithSeparators
   }
 
   fun isBranchesDiverged(): Boolean {
@@ -87,11 +99,6 @@ class GitBranchesTreePopupStep(private val project: Project,
   internal fun setPrefixGrouping(state: Boolean) {
     _treeModel.isPrefixGrouping = state
   }
-
-  internal fun isSeparatorAboveRequired(path: TreePath) =
-    ExperimentalUI.isNewUI() && isFirstStep && (path.lastPathComponent as? PopupFactoryImpl.ActionItem)?.action is GitNewBranchAction
-    || path.lastPathComponent == repositories.firstOrNull()
-    || path.lastPathComponent == GitBranchType.LOCAL
 
   private val LOCAL_SEARCH_PREFIX = "/l"
   private val REMOTE_SEARCH_PREFIX = "/r"
