@@ -175,9 +175,15 @@ public final class LeakHunter {
     if (knownHeapDumpPath != null) {
       builder.append("\n  Please see `").append(knownHeapDumpPath).append("` for a memory dump");
     }
+    else if (TeamCityLogger.isUnderTC) {
+      builder
+        .append("\n  You can find a memory snapshot `")
+        .append(TestApplicationKt.LEAKED_PROJECTS)
+        .append(".hproof.zip` in the \"Artifacts\" tab of the build run.");
+    }
     else {
-      builder.append("\n  If this is a TeamCity build, you can find a memory snapshot `").append(TestApplicationKt.LEAKED_PROJECTS).append(".hproof.zip` in the \"Artifacts\" tab of the build run.")
-        .append("\n  Otherwise, try looking for '").append(DumpKt.HEAP_DUMP_IS_PUBLISHED).append("' string in the system output below in the log ↓.");
+      builder.append("\n  Try looking for '").append(DumpKt.HEAP_DUMP_IS_PUBLISHED)
+        .append("' string in the system output below in the log ↓.");
     }
   }
 }
