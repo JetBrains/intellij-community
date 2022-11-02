@@ -57,7 +57,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
   @Override
   public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    Application app = ApplicationManager.getApplication();
+    if (!app.isWriteThread() && app.isReadAccessAllowed()) {
+      throw new IllegalStateException("importData() must not be called with a read lock on a background thread. " +
+                                      "It will deadlock committing project model changes in write action");
+    }
+
     myLock.lock();
     try {
       importData(node, project, createModifiableModelsProvider(project));
