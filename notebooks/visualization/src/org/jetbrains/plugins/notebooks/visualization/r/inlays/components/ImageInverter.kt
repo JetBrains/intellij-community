@@ -108,7 +108,7 @@ class ImageInverter(foreground: Color, background: Color) {
   }
 
   fun invert(image: BufferedImage): BufferedImage =
-    blankImageWithSameSize(image).also { outputImage ->
+    createImageWithInvertedPalette(image).also { outputImage ->
       invertInPlace(image, outputImage)
     }
 
@@ -152,15 +152,10 @@ class ImageInverter(foreground: Color, background: Color) {
       palette[index] = convertHSLtoRGB(hsl, alpha)
     }
 
-    return blankImageWithSameSize(image)
+    // UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
+    @Suppress("UndesirableClassUsage")
+    return BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
   }
-
-  /**
-   * UIUtil.createImage() scales the image for HiDPI. It's undesired in this particular case.
-   */
-  @Suppress("UndesirableClassUsage")
-  private fun blankImageWithSameSize(image: BufferedImage): BufferedImage =
-    BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_INDEXED)
 
   // Note: returns alpha, resulting color resides in `hsl`
   private fun invert(argb: Int): Float {
