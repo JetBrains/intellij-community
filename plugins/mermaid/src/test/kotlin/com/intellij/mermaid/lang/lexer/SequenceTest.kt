@@ -1,26 +1,5 @@
 package com.intellij.mermaid.lang.lexer
 
-import com.intellij.mermaid.lang.lexer.MermaidTokens.ALIAS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.AS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.COLON
-import com.intellij.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.intellij.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.END
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EOL
-import com.intellij.mermaid.lang.lexer.MermaidTokens.ID
-import com.intellij.mermaid.lang.lexer.MermaidTokens.IGNORED
-import com.intellij.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.MINUS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.NOTE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.PLUS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.RIGHT_OF
-import com.intellij.mermaid.lang.lexer.MermaidTokens.SEMICOLON
-import com.intellij.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Sequence
-import com.intellij.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
-
 class SequenceTest : MermaidLexerTestCase() {
   override val diagramName: String
     get() = "sequence"
@@ -131,6 +110,16 @@ class SequenceTest : MermaidLexerTestCase() {
         API-->Consumer: show failure
       end
       API-->BillingService: Start billing process
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test actors names with dash`() {
+    val content = """
+    sequenceDiagram
+      actor A as Alice
+      actor J-J as JohnJunior
+      A -->> J-J
     """.trimIndent()
     doTest(content)
   }
