@@ -36,6 +36,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
@@ -202,12 +203,15 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
   }
 
   private suspend fun rstToHtml(text: String, sdk: Sdk): String {
-    val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
+    val localSdk = PythonSdkType.findLocalCPythonForSdk(sdk)
+    if (localSdk == null) return wrapHtml("<p>${message("python.toolwindow.packages.documentation.local.interpreter")}</p>")
+
+    val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(localSdk, project)
     val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
     val pythonExecution = prepareHelperScriptExecution(PythonHelper.REST_RUNNER, helpersAwareTargetRequest)
 
     // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
-    val helperLocation = if (sdk.sdkFlavor.getLanguageLevel(sdk).isPython2) "py2only" else "py3only"
+    val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) "py2only" else "py3only"
     val path = PythonHelpersLocator.getHelpersRoot().toPath().resolve(helperLocation)
     pythonExecution.applyHelperPackageToPythonPath(listOf(path.toString()), helpersAwareTargetRequest)
 
@@ -219,7 +223,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       value.upload(".", targetProgressIndicator)
     }
 
-    val targetedCommandLine = pythonExecution.buildTargetedCommandLine(targetEnvironment, sdk, emptyList())
+    val targetedCommandLine = pythonExecution.buildTargetedCommandLine(targetEnvironment, localSdk, emptyList())
 
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val process = targetEnvironment.createProcess(targetedCommandLine, indicator)

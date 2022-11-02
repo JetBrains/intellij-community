@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
@@ -356,17 +357,22 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
 
   fun packageSelected(selectedPackage: DisplayablePackage) {
-    showHeaderForPackage(selectedPackage)
+    val service = project.service<PyPackagingToolWindowService>()
+    val managementEnabled = PyPackageUtil.packageManagementEnabled(service.currentSdk)
+    showHeaderForPackage(selectedPackage, managementEnabled)
+
     this.selectedPackage = selectedPackage
     packagingScope.launch(Dispatchers.IO) {
-      val service = project.service<PyPackagingToolWindowService>()
       val packageDetails = service.detailsForPackage(selectedPackage)
 
-      val installActions = PythonPackagingToolwindowActionProvider.EP_NAME
-        .extensionList
-        .firstNotNullOf {
-          it.getInstallActions(packageDetails, service.manager)
-        }
+      val installActions = if (managementEnabled) {
+        PythonPackagingToolwindowActionProvider.EP_NAME
+          .extensionList
+          .firstNotNullOf {
+            it.getInstallActions(packageDetails, service.manager)
+          }
+      }
+      else emptyList()
 
       withContext(Dispatchers.Main) {
         selectedPackageDetails = packageDetails
@@ -387,14 +393,14 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
         documentationUrl = packageDetails.documentationUrl
         documentationLink.isVisible = documentationUrl != null
 
-
-        installButton.action = wrapAction(installActions.first(), packageDetails)
-        if (installActions.size > 1) {
-          installButton.options = installActions
-            .asSequence().drop(1).map { wrapAction(it, packageDetails) }.toList().toTypedArray()
-        }
-
-        installButton.repaint()
+        if (installActions.isNotEmpty()) {
+          installButton.action = wrapAction(installActions.first(), packageDetails)
+          if (installActions.size > 1) {
+            installButton.options = installActions
+              .asSequence().drop(1).map { wrapAction(it, packageDetails) }.toList().toTypedArray()
+          }
+          installButton.repaint()
+        } else hideInstallableControls()
       }
     }
   }
@@ -429,19 +435,19 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     progressBar.isVisible = false
   }
 
-  private fun showInstalledControls() {
+  private fun showInstalledControls(managementSupported: Boolean) {
     hideInstallableControls()
     progressBar.isVisible = false
     versionLabel.isVisible = true
-    uninstallAction.isVisible = true
+    uninstallAction.isVisible = managementSupported
   }
 
-  private fun showInstallableControls() {
+  private fun showInstallableControls(managementSupported: Boolean) {
     hideInstalledControls()
     progressBar.isVisible = false
-    versionSelector.isVisible = true
+    versionSelector.isVisible = managementSupported
     versionSelector.text = latestText
-    installButton.isVisible = true
+    installButton.isVisible = managementSupported
   }
 
   private fun hideInstalledControls() {
@@ -454,7 +460,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     versionSelector.isVisible = false
   }
 
-  private fun showHeaderForPackage(selectedPackage: DisplayablePackage) {
+  private fun showHeaderForPackage(selectedPackage: DisplayablePackage, managementSupported: Boolean) {
     packageNameLabel.text = selectedPackage.name
     packageNameLabel.isVisible = true
     documentationLink.isVisible = false
@@ -462,10 +468,10 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     if (selectedPackage is InstalledPackage) {
       @Suppress("HardCodedStringLiteral")
       versionLabel.text = selectedPackage.instance.version
-      showInstalledControls()
+      showInstalledControls(managementSupported)
     }
     else {
-      showInstallableControls()
+      showInstallableControls(managementSupported)
     }
   }
 
