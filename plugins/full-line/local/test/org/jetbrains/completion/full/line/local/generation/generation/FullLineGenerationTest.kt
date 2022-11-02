@@ -31,7 +31,7 @@ class FullLineGenerationTest {
     val prefix = "_"
     val contextIds = bpe.encode(context)
     val config = FullLineGenerationConfig(maxLen = 10)
-    val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default)
+    val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default.toInference())
     val variants = result.map { it.map { info -> bpe.decode(info.ids) } }.last()
     val expected = "_world():\n"
     assertTrue(variants.contains(expected), "Variants are expected to contain: \"$expected\"")
@@ -48,7 +48,7 @@ class FullLineGenerationTest {
     val prefix = "\tp"
     val contextIds = bpe.encode(context)
     val config = FullLineGenerationConfig(maxLen = 8, filename = "hello_world.py")
-    val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default)
+    val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default.toInference())
     val variants = result.map { it.map { info -> bpe.decode(info.ids) } }.last()
     val badTokenRegex = Regex("<PAD>|<BOS>|<EOS>")
     variants.forEach {
@@ -75,7 +75,7 @@ class FullLineGenerationTest {
       contextLenToTime[contextEnd] = measureTimeMillis {
         val contextIds = bpe.encode(splitContext)
         val config = FullLineGenerationConfig(maxLen = 5)
-        val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default)
+        val result = generation.generate(contextIds, prefix, config, TestExecutionContext.default.toInference())
         result.map { it.map { info -> bpe.decode(info.ids) } }.last()
       }
     }

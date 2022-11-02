@@ -41,18 +41,18 @@ internal class HiddenStateCachingModelWrapperTest {
   @ParameterizedTest
   @MethodSource("cacheHit source")
   fun cacheHit(inputIds: Array<IntArray>, cacheWarmupInputIds: Array<IntArray>, expectedCacheHit: Boolean) {
-    cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default)
+    cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default.toInference())
     isCacheHit = false
-    cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default).logProbs
+    cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
     assertEquals(expectedCacheHit, isCacheHit)
   }
 
   private fun getOriginalAndCachingOutputs(
     inputIds: Array<IntArray>, cacheWarmupInputIds: Array<IntArray>
   ): Pair<DoubleArray, DoubleArray> {
-    cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default)
-    val originalOutput = gpt2.initLastLogProbs(inputIds, TestExecutionContext.default).logProbs
-    val cachingModelOutput = cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default).logProbs
+    cachingGpt2.initLastLogProbs(cacheWarmupInputIds, TestExecutionContext.default.toInference())
+    val originalOutput = gpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
+    val cachingModelOutput = cachingGpt2.initLastLogProbs(inputIds, TestExecutionContext.default.toInference()).logProbs
     return Pair(originalOutput[0], cachingModelOutput[0])
   }
 

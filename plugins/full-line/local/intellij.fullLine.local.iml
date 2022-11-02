@@ -10,6 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -31,7 +32,6 @@
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="io.kinference:logger-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.slf4j:slf4j-api" />
@@ -49,6 +49,7 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.0/model-profiler-jvm-0.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.0/common-utils-jvm-0.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.0/serializer-tiled-jvm-0.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.0/logger-jvm-0.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/3.0.0/okio-3.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
