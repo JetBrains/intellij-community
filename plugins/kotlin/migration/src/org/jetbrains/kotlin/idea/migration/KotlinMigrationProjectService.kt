@@ -33,6 +33,7 @@ class KotlinMigrationProjectService(val project: Project) : Disposable {
         val oldState = synchronized(this) { currentState.also { currentState = newState } }
         val migrationInfo = prepareMigrationInfo(old = oldState, new = newState) ?: return
         ReadAction.nonBlocking<Boolean> { applicableMigrationToolExists(migrationInfo) || isUnitTestMode() }
+            .expireWith(this)
             .inSmartMode(project)
             .finishOnUiThread(ModalityState.any()) { toolExists ->
                 if (toolExists) {
