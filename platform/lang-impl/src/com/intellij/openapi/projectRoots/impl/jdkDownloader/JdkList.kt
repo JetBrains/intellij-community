@@ -222,22 +222,11 @@ data class JdkPredicate(
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
       val platforms = when {
-        (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> {
-          listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
-        }
-
-        (SystemInfo.isLinux && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.linux.aarch64") -> {
-          listOf(defaultPlatform.copy(arch = "aarch64"))
-        }
-
-        SystemInfo.isWindows && forWsl -> {
-          listOf(defaultPlatform.copy(os = "linux"))
-        }
-
-        !SystemInfo.isWindows && forWsl -> {
-          listOf()
-        }
-
+        SystemInfo.isWindows && forWsl && CpuArch.isArm64() -> listOf(defaultPlatform.copy(os = "linux", arch = "aarch64"))
+        SystemInfo.isWindows && forWsl && !CpuArch.isArm64() -> listOf(defaultPlatform.copy(os = "linux"))
+        SystemInfo.isLinux && CpuArch.isArm64() -> listOf(defaultPlatform.copy(arch = "aarch64"))
+        (SystemInfo.isMac || SystemInfo.isWindows) && CpuArch.isArm64() -> listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
+        !SystemInfo.isWindows && forWsl -> listOf()
         else -> listOf(defaultPlatform)
       }
 
@@ -252,8 +241,7 @@ data class JdkPredicate(
     }
 
     val currentArch = when {
-      (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> "aarch64"
-      (SystemInfo.isLinux && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.linux.aarch64") -> "aarch64"
+      CpuArch.isArm64() -> "aarch64"
       else -> "x86_64"
     }
   }
