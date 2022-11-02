@@ -108,10 +108,9 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   public Collection<VirtualFile> getAllFilesToUpdate() {
     ensureUpToDate();
-    if (myFilesToUpdate.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return new ArrayList<>(myFilesToUpdate.values());
+    return myFilesToUpdate.isEmpty()
+           ? Collections.emptyList()
+           : Collections.unmodifiableCollection(myFilesToUpdate.values());
   }
 
   // it's important here to don't load any extension here, so we don't check scopes.
