@@ -67,8 +67,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
 
     override fun getIcon(unused: Boolean): Icon? {
         for (kotlinIconProvider in IconProvider.EXTENSION_POINT_NAME.iterable.filterIsInstance<KotlinIconProvider>()) {
-            val icon = kotlinIconProvider.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
-            if (icon != null) return icon
+            kotlinIconProvider.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)?.let { return it }
         }
         return null
     }
