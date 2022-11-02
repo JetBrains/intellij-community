@@ -2,7 +2,6 @@
 
 package com.intellij.xml.refactoring;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -108,8 +107,6 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     if (!isRenaming(context)) {
       return;
     }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
     if (isInplaceRenameAvailable(editor)) {
       XmlTagInplaceRenamer.rename(editor, (XmlTag)element.getParent());

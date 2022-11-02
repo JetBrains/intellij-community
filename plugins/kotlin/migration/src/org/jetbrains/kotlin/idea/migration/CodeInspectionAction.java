@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
@@ -27,7 +26,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
     @Override
     protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassist.inspect.batch");
         try {
             runInspections(project, scope);
         }

@@ -11,7 +11,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
@@ -54,7 +53,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassist.inspect.batch");
     try {
       runInspections(project, scope);
     }

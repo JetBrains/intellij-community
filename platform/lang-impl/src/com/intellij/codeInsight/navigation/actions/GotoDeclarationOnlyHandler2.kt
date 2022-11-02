@@ -8,7 +8,6 @@ import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
-import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
@@ -39,7 +38,6 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration.only")
     if (navigateToLookupItem(project)) {
       return
     }

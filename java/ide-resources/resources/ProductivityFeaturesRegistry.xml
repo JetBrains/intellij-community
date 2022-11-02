@@ -5,8 +5,9 @@
       tip-id="GoToImplementation"
       min-usage-count="10"
       first-show="2"
-      successive-show="5"
-      />
+      successive-show="5">
+      <track-action id="GotoImplementation"/>
+    </feature>
   </group>
 
   <group id="completion">
@@ -15,7 +16,9 @@
       tip-id="SmartTypeCompletion"
       min-usage-count="10"
       first-show="2"
-      successive-show="3"/>
+      successive-show="3">
+      <track-action id="SmartTypeCompletion"/>
+    </feature>
     <feature
       id="editing.completion.smarttype.afternew"
       tip-id="SmartTypeAfterNew"
@@ -100,13 +103,17 @@
       first-show="4"
       successive-show="8">
       <dependency id="editing.completion.finishByDotEtc"/>
-      </feature>
+      <track-action id="EditorCompleteStatement"/>
+    </feature>
   </group>
   
   <group id="editing">
     <feature
       id="move.element.left.right"
-      tip-id="ChangeSignatureAfterMovingParameters"/>
+      tip-id="ChangeSignatureAfterMovingParameters">
+      <track-action id="MoveElementLeft"/>
+      <track-action id="MoveElementRight"/>
+    </feature>
   </group>
 
   <group id="codeassists">
@@ -116,14 +123,16 @@
       min-usage-count="1"
       first-show="5"
       successive-show="7">
+      <track-action id="ExternalJavaDoc"/>
     </feature>
     <feature
       id="codeassists.comment.block"
       tip-id="CommentCode"
       first-show="6"
       successive-show="5"
-      min-usage-count="3"
-      />
+      min-usage-count="3">
+      <track-action id="CommentByBlockComment"/>
+    </feature>
     <feature
       id="codeassists.highlight.implements"
       tip-id="HighlightImplements"
@@ -160,8 +169,9 @@
       tip-id="MoveInnerToUpper"
       min-usage-count="2"
       first-show="5"
-      successive-show="10"
-    />
+      successive-show="10">
+      <track-action id="Move"/>
+    </feature>
     <feature
       id="refactoring.copyClass"
       tip-id="CopyClass"
