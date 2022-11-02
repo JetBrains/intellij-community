@@ -153,7 +153,7 @@ class PyAddCondaPanelModelTest {
     model.newEnvNameRwProperty.set("")
     Assert.assertNotNull("No validation error, but conda env name not set", model.getValidationError())
 
-    model.newEnvNameRwProperty.set("SomeEnvName")
+    model.newEnvNameRwProperty.set("SomeEnv-Name")
     Assert.assertNull("Unexpected error", model.getValidationError())
   }
 
