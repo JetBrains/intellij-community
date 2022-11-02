@@ -221,7 +221,6 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
    * @param stableKeysSorter   function to sort List of keys. Must provide stable sort -- i.e. same set
    *                           of keys must always come out sorted in the same order, regardless of their
    *                           original order
-   * @param valueCanonicalizer
    * @param targetCanonicalMap out-parameter: empty map of the same type as originalMap (i.e. suitable as
    *                           receiver of keys-values from originalMap)
    */
