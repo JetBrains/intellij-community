@@ -16,6 +16,8 @@ import com.intellij.psi.util.siblings
 
 
 class GitGraphAnnotator : Annotator {
+  private val MAIN = "main"
+
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     when (element) {
       is MermaidMergeStatement -> {
@@ -36,6 +38,8 @@ class GitGraphAnnotator : Annotator {
         ?: return
 
     val text = identifier.text
+    if (text == MAIN) return
+
     val parent = element.parent ?: return
 
     val matchingIds = parent
