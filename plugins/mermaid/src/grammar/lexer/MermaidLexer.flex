@@ -660,8 +660,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
       
   ":" { return COLON; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
-  [a-zA-Z][-_\./a-zA-Z0-9]*[-_a-zA-Z0-9] { return ID; }
   [0-9]+ { return NUM; }
+  \w([-\./\w]*[-\w])? { return ID; }
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
 }
 
