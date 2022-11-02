@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
@@ -31,7 +30,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Color
@@ -74,7 +72,6 @@ abstract class NonModalCommitPanel(
 
   init {
     bottomPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
-    bottomPanel.background = getButtonPanelBackground()
 
     commitActionsPanel.apply {
       border = getButtonPanelBorder()
@@ -87,6 +84,8 @@ abstract class NonModalCommitPanel(
 
     addToCenter(centerPanel)
     withPreferredHeight(85)
+    commitMessage.editorField.setDisposedWith(this)
+    bottomPanel.background = getButtonPanelBackground()
   }
 
   override fun updateUI() {
@@ -135,8 +134,8 @@ abstract class NonModalCommitPanel(
     return EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
   }
 
-  private fun getButtonPanelBackground(): Color {
-    return (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground()
+  private fun getButtonPanelBackground(): Color? {
+    return commitMessage.editorField.getEditor(true)?.backgroundColor
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
