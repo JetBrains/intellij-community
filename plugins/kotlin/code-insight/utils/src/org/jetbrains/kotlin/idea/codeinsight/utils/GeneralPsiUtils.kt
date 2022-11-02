@@ -13,9 +13,9 @@ fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
 }
 
 /**
- * Returns a [Set] with its [SmartPsiElementPointer]s dereferenced. Pointers that cannot be dereferenced are ignored.
+ * Returns a [List] with all valid [SmartPsiElementPointer]s dereferenced. Pointers that cannot be dereferenced are ignored.
  */
-fun <E : PsiElement> Set<SmartPsiElementPointer<E>>.dereferenceValidPointers(): Set<E> = mapNotNull { it.element }.toSet()
+fun <E : PsiElement> Iterable<SmartPsiElementPointer<E>>.dereferenceValidPointers(): List<E> = mapNotNull { it.element }
 
 
 /**

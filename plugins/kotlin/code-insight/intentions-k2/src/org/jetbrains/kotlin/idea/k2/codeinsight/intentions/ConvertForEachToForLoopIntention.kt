@@ -5,23 +5,27 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-private const val FOR_EACH_NAME = "forEach"
+private val FOR_EACH_NAME = Name.identifier("forEach")
 
-private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
-    sequenceOf("collections", "sequences", "text").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
-}
+private val FOR_EACH_CALLABLE_IDS = setOf(
+    CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, FOR_EACH_NAME),
+    CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("sequences")), FOR_EACH_NAME),
+    CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_NAME),
+)
 
-private typealias ReturnsToReplace = Set<SmartPsiElementPointer<KtReturnExpression>>
+private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
     : KotlinApplicableIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
@@ -37,7 +41,7 @@ internal class ConvertForEachToForLoopIntention
     override fun getActionName(element: KtCallExpression, context: Context): String = familyName
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
-        if (element.getCallNameExpression()?.getReferencedName() != FOR_EACH_NAME) return false
+        if (element.getCallNameExpression()?.getReferencedName() != FOR_EACH_NAME.asString()) return false
 
         // We only want to convert calls of the form `c.forEach { ... }`, so the parent of `forEach { ... }` must be a
         // KtDotQualifiedExpression.
@@ -52,25 +56,26 @@ internal class ConvertForEachToForLoopIntention
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): Context? {
-        if (!element.isForEachByFqName()) return null
+        if (!element.isForEachByAnalyze()) return null
         return computeReturnsToReplace(element)?.let { Context(it) }
     }
 
     context(KtAnalysisSession)
-    private fun KtCallExpression.isForEachByFqName(): Boolean {
-        val symbol = resolveCall().successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtFunctionSymbol ?: return false
-        val fqName = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return false
-        return fqName.toString() in FOR_EACH_FQ_NAMES
+    private fun KtCallExpression.isForEachByAnalyze(): Boolean {
+        val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return false
+        return symbol.callableIdIfNonLocal in FOR_EACH_CALLABLE_IDS
     }
 
     context(KtAnalysisSession)
-    private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? = buildSet {
+    private fun computeReturnsToReplace(element: KtCallExpression): ReturnsToReplace? {
         val lambda = element.getSingleLambdaArgument() ?: return null
         val lambdaBody = lambda.bodyExpression ?: return null
         val functionLiteral = lambda.functionLiteral
-        lambdaBody.forEachDescendantOfType<KtReturnExpression> {
-            if (it.getReturnTargetSymbol() == functionLiteral.getSymbol()) {
-                add(it.createSmartPointer())
+        return buildList {
+            lambdaBody.forEachDescendantOfType<KtReturnExpression> { returnExpression ->
+                if (returnExpression.getReturnTargetSymbol() == functionLiteral.getSymbol()) {
+                    add(returnExpression.createSmartPointer())
+                }
             }
         }
     }
@@ -89,14 +94,10 @@ internal class ConvertForEachToForLoopIntention
 
     private fun generateLoop(receiver: KtExpression, lambda: KtLambdaExpression, context: Context): KtForExpression? {
         val factory = KtPsiFactory(lambda)
-
         val body = lambda.bodyExpression ?: return null
+
         val returnsToReplace = context.returnsToReplace.dereferenceValidPointers()
-        body.forEachDescendantOfType<KtReturnExpression> {
-            if (returnsToReplace.contains(it)) {
-                it.replace(factory.createExpression("continue"))
-            }
-        }
+        returnsToReplace.forEach { it.replace(factory.createExpression("continue")) }
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameter = lambda.valueParameters.singleOrNull()
