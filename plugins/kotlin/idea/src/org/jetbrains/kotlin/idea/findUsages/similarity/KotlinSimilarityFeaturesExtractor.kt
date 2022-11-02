@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages.similarity
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 import org.jetbrains.kotlin.psi.*
@@ -78,7 +79,7 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, context: PsiElement
 
     private fun collectVariableNames() {
         var currentElement = myContext
-        while (true) {
+        while (currentElement !is PsiFile) {
             val parent = currentElement.parent ?: break
             val startOffsetInParent = currentElement.startOffsetInParent
             when (parent) {
