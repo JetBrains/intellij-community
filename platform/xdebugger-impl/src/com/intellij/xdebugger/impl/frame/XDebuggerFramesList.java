@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -413,7 +414,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
           fileColors.put(virtualFile, COMPUTING_COLOR);
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (fileColors == myFileColors) { // check if it is obsolete already
-              Color color = myColorsManager.getFileColor(virtualFile);
+              Color color = ReadAction.compute(() -> myColorsManager.getFileColor(virtualFile));
               EdtExecutorService.getInstance().execute(() -> {
                 if (fileColors == myFileColors) { // check if it is obsolete already
                   fileColors.put(virtualFile, color == null ? NULL_COLOR : color);
