@@ -45,19 +45,10 @@ internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
           allItems.addAll(itemsFromProvider)
         }
       }
-      AttachDialogProcessItem(processInfo, providersWithItems, dataHolder)
+      AttachDialogProcessItem.create(processInfo, providersWithItems, dataHolder)
     }
 
-    val recentItems = getRecentItems(allItems, host, project, dataHolder).mapNotNull { recentItem ->
-      val itemWithAllDebuggers = processesToAttachItems[recentItem.processInfo]
-      return@mapNotNull if (itemWithAllDebuggers == null) {
-        logger.error("Unable to get all available debuggers for the recent item ${recentItem.processInfo}")
-        null
-      }
-      else {
-        itemWithAllDebuggers
-      }
-    }
+    val recentItems = getRecentItems(allItems, processesToAttachItems, host, project, dataHolder)
 
     return AttachItemsInfo(processesToAttachItems.values.toList(), recentItems, dataHolder)
 
@@ -124,17 +115,35 @@ internal suspend fun collectAttachProcessItems(project: Project,
   }
 }
 
-private fun getRecentItems(currentItems: MutableList<AttachToProcessItem>,
+private fun getRecentItems(currentItems: List<AttachToProcessItem>,
                            host: XAttachHost,
                            project: Project,
                            dataHolder: UserDataHolderBase): List<AttachDialogProcessItem> {
   return AttachToProcessActionBase.getRecentItems(currentItems, host, project, dataHolder).groupBy { it.processInfo.pid }.map { groupedItems ->
     val firstItem = groupedItems.value.first()
     val processInfo = firstItem.processInfo
-    return@map AttachDialogProcessItem(processInfo, groupedItems.value.groupBy { it.group }, dataHolder)
+    return@map AttachDialogProcessItem.create(processInfo, groupedItems.value.groupBy { it.group }, dataHolder)
+  }
+}
+
+private fun getRecentItems(currentItems: List<AttachToProcessItem>,
+                           currentDialogItems: Map<ProcessInfo, AttachDialogProcessItem>,
+                           host: XAttachHost,
+                           project: Project,
+                           dataHolder: UserDataHolderBase): List<AttachDialogRecentItem> {
+  return AttachToProcessActionBase.getRecentItems(currentItems, host, project, dataHolder).groupBy { it.processInfo.pid }.mapNotNull { groupedItems ->
+    val firstItem = groupedItems.value.first()
+    val processInfo = firstItem.processInfo
+    val dialogItem = currentDialogItems[processInfo]
+    if (dialogItem == null) {
+      logger.error("Unable to get all available debuggers for the recent item $processInfo")
+      return@mapNotNull null
+    }
+
+    return@mapNotNull AttachDialogRecentItem(dialogItem, groupedItems.value.sortedBy { it.group.order }.flatMap { it.debuggers })
   }
 }
 
 private fun AttachToProcessItem.toDialogItem(): AttachDialogProcessItem {
-  return AttachDialogProcessItem(processInfo, mapOf(group to listOf(this)), dataHolder)
+  return AttachDialogProcessItem.create(processInfo, mapOf(group to listOf(this)), dataHolder)
 }

@@ -235,10 +235,16 @@ private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: Att
     }
   }
 
+  val recentProcesses = recentItems.map { it.processInfo }.toSet()
+
   val allItems = mutableListOf<AttachToProcessListItem>()
 
   for (item in itemsInfo.processItems.filter { it.debuggers.any() }) {
     coroutineContext.ensureActive()
+
+    if (recentProcesses.contains(item.processInfo)) {
+      continue
+    }
 
     val itemNode = AttachToProcessListItem(item)
     allItems.add(itemNode)
@@ -246,7 +252,7 @@ private suspend fun buildMergedList(itemsInfo: AttachItemsInfo, dialogState: Att
 
   val allItemsSorted = allItems.sortedBy { itemNode -> itemNode.getProcessItem().getGroups().minBy { it.order }.order }
   if (itemNodes.any()) {
-    itemNodes.add(AttachToProcessAllItemsGroup().apply {
+    itemNodes.add(AttachToProcessOtherItemsGroup().apply {
       allItemsSorted.forEach { this.add(it) }
     })
   }
