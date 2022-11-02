@@ -10,6 +10,7 @@ import com.intellij.mermaid.lang.psi.*
 import com.intellij.mermaid.lang.psi.MermaidElementFactory.Companion.createBranchStatement
 import com.intellij.mermaid.lang.psi.MermaidElementFactory.Companion.createCommitStatement
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
@@ -28,6 +29,7 @@ class GitGraphAnnotator : Annotator {
       is MermaidCheckoutStatement -> annotateUnresolvedBranch(element, holder)
       is MermaidCherryPickStatement -> annotateUnresolvedCommitId(element, holder)
       is MermaidCommitStatement -> annotateConflictingCommitId(element, holder)
+      is MermaidBranchStatement -> annotateConflictingBranch(element, holder)
     }
   }
 
@@ -157,6 +159,40 @@ class GitGraphAnnotator : Annotator {
 
       return
     }
+  }
+
+  private fun annotateConflictingBranch(element: MermaidBranchStatement, holder: AnnotationHolder) {
+    val identifier = element.identifier
+
+    val text = identifier.text
+    if (text == MAIN) {
+      addConflictingBranchAnnotation(holder, identifier.textRange)
+    }
+
+    val parent = element.parentOfType<MermaidGitGraphDocument>() ?: return
+
+    val siblings = parent
+      .children
+      .filterIsInstance<MermaidGitGraphStatement>()
+      .map { it.firstChild }
+
+    val matchingIds = siblings
+      .filterIsInstance<MermaidBranchStatement>()
+      .map { it.identifier.text }
+      .filter { it == text }
+
+    if (!matchingIds.iterator().hasNext()) {
+      return
+    }
+
+    addConflictingBranchAnnotation(holder, identifier.textRange)
+  }
+
+  private fun addConflictingBranchAnnotation(holder: AnnotationHolder, textRange: TextRange) {
+    holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.conflicting.branch"))
+      .range(textRange)
+      .highlightType(ProblemHighlightType.ERROR)
+      .create()
   }
 
   private class CreateBranchDeclarationIntention(@SafeFieldForPreview private val className: String) :
