@@ -52,7 +52,7 @@ internal class AttachToProcessListGroup(private val presentationGroup: XAttachPr
 }
 
 internal class AttachToProcessListRecentGroup : AttachToProcessListGroupBase(
-  XDebuggerBundle.message("xdebugger.attach.toLocal.popup.recent")) {
+  XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message")) {
   override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
     return true
   }
@@ -60,7 +60,7 @@ internal class AttachToProcessListRecentGroup : AttachToProcessListGroupBase(
   override fun getOrder(): Int = Int.MIN_VALUE
 }
 
-internal class AttachToProcessAllItemsGroup : AttachToProcessListGroupBase(null) {
+internal class AttachToProcessOtherItemsGroup : AttachToProcessListGroupBase(XDebuggerBundle.message("xdebugger.attach.dialog.other.processes.message")) {
   override fun isAcceptedByFilters(filters: AttachToProcessElementsFilters): Boolean {
     return getNodes().any { filters.matches(it) }
   }

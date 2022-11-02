@@ -10,7 +10,7 @@ import javax.swing.JComponent
 
 private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
 
-fun isListMerged(): Boolean = Registry.`is`("debugger.attach.list.merged")
+fun isListMerged(): Boolean = Registry.`is`("debugger.attach.dialog.list.processes.merged")
 
 fun getProcessName(textToTruncate: String, fontMetrics: FontMetrics, maxWidth: Int): @NlsSafe String {
   if (textToTruncate.isEmpty()) return ""

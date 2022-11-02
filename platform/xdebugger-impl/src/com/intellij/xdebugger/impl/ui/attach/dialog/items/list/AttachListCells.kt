@@ -40,8 +40,6 @@ internal class DebuggersListCell(private val node: AttachToProcessListItem, stat
   override fun getTextToDisplay(): String = node.item.getGroups().filter { it !is XAttachDialogUiInvisiblePresentationGroup }.sortedBy { it.order }.joinToString(", ") {
     (it as? XAttachTreeDebuggersPresentationProvider)?.getDebuggersShortName() ?: it.groupName
   }
-
-  override fun getTextAttributes(): SimpleTextAttributes = node.item.commandLineTextAttributes ?: super.getTextAttributes()
 }
 
 

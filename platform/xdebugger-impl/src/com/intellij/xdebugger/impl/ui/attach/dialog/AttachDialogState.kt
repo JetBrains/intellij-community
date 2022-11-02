@@ -9,7 +9,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachListColumnS
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachTreeColumnSettingsState
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 
-internal class AttachDialogState(val dialogDisposable: Disposable) {
+class AttachDialogState(val dialogDisposable: Disposable) {
 
   companion object {
     private const val IS_ATTACH_VIEW_TREE_ENABLED = "ATTACH_VIEW_TREE_ENABLED"
