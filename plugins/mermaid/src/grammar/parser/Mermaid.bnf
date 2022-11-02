@@ -407,12 +407,17 @@ gitGraphStatement ::= commitStatement
 	| accStatement
 
 branchStatement ::= BRANCH identifier [branchOrder]
-cherryPickStatement ::= CHERRY_PICK commitIdAttribute
+cherryPickStatement ::= CHERRY_PICK cherryPickAttributes
 mergeStatement ::= MERGE identifier [commitAttributes]
 checkoutStatement ::= CHECKOUT identifier
 commitStatement ::=
     COMMIT commitAttributesWithMsg
   | COMMIT [commit_arg]
+
+private cherryPickAttributes ::=
+    commitIdAttribute commitTagAttribute
+  | commitTagAttribute commitIdAttribute
+  | commitIdAttribute
 
 private commitAttributes ::=
     commitIdAttribute commitTypeAttribute commitTagAttribute
