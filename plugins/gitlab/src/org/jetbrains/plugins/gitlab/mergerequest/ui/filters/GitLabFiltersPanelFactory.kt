@@ -41,6 +41,10 @@ internal class GitLabFiltersPanelFactory(
 
   override fun GitLabMergeRequestsQuickFilter.getQuickFilterTitle(): String = when (this) {
     is GitLabMergeRequestsQuickFilter.Open -> GitLabBundle.message("merge.request.list.filter.quick.open")
+    is GitLabMergeRequestsQuickFilter.IncludeMyChanges -> GitLabBundle.message("merge.request.list.filter.quick.me.author")
+    is GitLabMergeRequestsQuickFilter.NeedMyReview -> GitLabBundle.message("merge.request.list.filter.quick.me.reviewer")
+    is GitLabMergeRequestsQuickFilter.AssignedToMe -> GitLabBundle.message("merge.request.list.filter.quick.me.assignee")
+    is GitLabMergeRequestsQuickFilter.Closed -> GitLabBundle.message("merge.request.list.filter.quick.closed")
   }
 
   private fun createStateFilter(viewScope: CoroutineScope): JComponent {

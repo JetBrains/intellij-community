@@ -5,6 +5,7 @@ import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -12,6 +13,7 @@ class GitLabProjectConnection(
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
   override val account: GitLabAccount,
+  val currentUser: GitLabUserDTO,
   val apiClient: GitLabApi
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
 

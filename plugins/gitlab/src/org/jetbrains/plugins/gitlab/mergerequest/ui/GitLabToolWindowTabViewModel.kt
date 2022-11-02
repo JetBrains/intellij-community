@@ -93,6 +93,7 @@ internal class GitLabToolWindowTabViewModel(private val scope: CoroutineScope,
 
       private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
         scope,
+        currentUser = connection.currentUser,
         historyModel = GitLabMergeRequestsFiltersHistoryModel(GitLabMergeRequestsPersistentFiltersHistory()),
         avatarIconsProvider = avatarIconsProvider,
         projectDetailsLoader = GitLabProjectDetailsLoader(connection.apiClient, connection.repo.repository)

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
+  val currentUser: GitLabUserDTO
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 
   val stateFilterState: MutableStateFlow<MergeRequestStateFilterValue?>
@@ -31,6 +32,7 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
+  override val currentUser: GitLabUserDTO,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val projectDetailsLoader: GitLabProjectDetailsLoader
 ) : GitLabMergeRequestsFiltersViewModel,
@@ -45,7 +47,11 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
   }
 
   override val quickFilters: List<GitLabMergeRequestsQuickFilter> = listOf(
-    GitLabMergeRequestsQuickFilter.Open()
+    GitLabMergeRequestsQuickFilter.Open(),
+    GitLabMergeRequestsQuickFilter.IncludeMyChanges(currentUser),
+    GitLabMergeRequestsQuickFilter.NeedMyReview(currentUser),
+    GitLabMergeRequestsQuickFilter.AssignedToMe(currentUser),
+    GitLabMergeRequestsQuickFilter.Closed(),
   )
 
   override val stateFilterState = searchState.partialState(GitLabMergeRequestsFiltersValue::state) {

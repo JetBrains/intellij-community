@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.api
 import git4idea.remote.hosting.HostedGitRepositoryConnectionManager
 import git4idea.remote.hosting.ValidatingHostedGitRepositoryConnectionManager
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -14,6 +15,7 @@ internal fun GitLabProjectConnectionManager(repositoriesManager: GitLabProjectsM
   : GitLabProjectConnectionManager {
   return ValidatingHostedGitRepositoryConnectionManager(repositoriesManager, accountManager) { project, account, tokenState ->
     val apiClient = GitLabApi { tokenState.value }
-    GitLabProjectConnection(this, project, account, apiClient)
+    val currentUser = apiClient.getCurrentUser(project.repository.serverPath) ?: error("Unable to load current user")
+    GitLabProjectConnection(this, project, account, currentUser, apiClient)
   }
 }
