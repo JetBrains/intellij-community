@@ -1313,36 +1313,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/reduceOrNull.kt");
                 }
 
-                @TestMetadata("runningFold.kt")
-                public void testRunningFold() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningFold.kt");
-                }
-
-                @TestMetadata("runningFoldIndexed.kt")
-                public void testRunningFoldIndexed() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningFoldIndexed.kt");
-                }
-
-                @TestMetadata("runningReduce.kt")
-                public void testRunningReduce() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningReduce.kt");
-                }
-
-                @TestMetadata("runningReduceIndexed.kt")
-                public void testRunningReduceIndexed() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/runningReduceIndexed.kt");
-                }
-
-                @TestMetadata("scan.kt")
-                public void testScan() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/scan.kt");
-                }
-
-                @TestMetadata("scanIndexed.kt")
-                public void testScanIndexed() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/scanIndexed.kt");
-                }
-
                 @TestMetadata("single.kt")
                 public void testSingle() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/single.kt");
@@ -1521,6 +1491,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/returnAtLabels.kt");
                 }
 
+                @TestMetadata("runningFold.kt")
+                public void testRunningFold() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningFold.kt");
+                }
+
+                @TestMetadata("runningFoldIndexed.kt")
+                public void testRunningFoldIndexed() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningFoldIndexed.kt");
+                }
+
+                @TestMetadata("runningReduce.kt")
+                public void testRunningReduce() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningReduce.kt");
+                }
+
+                @TestMetadata("runningReduceIndexed.kt")
+                public void testRunningReduceIndexed() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/runningReduceIndexed.kt");
+                }
+
+                @TestMetadata("scan.kt")
+                public void testScan() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/scan.kt");
+                }
+
+                @TestMetadata("scanIndexed.kt")
+                public void testScanIndexed() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/scanIndexed.kt");
+                }
+
                 @TestMetadata("set.kt")
                 public void testSet() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/set.kt");
@@ -1578,6 +1578,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("inCallChain.kt")
             public void testInCallChain() throws Exception {
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/inCallChain.kt");
+            }
+
+            @TestMetadata("KTIJ-23488.kt")
+            public void testKTIJ_23488() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/KTIJ-23488.kt");
             }
 
             @TestMetadata("map.kt")
