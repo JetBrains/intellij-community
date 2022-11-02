@@ -40,7 +40,7 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
   override val entitySource: EntitySource
     get() = TODO("Not yet implemented")
 
-  class Builder(val result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity>(), UnknownFieldEntity.Builder {
+  class Builder(result: UnknownFieldEntityData?) : ModifiableWorkspaceEntityBase<UnknownFieldEntity, UnknownFieldEntityData>(result), UnknownFieldEntity.Builder {
     constructor() : this(UnknownFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -106,7 +106,6 @@ open class UnknownFieldEntityImpl : UnknownFieldEntity, WorkspaceEntityBase() {
 
       }
 
-    override fun getEntityData(): UnknownFieldEntityData = result ?: super.getEntityData() as UnknownFieldEntityData
     override fun getEntityClass(): Class<UnknownFieldEntity> = UnknownFieldEntity::class.java
   }
 }

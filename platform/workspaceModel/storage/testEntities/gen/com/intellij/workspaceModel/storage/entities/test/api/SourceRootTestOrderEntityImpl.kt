@@ -49,7 +49,8 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
     return connections
   }
 
-  class Builder(var result: SourceRootTestOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity>(), SourceRootTestOrderEntity.Builder {
+  class Builder(result: SourceRootTestOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootTestOrderEntity, SourceRootTestOrderEntityData>(
+    result), SourceRootTestOrderEntity.Builder {
     constructor() : this(SourceRootTestOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,7 +70,7 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -118,7 +119,7 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -127,7 +128,7 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -145,18 +146,18 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -166,7 +167,6 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
         changedProperty.add("contentRoot")
       }
 
-    override fun getEntityData(): SourceRootTestOrderEntityData = result ?: super.getEntityData() as SourceRootTestOrderEntityData
     override fun getEntityClass(): Class<SourceRootTestOrderEntity> = SourceRootTestOrderEntity::class.java
   }
 }

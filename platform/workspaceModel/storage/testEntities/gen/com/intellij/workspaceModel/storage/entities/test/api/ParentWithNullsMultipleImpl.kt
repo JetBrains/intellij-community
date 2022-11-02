@@ -49,7 +49,8 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
     return connections
   }
 
-  class Builder(var result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple>(), ParentWithNullsMultiple.Builder {
+  class Builder(result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple, ParentWithNullsMultipleData>(
+    result), ParentWithNullsMultiple.Builder {
     constructor() : this(ParentWithNullsMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,7 +70,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -115,7 +116,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -124,7 +125,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
       get() = getEntityData().parentData
       set(value) {
         checkModificationAllowed()
-        getEntityData().parentData = value
+        getEntityData(true).parentData = value
         changedProperty.add("parentData")
       }
 
@@ -148,9 +149,9 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -162,7 +163,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -173,7 +174,6 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
         changedProperty.add("children")
       }
 
-    override fun getEntityData(): ParentWithNullsMultipleData = result ?: super.getEntityData() as ParentWithNullsMultipleData
     override fun getEntityClass(): Class<ParentWithNullsMultiple> = ParentWithNullsMultiple::class.java
   }
 }

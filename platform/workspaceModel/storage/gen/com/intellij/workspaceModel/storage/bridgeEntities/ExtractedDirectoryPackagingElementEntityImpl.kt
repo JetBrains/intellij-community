@@ -54,7 +54,8 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     return connections
   }
 
-  class Builder(var result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity>(), ExtractedDirectoryPackagingElementEntity.Builder {
+  class Builder(result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(
+    result), ExtractedDirectoryPackagingElementEntity.Builder {
     constructor() : this(ExtractedDirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,7 +75,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -117,7 +118,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -136,21 +137,21 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
@@ -165,7 +166,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       get() = getEntityData().filePath
       set(value) {
         checkModificationAllowed()
-        getEntityData().filePath = value
+        getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
@@ -175,12 +176,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       get() = getEntityData().pathInArchive
       set(value) {
         checkModificationAllowed()
-        getEntityData().pathInArchive = value
+        getEntityData(true).pathInArchive = value
         changedProperty.add("pathInArchive")
       }
-
-    override fun getEntityData(): ExtractedDirectoryPackagingElementEntityData = result
-                                                                                 ?: super.getEntityData() as ExtractedDirectoryPackagingElementEntityData
 
     override fun getEntityClass(): Class<ExtractedDirectoryPackagingElementEntity> = ExtractedDirectoryPackagingElementEntity::class.java
   }

@@ -52,7 +52,8 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
     return connections
   }
 
-  class Builder(var result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity>(), FacetTestEntity.Builder {
+  class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(
+    result), FacetTestEntity.Builder {
     constructor() : this(FacetTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,7 +73,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -125,7 +126,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -134,7 +135,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -142,7 +143,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       get() = getEntityData().moreData
       set(value) {
         checkModificationAllowed()
-        getEntityData().moreData = value
+        getEntityData(true).moreData = value
         changedProperty.add("moreData")
       }
 
@@ -160,21 +161,21 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
@@ -185,7 +186,6 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
         changedProperty.add("module")
       }
 
-    override fun getEntityData(): FacetTestEntityData = result ?: super.getEntityData() as FacetTestEntityData
     override fun getEntityClass(): Class<FacetTestEntity> = FacetTestEntity::class.java
   }
 }

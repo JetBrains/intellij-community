@@ -52,7 +52,8 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
     return connections
   }
 
-  class Builder(var result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity>(), JavaResourceRootPropertiesEntity.Builder {
+  class Builder(result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(
+    result), JavaResourceRootPropertiesEntity.Builder {
     constructor() : this(JavaResourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -72,7 +73,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -122,7 +123,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -141,21 +142,21 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
@@ -170,7 +171,7 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       get() = getEntityData().generated
       set(value) {
         checkModificationAllowed()
-        getEntityData().generated = value
+        getEntityData(true).generated = value
         changedProperty.add("generated")
       }
 
@@ -178,12 +179,9 @@ open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRoot
       get() = getEntityData().relativeOutputPath
       set(value) {
         checkModificationAllowed()
-        getEntityData().relativeOutputPath = value
+        getEntityData(true).relativeOutputPath = value
         changedProperty.add("relativeOutputPath")
       }
-
-    override fun getEntityData(): JavaResourceRootPropertiesEntityData = result
-                                                                         ?: super.getEntityData() as JavaResourceRootPropertiesEntityData
 
     override fun getEntityClass(): Class<JavaResourceRootPropertiesEntity> = JavaResourceRootPropertiesEntity::class.java
   }

@@ -40,7 +40,7 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
     return connections
   }
 
-  class Builder(var result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
+  class Builder(result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity, ListEntityData>(result), ListEntity.Builder {
     constructor() : this(ListEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,7 +60,7 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -102,7 +102,7 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -125,11 +125,10 @@ open class ListEntityImpl(val dataSource: ListEntityData) : ListEntity, Workspac
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         dataUpdater.invoke(value)
       }
 
-    override fun getEntityData(): ListEntityData = result ?: super.getEntityData() as ListEntityData
     override fun getEntityClass(): Class<ListEntity> = ListEntity::class.java
   }
 }

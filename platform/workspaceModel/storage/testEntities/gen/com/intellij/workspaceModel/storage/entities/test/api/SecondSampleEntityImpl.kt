@@ -42,7 +42,8 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
     return connections
   }
 
-  class Builder(var result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity>(), SecondSampleEntity.Builder {
+  class Builder(result: SecondSampleEntityData?) : ModifiableWorkspaceEntityBase<SecondSampleEntity, SecondSampleEntityData>(
+    result), SecondSampleEntity.Builder {
     constructor() : this(SecondSampleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,7 +63,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -94,7 +95,7 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -103,11 +104,10 @@ open class SecondSampleEntityImpl(val dataSource: SecondSampleEntityData) : Seco
       get() = getEntityData().intProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().intProperty = value
+        getEntityData(true).intProperty = value
         changedProperty.add("intProperty")
       }
 
-    override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
     override fun getEntityClass(): Class<SecondSampleEntity> = SecondSampleEntity::class.java
   }
 }

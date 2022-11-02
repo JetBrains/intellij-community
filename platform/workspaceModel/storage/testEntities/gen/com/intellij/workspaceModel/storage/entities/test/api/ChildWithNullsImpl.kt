@@ -39,7 +39,8 @@ open class ChildWithNullsImpl(val dataSource: ChildWithNullsData) : ChildWithNul
     return connections
   }
 
-  class Builder(var result: ChildWithNullsData?) : ModifiableWorkspaceEntityBase<ChildWithNulls>(), ChildWithNulls.Builder {
+  class Builder(result: ChildWithNullsData?) : ModifiableWorkspaceEntityBase<ChildWithNulls, ChildWithNullsData>(
+    result), ChildWithNulls.Builder {
     constructor() : this(ChildWithNullsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,7 +60,7 @@ open class ChildWithNullsImpl(val dataSource: ChildWithNullsData) : ChildWithNul
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -94,7 +95,7 @@ open class ChildWithNullsImpl(val dataSource: ChildWithNullsData) : ChildWithNul
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -103,11 +104,10 @@ open class ChildWithNullsImpl(val dataSource: ChildWithNullsData) : ChildWithNul
       get() = getEntityData().childData
       set(value) {
         checkModificationAllowed()
-        getEntityData().childData = value
+        getEntityData(true).childData = value
         changedProperty.add("childData")
       }
 
-    override fun getEntityData(): ChildWithNullsData = result ?: super.getEntityData() as ChildWithNullsData
     override fun getEntityClass(): Class<ChildWithNulls> = ChildWithNulls::class.java
   }
 }

@@ -46,7 +46,8 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
     return connections
   }
 
-  class Builder(var result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity>(), ListVFUEntity.Builder {
+  class Builder(result: ListVFUEntityData?) : ModifiableWorkspaceEntityBase<ListVFUEntity, ListVFUEntityData>(
+    result), ListVFUEntity.Builder {
     constructor() : this(ListVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +67,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder
@@ -113,7 +114,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -122,7 +123,7 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -145,11 +146,10 @@ open class ListVFUEntityImpl(val dataSource: ListVFUEntityData) : ListVFUEntity,
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         filePropertyUpdater.invoke(value)
       }
 
-    override fun getEntityData(): ListVFUEntityData = result ?: super.getEntityData() as ListVFUEntityData
     override fun getEntityClass(): Class<ListVFUEntity> = ListVFUEntity::class.java
   }
 }

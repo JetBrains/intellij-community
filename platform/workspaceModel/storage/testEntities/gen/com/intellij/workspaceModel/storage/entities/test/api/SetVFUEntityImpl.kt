@@ -46,7 +46,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
     return connections
   }
 
-  class Builder(var result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity>(), SetVFUEntity.Builder {
+  class Builder(result: SetVFUEntityData?) : ModifiableWorkspaceEntityBase<SetVFUEntity, SetVFUEntityData>(result), SetVFUEntity.Builder {
     constructor() : this(SetVFUEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +66,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty.toHashSet())
       // Process linked entities that are connected without a builder
@@ -113,7 +113,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -122,7 +122,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -145,11 +145,10 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         filePropertyUpdater.invoke(value)
       }
 
-    override fun getEntityData(): SetVFUEntityData = result ?: super.getEntityData() as SetVFUEntityData
     override fun getEntityClass(): Class<SetVFUEntity> = SetVFUEntity::class.java
   }
 }

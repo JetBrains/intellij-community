@@ -55,7 +55,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
     return connections
   }
 
-  class Builder(var result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity>(), TreeEntity.Builder {
+  class Builder(result: TreeEntityData?) : ModifiableWorkspaceEntityBase<TreeEntity, TreeEntityData>(result), TreeEntity.Builder {
     constructor() : this(TreeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -75,7 +75,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -135,7 +135,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -144,7 +144,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -169,9 +169,9 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -183,7 +183,7 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -208,21 +208,21 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
@@ -233,7 +233,6 @@ open class TreeEntityImpl(val dataSource: TreeEntityData) : TreeEntity, Workspac
         changedProperty.add("parentEntity")
       }
 
-    override fun getEntityData(): TreeEntityData = result ?: super.getEntityData() as TreeEntityData
     override fun getEntityClass(): Class<TreeEntity> = TreeEntity::class.java
   }
 }

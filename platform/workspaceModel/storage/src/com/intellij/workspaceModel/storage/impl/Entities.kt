@@ -183,7 +183,7 @@ data class EntityLink(
 val EntityLink.remote: EntityLink
   get() = EntityLink(!this.isThisFieldChild, connectionId)
 
-abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
+abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEntityData<T>>(protected var currentEntityData: E?) : WorkspaceEntityBase(), WorkspaceEntity.Builder<T> {
   /**
    * In case any of two referred entities is not added to diff, the reference between entities will be stored in this field
    */
@@ -209,7 +209,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
         if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
           // One - to - many connection
           for (item in entities) {
-            if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+            if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
               @Suppress("KotlinConstantConditions")
               item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] =  this
               myDiff.addEntity(item)
@@ -219,7 +219,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
         } else {
           // One - to -one connection
           val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
             myDiff.addEntity(item)
@@ -232,7 +232,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
         if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
           // One - to - many connection
           val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
             myDiff.addEntity(item)
@@ -242,7 +242,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
         else {
           // One - to -one connection
           val item = entities.single()
-          if (item != null && item is ModifiableWorkspaceEntityBase<*> && item.diff == null) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
             myDiff.addEntity(item)
@@ -260,7 +260,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
           @Suppress("KotlinConstantConditions")
           this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = entities
           for (item in entities) {
-            if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+            if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
               @Suppress("KotlinConstantConditions")
               item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
             }
@@ -270,7 +270,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
           val item = entities.single()
           @Suppress("KotlinConstantConditions")
           this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
           }
@@ -284,7 +284,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 
           @Suppress("KotlinConstantConditions")
           this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
             @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
           }
@@ -294,7 +294,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
 
           @Suppress("KotlinConstantConditions")
           this.entityLinks[EntityLink(isThisFieldChild, foundConnectionId)] = item
-          if (item != null && item is ModifiableWorkspaceEntityBase<*>) {
+          if (item != null && item is ModifiableWorkspaceEntityBase<*, *>) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
           }
@@ -391,7 +391,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
         if (data is List<*>) {
           error("Cannot have parent lists")
         }
-        else if (data is ModifiableWorkspaceEntityBase<*>) {
+        else if (data is ModifiableWorkspaceEntityBase<*, *>) {
           val remoteData = data.entityLinks[key.remote]
           if (remoteData != null) {
             if (remoteData is List<*>) {
@@ -415,7 +415,7 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
       error("Cannot have parent lists")
     }
     else if (entity is WorkspaceEntity) {
-      if (entity is ModifiableWorkspaceEntityBase<*> && entity.diff == null) {
+      if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
         builder.addEntity(entity)
       }
       applyParentRef(entityLink.connectionId, entity)
@@ -428,12 +428,12 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
                                        connectionId: ConnectionId) {
     if (entity is List<*>) {
       for (item in entity) {
-        if (item is ModifiableWorkspaceEntityBase<*>) {
+        if (item is ModifiableWorkspaceEntityBase<*, *>) {
           builder.addEntity(item)
         }
         @Suppress("UNCHECKED_CAST")
         entity as List<WorkspaceEntity>
-        val withBuilder_entity = entity.filter { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
+        val withBuilder_entity = entity.filter { it is ModifiableWorkspaceEntityBase<*, *> && it.diff != null }
         applyRef(connectionId, withBuilder_entity)
       }
     }
@@ -443,11 +443,16 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     }
   }
 
-  open fun getEntityData(): WorkspaceEntityData<T> {
-    val actualEntityData = (diff as MutableEntityStorageImpl).entitiesByType.getEntityDataForModificationOrNull(id)
-      ?: error("Cannot find the data. Must probably this entity was already remove from builder.")
+  fun getEntityData(supposedModification: Boolean = false): E {
+    if (currentEntityData != null) return currentEntityData!!
+    val actualEntityData = if (supposedModification) {
+      (diff as MutableEntityStorageImpl).entitiesByType.getEntityDataForModificationOrNull(id)
+    } else {
+      (diff as MutableEntityStorageImpl).entitiesByType[id.clazz]?.get(id.arrayId)
+    } ?: error("Cannot find the data. Must probably this entity was already remove from builder.")
+
     @Suppress("UNCHECKED_CAST")
-    return actualEntityData as WorkspaceEntityData<T>
+    return actualEntityData as E
   }
 
   // For generated entities

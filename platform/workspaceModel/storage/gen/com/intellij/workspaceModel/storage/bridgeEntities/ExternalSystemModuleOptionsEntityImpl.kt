@@ -69,7 +69,8 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
     return connections
   }
 
-  class Builder(var result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity>(), ExternalSystemModuleOptionsEntity.Builder {
+  class Builder(result: ExternalSystemModuleOptionsEntityData?) : ModifiableWorkspaceEntityBase<ExternalSystemModuleOptionsEntity, ExternalSystemModuleOptionsEntityData>(
+    result), ExternalSystemModuleOptionsEntity.Builder {
     constructor() : this(ExternalSystemModuleOptionsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -89,7 +90,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -141,7 +142,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -160,18 +161,18 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -185,7 +186,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().externalSystem
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystem = value
+        getEntityData(true).externalSystem = value
         changedProperty.add("externalSystem")
       }
 
@@ -193,7 +194,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().externalSystemModuleVersion
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystemModuleVersion = value
+        getEntityData(true).externalSystemModuleVersion = value
         changedProperty.add("externalSystemModuleVersion")
       }
 
@@ -201,7 +202,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().linkedProjectPath
       set(value) {
         checkModificationAllowed()
-        getEntityData().linkedProjectPath = value
+        getEntityData(true).linkedProjectPath = value
         changedProperty.add("linkedProjectPath")
       }
 
@@ -209,7 +210,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().linkedProjectId
       set(value) {
         checkModificationAllowed()
-        getEntityData().linkedProjectId = value
+        getEntityData(true).linkedProjectId = value
         changedProperty.add("linkedProjectId")
       }
 
@@ -217,7 +218,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().rootProjectPath
       set(value) {
         checkModificationAllowed()
-        getEntityData().rootProjectPath = value
+        getEntityData(true).rootProjectPath = value
         changedProperty.add("rootProjectPath")
       }
 
@@ -225,7 +226,7 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().externalSystemModuleGroup
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystemModuleGroup = value
+        getEntityData(true).externalSystemModuleGroup = value
         changedProperty.add("externalSystemModuleGroup")
       }
 
@@ -233,12 +234,9 @@ open class ExternalSystemModuleOptionsEntityImpl(val dataSource: ExternalSystemM
       get() = getEntityData().externalSystemModuleType
       set(value) {
         checkModificationAllowed()
-        getEntityData().externalSystemModuleType = value
+        getEntityData(true).externalSystemModuleType = value
         changedProperty.add("externalSystemModuleType")
       }
-
-    override fun getEntityData(): ExternalSystemModuleOptionsEntityData = result
-                                                                          ?: super.getEntityData() as ExternalSystemModuleOptionsEntityData
 
     override fun getEntityClass(): Class<ExternalSystemModuleOptionsEntity> = ExternalSystemModuleOptionsEntity::class.java
   }

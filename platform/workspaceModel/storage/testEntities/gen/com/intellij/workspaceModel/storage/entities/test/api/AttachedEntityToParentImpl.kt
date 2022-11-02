@@ -38,7 +38,8 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
     return connections
   }
 
-  class Builder(var result: AttachedEntityToParentData?) : ModifiableWorkspaceEntityBase<AttachedEntityToParent>(), AttachedEntityToParent.Builder {
+  class Builder(result: AttachedEntityToParentData?) : ModifiableWorkspaceEntityBase<AttachedEntityToParent, AttachedEntityToParentData>(
+    result), AttachedEntityToParent.Builder {
     constructor() : this(AttachedEntityToParentData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -58,7 +59,7 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -93,7 +94,7 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -102,11 +103,10 @@ open class AttachedEntityToParentImpl(val dataSource: AttachedEntityToParentData
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): AttachedEntityToParentData = result ?: super.getEntityData() as AttachedEntityToParentData
     override fun getEntityClass(): Class<AttachedEntityToParent> = AttachedEntityToParent::class.java
   }
 }

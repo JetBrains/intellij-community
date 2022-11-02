@@ -49,7 +49,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
     return connections
   }
 
-  class Builder(var result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2>(), VFUEntity2.Builder {
+  class Builder(result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2, VFUEntity2Data>(result), VFUEntity2.Builder {
     constructor() : this(VFUEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -69,7 +69,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "filePath", this.filePath)
       index(this, "directoryPath", this.directoryPath)
@@ -123,7 +123,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -132,7 +132,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -140,7 +140,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().filePath
       set(value) {
         checkModificationAllowed()
-        getEntityData().filePath = value
+        getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
@@ -150,7 +150,7 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       get() = getEntityData().directoryPath
       set(value) {
         checkModificationAllowed()
-        getEntityData().directoryPath = value
+        getEntityData(true).directoryPath = value
         changedProperty.add("directoryPath")
         val _diff = diff
         if (_diff != null) index(this, "directoryPath", value)
@@ -175,11 +175,10 @@ open class VFUEntity2Impl(val dataSource: VFUEntity2Data) : VFUEntity2, Workspac
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().notNullRoots = value
+        getEntityData(true).notNullRoots = value
         notNullRootsUpdater.invoke(value)
       }
 
-    override fun getEntityData(): VFUEntity2Data = result ?: super.getEntityData() as VFUEntity2Data
     override fun getEntityClass(): Class<VFUEntity2> = VFUEntity2::class.java
   }
 }

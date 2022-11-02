@@ -41,7 +41,8 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
     return connections
   }
 
-  class Builder(var result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity>(), DefaultFieldEntity.Builder {
+  class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(
+    result), DefaultFieldEntity.Builder {
     constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -61,7 +62,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -99,7 +100,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -108,7 +109,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
-        getEntityData().version = value
+        getEntityData(true).version = value
         changedProperty.add("version")
       }
 
@@ -116,7 +117,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
 
       }
@@ -125,7 +126,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       get() = getEntityData().anotherVersion
       set(value) {
         checkModificationAllowed()
-        getEntityData().anotherVersion = value
+        getEntityData(true).anotherVersion = value
         changedProperty.add("anotherVersion")
       }
 
@@ -133,11 +134,10 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       get() = getEntityData().description
       set(value) {
         checkModificationAllowed()
-        getEntityData().description = value
+        getEntityData(true).description = value
         changedProperty.add("description")
       }
 
-    override fun getEntityData(): DefaultFieldEntityData = result ?: super.getEntityData() as DefaultFieldEntityData
     override fun getEntityClass(): Class<DefaultFieldEntity> = DefaultFieldEntity::class.java
   }
 }

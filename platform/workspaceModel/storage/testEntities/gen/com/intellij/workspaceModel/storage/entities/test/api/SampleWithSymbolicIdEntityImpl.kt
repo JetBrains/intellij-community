@@ -65,7 +65,8 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
     return connections
   }
 
-  class Builder(var result: SampleWithSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithSymbolicIdEntity>(), SampleWithSymbolicIdEntity.Builder {
+  class Builder(result: SampleWithSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityData>(
+    result), SampleWithSymbolicIdEntity.Builder {
     constructor() : this(SampleWithSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -85,7 +86,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
@@ -153,7 +154,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -162,7 +163,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().booleanProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().booleanProperty = value
+        getEntityData(true).booleanProperty = value
         changedProperty.add("booleanProperty")
       }
 
@@ -170,7 +171,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().stringProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringProperty = value
+        getEntityData(true).stringProperty = value
         changedProperty.add("stringProperty")
       }
 
@@ -192,7 +193,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringListProperty = value
+        getEntityData(true).stringListProperty = value
         stringListPropertyUpdater.invoke(value)
       }
 
@@ -200,7 +201,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().stringMapProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().stringMapProperty = value
+        getEntityData(true).stringMapProperty = value
         changedProperty.add("stringMapProperty")
       }
 
@@ -208,7 +209,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().fileProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().fileProperty = value
+        getEntityData(true).fileProperty = value
         changedProperty.add("fileProperty")
         val _diff = diff
         if (_diff != null) index(this, "fileProperty", value)
@@ -234,9 +235,9 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -248,7 +249,7 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -263,11 +264,10 @@ open class SampleWithSymbolicIdEntityImpl(val dataSource: SampleWithSymbolicIdEn
       get() = getEntityData().nullableData
       set(value) {
         checkModificationAllowed()
-        getEntityData().nullableData = value
+        getEntityData(true).nullableData = value
         changedProperty.add("nullableData")
       }
 
-    override fun getEntityData(): SampleWithSymbolicIdEntityData = result ?: super.getEntityData() as SampleWithSymbolicIdEntityData
     override fun getEntityClass(): Class<SampleWithSymbolicIdEntity> = SampleWithSymbolicIdEntity::class.java
   }
 }

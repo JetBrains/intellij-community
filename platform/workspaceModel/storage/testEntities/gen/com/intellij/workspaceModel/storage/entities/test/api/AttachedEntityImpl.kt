@@ -46,7 +46,8 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
     return connections
   }
 
-  class Builder(var result: AttachedEntityData?) : ModifiableWorkspaceEntityBase<AttachedEntity>(), AttachedEntity.Builder {
+  class Builder(result: AttachedEntityData?) : ModifiableWorkspaceEntityBase<AttachedEntity, AttachedEntityData>(
+    result), AttachedEntity.Builder {
     constructor() : this(AttachedEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -66,7 +67,7 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -115,7 +116,7 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -133,18 +134,18 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, REF_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(REF_CONNECTION_ID, this, value)
         }
         else {
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, REF_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
@@ -158,11 +159,10 @@ open class AttachedEntityImpl(val dataSource: AttachedEntityData) : AttachedEnti
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
-    override fun getEntityData(): AttachedEntityData = result ?: super.getEntityData() as AttachedEntityData
     override fun getEntityClass(): Class<AttachedEntity> = AttachedEntity::class.java
   }
 }

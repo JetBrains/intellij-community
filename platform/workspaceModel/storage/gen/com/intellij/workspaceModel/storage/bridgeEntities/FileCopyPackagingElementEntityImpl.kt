@@ -54,7 +54,8 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
     return connections
   }
 
-  class Builder(var result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity>(), FileCopyPackagingElementEntity.Builder {
+  class Builder(result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(
+    result), FileCopyPackagingElementEntity.Builder {
     constructor() : this(FileCopyPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -74,7 +75,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -114,7 +115,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -133,21 +134,21 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       set(value) {
         checkModificationAllowed()
         val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*>) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
@@ -162,7 +163,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       get() = getEntityData().filePath
       set(value) {
         checkModificationAllowed()
-        getEntityData().filePath = value
+        getEntityData(true).filePath = value
         changedProperty.add("filePath")
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
@@ -172,11 +173,10 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       get() = getEntityData().renamedOutputFileName
       set(value) {
         checkModificationAllowed()
-        getEntityData().renamedOutputFileName = value
+        getEntityData(true).renamedOutputFileName = value
         changedProperty.add("renamedOutputFileName")
       }
 
-    override fun getEntityData(): FileCopyPackagingElementEntityData = result ?: super.getEntityData() as FileCopyPackagingElementEntityData
     override fun getEntityClass(): Class<FileCopyPackagingElementEntity> = FileCopyPackagingElementEntity::class.java
   }
 }

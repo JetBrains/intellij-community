@@ -42,7 +42,8 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
     return connections
   }
 
-  class Builder(var result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity>(), ProjectModelTestEntity.Builder {
+  class Builder(result: ProjectModelTestEntityData?) : ModifiableWorkspaceEntityBase<ProjectModelTestEntity, ProjectModelTestEntityData>(
+    result), ProjectModelTestEntity.Builder {
     constructor() : this(ProjectModelTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,7 +63,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -101,7 +102,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -110,7 +111,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().info
       set(value) {
         checkModificationAllowed()
-        getEntityData().info = value
+        getEntityData(true).info = value
         changedProperty.add("info")
       }
 
@@ -118,12 +119,11 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       get() = getEntityData().descriptor
       set(value) {
         checkModificationAllowed()
-        getEntityData().descriptor = value
+        getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
       }
 
-    override fun getEntityData(): ProjectModelTestEntityData = result ?: super.getEntityData() as ProjectModelTestEntityData
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java
   }
 }

@@ -40,7 +40,7 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
     return connections
   }
 
-  class Builder(var result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity>(), ParentEntity.Builder {
+  class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(result), ParentEntity.Builder {
     constructor() : this(ParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -60,7 +60,7 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -99,7 +99,7 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -108,7 +108,7 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
       get() = getEntityData().data1
       set(value) {
         checkModificationAllowed()
-        getEntityData().data1 = value
+        getEntityData(true).data1 = value
         changedProperty.add("data1")
       }
 
@@ -116,11 +116,10 @@ open class ParentEntityImpl(val dataSource: ParentEntityData) : ParentEntity, Wo
       get() = getEntityData().data2
       set(value) {
         checkModificationAllowed()
-        getEntityData().data2 = value
+        getEntityData(true).data2 = value
         changedProperty.add("data2")
       }
 
-    override fun getEntityData(): ParentEntityData<T> = result ?: super.getEntityData() as ParentEntityData<T>
     override fun getEntityClass(): Class<ParentEntity> = ParentEntity::class.java
   }
 }

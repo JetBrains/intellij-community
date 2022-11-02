@@ -43,7 +43,8 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
     return connections
   }
 
-  class Builder(var result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2>(), SampleEntity2.Builder {
+  class Builder(result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2, SampleEntity2Data>(
+    result), SampleEntity2.Builder {
     constructor() : this(SampleEntity2Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -63,7 +64,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -100,7 +101,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -109,7 +110,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       get() = getEntityData().data
       set(value) {
         checkModificationAllowed()
-        getEntityData().data = value
+        getEntityData(true).data = value
         changedProperty.add("data")
       }
 
@@ -117,7 +118,7 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       get() = getEntityData().boolData
       set(value) {
         checkModificationAllowed()
-        getEntityData().boolData = value
+        getEntityData(true).boolData = value
         changedProperty.add("boolData")
       }
 
@@ -125,11 +126,10 @@ open class SampleEntity2Impl(val dataSource: SampleEntity2Data) : SampleEntity2,
       get() = getEntityData().optionalData
       set(value) {
         checkModificationAllowed()
-        getEntityData().optionalData = value
+        getEntityData(true).optionalData = value
         changedProperty.add("optionalData")
       }
 
-    override fun getEntityData(): SampleEntity2Data = result ?: super.getEntityData() as SampleEntity2Data
     override fun getEntityClass(): Class<SampleEntity2> = SampleEntity2::class.java
   }
 }

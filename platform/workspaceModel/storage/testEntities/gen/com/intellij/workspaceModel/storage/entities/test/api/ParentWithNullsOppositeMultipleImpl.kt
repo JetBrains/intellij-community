@@ -39,7 +39,8 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
     return connections
   }
 
-  class Builder(var result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple>(), ParentWithNullsOppositeMultiple.Builder {
+  class Builder(result: ParentWithNullsOppositeMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleData>(
+    result), ParentWithNullsOppositeMultiple.Builder {
     constructor() : this(ParentWithNullsOppositeMultipleData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -59,7 +60,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -94,7 +95,7 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -103,12 +104,9 @@ open class ParentWithNullsOppositeMultipleImpl(val dataSource: ParentWithNullsOp
       get() = getEntityData().parentData
       set(value) {
         checkModificationAllowed()
-        getEntityData().parentData = value
+        getEntityData(true).parentData = value
         changedProperty.add("parentData")
       }
-
-    override fun getEntityData(): ParentWithNullsOppositeMultipleData = result
-                                                                        ?: super.getEntityData() as ParentWithNullsOppositeMultipleData
 
     override fun getEntityClass(): Class<ParentWithNullsOppositeMultiple> = ParentWithNullsOppositeMultiple::class.java
   }

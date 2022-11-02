@@ -60,7 +60,8 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
     return connections
   }
 
-  class Builder(var result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity>(), XParentEntity.Builder {
+  class Builder(result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity, XParentEntityData>(
+    result), XParentEntity.Builder {
     constructor() : this(XParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -80,7 +81,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -148,7 +149,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -157,7 +158,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
       get() = getEntityData().parentProperty
       set(value) {
         checkModificationAllowed()
-        getEntityData().parentProperty = value
+        getEntityData(true).parentProperty = value
         changedProperty.add("parentProperty")
       }
 
@@ -182,9 +183,9 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -196,7 +197,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -229,9 +230,9 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -243,7 +244,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, OPTIONALCHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -275,9 +276,9 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         val _diff = diff
         if (_diff != null) {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*>) {
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
                 item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
@@ -289,7 +290,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         }
         else {
           for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*>) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
@@ -300,7 +301,6 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
         changedProperty.add("childChild")
       }
 
-    override fun getEntityData(): XParentEntityData = result ?: super.getEntityData() as XParentEntityData
     override fun getEntityClass(): Class<XParentEntity> = XParentEntity::class.java
   }
 }

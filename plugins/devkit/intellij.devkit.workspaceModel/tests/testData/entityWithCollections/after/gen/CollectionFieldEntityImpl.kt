@@ -42,7 +42,8 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
     return connections
   }
 
-  class Builder(var result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity>(), CollectionFieldEntity.Builder {
+  class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(
+    result), CollectionFieldEntity.Builder {
     constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -62,7 +63,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
       // Builder may switch to snapshot at any moment and lock entity data to modification
-      this.result = null
+      this.currentEntityData = null
 
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
@@ -112,7 +113,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
+        getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
 
       }
@@ -135,7 +136,7 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().versions = value
+        getEntityData(true).versions = value
         versionsUpdater.invoke(value)
       }
 
@@ -157,11 +158,10 @@ open class CollectionFieldEntityImpl(val dataSource: CollectionFieldEntityData) 
       }
       set(value) {
         checkModificationAllowed()
-        getEntityData().names = value
+        getEntityData(true).names = value
         namesUpdater.invoke(value)
       }
 
-    override fun getEntityData(): CollectionFieldEntityData = result ?: super.getEntityData() as CollectionFieldEntityData
     override fun getEntityClass(): Class<CollectionFieldEntity> = CollectionFieldEntity::class.java
   }
 }
