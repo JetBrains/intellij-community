@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/intentions/loopToCallChain")
-public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
+public abstract class K1IntentionTest2Generated extends AbstractK1IntentionTest2 {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/any")
-    public static class Any extends AbstractIntentionTest2 {
+    public static class Any extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -109,7 +109,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/contains")
-    public static class Contains extends AbstractIntentionTest2 {
+    public static class Contains extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -137,7 +137,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/count")
-    public static class Count extends AbstractIntentionTest2 {
+    public static class Count extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -195,7 +195,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/filter")
-    public static class Filter extends AbstractIntentionTest2 {
+    public static class Filter extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -453,7 +453,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/firstOrNull")
-    public static class FirstOrNull extends AbstractIntentionTest2 {
+    public static class FirstOrNull extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -561,7 +561,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/flatMap")
-    public static class FlatMap extends AbstractIntentionTest2 {
+    public static class FlatMap extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -624,7 +624,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/forEach")
-    public static class ForEach extends AbstractIntentionTest2 {
+    public static class ForEach extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -667,7 +667,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/indexOf")
-    public static class IndexOf extends AbstractIntentionTest2 {
+    public static class IndexOf extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -710,7 +710,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/introduceIndex")
-    public static class IntroduceIndex extends AbstractIntentionTest2 {
+    public static class IntroduceIndex extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -758,7 +758,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/map")
-    public static class Map extends AbstractIntentionTest2 {
+    public static class Map extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -906,7 +906,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/maxMin")
-    public static class MaxMin extends AbstractIntentionTest2 {
+    public static class MaxMin extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -979,7 +979,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/smartCasts")
-    public static class SmartCasts extends AbstractIntentionTest2 {
+    public static class SmartCasts extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1062,7 +1062,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/sum")
-    public static class Sum extends AbstractIntentionTest2 {
+    public static class Sum extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1165,7 +1165,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/takeWhile")
-    public static class TakeWhile extends AbstractIntentionTest2 {
+    public static class TakeWhile extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1198,7 +1198,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/toCollection")
-    public static class ToCollection extends AbstractIntentionTest2 {
+    public static class ToCollection extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1286,7 +1286,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain")
-    public static class Uncategorized extends AbstractIntentionTest2 {
+    public static class Uncategorized extends AbstractK1IntentionTest2 {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

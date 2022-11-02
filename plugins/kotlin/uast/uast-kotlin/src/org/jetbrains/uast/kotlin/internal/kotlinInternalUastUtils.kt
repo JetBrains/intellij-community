@@ -245,7 +245,12 @@ internal fun KotlinType.getFunctionalInterfaceType(
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, typeOwnerKind, false)
 
 internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
-    val parent = sourcePsi.parent
+    val parent = if (sourcePsi.parent is KtLabeledExpression) {
+        // lambda -> labeled expression -> lambda argument (value argument)
+        sourcePsi.parent.parent
+    } else {
+        sourcePsi.parent
+    }
     if (parent is KtBinaryExpressionWithTypeRHS)
         return parent.right?.getType()?.getFunctionalInterfaceType(this, sourcePsi, parent.right!!.typeOwnerKind)
     if (parent is KtValueArgument) run {

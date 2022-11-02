@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import java.io.File
 
-abstract class AbstractIntentionTest2 : AbstractIntentionTest() {
+abstract class AbstractK1IntentionTest2 : AbstractK1IntentionTest() {
     override fun intentionFileName() = ".intention2"
     override fun afterFileNameSuffix(ktFilePath: File) = ".after2"
     override fun intentionTextDirectiveName() = "INTENTION_TEXT_2"

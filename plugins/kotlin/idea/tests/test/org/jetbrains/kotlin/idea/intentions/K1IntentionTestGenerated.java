@@ -18,16 +18,16 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/intentions")
-public abstract class IntentionTestGenerated extends AbstractIntentionTest {
+public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addAnnotationUseSiteTarget")
-    public abstract static class AddAnnotationUseSiteTarget extends AbstractIntentionTest {
+    public abstract static class AddAnnotationUseSiteTarget extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/constructor")
-        public abstract static class Constructor extends AbstractIntentionTest {
+        public abstract static class Constructor extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/constructor")
-            public static class Uncategorized extends AbstractIntentionTest {
+            public static class Uncategorized extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -45,7 +45,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/constructor/val")
-            public static class Val extends AbstractIntentionTest {
+            public static class Val extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -98,7 +98,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/constructor/var")
-            public static class Var extends AbstractIntentionTest {
+            public static class Var extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -152,10 +152,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/extension")
-        public abstract static class Extension extends AbstractIntentionTest {
+        public abstract static class Extension extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/extension/function")
-            public static class Function extends AbstractIntentionTest {
+            public static class Function extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -208,7 +208,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/extension/property")
-            public static class Property extends AbstractIntentionTest {
+            public static class Property extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -262,10 +262,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property")
-        public abstract static class Property extends AbstractIntentionTest {
+        public abstract static class Property extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property/delegate")
-            public static class Delegate extends AbstractIntentionTest {
+            public static class Delegate extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -318,7 +318,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property")
-            public static class Uncategorized extends AbstractIntentionTest {
+            public static class Uncategorized extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -331,7 +331,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property/val")
-            public static class Val extends AbstractIntentionTest {
+            public static class Val extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -384,7 +384,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property/valNoBacking")
-            public static class ValNoBacking extends AbstractIntentionTest {
+            public static class ValNoBacking extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -437,7 +437,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property/var")
-            public static class Var extends AbstractIntentionTest {
+            public static class Var extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -490,7 +490,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/addAnnotationUseSiteTarget/property/varNoBacking")
-            public static class VarNoBacking extends AbstractIntentionTest {
+            public static class VarNoBacking extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -544,7 +544,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addAnnotationUseSiteTarget")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -578,7 +578,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addForLoopIndices")
-    public static class AddForLoopIndices extends AbstractIntentionTest {
+    public static class AddForLoopIndices extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -656,10 +656,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addFullQualifier")
-    public abstract static class AddFullQualifier extends AbstractIntentionTest {
+    public abstract static class AddFullQualifier extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addFullQualifier/callExpressions")
-        public static class CallExpressions extends AbstractIntentionTest {
+        public static class CallExpressions extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -712,7 +712,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addFullQualifier/methodReferences")
-        public static class MethodReferences extends AbstractIntentionTest {
+        public static class MethodReferences extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -815,7 +815,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addFullQualifier/references")
-        public static class References extends AbstractIntentionTest {
+        public static class References extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -883,7 +883,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addFullQualifier")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -911,7 +911,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addFullQualifier/userTypes")
-        public static class UserTypes extends AbstractIntentionTest {
+        public static class UserTypes extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -955,7 +955,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addJvmOverloads")
-    public static class AddJvmOverloads extends AbstractIntentionTest {
+    public static class AddJvmOverloads extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1003,7 +1003,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addJvmStatic")
-    public static class AddJvmStatic extends AbstractIntentionTest {
+    public static class AddJvmStatic extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1076,7 +1076,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addLabeledReturnInLambda")
-    public static class AddLabeledReturnInLambda extends AbstractIntentionTest {
+    public static class AddLabeledReturnInLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1149,7 +1149,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addMissingClassKeyword")
-    public static class AddMissingClassKeyword extends AbstractIntentionTest {
+    public static class AddMissingClassKeyword extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1197,7 +1197,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addMissingDestructuring")
-    public static class AddMissingDestructuring extends AbstractIntentionTest {
+    public static class AddMissingDestructuring extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1235,7 +1235,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNameToArgument")
-    public static class AddNameToArgument extends AbstractIntentionTest {
+    public static class AddNameToArgument extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1393,7 +1393,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNamesInCommentToJavaCallArguments")
-    public static class AddNamesInCommentToJavaCallArguments extends AbstractIntentionTest {
+    public static class AddNamesInCommentToJavaCallArguments extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1451,7 +1451,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNamesToCallArguments")
-    public static class AddNamesToCallArguments extends AbstractIntentionTest {
+    public static class AddNamesToCallArguments extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1539,7 +1539,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addNamesToFollowingArguments")
-    public static class AddNamesToFollowingArguments extends AbstractIntentionTest {
+    public static class AddNamesToFollowingArguments extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1602,7 +1602,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addOpenModifier")
-    public static class AddOpenModifier extends AbstractIntentionTest {
+    public static class AddOpenModifier extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1680,10 +1680,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addPropertyAccessors")
-    public abstract static class AddPropertyAccessors extends AbstractIntentionTest {
+    public abstract static class AddPropertyAccessors extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addPropertyAccessors/both")
-        public static class Both extends AbstractIntentionTest {
+        public static class Both extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1766,7 +1766,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addPropertyAccessors/getter")
-        public static class Getter extends AbstractIntentionTest {
+        public static class Getter extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1854,7 +1854,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addPropertyAccessors/setter")
-        public static class Setter extends AbstractIntentionTest {
+        public static class Setter extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1938,7 +1938,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addThrowsAnnotation")
-    public static class AddThrowsAnnotation extends AbstractIntentionTest {
+    public static class AddThrowsAnnotation extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2091,7 +2091,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addValOrVar")
-    public static class AddValOrVar extends AbstractIntentionTest {
+    public static class AddValOrVar extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2159,7 +2159,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addWhenRemainingBranches")
-    public static class AddWhenRemainingBranches extends AbstractIntentionTest {
+    public static class AddWhenRemainingBranches extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2187,7 +2187,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/anonymousFunctionToLambda")
-    public static class AnonymousFunctionToLambda extends AbstractIntentionTest {
+    public static class AnonymousFunctionToLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -2315,10 +2315,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/branched")
-    public abstract static class Branched extends AbstractIntentionTest {
+    public abstract static class Branched extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/doubleBangToIfThen")
-        public static class DoubleBangToIfThen extends AbstractIntentionTest {
+        public static class DoubleBangToIfThen extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2406,7 +2406,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/elvisToIfThen")
-        public static class ElvisToIfThen extends AbstractIntentionTest {
+        public static class ElvisToIfThen extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2524,10 +2524,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/folding")
-        public abstract static class Folding extends AbstractIntentionTest {
+        public abstract static class Folding extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/folding/ifToFunctionCall")
-            public static class IfToFunctionCall extends AbstractIntentionTest {
+            public static class IfToFunctionCall extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2610,7 +2610,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/folding/ifToReturnAsymmetrically")
-            public static class IfToReturnAsymmetrically extends AbstractIntentionTest {
+            public static class IfToReturnAsymmetrically extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2634,10 +2634,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/ifWhen")
-        public abstract static class IfWhen extends AbstractIntentionTest {
+        public abstract static class IfWhen extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/ifWhen/ifToWhen")
-            public static class IfToWhen extends AbstractIntentionTest {
+            public static class IfToWhen extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2840,7 +2840,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/ifWhen/whenToIf")
-            public static class WhenToIf extends AbstractIntentionTest {
+            public static class WhenToIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2964,7 +2964,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/safeAccessToIfThen")
-        public static class SafeAccessToIfThen extends AbstractIntentionTest {
+        public static class SafeAccessToIfThen extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3127,10 +3127,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/unfolding")
-        public abstract static class Unfolding extends AbstractIntentionTest {
+        public abstract static class Unfolding extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/assignmentToIf")
-            public static class AssignmentToIf extends AbstractIntentionTest {
+            public static class AssignmentToIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3173,7 +3173,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/assignmentToWhen")
-            public static class AssignmentToWhen extends AbstractIntentionTest {
+            public static class AssignmentToWhen extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3201,7 +3201,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/functionCallToIf")
-            public static class FunctionCallToIf extends AbstractIntentionTest {
+            public static class FunctionCallToIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3259,7 +3259,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/propertyToIf")
-            public static class PropertyToIf extends AbstractIntentionTest {
+            public static class PropertyToIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3312,7 +3312,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/propertyToWhen")
-            public static class PropertyToWhen extends AbstractIntentionTest {
+            public static class PropertyToWhen extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3355,7 +3355,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/returnToIf")
-            public static class ReturnToIf extends AbstractIntentionTest {
+            public static class ReturnToIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3408,7 +3408,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/returnToWhen")
-            public static class ReturnToWhen extends AbstractIntentionTest {
+            public static class ReturnToWhen extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3462,10 +3462,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/when")
-        public abstract static class When extends AbstractIntentionTest {
+        public abstract static class When extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/when/eliminateSubject")
-            public static class EliminateSubject extends AbstractIntentionTest {
+            public static class EliminateSubject extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3528,7 +3528,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/when/flatten")
-            public static class Flatten extends AbstractIntentionTest {
+            public static class Flatten extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3553,10 +3553,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/changeVisibility")
-    public abstract static class ChangeVisibility extends AbstractIntentionTest {
+    public abstract static class ChangeVisibility extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/changeVisibility/internal")
-        public static class Internal extends AbstractIntentionTest {
+        public static class Internal extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3619,7 +3619,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/changeVisibility/private")
-        public static class Private extends AbstractIntentionTest {
+        public static class Private extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3842,7 +3842,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/changeVisibility/protected")
-        public static class Protected extends AbstractIntentionTest {
+        public static class Protected extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3940,7 +3940,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/changeVisibility/public")
-        public static class Public extends AbstractIntentionTest {
+        public static class Public extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4013,7 +4013,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/changeVisibility/publicExplicitApi")
-        public static class PublicExplicitApi extends AbstractIntentionTest {
+        public static class PublicExplicitApi extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4037,10 +4037,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/chop")
-    public abstract static class Chop extends AbstractIntentionTest {
+    public abstract static class Chop extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/chop/argumentList")
-        public static class ArgumentList extends AbstractIntentionTest {
+        public static class ArgumentList extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4098,7 +4098,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/chop/parameterList")
-        public static class ParameterList extends AbstractIntentionTest {
+        public static class ParameterList extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4157,10 +4157,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/conventionNameCalls")
-    public abstract static class ConventionNameCalls extends AbstractIntentionTest {
+    public abstract static class ConventionNameCalls extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/conventionNameCalls/replaceCallWithUnaryOperator")
-        public static class ReplaceCallWithUnaryOperator extends AbstractIntentionTest {
+        public static class ReplaceCallWithUnaryOperator extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4243,7 +4243,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/conventionNameCalls/replaceContains")
-        public static class ReplaceContains extends AbstractIntentionTest {
+        public static class ReplaceContains extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4356,7 +4356,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/conventionNameCalls/replaceInvoke")
-        public static class ReplaceInvoke extends AbstractIntentionTest {
+        public static class ReplaceInvoke extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4445,7 +4445,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertArgumentToSet")
-    public static class ConvertArgumentToSet extends AbstractIntentionTest {
+    public static class ConvertArgumentToSet extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4553,7 +4553,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertArrayParameterToVararg")
-    public static class ConvertArrayParameterToVararg extends AbstractIntentionTest {
+    public static class ConvertArrayParameterToVararg extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4621,7 +4621,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertBinaryExpressionWithDemorgansLaw")
-    public static class ConvertBinaryExpressionWithDemorgansLaw extends AbstractIntentionTest {
+    public static class ConvertBinaryExpressionWithDemorgansLaw extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4759,7 +4759,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertBlockCommentToLineComment")
-    public static class ConvertBlockCommentToLineComment extends AbstractIntentionTest {
+    public static class ConvertBlockCommentToLineComment extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4802,7 +4802,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertCamelCaseTestFunctionToSpaced")
-    public static class ConvertCamelCaseTestFunctionToSpaced extends AbstractIntentionTest {
+    public static class ConvertCamelCaseTestFunctionToSpaced extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4845,7 +4845,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertCollectionConstructorToFunction")
-    public static class ConvertCollectionConstructorToFunction extends AbstractIntentionTest {
+    public static class ConvertCollectionConstructorToFunction extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4888,7 +4888,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertConcatenationToBuildString")
-    public static class ConvertConcatenationToBuildString extends AbstractIntentionTest {
+    public static class ConvertConcatenationToBuildString extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4931,7 +4931,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertEnumToSealedClass")
-    public static class ConvertEnumToSealedClass extends AbstractIntentionTest {
+    public static class ConvertEnumToSealedClass extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -4984,13 +4984,13 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw")
-    public abstract static class ConvertFilteringFunctionWithDemorgansLaw extends AbstractIntentionTest {
+    public abstract static class ConvertFilteringFunctionWithDemorgansLaw extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
-        public abstract static class AnyToAll extends AbstractIntentionTest {
+        public abstract static class AnyToAll extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAll")
-            public static class ToAll extends AbstractIntentionTest {
+            public static class ToAll extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5003,7 +5003,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny")
-            public static class ToAny extends AbstractIntentionTest {
+            public static class ToAny extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5016,7 +5016,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
-            public static class Uncategorized extends AbstractIntentionTest {
+            public static class Uncategorized extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5055,10 +5055,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
-        public abstract static class AnyToNone extends AbstractIntentionTest {
+        public abstract static class AnyToNone extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toAny")
-            public static class ToAny extends AbstractIntentionTest {
+            public static class ToAny extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5071,7 +5071,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone")
-            public static class ToNone extends AbstractIntentionTest {
+            public static class ToNone extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5094,7 +5094,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
-            public static class Uncategorized extends AbstractIntentionTest {
+            public static class Uncategorized extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5133,13 +5133,13 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
-        public abstract static class CallToOpposite extends AbstractIntentionTest {
+        public abstract static class CallToOpposite extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
-            public abstract static class AllToNone extends AbstractIntentionTest {
+            public abstract static class AllToNone extends AbstractK1IntentionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate")
-                public static class Predicate extends AbstractIntentionTest {
+                public static class Predicate extends AbstractK1IntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5172,7 +5172,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
-                public static class Uncategorized extends AbstractIntentionTest {
+                public static class Uncategorized extends AbstractK1IntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5201,7 +5201,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter")
-            public static class FilterNotToFilter extends AbstractIntentionTest {
+            public static class FilterNotToFilter extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5219,7 +5219,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToToFilterTo")
-            public static class FilterNotToToFilterTo extends AbstractIntentionTest {
+            public static class FilterNotToToFilterTo extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5232,7 +5232,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot")
-            public static class FilterToFilterNot extends AbstractIntentionTest {
+            public static class FilterToFilterNot extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5250,7 +5250,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToToFilterNotTo")
-            public static class FilterToToFilterNotTo extends AbstractIntentionTest {
+            public static class FilterToToFilterNotTo extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5263,7 +5263,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/noneToAll")
-            public static class NoneToAll extends AbstractIntentionTest {
+            public static class NoneToAll extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5276,7 +5276,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeIfToTakeUnless")
-            public static class TakeIfToTakeUnless extends AbstractIntentionTest {
+            public static class TakeIfToTakeUnless extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5289,7 +5289,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf")
-            public static class TakeUnlessToTakeIf extends AbstractIntentionTest {
+            public static class TakeUnlessToTakeIf extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5302,7 +5302,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
-            public static class Uncategorized extends AbstractIntentionTest {
+            public static class Uncategorized extends AbstractK1IntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5337,7 +5337,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertForEachToForLoop")
-    public static class ConvertForEachToForLoop extends AbstractIntentionTest {
+    public static class ConvertForEachToForLoop extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5425,7 +5425,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertFunctionToProperty")
-    public static class ConvertFunctionToProperty extends AbstractIntentionTest {
+    public static class ConvertFunctionToProperty extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5583,7 +5583,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertFunctionTypeParameterToReceiver")
-    public static class ConvertFunctionTypeParameterToReceiver extends AbstractIntentionTest {
+    public static class ConvertFunctionTypeParameterToReceiver extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5676,7 +5676,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertFunctionTypeReceiverToParameter")
-    public static class ConvertFunctionTypeReceiverToParameter extends AbstractIntentionTest {
+    public static class ConvertFunctionTypeReceiverToParameter extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5739,7 +5739,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLambdaToMultiLine")
-    public static class ConvertLambdaToMultiLine extends AbstractIntentionTest {
+    public static class ConvertLambdaToMultiLine extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -5782,10 +5782,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLambdaToReference")
-    public abstract static class ConvertLambdaToReference extends AbstractIntentionTest {
+    public abstract static class ConvertLambdaToReference extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertLambdaToReference")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -6393,7 +6393,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertLambdaToReference/version1_1")
-        public static class Version1_1 extends AbstractIntentionTest {
+        public static class Version1_1 extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -6452,7 +6452,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLambdaToSingleLine")
-    public static class ConvertLambdaToSingleLine extends AbstractIntentionTest {
+    public static class ConvertLambdaToSingleLine extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6515,7 +6515,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLateinitPropertyToNullable")
-    public static class ConvertLateinitPropertyToNullable extends AbstractIntentionTest {
+    public static class ConvertLateinitPropertyToNullable extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6543,7 +6543,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLazyPropertyToOrdinary")
-    public static class ConvertLazyPropertyToOrdinary extends AbstractIntentionTest {
+    public static class ConvertLazyPropertyToOrdinary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6581,7 +6581,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLineCommentToBlockComment")
-    public static class ConvertLineCommentToBlockComment extends AbstractIntentionTest {
+    public static class ConvertLineCommentToBlockComment extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6629,7 +6629,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertNullablePropertyToLateinit")
-    public static class ConvertNullablePropertyToLateinit extends AbstractIntentionTest {
+    public static class ConvertNullablePropertyToLateinit extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6722,7 +6722,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertObjectLiteralToClass")
-    public static class ConvertObjectLiteralToClass extends AbstractIntentionTest {
+    public static class ConvertObjectLiteralToClass extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6765,7 +6765,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertOrdinaryPropertyToLazy")
-    public static class ConvertOrdinaryPropertyToLazy extends AbstractIntentionTest {
+    public static class ConvertOrdinaryPropertyToLazy extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6798,7 +6798,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertParameterToReceiver")
-    public static class ConvertParameterToReceiver extends AbstractIntentionTest {
+    public static class ConvertParameterToReceiver extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -6911,7 +6911,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertPrimaryConstructorToSecondary")
-    public static class ConvertPrimaryConstructorToSecondary extends AbstractIntentionTest {
+    public static class ConvertPrimaryConstructorToSecondary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7119,7 +7119,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertPropertyGetterToInitializer")
-    public static class ConvertPropertyGetterToInitializer extends AbstractIntentionTest {
+    public static class ConvertPropertyGetterToInitializer extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7177,7 +7177,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertPropertyInitializerToGetter")
-    public static class ConvertPropertyInitializerToGetter extends AbstractIntentionTest {
+    public static class ConvertPropertyInitializerToGetter extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7265,7 +7265,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertPropertyToFunction")
-    public static class ConvertPropertyToFunction extends AbstractIntentionTest {
+    public static class ConvertPropertyToFunction extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7388,7 +7388,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertRangeCheckToTwoComparisons")
-    public static class ConvertRangeCheckToTwoComparisons extends AbstractIntentionTest {
+    public static class ConvertRangeCheckToTwoComparisons extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7456,7 +7456,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertReceiverToParameter")
-    public static class ConvertReceiverToParameter extends AbstractIntentionTest {
+    public static class ConvertReceiverToParameter extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7544,7 +7544,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertReferenceToLambda")
-    public static class ConvertReferenceToLambda extends AbstractIntentionTest {
+    public static class ConvertReferenceToLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7777,7 +7777,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertSealedClassToEnum")
-    public static class ConvertSealedClassToEnum extends AbstractIntentionTest {
+    public static class ConvertSealedClassToEnum extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7840,7 +7840,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertSecondaryConstructorToPrimary")
-    public static class ConvertSecondaryConstructorToPrimary extends AbstractIntentionTest {
+    public static class ConvertSecondaryConstructorToPrimary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7978,7 +7978,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertSnakeCaseTestFunctionToSpaced")
-    public static class ConvertSnakeCaseTestFunctionToSpaced extends AbstractIntentionTest {
+    public static class ConvertSnakeCaseTestFunctionToSpaced extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -7996,7 +7996,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertStringTemplateToBuildString")
-    public static class ConvertStringTemplateToBuildString extends AbstractIntentionTest {
+    public static class ConvertStringTemplateToBuildString extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -8044,7 +8044,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToBlockBody")
-    public static class ConvertToBlockBody extends AbstractIntentionTest {
+    public static class ConvertToBlockBody extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -8207,7 +8207,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToConcatenatedString")
-    public static class ConvertToConcatenatedString extends AbstractIntentionTest {
+    public static class ConvertToConcatenatedString extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -8400,10 +8400,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToIndexedFunctionCall")
-    public abstract static class ConvertToIndexedFunctionCall extends AbstractIntentionTest {
+    public abstract static class ConvertToIndexedFunctionCall extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToIndexedFunctionCall/basic")
-        public static class Basic extends AbstractIntentionTest {
+        public static class Basic extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8501,7 +8501,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToIndexedFunctionCall")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8550,7 +8550,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToRawStringTemplate")
-    public static class ConvertToRawStringTemplate extends AbstractIntentionTest {
+    public static class ConvertToRawStringTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -8568,10 +8568,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToScope")
-    public abstract static class ConvertToScope extends AbstractIntentionTest {
+    public abstract static class ConvertToScope extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToScope/convertToAlso")
-        public static class ConvertToAlso extends AbstractIntentionTest {
+        public static class ConvertToAlso extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8689,7 +8689,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToScope/convertToApply")
-        public static class ConvertToApply extends AbstractIntentionTest {
+        public static class ConvertToApply extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8832,7 +8832,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToScope/convertToRun")
-        public static class ConvertToRun extends AbstractIntentionTest {
+        public static class ConvertToRun extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8990,7 +8990,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToScope/convertToWith")
-        public static class ConvertToWith extends AbstractIntentionTest {
+        public static class ConvertToWith extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9129,7 +9129,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToStringTemplate")
-    public static class ConvertToStringTemplate extends AbstractIntentionTest {
+    public static class ConvertToStringTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9392,7 +9392,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertTrimIndentToTrimMargin")
-    public static class ConvertTrimIndentToTrimMargin extends AbstractIntentionTest {
+    public static class ConvertTrimIndentToTrimMargin extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9430,7 +9430,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertTrimMarginToTrimIndent")
-    public static class ConvertTrimMarginToTrimIndent extends AbstractIntentionTest {
+    public static class ConvertTrimMarginToTrimIndent extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9488,7 +9488,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertTryFinallyToUseCall")
-    public static class ConvertTryFinallyToUseCall extends AbstractIntentionTest {
+    public static class ConvertTryFinallyToUseCall extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9566,7 +9566,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertUnsafeCastCallToUnsafeCast")
-    public static class ConvertUnsafeCastCallToUnsafeCast extends AbstractIntentionTest {
+    public static class ConvertUnsafeCastCallToUnsafeCast extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9584,7 +9584,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertUnsafeCastToUnsafeCastCall")
-    public static class ConvertUnsafeCastToUnsafeCastCall extends AbstractIntentionTest {
+    public static class ConvertUnsafeCastToUnsafeCastCall extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9602,7 +9602,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertVarargParameterToArray")
-    public static class ConvertVarargParameterToArray extends AbstractIntentionTest {
+    public static class ConvertVarargParameterToArray extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9645,7 +9645,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertVariableAssignmentToExpression")
-    public static class ConvertVariableAssignmentToExpression extends AbstractIntentionTest {
+    public static class ConvertVariableAssignmentToExpression extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9673,7 +9673,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/copyConcatenatedStringToClipboard")
-    public static class CopyConcatenatedStringToClipboard extends AbstractIntentionTest {
+    public static class CopyConcatenatedStringToClipboard extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -9706,10 +9706,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/declarations")
-    public abstract static class Declarations extends AbstractIntentionTest {
+    public abstract static class Declarations extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/declarations/convertMemberToExtension")
-        public static class ConvertMemberToExtension extends AbstractIntentionTest {
+        public static class ConvertMemberToExtension extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9947,7 +9947,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/declarations/split")
-        public static class Split extends AbstractIntentionTest {
+        public static class Split extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10026,7 +10026,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/destructuringInLambda")
-    public static class DestructuringInLambda extends AbstractIntentionTest {
+    public static class DestructuringInLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10164,7 +10164,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/destructuringVariables")
-    public static class DestructuringVariables extends AbstractIntentionTest {
+    public static class DestructuringVariables extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10227,7 +10227,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/evaluateCompileTimeExpression")
-    public static class EvaluateCompileTimeExpression extends AbstractIntentionTest {
+    public static class EvaluateCompileTimeExpression extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10315,7 +10315,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/expandBooleanExpression")
-    public static class ExpandBooleanExpression extends AbstractIntentionTest {
+    public static class ExpandBooleanExpression extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10388,10 +10388,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/implementAbstractMember")
-    public abstract static class ImplementAbstractMember extends AbstractIntentionTest {
+    public abstract static class ImplementAbstractMember extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/implementAbstractMember/function")
-        public static class Function extends AbstractIntentionTest {
+        public static class Function extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10464,7 +10464,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/implementAbstractMember/property")
-        public static class Property extends AbstractIntentionTest {
+        public static class Property extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10538,7 +10538,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/implementAsConstructorParameter")
-    public static class ImplementAsConstructorParameter extends AbstractIntentionTest {
+    public static class ImplementAsConstructorParameter extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10601,7 +10601,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/importAllMembers")
-    public static class ImportAllMembers extends AbstractIntentionTest {
+    public static class ImportAllMembers extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10679,7 +10679,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/importMember")
-    public static class ImportMember extends AbstractIntentionTest {
+    public static class ImportMember extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10797,7 +10797,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/indentRawString")
-    public static class IndentRawString extends AbstractIntentionTest {
+    public static class IndentRawString extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10840,7 +10840,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/infixCallToOrdinary")
-    public static class InfixCallToOrdinary extends AbstractIntentionTest {
+    public static class InfixCallToOrdinary extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10878,7 +10878,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/inlayHints")
-    public static class InlayHints extends AbstractIntentionTest {
+    public static class InlayHints extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10911,7 +10911,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/insertCurlyBracesToTemplate")
-    public static class InsertCurlyBracesToTemplate extends AbstractIntentionTest {
+    public static class InsertCurlyBracesToTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -10959,7 +10959,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/insertExplicitTypeArguments")
-    public static class InsertExplicitTypeArguments extends AbstractIntentionTest {
+    public static class InsertExplicitTypeArguments extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11067,7 +11067,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/introduceBackingProperty")
-    public static class IntroduceBackingProperty extends AbstractIntentionTest {
+    public static class IntroduceBackingProperty extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11150,7 +11150,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/introduceImportAlias")
-    public static class IntroduceImportAlias extends AbstractIntentionTest {
+    public static class IntroduceImportAlias extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11308,7 +11308,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/introduceVariable")
-    public static class IntroduceVariable extends AbstractIntentionTest {
+    public static class IntroduceVariable extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11361,7 +11361,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/invertIfCondition")
-    public static class InvertIfCondition extends AbstractIntentionTest {
+    public static class InvertIfCondition extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11654,7 +11654,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/iterateExpression")
-    public static class IterateExpression extends AbstractIntentionTest {
+    public static class IterateExpression extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11727,7 +11727,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/iterationOverMap")
-    public static class IterationOverMap extends AbstractIntentionTest {
+    public static class IterationOverMap extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -11935,7 +11935,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/joinArgumentList")
-    public static class JoinArgumentList extends AbstractIntentionTest {
+    public static class JoinArgumentList extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -12003,7 +12003,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/joinDeclarationAndAssignment")
-    public static class JoinDeclarationAndAssignment extends AbstractIntentionTest {
+    public static class JoinDeclarationAndAssignment extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -12181,7 +12181,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/joinParameterList")
-    public static class JoinParameterList extends AbstractIntentionTest {
+    public static class JoinParameterList extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -12234,7 +12234,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/lambdaToAnonymousFunction")
-    public static class LambdaToAnonymousFunction extends AbstractIntentionTest {
+    public static class LambdaToAnonymousFunction extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -12387,10 +12387,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain")
-    public abstract static class LoopToCallChain extends AbstractIntentionTest {
+    public abstract static class LoopToCallChain extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/any")
-        public static class Any extends AbstractIntentionTest {
+        public static class Any extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12478,7 +12478,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/contains")
-        public static class Contains extends AbstractIntentionTest {
+        public static class Contains extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12506,7 +12506,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/count")
-        public static class Count extends AbstractIntentionTest {
+        public static class Count extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12564,7 +12564,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/filter")
-        public static class Filter extends AbstractIntentionTest {
+        public static class Filter extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12822,7 +12822,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/firstOrNull")
-        public static class FirstOrNull extends AbstractIntentionTest {
+        public static class FirstOrNull extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12930,7 +12930,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/flatMap")
-        public static class FlatMap extends AbstractIntentionTest {
+        public static class FlatMap extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12993,7 +12993,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/forEach")
-        public static class ForEach extends AbstractIntentionTest {
+        public static class ForEach extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13036,7 +13036,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/indexOf")
-        public static class IndexOf extends AbstractIntentionTest {
+        public static class IndexOf extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13079,7 +13079,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/introduceIndex")
-        public static class IntroduceIndex extends AbstractIntentionTest {
+        public static class IntroduceIndex extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13127,7 +13127,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/map")
-        public static class Map extends AbstractIntentionTest {
+        public static class Map extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13275,7 +13275,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/maxMin")
-        public static class MaxMin extends AbstractIntentionTest {
+        public static class MaxMin extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13348,7 +13348,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/smartCasts")
-        public static class SmartCasts extends AbstractIntentionTest {
+        public static class SmartCasts extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13431,7 +13431,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/sum")
-        public static class Sum extends AbstractIntentionTest {
+        public static class Sum extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13534,7 +13534,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/takeWhile")
-        public static class TakeWhile extends AbstractIntentionTest {
+        public static class TakeWhile extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13567,7 +13567,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/toCollection")
-        public static class ToCollection extends AbstractIntentionTest {
+        public static class ToCollection extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13655,7 +13655,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13729,7 +13729,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/mergeElseIf")
-    public static class MergeElseIf extends AbstractIntentionTest {
+    public static class MergeElseIf extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -13762,7 +13762,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/mergeIfs")
-    public static class MergeIfs extends AbstractIntentionTest {
+    public static class MergeIfs extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -13805,7 +13805,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveDeclarationToSeparateFile")
-    public static class MoveDeclarationToSeparateFile extends AbstractIntentionTest {
+    public static class MoveDeclarationToSeparateFile extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -13823,7 +13823,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveLambdaInsideParentheses")
-    public static class MoveLambdaInsideParentheses extends AbstractIntentionTest {
+    public static class MoveLambdaInsideParentheses extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -13926,7 +13926,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveMemberToTopLevel")
-    public static class MoveMemberToTopLevel extends AbstractIntentionTest {
+    public static class MoveMemberToTopLevel extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -13979,7 +13979,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveOutOfCompanion")
-    public static class MoveOutOfCompanion extends AbstractIntentionTest {
+    public static class MoveOutOfCompanion extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14037,7 +14037,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/movePropertyToClassBody")
-    public static class MovePropertyToClassBody extends AbstractIntentionTest {
+    public static class MovePropertyToClassBody extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14105,7 +14105,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/movePropertyToConstructor")
-    public static class MovePropertyToConstructor extends AbstractIntentionTest {
+    public static class MovePropertyToConstructor extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14203,7 +14203,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/moveToCompanion")
-    public static class MoveToCompanion extends AbstractIntentionTest {
+    public static class MoveToCompanion extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14321,7 +14321,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/nullableBooleanEqualityCheckToElvis")
-    public static class NullableBooleanEqualityCheckToElvis extends AbstractIntentionTest {
+    public static class NullableBooleanEqualityCheckToElvis extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14354,7 +14354,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/objectLiteralToLambda")
-    public static class ObjectLiteralToLambda extends AbstractIntentionTest {
+    public static class ObjectLiteralToLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14502,7 +14502,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/operatorToFunction")
-    public static class OperatorToFunction extends AbstractIntentionTest {
+    public static class OperatorToFunction extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14750,7 +14750,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/reconstructTypeInCastOrIs")
-    public static class ReconstructTypeInCastOrIs extends AbstractIntentionTest {
+    public static class ReconstructTypeInCastOrIs extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14783,7 +14783,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeAllArgumentNames")
-    public static class RemoveAllArgumentNames extends AbstractIntentionTest {
+    public static class RemoveAllArgumentNames extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -14866,10 +14866,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeArgumentName")
-    public abstract static class RemoveArgumentName extends AbstractIntentionTest {
+    public abstract static class RemoveArgumentName extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeArgumentName/MixedNamedArgumentsInTheirOwnPosition")
-        public static class MixedNamedArgumentsInTheirOwnPosition extends AbstractIntentionTest {
+        public static class MixedNamedArgumentsInTheirOwnPosition extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14897,7 +14897,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeArgumentName")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14986,7 +14986,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeEmptyPrimaryConstructor")
-    public static class RemoveEmptyPrimaryConstructor extends AbstractIntentionTest {
+    public static class RemoveEmptyPrimaryConstructor extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15049,7 +15049,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitLambdaParameterTypes")
-    public static class RemoveExplicitLambdaParameterTypes extends AbstractIntentionTest {
+    public static class RemoveExplicitLambdaParameterTypes extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15102,7 +15102,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitSuperQualifier")
-    public static class RemoveExplicitSuperQualifier extends AbstractIntentionTest {
+    public static class RemoveExplicitSuperQualifier extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15165,7 +15165,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitType")
-    public static class RemoveExplicitType extends AbstractIntentionTest {
+    public static class RemoveExplicitType extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15185,6 +15185,46 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/anonymousFunctionInitializer3.kt");
         }
 
+        @TestMetadata("callableInitializerExplicitTypeArguments.kt")
+        public void testCallableInitializerExplicitTypeArguments() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments.kt")
+        public void testCallableInitializerImplicitTypeArguments() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments2.kt")
+        public void testCallableInitializerImplicitTypeArguments2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments2.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments3.kt")
+        public void testCallableInitializerImplicitTypeArguments3() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments3.kt");
+        }
+
+        @TestMetadata("callableInitializerImplicitTypeArguments4.kt")
+        public void testCallableInitializerImplicitTypeArguments4() throws Exception {
+            runTest("testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments4.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializer.kt")
+        public void testConstantExpressionInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/constantExpressionInitializer.kt");
+        }
+
+        @TestMetadata("constantExpressionInitializerVar.kt")
+        public void testConstantExpressionInitializerVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
+        }
+
+        @TestMetadata("explicitTypeIsAlias.kt")
+        public void testExplicitTypeIsAlias() throws Exception {
+            runTest("testData/intentions/removeExplicitType/explicitTypeIsAlias.kt");
+        }
+
         @TestMetadata("extensionFunction.kt")
         public void testExtensionFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/extensionFunction.kt");
@@ -15198,6 +15238,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("funWithBody.kt")
         public void testFunWithBody() throws Exception {
             runTest("testData/intentions/removeExplicitType/funWithBody.kt");
+        }
+
+        @TestMetadata("funWithBody2.kt")
+        public void testFunWithBody2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/funWithBody2.kt");
         }
 
         @TestMetadata("hasAnnotation.kt")
@@ -15218,6 +15263,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("hasAnnotationOnTypeArgument3.kt")
         public void testHasAnnotationOnTypeArgument3() throws Exception {
             runTest("testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument3.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitType.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitType() throws Exception {
+            runTest("testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitType.kt");
+        }
+
+        @TestMetadata("implicitTypeIsSubtypeOfExplicitTypeVar.kt")
+        public void testImplicitTypeIsSubtypeOfExplicitTypeVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/implicitTypeIsSubtypeOfExplicitTypeVar.kt");
         }
 
         @TestMetadata("lambdaExpressionBody.kt")
@@ -15275,6 +15330,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/needTypeArgument2.kt");
         }
 
+        @TestMetadata("needTypeArgumentInFunctionDefinition.kt")
+        public void testNeedTypeArgumentInFunctionDefinition() throws Exception {
+            runTest("testData/intentions/removeExplicitType/needTypeArgumentInFunctionDefinition.kt");
+        }
+
         @TestMetadata("notOnParameterOfFunctionType.kt")
         public void testNotOnParameterOfFunctionType() throws Exception {
             runTest("testData/intentions/removeExplicitType/notOnParameterOfFunctionType.kt");
@@ -15285,6 +15345,26 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/notOnSetterParameter.kt");
         }
 
+        @TestMetadata("nullableExplicitType.kt")
+        public void testNullableExplicitType() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitType.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar.kt")
+        public void testNullableExplicitTypeVar() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitTypeVar.kt");
+        }
+
+        @TestMetadata("nullableExplicitTypeVar2.kt")
+        public void testNullableExplicitTypeVar2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/nullableExplicitTypeVar2.kt");
+        }
+
+        @TestMetadata("onLoopParameter.kt")
+        public void testOnLoopParameter() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onLoopParameter.kt");
+        }
+
         @TestMetadata("onOverride.kt")
         public void testOnOverride() throws Exception {
             runTest("testData/intentions/removeExplicitType/onOverride.kt");
@@ -15293,6 +15373,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("onOverrideInTrait.kt")
         public void testOnOverrideInTrait() throws Exception {
             runTest("testData/intentions/removeExplicitType/onOverrideInTrait.kt");
+        }
+
+        @TestMetadata("onPropertyAccessor.kt")
+        public void testOnPropertyAccessor() throws Exception {
+            runTest("testData/intentions/removeExplicitType/onPropertyAccessor.kt");
         }
 
         @TestMetadata("onSetterParameter.kt")
@@ -15315,6 +15400,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/removeUnresolvedType.kt");
         }
 
+        @TestMetadata("stringInitializer.kt")
+        public void testStringInitializer() throws Exception {
+            runTest("testData/intentions/removeExplicitType/stringInitializer.kt");
+        }
+
         @TestMetadata("suspendFunction.kt")
         public void testSuspendFunction() throws Exception {
             runTest("testData/intentions/removeExplicitType/suspendFunction.kt");
@@ -15328,7 +15418,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitTypeArguments")
-    public static class RemoveExplicitTypeArguments extends AbstractIntentionTest {
+    public static class RemoveExplicitTypeArguments extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15516,7 +15606,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeExplicitTypeWithApiMode")
-    public static class RemoveExplicitTypeWithApiMode extends AbstractIntentionTest {
+    public static class RemoveExplicitTypeWithApiMode extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15534,7 +15624,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeForLoopIndices")
-    public static class RemoveForLoopIndices extends AbstractIntentionTest {
+    public static class RemoveForLoopIndices extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15577,7 +15667,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeLabeledReturnInLambda")
-    public static class RemoveLabeledReturnInLambda extends AbstractIntentionTest {
+    public static class RemoveLabeledReturnInLambda extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15625,7 +15715,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeRedundantCallsOfConversionMethods")
-    public static class RemoveRedundantCallsOfConversionMethods extends AbstractIntentionTest {
+    public static class RemoveRedundantCallsOfConversionMethods extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15728,7 +15818,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeSingleExpressionStringTemplate")
-    public static class RemoveSingleExpressionStringTemplate extends AbstractIntentionTest {
+    public static class RemoveSingleExpressionStringTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15771,7 +15861,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/renameClassToContainingFileName")
-    public static class RenameClassToContainingFileName extends AbstractIntentionTest {
+    public static class RenameClassToContainingFileName extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15809,7 +15899,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceAddWithPlusAssign")
-    public static class ReplaceAddWithPlusAssign extends AbstractIntentionTest {
+    public static class ReplaceAddWithPlusAssign extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15857,7 +15947,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceExplicitFunctionLiteralParamWithIt")
-    public static class ReplaceExplicitFunctionLiteralParamWithIt extends AbstractIntentionTest {
+    public static class ReplaceExplicitFunctionLiteralParamWithIt extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -15985,7 +16075,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceItWithExplicitFunctionLiteralParam")
-    public static class ReplaceItWithExplicitFunctionLiteralParam extends AbstractIntentionTest {
+    public static class ReplaceItWithExplicitFunctionLiteralParam extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16018,7 +16108,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceMapGetOrDefault")
-    public static class ReplaceMapGetOrDefault extends AbstractIntentionTest {
+    public static class ReplaceMapGetOrDefault extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16041,7 +16131,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceSizeCheckWithIsNotEmpty")
-    public static class ReplaceSizeCheckWithIsNotEmpty extends AbstractIntentionTest {
+    public static class ReplaceSizeCheckWithIsNotEmpty extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16154,7 +16244,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceSizeZeroCheckWithIsEmpty")
-    public static class ReplaceSizeZeroCheckWithIsEmpty extends AbstractIntentionTest {
+    public static class ReplaceSizeZeroCheckWithIsEmpty extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16247,7 +16337,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceUnderscoreWithParameterName")
-    public static class ReplaceUnderscoreWithParameterName extends AbstractIntentionTest {
+    public static class ReplaceUnderscoreWithParameterName extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16300,7 +16390,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceUntilWithRangeTo")
-    public static class ReplaceUntilWithRangeTo extends AbstractIntentionTest {
+    public static class ReplaceUntilWithRangeTo extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16313,7 +16403,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceWithOrdinaryAssignment")
-    public static class ReplaceWithOrdinaryAssignment extends AbstractIntentionTest {
+    public static class ReplaceWithOrdinaryAssignment extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16366,7 +16456,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/samConversionToAnonymousObject")
-    public static class SamConversionToAnonymousObject extends AbstractIntentionTest {
+    public static class SamConversionToAnonymousObject extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16474,7 +16564,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/simplifyBooleanWithConstants")
-    public static class SimplifyBooleanWithConstants extends AbstractIntentionTest {
+    public static class SimplifyBooleanWithConstants extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16677,7 +16767,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/specifyExplicitLambdaSignature")
-    public static class SpecifyExplicitLambdaSignature extends AbstractIntentionTest {
+    public static class SpecifyExplicitLambdaSignature extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16770,7 +16860,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/specifyTypeExplicitly")
-    public static class SpecifyTypeExplicitly extends AbstractIntentionTest {
+    public static class SpecifyTypeExplicitly extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -16963,7 +17053,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/specifyTypeExplicitlyInDestructuringAssignment")
-    public static class SpecifyTypeExplicitlyInDestructuringAssignment extends AbstractIntentionTest {
+    public static class SpecifyTypeExplicitlyInDestructuringAssignment extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17006,10 +17096,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/splitIf")
-    public abstract static class SplitIf extends AbstractIntentionTest {
+    public abstract static class SplitIf extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/splitIf/keepComments")
-        public static class KeepComments extends AbstractIntentionTest {
+        public static class KeepComments extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17037,7 +17127,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/splitIf")
-        public static class Uncategorized extends AbstractIntentionTest {
+        public static class Uncategorized extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17171,7 +17261,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/swapBinaryExpression")
-    public static class SwapBinaryExpression extends AbstractIntentionTest {
+    public static class SwapBinaryExpression extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17394,7 +17484,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/swapStringEqualsIgnoreCase")
-    public static class SwapStringEqualsIgnoreCase extends AbstractIntentionTest {
+    public static class SwapStringEqualsIgnoreCase extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17417,7 +17507,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/toInfixCall")
-    public static class ToInfixCall extends AbstractIntentionTest {
+    public static class ToInfixCall extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17525,7 +17615,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/toOrdinaryStringLiteral")
-    public static class ToOrdinaryStringLiteral extends AbstractIntentionTest {
+    public static class ToOrdinaryStringLiteral extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17673,7 +17763,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/toRawStringLiteral")
-    public static class ToRawStringLiteral extends AbstractIntentionTest {
+    public static class ToRawStringLiteral extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17761,7 +17851,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/trailingComma")
-    public static class TrailingComma extends AbstractIntentionTest {
+    public static class TrailingComma extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -17774,10 +17864,10 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/underscoresInNumericLiteral")
-    public abstract static class UnderscoresInNumericLiteral extends AbstractIntentionTest {
+    public abstract static class UnderscoresInNumericLiteral extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/underscoresInNumericLiteral/addUnderscores")
-        public static class AddUnderscores extends AbstractIntentionTest {
+        public static class AddUnderscores extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17825,7 +17915,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/underscoresInNumericLiteral/removeUnderscores")
-        public static class RemoveUnderscores extends AbstractIntentionTest {
+        public static class RemoveUnderscores extends AbstractK1IntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17844,7 +17934,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/usePropertyAccessSyntax")
-    public static class UsePropertyAccessSyntax extends AbstractIntentionTest {
+    public static class UsePropertyAccessSyntax extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -18022,7 +18112,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/useWithIndex")
-    public static class UseWithIndex extends AbstractIntentionTest {
+    public static class UseWithIndex extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -18070,7 +18160,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/valToObject")
-    public static class ValToObject extends AbstractIntentionTest {
+    public static class ValToObject extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

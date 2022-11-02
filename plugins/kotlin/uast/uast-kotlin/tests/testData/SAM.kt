@@ -15,6 +15,9 @@ fun bar(): java.lang.Runnable {
 
 val baz = java.lang.Runnable { /* SAM */ }
 
+val samImplicitLabel = Runnable { return@Runnable }
+val samExplicitLabel = Runnable l@{ return@l }
+
 fun runRunnable(r: java.lang.Runnable) = r()
 
 fun test1() {
