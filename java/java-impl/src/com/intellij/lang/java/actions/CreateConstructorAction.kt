@@ -16,8 +16,10 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateConstructorFromJavaUsageRequest
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
@@ -108,7 +110,11 @@ private class JavaConstructorRenderer(
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) return
-        IntentionPreviewUtils.write<Throwable> { setupBody() }
+        if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+          setupBody()
+        } else {
+          WriteCommandAction.runWriteCommandAction(project, Computable { setupBody() })
+        }
       }
 
       private fun setupBody() {
