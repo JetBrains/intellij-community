@@ -46,7 +46,7 @@ abstract class GithubGitRepoTest : GithubTest() {
   }
 
   protected fun findGitRepo() {
-    repository = repositoryManager.getRepositoryForFile(projectRoot)!!
+    repository = repositoryManager.getRepositoryForFileQuick(projectRoot)!!
   }
 
   // workaround: user on test server got "" as username, so git can't generate default identity

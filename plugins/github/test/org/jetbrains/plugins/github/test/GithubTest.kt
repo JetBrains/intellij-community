@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
@@ -177,7 +178,11 @@ abstract class GithubTest : GitPlatformTest() {
     assertEquals("Notification has wrong type", type, actualNotification.type)
   }
 
-  override fun runInDispatchThread() = true
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+    runInEdtAndWait {
+      super.runTestRunnable(testRunnable)
+    }
+  }
 
   protected data class AccountData(val token: String,
                                    val account: GithubAccount,

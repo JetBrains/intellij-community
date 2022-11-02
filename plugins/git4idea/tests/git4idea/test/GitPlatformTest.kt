@@ -5,7 +5,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.Executor.cd
@@ -67,8 +66,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     settings = GitVcsSettings.getInstance(project)
     appSettings = GitVcsApplicationSettings.getInstance()
     appSettings.setPathToGit(gitExecutable())
-    BackgroundTaskUtil.executeOnPooledThread(testRootDisposable, {
-          GitExecutableManager.getInstance().testGitExecutableVersionValid(project) })
+    GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
 
     logProvider = findGitLogProvider(project)
 
