@@ -1413,6 +1413,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
         }
 
+        @TestMetadata("methodCallChained.kt")
+        public void testMethodCallChained() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained.kt");
+        }
+
+        @TestMetadata("methodCallChained2.kt")
+        public void testMethodCallChained2() throws Exception {
+            runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained2.kt");
+        }
+
         @TestMetadata("methodCallWithComments.kt")
         public void testMethodCallWithComments() throws Exception {
             runTest("testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");

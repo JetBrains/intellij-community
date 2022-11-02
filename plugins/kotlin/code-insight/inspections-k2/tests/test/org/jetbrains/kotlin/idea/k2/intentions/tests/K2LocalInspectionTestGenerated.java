@@ -1119,6 +1119,106 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter")
+    public abstract static class InconsistentCommentForJavaParameter extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/annotation.kt");
+            }
+
+            @TestMetadata("comment.kt")
+            public void testComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/comment.kt");
+            }
+
+            @TestMetadata("na.kt")
+            public void testNa() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/na.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/simple.kt");
+            }
+
+            @TestMetadata("superSecondaryCtorCall.kt")
+            public void testSuperSecondaryCtorCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/superSecondaryCtorCall.kt");
+            }
+
+            @TestMetadata("superTypeCall.kt")
+            public void testSuperTypeCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/superTypeCall.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace")
+        public static class Whitespace extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("notSameName1.kt")
+            public void testNotSameName1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName1.kt");
+            }
+
+            @TestMetadata("notSameName2.kt")
+            public void testNotSameName2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName2.kt");
+            }
+
+            @TestMetadata("notSameName3.kt")
+            public void testNotSameName3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName3.kt");
+            }
+
+            @TestMetadata("notSameName4.kt")
+            public void testNotSameName4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName4.kt");
+            }
+
+            @TestMetadata("notSameName5.kt")
+            public void testNotSameName5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/notSameName5.kt");
+            }
+
+            @TestMetadata("sameName1.kt")
+            public void testSameName1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName1.kt");
+            }
+
+            @TestMetadata("sameName2.kt")
+            public void testSameName2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName2.kt");
+            }
+
+            @TestMetadata("sameName3.kt")
+            public void testSameName3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName3.kt");
+            }
+
+            @TestMetadata("sameName4.kt")
+            public void testSameName4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName4.kt");
+            }
+
+            @TestMetadata("sameName5.kt")
+            public void testSameName5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace/sameName5.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

@@ -1869,6 +1869,74 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments")
+    public static class AddNamesInCommentToJavaCallArguments extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/constructorCall.kt");
+        }
+
+        @TestMetadata("kotlinFunctionCall.kt")
+        public void testKotlinFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/kotlinFunctionCall.kt");
+        }
+
+        @TestMetadata("methodCall.kt")
+        public void testMethodCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCall.kt");
+        }
+
+        @TestMetadata("methodCallChained.kt")
+        public void testMethodCallChained() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained.kt");
+        }
+
+        @TestMetadata("methodCallChained2.kt")
+        public void testMethodCallChained2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallChained2.kt");
+        }
+
+        @TestMetadata("methodCallWithComments.kt")
+        public void testMethodCallWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments.kt");
+        }
+
+        @TestMetadata("methodCallWithComments2.kt")
+        public void testMethodCallWithComments2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithComments2.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgument.kt")
+        public void testMethodCallWithLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgument.kt");
+        }
+
+        @TestMetadata("methodCallWithLambdaArgumentOnly.kt")
+        public void testMethodCallWithLambdaArgumentOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithLambdaArgumentOnly.kt");
+        }
+
+        @TestMetadata("methodCallWithNoArguments.kt")
+        public void testMethodCallWithNoArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithNoArguments.kt");
+        }
+
+        @TestMetadata("methodCallWithVararg.kt")
+        public void testMethodCallWithVararg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/methodCallWithVararg.kt");
+        }
+
+        @TestMetadata("superTypeCall.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addNamesInCommentToJavaCallArguments/superTypeCall.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

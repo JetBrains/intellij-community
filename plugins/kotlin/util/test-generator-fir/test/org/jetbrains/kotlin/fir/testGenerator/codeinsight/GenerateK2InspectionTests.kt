@@ -32,6 +32,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/liftOut/ifToReturn")
             model("${idea}/inspectionsLocal/liftOut/tryToReturn")
             model("${idea}/inspectionsLocal/liftOut/whenToReturn")
+            model("${idea}/inspectionsLocal/inconsistentCommentForJavaParameter")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
