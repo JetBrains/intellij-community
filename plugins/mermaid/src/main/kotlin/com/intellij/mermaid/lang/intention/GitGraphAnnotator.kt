@@ -131,7 +131,7 @@ class GitGraphAnnotator : Annotator {
       .mapNotNull { it.commitIdAttribute?.commitIdValue }
       .filter { identifier.textMatches(it) }
 
-    if (matchingMergeStatementIdentifiers.none()) {
+    if (matchingMergeStatementIdentifiers.any()) {
       holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.conflicting.commit.id"))
         .range(identifier.textRange)
         .highlightType(ProblemHighlightType.ERROR)

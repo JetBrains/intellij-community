@@ -12,7 +12,7 @@ class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/decl
     val testName = getTestName(true)
     myFixture.configureByFile("${testName}_before.mermaid")
 
-    val targetText = MermaidBundle.message("fix.create.branch.declaration", "main")
+    val targetText = MermaidBundle.message("fix.create.branch.declaration", "master")
     val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
     assertNotNull(fix)
     myFixture.checkPreviewAndLaunchAction(fix!!)
