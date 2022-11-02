@@ -42,8 +42,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   public enum PerFileElementTypeStubChangeTrackingSource {
     Disabled,
-    ChangedFilesCollector,
-    VfsEventMerger
+    ChangedFilesCollector
   }
   public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
   static {

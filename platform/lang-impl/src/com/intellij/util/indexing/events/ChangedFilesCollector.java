@@ -16,8 +16,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -56,30 +56,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
   private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-
-  public ChangedFilesCollector() {
-    super(new VfsEventsMerger.VfsEventProcessor() {
-      private final StubIndexEx.FileUpdateProcessor perFileElementTypeUpdateProcessor =
-        ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
-
-      @Override
-      public boolean process(VfsEventsMerger.@NotNull ChangeInfo changeInfo) {
-        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.VfsEventMerger) {
-          perFileElementTypeUpdateProcessor.processUpdate(changeInfo.getFile());
-        }
-        return true;
-      }
-
-      @Override
-      public void endBatch() {
-        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.VfsEventMerger) {
-          perFileElementTypeUpdateProcessor.endUpdatesBatch();
-        }
-      }
-    });
-  }
 
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {

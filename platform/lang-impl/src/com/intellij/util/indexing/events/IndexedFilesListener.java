@@ -17,15 +17,7 @@ import java.util.List;
 
 public abstract class IndexedFilesListener implements AsyncFileListener {
   @NotNull
-  private final VfsEventsMerger myEventMerger;
-
-  public IndexedFilesListener() {
-    myEventMerger = new VfsEventsMerger();
-  }
-
-  public IndexedFilesListener(@NotNull VfsEventsMerger.VfsEventProcessor instantUpdateProcessor) {
-    myEventMerger = new VfsEventsMerger(instantUpdateProcessor);
-  }
+  private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
   @NotNull
   public VfsEventsMerger getEventMerger() {
