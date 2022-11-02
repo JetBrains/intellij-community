@@ -54,7 +54,9 @@ internal class PyCondaSdkTest {
     legacyPythonSdk.readExternal(element)
     val fixedAdditionalData = legacyPythonSdk.getOrCreateAdditionalData()
     Assert.assertEquals("Wrong flavor", CondaEnvSdkFlavor.getInstance(), fixedAdditionalData.flavor)
-    Assert.assertEquals("Wrong env", env, (fixedAdditionalData.flavorAndData.data as PyCondaFlavorData).env)
+    // Ensure correct identity created
+    ((fixedAdditionalData.flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.UnnamedEnv)
+    Assert.assertEquals("", pythonPath, legacyPythonSdk.getPythonBinaryPath(projectRule.project).getOrThrow())
   }
 
   @Test
