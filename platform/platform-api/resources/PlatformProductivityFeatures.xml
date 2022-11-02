@@ -453,4 +453,49 @@
       <track-action id="CloseAllEditors"/>
     </feature>
   </group>
+
+
+  <group id="diff">
+    <feature id="dir.diff"
+             tip-id="DirDiff"
+             first-show="6"
+             successive-show="10"
+             min-usage-count="1"
+    />
+  </group>
+
+
+  <group id="debugger">
+    <feature id="debugger.breakpoint.edit"
+             tip-id="BreakpointSpeedmenu">
+      <track-action id="com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction"/>
+    </feature>
+
+    <feature id="debugger.evaluate.expression"
+             tip-id="EvaluateExpression"
+    />
+
+    <feature id="debugger.breakpoint.non.suspending"
+             tip-id="NonSuspendingBreakpoints"
+             show-in-guide="false"
+    />
+  </group>
+
+
+  <group id="vcs">
+    <feature id="vcs.show.local.history"
+             tip-id="local_history"
+             show-in-guide="false">
+      <track-action id="LocalHistory.ShowHistory"/>
+    </feature>
+  </group>
+
+
+  <group id="intentions">
+    <feature id="intentions.check.regexp"
+             tip-id="CheckRegExp"
+             show-in-guide="false">
+      <track-intention class-name="org.intellij.lang.regexp.intention.CheckRegExpIntentionAction"/>
+    </feature>
+  </group>
 </component>
