@@ -970,8 +970,6 @@ private class NotificationComponent(val project: Project,
 
       if (notification.isSuggestionType) {
         if (actionsSize > 0) {
-          NotificationsManagerImpl.buttonInsetsCorrectionActionLayout(actionPanel)
-
           val button = JButton(actions[0].templateText)
           button.isOpaque = false
           button.addActionListener {

@@ -756,8 +756,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
       if (actionsSize > 0) {
-        buttonInsetsCorrectionActionLayout(actionPanel);
-
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
         button.setOpaque(false);
@@ -820,32 +818,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     hoverAdapter.addSource(actionPanel);
-  }
-
-  public static void buttonInsetsCorrectionActionLayout(@NotNull JPanel actionPanel) {
-    actionPanel.setLayout(new FinalLayoutWrapper((LayoutManager2)actionPanel.getLayout()) {
-      @Override
-      public void layoutContainer(@NotNull Container parent) {
-        super.layoutContainer(parent);
-
-        int count = parent.getComponentCount();
-        if (count == 0) {
-          return;
-        }
-
-        Component first = parent.getComponent(0);
-        if (first instanceof JButton button) {
-          int delta = button.getInsets().left;
-
-          for (int i = 0; i < count; i++) {
-            Component component = parent.getComponent(i);
-            Rectangle bounds = component.getBounds();
-            bounds.x -= delta;
-            component.setBounds(bounds);
-          }
-        }
-      }
-    });
   }
 
   private static void setButtonColor(@NotNull JButton button, @NotNull String colorKey, @NotNull String colorProperty) {
