@@ -126,9 +126,9 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PostfixTemplateDescriptionNotFoundInspection"/>
     <!--suppress PluginXmlCapitalization -->
-    <localInspection language="" shortName="ComponentRegistrationProblems"
+    <localInspection language="JAVA" shortName="ComponentRegistrationProblems"
                      key="inspections.registration.problems.name"
-                     groupKey="inspections.group.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection"/>
 
