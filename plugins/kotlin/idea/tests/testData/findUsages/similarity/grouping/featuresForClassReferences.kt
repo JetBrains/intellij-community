@@ -46,6 +46,22 @@ class Test {
                     j.f(B.getB())
                 }
             }
+
+            test.let { i ->
+                i.f(B.getB())
+            }
+
+            test.let {
+                it.f(B.getB())
+            }
+
+            when (val whenProperty = test2) {
+                test2 -> whenProperty.f(B.getB())
+                else -> {
+                    whenProperty.f(B.getB())
+                }
+            }
+
             globalB.f(B.getB())
             outer.f(B.getB())
             inner.f(B.getB())
