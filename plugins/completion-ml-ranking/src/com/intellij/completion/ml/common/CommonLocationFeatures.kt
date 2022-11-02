@@ -46,9 +46,9 @@ class CommonLocationFeatures : ContextFeatureProvider {
     if (projectInfo.isIdeaProject) {
       result["is_idea_project"] = MLFeatureValue.binary(true)
     }
-    result["modules_count"] = MLFeatureValue.Companion.numerical(projectInfo.modulesCount)
-    result["libraries_count"] = MLFeatureValue.Companion.numerical(projectInfo.librariesCount)
-    result["files_count"] = MLFeatureValue.Companion.numerical(projectInfo.filesCount)
+    result["modules_count"] = MLFeatureValue.Companion.numerical(projectInfo.modulesCount.roundDown())
+    result["libraries_count"] = MLFeatureValue.Companion.numerical(projectInfo.librariesCount.roundDown())
+    result["files_count"] = MLFeatureValue.Companion.numerical(projectInfo.filesCount.roundDown())
 
     val caseSensitive = CaseSensitivity.fromSettings(CodeInsightSettings.getInstance())
     if (caseSensitive != CaseSensitivity.NONE) {
@@ -72,6 +72,8 @@ class CommonLocationFeatures : ContextFeatureProvider {
     environment.putUserData(ContextSimilarityUtil.PARENT_SIMILARITY_SCORER_KEY,
                             ContextSimilarityUtil.createParentSimilarityScorer(position))
   }
+
+  private fun Int.roundDown(base: Int = 10): Int = generateSequence(1) { it * base }.first { it * base > this }
 
   private fun MutableMap<String, MLFeatureValue>.addPsiParents(position: PsiElement, numParents: Int) {
     // First parent is always referenceExpression
