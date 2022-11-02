@@ -1851,7 +1851,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   boolean isSelectOpenedFileEnabled() {
-    return !isAutoscrollFromSource(myCurrentViewId);
+    return !isAutoscrollFromSourceEnabled(myCurrentViewId);
   }
 
   @Nullable Runnable getSelectOpenedFile() {
