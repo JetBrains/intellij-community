@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.psi.PsiComment
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 object AddArgumentNamesUtils {
@@ -62,7 +64,10 @@ object AddArgumentNamesUtils {
      * starts at [startArgument] if it's not `null`.
      */
     context(KtAnalysisSession)
-    fun associateArgumentNamesStartingAt(call: KtCallElement, startArgument: KtValueArgument?): Map<KtValueArgument, Name>? {
+    fun associateArgumentNamesStartingAt(
+        call: KtCallElement,
+        startArgument: KtValueArgument?
+    ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
         val resolvedCall = call.resolveCall().singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null
@@ -70,8 +75,8 @@ object AddArgumentNamesUtils {
 
         val arguments = call.valueArgumentList?.arguments ?: return null
         val argumentsExcludingPrevious = if (startArgument != null) arguments.dropWhile { it != startArgument } else arguments
-        return argumentsExcludingPrevious.associateWith {
-            getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return null
-        }
+        return argumentsExcludingPrevious
+            .associateWith { getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return null }
+            .mapKeys { it.key.createSmartPointer() }
     }
 }

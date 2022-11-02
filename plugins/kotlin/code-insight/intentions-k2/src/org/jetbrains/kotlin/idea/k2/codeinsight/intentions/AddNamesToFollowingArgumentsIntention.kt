@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.associateArgumentNamesStartingAt
@@ -20,7 +22,7 @@ internal class AddNamesToFollowingArgumentsIntention :
     KotlinApplicableIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
-    class Context(val argumentNames: Map<KtValueArgument, Name>)
+    class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.this.argument.and.following.arguments")
     override fun getActionName(element: KtValueArgument, context: Context): String = familyName
@@ -51,5 +53,5 @@ internal class AddNamesToFollowingArgumentsIntention :
     }
 
     override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
-        addArgumentNames(context.argumentNames)
+        addArgumentNames(context.argumentNames.dereferenceValidKeys())
 }

@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.associateArgumentNamesStartingAt
 import org.jetbrains.kotlin.name.Name
@@ -18,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 internal class AddNamesToCallArgumentsIntention :
     KotlinApplicableIntentionWithContext<KtCallElement, AddNamesToCallArgumentsIntention.Context>(KtCallElement::class) {
 
-    class Context(val argumentNames: Map<KtValueArgument, Name>)
+    class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.call.arguments")
     override fun getActionName(element: KtCallElement, context: Context): String = familyName
@@ -46,5 +48,5 @@ internal class AddNamesToCallArgumentsIntention :
         associateArgumentNamesStartingAt(element, null)?.let { Context(it) }
 
     override fun apply(element: KtCallElement, context: Context, project: Project, editor: Editor?) =
-        addArgumentNames(context.argumentNames)
+        addArgumentNames(context.argumentNames.dereferenceValidKeys())
 }
