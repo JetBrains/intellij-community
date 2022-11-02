@@ -109,6 +109,11 @@ public class DefaultTreeUI extends BasicTreeUI {
     setBackground(tree, component, background, true);
   }
 
+  @ApiStatus.Internal
+  public static boolean isSeparator(@Nullable TreePath path) {
+    return path != null && isSeparator(path.getLastPathComponent());
+  }
+
   private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
     if (component instanceof JComponent) {
       ((JComponent)component).setOpaque(opaque);
