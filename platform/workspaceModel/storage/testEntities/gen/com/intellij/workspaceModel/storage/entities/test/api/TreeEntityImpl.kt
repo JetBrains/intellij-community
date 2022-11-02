@@ -245,12 +245,9 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeEntity> {
     val modifiable = TreeEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

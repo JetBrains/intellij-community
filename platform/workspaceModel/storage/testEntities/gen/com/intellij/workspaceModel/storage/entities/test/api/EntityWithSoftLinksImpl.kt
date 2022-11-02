@@ -1094,12 +1094,9 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EntityWithSoftLinks> {
     val modifiable = EntityWithSoftLinksImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

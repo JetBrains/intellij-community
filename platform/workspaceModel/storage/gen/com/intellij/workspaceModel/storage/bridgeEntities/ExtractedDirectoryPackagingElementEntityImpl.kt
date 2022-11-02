@@ -195,12 +195,9 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
     val modifiable = ExtractedDirectoryPackagingElementEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

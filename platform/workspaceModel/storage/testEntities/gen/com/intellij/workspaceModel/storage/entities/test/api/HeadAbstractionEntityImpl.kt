@@ -164,12 +164,9 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<HeadAbstractionEntity> {
     val modifiable = HeadAbstractionEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

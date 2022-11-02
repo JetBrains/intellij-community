@@ -186,12 +186,9 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
     val modifiable = TreeMultiparentRootEntityImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 

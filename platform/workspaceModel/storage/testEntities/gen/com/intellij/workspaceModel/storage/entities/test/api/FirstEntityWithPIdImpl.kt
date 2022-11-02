@@ -119,12 +119,9 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Firs
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FirstEntityWithPId> {
     val modifiable = FirstEntityWithPIdImpl.Builder(null)
-    modifiable.allowModifications {
-      modifiable.diff = diff
-      modifiable.snapshot = diff
-      modifiable.id = createEntityId()
-    }
-    modifiable.changedProperty.clear()
+    modifiable.diff = diff
+    modifiable.snapshot = diff
+    modifiable.id = createEntityId()
     return modifiable
   }
 
