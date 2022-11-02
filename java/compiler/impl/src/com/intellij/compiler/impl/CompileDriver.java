@@ -267,10 +267,20 @@ public final class CompileDriver {
 
     final Map<String, List<Artifact>> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
     return BuildManager.getInstance().scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
-        @Override
+      @Override
+      public void buildStarted(@NotNull UUID sessionId) {
+        if (!onlyCheckUpToDate && compileContext.shouldUpdateProblemsView()) {
+          ProblemsView view = ProblemsView.getInstanceIfCreated(myProject);
+          if (view != null) {
+            view.buildStarted(sessionId);
+          }
+        }
+      }
+
+      @Override
         public void sessionTerminated(@NotNull UUID sessionId) {
           if (!onlyCheckUpToDate && compileContext.shouldUpdateProblemsView()) {
-            ProblemsView view = myProject.getServiceIfCreated(ProblemsView.class);
+            ProblemsView view = ProblemsView.getInstanceIfCreated(myProject);
             if (view != null) {
               view.clearProgress();
               view.clearOldMessages(compileContext.getCompileScope(), compileContext.getSessionId());

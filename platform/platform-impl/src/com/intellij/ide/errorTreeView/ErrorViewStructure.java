@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
@@ -66,12 +67,20 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds) {
+    return hasMessages(kinds, element -> true);
+  }
+
+  public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds, Predicate<ErrorTreeElement> filter) {
     synchronized (myLock) {
       for (Map.Entry<ErrorTreeElementKind, List<ErrorTreeElement>> entry : mySimpleMessages.entrySet()) {
         if (kinds.contains(entry.getKey())) {
           final List<ErrorTreeElement> messages = entry.getValue();
           if (messages != null && !messages.isEmpty()) {
-            return true;
+            for (ErrorTreeElement message : messages) {
+              if (filter.test(message)) {
+                return true;
+              }
+            }
           }
         }
       }
@@ -79,7 +88,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         final List<NavigatableMessageElement> messages = entry.getValue();
         if (messages != null && !messages.isEmpty()) {
           for (NavigatableMessageElement message : messages) {
-            if (kinds.contains(message.getKind())) {
+            if (filter.test(message) && kinds.contains(message.getKind())) {
               return true;
             }
           }

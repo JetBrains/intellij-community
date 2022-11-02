@@ -62,7 +62,7 @@ final class ProblemsViewImpl extends ProblemsView {
         content.setHelpId("reference.problems.tool.window");
         toolWindow.getContentManager().addContent(content);
 
-        doUpdateIcon(panel, toolWindow);
+        doUpdateIcon(panel, toolWindow, null);
 
         myPanel = panel;
       }, ModalityState.NON_MODAL);
@@ -73,7 +73,7 @@ final class ProblemsViewImpl extends ProblemsView {
   public void clearOldMessages(@Nullable CompileScope scope, @NotNull UUID currentSessionId) {
     myViewUpdater.execute(() -> {
       cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
-      updateIcon();
+      updateIcon(null);
       myPanel.reload();
     });
   }
@@ -121,22 +121,28 @@ final class ProblemsViewImpl extends ProblemsView {
       else {
         myPanel.addMessage(type, text, null, -1, -1, sessionId);
       }
-      updateIcon();
+      updateIcon(sessionId);
     });
   }
 
-  private void updateIcon() {
+  private void updateIcon(final @Nullable UUID currentSessionId) {
     ApplicationManager.getApplication().invokeLater(() -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(AUTO_BUILD_TOOLWINDOW_ID);
       if (toolWindow != null) {
-        doUpdateIcon(myPanel, toolWindow);
+        doUpdateIcon(myPanel, toolWindow, currentSessionId);
       }
     }, myProject.getDisposed());
   }
 
-  private static void doUpdateIcon(@NotNull ProblemsViewPanel panel, @NotNull ToolWindow toolWindow) {
-    boolean active = panel.getErrorViewStructure().hasMessages(interestingMessageKinds);
+  private static void doUpdateIcon(@NotNull ProblemsViewPanel panel, @NotNull ToolWindow toolWindow, @Nullable UUID currentSessionId) {
+    boolean active = panel.getErrorViewStructure().hasMessages(interestingMessageKinds, element -> currentSessionId == null || currentSessionId.equals(element.getData()));
     toolWindow.setIcon(active ? AllIcons.Toolwindows.Problems : AllIcons.Toolwindows.ProblemsEmpty);
+  }
+
+  @Override
+  public void buildStarted(@NotNull UUID sessionId) {
+    super.buildStarted(sessionId);
+    updateIcon(sessionId);
   }
 
   @Override

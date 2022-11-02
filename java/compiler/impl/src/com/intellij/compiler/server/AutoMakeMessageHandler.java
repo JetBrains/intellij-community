@@ -50,6 +50,14 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
+  public void buildStarted(@NotNull UUID sessionId) {
+    ProblemsView view = ProblemsView.getInstanceIfCreated(myProject);
+    if (view != null) {
+      view.buildStarted(sessionId);
+    }
+  }
+
+  @Override
   protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
     if (myProject.isDisposed()) {
       return;
