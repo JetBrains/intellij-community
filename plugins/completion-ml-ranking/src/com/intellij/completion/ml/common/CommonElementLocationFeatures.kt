@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
 import com.intellij.codeInsight.completion.BaseCompletionService
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 
 class CommonElementLocationFeatures : ElementFeatureProvider {
   override fun getName(): String = "common"
@@ -20,7 +19,7 @@ class CommonElementLocationFeatures : ElementFeatureProvider {
 
     val result = mutableMapOf<String, MLFeatureValue>()
 
-    val completionElement = delegate(element).psiElement
+    val completionElement = element.psiElement
 
     // ruby blocks tree access in tests - org.jetbrains.plugins.ruby.ruby.testCases.RubyCodeInsightTestFixture.complete
     if (completionElement?.language?.isKindOf("ruby") != true) {
@@ -39,10 +38,5 @@ class CommonElementLocationFeatures : ElementFeatureProvider {
     }
 
     return result
-  }
-
-  private tailrec fun delegate(lookupElement: LookupElement): LookupElement = when (lookupElement) {
-    is LookupElementDecorator<*> -> delegate(lookupElement.delegate)
-    else -> lookupElement
   }
 }
