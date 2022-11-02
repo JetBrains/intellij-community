@@ -357,6 +357,12 @@
              first-show="3"
              successive-show="5"
     />
+
+    <feature id="codeassists.generate.code"
+             tip-id="AltInsertInEditor"
+             min-usage-count="3">
+      <track-action id="Generate"/>
+    </feature>
   </group>
 
 
