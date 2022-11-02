@@ -1,0 +1,3 @@
+typealias F = Int
+
+val f = 1

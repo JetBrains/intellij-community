@@ -1,7 +1,9 @@
 // IS_APPLICABLE: false
 // WITH_STDLIB
 
+fun foo(): List<String> = emptyList()
+
 @Target(AnnotationTarget.TYPE)
 annotation class Foo
 
-fun foo(): <caret>List<@Foo String> = listOf("")
+fun test(): <caret>List<@Foo String> = foo()

@@ -130,6 +130,7 @@ fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
+
         "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
         else -> return null
     }
@@ -245,14 +246,17 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
                         it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS, context) && it.isUsedAsExpression(context)
                     }
                 }
+
                 else -> false
             }
         }
+
         is KtQualifiedExpression -> {
             var target: KtQualifiedExpression = this
             while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
             target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
         }
+
         is KtCallExpression -> this.calleeExpression?.text in ENUM_STATIC_METHODS
         is KtCallableReferenceExpression -> this.callableReference.text in ENUM_STATIC_METHODS
         else -> false
@@ -305,12 +309,6 @@ private val rangeTypes = setOf(
 
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
-}
-
-fun KtTypeReference.isAnnotatedDeep(): Boolean {
-    if (annotationEntries.isNotEmpty()) return true
-    if (typeArguments().any { it.typeReference?.isAnnotatedDeep() == true }) return true
-    return false
 }
 
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {

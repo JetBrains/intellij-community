@@ -49,7 +49,7 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     @TestDataPath("/")
     @RunWith(JUnit3RunnerWithInners::class)
     class Type : AbstractFE1UastTest(), UastResolveApiTestBase {
-        override var testDataDir = KotlinRoot.PATH.resolve("uast/uast-kotlin-fir/testData/type").toFile()
+        override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/type")
 
         override val isFirUastPlugin: Boolean = false
 

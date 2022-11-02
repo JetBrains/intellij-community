@@ -23,6 +23,23 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                     ULambdaExpression
                         UBlockExpression
+        UField (name = samImplicitLabel)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                UIdentifier (Identifier (Runnable))
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
+                ULambdaExpression
+                    UBlockExpression
+                        UReturnExpression
+        UField (name = samExplicitLabel)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                UIdentifier (Identifier (Runnable))
+                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
+                ULabeledExpression (label = l)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
         UMethod (name = getNotSam)
         UMethod (name = getFoo)
         UMethod (name = setFoo)
@@ -49,6 +66,8 @@ UFile (package = )
                     ULambdaExpression
                         UBlockExpression
         UMethod (name = getBaz)
+        UMethod (name = getSamImplicitLabel)
+        UMethod (name = getSamExplicitLabel)
         UMethod (name = runRunnable)
             UParameter (name = r)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)

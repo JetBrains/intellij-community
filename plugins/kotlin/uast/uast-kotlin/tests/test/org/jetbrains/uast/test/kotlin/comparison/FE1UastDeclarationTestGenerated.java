@@ -107,4 +107,9 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     public void testRetention() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/retention.kt");
     }
+
+    @TestMetadata("returns.kt")
+    public void testReturns() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/returns.kt");
+    }
 }

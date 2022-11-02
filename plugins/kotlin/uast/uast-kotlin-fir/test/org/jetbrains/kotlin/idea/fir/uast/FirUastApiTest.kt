@@ -34,6 +34,11 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
         fun testRetention() {
             doCheck("uast-kotlin-fir/testData/declaration/retention.kt", ::checkCallbackForRetention)
         }
+
+        @TestMetadata("returns.kt")
+        fun testReturnJumpTargets() {
+            doCheck("uast-kotlin-fir/testData/declaration/returns.kt", ::checkReturnJumpTargets)
+        }
     }
 
     @TestMetadata("../uast-kotlin/tests/testData")
