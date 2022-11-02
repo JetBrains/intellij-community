@@ -17,13 +17,11 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 
-internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexContributor<*>>,
+internal class WorkspaceFileIndexData(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
                                       private val project: Project,
                                       private val rootFileSupplier: RootFileSupplier) {
   private val contributors = contributorList.groupBy { it.entityClass }
-  private val contributorsWithDependency = contributorList
-    .flatMap { contributor -> contributor.dependenciesOnParentEntities.map { it to contributor } }
-    .groupBy({ it.second.entityClass }, { it.first to it.second })
+  private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
   /** this map is accessed under 'Read Action' and updated under 'Write Action' or under 'Read Action' with a special lock in [NonIncrementalContributors.updateIfNeeded] */
   private val fileSets = MultiMap.create<VirtualFile, StoredFileSet>()
   private val nonIncrementalContributors = NonIncrementalContributors(project, rootFileSupplier)
@@ -159,35 +157,51 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
     }
   }
 
-  private fun <E : WorkspaceEntity> processChanges(event: VersionedStorageChange, entityClass: Class<out E>) {
-    val changes = event.getChanges(entityClass)
-    changes.forEach { change -> processChange(change, entityClass, event) }
-    collectChangesFromParents(event, entityClass)
-  }
-
-  private fun <C : WorkspaceEntity> collectChangesFromParents(event: VersionedStorageChange, childClass: Class<C>) {
-    val contributors = contributorsWithDependency[childClass] ?: return
-    contributors.forEach { (dependency, contributor) ->
+  private fun <E : WorkspaceEntity> processChangesByContributor(contributor: WorkspaceFileIndexContributor<E>, event: VersionedStorageChange) {
+    val removedEntities = LinkedHashSet<E>()
+    val addedEntities = LinkedHashSet<E>()
+    for (change in event.getChanges(contributor.entityClass)) {
+      change.oldEntity?.let { removedEntities.add(it) }
+      change.newEntity?.let { addedEntities.add(it) }
+    }
+    for (dependency in contributorDependencies.getValue(contributor)) {
       @Suppress("UNCHECKED_CAST")
-      processChangeInDependency(dependency as DependencyOnParentEntity<C, WorkspaceEntity>,
-                                contributor as WorkspaceFileIndexContributor<C>, event)
+      when (dependency) {
+        is DependencyDescription.OnParent<*, *> -> collectEntitiesWithChangedParent(dependency as DependencyDescription.OnParent<E, *>,
+                                                                                    event, removedEntities, addedEntities)
+        is DependencyDescription.OnChild<*, *> -> collectEntitiesWithChangedChild(dependency as DependencyDescription.OnChild<E, *>,
+                                                                                  event, removedEntities, addedEntities)
+      }
+    }
+    
+    for (removed in removedEntities) {
+      contributor.registerFileSets(removed, removeFileSetRegistrar, event.storageBefore)
+    }
+    for (added in addedEntities) {
+      contributor.registerFileSets(added, storeFileSetRegistrar, event.storageAfter)
     }
   }
 
-  private fun <E : WorkspaceEntity> processChange(change: EntityChange<out E>, entityClass: Class<out E>, event: VersionedStorageChange) {
-    change.oldEntity?.let { unregisterFileSets(it, entityClass, event.storageBefore) }
-    change.newEntity?.let { registerFileSets(it, entityClass, event.storageAfter) }
+  private fun <E : WorkspaceEntity, P : WorkspaceEntity> collectEntitiesWithChangedParent(dependency: DependencyDescription.OnParent<E, P>,
+                                                                                          event: VersionedStorageChange,
+                                                                                          removedEntities: MutableSet<E>,
+                                                                                          addedEntities: MutableSet<E>) {
+    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
+      dependency.childrenGetter(change.oldEntity).toCollection(removedEntities)
+      dependency.childrenGetter(change.newEntity).toCollection(addedEntities)
+    }
   }
 
-  private fun <C : WorkspaceEntity, P : WorkspaceEntity> processChangeInDependency(dependency: DependencyOnParentEntity<C, P>,
-                                                                                   contributor: WorkspaceFileIndexContributor<C>,
-                                                                                   event: VersionedStorageChange) {
-    event.getChanges(dependency.parentClass).asSequence().filterIsInstance<EntityChange.Replaced<P>>().forEach { change ->
-      dependency.childrenGetter(change.oldEntity).forEach {
-        contributor.registerFileSets(it, removeFileSetRegistrar, event.storageBefore)
+  private fun <E : WorkspaceEntity, C : WorkspaceEntity> collectEntitiesWithChangedChild(dependency: DependencyDescription.OnChild<E, C>,
+                                                                                         event: VersionedStorageChange,
+                                                                                         removedEntities: LinkedHashSet<E>,
+                                                                                         addedEntities: LinkedHashSet<E>) {
+    event.getChanges(dependency.childClass).asSequence().forEach { change ->
+      change.oldEntity?.let {
+        removedEntities.add(dependency.parentGetter(it))
       }
-      dependency.childrenGetter(change.newEntity).forEach {
-        contributor.registerFileSets(it, storeFileSetRegistrar, event.storageAfter)
+      change.newEntity?.let {
+        addedEntities.add(dependency.parentGetter(it))
       }
     }
   }
@@ -207,8 +221,8 @@ internal class WorkspaceFileIndexData(contributorList: List<WorkspaceFileIndexCo
 
   fun onEntitiesChanged(event: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    contributors.keys.forEach { entityClass ->
-      processChanges(event, entityClass)
+    contributorList.forEach { 
+      processChangesByContributor(it, event)
     }
     resetFileCache()
   }

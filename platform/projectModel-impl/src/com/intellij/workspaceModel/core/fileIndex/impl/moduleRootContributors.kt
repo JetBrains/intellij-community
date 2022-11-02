@@ -38,8 +38,8 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     }
   }
 
-  override val dependenciesOnParentEntities: List<DependencyOnParentEntity<SourceRootEntity, *>>
-    get() = listOf(DependencyOnParentEntity(ContentRootEntity::class.java) { it.sourceRoots.asSequence() })
+  override val dependenciesOnOtherEntities: List<DependencyDescription<SourceRootEntity>>
+    get() = listOf(DependencyDescription.OnParent(ContentRootEntity::class.java) { it.sourceRoots.asSequence() })
 }
 
 /**
