@@ -540,4 +540,3 @@ class BaseEncoder(modelFile: File, private var nThreads: Int) {
 }
 
 class BPEException(s: String) : Exception(s)
-

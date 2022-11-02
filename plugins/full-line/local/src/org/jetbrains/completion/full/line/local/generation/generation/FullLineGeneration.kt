@@ -137,5 +137,3 @@ class FullLineGeneration(
     private const val logItemClose = "<<<"
   }
 }
-
-

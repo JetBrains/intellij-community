@@ -20,7 +20,5 @@ internal abstract class PrefixMatcher {
       }
       return cnt
     }
-
   }
 }
-

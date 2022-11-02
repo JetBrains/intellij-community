@@ -12,5 +12,3 @@ interface RankingModel {
    */
   fun rank(context: String, prefix: String, completions: List<CompletionModel.CompletionResult>): List<CompletionModel.CompletionResult>
 }
-
-

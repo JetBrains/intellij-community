@@ -21,7 +21,6 @@ class STLQueue<T> : BasePriorityQueue<T>() {
   }
 }
 
-
 class DropoutQueue<T>(var skipProb: Double) : BasePriorityQueue<T>() {
   //    val rnd = MersenneTwister()
   var dist = UniformRealDistribution(0.0, 1.0)

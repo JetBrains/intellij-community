@@ -17,5 +17,4 @@ internal class FullLinePrefixMatcher(val tokenizer: Tokenizer) : PrefixMatcher()
       else values
     }
   }
-
 }
