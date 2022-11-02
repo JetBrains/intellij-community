@@ -7,11 +7,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.io.exists
-import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PySdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -49,7 +52,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
       return@withContext Result.success(result)
     }
 
-suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+    suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
 
       val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 
@@ -67,8 +70,9 @@ suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequ
 
   /**
    * Add conda prefix to [targetedCommandLineBuilder]
+   * [sdk] may be used to fetch local env vars, see implementation
    */
-  fun addCondaToTargetBuilder(targetedCommandLineBuilder: TargetedCommandLineBuilder) {
+  fun addCondaToTargetBuilder(sdk: Sdk?, targetedCommandLineBuilder: TargetedCommandLineBuilder) {
     targetedCommandLineBuilder.apply {
       setExePath(fullCondaPathOnTarget)
       addParameter("run")
@@ -84,6 +88,19 @@ suspend  fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequ
       }
       // Otherwise we wouldn't have interactive output (for console etc.)
       addParameter("--no-capture-output")
+    }
+
+    // If target is local, use legacy api to "activate" virtual env
+    // It reads envs vars out of "activate.bat" on Windows.
+    // Something unreliable and redundant, but may act as workaround for cases like https://github.com/conda/conda/issues/11795
+    if (targetedCommandLineBuilder.request.configuration == null && sdk != null) {
+      val pythonHomePath = sdk.homePath
+      if (pythonHomePath == null) {
+        Logger.getInstance(PyCondaFlavorData::class.java).warn("No home path for $this, will skip 'venv activation'")
+        return
+      }
+      val envs = PySdkUtil.activateVirtualEnv(sdk)
+      envs.forEach { targetedCommandLineBuilder.addEnvironmentVariable(it.key, it.value) }
     }
   }
 
